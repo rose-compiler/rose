@@ -22,30 +22,31 @@ namespace ASTtools
   //  SgVariableSymbol* getFirstVarSym (SgVariableDeclaration* decl);
 
   //! Collect var syms for all local variable declarations at 's'.
-  void collectDefdVarSyms (const SgStatement* s, VarSymSet_t& syms);
+  ROSE_DLL_API void collectDefdVarSyms (const SgStatement* s, VarSymSet_t& syms);
 
   //! Collect var syms for all variable references at 's'.
-  void collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms);
+  ROSE_DLL_API void collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms);
 
   /*!
    *  Collect var syms declared at 'root' or below that are visible to
    *  'target'.
    */
+  ROSE_DLL_API
   void collectLocalVisibleVarSyms (const SgStatement* root,
                                    const SgStatement* target,
                                    VarSymSet_t& syms);
 
   //! Convert a variable symbol set to a string-friendly form for debugging.
-  std::string toString (const VarSymSet_t& syms);
+  ROSE_DLL_API std::string toString (const VarSymSet_t& syms);
 
   //! Collect variable references using addresses for s
-  void collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
+  ROSE_DLL_API void collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
 
   //! Collect variable references with a type which does not support =operator or copy construction. Those two support is essential for temp variables used to copy and restore parameters
-  void collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
+  ROSE_DLL_API void collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
 
   //! Collect variables to be replaced by pointer dereferencing (pd)
-  void collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms);
+  ROSE_DLL_API void collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms);
 
 } // namespace ASTtools
 

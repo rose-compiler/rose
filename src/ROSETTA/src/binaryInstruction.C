@@ -476,8 +476,56 @@ Grammar::setUpBinaryInstructions()
 
 
 
+     // Declaration-like nodes that encapsulate multiple instructions.  Binary ASTs have two sides: the container side that
+     // corresponds to the ELF/PE/etc. file formats, and the interpretation side that corresponds to instructions and data from
+     // multiple sources (specimen + dynamic libraries) organized into multiple SgAsmInterpretation where each interpretation
+     // makes a coherent binary entity such as the DOS part of a PE executable.  The declaration-like nodes that follow appear
+     // on the interpretation side of the AST.  We may add other declaration nodes to the container side of the AST at a later
+     // time.
+     //
+     // These interpretation-side declaration-like nodes are used by the projects/BinaryDataStructureRecognition even if they
+     // aren't used internally by ROSE.
+     NEW_TERMINAL_MACRO(AsmSynthesizedDataStructureDeclaration,
+                        "AsmSynthesizedDataStructureDeclaration", "AsmSynthesizedDataStructureDeclarationTag");
+     AsmSynthesizedDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE",
+                                                                 "../Grammar/BinaryInstruction.code");
+     AsmSynthesizedDataStructureDeclaration.setFunctionSource("SOURCE_BINARY_DATA_STRUCTURE",
+                                                              "../Grammar/BinaryInstruction.code");
+#if 0
+     // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
+     // Binaries have some easily resolved data structures so we use this to represent these
+     AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+                                                  NO_DELETE, COPY_DATA);
+#endif
+
+
+
+     NEW_TERMINAL_MACRO(AsmSynthesizedFieldDeclaration, "AsmSynthesizedFieldDeclaration", "AsmSynthesizedFieldDeclarationTag");
+     // These are used as data members in AsmDataStructureDeclaration
+     AsmSynthesizedFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // Not clear if we want to store the offset explicitly
+     AsmSynthesizedFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     // DQ (9/2/2013): We may later wish to change "AsmFunction" to "AsmSynthesizedFunction", since functions are
+     // philosophically a synthesized concept within a binary (except where Binary API standards must be followed to permit
+     // seperate compilation).
+     // RPM (9/18/2013): On the other hand, most things on the interpretation side of the AST will be synthesized: basic
+     // blocks, functions, code vs. data, thunk tables, trampolines, exception handling structures, data types, CFG structures
+     // like switch statements, ... do users want or need "synthesized" in all those node type names?
+     NEW_NONTERMINAL_MACRO(AsmSynthesizedDeclaration,
+                           AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration,
+                           "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
+     AsmSynthesizedDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+
+
+
      NEW_NONTERMINAL_MACRO(AsmStatement,
-                           AsmFunction | AsmBlock | AsmInstruction | AsmStaticData,
+                           AsmSynthesizedDeclaration | AsmBlock | AsmInstruction | AsmStaticData,
                            "AsmStatement", "AsmStatementTag", false);
      AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);

@@ -127,6 +127,9 @@ main(int argc, char *argv[])
 
         if (igroup_ids.empty() && func_ids.empty())
             tx->execute("delete from semantic_outputvalues");
+        tx->execute("delete from semantic_fio_calls" + cond);
+        tx->execute("delete from semantic_fio_coverage" + cond);
+        tx->execute("delete from semantic_fio_inputs" + cond);
         tx->execute("delete from semantic_fio_trace" + cond);
         tx->execute("delete from semantic_fio" + cond);
 
@@ -156,6 +159,9 @@ main(int argc, char *argv[])
         }
 
         std::string cond = igroup_ids.empty() ? std::string() : " where igroup_id " + SqlDatabase::in(igroup_ids);
+        tx->execute("delete from semantic_fio_calls" + cond);
+        tx->execute("delete from semantic_fio_coverage" + cond);
+        tx->execute("delete from semantic_fio_inputs" + cond);
         tx->execute("delete from semantic_fio_trace" + cond);
         tx->execute("delete from semantic_fio" + cond);
         tx->execute("delete from semantic_inputvalues" + cond);
@@ -176,6 +182,9 @@ main(int argc, char *argv[])
         std::string funcs = func_ids.empty() ? std::string("is not null") : SqlDatabase::in(func_ids);
         tx->execute("delete from semantic_funcsim where func1_id "+funcs+" or func2_id "+funcs);
         tx->execute("delete from semantic_funcpartials where func_id "+funcs);
+        tx->execute("delete from semantic_fio_calls where func_id "+funcs);
+        tx->execute("delete from semantic_fio_coverage where func_id "+funcs);
+        tx->execute("delete from semantic_fio_inputs where func_id "+funcs);
         tx->execute("delete from semantic_fio_trace where func_id "+funcs);
         tx->execute("delete from semantic_fio where func_id "+funcs);
         

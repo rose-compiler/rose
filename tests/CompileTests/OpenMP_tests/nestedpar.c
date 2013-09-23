@@ -9,17 +9,18 @@ printf("%s\n",s);
 
 int main(void)
 {
- #pragma omp parallel
- {
-  paroutput("before single");
-
- #pragma omp single
+#pragma omp parallel
   {
-   paroutput("inside single");
-  }
+    paroutput("before single");
 
-  paroutput("after single");
- }
+#pragma omp single
+    {
+      paroutput("inside single");
+    }
+
+    paroutput("after single");
+  }
+  return 0;
 }
 
 

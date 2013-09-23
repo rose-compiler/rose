@@ -26,8 +26,7 @@ MarkForOutputInCodeGeneration::visit(SgNode* node)
      if (statement != NULL)
         {
 #if 0
-          printf ("Attempting to mark %s (%s) for output in code generation \n",
-             node->class_name().c_str(),SageInterface::get_name(statement).c_str());
+          printf ("In MarkForOutputInCodeGeneration::visit(): Attempting to mark %s (%s) for output in code generation \n",node->class_name().c_str(),SageInterface::get_name(statement).c_str());
 #endif
           ROSE_ASSERT(statement->get_file_info() != NULL);
           statement->get_file_info()->setOutputInCodeGeneration();

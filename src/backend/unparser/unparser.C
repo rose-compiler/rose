@@ -8,6 +8,10 @@
 // #include "propagateHiddenListData.h"
 // #include "HiddenList.h"
 
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+#include <setjmp.h>
+#include <signal.h>
+
 // include "array_class_interface.h"
 #include "unparser.h"
 
@@ -32,6 +36,14 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+static sigjmp_buf rose__sgproject_unparse_mark;
+static void HandleUnparserSignal(int sig)
+{
+  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__sgproject_unparse_mark, -1);
+}
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -319,6 +331,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      file->display("file: Unparser::unparseFile");
 #endif
 
+  // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
+     TimingPerformance timer ("Unparse File:");
+
   // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -378,11 +393,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // Use the information in the SgFile object to control which unparser is called.
      if ( ( (file->get_Fortran_only() == true) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
         {
+       // DQ (6/30/2013): Added support to time the unparsing of the file.
+          TimingPerformance timer ("Source code generation from AST (Fortran):");
+
        // Unparse using the new Fortran unparser!
           u_fortran_locatedNode->unparseStatement(globalScope, info);
         }
        else
         {
+       // DQ (6/30/2013): Added support to time the unparsing of the file.
+          TimingPerformance timer ("Source code generation from AST:");
 #if 0
           printf ("This is not a Fortran file! \n");
 #endif
@@ -952,11 +972,10 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
   // It does not make sense to reset the source file positions for a binary (at least not yet).
      ROSE_ASSERT (file->get_binary_only() == false);
 
-  // If we did unparse an intermediate file then we want to compile that 
-  // file instead of the original source file.
+  // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
      string outputFilename;
-      if (file->get_unparse_output_filename().empty() == true)
-      {
+     if (file->get_unparse_output_filename().empty() == true)
+        {
           outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)
@@ -973,16 +992,19 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
                ROSE_ASSERT(false);
              }
-          else if (file->get_X10_only() == true)
-          {
-               outputFilename = file->get_sourceFileNameWithoutPath();
+            else
+             {
+               if (file->get_X10_only() == true)
+                  {
+                    outputFilename = file->get_sourceFileNameWithoutPath();
 
-               printf ("[Warning] Output file name of generated X10 code is the "
+                    printf ("[Warning] Output file name of generated X10 code is the "
                        "same as the input file name, but must be build into a "
                        "separate directory.\n");
-               ROSE_ASSERT(false);
-          }
-      }
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
        else
         {
           outputFilename = file->get_unparse_output_filename();
@@ -1309,7 +1331,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
                inheritedAttributeInfo.set_current_scope(scope);
 #else
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+
+// DQ (5/25/2013): Commented out this message (too much output spew for test codes, debugging test2013_191.C).
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                printf ("Skipping set of inheritedAttributeInfo.set_current_scope(scope); for SgTemplateArgument \n");
 #endif
 #endif
@@ -1628,6 +1653,7 @@ string get_output_filename( SgFile& file)
           printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
         }
      ROSE_ASSERT(file.get_unparse_output_filename().empty() == false);
+
      return file.get_unparse_output_filename();
    }
 
@@ -1677,11 +1703,35 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called unparse()!
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
-  // If we did unparse an intermediate file then we want to compile that
-  // file instead of the original source file.
-    if (file->get_unparse_output_filename().empty() == true)
-    {
+  // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
+     if (file->get_unparse_output_filename().empty() == true)
+        {
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+
+       // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+          SgProject* project = TransformationSupport::getProject(file);
+       // ROSE_ASSERT(project != NULL);
+          if (project != NULL)
+             {
+#if 0
+               printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#endif
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
+                  {
+                    outputFilename = ROSE::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
+#if 0
+                    printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+#endif
+#if 0
+                    printf("Exiting as test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In unparseFile(): file = %p has no associated project \n",file);
+             }
 
         if (file->get_binary_only() == true)
         {
@@ -1746,10 +1796,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             //ROSE_ASSERT (! "Not implemented, or unknown file type");
         }
 
+       // DQ (9/15/2013): Added assertion.
+          ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
+#if 0
+          printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
+#endif
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
        // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
-    }
+     }
 
 #if 0
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
@@ -2066,20 +2121,40 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
-
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
-   {
-     ROSE_ASSERT(fileList != NULL);
+{
+  ROSE_ASSERT(fileList != NULL);
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
-     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
-        {
-          SgFile* file = fileList->get_listOfFiles()[i];
+  for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+  {
+      SgFile* file = fileList->get_listOfFiles()[i];
 
-          if ( SgProject::get_verbose() > 1 )
-               printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
+      if ( SgProject::get_verbose() > 1 )
+           printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
-          unparseFile(file,unparseFormatHelp,unparseDelegate);
-        }
-   }
+      // TOO1 (05/14/2013): Signal handling for -rose:keep_going
+      if (file->get_project()->get_keep_going())
+      {
+          struct sigaction act;
+          act.sa_handler = HandleUnparserSignal;
+          sigemptyset(&act.sa_mask);
+          act.sa_flags = 0;
+          sigaction(SIGSEGV, &act, 0);
+      }
+
+      if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
+      {
+          std::cout
+              << "[WARN] Ignoring unparser failure "
+              << " as directed by -rose:keep_going"
+              << std::endl;
+          file->set_unparserErrorCode(-1);
+      }
+      else
+      {
+          unparseFile(file, unparseFormatHelp, unparseDelegate);
+      }
+  }
+}
 

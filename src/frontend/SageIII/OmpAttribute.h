@@ -42,6 +42,14 @@ namespace OmpSupport
     e_atomic,
     e_flush,
 
+    // Liao, 1/15/2013, experimental implementation for the draft OpenMP Accelerator Model technical report 
+    e_target, 
+    e_target_declare,
+    e_target_data,
+    e_target_update, 
+    e_map, // map clauses
+    e_device,
+
     e_threadprivate,
     e_parallel_for,
     e_parallel_do,
@@ -131,8 +139,23 @@ namespace OmpSupport
     e_schedule_auto,
     e_schedule_runtime,
 
+    // 4 device map variants
+    //----------------------
+    e_map_alloc,
+    e_map_in,
+    e_map_out,
+    e_map_inout,
+
+    // experimental SIMD directive, phlin 8/5/2013
+    e_simd,
+    e_safelen,
+    e_uniform,
+    e_aligned,
+    e_linear,
+
     // not an OpenMP construct
     e_not_omp
+
   }; //end omp_construct_enum
 
   //-------------------------------------------------------------------
@@ -164,20 +187,20 @@ namespace OmpSupport
   //! Some utility functions to manipulate OmpAttribute
   //
   //! A builder for OmpAttribute, useDefined indicates if the directive is added by programmer or not (by autoParallelization)
-  OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node, bool useDefined);
+  ROSE_DLL_API OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node, bool useDefined);
 
   //! Add OmpAttribute to a SgNode
-  void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
+  ROSE_DLL_API void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
   //! Remove OmpAttribute from a SgNode
-  void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
+  ROSE_DLL_API void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
   //! Check if two OmpAttributes are semantically equivalent to each other 
-  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
+  ROSE_DLL_API bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
   
   class OmpAttributeList;
   //! Get OmpAttribute from a SgNode, return NULL if not found
-  OmpAttributeList* getOmpAttributeList(SgNode* node);
+  ROSE_DLL_API OmpAttributeList* getOmpAttributeList(SgNode* node);
 
   //! Get the first OmpAttribute from a SgNode, return NULL if not found
   OmpAttribute* getOmpAttribute(SgNode* node);
@@ -192,12 +215,12 @@ namespace OmpSupport
   omp_construct_enum getEndOmpConstructEnum (omp_construct_enum begin_enum);
 
   //! Generate a pragma declaration from OmpAttribute attached to a statement
-  void generatePragmaFromOmpAttribute(SgNode* sg_node); 
+  ROSE_DLL_API void generatePragmaFromOmpAttribute(SgNode* sg_node); 
   //TODO this is duplicated from autoParallization project's generatedOpenMPPragmas() 
   // We should remove this duplicate once autopar is moved into rose/src 
   
   //! Generate diff text from OmpAttribute attached to a statement
-  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
+  ROSE_DLL_API std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
 
   //------------------------------------------------------------------
   // By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST
@@ -217,7 +240,7 @@ namespace OmpSupport
   //    'omp for' needs scheduling type 
   //------------------------------------------------------------------
 
-  class OmpAttributeList :public AstAttribute
+  class ROSE_DLL_API OmpAttributeList :public AstAttribute
   {
     public:
       std::vector<OmpAttribute*> ompAttriList;
@@ -228,7 +251,8 @@ namespace OmpSupport
       ~OmpAttributeList();
   };                      
 
-  class OmpAttribute
+  // One attribute object stores all information within an OpenMP pragma (directive and clauses)
+  class ROSE_DLL_API OmpAttribute
   {
     public:
       //!--------------AST connection------------------
@@ -256,14 +280,18 @@ namespace OmpSupport
       std::vector<omp_construct_enum> getClauses();
 
       //!--------var list --------------
-      //! Add a variable into a variable list of a construct
-      void addVariable(omp_construct_enum targetConstruct, const std::string& varString,SgInitializedName* sgvar=NULL);
+      //! Add a variable into a variable list of an OpenMP construct ,return the symbol of the variable added, if possible
+      SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
       //! Check if a variable list is associated with a construct
       bool hasVariableList(omp_construct_enum);
       //! Get the variable list associated with a construct
       std::vector<std::pair<std::string,SgNode* > > 
         getVariableList(omp_construct_enum);
 
+      //! Dimension information for array variables, used by map clause, such as map (inout:array[0:n][0:m])
+      // We store a list (vector) of dimension bounds for each array variable
+      std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions;  
+      
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
 
@@ -286,6 +314,18 @@ namespace OmpSupport
       std::vector<omp_construct_enum> getReductionOperators();
       //! Check if a reduction operation exists
       bool hasReductionOperator(omp_construct_enum operatorx);
+
+      // map clause is similar to reduction clause, 
+      //
+      // Add a new map clauses with the specified variant type
+      void setMapVariant(omp_construct_enum operatorx);
+      //! Get map clauses for each variant,  map(variant:var_list)
+      std::vector<omp_construct_enum> getMapVariants();
+      //! Check if a map variant exists
+      bool hasMapVariant(omp_construct_enum operatorx);
+
+      //! Check if the input parameter is a map variant enum type
+      bool isMapVariant(omp_construct_enum omp_type);
 
       // default () value
       void setDefaultValue(omp_construct_enum valuex);
@@ -367,6 +407,10 @@ namespace OmpSupport
       std::vector<omp_construct_enum> reduction_operators;
       //omp_construct_enum reduction_operator;
 
+      // Liao, 1/15/2013, map variant:
+      // there could be multiple map clause with the same variant type: alloc, in, out , and inout.
+      std::vector<omp_construct_enum> map_variants; 
+      //enum omp_construct_enum map_variant; 
       //variable lists------------------- 
       //appeared within some directives and clauses
       //The clauses/directive are: flush, threadprivate, private, firstprivate, 

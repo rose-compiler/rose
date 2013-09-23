@@ -10,6 +10,13 @@
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
 
+#ifdef _MSC_VER
+#include <io.h>
+#include <direct.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
+
 // jichi (9/29/2009): Add test for Fortran language
 #define IS_FORTRAN_LANGUAGE() \
         SageInterface::is_Fortran_language()
@@ -623,8 +630,14 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
   // DQ (1/2/2007): The use of _astInterface_Tmp.c does not provide a unique filename
   // to support testing of the loop processor in parallel.  This is modified below to
   // make the name unique for each process.
-     char uniqueFilename[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     char *uniqueFilename = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     #ifdef _MSC_VER
+     uniqueFilename = mktemp(uniqueFilename);
+     if (uniqueFilename == NULL) return NULL;
+     int fd = open(uniqueFilename, O_CREAT|O_EXCL, S_IREAD|S_IWRITE);
+     #else
      int fd = mkstemp(uniqueFilename);
+     #endif
      if (fd == -1) {
        perror("mkstemp: ");
        abort();
@@ -648,6 +661,10 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      //cleanup of ROSE code
      SgSourceFile* addDecls = isSgSourceFile(determineFileType(argv,error,0));
   // std::cerr << "Finished generating declaration \n";
+
+  // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
+     ROSE_ASSERT(addDecls != NULL);
+     addDecls->runFrontend(error);
 
      unlink( uniqueFilename );
   // string systemString = string("rm '") + uniqueFilename + "'";

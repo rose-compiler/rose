@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
@@ -36,7 +37,8 @@ bin_PROGRAMS = \
    testAstFileRead \
    parallelASTMerge \
    testGraphGeneration \
-   testTokenGeneration
+   testTokenGeneration \
+   KeepGoingTranslator 
 
 # DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -92,6 +94,13 @@ testGraphGeneration_SOURCES = testGraphGeneration.C
 # This tests the token generation capabilities which are an option in ROSE used to support the 
 # generation of patches to define transformations of large scale applications.
 testTokenGeneration_SOURCES = testTokenGeneration.C
+
+# Ignores internal ROSE failures, see `rose --help` for info on `-rose:keep_going`
+KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
+
+# DQ (7/3/2013): Added support to output some pre-defined macro values.
+# Program to output predefined relevant macros.
+# predefinedMacros_SOURCES = predefinedMacros.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -269,10 +278,20 @@ test_testGraphGeneration: testGraphGeneration
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 endif
+
+testKeepGoingTranslator: KeepGoingTranslator
+	./KeepGoingTranslator $(__minimal_input_code)
+
+# This appears to be a bug, in that the executable is not build (ROSE assumes an implicit -c for compile only mode).
+#predefinedMacros: testTranslator
+#	./testTranslator $(srcdir)/predefinedMacros.C
+
+#testPredefinedMacros: predefinedMacros
+#	./predefinedMacros
 
 # Make check rule
 check-local: test

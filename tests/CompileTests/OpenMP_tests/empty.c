@@ -24,5 +24,6 @@ int main(void)
 #endif
     printf("Hello,world! I am thread %d\n",i);
   }
+  return 0;
 }
 

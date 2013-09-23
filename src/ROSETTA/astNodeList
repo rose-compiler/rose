@@ -38,6 +38,8 @@ SgAsmCommonSubExpression
 SgAsmControlFlagsExpression
 SgAsmDOSExtendedHeader
 SgAsmDOSFileHeader
+SgAsmSynthesizedDataStructureDeclaration
+SgAsmSynthesizedDeclaration
 SgAsmDoubleFloatValueExpression
 SgAsmDoubleWordValueExpression
 SgAsmDwarfAccessDeclaration
@@ -155,6 +157,7 @@ SgAsmElfSymverSection
 SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
+SgAsmSynthesizedFieldDeclaration
 SgAsmFunction
 SgAsmGenericArchitecture
 SgAsmGenericDLL
@@ -305,6 +308,7 @@ SgComprehension
 SgComprehensionList
 SgCompoundAssignOp
 SgCompoundInitializer
+SgCompoundLiteralExp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
@@ -506,6 +510,9 @@ SgOmpTaskStatement
 SgOmpTaskwaitStatement
 SgOmpThreadprivateStatement
 SgOmpWorkshareStatement
+SgOmpTargetStatement
+SgOmpTargetDataStatement
+SgOmpSimdStatement
 SgOmpClause
 SgOmpCollapseClause
 SgOmpCopyinClause
@@ -514,6 +521,7 @@ SgOmpDefaultClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
+SgOmpDeviceClause
 SgOmpLastprivateClause
 SgOmpNowaitClause
 SgOmpNumThreadsClause
@@ -524,6 +532,11 @@ SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
 SgOmpVariablesClause
+SgOmpMapClause
+SgOmpSafelenClause
+SgOmpLinearClause
+SgOmpUniformClause
+SgOmpAlignedClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
@@ -568,6 +581,7 @@ SgSequenceStatement
 SgSetComprehension
 SgShortVal
 SgSizeOfOp
+SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
@@ -618,6 +632,7 @@ SgTemplateParameterList
 SgTemplateSymbol
 SgTemplateType
 SgThisExp
+SgTypeTraitBuiltinOperator
 SgSuperExp
 SgThrowOp
 SgToken
@@ -716,3 +731,6 @@ SgCAFCoExpression
 SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
+SgJavaPackageStatement
+SgJavaImportStatementList
+SgJavaClassDeclarationList

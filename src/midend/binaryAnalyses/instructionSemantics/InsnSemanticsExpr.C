@@ -3,6 +3,7 @@
 #include "SMTSolver.h"
 #include "stringify.h"
 #include "integerOps.h"
+#include "Combinatorics.h"
 
 namespace InsnSemanticsExpr {
 
@@ -46,6 +47,20 @@ TreeNode::get_variables() const
     return t1.vars;
 }
 
+uint64_t
+TreeNode::hash() const
+{
+    if (0==hashval) {
+        // FIXME: We could build the hash with a traversal rather than
+        // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
+        std::ostringstream ss;
+        Formatter formatter;
+        formatter.show_comments = Formatter::CMT_SILENT;
+        print(ss, formatter);
+        hashval = Combinatorics::fnv1a64_digest(ss.str());
+    }
+    return hashval;
+}
 
 /*******************************************************************************************************************************
  *                                      InternalNode methods
@@ -59,15 +74,15 @@ InternalNode::add_child(const TreeNodePtr &child)
 }
 
 void
-InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
+InternalNode::print(std::ostream &o, Formatter &formatter) const
 {
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (!comment.empty())
+    if (formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
         o <<" ";
-        children[i]->print(o, rmap);
+        children[i]->print(o, formatter);
     }
     o <<")";
 }
@@ -76,19 +91,15 @@ bool
 InternalNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (solver) {
+    if (this==other_.get()) {
+        retval = true;
+    } else if (equivalent_to(other_)) {
+        // This is probably faster than using an SMT solver. It also serves as the naive approach when an SMT solver
+        // is not available.
+        retval = true;
+    } else if (solver) {
         TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
-    } else {
-        /* The naive approach uses structural equality */
-        InternalNodePtr other = other_->isInternalNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (other && op==other->op && children.size()==other->children.size()) {
-            retval = true;
-            for (size_t i=0; i<children.size() && retval; ++i)
-                retval = children[i]->must_equal(other->children[i], NULL);
-        }
     }
     return retval;
 }
@@ -97,12 +108,15 @@ bool
 InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (solver) {
+    if (this==other.get()) {
+        return true;
+    } else if (equivalent_to(other)) {
+        // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
+        // is not available.
+        retval = true;
+    } else if (solver) {
         TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other);
         retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
-    } else {
-        // The naive approach falls back to must_equal.
-        retval = must_equal(other, solver);
     }
     return retval;
 }
@@ -114,12 +128,59 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
     InternalNodePtr other = other_->isInternalNode();
     if (this==other.get()) {
         retval = true;
-    } else if (other && get_nbits()==other->get_nbits() && op==other->op && children.size()==other->children.size()) {
+    } else if (other==NULL || get_nbits()!=other->get_nbits()) {
+        retval = false;
+    } else if (hashval!=0 && other->hashval!=0 && hashval!=other->hashval) {
+        // Unequal hashvals imply non-equivalent expressions.  The converse is not necessarily true due to possible
+        // collisions.
+        retval = false;
+    } else if (op==other->op && children.size()==other->children.size()) {
         retval = true;
         for (size_t i=0; i<children.size() && retval; ++i)
             retval = children[i]->equivalent_to(other->children[i]);
+        // Cache hash values. There's no need to compute a hash value if we've determined that the two expressions are
+        // equivalent because it wouldn't save us any work--two equal hash values doesn't necessarily mean that two expressions
+        // are equivalent.  However, if we already know one of the hash values then we can cache that hash value in the other
+        // expression too.
+        if (retval) {
+            if (hashval!=0 && other->hashval==0) {
+                other->hashval = hashval;
+            } else if (hashval==0 && other->hashval!=0) {
+                hashval = other->hashval;
+            } else {
+                assert(hashval==other->hashval);
+            }
+        } else {
+#ifdef InsnInstructionExpr_USE_HASHES
+            hashval = hash();
+            other->hashval = other->hash();
+#endif
+        }
     }
     return retval;
+}
+
+TreeNodePtr
+InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
+{
+    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    if (equivalent_to(from))
+        return to;
+    bool substituted = false;
+    TreeNodes newnodes;
+    for (size_t i=0; i<children.size(); ++i) {
+        if (children[i]->equivalent_to(from)) {
+            newnodes.push_back(to);
+            substituted = true;
+        } else {
+            newnodes.push_back(children[i]->substitute(from, to));
+            if (newnodes.back()!=children[i])
+                substituted = true;
+        }
+    }
+    if (!substituted)
+        return shared_from_this();
+    return InternalNode::create(get_nbits(), get_operator(), newnodes, get_comment());
 }
 
 void
@@ -221,6 +282,12 @@ InternalNode::identity(uint64_t ident) const
 }
 
 TreeNodePtr
+InternalNode::unaryNoOp() const
+{
+    return 1==size() ? child(0) : shared_from_this();
+}
+
+TreeNodePtr
 InternalNode::rewrite(const Simplifier &simplifier) const
 {
     if (TreeNodePtr simplified = simplifier.rewrite(this))
@@ -270,6 +337,54 @@ AddSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator e
     for (/*void*/; begin!=end; ++begin)
         result += (*begin)->isLeafNode()->get_value();
     return LeafNode::create_integer(nbits, result);
+}
+
+TreeNodePtr
+AddSimplifier::rewrite(const InternalNode *inode) const
+{
+    struct are_duals {
+        bool operator()(TreeNodePtr a, TreeNodePtr b) {
+            if (a==NULL || b==NULL)
+                return false;
+            InternalNodePtr negate_a = a->isInternalNode();
+            if (negate_a!=NULL && OP_NEGATE!=negate_a->get_operator())
+                negate_a.reset();
+            InternalNodePtr negate_b = b->isInternalNode();
+            if (negate_b!=NULL && OP_NEGATE!=negate_b->get_operator())
+                negate_b.reset();
+            if ((negate_a==NULL) xor (negate_b==NULL)) {
+                if (negate_a==NULL)
+                    std::swap(negate_a, negate_b);
+                assert(1==negate_a->size());
+                return negate_a->child(0)->equivalent_to(b);
+            }
+            return false;
+        }
+    };
+    
+    // Arguments that are negated cancel out similar arguments that are not negated
+    TreeNodes children = inode->get_children();
+    for (size_t i=0; i<children.size(); ++i) {
+        for (size_t j=i+1; j<children.size(); ++j) {
+            if (are_duals()(children[i], children[j])) {
+                children[i].reset();
+                children[j].reset();
+                break;
+            }
+        }
+    }
+    children.erase(std::remove(children.begin(), children.end(), TreeNodePtr()), children.end());
+
+    // Create a new node if we removed any children. */
+    if (children.size()!=inode->size()) {
+        if (children.empty())
+            return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
+        if (children.size()==1)
+            return children[0];
+        return InternalNode::create(inode->get_nbits(), OP_ADD, children, inode->get_comment());
+    }
+                  
+    return TreeNodePtr();
 }
 
 TreeNodePtr
@@ -360,7 +475,7 @@ XorSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = 0;
+    size_t nbits = (*begin)->get_nbits();
     int64_t result = (*begin)->isLeafNode()->get_value();
     for (++begin; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
@@ -374,7 +489,7 @@ SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator 
 TreeNodePtr
 UmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = 0;
+    size_t nbits = (*begin)->get_nbits();
     uint64_t result = (*begin)->isLeafNode()->get_value();
     for (++begin; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
@@ -394,15 +509,15 @@ ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterato
     size_t nbits = 0;
     for (TreeNodes::const_iterator ti=begin; ti!=end; ++ti)
         nbits += (*ti)->get_nbits();
-    size_t result_nbits = nbits;
-    assert(nbits>0 && nbits<=8*sizeof result);
 
-    for (/*void*/; begin!=end; ++begin) {
+    for (size_t sa=nbits; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
-        nbits -= leaf->get_nbits();
-        result |= IntegerOps::shiftLeft2(leaf->get_value(), nbits);
+        sa -= leaf->get_nbits();
+        result |= IntegerOps::shiftLeft2(leaf->get_value(), sa);
     }
-    return LeafNode::create_integer(result_nbits, result);
+
+    assert(nbits>0 && nbits<=8*sizeof result);
+    return LeafNode::create_integer(nbits, result);
 }
 
 TreeNodePtr
@@ -434,7 +549,7 @@ ConcatSimplifier::rewrite(const InternalNode *inode) const
         } else if (!extract->child(2)->must_equal(retval, solver)) {
             break;
         }
-        offset += extract->child(2)->get_nbits();
+        offset += extract->get_nbits();
     }
     if (offset==inode->get_nbits())
         return retval;
@@ -940,6 +1055,8 @@ InternalNode::simplifyTop() const
                 newnode = inode->nonassociative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->constant_folding(AddSimplifier());
+                if (newnode==node)
+                    newnode = inode->rewrite(AddSimplifier());
                 break;
             case OP_AND:
             case OP_BV_AND:
@@ -1157,8 +1274,9 @@ LeafNode::get_name() const
 }
 
 void
-LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
+LeafNode::print(std::ostream &o, Formatter &formatter) const
 {
+    bool showed_comment = false;
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
             // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
@@ -1170,13 +1288,16 @@ LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         } else {
             o <<ival;
         }
+    } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
+        o <<comment;
+        showed_comment = true;
     } else {
         uint64_t renamed = name;
-        if (rmap) {
-            RenameMap::iterator found = rmap->find(name);
-            if (found==rmap->end()) {
-                renamed = rmap->size();
-                rmap->insert(std::make_pair(name, renamed));
+        if (formatter.do_rename) {
+            Formatter::RenameMap::iterator found = formatter.renames.find(name);
+            if (found==formatter.renames.end() && formatter.add_renames) {
+                renamed = formatter.renames.size();
+                formatter.renames.insert(std::make_pair(name, renamed));
             } else {
                 renamed = found->second;
             }
@@ -1195,7 +1316,7 @@ LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         o <<renamed;
     }
     o <<"[" <<nbits;
-    if (!comment.empty())
+    if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
 }
@@ -1204,20 +1325,19 @@ bool
 LeafNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
-    if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
-        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
-    } else {
-        LeafNodePtr other = other_->isLeafNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (other) {
-            if (is_known()) {
-                retval = other->is_known() && ival==other->ival;
-            } else {
-                retval = !other->is_known() && name==other->name;
-            }
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other==NULL) {
+        // We need an SMT solver to figure this out.  This handles things like "x must_equal (not (not x))" which is true.
+        if (solver) {
+            TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+            retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
+    } else if (is_known()) {
+        retval = other->is_known() && ival==other->ival;
+    } else {
+        retval = !other->is_known() && name==other->name;
     }
     return retval;
 }
@@ -1226,23 +1346,17 @@ bool
 LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
-    if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
-        retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
-    } else {
-        LeafNodePtr other = other_->isLeafNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (!other) {
-            // 'other' is not a leaf; it might be equal to this, but we can't tell without an SMT solver
-            retval = false;
-        } else if (is_known() && other->is_known()) {
-            // two integers may_equal iff they are equal
-            retval = ival == other->ival;
-        } else {
-            // two variables or a variable-and-integer may be equal in any case
-            retval = true;
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other==NULL) {
+        // We need an SMT solver to figure out things like "x may_equal (add y 1))", which is true.
+        if (solver) {
+            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
+            retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
         }
+    } else if (!is_known() || !other->is_known() || ival==other->ival) {
+        retval = true;
     }
     return retval;
 }
@@ -1264,6 +1378,15 @@ LeafNode::equivalent_to(const TreeNodePtr &other_) const
     return retval;
 }
 
+TreeNodePtr
+LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
+{
+    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    if (equivalent_to(from))
+        return to;
+    return shared_from_this();
+}
+
 void
 LeafNode::depth_first_visit(Visitor *v) const
 {
@@ -1276,5 +1399,13 @@ operator<<(std::ostream &o, const TreeNode &node) {
     node.print(o);
     return o;
 }
+
+std::ostream&
+operator<<(std::ostream &o, const TreeNode::WithFormatter &w)
+{
+    w.print(o);
+    return o;
+}
+
 
 } // namespace

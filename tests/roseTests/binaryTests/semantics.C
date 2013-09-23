@@ -32,6 +32,7 @@
     using namespace BinaryAnalysis::InstructionSemantics;
 #elif SEMANTIC_API == NEW_API
 #   include "DispatcherX86.h"
+#   include "TestSemantics2.h"
     using namespace BinaryAnalysis::InstructionSemantics2;
 #else
 #   error "invalid value for SEMANTIC_API"
@@ -60,6 +61,10 @@
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
+#ifdef TRACE
+#include "TraceSemantics2.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
@@ -71,7 +76,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return NullSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
+        TestSemantics<
+            NullSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr, BaseSemantics::MemoryCellListPtr,
+            BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -85,7 +95,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
+                      PartialSymbolicSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -100,7 +115,15 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return SymbolicSemantics::RiscOperators::instance(regdict);
+        SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
+#ifndef TRACE // usedef AND tracing is a little much for the eyes
+        retval->set_compute_usedef();
+#endif
+        TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                      SymbolicSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -114,7 +137,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return IntervalSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
+        TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                      IntervalSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -139,9 +167,13 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
-        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(regdict), "PartialSymbolic");
-        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(regdict), "Symbolic");
-        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(regdict), "Interval");
+        PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        SymbolicSemantics::RiscOperatorsPtr s2 = SymbolicSemantics::RiscOperators::instance(regdict);
+        s2->set_compute_usedef();
+        IntervalSemantics::RiscOperatorsPtr s3 = IntervalSemantics::RiscOperators::instance(regdict);
+        ops->add_subdomain(s1, "PartialSymbolic");
+        ops->add_subdomain(s2, "Symbolic");
+        ops->add_subdomain(s3, "Interval");
         return ops;
     }
 #endif
@@ -287,8 +319,10 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
     show(x86_regclass_flags, 0, 31, 1, "?31");
     show("eip", "ip");
 
+    BaseSemantics::Formatter memfmt;
+    memfmt.set_line_prefix("    ");
     std::cout <<"memory:\n";
-    ops->get_state()->print_memory(std::cout, "    ");
+    ops->get_state()->print_memory(std::cout, memfmt);
 }
 #endif
 
@@ -319,15 +353,31 @@ analyze_interp(SgAsmInterpretation *interp)
 #if SEMANTIC_API == NEW_API
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
+        BaseSemantics::Formatter formatter;
+        formatter.set_suppress_initial_values();
+#ifdef TRACE
+        TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
+        trace->set_stream(stdout);
+        MyDispatcher dispatcher = DispatcherX86::instance(trace);
+#else
         MyDispatcher dispatcher = DispatcherX86::instance(operators);
+#endif
         operators->set_solver(make_solver());
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
         MyPolicy operators;
         MyDispatcher dispatcher(operators);
 #   if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
-            operators.set_solver(make_solver());
+        operators.set_solver(make_solver());
 #   endif
+#endif
+
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
+        // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
+        // in the state, which is printed in the output, and thus changes the answer.
+        BaseSemantics::RegisterStateGeneric::promote(operators->get_state()->get_register_state())->initialize_large();
+        BaseSemantics::SValuePtr orig_esp = operators->readRegister(*regdict->lookup("esp"));
+        std::cout <<"Original state:\n" <<*operators;
 #endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
@@ -335,14 +385,14 @@ analyze_interp(SgAsmInterpretation *interp)
          * been processed. */
         while (1) {
             /* Analyze current instruction */
-                std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
 #if SEMANTIC_API == NEW_API
             try {
                 dispatcher->processInstruction(insn);
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
                 show_state(operators);
 #else
-                std::cout <<*operators;
+                std::cout <<(*operators + formatter);
 #endif
             } catch (const BaseSemantics::Exception &e) {
                 std::cout <<e <<"\n";
@@ -399,6 +449,17 @@ analyze_interp(SgAsmInterpretation *interp)
             insn = si->second;
             insns.erase(si);
         }
+
+        // Test substitution on the symbolic state.
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
+        SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
+        BaseSemantics::SValuePtr newvar = operators->undefined_(32);
+        newvar->set_comment("frame_pointer");
+        SymbolicSemantics::SValuePtr to = SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
+        std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";
+        SymbolicSemantics::RiscOperators::promote(operators)->substitute(from, to);
+        std::cout <<"Substituted state:\n" <<(*operators+formatter);
+#endif
     }
 }
 

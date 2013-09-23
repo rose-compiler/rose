@@ -1,4 +1,4 @@
-// (7/7/2004): Bug sugmitted by Andreas (DiffPack processing problem?)
+// (7/7/2004): Bug submitted by Andreas (DiffPack processing problem?)
 
 #include <cmath>
 #if !(defined(test1) || defined(test2))

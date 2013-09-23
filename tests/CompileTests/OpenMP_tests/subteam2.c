@@ -82,5 +82,6 @@ int main(void)
   }
   printf("sum=%d\n",sum);
   printf("sum2=%d\n",sum2);
+  return 0;
 }
 

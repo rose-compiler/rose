@@ -239,24 +239,6 @@ if test "x$enable_smaller_generated_files" = "xyes"; then
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
-
-# JJW: This needs to be early as things like C++ header editing are not done for the new interface
-# AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
-# AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-# if test "x$enable_new_edg_interface" = "xyes"; then
-#   AC_MSG_WARN([Using newest version of interface to translate EDG to ROSE (experimental)!])
-#   AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
-# fi
-
-# DQ (12/29/2008): the default is new EDG interface is 3.10, this option permits the use
-# of the newer EDG 4.0 interface (which breaks some existing work).
-# AC_ARG_ENABLE(edg-version4, AS_HELP_STRING([--enable-edg-version4], [Enable newest EDG version 4 (requires --enable-new-edg-interface option)]))
-# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
-# if test "x$enable_edg_version4" = "xyes"; then
-#   AC_MSG_WARN([Using newest EDG version 4.x (requires new interface) to translate EDG to ROSE (experimental)!])
-#   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
-# fi
-
 # DQ (11/14/2011): Added new configure mode to support faster development of langauge specific 
 # frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
 AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
@@ -269,89 +251,7 @@ if test "x$enable_internalFrontendDevelopment" = "xyes"; then
 # AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
 fi
 
-# DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
-AC_ARG_ENABLE(edg-version,
-[  --enable-edg_version     major.minor version number for EDG (e.g. 3.3, 4.0, 4.3, 4.4).],
-[ echo "Setting up EDG version"
-])
-
-# AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
-echo "enable_edg_version = $enable_edg_version"
-if test "x$enable_edg_version" = "x"; then
-   echo "Default version of EDG used (3.3)"
-   edg_major_version_number=3
-   edg_minor_version_number=3
-else
-   edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
-   edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
-fi
-
-echo "edg_major_version_number = $edg_major_version_number"
-echo "edg_minor_version_number = $edg_minor_version_number"
-
-if test "x$edg_major_version_number" = "x3"; then
-   echo "Recognized an accepted major version number."
-   if test "x$edg_minor_version_number" = "x3"; then
-      echo "Recognized an accepted minor version number."
-   else
-      if test "x$edg_minor_version_number" = "x10"; then
-         echo "ERROR: EDG version 3.10 is not supported anymore."
-      else
-         echo "ERROR: Could not identify the EDG minor version number."
-         exit 1
-      fi
-      enable_new_edg_interface=yes
-      enable_edg_version3=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
-   fi
-else
-   if test "x$edg_major_version_number" = "x4"; then
-      echo "Recognized an accepted major version number."
-      if test "x$edg_minor_version_number" = "x0"; then
-         echo "Recognized an accepted minor version number."
-      else
-         if test "x$edg_minor_version_number" = "x3"; then
-            echo "Recognized an accepted minor version number."
-            enable_edg_version43=yes
-            AC_DEFINE([ROSE_USE_EDG_VERSION_4_3], [], [Whether to use the new EDG version 4.3])
-         else
-            if test "x$edg_minor_version_number" = "x4"; then
-               echo "Recognized an accepted minor version number."
-               enable_edg_version44=yes
-               AC_DEFINE([ROSE_USE_EDG_VERSION_4_4], [], [Whether to use the new EDG version 4.4])
-            else
-               echo "ERROR: Could not identify the EDG minor version number."
-               exit 1
-            fi
-         fi
-      fi
-      enable_edg_version4=yes
-      AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
-      enable_new_edg_interface=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
-   else
-      echo "ERROR: Could not identify the EDG major version number."
-      exit 1
-   fi
-fi
-
-AC_DEFINE_UNQUOTED([ROSE_EDG_MAJOR_VERSION_NUMBER], $edg_major_version_number , [EDG major version number])
-AC_DEFINE_UNQUOTED([ROSE_EDG_MINOR_VERSION_NUMBER], $edg_minor_version_number , [EDG minor version number])
-
-ROSE_EDG_MAJOR_VERSION_NUMBER=$edg_major_version_number
-ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
-
-AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
-AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
-
-
-# DQ (2/3/2010): I would like to not have to use these and use the new 
-# ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
-AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_3, [test "x$enable_edg_version3" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_4, [test "x$enable_edg_version44" = xyes])
+ROSE_SUPPORT_EDG
 
 ROSE_SUPPORT_CLANG
 
@@ -383,6 +283,24 @@ AM_CONDITIONAL(ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION, [test "x$enable_debug_output_
 if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
   AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
+fi
+
+# DQ (6/7/2013): Added support for new Fortran front-end development.  
+AC_ARG_ENABLE(experimental_fortran_frontend,
+    AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
+if test "x$enable_experimental_fortran_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enable experimental frotran front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental frotran frontend])
+fi
+
+# DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
+AC_ARG_ENABLE(debug_output_for_experimental_fortran_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_fortran_frontend], [Enable debugging output (spew) of new OFP/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_fortran_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
 fi
 
 # DQ (8/18/2009): Removed this conditional macro.
@@ -491,88 +409,11 @@ AC_SUBST(ROSE_HOME)
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 AC_LANG(C++)
-AX_BOOST_BASE([1.36.0], [], [echo "Boost 1.36.0 or above is required for ROSE" 1>&2; exit 1])
-AC_SUBST(ac_boost_path) dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only be used to set --with-boost in distcheck
 
-# Requested boost version
-echo "Requested minimum boost version: boost_lib_version_req_major     = $boost_lib_version_req_major"
-echo "Requested minimum boost version: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
-echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
-
-# Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
-echo "Boost version being used is: $_version"
-
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
-echo "rose_boost_version = $rose_boost_version"
-
-# Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-#
-# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
-#
-
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
-# not ready
-#AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
-
-# DQ (10/18/2010): Error checking for Boost version.
-if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
-   -o "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37" \
-   -o "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38" \
-   -o "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39" \
-   -o "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40" \
-   -o "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41" \
-   -o "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42" \
-   -o "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43" \
-   -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
-   -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
-   -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" 
-# Not ready   
-#   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
-then
-    echo "Reasonable version of Boost found!"
-else
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version'). Only 1.36 to 1.47 is supported now.])
-fi
-
-# DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
-# not work with ROSE, and use the newer version specified by the user on the configure line.
-echo "In ROSE/configure: ac_boost_path = $ac_boost_path"
-#AC_DEFINE([ROSE_BOOST_PATH],"$ac_boost_path",[Location of Boost specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Boost specified on configure line.])
-#AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) of Wave specified on configure line.])
+ROSE_SUPPORT_BOOST
 
 # DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
-AX_BOOST_THREAD
-AX_BOOST_DATE_TIME
-AX_BOOST_REGEX
-AX_BOOST_PROGRAM_OPTIONS
-#AX_BOOST_SERIALIZATION
-#AX_BOOST_ASIO
-#AX_BOOST_SIGNALS
-#AX_BOOST_TEST_EXEC_MONITOR
-AX_BOOST_SYSTEM
-AX_BOOST_FILESYSTEM
-AX_BOOST_WAVE
-
-# AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
@@ -590,14 +431,9 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
 
-# For testing the configure script generation this link can be commented out
-# to improve performance of tests unrelated to backend compiler headr files.
-# DQ (9/17/2006): This must be done for BOTH C++ and C compilers (since the
-# compiler-specific header files for each can be different; as is the case 
-# for GNU).
-# GENERATE_BACKEND COMPILER_SPECIFIC_HEADERS
-# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
-
+# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
+# TV (06/17/2013): Now always the case (EDG 4.7).
+AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
 # End macro ROSE_SUPPORT_ROSE_PART_1.
 ]
@@ -610,25 +446,16 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
-rm -rf ./include-staging
-if test x$enable_new_edg_interface = xyes; then
-  :
-# DQ (11/1/2011): I think that we need these for more complex header file 
-# requirements than we have seen in testing C code to date.  Previously
-# in testing C codes with the EDG 4.x we didn't need as many header files.
+rm -rf ./include-stagin
+
+if test x$enable_clang_frontend = xyes; then
+  INSTALL_CLANG_SPECIFIC_HEADERS
+else
+  # DQ (11/1/2011): I think that we need these for more complex header file 
+  # requirements than we have seen in testing C code to date.  Previously
+  # in testing C codes with the EDG 4.x we didn't need as many header files.
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
-
-# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
-  AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
-
-else
-  if test x$enable_clang_frontend = xyes; then
-    INSTALL_CLANG_SPECIFIC_HEADERS
-  else
-    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
-  fi
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
@@ -829,7 +656,12 @@ AC_SUBST(TEST_SMT_SOLVER)
 #   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
 #fi
 
+# DQ (3/14/2013): Adding support for Aterm library use in ROSE.
+ROSE_SUPPORT_ATERM
+
 ROSE_SUPPORT_MINT
+
+ROSE_SUPPORT_VECTORIZATION
 
 ROSE_SUPPORT_PHP
 
@@ -838,6 +670,23 @@ AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
+AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+
+PYTHON_VERSION_MAJOR_VERSION="`echo $PYTHON_VERSION | cut -d\. -f1`"
+PYTHON_VERSION_MINOR_VERSION="`echo $PYTHON_VERSION | cut -d\. -f2`"
+PYTHON_VERSION_PATCH_VERSION="`echo $PYTHON_VERSION | cut -d\. -f3`"
+
+
+if test "$PYTHON_VERSION_MAJOR_VERSION" >= "2" && test "$PYTHON_VERSION_MINOR_VERSION" >= "7"; then
+  approved_python_version=true
+elif  test "$PYTHON_VERSION_MAJOR_VERSION" >= "3"; then
+  approved_python_version=true
+else
+  approved_python_version=false
+fi
+
+AM_CONDITIONAL(ROSE_APPROVED_PYTHON_VERSION, [$approved_python_version])
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -1029,71 +878,6 @@ ROSE_SUPPORT_VISUALIZATION
 
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
-
-
-# *****************************************************************
-# Option to control internal support of CUDA (GPU langauge support)
-# *****************************************************************
-
-# DQ (4/28/2010): This is part of optional support for CUDA.
-AC_MSG_CHECKING([for enabled CUDA support])
-AC_ARG_ENABLE(cuda, AS_HELP_STRING([--enable-cuda], [Support for CUDA graphics processor language support (from Nvidia)]))
-AM_CONDITIONAL(ROSE_USE_CUDA_SUPPORT, [test "x$enable_cuda" = xyes])
-if test "x$enable_cuda" = "xyes"; then
-  AC_MSG_WARN([Using incomplete CUDA langauge support in ROSE.])
-  AC_DEFINE([ROSE_USE_CUDA_SUPPORT], [], [Whether to use CUDA language support or not within ROSE])
-fi
-# DQ (10/17/2010): Why is this set to the value "7".
-ROSE_USE_CUDA_SUPPORT=7
-AC_SUBST(ROSE_USE_CUDA_SUPPORT)
-
-# *****************************************************
-# Option to control building of CUDA support in EDG 4.0
-# *****************************************************
-
-# TV (03/22/2011): This is part of optional building of CUDA support in EDG 4.0
-AC_MSG_CHECKING([for building of CUDA support in EDG 4.0])
-AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with CUDA support.]), [case "${enableval}" in
-  yes) edg_cuda=true ;;
-  no)  edg_cuda=false ;;
-  *)   edg_cuda=false ;;
-esac])
-AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
-if test x$edg_cuda = xtrue; then
-  AC_MSG_WARN([Add CUDA specific headers to the include-staging directory.])
-  GENERATE_CUDA_SPECIFIC_HEADERS
-fi
-
-# *******************************************************************
-# Option to control internal support of OpenCL (GPU langauge support)
-# *******************************************************************
-
-# DQ (4/28/2010): This is part of optional support for OpenCL.
-AC_MSG_CHECKING([for enabled OpenCL support])
-AC_ARG_ENABLE(opencl, AS_HELP_STRING([--enable-opencl], [Support for opencl graphics processor language support]))
-AM_CONDITIONAL(ROSE_USE_OPENCL_SUPPORT, [test "x$enable_opencl" = xyes])
-if test "x$enable_opencl" = "xyes"; then
-  AC_MSG_WARN([Using incomplete OpenCL langauge support in ROSE.])
-  AC_DEFINE([ROSE_USE_OPENCL_SUPPORT], [], [Whether to use OpenCL language support or not within ROSE])
-fi
-AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
-
-# *******************************************************
-# Option to control building of OpenCL support in EDG 4.0
-# *******************************************************
-
-# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
-AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
-AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
-  yes) edg_opencl=true ;;
-  no)  edg_opencl=false ;;
-  *)   edg_opencl=false ;;
-esac])
-AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
-if test x$edg_opencl = xtrue; then
-  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
-  GENERATE_OPENCL_SPECIFIC_HEADERS
-fi
 
 # support for Unified Parallel Runtime, check for CUDA and OpenCL
 ROSE_SUPPORT_UPR
@@ -1594,8 +1378,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 ## Setup the EDG specific stuff
 SETUP_EDG
 
-# AM_CONDITIONAL(ROSE_USE_EDG_3_3,test "$with_EDG_3_3" = yes)
-
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
 AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
 AC_SUBST(MD5)
@@ -1877,33 +1659,12 @@ AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
-src/frontend/CxxFrontend/EDG/edgRose/Makefile
-src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
-src/frontend/CxxFrontend/EDG/edg44Rose/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
+src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
 ])], [])
 
 
@@ -1933,6 +1694,7 @@ src/util/graphs/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -1977,6 +1739,7 @@ src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/X10_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
@@ -1992,6 +1755,7 @@ src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programAnalysis/systemDependenceGraph/Makefile
 src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
+src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
@@ -2053,6 +1817,7 @@ src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
+projects/AtermTranslation/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
@@ -2060,9 +1825,14 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/ConstructNameSimilarityAnalysis/Makefile
+projects/CodeThorn/Makefile
+projects/CodeThorn/src/Makefile
+projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -2077,7 +1847,11 @@ projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
+projects/EditDistanceMetric/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/fuse/Makefile
+projects/fuse/src/Makefile
+projects/fuse/tests/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
@@ -2217,6 +1991,9 @@ projects/mint/tests/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
+projects/vectorization/Makefile
+projects/vectorization/src/Makefile
+projects/vectorization/tests/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
@@ -2229,6 +2006,8 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/LineDeleter/Makefile
+projects/LineDeleter/src/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2271,6 +2050,7 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/Fortran_tests/experimental_frontend_tests/Makefile
 tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
@@ -2293,7 +2073,6 @@ tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
 tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
-tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
@@ -2328,6 +2107,7 @@ tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/ompLoweringTests/fortran/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
@@ -2339,6 +2119,7 @@ tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/systemDependenceGraphTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/Makefile
+tests/roseTests/programTransformationTests/singleStatementToBlockNormalization/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/Makefile

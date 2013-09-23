@@ -117,7 +117,7 @@ class JavaTraversal implements Callable<Boolean> {
                 Integer valbint = ((Integer)hashm.get(before.hashCode()));
                 if (valbint == null) {
                     System.err.println("Error : hashvalue valbint == null for node :" + before.getClass()); 
-                    System.exit(1); 
+                    throw new RuntimeException(); 
                 }
                 int valb = valbint.intValue();
                 int valc = getHashValue(current);
@@ -148,7 +148,7 @@ class JavaTraversal implements Callable<Boolean> {
             stack.pop();
         else {
             System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         if (! stack.empty())
@@ -210,7 +210,7 @@ class JavaTraversal implements Callable<Boolean> {
 
                     // It might be better to rethrow the exception
                     System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
-                    System.exit(1);
+                    throw new RuntimeException();
                 }
             }
             else {
@@ -256,7 +256,7 @@ class JavaTraversal implements Callable<Boolean> {
         catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error in main.configure(args): " + e.getMessage()); 
-            System.exit(1);
+            throw new RuntimeException();
         }
         main.compilerOptions = new CompilerOptions(main.options);
         main.compilerOptions.performMethodsFullRecovery = false;
@@ -305,7 +305,7 @@ class JavaTraversal implements Callable<Boolean> {
         catch (Exception e) {
             e.printStackTrace();
             System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         main.compilerOptions = new CompilerOptions(main.options);
@@ -363,7 +363,7 @@ class JavaTraversal implements Callable<Boolean> {
             System.err.println();
             System.err.println();
             System.err.println("ECJ front-end errors detected in input java program");
-            System.exit(1);
+            throw new RuntimeException();
         }
         
         Main main = generateAst(args); // get compiler to generate AST.
@@ -413,7 +413,7 @@ class JavaTraversal implements Callable<Boolean> {
                     System.err.println();
                     System.err.println();
                     System.err.println("ECJ front-end errors detected in input java program");
-                    System.exit(1);
+                    throw new RuntimeException();
                 }
 
                 java_parser_support.preprocess(unit);
@@ -455,7 +455,7 @@ class JavaTraversal implements Callable<Boolean> {
             // DQ (11/1/2010): Added more aggressive termination of program...
             e.printStackTrace();
             System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-            // System.exit(1);
+            // throw new RuntimeException();
 
             hasErrorOccurred = true;
             return;

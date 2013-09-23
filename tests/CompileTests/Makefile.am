@@ -11,7 +11,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
 #      ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
 #      sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-#      NewEDGInterface_C_tests UnparseHeadersTests
+#      UnparseHeadersTests
 
 # DQ (12/5/2007): Removed A++Code because this takes a long time (about 1 minute).
 
@@ -45,7 +45,9 @@ endif
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   SUBDIRS += Fortran_tests CAF2_tests
+# DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/CompileTests directory.
+#  SUBDIRS += Fortran_tests CAF2_tests
+   SUBDIRS += Fortran_tests
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -62,7 +64,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       OvertureCode P++Tests A++Code \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-      NewEDGInterface_C_tests UnparseHeadersTests
+      UnparseHeadersTests
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
@@ -77,6 +79,8 @@ endif
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
+
+SUBDIRS += CudaTests
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += frontend_integration

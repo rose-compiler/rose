@@ -70,7 +70,7 @@ namespace BinaryAnalysis {
      *          using namespace BinaryAnalysis;
      *          SgAsmFunction *func = isSgAsmFunction(node);
      *          if (func) {
-     *              ControlFlow::Graph cfg = cfg_analysis.build_cfg_from_ast<ControlFlow::Graph>(func);
+     *              ControlFlow::Graph cfg = cfg_analysis.build_block_cfg_from_ast<ControlFlow::Graph>(func);
      *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
      *              CFG_Vertex entry = 0; // first vertex is function entry block
      *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());

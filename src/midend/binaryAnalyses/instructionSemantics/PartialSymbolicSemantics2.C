@@ -7,15 +7,8 @@ namespace PartialSymbolicSemantics {
 
 uint64_t name_counter;
 
-std::ostream&
-operator<<(std::ostream &o, const SValue &e)
-{
-    e.print(o);
-    return o;
-}
-
 uint64_t
-RenameMap::rename(uint64_t orig_name)
+Formatter::rename(uint64_t orig_name)
 {
     if (0==orig_name)
         return orig_name;
@@ -48,34 +41,34 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
 }
 
 void
-SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
+SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
-    FormatRestorer restorer(output); // restore format flags when we leave this scope
+    FormatRestorer restorer(stream); // restore format flags when we leave this scope
     uint64_t sign_bit = (uint64_t)1 << (get_width()-1); /* e.g., 80000000 */
     uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
     /*magnitude of negative value*/
     uint64_t negative = get_width()>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0;
-    RenameMap *helper = dynamic_cast<RenameMap*>(helper_);
+    Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
 
     if (name!=0) {
         /* This is a named value rather than a constant. */
-        uint64_t renamed = helper ? helper->rename(name) : name;
+        uint64_t renamed = formatter ? formatter->rename(name) : name;
         const char *sign = negate ? "-" : "";
-        output <<sign <<"v" <<std::dec <<renamed;
+        stream <<sign <<"v" <<std::dec <<renamed;
         if (negative) {
-            output <<"-0x" <<std::hex <<negative;
+            stream <<"-0x" <<std::hex <<negative;
         } else if (offset) {
-            output <<"+0x" <<std::hex <<offset;
+            stream <<"+0x" <<std::hex <<offset;
         }
     } else {
         /* This is a constant */
         ROSE_ASSERT(!negate);
-        output  <<"0x" <<std::hex <<offset;
+        stream <<"0x" <<std::hex <<offset;
         if (negative)
-            output <<" (-0x" <<std::hex <<negative <<")";
+            stream <<" (-0x" <<std::hex <<negative <<")";
     }
 
-    output <<"[" <<std::dec <<get_width() <<"]";
+    stream <<"[" <<std::dec <<get_width() <<"]";
 }
 
 
@@ -84,7 +77,7 @@ SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
  *******************************************************************************************************************************/
 
 void
-State::print_diff_registers(std::ostream &o, const StatePtr &other_state, RenameMap *rmap) const
+State::print_diff_registers(std::ostream &o, const StatePtr &other_state, Formatter &fmt) const
 {
     assert(!"FIXME");
     abort();
@@ -110,13 +103,7 @@ State::discard_popped_memory()
  *******************************************************************************************************************************/
 
 void
-RiscOperators::interrupt(uint8_t inum)
-{
-    get_state()->clear();
-}
-
-void
-RiscOperators::sysenter()
+RiscOperators::interrupt(int majr, int minr)
 {
     get_state()->clear();
 }
@@ -530,7 +517,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister sg,
+RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition)
@@ -544,7 +531,7 @@ RiscOperators::writeMemory(X86SegmentRegister sg,
 }
     
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg,
+RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &condition,
                           size_t nbits)

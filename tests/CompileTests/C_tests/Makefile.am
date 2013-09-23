@@ -145,8 +145,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_38.c \
      test2012_39.c \
      test2012_40.c \
-     test2012_41.c \
      test2012_42.c \
+     test2012_41.c \
      test2012_43.c \
      test2012_46.c \
      test2012_47.c \
@@ -273,9 +273,101 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_01.c \
      test2013_02.c \
      test2013_03.c \
+     test2013_05.c \
+     test2013_06.c \
+     test2013_07.c \
+     test2013_08.c \
+     test2013_09.c \
+     test2013_10.c \
+     test2013_11.c \
+     test2013_12.c \
+     test2013_13.c \
+     test2013_14.c \
+     test2013_15.c \
+     test2013_16.c \
+     test2013_17.c \
+     test2013_18.c \
+     test2013_19.c \
+     test2013_20.c \
+     test2013_21.c \
+     test2013_22.c \
+     test2013_23.c \
+     test2013_24.c \
+     test2013_25.c \
+     test2013_26.c \
+     test2013_27.c \
+     test2013_28.c \
+     test2013_29.c \
+     test2013_30.c \
+     test2013_31.c \
+     test2013_32.c \
+     test2013_33.c \
+     test2013_34.c \
+     test2013_35.c \
+     test2013_36.c \
+     test2013_37.c \
+     test2013_38.c \
+     test2013_39.c \
+     test2013_40.c \
+     test2013_41.c \
+     test2013_42.c \
+     test2013_43.c \
+     test2013_44.c \
+     test2013_45.c \
+     test2013_46.c \
+     test2013_47.c \
+     test2013_48.c \
+     test2013_49.c \
+     test2013_50.c \
+     test2013_51.c \
+     test2013_52.c \
+     test2013_53.c \
+     test2013_54.c \
+     test2013_55.c \
+     test2013_56.c \
+     test2013_57.c \
+     test2013_58.c \
+     test2013_59.c \
+     test2013_60.c \
+     test2013_61.c \
+     test2013_62.c \
+     test2013_63.c \
+     test2013_64.c \
+     test2013_65.c \
+     test2013_66.c \
+     test2013_67.c \
+     test2013_68.c \
+     test2013_69.c \
+     test2013_70.c \
+     test2013_71.c \
+     test2013_72.c \
+     test2013_73.c \
+     test2013_74.c \
      math.c \
      complex_01.c \
      constants.c
+
+# DQ (9/9/2013): This is a problem for the new block support.
+#     test2012_23.c 
+#     test2012_25.c 
+#     test2012_36.c 
+#     test2012_42.c
+#     test2012_101.c
+#     test2012_102.c
+#     test2012_103.c 
+#     test2012_104.c 
+#     test2012_105.c 
+#     test2012_116.c 
+#     test2012_118.c 
+#     test2012_119.c 
+
+
+# DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
+# test2013_04.c 
+
+# DQ (9/2/2013): This is now fixed.
+# DQ (6/19/2013): Failing case of include used to initialize array (still working on this case).
+# test2013_05.c 
 
 
 # DQ (9/28/2012): Failing tests.
@@ -352,13 +444,12 @@ if ROSE_USE_CLANG_FRONTEND
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
-if ROSE_USE_EDG_VERSION_4_4
    TESTCODES_REQUIRED_TO_PASS += \
      test2004_21.c \
      test2005_168.c \
      test2006_65.c
-endif
 if !ROSE_USE_EDG_VERSION_4_4
+if !ROSE_USE_EDG_VERSION_4_7
    TESTCODES_REQUIRED_TO_PASS += \
      stdio.c \
      test2006_48.c \
@@ -367,6 +458,7 @@ if !ROSE_USE_EDG_VERSION_4_4
      test2010_11.c \
      test2010_12.c \
      test2010_14.c
+endif
 endif
 endif
 
@@ -418,11 +510,18 @@ $(OLD_TESTCODES_REQUIRED_TO_PASS)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:C
+# DQ (3/28/2013): Now that we have changed the default C behavior to C99 (from C89), we need 
+# to explicitly specify the C89 behavior for make of the C test codes in this directory.
+# ROSE_FLAGS = -rose:C
+ROSE_FLAGS = -rose:C89
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
 ROSE_FLAGS += -w
+
+# TOO1 (2013-09-17): Required by test2005_168.o to find "rosedll.h",
+#                    introduced by CMake work.
+ROSE_FLAGS += -I$(top_srcdir)/src/frontend/SageIII/
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
@@ -431,10 +530,12 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
 if !ROSE_USE_EDG_VERSION_4_4
+if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
+endif
 endif
 
 testTranslator = ../../testTranslator
@@ -455,6 +556,21 @@ test2012_145.o: $(srcdir)/test2012_145.c
 
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
+
+test_build_generated_file_in_same_directory_as_input_file: $(testTranslator)
+	mkdir -p test_directory
+	cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
+	$(testTranslator) -rose:unparse_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option: $(TEST_TRANSLATOR)
+	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_75.c -o test2013_75_unparse_headers.o
+
+# DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
+# is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
+test_unparse_includes_option_with_link: $(TEST_TRANSLATOR)
+	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) $(srcdir)/test2013_76.c -o test2013_76_unparse_headers
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -501,13 +617,18 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file
+	@$(MAKE) test_unparse_includes_option
+	@$(MAKE) test_unparse_includes_option_with_link
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
+	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out *.dot
 	rm -rf QMTest
+	rm -rf test_directory
+	rm -rf test2013_76_unparse_headers
 
 ################################################################################
 #

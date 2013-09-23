@@ -163,14 +163,6 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemanti
  *                                      RISC operators
  *******************************************************************************************************************************/
 
-void
-RiscOperators::interrupt(uint8_t)
-{}
-
-void
-RiscOperators::sysenter() {
-}
-
 BaseSemantics::SValuePtr
 RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
 {
@@ -452,7 +444,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     if (a->is_number() && b->is_number()) {
         uint64_t bn = b->get_number();
         uint64_t result = a->get_number() >> bn;
-        if (IntegerOps::signBit2(a->is_number(), nbitsa))
+        if (IntegerOps::signBit2(a->get_number(), nbitsa))
             result |= IntegerOps::genMask<uint64_t>(nbitsa) ^ IntegerOps::genMask<uint64_t>(nbitsa-bn);
         return number_(nbitsa, result);
     }
@@ -726,7 +718,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister segreg,
+RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &condition,
                           size_t nbits)
@@ -735,7 +727,7 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister segreg,
+RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition) {

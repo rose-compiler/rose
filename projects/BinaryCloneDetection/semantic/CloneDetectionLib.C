@@ -78,15 +78,8 @@ operator<<(std::ostream &o, const Exception &e)
  *******************************************************************************************************************************/
 
 void
-Tracer::reset(int func_id, int igroup_id, unsigned event_mask, size_t pos)
+Tracer::current_test(int func_id, int igroup_id, unsigned event_mask, size_t pos)
 {
-    if (fd<0) {
-        char buf[64];
-        strcpy(buf, "/tmp/roseXXXXXX");
-        fd = mkstemp(buf);
-        assert(fd>=0);
-        filename = buf;
-    }
     this->func_id = func_id;
     this->igroup_id = igroup_id;
     this->event_mask = event_mask;
@@ -94,31 +87,11 @@ Tracer::reset(int func_id, int igroup_id, unsigned event_mask, size_t pos)
 }
 
 void
-Tracer::emit(rose_addr_t addr, Event event, uint64_t value, int minor)
+Tracer::emit(rose_addr_t addr, TracerEvent event, uint64_t value, int minor)
 {
-    if (0!=(event & event_mask)) {
-        char buf[256];
-        int nprint = snprintf(buf, sizeof buf, "%d,%d,%zu,%"PRIu64",%d,%d,%"PRId64"\n",
-                              func_id, igroup_id, pos++, addr, (int)event, minor, value);
-        assert(nprint>0 && (size_t)nprint<sizeof buf);
-        ssize_t nwrite = write(fd, buf, nprint);
-        if (nwrite!=nprint)
-            throw Exception(std::string("CloneDetection::Tracer::emit write: ")+strerror(errno));
-    }
-}
-
-void
-Tracer::save(const SqlDatabase::TransactionPtr &tx)
-{
-    std::ifstream in(filename.c_str());
-    tx->bulk_load("semantic_fio_trace", in);
-    in.close();
-    off_t fp = lseek(fd, 0, SEEK_SET);
-    if (fp!=0)
-        throw Exception(std::string("CloneDetection::Tracer::save lseek: ")+strerror(errno));
-    int status = ftruncate(fd, 0);
-    if (status!=0)
-        throw Exception(std::string("CloneDetection::Tracer::save ftruncate: ")+strerror(errno));
+    assert(func_id>=0 && igroup_id>=0);
+    if (0!=(event & event_mask))
+        insert(TracerRow(func_id, igroup_id, pos++, addr, event, minor, value));
 }
 
 /*******************************************************************************************************************************
@@ -783,7 +756,8 @@ InsnCoverage::execute(SgAsmInstruction *insn)
     rose_addr_t insn_va = insn->get_address();
     CoverageMap::iterator found = coverage.find(insn_va);
     if (found==coverage.end()) {
-        coverage.insert(std::make_pair(insn_va, ExeInfo(coverage.size())));
+        assert(func_id>=0 && igroup_id>=0);
+        coverage.insert(std::make_pair(insn_va, InsnCoverageRow(func_id, igroup_id, insn_va, coverage.size(), 1)));
     } else {
         ++found->second.nhits;
     }
@@ -799,34 +773,21 @@ InsnCoverage::total_ninsns() const
 }
 
 void
-InsnCoverage::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+InsnCoverage::flush(const SqlDatabase::TransactionPtr &tx)
 {
-    if (!coverage.empty()) {
-        char filename[64];
-        strcpy(filename, "/tmp/roseXXXXXX");
-        int fd = mkstemp(filename);
-        assert(fd>=0);
-        FILE *f = fdopen(fd, "w");
-        assert(f!=NULL);
-
-        for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
-            int nprint __attribute__((unused))
-                = fprintf(f, "%d,%d,%"PRIu64",%zu,%zu\n",
-                          func_id, igroup_id, ci->first, ci->second.first_seen, ci->second.nhits);
-            assert(nprint>0);
+    for (CoverageMap::iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
+        if (ci->second.nhits > ci->second.nhits_saved) {
+            InsnCoverageRow tmp = ci->second;
+            tmp.nhits -= tmp.nhits_saved;
+            insert(tmp);
+            ci->second.nhits_saved = ci->second.nhits;
         }
-
-        fclose(f);
-        close(fd);
-        std::ifstream in(filename);
-        tx->bulk_load("semantic_fio_coverage", in);
-        in.close();
-        unlink(filename);
     }
+    WriteOnlyTable<InsnCoverageRow>::flush(tx);
 }
 
 double
-InsnCoverage::get_ratio(SgAsmFunction *func) const
+InsnCoverage::get_ratio(SgAsmFunction *func, int func_id, int igroup_id) const
 {
     struct: AstSimpleProcessing {
         Disassembler::AddressSet addrs;
@@ -839,8 +800,10 @@ InsnCoverage::get_ratio(SgAsmFunction *func) const
     if (c.addrs.empty())
         return 1.0;
     size_t denominator = c.addrs.size();
-    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
-        c.addrs.erase(ci->first);
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
+        if (ci->second.func_id==func_id && ci->second.igroup_id==igroup_id)
+            c.addrs.erase(ci->first);
+    }
     return 1.0 - (double)c.addrs.size() / denominator;
 }
 
@@ -922,41 +885,34 @@ InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembl
  *******************************************************************************************************************************/
 
 void
-DynamicCallGraph::call(const Call &c)
+DynamicCallGraph::call(int caller_id, int callee_id)
 {
-    if (!calls.empty() && calls.back().caller_id==c.caller_id && calls.back().callee_id==c.callee_id) {
-        calls.back().ncalls += c.ncalls;
+    assert(func_id>=0 && igroup_id>=0);
+    assert(caller_id>=0 && callee_id>=0);
+    if (func_id==last_call.func_id && igroup_id==last_call.igroup_id &&
+        caller_id==last_call.caller_id && callee_id==last_call.callee_id) {
+        ++last_call.ncalls;
+        if (keep_in_memory)
+            rows.back() = last_call;
     } else {
-        calls.push_back(c);
+        if (last_call.caller_id>=0)
+            insert(last_call);
+        last_call = DynamicCallGraphRow(func_id, igroup_id, caller_id, callee_id, call_sequence++);
+        if (keep_in_memory)
+            rows.push_back(last_call);
     }
 }
 
 void
-DynamicCallGraph::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+DynamicCallGraph::flush(const SqlDatabase::TransactionPtr &tx)
 {
-    if (!calls.empty()) {
-        char filename[64];
-        strcpy(filename, "/tmp/roseXXXXXX");
-        int fd = mkstemp(filename);
-        assert(fd>=0);
-        FILE *f = fdopen(fd, "w");
-        assert(f!=NULL);
-
-        for (size_t i=0; i<calls.size(); ++i) {
-            int nprint __attribute__((unused))
-                = fprintf(f, "%d,%d,%d,%d,%zu,%zu\n",
-                          func_id, igroup_id, calls[i].caller_id, calls[i].callee_id, i, calls[i].ncalls);
-            assert(nprint>0);
-        }
-
-        fclose(f);
-        close(fd);
-        std::ifstream in(filename);
-        tx->bulk_load("semantic_fio_calls", in);
-        in.close();
-        unlink(filename);
+    if (last_call.caller_id>=0) {
+        insert(last_call);
+        last_call = DynamicCallGraphRow();
     }
+    WriteOnlyTable<DynamicCallGraphRow>::flush(tx);
 }
+
 
 
 /*******************************************************************************************************************************

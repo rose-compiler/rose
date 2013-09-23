@@ -752,7 +752,7 @@ main(int argc, char *argv[])
     BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&vertex_filter);
     BinaryAnalysis::ControlFlow::Graph cfg;
-    cfg_analyzer.build_cfg_from_ast(interp, cfg);
+    cfg_analyzer.build_block_cfg_from_ast(interp, cfg);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";

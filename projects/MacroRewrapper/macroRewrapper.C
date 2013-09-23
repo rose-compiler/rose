@@ -84,7 +84,7 @@ SgNode*
 AnalyzeMacroCalls::findSmallestStmtMatchingMacroCallUsingPositions(PreprocessingInfo* currentInfo){
 
      SgNode* smallestStmt = NULL;
-     PreprocessingInfo::r_macro_call* macro_call = currentInfo->get_macro_call();
+     PreprocessingInfo::rose_macro_call* macro_call = currentInfo->get_macro_call();
      ROSE_ASSERT(macro_call != NULL);
      token_type a_call = macro_call->macro_call;
 
@@ -382,7 +382,7 @@ AnalyzeMacroCalls::findSmallestStmtMatchingMacroCallUsingPositions(Preprocessing
 //will return a
 std::vector<SgNode*> 
 findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo ){
-	PreprocessingInfo::r_macro_call* macro_call = currentInfo->get_macro_call();
+	PreprocessingInfo::rose_macro_call* macro_call = currentInfo->get_macro_call();
 	token_type a_call = macro_call->macro_call;
 
 	int line = a_call.get_position().get_line();

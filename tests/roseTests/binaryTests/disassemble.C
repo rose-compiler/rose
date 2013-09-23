@@ -160,6 +160,9 @@ Description:\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
 \n\
+  --skip-disassemble\n\
+    Skip the entire disassembly process; only parse the binary container (if any).\n\
+\n\
   --syscalls=linux32\n\
   --syscalls=none\n\
     Specifies how system calls are to be named in the disassembly output.\n\
@@ -720,14 +723,14 @@ dump_CFG_CG(SgNode *ast)
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
     struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
-        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
-            SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
+        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return !func || 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } unassigned_block_filter;
     BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
-    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
+    CFG global_cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
@@ -805,6 +808,7 @@ main(int argc, char *argv[])
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
+    bool do_skip_disassemble = false;
     bool do_link = false;
     std::string do_generate_ipd;
     std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
@@ -851,6 +855,8 @@ main(int argc, char *argv[])
             do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
             do_call_disassembler = true;
+        } else if (!strcmp(argv[i], "--skip-disassemble")) {
+            do_skip_disassemble = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -1188,7 +1194,6 @@ main(int argc, char *argv[])
         assert(interp->get_map()!=NULL);
         map = *interp->get_map();
 
-
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
             /* Seed disassembler work list with entry addresses */
@@ -1242,22 +1247,24 @@ main(int argc, char *argv[])
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns;
 
-    try {
-        if (do_call_disassembler) {
-            insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
-            block = partitioner->partition(interp, insns, &map);
-        } else {
-            block = partitioner->partition(interp, disassembler, &map);
-            insns = partitioner->get_instructions();
-            bad = partitioner->get_disassembler_errors();
+    if (!do_skip_disassemble) {
+        try {
+            if (do_call_disassembler) {
+                insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+                block = partitioner->partition(interp, insns, &map);
+            } else {
+                block = partitioner->partition(interp, disassembler, &map);
+                insns = partitioner->get_instructions();
+                bad = partitioner->get_disassembler_errors();
+            }
+        } catch (const Partitioner::Exception &e) {
+            std::cerr <<"partitioner exception: " <<e <<"\n";
+            exit(1);
         }
-    } catch (const Partitioner::Exception &e) {
-        std::cerr <<"partitioner exception: " <<e <<"\n";
-        exit(1);
     }
 
     /* Link instructions into AST if possible */
-    if (interp) {
+    if (interp && block) {
         interp->set_global_block(block);
         block->set_parent(interp);
     }
@@ -1276,9 +1283,9 @@ main(int argc, char *argv[])
                 typedef ControlFlow::Graph CFG;
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
-                if (func) {
-                    CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
+                if (func && func->get_entry_block()) {
+                    CFG cfg = cfg_analysis.build_block_cfg_from_ast<CFG>(func);
+                    CFG_Vertex entry = 0; /* see build_block_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
@@ -1356,12 +1363,12 @@ main(int argc, char *argv[])
         printf("\n");
     }
 
-    if (do_show_functions)
+    if (do_show_functions && block)
         std::cout <<ShowFunctions(block);
 
-    if (!do_quiet) {
+    if (!do_quiet && block) {
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(block);
+        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
@@ -1385,7 +1392,7 @@ main(int argc, char *argv[])
      * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
-    if (do_show_extents || do_show_coverage) {
+    if ((do_show_extents || do_show_coverage) && block) {
         ExtentMap extents=map.va_extents();
         size_t disassembled_map_size = extents.size();
 
@@ -1442,7 +1449,7 @@ main(int argc, char *argv[])
         //generateAstGraph(project, INT_MAX);
     }
         
-    if (do_cfg_dot) {
+    if (do_cfg_dot && block) {
         printf("generating GraphViz dot files for control flow graphs...\n");
         dump_CFG_CG(block);
     }

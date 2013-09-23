@@ -216,9 +216,7 @@ main(int argc, char *argv[])
     BaseSemantics::SValuePtr eax = operators->readRegister(dispatcher->findRegister("eax"));
 #if SEMANTIC_DOMAIN == MULTI_DOMAIN
     // This is entirely optional, but the output looks better if it has the names of the subdomains.
-    std::cerr <<"eax = ";
-    eax->print(std::cerr, MultiSemantics::RiscOperators::promote(operators)->get_print_helper());
-    std::cerr <<"\n";
+    std::cerr <<"eax = " <<(*eax + MultiSemantics::RiscOperators::promote(operators)->get_formatter()) <<"\n";
 #else
     std::cerr <<"eax = " <<*eax <<"\n";
 #endif

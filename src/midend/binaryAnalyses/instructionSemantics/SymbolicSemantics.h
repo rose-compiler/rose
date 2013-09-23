@@ -37,7 +37,6 @@ namespace BinaryAnalysis {              // documented elsewhere
          *  will be answered by very naive comparison of the expression trees. */
         namespace SymbolicSemantics {
 
-            typedef InsnSemanticsExpr::RenameMap RenameMap;
             typedef InsnSemanticsExpr::LeafNode LeafNode;
             typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
             typedef InsnSemanticsExpr::InternalNode InternalNode;
@@ -181,7 +180,7 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See
                  *  the rename() method for details. */
-                virtual void print(std::ostream &o, RenameMap *rmap=NULL) const {
+                virtual void print(std::ostream &o, InsnSemanticsExpr::Formatter *phelp=NULL) const {
                     o <<"defs={";
                     size_t ndefs=0;
                     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -190,13 +189,16 @@ namespace BinaryAnalysis {              // documented elsewhere
                             o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
                     }
                     o <<"} expr=";
-                    expr->print(o, rmap);
+                    InsnSemanticsExpr::Formatter ph;
+                    expr->print(o, phelp ? *phelp : ph);
                 }
                 virtual void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
-                    print(o, (RenameMap*)0);
+                    InsnSemanticsExpr::Formatter fmt;
+                    print(o, &fmt);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
-                    e.print(o, (RenameMap*)0);
+                    InsnSemanticsExpr::Formatter fmt;
+                    e.print(o, &fmt);
                     return o;
                 }
 
@@ -554,9 +556,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 Registers registers;
                 Memory memory;
 
-                /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
+                /** Print info about how registers differ.  If a print helper is specified then it will be passed on to the
+                 *  InsnSemanticsExpr::print() method. */
+                void print_diff_registers(std::ostream &o, const State&, InsnSemanticsExpr::Formatter *phelp=NULL) const;
 
                 /** Tests registers of two states for equality. */
                 bool equal_registers(const State&) const;
@@ -709,15 +711,15 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  memory that has only been read. */
                 bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
-                /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print(std::ostream &o, const std::string prefix="", RenameMap *rmap=NULL) const {
+                /** Print the current state of this policy.  If a print helper is specified then it will be passed along to the
+                 *  InsnSemanticsExpr::print() method. */
+                void print(std::ostream &o, const std::string prefix="", InsnSemanticsExpr::Formatter *phelp=NULL) const {
                     o <<prefix <<"registers:\n";
-                    cur_state.registers.print(o, prefix+"    ", rmap);
+                    cur_state.registers.print(o, prefix+"    ", phelp);
                     o <<prefix <<"memory:\n";
-                    cur_state.memory.print(o, prefix+"    ", rmap);
+                    cur_state.memory.print(o, prefix+"    ", phelp);
                     o <<prefix <<"init mem:\n";
-                    orig_state.memory.print(o, prefix+"    ", rmap);
+                    orig_state.memory.print(o, prefix+"    ", phelp);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
                     p.print(o, "", NULL);
@@ -740,20 +742,22 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return p_discard_popped_memory;
                 }
 
-                /** Print only the differences between two states.  If a rename map is specified then named values will be
-                 *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&, RenameMap *rmap=NULL) const ;
+                /** Print only the differences between two states.  If a print helper is specified it will be passed along to
+                 *  the InsnSemanticsExpr::print() method. */
+                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&,
+                                InsnSemanticsExpr::Formatter *pehlp=NULL) const ;
 
-                /** Print the difference between a state and the initial state.  If a rename map is specified then named values
-                 *  will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, const State<ValueType> &state, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, state, rmap);
+                /** Print the difference between a state and the initial state.  If a print helper is specified then it will be
+                 *  passed along to the InsnSemanticsExpr::print() method. */
+                void print_diff(std::ostream &o, const State<ValueType> &state,
+                                InsnSemanticsExpr::Formatter *phelp=NULL) const {
+                    print_diff(o, orig_state, state, phelp);
                 }
 
-                /** Print the difference between the current state and the initial state.  If a rename map is specified then
-                 *  named values will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, cur_state, rmap);
+                /** Print the difference between the current state and the initial state.  If a print helper is specified then
+                 *  it will be passed along to the InsnSemanticsExpr::print() method. */
+                void print_diff(std::ostream &o, InsnSemanticsExpr::Formatter *phelp=NULL) const {
+                    print_diff(o, orig_state, cur_state, phelp);
                 }
 
                 /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is

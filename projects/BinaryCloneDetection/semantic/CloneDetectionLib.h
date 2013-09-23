@@ -34,6 +34,8 @@ enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
 enum PathSyntactic {PATH_SYNTACTIC_NONE, PATH_SYNTACTIC_ALL, PATH_SYNTACTIC_FUNCTION };
 extern const rose_addr_t GOTPLT_VALUE; /**< Address of all dynamic functions that are not loaded. */
 
+
+
 /*******************************************************************************************************************************
  *                                      Progress bars
  *******************************************************************************************************************************/
@@ -86,66 +88,6 @@ public:
     size_t current() const { return cur; }
 };
 
-/*******************************************************************************************************************************
- *                                      Test trace events
- *******************************************************************************************************************************/
-
-class Tracer {
-public:
-    /** Types of events that are emitted to the database during tracing. */
-    enum Event {
-        // note: don't change the numbering, because these numbers appear in databases.
-        // note: update the analysis to emit the event
-        // note: update the --trace switch in 25-run-tests
-        // note: update 00-create-schema to insert the new event into the semantic_fio_events table
-        // note: update 90-list-function so the event is shown in the listing
-        EV_NONE                 = 0x00000000,   /**< No event. */
-        EV_REACHED              = 0x00000001,   /**< Basic block executed. */
-        EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
-        EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
-        EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
-        EV_MEM_WRITE            = 0x00000010,   /**< Data written to non-stack memory. Value is address written. */
-        EV_RETURNED             = 0x00000020,   /**< Forced immediate return of inner-most function. */
-        // Masks
-        CONTROL_FLOW            = 0x00000023,   /**< Control flow events. */
-        ALL_EVENTS              = 0xffffffff    /**< All possible events. */
-    };
-
-    /** Construct a tracer not yet associated with any function or input group. The reset() method must be called before
-     *  any events can be emitted. */
-    Tracer(): func_id(-1), igroup_id(-1), fd(-1), event_mask(ALL_EVENTS), pos(0) {}
-
-    /** Open a tracer for a particular file and input group pair. The @p events mask determines which kinds of events will be
-     *  accumulated; event types not set in the mask are ignored. */
-    Tracer(int func_id, int igroup_id, unsigned events=ALL_EVENTS)
-        : func_id(func_id), igroup_id(igroup_id), fd(-1), event_mask(events), pos(0) {
-        reset(func_id, igroup_id);
-    }
-
-    /** Destructor does not save accumulated events.  The save() method should be called first otherwise events accumulated
-     *  since the last save() will be lost. This behavior is consistent with SqlDatabase, where an explicit commit is necessary
-     *  before destroying a transaction. */
-    ~Tracer() {
-        if (fd>=0) {
-            close(fd);
-            unlink(filename.c_str());
-        }
-    }
-    
-    /** Associate a tracer with a particular function and input group.  Accumulated events are not lost. */
-    void reset(int func_id, int igroup_id, unsigned events=ALL_EVENTS, size_t pos=0);
-
-    /** Add an event to the stream.  The event is not actually inserted into the database until save() is called. */
-    void emit(rose_addr_t addr, Event event, uint64_t value=0, int minor=0);
-
-    /** Save events that have accumulated. */
-    void save(const SqlDatabase::TransactionPtr &tx);
-
-    std::string filename;
-    int func_id, igroup_id, fd;
-    unsigned event_mask;
-    size_t pos;
-};
 
 /*******************************************************************************************************************************
  *                                      Analysis faults
@@ -226,6 +168,150 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Exception&);
 
+
+
+/*******************************************************************************************************************************
+ *                                      Large Table Output
+ *******************************************************************************************************************************/
+
+/** Base class for generating data for large tables.  The data is first written to a temporary file so as not to consume large
+ *  amounts of core memory. The flush() operation then bulk loads the data into the database table and truncates the temporary
+ *  file.
+ *
+ *  The Row class must have a serialize() method that writes the row's data to a specified std::ostream argument in a form
+ *  suitable for bulk loading.  The format should be comma-separated values on a single line. Strings need to be escaped in the
+ *  usual SQL manner.
+ *
+ *  The destructor does not save accumulated events.  The flush() method should be called first otherwise events accumulated
+ *  since the last flush() will be lost. This behavior is consistent with SqlDatabase, where an explicit commit is necessary
+ *  before destroying a transaction. */
+template<class Row>
+class WriteOnlyTable {
+public:
+    /** Construct a new, empty table in memory.  The table may exist in the database, but it is not loaded into memory. */
+    WriteOnlyTable(const std::string &tablename): tablename(tablename), nrows(0) {}
+
+    ~WriteOnlyTable() { close_backing(); }
+
+    /** Discard data that is pending to be loaded into the database. */
+    void clear() { close_backing(); }
+
+    /** Returns true unless there is data pending to be loaded into the database. */
+    bool empty() const { return size()==0; }
+
+    /** Returns the number of rows pending to be loaded into the database. */
+    size_t size() const { return nrows; }
+
+    /** Accumulate a new row and mark is a pending to be loaded into the database by the next flush() operation. */
+    void insert(const Row &row) {
+        open_backing();
+        row.serialize(f);
+        ++nrows;
+        if (f.fail())
+            throw Exception(std::string("CloneDetection::WriteOnlyTable::insert: write error for table: "+tablename));
+    }
+
+    /** Copy pending data into the database. */
+    void flush(const SqlDatabase::TransactionPtr &tx) {
+        if (!empty()) {
+            f.close();
+            std::ifstream fin(filename);
+            tx->bulk_load(tablename, fin);
+            fin.close();
+            unlink(filename);
+            filename[0] = '\0';
+            nrows = 0;
+        }
+    }
+    
+private:
+    void open_backing() {
+        if (!f.is_open()) {
+            strcpy(filename, "/tmp/roseXXXXXX");
+            int fd = mkstemp(filename);
+            assert(-1!=fd);
+            close(fd);
+            f.open(filename);
+        }
+    }
+
+    void close_backing() {
+        if (f.is_open()) {
+            f.close();
+            unlink(filename);
+            filename[0] = '\0';
+            nrows = 0;
+        }
+    }
+    
+
+private:
+    std::string tablename;
+    size_t nrows;
+    char filename[64];
+    std::ofstream f;
+};
+
+
+/*******************************************************************************************************************************
+ *                                      Test trace events
+ *******************************************************************************************************************************/
+
+/** Types of events that are emitted to the database during tracing. */
+enum TracerEvent {
+    // note: don't change the numbering, because these numbers appear in databases.
+    // note: update the analysis to emit the event
+    // note: update the --trace switch in 25-run-tests
+    // note: update 00-create-schema to insert the new event into the semantic_fio_events table
+    // note: update 90-list-function so the event is shown in the listing
+    EV_NONE                 = 0x00000000,   /**< No event. */
+    EV_REACHED              = 0x00000001,   /**< Basic block executed. */
+    EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
+    EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
+    EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
+    EV_MEM_WRITE            = 0x00000010,   /**< Data written to non-stack memory. Value is address written. */
+    EV_RETURNED             = 0x00000020,   /**< Forced immediate return of inner-most function. */
+    // Masks
+    CONTROL_FLOW            = 0x00000023,   /**< Control flow events. */
+    ALL_EVENTS              = 0xffffffff    /**< All possible events. */
+};
+
+// See Schema.sql for semantic_fio_event
+struct TracerRow {
+    int func_id, igroup_id, minr;
+    size_t pos;
+    rose_addr_t addr;
+    TracerEvent event;
+    uint64_t value;
+
+    TracerRow(int func_id, int igroup_id, size_t pos, rose_addr_t addr, TracerEvent event, int minr, uint64_t value)
+        : func_id(func_id), igroup_id(igroup_id), minr(minr), pos(pos), addr(addr), event(event), value(value) {}
+    void serialize(std::ostream &output) const { // output order must match the schema
+        output <<func_id <<"," <<igroup_id <<"," <<pos <<"," <<addr <<"," <<event <<"," <<minr <<"," <<value <<"\n";
+    }
+};
+
+class Tracer: public WriteOnlyTable<TracerRow> {
+public:
+
+    /** Construct a tracer not yet associated with any function or input group. The reset() method must be called before
+     *  any events can be emitted. */
+    Tracer(): WriteOnlyTable<TracerRow>("semantic_fio_trace"), func_id(-1), igroup_id(-1), event_mask(ALL_EVENTS), pos(0) {}
+
+    /** Associate a tracer with a particular function and input group.  Accumulated events are not lost. */
+    void current_test(int func_id, int igroup_id, unsigned events=ALL_EVENTS, size_t pos=0);
+
+    /** Add an event to the stream.  The event is not actually inserted into the database until flush() is called. */
+    void emit(rose_addr_t addr, TracerEvent event, uint64_t value=0, int minor=0);
+
+private:
+    int func_id, igroup_id;
+    unsigned event_mask;
+    size_t pos;
+};
+
+
+
 /*******************************************************************************************************************************
  *                                      File names table
  *******************************************************************************************************************************/
@@ -287,17 +373,40 @@ public:
  *                                      Instruction coverage analysis
  *******************************************************************************************************************************/
 
-class InsnCoverage {
-public:
     /** Information about an executed address. */
-    struct ExeInfo {
-        ExeInfo(size_t first_seen): first_seen(first_seen), nhits(1) {}
-        size_t first_seen;                      /**< Sequence number for when this address was first executed. */
-        size_t nhits;                           /**< Number of times this address was executed. */
-    };
+struct InsnCoverageRow {
+    int func_id;                                /**< Function ID for test that was executed. */
+    int igroup_id;                              /**< Input group ID for test that was executed. */
+    rose_addr_t address;                        /**< Instruction address. */
+    size_t pos;                                 /**< Sequence number for when this address was first executed by this test. */
+    size_t nhits;                               /**< Number of times this address was executed. */
+    size_t nhits_saved;                         /**< Part of "nhits" already flushed to the database (not a database column). */
 
+    InsnCoverageRow(int func_id, int igroup_id, rose_addr_t address, size_t pos, size_t nhits)
+        : func_id(func_id), igroup_id(igroup_id), address(address), pos(pos), nhits(nhits), nhits_saved(0) {}
+
+    void serialize(std::ostream &stream) const { // output order must match the schema
+        stream <<func_id <<"," <<igroup_id <<"," <<address <<"," <<pos <<"," <<nhits <<"\n";
+    }
+};
+
+/** Instruction coverage information for a single test. A test is identified by function ID and input group ID. */
+class InsnCoverage: public WriteOnlyTable<InsnCoverageRow> {
+public:
+    InsnCoverage()
+        : WriteOnlyTable<InsnCoverageRow>("semantic_fio_coverage"), func_id(-1), igroup_id(-1) {}
+
+    /** Set the current test information. */
+    void current_test(int func_id, int igroup_id) {
+        this->func_id = func_id;
+        this->igroup_id = igroup_id;
+    }
+    
     /** Delete coverage info and reset to initial state. */
-    void clear() { *this = InsnCoverage(); }
+    void clear() {
+        WriteOnlyTable<InsnCoverageRow>::clear();
+        coverage.clear();
+    }
         
     /** Mark instructions as having been executed. */
     void execute(SgAsmInstruction*);
@@ -311,10 +420,8 @@ public:
     /** Total number of addresses executed. */
     size_t total_ninsns() const;
 
-    /** Save coverage info to the database. No attempt is made to not save edges that have already been saved; therefore it is
-     *  best to call this only when the object is about to be cleared or destroyed.  The func_id is the ID number for the
-     * function that is being tested. The func_id and and igroup_id together identify a particular test.*/
-    void save(const SqlDatabase::TransactionPtr&, int func_id, int igroup_id);
+    /** Flush pending data to the database and clear this object. */
+    void flush(const SqlDatabase::TransactionPtr&);
 
     /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
      *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
@@ -325,7 +432,8 @@ public:
      */
     void get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembler::InstructionMap& instr_map, SgAsmFunction* top = NULL);    
 protected:
-
+    int func_id, igroup_id;
+ 
     typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
@@ -339,54 +447,155 @@ get_instr_map(InstructionMapMap& instr_map_map, SgAsmInterpretation* top);
  *                                      Dynamic Function Call Graph
  *******************************************************************************************************************************/
 
+/** Information about a single function call. */
+struct DynamicCallGraphRow {
+    int func_id;                                /**< ID of function that is being tested. */
+    int igroup_id;                              /**< ID of the input group being tested. */
+    int caller_id;                              /**< ID of function that is doing the calling. */
+    int callee_id;                              /**< ID of the function that is being called. */
+    size_t pos;                                 /**< Sequence numbering for ordering calls. */
+    size_t ncalls;                              /**< Number of consecutive calls for this caller and callee pair. */
+
+    DynamicCallGraphRow()
+        : func_id(-1), igroup_id(-1), caller_id(-1), callee_id(-1), pos(0), ncalls(0) {}
+    DynamicCallGraphRow(int func_id, int igroup_id, int caller_id, int callee_id, size_t pos)
+        : func_id(func_id), igroup_id(igroup_id), caller_id(caller_id), callee_id(callee_id), pos(pos), ncalls(1) {}
+
+    void serialize(std::ostream &stream) const { // must be in the same order as the schema
+        stream <<func_id <<"," <<igroup_id <<"," <<caller_id <<"," <<callee_id <<"," <<pos <<"," <<ncalls <<"\n";
+    }
+};
+
 /** Dynamic call graph information.  This class stores a call graph by storing edges between the caller and callee function
  * IDs.  The edges are ordered according to when the call occurred. Consecutive parallel edges are stored as a single edge with
  * an @p ncalls attribute larger than one. */
-class DynamicCallGraph {
+class DynamicCallGraph: public WriteOnlyTable<DynamicCallGraphRow> {
 public:
-    /** Information about a single function call. */
-    struct Call {
-        Call(int caller_id, int callee_id): caller_id(caller_id), callee_id(callee_id), ncalls(1) {}
-        int caller_id;                          /**< ID of function that is doing the calling. */
-        int callee_id;                          /**< ID of the function that is being called. */
-        size_t ncalls;                          /**< Number of consecutive calls for this caller and callee pair. */
-    };
+    explicit DynamicCallGraph(bool keep_in_memory=false)
+        : WriteOnlyTable<DynamicCallGraphRow>("semantic_fio_calls"),
+          keep_in_memory(keep_in_memory), func_id(-1), igroup_id(-1) {}
 
+    /** Set information for current test. */
+    void current_test(int func_id, int igroup_id) {
+        this->func_id = func_id;
+        this->igroup_id = igroup_id;
+        this->call_sequence = 0;
+    }
+    
     /** Set this call graph back to its empty state. */
-    void clear() { *this = DynamicCallGraph(); }
+    void clear() {
+        WriteOnlyTable<DynamicCallGraphRow>::clear();
+        last_call = DynamicCallGraphRow();
+        rows.clear();
+    }
 
     /** Append a new call to the list of calls.
      * @{ */
-    void call(int caller_id, int callee_id) { call(Call(caller_id, callee_id)); }
-    void call(const Call&);
+    void call(int caller_id, int callee_id);
     /** @} */
 
     /** Returns true if the graph contains no instructions. */
-    bool empty() const { return calls.empty(); }
+    bool empty() const {
+        return last_call.func_id < 0 && WriteOnlyTable<DynamicCallGraphRow>::empty();
+    }
 
     /** Returns the number of calls. Consecutive calls between a specific caller and callee are compressed into a single call
      *  structure whose ncalls member indicates the number of calls, and which are treated as a single call for the purpose of
      *  this function. */
-    size_t size() const { return calls.size(); }
+    size_t size() const {
+        return keep_in_memory ?
+            rows.size() :
+            WriteOnlyTable<DynamicCallGraphRow>::size() + (last_call.func_id>=0 ? 1 : 0);
+    }
 
     /** Return info for the indicated call number. Consecutive calls from a specific caller to callee are treated as one call
-     * for the purpose of this function; the @p ncalls member indicates how many consecutive calls actually occurred.
-     * @{ */
-    Call& operator[](size_t idx) { return calls[idx]; }
-    const Call& operator[](size_t idx) const { return calls[idx]; }
-    /** @} */
+     * for the purpose of this function; the @p ncalls member indicates how many consecutive calls actually occurred. The
+     * information is only saved in memory if keep_in_memory is set to true during construction. */
+    const DynamicCallGraphRow& operator[](size_t idx) const {
+        assert(keep_in_memory);
+        return rows[idx];
+    }
 
-    /** Save all the edges to the database. No attempt is made to not save edges that have already been saved; therefore it is
-     * best to call this only when the object is about to be cleared or destroyed.  The func_id is the ID number for the
-     * function that is being tested; all calls (whether from that function or not) are attributed to that function.  The
-     * function_id and igroup_id together identify a particular test. */
-    void save(const SqlDatabase::TransactionPtr&, int func_id, int igroup_id);
+    /** Flush all pending data to the database. */
+    void flush(const SqlDatabase::TransactionPtr&);
 
 protected:
-    typedef std::vector<Call> Calls;
-    Calls calls;                                // list of calls in the order they occur
+    bool keep_in_memory;                // keep copies of rows in memory until clear() is called.
+    std::vector<DynamicCallGraphRow> rows; // rows kept in memory only if keep_in_memory is set
+    int func_id, igroup_id;             // identifies test; used to fill in the corresponding columns as rows are added
+    DynamicCallGraphRow last_call;      // most recent call; this row hasn't been handed to the WriteOnlyTable yet
+    size_t call_sequence;               // sequence number for ordering calls
 };
 
+
+/*******************************************************************************************************************************
+ *                                      ConsumedInputs
+ *******************************************************************************************************************************/
+
+struct ConsumedInputsRow {
+    int func_id;                                /**< ID of function that is being tested. */
+    int igroup_id;                              /**< ID of the input group being tested. */
+    int request_queue_id;                       /**< Input queue from which this input value was requested. */
+    int actual_queue_id;                        /**< Input queue from which this value was obtained. */
+    size_t pos;                                 /**< Relative position of this input w.r.t. other consumed inputs. */
+    uint64_t value;                             /**< Value that was consumed. */
+
+    ConsumedInputsRow(int func_id, int igroup_id, int request_queue_id, int actual_queue_id, size_t pos, uint64_t value)
+        : func_id(func_id), igroup_id(igroup_id), request_queue_id(request_queue_id), actual_queue_id(actual_queue_id),
+          pos(pos), value(value) {}
+
+    void serialize(std::ostream &stream) const { // output must be same order as schema
+        stream <<func_id <<"," <<igroup_id <<"," <<request_queue_id <<"," <<actual_queue_id <<"," <<pos <<"," <<value <<"\n";
+    }
+};
+
+class ConsumedInputs: public WriteOnlyTable<ConsumedInputsRow> {
+public:
+    explicit ConsumedInputs(bool keep_in_memory=false)
+        : WriteOnlyTable<ConsumedInputsRow>("semantic_fio_inputs"),
+          keep_in_memory(keep_in_memory), func_id(-1), igroup_id(-1) {}
+
+    /** Set information for current test. */
+    void current_test(int func_id, int igroup_id) {
+        this->func_id = func_id;
+        this->igroup_id = igroup_id;
+        this->pos = 0;
+    }
+
+    /** Drop all rows from memory and pending for write. Does not affect rows existing in the database. */
+    void clear() {
+        rows.clear();
+        WriteOnlyTable<ConsumedInputsRow>::clear();
+    }
+
+    /** Number of rows in memory or pending to write to database. */
+    size_t size() {
+        return keep_in_memory ?
+            rows.size() :
+            WriteOnlyTable<ConsumedInputsRow>::size();
+    }
+
+    /** Return a particular row from memory. */
+    const ConsumedInputsRow& operator[](size_t idx) {
+        assert(keep_in_memory);
+        return rows[idx];
+    }
+    
+    /** Add an input to the list of rows pending to be written to the database. */
+    void consumed(int request_queue_id, int actual_queue_id, uint64_t value) {
+        assert(func_id>=0 && igroup_id>=0);
+        ConsumedInputsRow row(func_id, igroup_id, request_queue_id, actual_queue_id, pos++, value);
+        insert(row);
+        if (keep_in_memory)
+            rows.push_back(row);
+    }
+
+private:
+    bool keep_in_memory;
+    std::vector<ConsumedInputsRow> rows;
+    int func_id, igroup_id;
+    size_t pos;
+};
 
 
 /*******************************************************************************************************************************
@@ -924,7 +1133,8 @@ protected:
 struct PolicyParams {
     PolicyParams()
         : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), path_syntactic(PATH_SYNTACTIC_NONE), initial_stack(0x80000000),
-          compute_coverage(false), compute_callgraph(false), top_callgraph(false) {}
+          compute_coverage(false), compute_callgraph(false), top_callgraph(false), compute_consumed_inputs(false) {} 
+
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
@@ -934,6 +1144,7 @@ struct PolicyParams {
     bool compute_coverage;              /**< Compute instruction coverage information? */
     bool compute_callgraph;             /**< Compute dynamic call graph information? */
     bool top_callgraph;                 /**< Store only function call edges emanating from the top stack frame? */
+    bool compute_consumed_inputs;       /**< Insert consumed inputs into the ConsumedInputs object? */
 };
 
 
@@ -1220,13 +1431,14 @@ public:
     FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
     InsnCoverage &insn_coverage;                        // Information about which instructions were executed
     DynamicCallGraph &dynamic_cg;                       // Information about function calls
+    ConsumedInputs &consumed_inputs;                    // List of input values consumed
 
     Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo,
-           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg)
+           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
           address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
           tracer(tracer), uses_stdcall(false), funcinfo(funcinfo), insn_coverage(insn_coverage),
-          dynamic_cg(dynamic_cg) {}
+          dynamic_cg(dynamic_cg), consumed_inputs(consumed_inputs) {}
 
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
@@ -1259,7 +1471,9 @@ public:
             }
         }
         inputs->inc_nconsumed_virtual(qn_orig); // before redirection
-        tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_INPUT, retval.known_value(), (int)qn);
+        tracer.emit(this->get_insn()->get_address(), EV_CONSUME_INPUT, retval.known_value(), (int)qn);
+        if (params.compute_consumed_inputs)
+            consumed_inputs.consumed((int)qn_orig, (int)qn, retval.known_value());
         return retval;
     }
 
@@ -1278,8 +1492,6 @@ public:
         this->ninsns = 0;
         this->interp = interp;
         this->whitelist_exports = whitelist_exports;
-        insn_coverage.clear();
-        dynamic_cg.clear();
         stack_frames.clear();
         state.reset_for_analysis();
 
@@ -1423,7 +1635,7 @@ public:
             }
         }
         state.registers.ip = ValueType<32>(ret_va);
-        tracer.emit(insn->get_address(), Tracer::EV_RETURNED);
+        tracer.emit(insn->get_address(), EV_RETURNED);
         return ret_va;
     }
 
@@ -1511,7 +1723,7 @@ public:
             std::cerr <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
         SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
         if (bb!=prev_bb)
-            tracer.emit(insn->get_address(), Tracer::EV_REACHED);
+            tracer.emit(insn->get_address(), EV_REACHED);
         prev_bb = bb;
 
         Super::startInstruction(insn_);
@@ -1599,7 +1811,7 @@ public:
         // Emit an event if the next instruction to execute is not at the fall through address.
         rose_addr_t fall_through_va = insn->get_address() + insn->get_size();
         if (next_eip!=fall_through_va)
-            tracer.emit(insn->get_address(), Tracer::EV_BRANCHED, next_eip);
+            tracer.emit(insn->get_address(), EV_BRANCHED, next_eip);
 
         Super::finishInstruction(insn);
     }
@@ -1722,7 +1934,7 @@ public:
                 if (v2!=data.known_value())
                     std::cerr <<"CloneDetection: output value is a string pointer; hash="<<StringUtility::addrToString(v2)<<"\n";
             }
-            tracer.emit(this->get_insn()->get_address(), Tracer::EV_MEM_WRITE, a0.known_value(), data.known_value());
+            tracer.emit(this->get_insn()->get_address(), EV_MEM_WRITE, a0.known_value(), data.known_value());
         }
     }
 

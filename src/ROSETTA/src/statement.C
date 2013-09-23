@@ -97,13 +97,6 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (GotoStatement,             "GotoStatement",             "GOTO_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
-  // Added Java specific "throw" statement since it is a proper part of the Java Grammar (not true for C++ where it is only an expression).
-     NEW_TERMINAL_MACRO (JavaThrowStatement,        "JavaThrowStatement",        "JAVE_THROW_STMT" );
-     NEW_TERMINAL_MACRO (JavaForEachStatement,      "JavaForEachStatement",      "JAVA_FOREACH_STMT");
-     NEW_TERMINAL_MACRO (JavaSynchronizedStatement, "JavaSynchronizedStatement", "JAVA_SYNC_STMT");
-
-  // DQ (8/26/2011): Added Java statement as a scope (different from the C/C++ label statement.
-     NEW_TERMINAL_MACRO (JavaLabelStatement,        "JavaLabelStatement",        "JAVA_LABEL_STMT" );
 
 
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
@@ -268,12 +261,20 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
     NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
+ 
+     // experimental omp target directive, Liao 1/22/2012
+     // use for testing OpenMP accelerator model
+    NEW_TERMINAL_MACRO (OmpTargetStatement,  "OmpTargetStatement",   "OMP_TARGET_STMT" );
+    NEW_TERMINAL_MACRO (OmpTargetDataStatement,  "OmpTargetDataStatement",   "OMP_TARGET_DATA_STMT" );
+
+    NEW_TERMINAL_MACRO (OmpSimdStatement,    "OmpSimdStatement",     "OMP_SIMD_STMT" );
 
     // A base class for the most commonly formed directives with both clauses and a structured body
     // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
-              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement ,
+              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement | OmpTargetStatement| OmpTargetDataStatement |
+              OmpSimdStatement,
         "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -293,11 +294,8 @@ Grammar::setUpStatements ()
 
 #endif
 
-#if USE_JAVA_IR_NODES
-  // DQ (4/16/2011): This is the Java specific SgJavaImportStatement (which is a declaration), there is also a Fortran specific import statment IR node.
-  // DQ (4/12/2011): Added Java support for "import" keyword.
-     NEW_TERMINAL_MACRO (JavaImportStatement,        "JavaImportStatement",         "TEMP_JavaImportStatement" );
-#endif
+#include "java/terminals.cpp"
+
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
      NEW_TERMINAL_MACRO (BlockDataStatement,        "BlockDataStatement",         "TEMP_Block_Data_Statement" );
@@ -501,7 +499,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement,
+             JavaSynchronizedStatement | JavaPackageStatement,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -560,8 +558,10 @@ Grammar::setUpStatements ()
      ScopeStatement.setAutomaticGenerationOfConstructor(false);
 
   // Switch between inlcuding the SgSymbolTable as a pointer or as a data member
+  // ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
      ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
   // DQ (7/23/2010): Build a local type table because during construction of the AST we can't yet build the global type table.
   // After construction of the AST it might be that we can build a global type table and then perhaps not use this local one at each scope.
@@ -1623,7 +1623,19 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateFunctionDeclaration.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_NAME", "args" );
@@ -1718,7 +1730,18 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -1856,6 +1879,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (3/22/2004): Support for template member functions
      TemplateInstantiationMemberFunctionDecl.setFunctionPrototype ( 
@@ -1893,6 +1924,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
 
 #if 0
@@ -2026,14 +2065,6 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "bool", "gnu_extension_unused", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/26/2011): Added Java Label statement (it is a scope) different from C/C++.
-     JavaLabelStatement.setFunctionPrototype ( "HEADER_JAVA_LABEL_STATEMENT", "../Grammar/Statement.code" );
-     JavaLabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaLabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
 
   // Not that the SgWhileStmt is used for the Fortran do while statement (because the test is 
   // at the top of the loop and so is more closely matched to the C/C++ "while(){}" statement 
@@ -2311,31 +2342,6 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
-  // DQ (8/17/2011):  Added Java "throw" statement support (constructor required SgExpression pointer).
-     JavaThrowStatement.setFunctionPrototype  ( "HEADER_JAVA_THROW_STATEMENT", "../Grammar/Statement.code" );
-     JavaThrowStatement.setDataPrototype ( "SgThrowOp*", "throwOp", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/17/2011):  Added Java "foreach" statement support (constructor required SgExpression pointer).
-     JavaForEachStatement.setFunctionPrototype  ( "HEADER_JAVA_FOREACH_STATEMENT", "../Grammar/Statement.code" );
-
-  // DQ (9/3/2011): Fixing up the new IR node to better match the grammar.
-  // JavaForEachStatement.setDataPrototype ( "SgInitializedName*", "element", "= NULL",
-  //                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JavaForEachStatement.setDataPrototype ( "SgVariableDeclaration*", "element", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JavaForEachStatement.setDataPrototype ( "SgExpression*", "collection", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JavaForEachStatement.setDataPrototype ( "SgStatement*", "loop_body",   "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/17/2011):  Added Java "synchronized" statement support (constructor required SgExpression pointer).
-     JavaSynchronizedStatement.setFunctionPrototype  ( "HEADER_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
-     JavaSynchronizedStatement.setDataPrototype ( "SgExpression*", "expression", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JavaSynchronizedStatement.setDataPrototype ( "SgStatement*", "body",   "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NullStatement.setFunctionPrototype  ( "HEADER_NULL_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2509,9 +2515,18 @@ Grammar::setUpStatements ()
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/23/2011): Pointers to previous and next matching namespace definitions (C++ namespaces are reintrant).
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamespaceDefinition", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamespaceDefinition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/16/2013): This is where we put the union of all of the symbols for all of the namespace definitions that
+  // are logically the same namespace, but seperated structurally because C++ namespaces can be re-entrant.
+  // Note that only SgAliasSymbols are put here and that the original symbol is placed into the namespace definition
+  // associated with its declaration.  
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "global_definition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NamespaceDefinitionStatement.setDataPrototype ( "bool", "isUnionOfReentrantNamespaceDefinitions", "= false",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UsingDeclarationStatement.setFunctionPrototype ( "HEADER_USING_DECLARATION_STATEMENT",
@@ -3313,14 +3328,6 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-
-  // DQ (4/12/2011): Added support for Java "import" statement.
-     JavaImportStatement.setFunctionPrototype ( "HEADER_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
-     JavaImportStatement.setDataPrototype ( "SgName", "path", "= \"\"",
-                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaImportStatement.setDataPrototype ( "bool", "containsWildCard", "= false",
-                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -3422,8 +3429,6 @@ Grammar::setUpStatements ()
      ExprStatement.setFunctionSource        ( "SOURCE_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
      LabelStatement.setFunctionSource       ( "SOURCE_LABEL_STATEMENT", "../Grammar/Statement.code" );
 
-     JavaLabelStatement.setFunctionSource   ( "SOURCE_JAVA_LABEL_STATEMENT", "../Grammar/Statement.code" );
-
      WhileStmt.setFunctionSource            ( "SOURCE_WHILE_STATEMENT", "../Grammar/Statement.code" );
      WhileStmt.editSubstitute               ( "$CLASSNAME", "SgWhileStmt" );
      DoWhileStmt.setFunctionSource          ( "SOURCE_DO_WHILE_STATEMENT", "../Grammar/Statement.code" );
@@ -3445,11 +3450,6 @@ Grammar::setUpStatements ()
      GotoStatement.setFunctionSource        ( "SOURCE_GOTO_STATEMENT", "../Grammar/Statement.code" );
      AsmStmt.setFunctionSource              ( "SOURCE_ASM_STATEMENT", "../Grammar/Statement.code" );
      SpawnStmt.setFunctionSource            ( "SOURCE_SPAWN_STATEMENT", "../Grammar/Statement.code" );
-
-  // DQ (8/17/2011):  Added Java "throw" statement support.
-     JavaThrowStatement.setFunctionSource        ( "SOURCE_JAVA_THROW_STATEMENT",        "../Grammar/Statement.code" );
-     JavaForEachStatement.setFunctionSource      ( "SOURCE_JAVA_FOREACH_STATEMENT",      "../Grammar/Statement.code" );
-     JavaSynchronizedStatement.setFunctionSource ( "SOURCE_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NullStatement.setFunctionSource        ( "SOURCE_NULL_STATEMENT", "../Grammar/Statement.code" );
@@ -3558,8 +3558,10 @@ Grammar::setUpStatements ()
 
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+#if 0
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+#endif
 
      UsingDirectiveStatement.setFunctionSource (
           "SOURCE_USING_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -3728,6 +3730,10 @@ Grammar::setUpStatements ()
     OmpOrderedStatement.setFunctionSource            ("SOURCE_OMP_ORDERED_STATEMENT", "../Grammar/Statement.code" );
     OmpTaskwaitStatement.setFunctionSource            ("SOURCE_OMP_TASKWAIT_STATEMENT", "../Grammar/Statement.code" );
 
+    OmpTargetStatement.setFunctionSource            ("SOURCE_OMP_TARGET_STATEMENT", "../Grammar/Statement.code" );
+    OmpTargetDataStatement.setFunctionSource            ("SOURCE_OMP_TARGET_DATA_STATEMENT", "../Grammar/Statement.code" );
+    OmpSimdStatement.setFunctionSource            ("SOURCE_OMP_SIMD_STATEMENT", "../Grammar/Statement.code" );
+
    // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
    // We hack the code to handle this special case
 //    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
@@ -3759,11 +3765,6 @@ Grammar::setUpStatements ()
 
 //    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
 #endif
-
-  // DQ (4/12/2011): Added support for Java "import" statement.
-     JavaImportStatement.setFunctionSource     ( "SOURCE_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
-
-
    }
 
 

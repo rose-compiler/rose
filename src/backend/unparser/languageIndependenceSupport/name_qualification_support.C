@@ -20,8 +20,6 @@ using namespace std;
 //    7) What about base class qualification? I might have forgotten this one! No, this works, 
 //       but might not generate the minimum length qualified name.
 
-
-
 SgName
 Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
    {
@@ -83,14 +81,23 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 
           case V_SgTemplateArgument:
              {
-            // SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
-            // nameQualifier = node->get_qualified_name_prefix_for_type();
 #if 0
+            // DQ (5/4/2013): This was previously disabled, maybe because the SgTemplateArgument is shared between too many declarations (in different scopes).
+               printf ("WARNING: lookup of qualifier prefix from SgTemplateArgument was previously disabled \n");
+#endif
                SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
                nameQualifier = node->get_qualified_name_prefix_for_type();
-#endif
                break;
              }
+
+       // DQ (7/13/2013): I think we need this here, but wait until we generate the error to drive it to be introduced.
+       // Also this does not permit handling of multiple types requiring different name qualification (same as for throw support).
+       // DQ (7/12/2013): Added support to type trait builtin functions 
+          case V_SgTypeTraitBuiltinOperator:
+
+       // DQ (8/19/2013): Added support for constructor initializers that might have an associated 
+       // qualified name string associated with the templated class or instantiated template class.
+          case V_SgConstructorInitializer:
 
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
@@ -129,7 +136,6 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
-
 #if 0
           case V_:
              {
@@ -140,7 +146,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #endif
           default:
              {
-               printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -182,6 +188,7 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
      return generateNameQualifierSupport(declarationStatement->get_scope(),info,qualificationOfType);
    }
 
+#error "DEAD CODE!"
 
 SgName
 Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const SgUnparse_Info& info, bool qualificationOfType )

@@ -4,6 +4,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+/** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
+ *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
+ *  more expensive traversal of an expression tree. */
+#define InsnSemanticsExpr_USE_HASHES
+
 class SMTSolver;
 
 /** Namespace supplying types and functions for symbolic expressions. These are used by certain instruction semantics policies
@@ -62,8 +67,6 @@ enum Operator
 
 const char *to_str(Operator o);
 
-typedef std::map<uint64_t, uint64_t> RenameMap;
-
 class TreeNode;
 class InternalNode;
 class LeafNode;
@@ -73,6 +76,22 @@ typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
 typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
 
+/** Controls formatting of expression trees when printing. */
+struct Formatter {
+    typedef Map<uint64_t, uint64_t> RenameMap;
+    enum ShowComments {
+        CMT_SILENT,                             /**< Do not show comments. */
+        CMT_AFTER,                              /**< Show comments after the node. */
+        CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
+    };
+    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true) {}
+    ShowComments show_comments;                 /**< Show node comments when printing? */
+    bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
+    bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
+    RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+};
+
+/** Base class for visiting nodes during expression traversal. */
 class Visitor {
 public:
     virtual ~Visitor() {}
@@ -89,15 +108,11 @@ public:
  *  deleted explicitly. */
 class TreeNode: public boost::enable_shared_from_this<TreeNode> {
 protected:
-    size_t nbits;           /**< Number of significant bits. Constant over the life of the node. */
-    std::string comment;    /**< Optional comment. */
+    size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
+    mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
+    mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment) { assert(nbits>0); }
-
-    /** Print the expression to a stream.  The output is an S-expression with no line-feeds.  If @p rmap is non-null then it
-     *  will be used to rename free variables for readability.  If the expression contains N variables, then the new names will
-     *  be numbered from the set M = (i | 0 <= i <= N-1). */
-    virtual void print(std::ostream&, RenameMap *rmap=NULL) const = 0;
+    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -113,6 +128,11 @@ public:
      *  operation, have the same number of children, and those children are all pairwise equivalent. */
     virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
 
+    /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
+     * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
+     * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const = 0;
+
     /** Returns true if the expression is a known value.
      *
      *  FIXME: The current implementation returns true only when @p this node is leaf node with a known value. Since
@@ -123,10 +143,12 @@ public:
      *  significant bits returned by get_nbits(), are guaranteed to be zero. */
     virtual uint64_t get_value() const = 0;
 
-    /** Accessors for the comment string associated with a node.
+    /** Accessors for the comment string associated with a node. Comments can be changed after a node has been created since
+     *  the comment is not intended to be used for anything but annotation and/or debugging. I.e., comments are not
+     *  considered significant for comparisons, computing hash values, etc.
      * @{ */
     const std::string& get_comment() const { return comment; }
-    void set_comment(const std::string &s) { comment=s; }
+    void set_comment(const std::string &s) const { comment=s; }
     /** @} */
 
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
@@ -149,6 +171,49 @@ public:
     LeafNodePtr isLeafNode() const {
         return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
     }
+
+    /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
+     *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
+     *  every call to hash(). */
+    bool is_hashed() const { return hashval!=0; }
+
+    /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
+     *  is computed and cached. */
+    uint64_t hash() const;
+
+    /** A node with formatter. See the with_format() method. */
+    class WithFormatter {
+    private:
+        TreeNodePtr node;
+        Formatter &formatter;
+    public:
+        WithFormatter(const TreeNodePtr &node, Formatter &formatter): node(node), formatter(formatter) {}
+        void print(std::ostream &stream) const { node->print(stream, formatter); }
+    };
+
+    /** Combines a node with a formatter for printing.  This is used for convenient printing with the "<<" operator. For
+     *  instance:
+     *
+     * @code
+     *  Formatter fmt;
+     *  fmt.show_comments = Formatter::CMT_AFTER; //show comments after the variable
+     *  TreeNodePtr expression = ...;
+     *  std::cout <<"method 1: "; expression->print(std::cout, fmt); std::cout <<"\n";
+     *  std::cout <<"method 2: " <<expression->with_format(fmt) <<"\n";
+     *  std::cout <<"method 3: " <<*expression+fmt <<"\n";
+     * 
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
+    /** @} */
+
+    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. */
+    void print(std::ostream &stream) const { Formatter formatter; print(stream, formatter); }
+
+    /** Print the expression to a stream.  The format of the output is controlled by the Formatter argument. */
+    virtual void print(std::ostream&, Formatter&) const = 0;
+
 };
 
 /** Operator-specific simplification methods. */
@@ -172,6 +237,7 @@ public:
 
 struct AddSimplifier: Simplifier {
     virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
 };
 struct AndSimplifier: Simplifier {
     virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
@@ -344,10 +410,11 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
@@ -359,6 +426,9 @@ public:
 
     /** Returns the specified child. */
     TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
+
+    /** Returns all children. */
+    TreeNodes get_children() const { return children; }
 
     /** Returns the operator. */
     Operator get_operator() const { return op; }
@@ -389,6 +459,9 @@ public:
 
     /** Removes identity arguments. Returns either a new expression or the original expression. */
     TreeNodePtr identity(uint64_t ident) const;
+
+    /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
+    TreeNodePtr unaryNoOp() const;
 
     /** Simplify an internal node. Returns a new node if this node could be simplified, otherwise returns this node. When
      *  the simplification could result in a leaf node, we return an OP_NOOP internal node instead. */
@@ -432,10 +505,11 @@ public:
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
-    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual void depth_first_visit(Visitor*) const;
 
     /** Is the node a bitvector variable? */
@@ -450,7 +524,8 @@ public:
 
 };
 
-std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
+std::ostream& operator<<(std::ostream &o, const TreeNode&);
+std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
 
 } // namespace
 #endif

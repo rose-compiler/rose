@@ -23,6 +23,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 /* Define this if you want the class to do fairly extensive testing of the consistency of the map after every operation.  Note
  * that this substantially increases execution time.  The NDEBUG preprocessor symbol must not be defined, or else the check()
@@ -189,6 +190,35 @@ public:
             return *this;
         assert(abuts_lt(right));
         return Range::inin(first(), right.last());
+    }
+
+    /** Erase part of a range to return zero, one, or two new ranges.  The possible situations are:
+     * <ol>
+     *   <li>The range to erase can be a superset of this range, in which case this entire range is erased and nothing is
+     *       returned.</li>
+     *   <li>The range to erase can be empty, in which case this range is returned.</li>
+     *   <li>The range to erase does not intersect this range, in which case this range is returned.</li>
+     *   <li>The range to erase can overlap the low end of this range, in which case only the non-overlapping high end of this
+     *       range is returned.</li>
+     *   <li>The range to erase can overlap the high end of this range, in which case only the non-overlapping low end of this
+     *       range is returned.</li>
+     *   <li> The range  to erase overlaps only the middle part of this range, in which case two ranges are returned: the
+     *        non-overlapping low end of this range, and the non-overlapping high end of this range.</li>
+     * </ol>
+     */
+    std::vector<Range> erase(const Range &to_erase) const {
+        std::vector<Range> retval;
+        if (to_erase.empty() || distinct(to_erase)) {
+            retval.push_back(*this);
+        } else if (contained_in(to_erase)) {
+            // void
+        } else {
+            if (begins_before(to_erase))
+                retval.push_back(Range::inin(first(), to_erase.first()-1));
+            if (ends_after(to_erase))
+                retval.push_back(Range::inin(to_erase.last()+1, last()));
+        }
+        return retval;
     }
 
     /** Intersection of two ranges. */
@@ -505,7 +535,7 @@ public:
     RangeMapVoid() {}
 
     template<class Other>
-    RangeMapVoid(const Other&) {}
+    explicit RangeMapVoid(const Other&) {}
 
     /** Remove a value from a RangeMap.  This method is invoked by RangeMap when it is removing a value from the map, such as
      *  during an erase() or clear() operation.  It is not called for the merge() argument after a successful merge. */
@@ -773,7 +803,7 @@ public:
 
     /** Create a new map from an existing map. */
     template<class Other>
-    RangeMap(const Other &other) {
+    explicit RangeMap(const Other &other) {
         for (typename Other::const_iterator ri=other.begin(); ri!=other.end(); ++ri) {
             Range new_range(ri->first);
             Value new_value(ri->second);
@@ -965,12 +995,14 @@ public:
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
+    #undef min
     typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
+    #undef max
     typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
@@ -1138,6 +1170,12 @@ public:
             return false;
         const_iterator found = lower_bound(r.first());
         return found!=end() && r.overlaps(found->first);
+    }
+
+    /** Determines if a range map does not contain any part of the specified range.  Returns false if any part of the range
+     *  @p r is present in the map.  An empty range is always distinct from the map. */
+    bool distinct(const Range &r) const {
+        return !overlaps(r);
     }
 
     /** Determines if two range maps are distinct.  Returns true iff there is no range in this map that overlaps with any range

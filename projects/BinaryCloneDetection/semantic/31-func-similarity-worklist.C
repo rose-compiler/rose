@@ -21,6 +21,10 @@ usage(int exit_status)
               <<"            discarded so that it is recalculated from scratch. The default is to calculate similarity values\n"
               <<"            only for those pairs of functions in the specified relationship for which similarity has not\n"
               <<"            been calculated already.\n"
+              <<"    --exclude-functions=TABLE[.COLUMN]\n"
+              <<"            Do not include any of the mentioned functions in the worklist.  The COLUMN defaults to\n"
+              <<"            \"func_id\" and should contain ID numbers for functions that should be excluded from the\n"
+              <<"            worklist.\n"
               <<"    --relation=ID\n"
               <<"            An integer that identifies which similarity values are being selected.  All similarity values\n"
               <<"            that have the same relation ID form a single similarity relationship.  This allows the database\n"
@@ -40,6 +44,7 @@ static struct Switches {
     Switches()
         : delete_old_data(false), relation_id(0) {}
     bool delete_old_data;
+    std::string exclude_functions_table;
     int relation_id;
 } opt;
 
@@ -64,6 +69,8 @@ main(int argc, char *argv[])
             usage(0);
         } else if (!strcmp(argv[argno], "--delete")) {
             opt.delete_old_data = true;
+        } else if (!strncmp(argv[argno], "--exclude-functions=", 20)) {
+            opt.exclude_functions_table = argv[argno]+20;
         } else if (!strcmp(argv[argno], "--no-delete")) {
             opt.delete_old_data = false;
         } else if (!strncmp(argv[argno], "--relation=", 11)) {
@@ -104,20 +111,34 @@ main(int argc, char *argv[])
     // Delete old data.
     if (opt.delete_old_data)
         tx->statement("delete from semantic_funcsim where relation_id = ?")->bind(0, opt.relation_id)->execute();
+
+    // Get the list of functions that should appear in the worklist.
+    std::cerr <<argv0 <<": obtaining function list\n";
+    std::string stmt1 = "create temporary table tmp_tested_funcs as"
+                        " select distinct fio.func_id"
+                        " from semantic_fio as fio";
+    if (!opt.exclude_functions_table.empty()) {
+        std::vector<std::string> parts = StringUtility::split('.', opt.exclude_functions_table, 2, true);
+        if (parts.size()<2)
+            parts.push_back("func_id");
+        stmt1 += " left join " + parts.front() + " as exclude"
+                 " on fio.func_id = exclude." + parts.back() +
+                 " where exclude." + parts.back() + " is null";
+    }
+    tx->execute(stmt1);
     
     // Create pairs of function IDs for those functions which have been tested and for which no similarity measurement has been
     // computed.  (FIXME: We should probably recompute similarity that might have changed due to rerunning tests or running the
     // same function but with more input groups. [Robb P. Matzke 2013-06-19])
     std::cerr <<argv0 <<": creating work list\n";
-    tx->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
-    SqlDatabase::StatementPtr stmt = tx->statement("select distinct f1.func_id as func1_id, f2.func_id as func2_id"
-                                                   " from tmp_tested_funcs as f1"
-                                                   " join tmp_tested_funcs as f2 on f1.func_id < f2.func_id"
-                                                   " except"
-                                                   " select func1_id, func2_id from semantic_funcsim as sim"
-                                                   " where sim.relation_id = ?");
-    stmt->bind(0, opt.relation_id);
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row)
+    SqlDatabase::StatementPtr stmt2 = tx->statement("select distinct f1.func_id as func1_id, f2.func_id as func2_id"
+                                                    " from tmp_tested_funcs as f1"
+                                                    " join tmp_tested_funcs as f2 on f1.func_id < f2.func_id"
+                                                    " except"
+                                                    " select func1_id, func2_id from semantic_funcsim as sim"
+                                                    " where sim.relation_id = ?");
+    stmt2->bind(0, opt.relation_id);
+    for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row)
         std::cout <<row.get<int>(0) <<"\t" <<row.get<int>(1) <<"\n";
 
     if (cmd_id>=0)

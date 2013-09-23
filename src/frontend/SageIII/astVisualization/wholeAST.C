@@ -726,10 +726,6 @@ CustomMemoryPoolDOTGeneration::~CustomMemoryPoolDOTGeneration()
    }
 #endif
 
-CustomMemoryPoolDOTGeneration::CustomMemoryPoolDOTGeneration()
-{
-  internal_init (NULL);
-}
 CustomMemoryPoolDOTGeneration::CustomMemoryPoolDOTGeneration(s_Filter_Flags* f /*= NULL*/)
 {
   internal_init (f);
@@ -1465,8 +1461,24 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                case V_SgNamespaceDefinitionStatement:
                   {
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+
+                    SgNamespaceDefinitionStatement* ns = isSgNamespaceDefinitionStatement(node);
+                    ROSE_ASSERT(ns != NULL);
+
+                    size_t index = ns->namespaceIndex() + 1;
+                    size_t count = ns->numberOfNamespaceDefinitions();
+
+                    if (ns->get_isUnionOfReentrantNamespaceDefinitions() == false)
+                       {
+                         labelWithSourceCode = "\\n  " +  StringUtility::numberToString(index) + " of " +  StringUtility::numberToString(count) + "  ";
+                       }
+                      else
+                       {
+                         labelWithSourceCode = "\\n  union of " +  StringUtility::numberToString(count) + " reentrant namespace definitions ";
+                       }
+
+                    labelWithSourceCode += "\\n  " +  StringUtility::numberToString(node) + "  ";
                     break;
                   }
 
@@ -1548,6 +1560,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              {
             // DQ (6/5/2011): Output if this is an implicit (compiler generated) or explicit case (non-compiler generated).
                ROSE_ASSERT(castExp->get_startOfConstruct() != NULL);
+            // DQ (7/24/2013): Added support to have more debugging information.
+               labelWithSourceCode += string("\\n castContainsBaseTypeDefiningDeclaration: ") + ((castExp->get_castContainsBaseTypeDefiningDeclaration() == true) ? "true" : "false") + "  ";
                labelWithSourceCode += string("\\n cast is: ") + ((castExp->get_startOfConstruct()->isCompilerGenerated() == true) ? "implicit" : "explicit") + "  ";
              }
 
@@ -1556,6 +1570,35 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           if (actualArgumentExpression != NULL)
              {
                labelWithSourceCode += string("\\n name = ") + actualArgumentExpression->get_argument_name() + "  ";
+             }
+
+       // DQ (4/8/2013): Added support to output if this function is using operator syntax.
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(node);
+          if (functionCallExp != NULL)
+             {
+            // DQ (4/8/2013): Added support to output if this function is using operator syntax.
+               labelWithSourceCode += string("\\n call uses operator syntax: ") + ((functionCallExp->get_uses_operator_syntax() == true) ? "true" : "false") + "  ";
+             }
+
+       // DQ (4/26/2013): Added support for marking as compiler generated.
+          SgExpression* expression = isSgExpression(node);
+          ROSE_ASSERT(expression != NULL);
+          if (expression->get_file_info()->isCompilerGenerated() == true)
+             {
+               labelWithSourceCode += string("\\n compiler generated ");
+             }
+
+          if (expression->get_file_info()->isDefaultArgument() == true)
+             {
+               labelWithSourceCode += string("\\n default argument ");
+             }
+
+          if (expression->get_file_info()->isImplicitCast() == true)
+             {
+               labelWithSourceCode += string("\\n implicit cast ");
+
+            // Make sure this is a cast sine otherwise this setting makes no sense.
+               ROSE_ASSERT(isSgCastExp(node) != NULL);
              }
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
@@ -1590,8 +1633,31 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                labelWithSourceCode += string("\\n  name = ") + templateType->get_name().str() + "  " + "position = " + StringUtility::numberToString(templateType->get_template_parameter_position()) + " ";
              }
 
+          SgModifierType* modifierType = isSgModifierType(node);
+          if (modifierType != NULL)
+             {
+#if 0
+               printf ("In CustomMemoryPoolDOTGeneration::defaultColorFilter(): settings = %s \n",modifierType->get_typeModifier().displayString().c_str());
+#endif
+#if 0
+            // DQ (5/4/2013): This makes the graph nodes too large so use it only as required.
+               labelWithSourceCode += string("\\n  settings = ") + modifierType->get_typeModifier().displayString() + "  ";
+#endif
+#if 0
+               if (modifierType->get_frontend_type_reference() != NULL)
+                  {
+                    labelWithSourceCode += string("\\n  frontend_type_reference() = ") + (modifierType->get_frontend_type_reference() != NULL ? "true" : "false") + "  ";
+                  }
+#else
+               labelWithSourceCode += string("\\n    frontend_type_reference() = ") + (modifierType->get_frontend_type_reference() != NULL ? "true" : "false") + "    ";
+#endif
+             }
+
        // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
           labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
+
+       // DQ (5/4/2013): Added to make the formatting of the type information better in the graph node.
+          labelWithSourceCode += string("\\n   ");
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);

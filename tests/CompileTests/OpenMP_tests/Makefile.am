@@ -19,6 +19,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi.c \
 	alignment.c \
 	array_init.c \
+	array_init_2.c \
 	atomic.c \
 	atoms-2.c \
 	barrier.c \
@@ -41,6 +42,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	falsesharing.c \
 	firstprivate.c \
 	firstPrivateArray.c \
+	firstPrivateArray_2.c \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \
@@ -77,6 +79,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor-decremental.c \
 	ompfor-static.c \
 	ompGetNumThreads.c \
+	omp_sections.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
@@ -111,8 +114,11 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	staticChunk.c \
 	subteam2.c \
 	subteam.c \
+	task_array.c \
+	task_array2.c \
 	task_largenumber.c \
 	task_orphaned.c \
+	task_outlining.c \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c \
@@ -126,13 +132,21 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate.c \
 	threadProcessor.c \
 	upperCase.c \
-	variables.c
+	variables.c 
+
+C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        axpy_ompacc.c \
+        axpy_ompacc2.c \
+	matrixmultiply-ompacc.c \
+	jacobi-ompacc.c \
+	jacobi-ompacc-opt1.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
 	memberFunction.cpp \
+	memberFunction2.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \
@@ -155,6 +169,8 @@ PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
+C_OMP_ACC_TEST_Objects = $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
@@ -167,6 +183,7 @@ check-cxx:$(PASSING_CXX_TEST_Objects)
 ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
+$(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # Liao 11/18/2009
@@ -175,12 +192,30 @@ $(TESTCODE_CURRENTLY_FAILING)
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
+macroIds.o: $(srcdir)/macroIds.c parseOmp
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
+
+# test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
+$(C_OMP_ACC_TEST_Objects): %.o:$(srcdir)/%.c parseOmp
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $<
+
+#axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
+#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
+##	./parseOmp -rose:openmp:parse_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
+#matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
+#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
+#jacobi-ompacc.o:$(srcdir)/jacobi-ompacc.c parseOmp
+#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc.c
+#
+#jacobi-ompacc-opt1.o:$(srcdir)/jacobi-ompacc-opt1.c parseOmp
+#	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc-opt1.c
+	
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@$(MAKE) bonds-2.o
+	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
@@ -192,7 +227,8 @@ check-local:
 	@echo "***********************************************************************************************************"
 endif
 
-EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c
+EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c \
+			 macroIds.c macroIds.h macroIdsDef.h
 
 clean-local:
 	rm -f *.o rose_*.* *.out

@@ -42,18 +42,18 @@ namespace PartialSymbolicSemantics {
 extern uint64_t name_counter;
 
 /*******************************************************************************************************************************
- *                                      Print Helper
+ *                                      Print Formatter
  *******************************************************************************************************************************/
 
-/** Print helper to rename variables on the fly.  When this print helper is used, named variables are renamed using lower
+/** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using lower
  *  numbers. This is useful for human-readable output because variable names tend to get very large (like "v904885611"). */
-class RenameMap: public BaseSemantics::PrintHelper {
+class Formatter: public BaseSemantics::Formatter {
 protected:
     typedef std::map<uint64_t, uint64_t> Map;
     Map renames;
     size_t next_name;
 public:
-    RenameMap(): next_name(1) {}
+    Formatter(): next_name(1) {}
     uint64_t rename(uint64_t orig_name);
 };
 
@@ -72,8 +72,9 @@ public:
     uint64_t offset;            /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
     bool negate;                /**< Switch between name+offset and (-name)+offset; should be false for constants. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // Constructors are protected because values are reference counted.
     explicit SValue(size_t nbits)
         : BaseSemantics::SValue(nbits), name(++name_counter), offset(0), negate(false) {}
 
@@ -87,12 +88,55 @@ protected:
         this->offset &= IntegerOps::genMask<uint64_t>(nbits);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Create a prototypical value. Prototypical values are only used for their virtual constructors. */
+    /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
         return SValuePtr(new SValue(1));
     }
 
+    /** Instantiate a new undefined value of specified width. */
+    static SValuePtr instance(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
+    }
+
+    /** Instantiate a new concrete value. */
+    static SValuePtr instance(size_t nbits, uint64_t value) {
+        return SValuePtr(new SValue(nbits, value));
+    }
+    
+    /** Insantiate a new value with all the necessary parts. */
+    static SValuePtr instance(size_t nbits, uint64_t name, uint64_t offset, bool negate) {
+        return SValuePtr(new SValue(nbits, name, offset, negate));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
+        return instance(nbits);
+    }
+
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
+        return instance(nbits, value);
+    }
+
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
+        SValuePtr retval(new SValue(*this));
+        if (new_width!=0 && new_width!=retval->get_width())
+            retval->set_width(new_width);
+        return retval;
+    }
+    
+    /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
+    virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
+        return instance(nbits, name, offset, negate);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
     /** Promote a base value to a PartialSymbolicSemantics value. The value @p v must have a
      *  PartialSymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
@@ -101,26 +145,9 @@ public:
         return retval;
     }
 
-    // Virtual constructors inherited from base class
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nbits));
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nbits, value));
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
-            retval->set_width(new_width);
-        return retval;
-    }
-
-    /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
-    virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
-        return SValuePtr(new SValue(nbits, name, offset, negate));
-    }
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Other stuff we inherited from the super class
+public:
     virtual void set_width(size_t nbits) /*override*/ {
         BaseSemantics::SValue::set_width(nbits);
         offset &= IntegerOps::genMask<uint64_t>(nbits);
@@ -129,7 +156,7 @@ public:
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
     
     virtual bool is_number() const /*override*/ {
         return 0==name;
@@ -160,6 +187,9 @@ typedef boost::shared_ptr<class State> StatePtr;
 /** Represents the entire state of the machine. This state expects to use a subclass of BaseSemantics::MemoryCellList as
  *  its memory state, and does not expect that MemoryCellList to be byte-restricted. */
 class State: public BaseSemantics::State {
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
     State(const BaseSemantics::RegisterStatePtr &registers,
           const BaseSemantics::MemoryStatePtr &memory)
@@ -177,22 +207,48 @@ protected:
 
     State(const State &other): BaseSemantics::State(other) {}
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor. */
+    /** Instantiates a new instance of memory state with specified register and memory states. */
     static StatePtr instance(const BaseSemantics::RegisterStatePtr &registers,
                              const BaseSemantics::MemoryStatePtr &memory) {
         return StatePtr(new State(registers, memory));
     }
 
-    /** Virtual allocating constructor. */
+    /** Instantiates a new copy of an existing state. */
+    static StatePtr instance(const StatePtr &other) {
+        return StatePtr(new State(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
                                            const BaseSemantics::MemoryStatePtr &memory) const /*override*/ {
         return instance(registers, memory);
     }
 
+    virtual BaseSemantics::StatePtr clone() const /*override*/ {
+        StatePtr self = promote(boost::const_pointer_cast<BaseSemantics::State>(shared_from_this()));
+        return instance(self);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    static StatePtr promote(const BaseSemantics::StatePtr &x) {
+        StatePtr retval = boost::dynamic_pointer_cast<State>(x);
+        assert(x!=NULL);
+        return retval;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
+public:
     /** Print info about how registers differ.  If a RenameMap is specified then named values will be renamed to
      *  have a shorter name.  */
-    virtual void print_diff_registers(std::ostream &o, const StatePtr &other_state, RenameMap *rmap=NULL) const;
+    virtual void print_diff_registers(std::ostream&, const StatePtr &other_state, Formatter&) const;
 
     /** Tests registers of two states for equality. */
     virtual bool equal_registers(const StatePtr &other) const;
@@ -215,8 +271,9 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     MemoryMap *map;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // Protected constructors, same as for the base class
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
         set_name("PartialSymbolic");
@@ -226,30 +283,34 @@ protected:
         set_name("PartialSymbolic");
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
-     * that are defaults for PartialSymbolicSemantics. */
+    /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
+     * PartialSymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
-        memory->set_byte_restricted(false);
+        memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
-    
 
-    /** Static allocating constructor. */
+    /** Instantiates a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    /** Static allocating constructor. */
+    /** Instantiates a new RiscOperators with specified state. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
@@ -260,6 +321,19 @@ public:
         return instance(state, solver);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Run-time promotion of a base RiscOperators pointer to partial symbolic operators. This is a checked conversion--it will
+     *  fail if @p from does not point to a PartialSymbolicSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
 public:
     /** A memory map can be used to provide default values for memory cells that are read before being written. Usually one
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
@@ -269,9 +343,10 @@ public:
     void set_memory_map(MemoryMap *m) { map = m; }
     /** @} */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Risc operators inherited
 public:
-    virtual void interrupt(uint8_t inum) /*override*/;
-    virtual void sysenter() /*override*/;
+    virtual void interrupt(int majr, int minr) /*override*/;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
@@ -319,11 +394,11 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,
                                                 size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg,
+    virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) /*override*/;
@@ -729,8 +804,6 @@ protected:
             }
 #endif
 
-std::ostream& operator<<(std::ostream &o, const SValue &e);
-    
         } /*namespace*/
     } /*namespace*/
 } /*namespace*/

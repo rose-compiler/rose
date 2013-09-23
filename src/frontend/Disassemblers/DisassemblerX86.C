@@ -163,11 +163,9 @@ DisassemblerX86::getQWord()
 
 SgAsmExpression *
 DisassemblerX86::currentDataSegment() const {
-    if (segOverride == x86_segreg_none) {
-        return makeSegmentRegister(x86_segreg_ds, insnSize == x86_insnsize_64);
-    } else {
-        return makeSegmentRegister(segOverride, insnSize == x86_insnsize_64);
-    }
+    if (segOverride != x86_segreg_none)
+        return makeSegmentRegister(segOverride, insnSize==x86_insnsize_64);
+    return makeSegmentRegister(x86_segreg_ds, insnSize==x86_insnsize_64);
 }
 
 X86InstructionSize
@@ -316,7 +314,8 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
     insn->set_lockPrefix(lock);
     insn->set_repeatPrefix(repeatPrefix);
     insn->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
-    insn->set_segmentOverride(segOverride);
+    if (segOverride != x86_segreg_none)
+        insn->set_segmentOverride(segOverride);
     if (branchPredictionEnabled)
         insn->set_branchPrediction(branchPrediction);
 

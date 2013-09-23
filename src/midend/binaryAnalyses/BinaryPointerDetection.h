@@ -2,7 +2,7 @@
 #define ROSE_BinaryPointerDetection_H
 
 #include "SymbolicSemantics.h"
-#include "WorkList.h"
+#include "WorkLists.h"
 #include "YicesSolver.h"
 
 // documented elsewhere

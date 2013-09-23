@@ -24,6 +24,15 @@ int main( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 
+#if 0
+  // DQ (8/20/2013): Added initial support for IR node specific DOT graphs.
+  // std::vector<VariantT> nodeKindList = {V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+  // VariantT initializationArray[3] = {V_SgInitializedName,V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+     VariantT initializationArray[3] = {V_SgDeclarationStatement,V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+     std::vector<VariantT> nodeKindList(initializationArray, initializationArray+1);
+     intermediateRepresentationNodeGraph(project,nodeKindList);
+#endif
+
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
@@ -31,7 +40,10 @@ int main( int argc, char * argv[] )
   // compiler, only backend error code is reported.
   // return backend(project);
      int exit_status = backend(project);
-     
+
+  // DQ (6/30/2013): Compute the elapsed time to this point.
+     timer.endTimer();
+
   // Output any saved performance data (see ROSE/src/astDiagnostics/AstPerformance.h)
   // AstPerformance::generateReportToFile(project->get_file(0).get_sourceFileNameWithPath(),project->get_compilationPerformanceFile());
   // AstPerformance::generateReportToFile(project);

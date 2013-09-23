@@ -16,32 +16,68 @@ std::ostream& operator<<(std::ostream &o, const Exception &x) {
 }
 
 std::ostream& operator<<(std::ostream &o, const SValue &x) {
-    x.print(o, NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const SValue::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const MemoryCell &x) {
-    x.print(o, NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const MemoryCell::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const MemoryState &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const MemoryState::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const RegisterState &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const RegisterState::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const State &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const State::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const RiscOperators &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
@@ -68,30 +104,51 @@ Allocator SValue::allocator;
  *                                      RegisterStateGeneric
  *******************************************************************************************************************************/
 
-RegisterStatePtr
-RegisterStateGeneric::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
-{
-    return RegisterStatePtr(new RegisterStateGeneric(protoval, regdict));
-}
-
-RegisterStatePtr
-RegisterStateGeneric::clone() const
-{
-    return RegisterStatePtr(new RegisterStateGeneric(*this));
-}
-
 void
 RegisterStateGeneric::clear()
 {
     registers.clear();
-    init_to_zero = false;
 }
 
 void
 RegisterStateGeneric::zero()
 {
-    registers.clear();
-    init_to_zero = true;
+    // We're initializing with a concrete value, so it really doesn't matter whether we initialize large registers
+    // or small registers.  Constant folding will adjust things as necessary when we start reading registers.
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    initialize_nonoverlapping(regs, true);
+}
+
+void
+RegisterStateGeneric::initialize_large()
+{
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    initialize_nonoverlapping(regs, false);
+}
+
+void
+RegisterStateGeneric::initialize_small()
+{
+    std::vector<RegisterDescriptor> regs = regdict->get_smallest_registers();
+    initialize_nonoverlapping(regs, false);
+}
+
+void
+RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescriptor> &regs, bool initialize_to_zero)
+{
+    clear();
+    for (size_t i=0; i<regs.size(); ++i) {
+        std::string name = regdict->lookup(regs[i]);
+        SValuePtr val;
+        if (initialize_to_zero) {
+            val = get_protoval()->number_(regs[i].get_nbits(), 0);
+        } else {
+            val = get_protoval()->undefined_(regs[i].get_nbits());
+            if (!name.empty())
+                val->set_comment(name+"_0");
+        }
+        registers[RegStore(regs[i])].push_back(RegPair(regs[i], val));
+    }
 }
 
 static bool
@@ -112,10 +169,11 @@ RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegP
         pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
     }
     if (overlap.last()+1 < rp.desc.get_offset() + rp.desc.get_nbits()) { // MSB part of existing reg does not overlap
-        size_t nonoverlap_first = overlap.last() + 1;
+        size_t nonoverlap_first = overlap.last() + 1; // bit offset for register
         size_t nonoverlap_nbits = (rp.desc.get_offset() + rp.desc.get_nbits()) - (overlap.last() + 1);
         RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(), nonoverlap_first, nonoverlap_nbits);
-        SValuePtr nonoverlap_val = ops->extract(rp.value, nonoverlap_first-rp.desc.get_offset(), nonoverlap_nbits);
+        size_t lo_bit = nonoverlap_first - rp.desc.get_offset(); // lo bit of value to extract
+        SValuePtr nonoverlap_val = ops->extract(rp.value, lo_bit, lo_bit+nonoverlap_nbits);
         pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
     }
 }
@@ -127,28 +185,43 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     Registers::iterator ri = registers.find(reg);
     if (ri==registers.end()) {
         size_t nbits = reg.get_nbits();
-        SValuePtr newval = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+        SValuePtr newval = get_protoval()->undefined_(nbits);
+        std::string regname = regdict->lookup(reg);
+        if (!regname.empty())
+            newval->set_comment(regname + "_0");
         registers[reg].push_back(RegPair(reg, newval));
         return newval;
     }
 
     // Get a list of all the (parts of) registers that might overlap with this register.
-    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    Extent need_extent(reg.get_offset(), reg.get_nbits());
     std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
     std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
-        if (overlap==reg_extent) {
-            return rvi->value; // found exact match; no other overlaps are possible.
-        } else if (!overlap.empty()) {
-            SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-rvi->desc.get_offset(), overlap.size());
-            overlaps[overlap.first()] = overlap_val;
+        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
+        if (need_extent==have_extent) {
+            // exact match; no need to traverse further because a RegisterStateGeneric never stores overlapping values
+            assert(nonoverlaps.empty());
+            return rvi->value;
+        } else {
+            Extent overlap = need_extent.intersect(have_extent);
+            if (overlap==need_extent) {
+                // The stored register contains all the bits we need to read, and then some.  Extract only what we need.
+                // No need to traverse further because we never store overlapping values.
+                assert(nonoverlaps.empty());
+                size_t lo_bit = need_extent.first() - have_extent.first();
+                return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
+            } else if (!overlap.empty()) {
+                SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
+                overlaps[overlap.first()] = overlap_val;
 
-            // If any part of the existing register is not represented by the register being read, then we need to save that part.
-            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+                // If any part of the existing register is not represented by the register being read, then we need to save
+                // that part.
+                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
 
-            // Mark the overlapping register by setting it to null so we can remove it later.
-            rvi->value = SValuePtr();
+                // Mark the overlapping register by setting it to null so we can remove it later.
+                rvi->value = SValuePtr();
+            }
         }
     }
 
@@ -167,7 +240,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             size_t next_offset = offset+1;
             while (next_offset<reg.get_nbits() && overlaps[next_offset]==NULL) ++next_offset;
             size_t nbits = next_offset - offset;
-            part = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+            part = get_protoval()->undefined_(nbits);
         }
         retval = retval==NULL ? part : ops->concat(part, retval);
         offset += part->get_width();
@@ -191,15 +264,20 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
     // need to eventually add the non-overlapping part back into the list.
     RegPairs nonoverlaps; // the non-overlapping parts of overlapping registers
-    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    Extent need_extent(reg.get_offset(), reg.get_nbits());
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
-        if (overlap==reg_extent) {
-            rvi->value = value; // found exact match; no other overlaps are possible
+        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
+        if (need_extent==have_extent) {
+            // found exact match. No need to traverse further because a RegisterStateGeneric never stores overlapping values.
+            assert(nonoverlaps.empty());
+            rvi->value = value;
             return;
-        } else if (!overlap.empty()) {
-            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+        } else {
+            Extent overlap = need_extent.intersect(have_extent);
+            if (!overlap.empty()) {
+                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+                rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+            }
         }
     }
 
@@ -211,30 +289,118 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     ri->second.push_back(RegPair(reg, value));
 }
 
-void
-RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const
+RegisterStateGeneric::RegPairs
+RegisterStateGeneric::get_stored_registers() const
 {
-    const RegisterDictionary *regdict = ph ? ph->get_register_dictionary() : NULL;
+    RegPairs retval;
+    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri)
+        retval.insert(retval.end(), ri->second.begin(), ri->second.end());
+    return retval;
+}
+
+void
+RegisterStateGeneric::traverse(Visitor &visitor)
+{
+    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::iterator rpi=ri->second.begin(); rpi!=ri->second.end(); ++rpi) {
+            SValuePtr newval = (visitor)(rpi->desc, rpi->value);
+            if (newval!=NULL) {
+                assert(newval->get_width()==rpi->desc.get_nbits());
+                rpi->value = newval;
+            }
+        }
+    }
+}
+
+void
+RegisterStateGeneric::deep_copy_values()
+{
+    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi)
+            pi->value = pi->value->copy();
+    }
+}
+
+bool
+RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
+{
+    Extent want(desc.get_offset(), desc.get_nbits());
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            const RegisterDescriptor &desc = pi->desc;
+            Extent have(desc.get_offset(), desc.get_nbits());
+            if (want.overlaps(have))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool
+RegisterStateGeneric::is_wholly_stored(const RegisterDescriptor &desc) const
+{
+    Extent want(desc.get_offset(), desc.get_nbits());
+    ExtentMap have = stored_parts(desc);
+    return 1==have.nranges() && have.minmax()==want;
+}
+
+bool
+RegisterStateGeneric::is_exactly_stored(const RegisterDescriptor &desc) const
+{
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            if (desc==pi->desc)
+                return true;
+        }
+    }
+    return false;
+}
+
+ExtentMap
+RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
+{
+    ExtentMap retval;
+    Extent want(desc.get_offset(), desc.get_nbits());
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            const RegisterDescriptor &desc = pi->desc;
+            Extent have(desc.get_offset(), desc.get_nbits());
+            retval.insert(want.intersect(have));
+        }
+    }
+    return retval;
+}
+
+void
+RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
+{
+    const RegisterDictionary *regdict = fmt.get_register_dictionary();
     if (!regdict)
         regdict = get_register_dictionary();
     RegisterNames regnames(regdict);
 
-    // First pass is to get the maximum length of the register names.
+    // First pass is to get the maximum length of the register names; second pass prints
+    FormatRestorer oflags(stream);
     size_t maxlen = 6; // use at least this many columns even if register names are short.
-    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-            maxlen = std::max(maxlen, regnames(rvi->desc).size());
-        }
-    }
-
-    // Second pass actually prints stuff
-    FormatRestorer oflags(o);
-    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-            std::string name = regnames(rvi->desc);
-            o <<prefix <<std::setw(maxlen) <<std::left <<name <<" = ";
-            oflags.restore();
-            o <<*(rvi->value) <<"\n";
+    for (int i=0; i<2; ++i) {
+        for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+            for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+                std::string regname = regnames(rvi->desc);
+                if (!fmt.get_suppress_initial_values() || rvi->value->get_comment().empty() ||
+                    0!=rvi->value->get_comment().compare(regname+"_0")) {
+                    if (0==i) {
+                        maxlen = std::max(maxlen, regname.size());
+                    } else {
+                        stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname <<" = ";
+                        oflags.restore();
+                        rvi->value->print(stream, fmt);
+                        stream <<"\n";
+                    }
+                }
+            }
         }
     }
 }
@@ -243,18 +409,6 @@ RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelp
 /*******************************************************************************************************************************
  *                                      RegisterStateX86
  *******************************************************************************************************************************/
-
-RegisterStatePtr
-RegisterStateX86::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
-{
-    return RegisterStatePtr(new RegisterStateX86(protoval, regdict));
-}
-
-RegisterStatePtr
-RegisterStateX86::clone() const
-{
-    return RegisterStatePtr(new RegisterStateX86(*this));
-}
 
 void
 RegisterStateX86::clear()
@@ -409,7 +563,7 @@ RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePt
         towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
     if (reg.get_offset() + reg.get_nbits()<32)
         towrite = ops->concat(towrite, ops->extract(gpr[reg.get_minor()], reg.get_offset()+reg.get_nbits(), 32));
-    assert(towrite->get_width()==reg.get_nbits());
+    assert(towrite->get_width()==32);
     gpr[reg.get_minor()] = towrite;
 }
 
@@ -467,27 +621,71 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
-RegisterStateX86::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const 
+RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
 {
-    FormatRestorer save_fmt(o);
-    for (size_t i=0; i<n_gprs; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
-        gpr[i]->print(o, ph);
-        o <<" }\n";
+    const RegisterDictionary *regdict = fmt.get_register_dictionary();
+    if (!regdict)
+        regdict = get_register_dictionary();
+    RegisterNames regnames(regdict);
+
+    struct ShouldShow {
+        Formatter &fmt;
+        ShouldShow(Formatter &fmt): fmt(fmt) {}
+        bool operator()(const std::string &regname, const BaseSemantics::SValuePtr &value) {
+            return (!fmt.get_suppress_initial_values() || value->get_comment().empty() ||
+                    0!=value->get_comment().compare(regname+"_0"));
+        }
+    } should_show(fmt);
+
+    // Two passes: first figure out column widths for the register names, then print
+    size_t namewidth = 7;
+    FormatRestorer save_fmt(stream);
+    for (int pass=0; pass<2; ++pass) {
+        for (size_t i=0; i<n_gprs; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_gpr, i, 0, 32));
+            if (should_show(regname, gpr[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*gpr[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_segregs; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_segment, i, 0, 16));
+            if (should_show(regname, segreg[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*segreg[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_flags; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, 0, i, 1)); // flags are all part of minor #0
+            if (should_show(regname, flag[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*flag[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_ip, 0, 0, 32));
+            if (should_show(regname, ip)) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*ip+fmt) <<" }\n";
+                }
+            }
+        }
     }
-    for (size_t i=0; i<n_segregs; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
-        segreg[i]->print(o, ph);
-        o <<" }\n";
-    }
-    for (size_t i=0; i<n_flags; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
-        flag[i]->print(o, ph);
-        o <<" }\n";
-    }
-    o <<prefix <<std::setw(7) <<std::left <<"ip" <<" = { ";
-    ip->print(o, ph);
-    o <<" }\n";
 }
 
 /*******************************************************************************************************************************
@@ -568,6 +766,12 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
     return false;
 }
 
+void
+MemoryCell::print(std::ostream &stream, Formatter &fmt) const
+{
+    stream <<"addr=" <<(*address+fmt) <<" value=" <<(*value+fmt);
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits, RiscOperators *ops)
 {
@@ -583,7 +787,13 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
         cells.push_front(protocell->create(addr, dflt));
     } else {
         retval = found.front()->get_value();
+        if (retval->get_width()!=nbits) {
+            assert(!byte_restricted); // can't happen if memory state stores only byte values
+            retval = ops->unsignedExtend(retval, nbits); // extend or truncate
+        }
     }
+
+    assert(retval->get_width()==nbits);
     return retval;
 }
 
@@ -596,13 +806,10 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 }
 
 void
-MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *helper/*=NULL*/) const
+MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 {
-    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        o <<prefix;
-        (*ci)->print(o, helper);
-        o <<"\n";
-    }
+    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)
+        stream <<fmt.get_line_prefix() <<(**ci+fmt) <<"\n";
 }
 
 MemoryCellList::CellList
@@ -619,6 +826,25 @@ MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOpe
         }
     }
     return retval;
+}
+
+void
+MemoryCellList::traverse(Visitor &visitor)
+{
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci)
+        (visitor)(*ci);
+}
+
+/*******************************************************************************************************************************
+ *                                      State
+ *******************************************************************************************************************************/
+
+void
+State::print(std::ostream &stream, Formatter &fmt) const
+{
+    std::string prefix = fmt.get_line_prefix();
+    Indent indent(fmt);
+    stream <<prefix <<"registers:\n" <<(*registers+fmt) <<prefix <<"memory:\n" <<(*memory+fmt);
 }
 
 /*******************************************************************************************************************************
@@ -700,6 +926,105 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
     }
     return *reg;
 }
+
+SValuePtr
+Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
+{
+    BaseSemantics::SValuePtr retval;
+    if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        retval = effectiveAddress(mre->get_address(), nbits);
+    } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        retval = operators->readRegister(rre->get_descriptor());
+    } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        if (0==nbits)
+            nbits = std::max(lhs->get_width(), rhs->get_width());
+        if (lhs->get_width() < nbits)
+            lhs = operators->signExtend(lhs, nbits);
+        if (rhs->get_width() < nbits)
+            rhs = operators->signExtend(rhs, nbits);
+        retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->unsignedMultiply(lhs, rhs);
+    } else if (SgAsmByteValueExpression *val = isSgAsmByteValueExpression(e)) {
+        retval = operators->number_(8, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmWordValueExpression *val = isSgAsmWordValueExpression(e)) {
+        retval = operators->number_(16, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmDoubleWordValueExpression *val = isSgAsmDoubleWordValueExpression(e)) {
+        retval = operators->number_(32, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmQuadWordValueExpression *val = isSgAsmQuadWordValueExpression(e)) {
+        retval = operators->number_(64, SageInterface::getAsmSignedConstant(val));
+    }
+
+    assert(retval!=NULL);
+    if (nbits!=0) {
+        if (retval->get_width() < nbits) {
+            retval = operators->signExtend(retval, nbits);
+        } else if (retval->get_width() > nbits) {
+            retval = operators->extract(retval, 0, nbits);
+        }
+    }
+
+    return retval;
+}
+
+RegisterDescriptor
+Dispatcher::segmentRegister(SgAsmMemoryReferenceExpression *mre)
+{
+    if (mre!=NULL && mre->get_segment()!=NULL) {
+        if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(mre->get_segment())) {
+            return rre->get_descriptor();
+        }
+    }
+    return RegisterDescriptor();
+}
+
+void
+Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
+{
+    assert(e!=NULL && value!=NULL);
+    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        operators->writeRegister(rre->get_descriptor(), value);
+    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
+    } else {
+        assert(!"not implemented");
+        abort();
+    }
+}
+
+SValuePtr
+Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
+{
+    assert(e!=NULL);
+    BaseSemantics::SValuePtr retval;
+    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        retval = operators->readRegister(rre->get_descriptor());
+    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        retval = operators->readMemory(segmentRegister(mre), addr, operators->boolean_(true), value_nbits);
+    } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
+        uint64_t val = SageInterface::getAsmSignedConstant(ve);
+        retval = operators->number_(value_nbits, val);
+    } else {
+        assert(!"not implemented");
+        abort();
+    }
+
+    // Make sure the return value is the requested width. The unsignedExtend() can expand or shrink values.
+    assert(retval!=NULL);
+    if (retval->get_width()!=value_nbits)
+        retval = operators->unsignedExtend(retval, value_nbits);
+    return retval;
+}
+
+
+    
+    
 
 } // namespace
 } // namespace

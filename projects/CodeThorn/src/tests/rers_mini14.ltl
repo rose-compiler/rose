@@ -1,0 +1,15 @@
+(( F oX) | F oU )
+ (! (F oX) | (! oU U (oZ | oX)))
+
+ (G (! ((iC & ! oV) & (F oV)) | (! oZ U oV)))
+ output Z does never occur between input C and output V
+ ----------------------------------------
+  
+ ----------------------------------------
+ (! (F oX) | (! oU U (oZ | oX)))
+ output Z precedes output U before output X
+ ----------------------------------------
+  
+ (G (! (oU & ! iD) | (! iD U (oV & ! iD))))
+ output V occurs after output U until input D
+ ----------------------------------------

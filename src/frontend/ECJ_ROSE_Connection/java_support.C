@@ -1151,7 +1151,10 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && i != astJavaScopeStack.end(); i++)  {
         symbol = (isSgClassDefinition(*i)
                       ? lookupSimpleNameVariableInClass(name, (SgClassDefinition *) (*i))
-                      : (*i) -> lookup_symbol(name));
+                   // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
+                   // lookup_variable_symbol() should have been called in place of the more general lookup_symbol() function.
+                   // : (*i) -> lookup_symbol(name));
+                      : (*i) -> lookup_variable_symbol(name));
         if ((*i) == ::globalScope)
             break;
     }
@@ -1176,7 +1179,9 @@ SgJavaLabelSymbol *lookupLabelByName(const SgName &name) {
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgJavaLabelSymbol(symbol))) && i != astJavaScopeStack.end(); i++)  {
         if (isSgClassDefinition(*i))
             break;
-        symbol = (*i) -> lookup_symbol(name);
+     // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
+     // symbol = (*i) -> lookup_symbol(name);
+        symbol = (*i) -> lookup_symbol(name,NULL,NULL);
         if ((*i) == ::globalScope)
             break;
     }
@@ -1342,8 +1347,11 @@ SgClassSymbol *lookupSymbolFromQualifiedName(string className) {
         if (SgProject::get_verbose() > 2)
             printf ("Lookup SgSymbol for name = %s in scope = %p = %s = %s \n", (*i).str(), previousClassScope, previousClassScope -> class_name().c_str(), SageInterface::get_name(previousClassScope).c_str());
 
-        SgSymbol *tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i, previousClassScope);
-        // ROSE_ASSERT(tmpSymbol != NULL);
+     // DQ (8/16/2013): The API for this function has changed slightly to address added requirements in C++ to handle template parameters and template arguments.
+     // SgSymbol *tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i, previousClassScope);
+        SgSymbol *tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i, previousClassScope,NULL,NULL);
+
+     // ROSE_ASSERT(tmpSymbol != NULL);
         if (tmpSymbol != NULL) {
             if (SgProject::get_verbose() > 2)
                 printf ("Found a symbol tmpSymbol = %s = %s \n", tmpSymbol -> class_name().c_str(), tmpSymbol -> get_name().str());
@@ -1397,7 +1405,7 @@ SgClassSymbol *lookupSymbolFromQualifiedName(string className) {
                     if (functionSymbol != NULL) {
                         // printf ("This could/should the constructor for the class we want, we just want the class... \n");
 
-                        // Get the class directly since it is likely a parent class of the current scope.
+                     // Get the class directly since it is likely a parent class of the current scope.
                         classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i, previousClassScope);
                         ROSE_ASSERT(classSymbol != NULL);
                     }

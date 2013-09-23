@@ -235,8 +235,8 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
 #endif
 }
 
-/** Function entry basic block.  Returns the basic block that represents the function entry point. Every function must have
- *  one. */
+/** Function entry basic block.  Returns the basic block that represents the function entry point. Returns null for a function
+ *  that contains no instructions (e.g., has only static data blocks). */
 SgAsmBlock *
 SgAsmFunction::get_entry_block() const {
     for (SgAsmStatementPtrList::const_iterator si=p_statementList.begin(); si!=p_statementList.end(); ++si) {
@@ -244,6 +244,5 @@ SgAsmFunction::get_entry_block() const {
         if (bb && bb->get_address()==p_entry_va)
             return bb;
     }
-    assert(!"no entry basic block");
-    abort();
+    return NULL;
 }

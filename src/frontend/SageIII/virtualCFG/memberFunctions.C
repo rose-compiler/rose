@@ -2903,6 +2903,49 @@ SgSizeOfOp::cfgInEdges(unsigned int idx) {
         return result;
 }
 
+unsigned int
+SgAlignOfOp::cfgIndexForEnd() const {
+     return 1;
+}
+
+std::vector<CFGEdge>
+SgAlignOfOp::cfgOutEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+
+        switch (idx) {
+                case 0:
+                        if (get_operand_expr())
+                                makeEdge(CFGNode(this, idx), get_operand_expr()->cfgForBeginning(), result);
+                        else
+                                makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+                        break;
+                case 1: 
+                        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
+std::vector<CFGEdge>
+SgAlignOfOp::cfgInEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0: 
+                        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+                case 1:
+                        if (get_operand_expr())
+                                makeEdge(get_operand_expr()->cfgForEnd(), CFGNode(this, idx), result);
+                        else
+                                makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
 // DQ (7/18/2011): Added support for new Java specific IR node (structurally similar to SgSizeOf operator).
 unsigned int
 SgJavaInstanceOfOp::cfgIndexForEnd() const {
@@ -3088,6 +3131,33 @@ SgVarRefExp::cfgOutEdges(unsigned int idx)
 
 std::vector<CFGEdge>
 SgVarRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+unsigned int
+SgCompoundLiteralExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3377,6 +3447,63 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
     }
     return result;
   }
+
+
+// DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
+unsigned int
+SgTypeTraitBuiltinOperator::cfgIndexForEnd() const {
+     return 1;
+}
+
+// DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
+std::vector<CFGEdge>
+SgTypeTraitBuiltinOperator::cfgOutEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+
+        switch (idx) {
+                case 0:
+#if 0
+                        if (get_operand_expr())
+                                makeEdge(CFGNode(this, idx), get_operand_expr()->cfgForBeginning(), result);
+                        else
+                                makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+#else
+                        printf ("In SgTypeTraitBuiltinFunctionCallExp::cfgOutEdges(%u): Almost all of the type trait builtin functions take types as arguments, but a few do not (not handled!) \n",idx);
+#endif
+                        break;
+                case 1: 
+                        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgTypeTraitBuiltinOperator");
+        }
+        return result;
+}
+
+// DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
+std::vector<CFGEdge>
+SgTypeTraitBuiltinOperator::cfgInEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0: 
+                        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+                case 1:
+#if 0
+                        if (get_operand_expr())
+                                makeEdge(get_operand_expr()->cfgForEnd(), CFGNode(this, idx), result);
+                        else
+                                makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+#else
+                        printf ("In SgTypeTraitBuiltinFunctionCallExp::cfgInEdges(%u): Almost all of the type trait builtin functions take types as arguments, but a few do not (not handled!) \n",idx);
+#endif
+                        break;
+
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgTypeTraitBuiltinOperator");
+        }
+        return result;
+}
+
 
 bool
 SgAndOp::cfgIsIndexInteresting(unsigned int idx) const
@@ -4851,6 +4978,32 @@ bool SgVarRefExp::isChildUsedAsLValue(const SgExpression* child) const
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
         return false;
 }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:2.5 par:5 */
+bool SgCompoundLiteralExp::isDefinable() const
+{
+        // if not constant
+        if (SageInterface::isConstType(get_type()))
+                return false;
+        // if it is protected, it is not definable
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:5.1 par:7,8 */
+bool SgCompoundLiteralExp::isLValue() const
+{
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+bool SgCompoundLiteralExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
+        return false;
+}
+
 
 /*! std:5.16 par:4 */
 bool SgConditionalExp::isLValue() const

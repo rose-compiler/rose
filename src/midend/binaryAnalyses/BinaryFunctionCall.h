@@ -193,7 +193,7 @@ namespace BinaryAnalysis {
          *  CG cg1 = FunctionCall().build_cg_from_ast(node);
          *
          *  // Method 2
-         *  CFG cfg = ControlFlow().build_cfg_from_ast<CFG>(node);
+         *  CFG cfg = ControlFlow().build_block_cfg_from_ast<CFG>(node);
          *  CG cg2 = FunctionCall().build_cg_from_cfg<CG>(cfg);
          *  @endcode
          *

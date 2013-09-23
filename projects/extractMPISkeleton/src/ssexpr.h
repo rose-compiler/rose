@@ -9,6 +9,7 @@
 
 #include <string>
 #include <stdlib.h>
+#include <iostream>
 
 class SExpr {
 public:
@@ -17,35 +18,31 @@ public:
   } sexpr_elt_t;
 
   // empty s-expression is by default a list
-  SExpr() {
+  SExpr() : atomval("") {
     ty = SX_LIST;
     list = NULL;
     next = NULL;
-    atomval = "";
   }
 
   // empty s-expression with explicit type
-  SExpr(sexpr_elt_t t) {
+  SExpr(sexpr_elt_t t) : atomval("") {
     ty = t;
     list = NULL;
     next = NULL;
-    atomval = "";
   }
 
   // constructor with string yields atom
-  SExpr(std::string s) {
+  SExpr(std::string s) : atomval(s) {
     ty = SX_ATOM;
     list = NULL;
     next = NULL;
-    atomval = s;
   }
 
   // constructor with s-expression yields list
-  SExpr(SExpr *sx) {
+  SExpr(SExpr *sx) : atomval("") {
     ty = SX_LIST;
     list = sx;
     next = NULL;
-    atomval = "";
   }
 
   // destructor
@@ -68,7 +65,7 @@ public:
   // set the value.  this by default turns the expression into an atom
   // NOTE: warn if this occurs if it was already a list with a list value
   // set.
-  void setValue(std::string s) {
+  void setValue(const std::string & s) {
     if (ty == SX_LIST && list != NULL) {
       warn("Setting element to atom value when already set to list.");
     }
@@ -95,27 +92,27 @@ public:
     list = sx;
   }
 
-  std::string getValue() {
+  std::string getValue() const {
     return atomval;
   }
 
   // get the list pointer
-  SExpr *getList() {
+  SExpr *getList() const {
     return list;
   }
 
   // get the next pointer
-  SExpr *getNext() {
+  SExpr *getNext() const {
     return next;
   }
 
   // get the SExpr type
-  sexpr_elt_t getType() {
+  sexpr_elt_t getType() const {
     return ty;
   }
 
   // pretty print the s-expression to a string
-  std::string toString() {
+  std::string toString() const {
     std::string s = "";
     if (ty == SX_LIST) {
       if (list == NULL) {
@@ -132,9 +129,9 @@ public:
     return s;
   }
 
-  static SExpr *parse(std::string s);
+  static SExpr *parse(const std::string & s);
 
-  static SExpr *parse_file(std::string fname);
+  static SExpr *parse_file(const std::string & fname);
 
 private:
 
@@ -152,8 +149,7 @@ private:
     std::string str;
     std::string::iterator it;
 
-    SExprParserState(std::string s) {
-      str = s;
+    SExprParserState(std::string s) : str(s) {
       it = str.begin();
     }
   };
@@ -170,5 +166,11 @@ private:
   }
 };
 
+// Formats the SExpr so that it can be parsed again.
+// We use an ostream so that we can send it to any one of:
+//   * cout/cerr
+//   * fstream
+//   * stringstream
+std::ostream& operator<<(std::ostream & os, const SExpr & s);
 
 #endif // __ssexpr_c__

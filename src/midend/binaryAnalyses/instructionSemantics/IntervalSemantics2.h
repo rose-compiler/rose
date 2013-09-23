@@ -83,21 +83,40 @@ protected:
         assert((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
         p_intervals = intervals;
     }
-        
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
-    /** Construct a prototypical value. Prototypical values are only used for their virtual constructors. */
+    /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
         return SValuePtr(new SValue(1));
     }
 
-    /** Create a value from a set of intervals. */
+    /** Instantiate a new undefined value of particular size. */
+    static SValuePtr instance(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
+    }
+
+    /** Instantiate a new concrete value of particular size. */
+    static SValuePtr instance(size_t nbits, uint64_t number) {
+        return SValuePtr(new SValue(nbits, number));
+    }
+
+    /** Instantiate a new value from a set of intervals. */
     static SValuePtr instance(size_t nbits, const Intervals &intervals) {
         return SValuePtr(new SValue(nbits, intervals));
     }
 
+    /** Instantiate a new value that's constrained to be between two unsigned values, inclusive. */
+    static SValuePtr instance(size_t nbits, uint64_t v1, uint64_t v2) {
+        return SValuePtr(new SValue(nbits, v1, v2));
+    }
+
+    /** Instantiate a new copy of an existing value. */
+    static SValuePtr instance(const SValuePtr &other) {
+        return SValuePtr(new SValue(*other));
+    }
+    
     /** Create a value from a set of possible bits. */
     static SValuePtr instance_from_bits(size_t nbits, uint64_t possible_bits);
 
@@ -109,14 +128,14 @@ public:
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual allocating constructors
+    // Virtual allocating constructors inherited from the super class
 public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
-        return SValuePtr(new SValue(nbits));
+        return instance(nbits);
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t number) const /*override*/ {
-        return SValuePtr(new SValue(nbits, number));
+        return instance(nbits, number);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
@@ -124,10 +143,13 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual allocating constructors first defined at this level of the class hierarchy
+public:
     /** Construct a ValueType that's constrained to be between two unsigned values, inclusive. */
     virtual SValuePtr create(size_t nbits, uint64_t v1, uint64_t v2) {
-        return SValuePtr(new SValue(nbits, v1, v2));
+        return instance(nbits, v1, v2);
     }
 
     /** Construct a ValueType from a rangemap. Note that this does not truncate the rangemap to contain only values that would
@@ -159,7 +181,7 @@ public:
         return p_intervals.min();
     }
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/ {
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const /*override*/ {
         output <<p_intervals <<"[" <<get_width() <<"]";
     }
 
@@ -199,34 +221,49 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *
  *  A memory read operation scans the memory cell list and returns the union of all possible matches. */
 class MemoryState: public BaseSemantics::MemoryCellList {
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // protected constructors. See base class and public constructors for documentation
     MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
         : BaseSemantics::MemoryCellList(protocell, protoval) {}
 
+    MemoryState(const MemoryState &other)
+        : BaseSemantics::MemoryCellList(other) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  This constructor uses BaseSemantics::MemoryCell as the cell type. */
+    /** Instantiate a new memory state with specified prototypical cells and values. */
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
+        return MemoryStatePtr(new MemoryState(protocell, protoval));
+    }
+
+    /** Instantiate a new memory state with prototypical value. This constructor uses BaseSemantics::MemoryCell as the cell
+     * type. */
     static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
         BaseSemantics::MemoryCellPtr protocell = BaseSemantics::MemoryCell::instance(protoval, protoval);
         return MemoryStatePtr(new MemoryState(protocell, protoval));
     }
-
-    /** Static allocating constructor. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
+                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
+        return instance(protocell, protoval);
     }
 
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
         return instance(protoval);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
+        return MemoryStatePtr(new MemoryState(*this));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods that override the base class
+    // Methods we inherited
 public:
     /** Read a byte from memory.
      *
@@ -252,7 +289,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** RISC operators for interval domains. */
 class RiscOperators: public BaseSemantics::RiscOperators {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Protected constructors
+    // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
@@ -267,10 +304,10 @@ protected:
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public allocating constructors
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
-     *  that are defaults for IntervalSemantics. */
+    /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
+     *  IntervalSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
@@ -279,30 +316,42 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    /** Static allocating constructor.  An SMT solver may be specified as the second argument for convenience. See set_solver()
-     *  for details. */
+    /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
+     *  argument for convenience. See set_solver() for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    /** Static allocating constructor. An SMT solver may be specified as the second argument for convenience. See set_solver()
-     *  for details. */
+    /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
+     *  convenience. See set_solver() for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    /** Virtual allocating constructor. */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
     }
 
-    /** Virtual allocating constructor. */
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(state, solver);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Run-time promotion of a base RiscOperators pointer to interval operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a IntervalSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first introduced at this level of the class hierarchy.
 public:
@@ -322,8 +371,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
-    virtual void interrupt(uint8_t inum) /*override*/;
-    virtual void sysenter() /*override*/;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
@@ -372,11 +419,11 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,
                                                 size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg,
+    virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) /*override*/;

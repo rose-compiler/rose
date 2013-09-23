@@ -320,20 +320,20 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
         int igroup_id = row.get<int>(5);
         int pos = row.get<int>(6);
         switch (event_id) {
-            case CloneDetection::Tracer::EV_REACHED: {
+            case CloneDetection::EV_REACHED: {
                 ++events[addr].nexecuted;
                 break;
             }
-            case CloneDetection::Tracer::EV_BRANCHED: {
+            case CloneDetection::EV_BRANCHED: {
                 ++events[addr].nbranches;
                 ++events[addr].branches[val];
                 break;
             }
-            case CloneDetection::Tracer::EV_RETURNED: {
+            case CloneDetection::EV_RETURNED: {
                 ++events[addr].nreturns;
                 break;
             }
-            case CloneDetection::Tracer::EV_CONSUME_INPUT: {
+            case CloneDetection::EV_CONSUME_INPUT: {
                 ++events[addr].ninputs;
                 assert(minor>=0);
                 if ((size_t)minor>=events[addr].inputs.size())
@@ -341,13 +341,13 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
                 ++events[addr].inputs[minor][val];
                 break;
             }
-            case CloneDetection::Tracer::EV_FAULT: {
+            case CloneDetection::EV_FAULT: {
                 CloneDetection::AnalysisFault::Fault fault = (CloneDetection::AnalysisFault::Fault)minor;
                 ++events[addr].nfaults;
                 ++events[addr].faults[fault];
                 break;
             }
-            case CloneDetection::Tracer::EV_MEM_WRITE: {
+            case CloneDetection::EV_MEM_WRITE: {
                 OutputEventKey output_key(igroup_id, val);
                 OutputEventValue output_val(pos, minor);
                 // Track final writes to each address

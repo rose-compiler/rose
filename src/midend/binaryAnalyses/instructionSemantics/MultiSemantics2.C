@@ -105,20 +105,21 @@ SValue::get_number() const
 }
 
 void
-SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
+SValue::print(std::ostream &output, BaseSemantics::Formatter &formatter_) const
 {
-    PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
+    Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
+
     size_t nprinted = 0;
     output <<"{";
     for (size_t i=0; i<subvalues.size(); ++i) {
         if (is_valid(i)) {
             output <<(nprinted++?", ":"");
-            if (helper && i<helper->subdomain_names.size()) {
-                output <<helper->subdomain_names[i] <<"=";
+            if (formatter && i<formatter->subdomain_names.size()) {
+                output <<formatter->subdomain_names[i] <<"=";
             } else {
                 output <<"subdomain-" <<i <<"=";
             }
-            subvalues[i]->print(output, helper_);
+            subvalues[i]->print(output, formatter_);
         }
     }
     output <<"}";
@@ -265,9 +266,9 @@ RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, c
     size_t idx = subdomains.size();
     subdomains.push_back(subdomain);
     active.push_back(activate);
-    if (idx>=print_helper.subdomain_names.size())
-        print_helper.subdomain_names.resize(idx+1, "");
-    print_helper.subdomain_names[idx] = name;
+    if (idx>=formatter.subdomain_names.size())
+        formatter.subdomain_names.resize(idx+1, "");
+    formatter.subdomain_names[idx] = name;
     SValue::promote(get_protoval())->set_subvalue(idx, subdomain->get_protoval());
     return idx;
 }
@@ -293,12 +294,10 @@ RiscOperators::set_active(size_t idx, bool status)
 }
 
 void
-RiscOperators::print(std::ostream &o, const std::string prefix, BaseSemantics::PrintHelper *helper) const
+RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const
 {
-    for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi) {
-        o <<"== " <<(*sdi)->get_name() <<" ==\n";
-        (*sdi)->print(o, prefix, helper);
-    }
+    for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi)
+        stream <<"== " <<(*sdi)->get_name() <<" ==\n" <<(**sdi + formatter);
 }
 
 void
@@ -603,21 +602,21 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &cond, size_t nbits)
 {
     SValuePtr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, (addr, cond))
-        retval->set_subvalue(sd.idx(), sd->readMemory(sg, sd(addr), sd(cond), nbits));
+        retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(cond), nbits));
     return retval;
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &data,
-                           const BaseSemantics::SValuePtr &cond)
+RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+                           const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
     SUBDOMAINS(sd, (addr, data, cond))
-        sd->writeMemory(sg, sd(addr), sd(data), cond);
+        sd->writeMemory(segreg, sd(addr), sd(data), cond);
 }
 
 } // namespace

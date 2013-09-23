@@ -11,8 +11,9 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
     explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        iproc_init();
+        set_register_dictionary(RegisterDictionary::dictionary_i386());
         regcache_init();
+        iproc_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
@@ -28,6 +29,7 @@ public:
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_EIP, REG_ESI, REG_ESP, REG_EBP;
     RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
+    RegisterDescriptor REG_DS, REG_ES, REG_SS;
     /** @}*/
 
     /** Constructor. */
@@ -54,42 +56,6 @@ public:
         assert(insn!=NULL);
         return insn->get_kind();
     }
-
-    /** Write the @p value to the location (memory or register) specified by the expression @p e. The number of bytes written
-     *  depends on the width of @p value. */
-    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value);
-
-    // FIXME: Soon to be deprecated
-    virtual void write8(SgAsmExpression *e, const BaseSemantics::SValuePtr &value) {
-        assert(value->get_width()==8);
-        write(e, value);
-    }
-    virtual void write16(SgAsmExpression *e, const BaseSemantics::SValuePtr &value) {
-        assert(value->get_width()==16);
-        write(e, value);
-    }
-    virtual void write32(SgAsmExpression *e, const BaseSemantics::SValuePtr &value) {
-        assert(value->get_width()==32);
-        write(e, value);
-    }
-
-    /** Read a value from the location (memory or register) specified by the expression @p e. */
-    virtual BaseSemantics::SValuePtr read(SgAsmExpression *e, size_t nbits);
-
-    // FIXME: Soon to be deprecated
-    virtual BaseSemantics::SValuePtr read8(SgAsmExpression *e) { return read(e, 8); }
-    virtual BaseSemantics::SValuePtr read16(SgAsmExpression *e) { return read(e, 16); }
-    virtual BaseSemantics::SValuePtr read32(SgAsmExpression *e) { return read(e, 32); }
-    
-    virtual BaseSemantics::SValuePtr readEffectiveAddress(SgAsmExpression *expr);
-
-    /** Read a multi-byte value from memory. */
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr& cond, size_t nbits);
-
-    /** Write a multi-byte value to memory. */
-    void writeMemory(X86SegmentRegister segreg, const BaseSemantics::SValuePtr &addr,
-                     const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);
@@ -153,116 +119,7 @@ public:
                                                       const BaseSemantics::SValuePtr &total_shift,
                                                       size_t shiftSignificantBits);
 };
-
-
-
-#if 0
-
-
-
-
-/** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
- *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. Apologies for
- *  the lack of documentation for this class.  You can at least find some examples in the semantics.C file of the
- *  tests/roseTests/binaryTests directory, among others. */
-template <typename Policy, template <size_t> class WordType>
-struct X86InstructionSemantics {
-    struct Exception {
-        Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
-        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
-            o <<"instruction semantics: " <<e.mesg;
-            if (e.insn) o <<" [" <<unparseInstructionWithAddress(e.insn) <<"]";
-            return o;
-        }
-        std::string mesg;
-        SgAsmInstruction *insn;
-    };
-
-    void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end) {
-        if (begin == end) return;
-        policy.startBlock(stmts[begin]->get_address());
-        for (size_t i = begin; i < end; ++i) {
-            processInstruction(isSgAsmx86Instruction(stmts[i]));
-        }
-        policy.finishBlock(stmts[begin]->get_address());
-    }
-
-    static bool isRepeatedStringOp(SgAsmStatement* s) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(s);
-        if (!insn) return false;
-        switch (insn->get_kind()) {
-            case x86_repe_cmpsb: return true;
-            case x86_repe_cmpsd: return true;
-            case x86_repe_cmpsq: return true;
-            case x86_repe_cmpsw: return true;
-            case x86_repe_scasb: return true;
-            case x86_repe_scasd: return true;
-            case x86_repe_scasq: return true;
-            case x86_repe_scasw: return true;
-            case x86_rep_insb: return true;
-            case x86_rep_insd: return true;
-            case x86_rep_insw: return true;
-            case x86_rep_lodsb: return true;
-            case x86_rep_lodsd: return true;
-            case x86_rep_lodsq: return true;
-            case x86_rep_lodsw: return true;
-            case x86_rep_movsb: return true;
-            case x86_rep_movsd: return true;
-            case x86_rep_movsq: return true;
-            case x86_rep_movsw: return true;
-            case x86_repne_cmpsb: return true;
-            case x86_repne_cmpsd: return true;
-            case x86_repne_cmpsq: return true;
-            case x86_repne_cmpsw: return true;
-            case x86_repne_scasb: return true;
-            case x86_repne_scasd: return true;
-            case x86_repne_scasq: return true;
-            case x86_repne_scasw: return true;
-            case x86_rep_outsb: return true;
-            case x86_rep_outsd: return true;
-            case x86_rep_outsw: return true;
-            case x86_rep_stosb: return true;
-            case x86_rep_stosd: return true;
-            case x86_rep_stosq: return true;
-            case x86_rep_stosw: return true;
-            default: return false;
-        }
-    }
-
-    static bool isHltOrInt(SgAsmStatement* s) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(s);
-        if (!insn) return false;
-        switch (insn->get_kind()) {
-            case x86_hlt: return true;
-            case x86_int: return true;
-            default: return false;
-        }
-    }
-
-    void processBlock(SgAsmBlock* b) {
-        const SgAsmStatementPtrList& stmts = b->get_statementList();
-        if (stmts.empty()) return;
-        if (!isSgAsmInstruction(stmts[0])) return; /* A block containing functions or something */
-        size_t i = 0;
-        while (i < stmts.size()) {
-            size_t oldI = i;
-            /* Advance until either i points to a repeated string op or it is just after a hlt or int */
-            while (i < stmts.size() && !isRepeatedStringOp(stmts[i]) && (i == oldI || !isHltOrInt(stmts[i - 1]))) ++i;
-            processBlock(stmts, oldI, i);
-            if (i >= stmts.size()) break;
-            if (isRepeatedStringOp(stmts[i])) {
-                processBlock(stmts, i, i + 1);
-                ++i;
-            }
-            ROSE_ASSERT(i != oldI);
-        }
-    }
-
-};
-
-#undef Word
-#endif
         
-    } /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
 #endif

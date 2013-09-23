@@ -86,7 +86,7 @@ use policies::FileLister;
 use Cwd qw/getcwd abs_path/;
 my %enum;			# key is enum name; values are a hash mapping value to name
 my %enum_loc;			# key is enum name; value is "file:linenumber"
-my @name_stack;
+my @name_stack;			# pair of values: \[ name or undef, source position \]
 
 sub usage {
   my($arg0) = $0 =~ /([^\/]+)$/;
@@ -197,7 +197,8 @@ sub make_lexer {
       $s =~ /\G("(\\[0-7]{1,3}|\\.|[^"\\])*")/cgs and do {
 	local $_ = $1;
 	$linenum += tr/\n/\n/;
-	return $1 unless defined($cpp[-1]) && !$cpp[-1];
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
       };
       $s =~ /\G('(\\[0-7]{1,3}|\\.|[^'\\])*')/cgs and do {
 	next if defined($cpp[-1]) && !$cpp[-1];
@@ -230,7 +231,8 @@ sub make_lexer {
 }
 
 sub canonic_name {
-  return join "::", grep {$_} @name_stack, @_;
+  my($base_name) = @_;
+  return join "::", (grep {$_} map {$_->[0]} @name_stack), $base_name;
 }
 
 # Generate the name of an enum-to-string function from a canonic enum name.
@@ -249,9 +251,9 @@ sub parse_namespace {
   my($lexer) = @_;
   my($ns_name) =&$lexer();
   if ('{' eq $ns_name) {
-    push @name_stack, undef;
+    push @name_stack, [undef, &$lexer('location')];
   } elsif ($ns_name =~ /^[a-z_A-Z]\w*$/ && '{' eq &$lexer()) {
-    push @name_stack, $ns_name;
+    push @name_stack, [$ns_name, &$lexer('location')];
   }
 }
 
@@ -261,7 +263,7 @@ sub parse_class {
   my($token) = &$lexer();
   $token = &$lexer() if $token eq "ROSE_DLL_API"; # e.g., "class ROSE_DLL_API SgAsmElfRelocEntry : public ..."
   if ($token eq '{') {
-    push @name_stack, undef;
+    push @name_stack, [undef, &$lexer('location')];
   } elsif ($token =~ /^[a-z_A-Z]\w*$/) {
     return parse_class($lexer) if $token eq 'QCE_EXPORT'; # for some files in roseExtensions/qtWidgets
     my $class_name = $token;
@@ -271,7 +273,7 @@ sub parse_class {
 	$token = &$lexer();
       }
     }
-    push @name_stack, $class_name if $token eq '{'; # otherwise it's a use, not definition
+    push @name_stack, [$class_name, &$lexer('location')] if $token eq '{'; # otherwise it's a use, not definition
   }
 }
 
@@ -283,7 +285,7 @@ sub parse_enum {
 
   # Check for anonymous enumeration types
   if ($token eq '{') {
-    push @name_stack, undef; # popped when we see corresponding '}'
+    push @name_stack, [undef, &$lexer('location')]; # popped when we see corresponding '}'
     return;
   } else {
     $enum_name = $token;
@@ -295,7 +297,7 @@ sub parse_enum {
   $enum_name = canonic_name $enum_name;
   if ($enum{$enum_name}) {
     &$lexer("warning", "enum is multiply defined, this one ignored for stringification", $enum_name);
-    print STDERR $enum_loc{$enum_name}, ": previous definition is here\n";
+    print STDERR $enum_loc{$enum_name}, ": info: previous definition is here\n";
   }
   $enum{$enum_name} = {};
   $enum_loc{$enum_name} = &$lexer("location");
@@ -491,6 +493,7 @@ if ($defn_output) {
 }
 
 # Scan C++ files to generate %enum hash
+my $nenums = 0;
 my $files = FileLister->new('--generated',@ARGV);
 $files->{build} = 1; # include machine generated files
 while (my $filename = $files->next_file) {
@@ -500,11 +503,11 @@ while (my $filename = $files->next_file) {
   while (defined($token=&$lexer())) {
     debug $lexer, "token [$token]";
     if ($token eq '{') {
-      push @name_stack, undef;
-      debug $lexer, "enter [".join(" ",map{$_||"X"} @name_stack)."]";
+      push @name_stack, [undef, &$lexer('location')];
+      debug $lexer, "enter [".join(" ",map{$_->[0]||"X"} @name_stack)."]";
     } elsif ($token eq '}') {
       pop @name_stack;
-      debug $lexer, "leave [".join(" ",map{$_||"X"} @name_stack)."]";
+      debug $lexer, "leave [".join(" ",map{$_->[0]||"X"} @name_stack)."]";
     } elsif ($token eq 'namespace') {
       parse_namespace $lexer;
     } elsif ($token eq 'class' || $token eq 'struct') {
@@ -529,9 +532,15 @@ while (my $filename = $files->next_file) {
   #
   # If we find unbalanced braces, then reset to the initial state at the end of each source file.
   if (@name_stack) {
-    &$lexer("unbalanced braces", "[".join(" ", map {$_||"anonymous"} @name_stack)."]");
+    if ($nenums < keys %enum) { # no need to show error if we didn't see any enums anyway
+      &$lexer("unbalanced braces encountered");
+      for my $name (@name_stack) {
+        print STDERR $name->[1], ": info: no close brace for this ", ($name->[0]||"anonymous"), " open brace\n";
+      }
+    }
     @name_stack = ();
   }
+  $nenums = keys %enum;
 }
 
 # Emit output

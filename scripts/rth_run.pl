@@ -96,6 +96,11 @@ When multiple commands are specified on the same line they will be run in a sing
 of the config file will be run in separate shells.  In other words, a variable setting or change of directories applies only to
 a single line.
 
+=item cleanup = SHELL_COMMAND
+
+These commands all run after the "cmd" commands run, regardless of whether the "cmd" commands passed.  The exit status,
+standard output, and standard error from these commands is not saved.
+
 =item diff = DIFF_COMMAND
 
 This property specifies a program (and options) to use when comparing the standard output of a test with a predetermined
@@ -114,7 +119,8 @@ affecting whether the test is a failing or passing test.
 =item filter = no | COMMAND
 
 Before output is compared with a predetermined answer, both the output and the answer are fed through an optional filter. The
-filter should read from standard input and write to standard output.
+filter should read from standard input and write to standard output.  If multiple filters are specified they are run in the
+order they were specified.
 
 =item lockdir = DIRECTORY
 
@@ -298,10 +304,16 @@ sub help {
 # values are the values or an array of values.
 sub load_config {
   my($file,%vars) = @_;
-  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
+  my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>[], lockdir=>undef,
                may_fail=>'no', promote=>'yes', timeout=>15*60);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
+    while (/(.*)\\\n$/s) {
+      my $extra = <CONFIG>;
+      last unless defined $extra;
+      $_ = $1 . $extra;
+    }
+
     s/\s*#.*//;
     s/\$\{(\w+)\}/exists $vars{$1} ? $vars{$1} : $1/eg;
     if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
@@ -464,16 +476,31 @@ if (!$status && $config{answer} ne 'no') {
   if (! -r $answer) {
     system "echo '$answer: no such file' >>$cmd_stderr";
     $status = 1;
-  } elsif ($config{filter} ne 'no') {
-    my($a,$b) = (tempname, tempname);
-    $status ||= system "($config{filter}) <$answer >$a 2>>$cmd_stderr";
-    $status ||= system "($config{filter}) <$cmd_stdout >$b 2>>$cmd_stderr";
-    $status ||= system "($config{diff} $a $b) >>$cmd_stderr 2>&1";
-    unlink $a, $b;
+  } elsif (0 != @{$config{filter}} ) {
+      system "echo 'Running filters:' >>$cmd_stderr";
+    my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout, tempname);
+    foreach my $filter (@{$config{filter}}) {
+	$status ||= system "(set -x; $filter) <$a1 >$a2 2>>$cmd_stderr";
+	$status ||= system "(set -x; $filter) <$b1 >$b2 2>>$cmd_stderr";
+	$a1 = tempname if $a1 eq $answer;
+	$b1 = tempname if $b1 eq $cmd_stdout;
+	($a1,$a2) = ($a2,$a1);
+	($b1,$b2) = ($b2,$b1);
+	last if $status;
+    }
+    if (!$status) {
+	system "echo 'Comparing filter output with filtered answer' >>$cmd_stderr";
+	$status ||= system "(set -x; $config{diff} $a1 $b1) >>$cmd_stderr 2>&1";
+    }
+    unlink $a1, $a2, $b1, $b2;
   } else {
-    $status = system "($config{diff} $answer $cmd_stdout) >>$cmd_stderr 2>&1";
+    system "echo 'Comparing output with answer' >>$cmd_stderr";
+    $status = system "(set -x; $config{diff} $answer $cmd_stdout) >>$cmd_stderr 2>&1";
   }
 }
+
+# Run clean-up commands
+run_command("/dev/null", "/dev/null", $config{timeout}, @{$config{cleanup}});
 
 # If the test failed and the "may_fail" property is "yes" then pretend the test was successfull.
 # If the test passed and the "may_fail" property is "promote" then we need to change the property

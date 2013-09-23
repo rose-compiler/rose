@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
 #include <string>
+
 #define ALIAS_SYMBOL_DEBUGGING 0
 
 void
@@ -406,9 +407,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
    {
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
 #if ALIAS_SYMBOL_DEBUGGING
-     printf ("In FixupAstSymbolTablesToSupportAliasedSymbols::visit() node = %p = %s \n",node,node->class_name().c_str());
+     printf ("In FixupAstSymbolTablesToSupportAliasedSymbols::visit() (preorder AST traversal) node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
+#if 0
   // DQ (7/23/2011): New support for linking namespaces sharing the same name (mangled name).
   // std::map<SgName,std::vector<SgNamespaceDefinition*> > namespaceMap;
      SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(node);
@@ -419,12 +421,12 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
           SgName name = namespaceDefinition->get_namespaceDeclaration()->get_name();
 #if ALIAS_SYMBOL_DEBUGGING
-          printf ("namespace definition found for name = %s \n",name.str());
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: namespace definition found for name = %s #symbols = %d \n",name.str(),namespaceDefinition->get_symbol_table()->size());
 #endif
        // It is important to use mangled names to define unique names when namespaces are nested.
           SgName mangledNamespaceName = namespaceDefinition->get_namespaceDeclaration()->get_mangled_name();
 #if ALIAS_SYMBOL_DEBUGGING
-          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
 #endif
        // DQ (7/23/2011): Fixup the name we use as a key in the map to relect that some namespaces don't have a name.
           if (name == "")
@@ -448,7 +450,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
              {
                std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Namespace vector size = %zu \n",namespaceVector.size());
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %zu \n",namespaceVector.size());
 #endif
             // Testing each entry...
                for (size_t j = 0; j < namespaceVector.size(); j++)
@@ -456,16 +458,16 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                     ROSE_ASSERT(namespaceVector[j] != NULL);
                     SgName existingNamespaceName = namespaceVector[j]->get_namespaceDeclaration()->get_name();
 #if ALIAS_SYMBOL_DEBUGGING
-                    printf ("Existing namespace %p = %s \n",namespaceVector[j],existingNamespaceName.str());
+                    printf ("Existing namespace (SgNamespaceDefinitionStatement) %p = %s \n",namespaceVector[j],existingNamespaceName.str());
 #endif
                     if (j > 0)
                        {
-                         ROSE_ASSERT(namespaceVector[j]->get_previousNamepaceDefinition() != NULL);
+                         ROSE_ASSERT(namespaceVector[j]->get_previousNamespaceDefinition() != NULL);
                        }
 
                     if (namespaceVector.size() > 1 && j < namespaceVector.size() - 2)
                        {
-                         ROSE_ASSERT(namespaceVector[j]->get_nextNamepaceDefinition() != NULL);
+                         ROSE_ASSERT(namespaceVector[j]->get_nextNamespaceDefinition() != NULL);
                        }
                   }
 
@@ -473,16 +475,47 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                if (namespaceListSize > 0)
                   {
                     size_t lastNamespaceIndex = namespaceListSize - 1;
-                    namespaceVector[lastNamespaceIndex]->set_nextNamepaceDefinition(namespaceDefinition);
 
-                    namespaceDefinition->set_previousNamepaceDefinition(namespaceVector[lastNamespaceIndex]);
+                 // DQ (5/9/2013): Before setting these, I think they should be unset (to NULL values).
+                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
+                 // ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
+                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
+
+                 // namespaceVector[lastNamespaceIndex]->set_nextNamespaceDefinition(namespaceDefinition);
+#if 1
+                    printf ("namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() = %p \n",namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition());
+#endif
+                    if (namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL)
+                       {
+                         namespaceVector[lastNamespaceIndex]->set_nextNamespaceDefinition(namespaceDefinition);
+                       }
+                      else
+                       {
+                      // DQ (5/9/2013): If this is already set then make sure it was set to the correct value.
+                         ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == namespaceDefinition);
+                       }
+
+                 // DQ (5/9/2013): If this is already set then make sure it was set to the correct value.
+                 // namespaceDefinition->set_previousNamespaceDefinition(namespaceVector[lastNamespaceIndex]);
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == namespaceVector[lastNamespaceIndex]);
+
+                 // DQ (5/9/2013): I think I can assert this.
+                    ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_namespaceDeclaration()->get_name() == namespaceDefinition->get_namespaceDeclaration()->get_name());
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
+#if 1
+                    printf ("namespaceDefinition = %p namespaceDefinition->get_nextNamespaceDefinition() = %p \n",namespaceDefinition,namespaceDefinition->get_nextNamespaceDefinition());
+#endif
+                 // ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
+                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
                   }
 
             // Add the namespace matching a previous name to the list.
                namespaceVector.push_back(namespaceDefinition);
 
             // Setup scopes as sources and distinations of alias symbols.
-               SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamepaceDefinition();
+               SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamespaceDefinition();
                ROSE_ASSERT(referencedScope != NULL);
                SgNamespaceDefinitionStatement* currentScope = namespaceDefinition;
                ROSE_ASSERT(currentScope != NULL);
@@ -490,6 +523,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #if ALIAS_SYMBOL_DEBUGGING
                printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Suppress injection of symbols from one namespace to the other for each reintrant namespace \n");
                printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope #symbols = %d currentScope #symbols = %d \n",referencedScope->get_symbol_table()->size(),currentScope->get_symbol_table()->size());
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope = %p currentScope = %p \n",referencedScope,currentScope);
 #endif
 #if 1
             // Generate the alias symbols from the referencedScope and inject into the currentScope.
@@ -499,7 +533,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
             else
              {
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("Insert namespace %p for name = %s into the namespaceMap \n",namespaceDefinition,mangledNamespaceName.str());
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (entry NOT found): Insert namespace %p for name = %s into the namespaceMap \n",namespaceDefinition,mangledNamespaceName.str());
 #endif
                std::vector<SgNamespaceDefinitionStatement*> list(1);
                ROSE_ASSERT(list.size() == 1);
@@ -514,28 +548,36 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                   }
                  else
                   {
-                 // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
-                 // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
+                 // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
+                 // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
                  // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
-                    namespaceDefinition->set_nextNamepaceDefinition(NULL);
-                    namespaceDefinition->set_previousNamepaceDefinition(NULL);
+                    namespaceDefinition->set_nextNamespaceDefinition(NULL);
+                    namespaceDefinition->set_previousNamespaceDefinition(NULL);
 
-                    ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
+                    ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
+                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
                   }
 #else
-            // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
-            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
+            // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
+            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
             // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
-               namespaceDefinition->set_nextNamepaceDefinition(NULL);
-               namespaceDefinition->set_previousNamepaceDefinition(NULL);
+               namespaceDefinition->set_nextNamespaceDefinition(NULL);
+               namespaceDefinition->set_previousNamespaceDefinition(NULL);
 
-               ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
-               ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
+               ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
+               ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
 #endif
                namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
+
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("namespaceMap.size() = %zu \n",namespaceMap.size());
+#endif
              }
         }
+#else
+  // DQ (5/23/2013): Commented out since we now have a newer and better namespace support for symbol handling.
+  // printf ("NOTE:: COMMENTED OUT old support for namespace declarations in FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
+#endif
 
      SgUseStatement* useDeclaration = isSgUseStatement(node);
      if (useDeclaration != NULL)

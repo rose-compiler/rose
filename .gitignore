@@ -18,6 +18,12 @@ Makefile.in
 /*.tar.gz
 /libltdl
 
+# Integrated Development Evironment files
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
 # /config/
 /config/config.guess
 /config/config.sub
@@ -35,6 +41,7 @@ Makefile.in
 /config/ltversion.m4
 /config/lt~obsolete.m4
 /config/support-projects.m4
+/config/test-driver
 
 # OS X Finder files
 .DS_Store

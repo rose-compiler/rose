@@ -14,100 +14,52 @@ namespace InstructionSemantics2 {               // documented elsewhere
  * instantiating multiple instruction semantics objects and calling each one for each instruction.  However, using this
  * MultiSemantics domain is cleaner and easier to specialize.
  *
- * '''FIXME: OLD DOCUMENTATION NEEDS TO BE REWRITTEN'''
+ * A multi-domain is created by instantiating all the subdomain RiscOperators and adding them one by one to the multi-domain
+ * RiscOperators object via its add_subdomain() method.  Each call to add_subdomain() returns an ID number for the subdomain,
+ * by which the subdomain's RiscOperators and SValue objects can be accessed given a multi-domain RiscOperators or SValue
+ * object.
  *
- * A multi-policy is created by listing all the sub-policy value types, state types, and policy types in the
- * MultiPolicy template class.  For instance, to declare a multi-policy that does both full-symbolic semantics
- * (SymbolicSemantics) and partial-symbolic semantics (PartialSymbolicSemantics) do this:
+ * A sub-domain can be marked as active or inactive.  When the a multi-domain RISC operation is called, the same
+ * operation will be invoked in each of the active sub-domains (provided the operation's inputs are valid for that
+ * sub-domain).  If the operation returns a multi-value (as most do), then the sub-values corresponding to called sub-domains
+ * will be marked valid and the other sub-values are marked invalid.
  *
- * @code
- *  #include "MultiSemantics.h"
- *  #include "SymbolicSemantics.h"
- *  #include "PartialSymbolicSemantics.h"
- *
- *  typedef MultiSemantics<
- *      SymbolicSemantics::ValueType,           // first data type
- *      SymbolicSemantics::State,               // first state
- *      SymbolicSemantics::Policy,              // first policy
- *      PartialSymbolicSemantics::ValueType,    // second data type
- *      PartialSymbolicSemantics::State,        // second state
- *      PartialSymbolicSemantics::Policy        // second policy
- *      // etc.
- *                         >::Policy Policy;
- * @endcode
- *
- * Note that MultiSemantics is a class while many of the other semantic domains are implemented as name spaces. We used
- * a class here so that template arguments could be specified for the MultiSemantics as a whole rather than specifying
- * them repeatedly for the Policy, State, and ValueType classes.  Those inner classes also take template arguments
- * similar to their counterparts in other semantic domains.
- *
- * The sub-policies are identified by the tag types SP0, SP1, etc.:
+ * Using a multi-domain directly is not all that interesting.  Where the real convenience comes is in specializing the
+ * multi-domain to do things like convert values from one domain to another.  For example, consider two semantic domains called
+ * Alpha and Beta implemented operating on values of type AlphaValue and BetaValue. Assume that for some reason, and ADD
+ * operation in Beta is expensive and that a BetaValue can be constructed from an AlphaValue.  Therefore, it is more efficient
+ * to skip the ADD operation in Beta and instead compute the Beta sum from the Alpha sum.  One does that by subclassing the
+ * MultiDomain::RiscOperators and overriding its add() method.  Here's the basic idea, sans error handling, etc.:
  *
  * @code
- *  SymbolicSemantics::Policy<>        &sp0 = get_subpolicy(SP0());
- *  PartialSymbolicSemantics::Policy<> &sp1 = get_subpolicy(SP1());
- * @endcode
- *
- * A multi-value has one sub-value for each sub-policy. Like the sub-policies themselves, the sub-values are identified
- * by the SP0, SP1, etc., tags:
- * 
- * @code
- *  ValueType<32> v = ....; // the multi-policy value, or "multi-value"
- *  SymbolicSemantics::ValueType<32>        v0 = v.get_subvalue(SP0());
- *  PartialSymbolicSemantics::ValueType<32> v1 = v.get_subvalue(SP1());
- * @endcode
- *
- * Individual sub-values of a multi-value can be marked as invalid.  A sub-value must still necessarily be stored at
- * that slot in the multi-value:
- *
- * @code
- *  ValueType<32> v = ....; // the multi-value
- *  if (v.is_valid(SP0())) {
- *      std::cout <<"sub-value 0 is " <<v.get_subvalue(SP0()) <<std::endl;
- *      v.set_valid(SP0(), false); // or v.clear_valid(SP0())
- *  }
- * @endcode
- *
- * A sub-value can be modified with the set_subvalue() method, which also (by default) makes that sub-value slot
- * valid.
- *
- * Similar to marking a sub-value as invalid, a sub-policy can be marked as inactive.  When the a RISC operation is
- * called in the multi-policy, the same operation will be invoked in each of the active sub-policies (provided the
- * operation's inputs are valid for that sub-policy).  If the operation returns a multi-value (as most do), then the
- * sub-values corresponding to called sub-policies will be marked valid and the other sub-values are marked invalid.
- *
- * Using a multi-policy directly is not all that interesting.  Where the real convenience comes is in specializing the
- * multi-policy to do things like convert values from one domain to another.  For example, consider two semantic
- * domains called Alpha and Beta implemented by policies, AlphaPolicy and BetaPolicy, and operating on values of type
- * AlphaValue and BetaValue. Assume that for some reason, and ADD operation in BetaPolicy is expensive and that a
- * BetaValue can be constructed from an AlphaValue.  Therefore, it is more efficient to skip the ADD operation in
- * BetaPolicy and instead compute the Beta sum from the Alpha sum, like this:
- *
- * @code
- *  typedef MultiPolicy<AlphaType, AlphaState, AlphaPolicy, BetaType, BetaState, BetaPolicy> BaseClass;
- *  class MyPolicy: public BaseClass {
+ *  class MyDomain: public MultiSemantics::RiscOperators {
  *  public:
- *      template<size_t nBits>
- *      ValueType<nBits> add(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
- *          ActiveMask old_active = get_active_policies(); // what sub-policies are active?
- *          try {
- *              disable_policy(SP1()); // temporarily disable BetaPolicy
- *              ValueType<nBits> retval = BaseClass::add<nBits>(a, b);
- *              assert(!retval.is_valid(SP1())); // the beta value is not valid, its "add" having not been called
- *              BetaValue betaValue = retval.get_subvalue(SP1()); // construct the beta value from alpha
- *              retval.set_subvalue(betaValue); // define the beta value and make it valid
- *              set_active_policies(old_active); // restore original value
- *          } catch(...) {
- *              set_active_policies(old_active); // restore on error
+ *      // the usual virtual constructors go here...
+ *  public:
+ *      BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+ *          SValuePtr a = SValue::promote(a_); //promote from BaseSemantics to MultiSemantics SValue
+ *          SValuePtr b = SValue::promote(b_);
+ *          const size_t AlphaID = 0, BetaID = 1; //probably part of the constructor
+ *          if (is_active(AlphaID) && is_active(BetaID)) {
+ *              clear_active(BetaID);
+ *              SValuePtr result = SValue::promote(MultiSemantics::RiscOperators::add(a_, b_));
+ *              set_active(BetaID);
+ *              Beta::SValuePtr beta_result = compute_from_alpha(retval.get_subvalue(AlphaID));
+ *              result.set_subvalue(BetaID, beta_result);
+ *              return result;
  *          }
- *          return retval;
+ *          return MultiSemantics::RiscOperators(a_, b_);
  *      }
  *  };
  * @endcode
- *
- * The convenience of using a MultiPolicy increases with the number of sub-policies it contains.
  */
 namespace MultiSemantics {
+
+/** Helps printing multidomain values by allowing the user to specify a name for each subdomain. */
+class Formatter: public BaseSemantics::Formatter {
+public:
+    std::vector<std::string> subdomain_names;
+};
 
 /*******************************************************************************************************************************
  *                                      Value type
@@ -121,7 +73,10 @@ typedef BaseSemantics::Pointer<class SValue> SValuePtr;
  * A multi-semantic value is a set of values, one from each of the subdomains, and a bit vector that indicates which values
  * are valid.  The bit vector is accessed by the RiscOperators and new values are created by those operators with appropriate
  * validities, but the MultiSemantics domain doesn't otherwise modify the bit vector--that's up to the user-defined,
- * inter-operation callbacks. */
+ * inter-operation callbacks.
+ *
+ * Individual sub-domain values can be queried from a multi-domain value with get_subvalue() using the ID returned by
+ * add_subdomain() when the sub-domain's RiscOperators were added to the multi-domain's RiscOperators. */
 class SValue: public BaseSemantics::SValue {
 protected:
     typedef std::vector<BaseSemantics::SValuePtr> Subvalues;
@@ -198,7 +153,7 @@ public:
 
     virtual uint64_t get_number() const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared at this level of the class hierarchy
@@ -230,12 +185,6 @@ public:
     }
 };
 
-/** Helps printing multidomain values by allowing the user to specify a name for each subdomain. */
-class PrintHelper: public BaseSemantics::PrintHelper {
-public:
-    std::vector<std::string> subdomain_names;
-};
-
 /*******************************************************************************************************************************
  *                                      RISC Operators
  *******************************************************************************************************************************/
@@ -253,10 +202,10 @@ protected:
     typedef std::vector<BaseSemantics::RiscOperatorsPtr> Subdomains;
     Subdomains subdomains;
     std::vector<bool> active;
-    PrintHelper print_helper;
+    Formatter formatter;                // contains names for the subdomains
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Protected constructors
+    // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
@@ -271,7 +220,7 @@ protected:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public allocating constructors
+    // Static allocating constructors
 public:
     /** Static allocating constructor. This constructor creates a new MultiDomain RiscOperators object that does't have any
      *  subdomains.  The subdomains should be added before using this object. The @p regdict argument is not used in this
@@ -289,8 +238,9 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &ops);
-    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
@@ -300,23 +250,25 @@ public:
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(state, solver);
     }
-    
-        
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &ops);
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hiearchy
 public:
     /** Add a subdomain to this MultiSemantics domain.  Returns the identifier (index) used for this subdomain.  The @p name is
-     *  optional and used mostly for debugging; it is also added to the PrintHelper and can be used when printing a semantic
+     *  optional and used mostly for debugging; it is also added to the formatter and can be used when printing a semantic
      *  value. The @p activate argument indicates whether this subdomain is activated (default is true).  Activated subdomains
      *  will participate in RISC operations if their arguments are defined.  See also, is_active(), set_active(), and
      *  clear_active(). */
     virtual size_t add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, const std::string &name, bool activate=true);
 
-    /** Returns a print-helper containing the names of the subdomains.  The print helper is a member of the RiscOperators class
-     *  and should not be deleted by the user. */
-    virtual PrintHelper *get_print_helper() {
-        return &print_helper;
+    /** Returns a formatter containing the names of the subdomains. */
+    virtual Formatter& get_formatter() {
+        return formatter;
     }
     
     /** Returns the number of subdomains added to this MultiDomain. */
@@ -417,7 +369,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // RISC operations and other overrides
 public:
-    virtual void print(std::ostream &o, const std::string prefix="", BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream &o, BaseSemantics::Formatter&) const /*override*/;
     virtual void startInstruction(SgAsmInstruction *insn) /*override*/;
     virtual void finishInstruction(SgAsmInstruction *insn) /*override*/;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) /*override*/;
@@ -465,10 +417,10 @@ public:
                                                       const BaseSemantics::SValuePtr &b) /*override*/;
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond, size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) /*override*/;
+    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
 } // namespace

@@ -15,6 +15,14 @@ HEADER_START
        // DQ (12/3/2011): refactoring support for symbol tables and symbols.
           SgName get_mangled_name() const;
 
+       // DQ (8/21/2013): Added function so that templated lower-level symbol table support will compile.
+       // Note that this function can not be called and returns an appropriate error message.
+       // Note also that we have to return a declaration for which get_type exists as well 
+       // (selected SgFunctionDeclaration).  The return value of this function is always NULL 
+       // plus it is a runtime error to call this function.
+       // SgFunctionDeclaration* get_declaration() const;
+          SgDeclarationStatement* get_declaration() const;
+
 HEADER_END
 
 HEADER_X_SYMBOL_START
@@ -39,7 +47,7 @@ HEADER_GET_NAME_END
 
 
 HEADER_DECLARATION_START
-          SgMemberFunctionDeclaration *get_declaration() const;
+          SgMemberFunctionDeclaration* get_declaration() const;
 
        // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
           SgClassDefinition *get_scope() const ROSE_DEPRECATED_FUNCTION;
@@ -126,6 +134,19 @@ SgSymbol::get_symbol_basis() const
      return NULL;
    }
 #endif
+
+SgDeclarationStatement*
+SgSymbol::get_declaration() const
+   {
+  // DQ (8/21/2013): Added function so that templated lower-level symbol table support will compile.
+  // Note that this function can not be called and returns an appropriate error message.
+
+     printf ("ERROR: SgSymbol::get_declaration(): this function exists so that templated lower-level symbol table support will compile (please call this on an appropriate derived class of SgSymbol) \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
 
 // This function has been implement to support testing of the scope of 
 // the declartion with the scope of where the symbols are placed 

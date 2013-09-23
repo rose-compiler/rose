@@ -6,8 +6,11 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include "PartialSymbolicSemantics.h"
+#include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
+
+#include "PartialSymbolicSemantics2.h"
+#include "DispatcherX86.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -190,7 +193,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 Disassembler::AddressSet
 Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace BinaryAnalysis::InstructionSemantics2;
 
     /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
@@ -204,18 +207,16 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
         return Disassembler::AddressSet(); // no indirection
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
-    typedef PartialSymbolicSemantics::ValueType<32> RegisterValueType;
-    typedef PartialSymbolicSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
-    Policy policy;
-    policy.set_map(&ro_map);
-    Semantics semantics(policy);
+    const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64(); // compatible w/ older x86 models
+    const RegisterDescriptor *REG_EIP = regdict->lookup("eip");
+    PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    ops->set_memory_map(&ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {
             insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
             assert(insn_x86); // we know we're in a basic block of x86 instructions already
-            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
-            semantics.processInstruction(insn_x86);
+            dispatcher->processInstruction(insn_x86);
         }
     } catch (...) {
         return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
@@ -227,15 +228,17 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
      * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
      * stack), so we also skip over any memory whose address is known. */
     Disassembler::AddressSet successors;
-    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
-    size_t entry_size = 4; // FIXME: bytes per jump table entry
-    if (!eip.is_known()) {
-        for (Policy::StateType::Memory::iterator mi=policy.get_state().memory.begin(); mi!=policy.get_state().memory.end(); ++mi) {
-            if (mi->get_data()==eip && !mi->get_address().is_known()) {
-                rose_addr_t base_va = mi->get_address().offset;
+    BaseSemantics::SValuePtr eip = ops->readRegister(*REG_EIP);
+    static const size_t entry_size = 4; // FIXME: bytes per jump table entry
+    uint8_t *buf = new uint8_t[entry_size];
+    if (!eip->is_number()) {
+        BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
+        for (BaseSemantics::MemoryCellList::CellList::iterator mi=mem->get_cells().begin(); mi!=mem->get_cells().end(); ++mi) {
+            BaseSemantics::MemoryCellPtr cell = *mi;
+            if (cell->get_address()->is_number() && cell->get_value()->must_equal(eip)) {
+                rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
-                    uint8_t buf[entry_size];
                     size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
@@ -260,6 +263,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
             }
         }
     }
+    delete [] buf;
     return successors;
 }
 
@@ -302,7 +306,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va);
+    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va, NULL);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -1568,7 +1572,7 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->node->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+        if (ii->second->node->is_function_call(iv, &target_va, NULL) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
@@ -3107,6 +3111,14 @@ Partitioner::detach_thunk(Function *func)
         if (!complete || succs.size()!=1)
             return false;
         second_va = *(succs.begin());
+    }
+
+    /* The JMP target must be an instruction in the same function. */
+    if (BasicBlock *target_bb = find_bb_containing(second_va)) {
+        if (target_bb->function!=func)
+            return false;
+    } else {
+        return false;
     }
 
     /* Don't split the function if the first instruction is a successor of any of the function's blocks. */

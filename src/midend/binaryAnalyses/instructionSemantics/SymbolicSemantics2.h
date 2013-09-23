@@ -52,13 +52,19 @@ typedef std::set<SgAsmInstruction*> InsnSet;
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
+/** Formatter for symbolic values. */
+class Formatter: public BaseSemantics::Formatter {
+public:
+    InsnSemanticsExpr::Formatter expr_formatter;
+};
+
 /** Type of values manipulated by the SymbolicSemantics domain.
  *
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, also stores the set of
- *  instructions that were used in defining the value.  This provides a framework for some simple forms of def-use
+ *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
+ *  instructions that were used to define the value.  This provides a framework for some simple forms of def-use
  *  analysis. See get_defining_instructions() for details.
  * 
  *  @section Unk_Uinit Unknown versus Uninitialized Values
@@ -129,8 +135,9 @@ protected:
      *  adds itself to the saved value. */
     InsnSet defs;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // Protected constructors
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_variable(nbits);
     }
@@ -146,26 +153,34 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
-    /** Construct a prototypical value. Prototypical values are only used for their virtual constructors. */
+    /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
         return SValuePtr(new SValue(1));
     }
 
-    /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
-        return retval;
+    /** Instantiate a new undefined value of specified width. */
+    static SValuePtr instance(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
     }
 
+    /** Instantiate a new concrete value. */
+    static SValuePtr instance(size_t nbits, uint64_t value) {
+        return SValuePtr(new SValue(nbits, value));
+    }
+
+    /** Instantiate a new value with specified symbolic expression. */
+    static SValuePtr instance(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
+        return SValuePtr(new SValue(expr, defs));
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nbits));
+        return instance(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nbits, value));
+        return instance(nbits, value);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
@@ -176,7 +191,17 @@ public:
 
     /** Virtual allocating constructor. Constructs a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        return SValuePtr(new SValue(expr, defs));
+        return instance(expr, defs);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
+    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
+        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        assert(retval!=NULL);
+        return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,11 +222,20 @@ public:
 
     virtual uint64_t get_number() const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
+
+    virtual std::string get_comment() const /*override*/;
+    virtual void set_comment(const std::string&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
 public:
+    /** Substitute one value for another throughout a value. For example, if this value is "(add esp_0, -12)" and we substitute
+     *  "esp_0" with "(add stack_frame 4)", this method would return "(add stack_frame -8)".  It is also possible for the @p
+     *  from value to be a more complicated expression. This method attempts to match @p from at all nodes of this expression
+     *  and substitutes at eac node that matches.  The @p from and @p to must have the same width. */
+    virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to) const;
+
     /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
      *  value and returns a reference to this value. See also add_defining_instructions().
      *  @{ */
@@ -342,38 +376,73 @@ public:
     };
 
 protected:
-    
     CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
     CellCompressorChoice cc_choice;             /**< The default cell compressor. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // protected constructors, same as for the base class
     MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
         : BaseSemantics::MemoryCellList(protocell, protoval), cell_compressor(&cc_choice) {}
 
-public:
-    /** Static allocating constructor.  This constructor uses BaseSemantics::MemoryCell as the cell type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        BaseSemantics::MemoryCellPtr protocell = BaseSemantics::MemoryCell::instance(protoval, protoval);
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
-    }
+    MemoryState(const BaseSemantics::SValuePtr &protoval)
+        : BaseSemantics::MemoryCellList(protoval), cell_compressor(&cc_choice) {}
 
-    /** Static allocating constructor. */
+    MemoryState(const MemoryState &other)
+        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor), cc_choice(other.cc_choice) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
+public:
+    /** Instantiates a new memory state having specified prototypical cells and value. */
     static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
         return MemoryStatePtr(new MemoryState(protocell, protoval));
     }
 
+    /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
+     * as the cell type. */
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
+        return MemoryStatePtr(new MemoryState(protoval));
+    }
+
+    /** Instantiates a new deep copy of an existing state. */
+    static MemoryStatePtr instance(const MemoryStatePtr &other) {
+        return MemoryStatePtr(new MemoryState(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
+     * BaseSemantics::MemoryCell as the cell type. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
         return instance(protoval);
     }
 
+    /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
                                                  const BaseSemantics::SValuePtr &protoval) const /*override*/ {
         return instance(protocell, protoval);
     }
+
+    /** Virtual copy constructor. Creates a new deep copy of this memory state. */
+    virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
+        return MemoryStatePtr(new MemoryState(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
+     *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        assert(x!=NULL);
+        return retval;
+    }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods that override the base class
+    // Methods we inherited
 public:
     /** Read a byte from memory.
      *
@@ -411,8 +480,11 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for the SymbolicSemantics domain.
  *
  *  These RISC operators depend on functionality introduced into the SValue class hierarchy at the SymbolicSemantics::SValue
- *  level. Therfore, the prototypical value supplied to the constructor or present in the supplied state object must have a
+ *  level. Therefore, the prototypical value supplied to the constructor or present in the supplied state object must have a
  *  dynamic type which is a SymbolicSemantics::SValue.
+ *
+ *  The RiscOperators object also controls whether use-def information is computed and stored in the SValues.  The default is
+ *  to not compute this information.  The set_compute_usedef() method can be used to enable this feature.
  *
  *  Each RISC operator should return a newly allocated semantic value so that the caller can adjust definers for the result
  *  without affecting any of the inputs. For example, a no-op that returns its argument should be implemented like this:
@@ -426,25 +498,25 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Protected constructors, same as those in the base class
+    // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver) {
+        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver) {
+        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public allocating constructors
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
-     * that are defaults for SymbolicSemantics. */
+    /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
+     * SymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
@@ -453,28 +525,40 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    /** Static allocating constructor.  An SMT solver may be specified as the second argument for convenience. See
-     *  set_solver() for details. */
+    /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
+     *  second argument for convenience. See set_solver() for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    /** Static allocating constructor.  An SMT solver may be specified as the second argument for convenience. See set_solver()
-     *  for details. */
+    /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
+     *  for convenience. See set_solver() for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    /** Virtual allocating constructor. */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
     }
 
-    /** Virtual allocating constructor. */
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(state, solver);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Run-time promotion of a base RiscOperators pointer to symbolic operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a SymbolicSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,13 +566,15 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        retval->defined_by(get_insn());
+        if (compute_usedef)
+            retval->defined_by(get_insn());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        retval->defined_by(get_insn());
+        if (compute_usedef)
+            retval->defined_by(get_insn());
         return retval;
     }
 
@@ -514,10 +600,90 @@ protected:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Configuration properties
+protected:
+    bool compute_usedef;
+
+public:
+    /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
+     *  defining instructions in their return values, computing the new set from the sets of definers for the RISC operands and
+     *  possibly the current instruction (the current instruction is usually not a definer if it simply copies data verbatim).
+     * @{ */
+    void set_compute_usedef(bool b=true) { compute_usedef = b; }
+    void clear_compute_usedef() { set_compute_usedef(false); }
+    bool get_compute_usedef() const { return compute_usedef; }
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first defined at this level of the class hierarchy
+public:
+    /** Substitute all occurrences of @p from with @p to in the current state.  For instance, in functions that use a frame
+     *  pointer set up with "push ebp; mov ebp, esp", it is convenient to see stack offsets in terms of the function's stack
+     *  frame rather than in terms of the original esp value.  This convenience comes from the fact that compilers tend to
+     *  emit stack accessing code where the addresses are offsets from the function's stack frame.
+     *
+     *  For instance, after the "push ebp; mov ebp, esp" prologue, the machine state is:
+     * @code
+     *  registers:
+     *    esp    = (add[32] esp_0[32] -4[32])
+     *    ebp    = (add[32] esp_0[32] -4[32])
+     *    eip    = 0x080480a3[32]
+     *  memory:
+     *    addr=(add[32] esp_0[32] -1[32]) value=(extract[8] 24[32] 32[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -2[32]) value=(extract[8] 16[32] 24[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -3[32]) value=(extract[8] 8[32] 16[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -4[32]) value=(extract[8] 0[32] 8[32] ebp_0[32])
+     * @endcode
+     *
+     *  If we create a new variable called "stack_frame" where
+     *
+     * @code
+     *  stack_frame = esp_0 - 4
+     * @endcode
+     *
+     *  Solving for esp_0:
+     *
+     * @code
+     *  esp_0 = stack_frame + 4
+     * @endcode
+     *
+     * Then replacing the lhs (esp_0) with the rhs (stack_frame + 4) in the machine state causes the expressions to be
+     * rewritten in terms of stack_frame instead of esp_0:
+     * 
+     * @code
+     *  registers:
+     *    esp    = stack_frame[32]
+     *    ebp    = stack_frame[32]
+     *    eip    = 0x080480a3[32]
+     *  memory:
+     *    addr=(add[32] stack_frame[32] 3[32]) value=(extract[8] 24[32] 32[32] ebp_0[32])
+     *    addr=(add[32] stack_frame[32] 2[32]) value=(extract[8] 16[32] 24[32] ebp_0[32])
+     *    addr=(add[32] stack_frame[32] 1[32]) value=(extract[8] 8[32] 16[32] ebp_0[32])
+     *    addr=stack_frame[32] value=(extract[8] 0[32] 8[32] ebp_0[32])
+     * @endcode
+     *
+     * Here's the source code for that substitution:
+     *
+     * @code
+     *  SymbolicSemantics::RiscOperatorsPtr operators = ...;
+     *  SymbolicSemantics::SValuePtr original_esp = ...; //probably read from the initial state
+     *  BaseSemantics::SValuePtr stack_frame = operators->undefined_(32);
+     *  stack_frame->set_comment("stack_frame"); //just so output looks nice
+     *  SymbolicSemantics::SValuePtr rhs = SymbolicSemantics::SValue::promote(
+     *      operators->add(stack_frame, operators->number_(32, 4))
+     *  );
+     *
+     *  std::cerr <<"Prior to state:\n" <<*operators;
+     *  operators->substitute(original_esp, rhs);
+     *  std::cerr <<"Substituted state:\n" <<*operators;
+     * @endcode
+     */
+    virtual void substitute(const SValuePtr &from, const SValuePtr &to);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
-    virtual void interrupt(uint8_t inum) /*override*/;
-    virtual void sysenter() /*override*/;
+    virtual void interrupt(int majr, int minr) /*override*/;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
@@ -566,11 +732,11 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,
                                                 size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg,
+    virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) /*override*/;

@@ -1,0 +1,78 @@
+module FExpr
+
+exports
+
+sorts Program ProgramStmt EndProgramStmt AssignmentStmt
+      Name Expr
+      EOL EOS Comment
+
+context-free start-symbols
+
+  Program
+
+context-free syntax
+
+  ProgramStmt
+    AssignmentStmt*
+  EndProgramStmt              -> Program          {cons("Program")}
+
+  "PROGRAM" Name          EOS -> ProgramStmt      {cons("ProgramStmt")}
+  "end" "program"         EOS -> EndProgramStmt   {cons("EndProgramStmt")}
+
+  Name '=' Expr           EOS -> AssignmentStmt   {cons("AssignmentStmt")}
+  
+  Name                        -> Expr             {cons("Var")}
+  '(' Expr ')'                -> Expr             {cons("ParenExpr")}
+
+context-free priorities
+
+%% See Clause 7.1.3 for precedence of operators
+
+%% defined-unary-op has highest priority followed by **
+%%
+  Expr '**' Expr        -> Expr {cons("PowerExpr"), right}
+  >
+  { left:
+    Expr '*' Expr       -> Expr {cons("MultExpr"), left}
+    Expr '/' Expr       -> Expr {cons("DivExpr"),  left}
+  }
+  >
+  {
+    '+' Expr            -> Expr {cons("UnaryPlusExpr")}
+    '-' Expr            -> Expr {cons("UnaryMinusExpr")}
+  }
+  >
+  { left:
+    Expr '+'  Expr      -> Expr {cons("PlusExpr"),  left}
+    Expr '-'  Expr      -> Expr {cons("MinusExpr"), left}
+  }
+  > Expr '//' Expr      -> Expr {cons("ConcatExpr"), left}
+  >
+  { left:
+    Expr '=='  Expr     -> Expr {cons("EqExpr"),    left}
+    Expr '/='  Expr     -> Expr {cons("NotEqExpr"), left}
+  }
+  > Expr '.NOT.' Expr   -> Expr {cons("NotExpr"), left}
+  > Expr '.AND.' Expr   -> Expr {cons("AndExpr"), left}
+  > Expr '.OR.'  Expr   -> Expr {cons("OrExpr"),  left}
+  >
+  { left:
+    Expr '.EQV.'  Expr  -> Expr {cons("EqvExpr"),    left}
+    Expr '.NEQV.' Expr  -> Expr {cons("NotEqvExpr"), left}
+  }
+%%
+%% defined-binary-op has lowest priority
+
+lexical syntax
+
+  [a-zA-Z\_][a-zA-Z0-9\_]*    -> Name
+
+  [\ \t] -> LAYOUT
+
+  [\n]             -> EOL
+  [\r] [\n]        -> EOL
+
+  "!" ~[\n\r]*     -> Comment
+
+  EOL              -> EOS
+

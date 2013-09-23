@@ -232,7 +232,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &cond, size_t nbits)
 {
     assert(get_state()!=NULL);
@@ -242,7 +242,7 @@ RiscOperators::readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr 
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                          const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
     assert(get_state()!=NULL);

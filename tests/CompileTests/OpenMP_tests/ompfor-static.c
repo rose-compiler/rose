@@ -25,5 +25,6 @@ int main(void)
     printf ("Using %d threads.\n",omp_get_num_threads());
    foo(0,10,2);
   }
+  return 0;
 }
 
