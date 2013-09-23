@@ -16,8 +16,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-using namespace sqlite3x;
-
 namespace CloneDetection {
 
 const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
