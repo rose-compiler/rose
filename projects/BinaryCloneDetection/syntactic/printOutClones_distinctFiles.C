@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
 	    clone_cluster++;
 	  }
 
-	string nametail = boost::filesystem::path(cur_elem.file).leaf();
+	string nametail = boost::filesystem::path(cur_elem.file).leaf().string();
 	if (nametail.rfind('-') != string::npos) { // Remove "expanded-" prefix
 	  int pos = cur_elem.file.rfind('-');
 	  cur_elem.file = cur_elem.file.substr(0, pos);
