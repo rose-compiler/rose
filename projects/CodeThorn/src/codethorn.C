@@ -95,7 +95,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   if(boolOptions["rers-binary"]) {
-    for(int i=0;i<62;i++) {
+	int assertStart=-1;
+	int assertEnd=-1;
+	switch(resultsFormat) {
+	case RF_RERS2012: assertStart=0; assertEnd=60;break;
+	case RF_RERS2013: assertStart=100; assertEnd=159;break;
+	default: assert(0);
+	}
+    for(int i=assertStart;i<=assertEnd;i++) {
       *csv << i<<",";
       if(analyzer.binaryBindingAssert[i]) {
         *csv << "yes,9";
@@ -109,10 +116,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
       string name=SgNodeHelper::getLabelName((*i).first);
       if(name=="globalError")
         name="error_60";
-      name=name.substr(6,name.size()-6);
-      *csv << name
-           <<","
-        ;
+	  int num;
+	  stringstream(name.substr(6,name.size()-6))>>num;
+	  switch(resultsFormat) {
+	  case RF_RERS2012: *csv<<(num);break;
+	  case RF_RERS2013: *csv<<(num+100);break;
+	  default: assert(0);
+	  } 
+	  *csv <<",";
       Label lab=analyzer.getLabeler()->getLabel((*i).second);
       if(lset.find(lab)!=lset.end()) {
         *csv << "yes,9";
@@ -127,7 +138,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
 
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
   if(boolOptions["rers-binary"]) {
-    for(int i=0;i<62;i++) {
+	int assertStart=-1;
+	int assertEnd=-1;
+	switch(resultsFormat) {
+	case RF_RERS2012: assertStart=0; assertEnd=60;break;
+	case RF_RERS2013: assertStart=100; assertEnd=159;break;
+	default: assert(0);
+	}
+    for(int i=assertStart;i<=assertEnd;i++) {
       cout <<color("white")<<"assert: error_"<<i<<": ";
       if(analyzer.binaryBindingAssert[i]) {
         cout << color("green")<<"YES (REACHABLE)";
@@ -273,7 +291,15 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       string formula = *ltl_val;
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
-      if (csv) *csv << n+60 <<",";
+
+	  if(csv) {
+		switch(resultsFormat) {
+		case RF_RERS2012: *csv << (n-1)+61 <<",";break; // MS: n starts at 1
+		case RF_RERS2013: *csv << (n-1) <<",";break;
+		case RF_UNKNOWN: /* intentional fall-through */
+		default: assert(0);
+		}
+	  }
       try {
     AType::BoolLattice result;
     if (checker1) result = checker1->verify(*ltl_val);
@@ -429,7 +455,7 @@ int main( int argc, char * argv[] ) {
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
-    ("skip-analysis",po::value< string >(),"Run without performing any analysis (only used for testing).")
+    ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -546,6 +572,15 @@ int main( int argc, char * argv[] ) {
     else
       throw "Error: option input-var-values: wrong input format (at end).";
 #endif
+  }
+
+  if(args.count("rersformat")) {
+    int year=args["rersformat"].as<int>();
+	if(year==2012)
+	  resultsFormat=RF_RERS2012;
+	if(year==2013)
+	  resultsFormat=RF_RERS2013;
+	// otherwise it remains RF_UNKNOWN
   }
 
   int numberOfThreadsToUse=1;
