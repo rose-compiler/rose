@@ -35,14 +35,15 @@ void LabelProperty::initialize(VariableIdMapping* variableIdMapping) {
     SgNodeHelper::Pattern::OutputTarget ot=SgNodeHelper::Pattern::matchSingleVarOrValuePrintf(_node);
     switch(ot.outType) {
     case SgNodeHelper::Pattern::OutputTarget::VAR:
+      _ioType=LABELIO_STDOUTVAR;
       varRefExp=ot.varRef;
-      _ioType=LABELIO_STDOUT;
       break;
     case SgNodeHelper::Pattern::OutputTarget::INT:
-      _ioType=LABELIO_STDOUT;
+      _ioType=LABELIO_STDOUTCONST;
+      _ioValue=ot.intVal;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF:
-      cout<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
+      cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION:
       ;//intentionally ignored (filtered)
@@ -78,7 +79,9 @@ void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRele
 bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
 bool LabelProperty::isLTLRelevant() {assert(_isValid); return _isLTLRelevant;}
 SgNode* LabelProperty::getNode() { if(!_isValid) cout<<"ERROR:"<<toString()<<endl; assert(_isValid); return _node;}
-bool LabelProperty::isStdOutLabel() { assert(_isValid); return _ioType==LABELIO_STDOUT; }
+/* deprecated */ bool LabelProperty::isStdOutLabel() { assert(_isValid); return  isStdOutVarLabel()||isStdOutConstLabel();}
+bool LabelProperty::isStdOutVarLabel() { assert(_isValid); return _ioType==LABELIO_STDOUTVAR; }
+bool LabelProperty::isStdOutConstLabel() { assert(_isValid); return _ioType==LABELIO_STDOUTCONST; }
 bool LabelProperty::isStdInLabel() { assert(_isValid); return _ioType==LABELIO_STDIN; }
 bool LabelProperty::isStdErrLabel() { assert(_isValid); return _ioType==LABELIO_STDERR; }
 bool LabelProperty::isIOLabel() { assert(_isValid); return isStdOutLabel()||isStdInLabel()||isStdErrLabel(); }
@@ -89,6 +92,7 @@ bool LabelProperty::isFunctionExitLabel() { assert(_isValid); return _labelType=
 bool LabelProperty::isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
 bool LabelProperty::isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
 VariableId LabelProperty::getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
+int LabelProperty::getIOConst() { assert(_ioType!=LABELIO_NONE); return _ioValue; }
 
 Labeler::Labeler(SgNode* start, VariableIdMapping* variableIdMapping) {
   _variableIdMapping=variableIdMapping;
@@ -330,11 +334,23 @@ std::string Labeler::toString() {
   return ss.str();
 }
 
-bool Labeler::isStdOutLabel(Label label, VariableId* id) {
+bool Labeler::isStdOutLabel(Label label) {
+  return isStdOutVarLabel(label)||isStdOutConstLabel(label);
+}
+
+bool Labeler::isStdOutVarLabel(Label label, VariableId* id) {
   bool res=false;
-  res=mappingLabelToLabelProperty[label].isStdOutLabel();
+  res=mappingLabelToLabelProperty[label].isStdOutVarLabel();
   if(res&&id)
     *id=mappingLabelToLabelProperty[label].getIOVarId();
+  return res;
+}
+
+bool Labeler::isStdOutConstLabel(Label label, int* value) {
+  bool res=false;
+  res=mappingLabelToLabelProperty[label].isStdOutConstLabel();
+  if(res&&value)
+    *value=mappingLabelToLabelProperty[label].getIOConst();
   return res;
 }
 

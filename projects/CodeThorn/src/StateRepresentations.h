@@ -112,6 +112,7 @@ class InputOutput {
   string toString(VariableIdMapping* variableIdMapping) const;
   void recordVariable(OpType op, VariableId varId);
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
+  void recordConst(OpType op, int val);
   void recordFailedAssert();
 };
 

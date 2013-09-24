@@ -24,8 +24,17 @@ using namespace CodeThorn;
   * \date 2012.
  */
 void InputOutput::recordVariable(OpType op0,VariableId varId) {
+  switch(op0) {
+  case STDIN_VAR:
+  case STDOUT_VAR:
+  case STDERR_VAR:
+    break;
+  default: cerr<<"Error: wrong IO operation type."<<endl;
+    ROSE_ASSERT(0);
+  }
   op=op0;
   var=varId;
+  val=CodeThorn::AType::Bot();
 }
 
 /*! 
@@ -40,11 +49,17 @@ void InputOutput::recordFailedAssert() {
   * \author Markus Schordan
   * \date 2012.
  */
-void InputOutput::recordConst(OpType op0,AType::ConstIntLattice val) {
-  cerr<<"IO with constants not supported yet."<<endl;
-  exit(1);
+void InputOutput::recordConst(OpType op0,AType::ConstIntLattice constvalue) {
+  ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
+  op=op0;
+  var=VariableId();
+  val=constvalue;
 }
-
+void InputOutput::recordConst(OpType op0,int value) {
+  ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
+  AType::ConstIntLattice abstractConstValue(value);
+  recordConst(op0,abstractConstValue);
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -56,8 +71,8 @@ string InputOutput::toString() const {
   case STDIN_VAR: str="stdin:"+var.toString();break;
   case STDOUT_VAR: str="stdout:"+var.toString();break;
   case STDERR_VAR: str="stderr:"+var.toString();break;
-  case STDOUT_CONST: str="out:"+val.toString();break;
-  case STDERR_CONST: str="out:"+val.toString();break;
+  case STDOUT_CONST: str="stdoutconst:"+val.toString();break;
+  case STDERR_CONST: str="stderrconst:"+val.toString();break;
   case FAILED_ASSERT: str="failedassert";break;
   default:
     cerr<<"FATAL ERROR: unknown IO operation abstraction.";
@@ -78,8 +93,8 @@ string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   case STDIN_VAR: str="stdin:"+varName;break;
   case STDOUT_VAR: str="stdout:"+varName;break;
   case STDERR_VAR: str="stderr:"+varName;break;
-  case STDOUT_CONST: str="out:"+val.toString();break;
-  case STDERR_CONST: str="out:"+val.toString();break;
+  case STDOUT_CONST: str="stdoutconst:"+val.toString();break;
+  case STDERR_CONST: str="stderrconst:"+val.toString();break;
   case FAILED_ASSERT: str="failedassert";break;
   default:
     cerr<<"FATAL ERROR: unknown IO operation abstraction.";
@@ -415,11 +430,14 @@ string EStateSet::estateIdString(const EState* estate) const {
   * \date 2012.
  */
 CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
+  return io.op;
+#if 0
   Label lab=label();
   if(labeler->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
   if(labeler->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
   if(labeler->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
   return InputOutput::NONE;
+#endif
 }
 
 /*! 

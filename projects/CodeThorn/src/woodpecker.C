@@ -33,7 +33,6 @@ bool trivialInline(SgFunctionCallExp* funCall) {
 	4) clone body of function to inline
 	5) insert cloned body as block
   */
-  bool success=false;
   string fname=SgNodeHelper::getFunctionName(funCall);
   SgFunctionDefinition* functionDef=isSgFunctionDefinition(SgNodeHelper::determineFunctionDefinition(funCall));
   if(!functionDef)

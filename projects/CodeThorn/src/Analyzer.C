@@ -171,12 +171,7 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
 }
 
 bool Analyzer::isTerminationRelevantLabel(Label label) {
-  Labeler* lab=getLabeler();
-  if(SgNodeHelper::isLoopCond(lab->getNode(label))) {
-    //cout << "DEBUG: is termination relevant node: "<<SgNodeHelper::nodeToString(lab->getNode(label))<<endl;
-    return true;
-  }
-  return false;
+  return SgNodeHelper::isLoopCond(getLabeler()->getNode(label));
 }
 
 // We want to avoid calling critical sections from critical sections:
@@ -467,11 +462,14 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
 }
 
 InputOutput::OpType Analyzer::ioOp(const EState* estate) const {
+  return estate->ioOp(getLabeler());
+#if 0
   Label lab=estate->label();
   if(getLabeler()->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
   if(getLabeler()->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
   if(getLabeler()->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
   return InputOutput::NONE;
+#endif
 }
 
 const PState* Analyzer::processNew(PState& s) {
@@ -861,9 +859,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         return elistify(createEState(edge.target,newPState,newCSet,newio));
       }
     }
-    if(getLabeler()->isStdOutLabel(lab,&varId)) {
-      newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-      assert(newio.var==varId);
+    if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
+      {
+	newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+	assert(newio.var==varId);
+      }
       if(boolOptions["report-stdout"]) {
         cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
       }
@@ -873,6 +873,17 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         // TODO: to make this more specific we must parse the printf string
         cout<<"CodeThorn-abstract-interpreter(stdout)> ";
         cout<<aint.toString()<<endl;
+      }
+    }
+    {
+      int constvalue;
+      if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
+	{
+	  newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+	}
+	if(boolOptions["report-stdout"]) {
+	  cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
+	}
       }
     }
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
