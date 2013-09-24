@@ -1,6 +1,18 @@
+#if 1
+#include <iostream>
+int main(int argc, char *argv[])
+{
+    // No longer supported because the syntactic clone detection has been partly merged with the semantic clone
+    // detection, which uses PostgreSQL via ROSE's SqlDatabase API.
+    std::cerr <<argv[0] <<": no longer supported\n";
+    return 1;
+}
+#else
+
 #include "findExactClones.h"
+#include "sqlite3x.h"
 
-
+using namespace sqlite3x;
 using namespace boost::program_options;
 using namespace std;
 int main(int argc, char* argv[])
@@ -155,5 +167,4 @@ int main(int argc, char* argv[])
   return 0;
 };
 
-
-
+#endif
