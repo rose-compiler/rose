@@ -612,7 +612,7 @@ int main(int argc, char* argv[])
   }
 
   int skippedEdge=0;
-  map<int,int>::const_iterator edgeIt = edges.begin();
+  multimap<int,int>::const_iterator edgeIt = edges.begin();
   for (;edgeIt!=edges.end();++edgeIt) {
     int from = edgeIt->first;
     int to = edgeIt->second;
