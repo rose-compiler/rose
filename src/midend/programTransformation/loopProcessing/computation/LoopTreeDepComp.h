@@ -154,7 +154,7 @@ class LoopTreeDepGraphCreate
 };
 
 
-class LoopTreeDepComp 
+class ROSE_DLL_API LoopTreeDepComp 
 {
   LoopTreeNode *root;
   LoopTreeCreate* tc;
@@ -222,7 +222,7 @@ class LoopTreeDepCompSubtree : public LoopTreeDepComp
   virtual ~LoopTreeDepCompSubtree() { delete GetDepGraph(); }
 };
 
-class LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
+class ROSE_DLL_API LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
 {
   DepInfoAnal anal;
   PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode> nodeMap;

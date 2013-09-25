@@ -49,7 +49,7 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 # (if rose.docs.in is modified)
 all-local: rose.docs 
 
-all: enforce_policies remove_sage3basic_h_pch
+all: remove_sage3basic_h_pch
 
 core:
 	$(MAKE) -C $(top_builddir)/src
