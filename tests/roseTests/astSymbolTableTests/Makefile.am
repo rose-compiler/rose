@@ -1,39 +1,31 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
+TEST_TARGETS =
+EXTRA_DIST =
+MOSTLYCLEANFILES =
 
-# To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-## Don't use the repository in ../src
-CXX_TEMPLATE_REPOSITORY_PATH = .
+#------------------------------------------------------------------------------------------------------------------------
+noinst_PROGRAMS += testSymbolTable
+testSymbolTable_SOURCES = testSymbolTable.C
+testSymbolTable_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-# This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = testSymbolTable
+TEST_TARGETS += test1.passed
+test1.passed: input.C testSymbolTable
+	@$(RTH_RUN) CMD="./testSymbolTable -c $<" $(TEST_EXIT_STATUS) $@
 
-# Allow development using -lrose -ledg (simpler) or using 
-# long list of separate libraries (for faster development)
-ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
+EXTRA_DIST += input.C
+MOSTLYCLEANFILES += rose_input.C
 
-testSymbolTable_SOURCES      = testSymbolTable.C
-testSymbolTable_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
 
-# source files don't contain anything that would be merged
-# TESTCODES = $(srcdir)/performanceTest.C
-
-test: testSymbolTable
-	./testSymbolTable -c $(srcdir)/input.C
-
-EXTRA_DIST = input.C
-
-check-local:
-	@$(MAKE) test
-	@echo "************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astPerformanceTests: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************************"
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C
-
-distclean-local:
-	rm -rf Templates.DB 
-
-
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.err)
+	rm -f $(TEST_TARGETS:.passed=.out)
