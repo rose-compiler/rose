@@ -1,4 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+EXTRA_DISTS = tests
+
+if ROSE_APPROVED_PYTHON_VERSION
+
 CODETHORN_SRC_ROOT = $(top_srcdir)/projects/CodeThorn/src/
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
@@ -8,8 +13,6 @@ noinst_PROGRAMS = addressTakenAnalysis
 
 #arrRefExpLhsTypeCheck_SOURCES = arrRefExpLhsTypeCheck.C
 #arrRefExpLhsTypeCheck_LDADD = -lrose
-
-EXTRA_DISTS = tests
 
 INCLUDES = \
 	$(ROSE_INCLUDES) \
@@ -1460,3 +1463,4 @@ testRoseHeaders_08.C
 
 #check-arrRefExpLhsTypeCheck: $(TEST_OBJECTS)
 
+endif

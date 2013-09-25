@@ -1,32 +1,27 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
+#TODO: ask ROSE team where LEVEL_PINCLIENT namespace can be found.
 
 ########### next target ###############
 
-set(dynamicStaticBinaryAnalysis_SRCS dynamicStaticBinaryAnalysis.C)
-
-kde4_add_executable(dynamicStaticBinaryAnalysis ${dynamicStaticBinaryAnalysis_SRCS})
-
-target_link_libraries(dynamicStaticBinaryAnalysis ${KDE4_KDECORE_LIBS})
-
-
-########### next target ###############
-
-set(staticDynamicBinaryAnalysis_SRCS staticDynamicBinaryAnalysis.C)
-
-kde4_add_executable(staticDynamicBinaryAnalysis ${staticDynamicBinaryAnalysis_SRCS})
-
-target_link_libraries(staticDynamicBinaryAnalysis ${KDE4_KDECORE_LIBS})
+#set(dynamicStaticBinaryAnalysis_SRCS dynamicStaticBinaryAnalysis.C)
+#add_executable(dynamicStaticBinaryAnalysis ${dynamicStaticBinaryAnalysis_SRCS})
+#target_link_libraries(dynamicStaticBinaryAnalysis ${KDE4_KDECORE_LIBS})
 
 
 ########### next target ###############
 
-set(commandlineHandling_SRCS commandlineHandling.C)
+#set(staticDynamicBinaryAnalysis_SRCS staticDynamicBinaryAnalysis.C)
+#add_executable(staticDynamicBinaryAnalysis ${staticDynamicBinaryAnalysis_SRCS})
+#target_link_libraries(staticDynamicBinaryAnalysis ${KDE4_KDECORE_LIBS})
 
-kde4_add_executable(commandlineHandling ${commandlineHandling_SRCS})
 
-target_link_libraries(commandlineHandling ${KDE4_KDECORE_LIBS})
+########### next target ###############
+
+#set(commandlineHandling_SRCS commandlineHandling.C)
+#add_executable(commandlineHandling ${commandlineHandling_SRCS})
+#target_link_libraries(commandlineHandling ${KDE4_KDECORE_LIBS})
 
 
 ########### install files ###############

@@ -17,6 +17,11 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+// DQ (8/31/2013):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -1331,7 +1336,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 
   // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt() */");
 
-#if OUTPUT_DEBUGGING_CLASS_NAME || 1
+#if OUTPUT_DEBUGGING_CLASS_NAME
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
           classDeclaration,templateInstantiationDeclaration,
           templateInstantiationDeclaration->get_name().str(),
@@ -2662,7 +2667,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printf ("storage.isAsm() = %s \n",storage.isAsm() ? "true" : "false");
           if (storage.isAsm() == true)
              {
-               curprint( "asm ");
+               curprint("asm ");
              }
 
 #if 0
@@ -4226,6 +4231,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint("\n/* END: output using unp->u_type->unparseType (1st part) */ \n");
 #endif
+            // DQ (8/31/2013): Added support for missing attributes.
+               unp->u_sage->printAttributes(decl_item,info);
+
             // DQ (11/28/2004): Added qualifier to variable name.
 
             // DQ (10/6/2004): Changed this back to the previous ordering so that we could handle test2004_104.C
@@ -4304,7 +4312,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     printf ("Variable Name: tmp_name = %s \n",tmp_name.str());
 #endif
                  // Output the name of the variable...
-                    curprint ( tmp_name.str());
+                    curprint(tmp_name.str());
 
                  // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
@@ -4480,8 +4488,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( tmp_name.str());
              }
 
+       // DQ (8/31/2013): I think this is the wrong location for the attribute (see test2013_40.c).
        // DQ (2/27/2013): Added support for missing attributes.
-          unp->u_sage->printAttributes(decl_item,info);
+       // unp->u_sage->printAttributes(decl_item,info);
 
 #if 0
           curprint("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n");
@@ -5801,7 +5810,16 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
   // Output the "asm" keyword.
-     curprint ( string("asm "));
+  // DQ (8/31/2013): We have to output either "__asm__" or "asm" (for MSVisual C++ I think we might need "__asm").
+     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+     if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
+        {
+          curprint("__asm__ ");
+        }
+       else
+        {
+          curprint("asm ");
+        }
 
   // DQ (7/23/2006): Added support for volatile as modifier.
      if (asm_stmt->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile())
@@ -5820,6 +5838,21 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
   // printf ("unparsing asm statement = %ld \n",asm_stmt->get_operands().size());
   // Process the asm template (always the first operand)
      string asmTemplate = asm_stmt->get_assemblyCode();
+
+#if 0
+     string testString = "pxor %%mm7, %%mm7";
+     printf ("In unparseAsmStmt(): testString                = %s \n",testString.c_str());
+     printf ("In unparseAsmStmt(): escapeString(testString)  = %s \n",escapeString(testString).c_str());
+
+     for (size_t i=0; i < asmTemplate.length(); i++)
+        {
+          printf ("ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
+        }
+
+     printf ("In unparseAsmStmt(): asmTemplate               = %s \n",asmTemplate.c_str());
+     printf ("In unparseAsmStmt(): escapeString(asmTemplate) = %s \n",escapeString(asmTemplate).c_str());
+#endif
+
      curprint("\"" + escapeString(asmTemplate) + "\"");
 
      if (asm_stmt->get_useGnuExtendedFormat())
@@ -5863,6 +5896,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           bool first;
           if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0)
              {
+#if 0
+               printf ("In unparseAsmStmt(): (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c).
+               curprint(" :: "); // Start of output operands
+
                goto donePrintingConstraints;
              }
           curprint(" : "); // Start of output operands
@@ -5890,6 +5929,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (numInputOperands == 0 && numClobbers == 0)
              {
+#if 0
+               printf ("In unparseAsmStmt(): (numInputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
+            // curprint(" : "); // Start of output operands
+
                goto donePrintingConstraints;
              }
           curprint(" : "); // Start of input operands
@@ -5912,7 +5957,15 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
           if (numClobbers == 0)
+             {
+#if 0
+               printf ("In unparseAsmStmt(): (numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
+            // curprint(" : "); // Start of output operands
+
                goto donePrintingConstraints;
+             }
 
           curprint(" : "); // Start of clobbers
 

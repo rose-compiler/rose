@@ -11,13 +11,16 @@ SUBDIRS = \
 	BinFuncDetect \
 	BinQ \
 	BinaryCloneDetection \
+   BinaryDataStructureRecognition \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
-	CodeThorn \
+   CodeThorn \
+   ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
+   EditDistanceMetric \
 	FiniteStateModelChecker \
 	fuse \
 	graphColoring \
@@ -39,18 +42,20 @@ SUBDIRS = \
 	programModeling \
 	pragmaParsing \
 	roseToLLVM \
-	taintcheck \
 	RTC \
 	PowerAwareCompiler \
+   taintcheck \
 	ManyCoreRuntime \
 	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+	RoseBlockLevelTracing\
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
+# DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly
@@ -76,6 +81,9 @@ if !USING_GCC_3_4_4_BACKEND_COMPILER
 #  SUBDIRS += backstroke haskellport 
    SUBDIRS += backstroke
 
+# DQ (9/2/2013): This is overly complex to process with internal debugging turned on in the new EDG support.
+if !ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+
 # DQ (4/17/2011):This is hanging (worst kind of failing) on tux324 (for two Hudson tests a50-ROSE-BOOST-matrix-scratch in a row #334 and #335).
 if !ROSE_USING_BOOST_VERSION_1_36
 # DQ (4/16/2011): This is hanging (worst kind of failing) on tux324 (for two Hudson tests in a row #2290 and #2291).
@@ -85,6 +93,8 @@ if !ROSE_USE_INSURE
    SUBDIRS += haskellport 
 endif
 endif
+endif
+
 endif
 
 endif

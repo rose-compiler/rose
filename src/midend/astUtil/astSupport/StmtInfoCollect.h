@@ -10,7 +10,7 @@
 #include <map>
 #include <sstream>
 
-class StmtInfoCollect : public ProcessAstTreeBase
+class ROSE_DLL_API StmtInfoCollect : public ProcessAstTreeBase
 { 
  protected:
   struct ModRecord{
@@ -44,7 +44,7 @@ class StmtInfoCollect : public ProcessAstTreeBase
 };
 
 class FunctionSideEffectInterface;
-class StmtSideEffectCollect 
+class ROSE_DLL_API StmtSideEffectCollect 
 : public StmtInfoCollect, public SideEffectAnalysisInterface
 {
  private:
@@ -118,7 +118,7 @@ class InterProcVariableUniqueRepr {
 
 class FunctionAliasInterface;
 // flow insensitive alias analysis for named variables only
-class StmtVarAliasCollect 
+class ROSE_DLL_API StmtVarAliasCollect 
 : public StmtInfoCollect, public AliasAnalysisInterface
 {
  public:

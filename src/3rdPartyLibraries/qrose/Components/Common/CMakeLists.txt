@@ -1,5 +1,14 @@
+set(COMMON_MOC_SOURCES
+  QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h
+  QRoseComponent.h)
+QT4_WRAP_CPP(COMMON_MOC_CPP ${COMMON_MOC_SOURCES})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+set(COMMON_SOURCES
+  QRAstInfo.C QRCoords.C  QRIcons.C  QRPixmap.C QRAttribute.C
+  QRoseComponent.C)
+
+add_library(qrcommon ${COMMON_SOURCES} ${COMMON_MOC_CPP})
+add_dependencies(qrcommon rosetta_generated)
 
 add_subdirectory(icons)
 

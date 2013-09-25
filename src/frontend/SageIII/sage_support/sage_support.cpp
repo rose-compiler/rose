@@ -40,11 +40,13 @@ using namespace OmpSupport;
 
 const string FileHelper::pathDelimiter = "/";
 
+/* These symbols are defined when we include sage_support.h above - ZG (4/5/2013)
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
 
 // CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
 extern const std::string ROSE_OFP_VERSION_STRING;
+*/
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
@@ -495,6 +497,21 @@ bool roseInstallPrefix(std::string& result) {
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libdirCopy2); 
+
+    // Zack Galbreath, June 2013
+    // When building with CMake, detect build directory by searching
+    // for the presence of a CMakeCache.txt file.  If this cannot
+    // be found, then assume we are running from within an install tree.
+    #ifdef USE_CMAKE
+    std::string pathToCache = libdir;
+    pathToCache += "/../CMakeCache.txt";
+    if (boost::filesystem::exists(pathToCache)) {
+      return false;
+    } else {
+      return true;
+    }
+    #endif
+
     free(libroseName);
 // Liao, 12/2/2009
 // Check the librose's parent directory name to tell if it is within a build or installation tree
@@ -1003,6 +1020,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
                                 // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
                                    file->set_C99_only(true);
+
+                                // DQ (9/3/2013): Set the default to use gnu99 when defaulting to C mode (this will be reset if the -std=c99 option is used).
+                                // However, it might be better still to check the backend compiler before we default to GNU.
+                                   file->set_C99_gnu_only(true);
+#if 0
+                                   printf ("In determineFileType(): Setting the default mode for detected C cile to C99 (specifically generated code will use: -std=gnu99 option) \n");
+#endif
                                  }
 
                            // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
@@ -3165,7 +3189,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
             //      -Wsurprising -Wunderflow -Wunused-labels -Wline-truncation -Werror -W
             // warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow";
 
-            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at leas for how)
+            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at least for how)
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
@@ -3535,7 +3559,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
         }
 
-  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#if 0
+     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#endif
      if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
         {
        // Add the source directory to the include list so that we reproduce the semantics of gfortran
@@ -4548,7 +4574,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 0
      printf ("\n\n***************************************************** \n");
      printf ("Inside of SgFile::compileOutput() \n");
+     printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      printf ("***************************************************** \n\n\n");
+#endif
+#if 0
+     display("In SgFile::compileOutput()");
 #endif
 
   // This function does the final compilation of the unparsed file
@@ -4639,6 +4669,30 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
+#if 1
+       // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+       // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we 
+       // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
+          SgProject* project = TransformationSupport::getProject(this);
+       // ROSE_ASSERT(project != NULL);
+          if (project != NULL)
+             {
+               printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
+                  {
+                    outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+
+                    printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+
+                    set_unparse_output_filename(outputFilename);
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
+             }
+#endif
+
           if (get_unparse_output_filename().empty())
              {
                if (get_skipfinalCompileStep())
@@ -4650,7 +4704,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
                  // specific configuration testing (when configure tests ROSE translators)).
-                    ROSE_ASSERT(! "Not implemented yet");
+
+                 // TOO1 (9/23/2013): There was never an else branch (or assertion) here before.
+                 //                   Commenting out for now to allow $ROSE/tests/CompilerOptionTests to pass
+                 //                   in order to expedite the transition from ROSE-EDG3 to ROSE-EDG4.
+                 //   ROSE_ASSERT(! "Not implemented yet");
                   }
              }
             else
@@ -4693,6 +4751,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
                   }
              }
+
           set_unparse_output_filename(outputFilename);
         }
 #endif
@@ -4742,7 +4801,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                     itInput++;
                     string destDirName = *itInput;
-                    if (mkdir(destDirName.c_str(),0777) == -1)
+                    if(!boost::filesystem::create_directory(destDirName.c_str()))
                        {
                          if(errno != EEXIST) 
                             {

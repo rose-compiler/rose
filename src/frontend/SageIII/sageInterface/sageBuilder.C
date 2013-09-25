@@ -1102,13 +1102,19 @@ SageBuilder::buildInitializedName ( const char* name, SgType* type)
 
 SgInitializedName *
 SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init)
-{
-  ROSE_ASSERT(type != NULL);
-  SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-  ROSE_ASSERT(initializedName);
-  setOneSourcePositionNull(initializedName);
-  return initializedName;
-}
+   {
+     ROSE_ASSERT(type != NULL);
+
+     SgInitializedName* initializedName = new SgInitializedName(name,type,init);
+     ROSE_ASSERT(initializedName != NULL);
+
+  // DQ (9/4/2013): Added test.
+     ROSE_ASSERT(init == NULL || init->get_parent() == initializedName);
+
+     setOneSourcePositionNull(initializedName);
+
+     return initializedName;
+   }
 
 //-----------------------------------------------
 // could have two declarations for a same variable
@@ -1648,7 +1654,7 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
    }
 
 //-----------------------------------------------
-// Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
+// Assertion `definingDeclaration != NULL || firstNondefiningDeclaration != NULL' 
 SgFunctionParameterList * 
 SageBuilder::buildFunctionParameterList(SgInitializedName* in1, SgInitializedName* in2, SgInitializedName* in3, SgInitializedName* in4, SgInitializedName* in5, SgInitializedName* in6, SgInitializedName* in7, SgInitializedName* in8, SgInitializedName* in9, SgInitializedName* in10)
 {
@@ -5577,7 +5583,7 @@ T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
   { \
      return SageBuilder::buildUnaryExpression_nfi<Sg##suffix>(op); \
   } \
-  Sg##suffix* SageBuilder::build##suffix(SgExpression* op) \
+  ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix(SgExpression* op) \
   { \
      return SageBuilder::buildUnaryExpression<Sg##suffix>(op); \
   }
@@ -5639,10 +5645,10 @@ SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
 }
 
 SgTypeIdOp*
-SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type)
+SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type)
    {
   // DQ (1/25/2013): Added support for typeId operators.
-     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type,expression_type);
+     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type);
      ROSE_ASSERT(result != NULL);
      setOneSourcePositionForTransformation(result);
      return result;
@@ -5812,11 +5818,11 @@ T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
    }
 
 #define BUILD_BINARY_DEF(suffix) \
-  Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \
+  ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \
   { \
      return buildBinaryExpression_nfi<Sg##suffix>(lhs, rhs); \
   } \
-  Sg##suffix* SageBuilder::build##suffix(SgExpression* lhs, SgExpression* rhs) \
+  ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix(SgExpression* lhs, SgExpression* rhs) \
   { \
      return buildBinaryExpression<Sg##suffix>(lhs, rhs); \
   }
@@ -6422,8 +6428,9 @@ SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
    {
      SgVarRefExp *varRef = new SgVarRefExp(sym);
-     setOneSourcePositionForTransformation(varRef);
      ROSE_ASSERT(varRef);
+
+     setOneSourcePositionForTransformation(varRef);
 
 #if 0
      printf ("In SageBuilder::buildVarRefExp(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
@@ -6436,8 +6443,9 @@ SgVarRefExp *
 SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
    {
      SgVarRefExp *varRef = new SgVarRefExp(sym);
-     setOneSourcePositionNull(varRef);
      ROSE_ASSERT(varRef);
+
+     setOneSourcePositionNull(varRef);
 
 #if 0
      printf ("In SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
@@ -6488,6 +6496,42 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
 
      return result;
    } // buildOpaqueVarRefExp()
+
+
+// DQ (9/4/2013): Added support for building compound literals (similar to a SgVarRefExp).
+//! Build function for compound literals (uses a SgVariableSymbol and is similar to buildVarRefExp_nfi()).
+SgCompoundLiteralExp*
+SageBuilder::buildCompoundLiteralExp_nfi(SgVariableSymbol* varSymbol)
+   {
+     SgCompoundLiteralExp *compoundLiteral = new SgCompoundLiteralExp(varSymbol);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     setOneSourcePositionNull(compoundLiteral);
+
+#if 0
+     printf ("In SageBuilder::buildCompoundLiteralExp_nfi(SgVariableSymbol* sym): Returning SgCompoundLiteralExp = %p \n",compoundLiteral);
+#endif
+
+     return compoundLiteral;
+   }
+
+// DQ (9/4/2013): Added support for building compound literals (similar to a SgVarRefExp).
+//! Build function for compound literals (uses a SgVariableSymbol and is similar to buildVarRefExp()).
+SgCompoundLiteralExp*
+SageBuilder::buildCompoundLiteralExp(SgVariableSymbol* varSymbol)
+   {
+     SgCompoundLiteralExp *compoundLiteral = new SgCompoundLiteralExp(varSymbol);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     setOneSourcePositionForTransformation(compoundLiteral);
+
+#if 0
+     printf ("In SageBuilder::buildCompoundLiteralExp(SgVariableSymbol* sym): Returning SgCompoundLiteralExp = %p \n",compoundLiteral);
+#endif
+
+     return compoundLiteral;
+   }
+
 
 //! Build a Fortran numeric label ref exp
 SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
@@ -10622,7 +10666,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
-          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != NULL);
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
@@ -11231,7 +11275,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
-          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != NULL);
 
        // nondefdecl->set_definingDeclaration(defdecl);
           nondefdecl->setForward();
@@ -11665,7 +11709,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
-          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != NULL);
 
           nondefdecl->setForward();
 

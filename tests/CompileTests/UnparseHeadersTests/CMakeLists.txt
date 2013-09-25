@@ -9,4 +9,4 @@ set(TestUnparseHeaders_SRCS
 
 add_executable(TestUnparseHeaders ${TestUnparseHeaders_SRCS})
 
-target_link_libraries(TestUnparseHeaders ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(TestUnparseHeaders ROSE_DLL EDG ${link_with_libraries} )
