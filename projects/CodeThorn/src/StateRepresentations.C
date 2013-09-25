@@ -258,7 +258,17 @@ bool PState::varIsConst(VariableId varId) const {
     return false; // throw "Error: PState::varIsConst : variable does not exist.";
   }
 }
-
+bool PState::varIsTop(VariableId varId) const {
+  PState::const_iterator i=find(varId);
+  if(i!=end()) {
+    AValue val=(*i).second.getValue();
+    return val.isTop();
+  } else {
+    // TODO: this allows variables (intentionally) not to be in PState but still to analyze
+    // however, this check will have to be reinstated once this mode is fully supported
+    return false; // throw "Error: PState::varIsConst : variable does not exist.";
+  }
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -439,6 +449,30 @@ CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
   return InputOutput::NONE;
 #endif
 }
+
+CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
+  // this returns 1 (TODO: investigate)
+  CodeThorn::AType::ConstIntLattice value;
+  Label lab=label();
+  if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
+    VariableId varId=io.var;
+    assert(_pstate->varExists(varId));
+    // case 1: check PState
+    if(_pstate->varIsConst(varId)) {
+      PState pstate2=*_pstate;
+      AType::CppCapsuleConstIntLattice varVal=(pstate2)[varId];
+      return varVal.getValue(); // extracts ConstIntLattice from CppCapsuleConstIntLattice
+    }
+    // case 2: check constraint if var is top
+    if(_pstate->varIsTop(varId))
+      return constraints()->varConstIntLatticeValue(varId);
+  }
+  if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
+    value=io.val;
+  }
+  return value;
+}
+
 
 /*! 
   * \author Markus Schordan

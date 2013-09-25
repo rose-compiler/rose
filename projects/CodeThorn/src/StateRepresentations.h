@@ -50,6 +50,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   friend istream& operator>>(istream& os, PState& value);
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
+  bool varIsTop(VariableId varId) const;
   string varValueToString(VariableId varname) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
@@ -143,7 +144,8 @@ class EState {
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
   InputOutput::OpType ioOp(Labeler*) const;
-
+  // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
+  AType::ConstIntLattice determineUniqueIOValue() const;
  private:
   Label _label;
   const PState* _pstate;

@@ -456,6 +456,8 @@ int main( int argc, char * argv[] ) {
     ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
+    ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
+    ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -581,6 +583,10 @@ int main( int argc, char * argv[] ) {
 	if(year==2013)
 	  resultsFormat=RF_RERS2013;
 	// otherwise it remains RF_UNKNOWN
+  }
+
+  if(args.count("max-transitions")) {
+    analyzer.setMaxTransitions(args["max-transitions"].as<int>());
   }
 
   int numberOfThreadsToUse=1;
@@ -802,8 +808,8 @@ int main( int argc, char * argv[] ) {
     cout << "STATUS: Generated assertions."<<endl;
   }
 
+  Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
-    Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     cout << "generating graphviz files:"<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
@@ -817,7 +823,7 @@ int main( int argc, char * argv[] ) {
     string datFile1=(analyzer.getTransitionGraph())->toString();
     write_file("transitiongraph1.dat", datFile1);
     cout << "generated transitiongraph1.dat."<<endl;
-
+    
     assert(analyzer.startFunRoot);
     //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
@@ -829,6 +835,17 @@ int main( int argc, char * argv[] ) {
     
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
+    cout << "=============================================================="<<endl;
+  }
+
+  if (args.count("dot-io-stg")) {
+    string filename=args["dot-io-stg"].as<string>().c_str();
+    cout << "generating dot IO graph file:"<<filename<<endl;
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.transitionGraphWithIOToDot();
+    dotFile+="}\n";
+    write_file(filename, dotFile);
+    cout << "=============================================================="<<endl;
   }
 
 #if 0

@@ -10,6 +10,7 @@
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
 #include "AstAnnotator.h"
+#include "AType.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -263,6 +264,50 @@ string Visualizer::transitionGraphToDot() {
   tg1=false;
   return ss.str();
 }
+
+string Visualizer::transitionGraphWithIOToDot() {
+  tg1=true;
+  stringstream ss;
+  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
+    ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
+  }
+  set<const EState*> estatePtrSet=transitionGraph->estateSet();
+  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+    ss<<"n"<<*i<<" [label=";
+    Label lab=(*i)->label();
+    string name="\"";
+    stringstream ss2;
+    ss2<<lab;
+    name+="L"+ss2.str()+":";
+
+    // determine whether it is a call node (C) or a call-return node (R)
+    if(labeler->isFunctionCallLabel(lab))
+      name+="C:";
+    if(labeler->isFunctionCallReturnLabel(lab))
+      name+="R:";
+    // generate number which is used in IO operation
+    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    name+=number.toString();
+    name+="\"";
+    ss<<name;
+    
+    // determine color based on IO type
+    string color="grey";
+    if(labeler->isStdInLabel(lab))
+      color="dodgerblue";
+    if(labeler->isStdOutLabel(lab))
+      color="orange";
+    if(labeler->isStdErrLabel(lab))
+      color="orangered";
+    if((*i)->io.op==InputOutput::FAILED_ASSERT)
+       color="grey10";
+    ss<<" color="<<color<<" style=\"filled\"";
+    ss<<"];";
+    ss<<endl;
+  }
+  return ss.str();
+}
+
 
 string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   stringstream ss;

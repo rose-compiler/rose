@@ -201,6 +201,8 @@ namespace CodeThorn {
     map<string,VariableId> globalVarName2VarIdMapping;
     vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+    void setMaxTransitions(long int maxTransitions) { _maxTransitions=maxTransitions; }
+    bool isIncompleteSTGReady();
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -219,6 +221,7 @@ namespace CodeThorn {
     int _solver;
 	AnalyzerMode _analyzerMode;
 	set<const EState*> _newNodesToFold;
+    long int _maxTransitions;
   };
   
 } // end of namespace CodeThorn

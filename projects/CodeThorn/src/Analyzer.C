@@ -17,10 +17,17 @@ using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),_semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
+		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),_maxTransitions(-1) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
+}
+
+bool Analyzer::isIncompleteSTGReady() {
+  if(_maxTransitions<0)
+    return false;
+  return transitionGraph.size()>_maxTransitions;
 }
 
 void Analyzer::runSolver() {
@@ -1680,6 +1687,13 @@ void Analyzer::runSolver3() {
 		} // just for proper auto-formatting in emacs
 	  } // conditional: test if work is available
     } // worklist-parallel for
+    if(isIncompleteSTGReady()) {
+      // we report some information and finish the algorithm with an incomplete STG
+      cout << "-------------------------------------------------"<<endl;
+      cout << "STATUS: finished with incomplete STG (as planned)"<<endl;
+      cout << "-------------------------------------------------"<<endl;
+      return;
+    }
   } // while
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
@@ -1786,7 +1800,18 @@ void Analyzer::runSolver4() {
     if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
       printStatusMessage(true);
       prevStateSetSize=estateSet.size();
-	}
+    }
+    if(isIncompleteSTGReady()) {
+      // ensure that the STG is folded properly when finished
+      if(boolOptions["semantic-fold"]) {
+	semanticFoldingOfTransitionGraph();
+      }  
+      // we report some information and finish the algorithm with an incomplete STG
+      cout << "-------------------------------------------------"<<endl;
+      cout << "STATUS: finished with incomplete STG (as planned)"<<endl;
+      cout << "-------------------------------------------------"<<endl;
+      return;
+    }
   } // while
   // ensure that the STG is folded properly when finished
   if(boolOptions["semantic-fold"]) {
