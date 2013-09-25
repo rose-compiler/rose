@@ -229,7 +229,7 @@ check-local:
 	@echo ================================================================
 	@echo CHECK: all of the following formulae should evaluate to "YES"!
 	@echo ================================================================
-	./codethorn --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
+	./codethorn --rersmode=yes --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 	rm -f *.consistent
 	$(MAKE) $(CONSISTENCY_CHECKS)
 
@@ -238,7 +238,7 @@ checkdemos:
 	./ast_demo $(srcdir)/tests/basictest5.C
 
 test:
-	./codethorn --edg:no_warnings $(srcdir)/tests/rers/Problem1.c \
+	./codethorn --rers-mode=yes --edg:no_warnings $(srcdir)/tests/rers/Problem1.c \
 	               --verify $(srcdir)/tests/rers/properties1.txt \
 	               --csv-assert Problem1-assert.csv \
 	               --csv-ltl Problem1-ltl.csv
@@ -247,19 +247,19 @@ test:
 # make sure that all permutations of analyzer options yield consistent results
 CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
 %.consistent: $(srcdir)/tests/rers/%.c codethorn Makefile
-	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
+	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=1 --semantic-fold=no \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
          --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.0.csv,$<)
-	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
+	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=1 --semantic-fold=yes \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
          --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.1.csv,$<)
-	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
+	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=2 --semantic-fold=no \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
          --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.2.csv,$<)
-	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
+	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=2 --semantic-fold=yes \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
          --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<)
@@ -304,7 +304,7 @@ rers: $(RERS)
 
 # parallel tests with make -j<N> test
 %.log: $(srcdir)/tests/rers/%.c codethorn Makefile
-	./codethorn --edg:no_warnings --colors=no $< \
+	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< \
 	     --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
 	     --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
 	     --csv-assert $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
@@ -364,7 +364,7 @@ bsps: codethorn
 	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
 	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
 
-	./codethorn $(srcdir)/tests/rers/Problem1.c
+	./codethorn --rersmode=yes $(srcdir)/tests/rers/Problem1.c
 	cp $(srcdir)/tests/rers/Problem1.c bsps
 	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
 	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
@@ -377,7 +377,7 @@ asserttest: codethorn
 	./codethorn --edg:no_warnings $(srcdir)/tests/asserttest2.c --csv-assert assert_csv.txt
 
 regressiontest: codethorn
-	@./codethorn --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c
+	@./codethorn --rersmode=yes --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c
 	@echo "-----------------------"
 	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
 	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
@@ -394,7 +394,7 @@ regressiontest: codethorn
 
 # use with caution
 generateregressiondata:
-	./codethorn --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c 
+	./codethorn --rersmode=yes --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c 
 	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
 	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
 

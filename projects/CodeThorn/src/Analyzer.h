@@ -192,6 +192,7 @@ namespace CodeThorn {
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
     string _csv_assert_live_file; // to become private
@@ -223,6 +224,7 @@ namespace CodeThorn {
 	AnalyzerMode _analyzerMode;
 	set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
+    bool _treatStdErrLikeFailedAssert;
   };
   
 } // end of namespace CodeThorn

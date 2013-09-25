@@ -453,7 +453,6 @@ CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
 CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
   // this returns 1 (TODO: investigate)
   CodeThorn::AType::ConstIntLattice value;
-  Label lab=label();
   if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
     VariableId varId=io.var;
     assert(_pstate->varExists(varId));

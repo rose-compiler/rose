@@ -18,7 +18,8 @@ using namespace CodeThorn;
 #include "CollectionOperators.h"
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
-		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),_maxTransitions(0) {
+		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),
+		     _maxTransitions(0),_treatStdErrLikeFailedAssert(false) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -421,7 +422,12 @@ bool Analyzer::isAssertExpr(SgNode* node) {
 #endif
 
 bool Analyzer::isFailedAssertEState(const EState* estate) {
-  return estate->io.op==InputOutput::FAILED_ASSERT;
+  if(estate->io.isFailedAssertIO())
+    return true;
+  if(_treatStdErrLikeFailedAssert) {
+    return estate->io.isStdErrIO();
+  }
+  return false;
 }
 
 EState Analyzer::createFailedAssertEState(EState estate, Label target) {
@@ -470,13 +476,6 @@ list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProj
 
 InputOutput::OpType Analyzer::ioOp(const EState* estate) const {
   return estate->ioOp(getLabeler());
-#if 0
-  Label lab=estate->label();
-  if(getLabeler()->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
-  if(getLabeler()->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
-  if(getLabeler()->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
-  return InputOutput::NONE;
-#endif
 }
 
 const PState* Analyzer::processNew(PState& s) {

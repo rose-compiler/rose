@@ -115,6 +115,10 @@ class InputOutput {
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
   void recordConst(OpType op, int val);
   void recordFailedAssert();
+  bool isStdInIO() const { return op==STDIN_VAR; }
+  bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
+  bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
+  bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);

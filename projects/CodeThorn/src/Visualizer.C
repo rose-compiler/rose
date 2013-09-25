@@ -209,18 +209,13 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
     if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
     if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
     if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
+
     if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
+    if((*j)->io.isFailedAssertIO()) {bgcolor="black";textcolor="red";}
+
     // check for start state
     if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
 
-    // should not be necessary!
-#if 0
-    if((*j)->io.op==InputOutput::STDIN_VAR) bgcolor="dodgerblue";
-    if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
-    if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
-#endif
-
-    //if((*j)->io.op==InputOutput::FAILED_ASSERT) {bgcolor="black";textcolor="white";}
     sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+estateIdStringWithTemporaries(*j)+"\">";
     sinline+="<FONT COLOR=\""+textcolor+"\">"+estateToString(*j)+"</FONT>";
     sinline+="</TD>";
@@ -354,7 +349,7 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j).source;
     const EState* target=(*j).target;
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
     ss <<"->";

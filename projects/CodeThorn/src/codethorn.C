@@ -35,7 +35,6 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgRshiftOp, true);
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
-
 }
 
 
@@ -459,6 +458,8 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
+    ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
+    ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -522,6 +523,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("abstract-interpreter",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
+  boolOptions.registerOption("stderr-like-failed-assert",false);
+  boolOptions.registerOption("rersmode",false);
 
   boolOptions.processOptions();
 
@@ -626,6 +629,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--display-diff"
         || string(argv[i])=="--input-var-values"
         || string(argv[i])=="--ltl-verifier"
+        || string(argv[i])=="--dot-io-stg"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -633,6 +637,15 @@ int main( int argc, char * argv[] ) {
         argv[i+1] = strdup("");
     }
   }
+
+  // handle RERS mode: reconfigure options
+  if(boolOptions["rersmode"]) {
+    cout<<"INFO: RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+    boolOptions.registerOption("stderr-like-failed-assert",true);
+  }
+
+  analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
+  
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
