@@ -263,6 +263,37 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
             // statementfilename = stmt->get_file_info()->get_filenameString();
                statementfilename = stmt->get_file_info()->get_physical_filename();
+
+               if (info.get_language() == SgFile::e_Fortran_output_language)
+                  {
+                 // DQ (9/24/2013): In the case of Fortran we need to generate the preprocessor name (at least for file requireing CPP).
+                 // This was handled properly under the previous implementation using the logical source position, so for Fortran we 
+                 // use the logical source position as a basis for knowing which statements to be output.  The case of C/C++ is 
+                 // more sophisticated (test autoconf test codes) and so it requires the physical source position.  Ideally, the 
+                 // fortran support would have the same implementation, but the handling of intermdiate preprocessed files makes 
+                 // this more complex (and it should be a seperate fix to handle that).
+                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(stmt->get_file_info()->get_physical_filename());
+                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(sourceFilename);
+                    statementfilename = stmt->get_file_info()->get_filenameString();
+#if 0
+                    printf ("sourceFilename                                 = %s \n",sourceFilename.c_str());
+                    printf ("statementfilename                              = %s \n",statementfilename.c_str());
+                    printf ("stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
+                    printf ("stmt->get_file_info()->get_filenameString()    = %s \n",stmt->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                    printf ("In statementFromFile(): Exiting as a test in the Fortran support for source file identification \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                    statementfilename = stmt->get_file_info()->get_physical_filename();
+#if 0
+                    printf ("In statementFromFile(): Exiting as a test in the NON-Fortran support for source file identification \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
 #if 0
                printf ("In statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
                printf ("In statementFromFile(): stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
@@ -5216,10 +5247,23 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // Make this the same precedence as a SgFunctionCallExp.
           case V_SgTypeTraitBuiltinOperator: return 16;
 
+       // DQ (9/25/2013): Adding support for new IR node (C90 and C++ compound literals).
+          case V_SgCompoundLiteralExp: return 0;
+
+       // DQ (9/25/2013): Adding support for Fortran user defined binary operators (however, I am not certain this is the correct precedence).
+          case V_SgUserDefinedBinaryOp: return 0;
+
+       // DQ (9/25/2013): Adding support for C/C++ asm operator (however, I am not certain this is the correct precedence).
+          case V_SgAsmOp: return 0;
+
           default:
              {
-#if PRINT_DEVELOPER_WARNINGS | 1
+            // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
                printf ("Warning: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#if 0
+            // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
+               printf ("Error: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               ROSE_ASSERT(false);
 #endif
              }
         }
@@ -5237,6 +5281,14 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
   // I have added the case for SgCastExp, but noticed that there appear to be many incorrect entries for associativity for the 
   // other operators.  This function is called in the evaluation for added "()" using the operator precedence (obtained from
   // the function: getPrecedence()).
+
+  // DQ (9/25/2013): It is an additional issue that some associativity rules are language dependent.  For example, I understand 
+  // that Fortran supports A - B - C as A - (B - C) (right associative) where as C and C++ would treat it as (A - B) - C (left 
+  // associative).  Currently all associativity is defined in terms of C/C++, this is something to fix for the Fortran.  In 
+  // general we add parenthesis to support the explict handling wherever possible (I think). As a rule, Fortran relational 
+  // operators are not associative.  The exponentiation operator associates right to left (right associative).  Thus, A**B**C 
+  // is equal to A**(B**C) rather than (A**B)**C. All other FORTRAN operators are left to right associative (left associative)
+  // (however it appears to contradict the stated rule for minus (above).
 
      int variant = GetOperatorVariant(expr);
      switch (variant)
@@ -5335,12 +5387,24 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgDotExp:
               return e_assoc_right;
 
+       // DQ (9/25/2013): The Fortran SgExponentiationOp has right associativity.
+           case V_SgExponentiationOp:
+              return e_assoc_right;
+
+       // DQ (9/25/2013): I believe that the Fortran SgConcatenationOp has left associativity.
+          case V_SgConcatenationOp:
+              return e_assoc_left;
+
           default:
              {
+            // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
             // The implementation of this function assumes unhandled cases are not associative.
-// #if PRINT_DEVELOPER_WARNINGS
-               printf ("getAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-// #endif
+               printf ("Warning: getAssociativity(): Undefined expression variant = %d = %s (returning e_assoc_none) \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#if 0
+            // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
+               printf ("Error: getAssociativity(): Undefined expression variant = %d = %s (returning e_assoc_none) \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               ROSE_ASSERT(false);
+#endif
              }
         }
 

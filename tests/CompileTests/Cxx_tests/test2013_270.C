@@ -1,14 +1,4 @@
 // This test code can be used for another test...
 
-// This is a slightly different version of test2013_261.C
-// were we use "iostream.h" instead of "iostream"
-// and "cout" instead of "std::cout".
-
-#line 1544 "configure"
-#include "confdefs.h"
-#include <iostream.h>
-int main() {
-   cout << "hello, world!";
-; return 0; }
-
+#include <boost/unordered_map.hpp>
 
