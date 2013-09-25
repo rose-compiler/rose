@@ -1,0 +1,16 @@
+static BoolLattice isInputState(const EState* estate,
+		    const VariableIdMapping::VariableIdSet& input_vars,
+		    char c, BoolLattice succ_val) {
+
+static BoolLattice is_eq(const ConstraintSet& constraints,
+		   const VariableId& v,
+		   char c) {
+
+RERS 2012: CHALLENGE: ASSERTS: 0-60  LTL   :  61-160 (one more assert than 2013)
+RERS 2013: TRAINING : LTL   :  0-99  ASSERT: 100-119
+RERS 2013: CHALLENGE: LTL   :  0-99  ASSERT: 100-159
+
+$executable >> $log 2>&1 &
+pid=$! ## process id
+wait $! ## wait returns return status of executable
+echo $?  # return status of $executable

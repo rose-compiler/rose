@@ -86,6 +86,7 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
  */
 class ConstraintSet : public set<Constraint> {
  public:
+  ConstraintSet constraintsOfVariable(VariableId varId);
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op) const;

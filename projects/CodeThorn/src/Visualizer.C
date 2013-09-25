@@ -266,11 +266,15 @@ string Visualizer::transitionGraphToDot() {
 }
 
 string Visualizer::transitionGraphWithIOToDot() {
-  tg1=true;
   stringstream ss;
+#if 0
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
+	// do not generate input->output edges here because we generate them later
+	if(!(labeler->isStdInLabel((*j).source->label()) && labeler->isStdOutLabel((*j).source->label()))) {
+	  ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
+	}
   }
+#endif
   set<const EState*> estatePtrSet=transitionGraph->estateSet();
   for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     ss<<"n"<<*i<<" [label=";
@@ -290,6 +294,22 @@ string Visualizer::transitionGraphWithIOToDot() {
     name+=number.toString();
     name+="\"";
     ss<<name;
+	stringstream newedges;
+	  // generate constraint on each edge of following state
+	TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
+	for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
+		j!=outTrans.end();
+		++j) {
+	  newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
+	  if(number.isTop()) {
+		newedges<<" [label=\"";
+		newedges<<(*j)->target->constraints()->toString()<<"\"";
+		if((*j)->source==(*j)->target)
+		  newedges<<" color=red ";
+		newedges<<"];"<<endl;
+	  }
+	  newedges<<endl;
+	}
     
     // determine color based on IO type
     string color="grey";
@@ -304,6 +324,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     ss<<" color="<<color<<" style=\"filled\"";
     ss<<"];";
     ss<<endl;
+	ss<<newedges.str();
   }
   return ss.str();
 }

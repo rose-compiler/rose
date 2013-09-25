@@ -18,14 +18,14 @@ using namespace CodeThorn;
 #include "CollectionOperators.h"
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
-		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),_maxTransitions(-1) {
+		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),_maxTransitions(0) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions<0)
+  if(_maxTransitions==0)
     return false;
   return transitionGraph.size()>_maxTransitions;
 }
@@ -1388,7 +1388,7 @@ void Analyzer::semanticEliminationOfSelfInInTransitions() {
 	  i!=transitionGraph.end();
 	  ++i) {
 	const Transition* t=&(*i);
-	if((t->source->label()==t->target->label())
+	if((t->source==t->target)
 	   &&
 	   (getLabeler()->isStdInLabel(t->source->label()))
 	   &&
@@ -1410,6 +1410,9 @@ void Analyzer::semanticEliminationOfSelfInInTransitions() {
 void Analyzer::semanticEliminationOfTransitions() {
   cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
   assert(transitionGraph.checkConsistency());
+  semanticEliminationOfSelfInInTransitions();
+  assert(transitionGraph.checkConsistency());
+  return;
   set<const EState*> toReduce1;
 #if 1
   int eliminated;

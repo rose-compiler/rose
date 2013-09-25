@@ -663,8 +663,8 @@ void TransitionGraph::add(Transition trans) {
     insert(trans);
     const Transition* transp=determine(trans);
     assert(transp!=0);
-    _inEdges[trans.target].insert(transp);
     _outEdges[trans.source].insert(transp);
+    _inEdges[trans.target].insert(transp);
   }
 }
 
@@ -675,8 +675,8 @@ void TransitionGraph::add(Transition trans) {
 void TransitionGraph::erase(TransitionGraph::iterator transiter) {
   const Transition* transp=determine(*transiter);
   assert(transp!=0);
-  _inEdges[(*transiter).target].erase(transp);
   _outEdges[(*transiter).source].erase(transp);
+  _inEdges[(*transiter).target].erase(transp);
   HSetMaintainer<Transition,TransitionHashFun>::erase(transiter);
 }
 
@@ -687,9 +687,10 @@ void TransitionGraph::erase(TransitionGraph::iterator transiter) {
 void TransitionGraph::erase(const Transition trans) {
   const Transition* transp=determine(trans);
   assert(transp!=0);
-  _inEdges[trans.target].erase(transp);
   _outEdges[trans.source].erase(transp);
-  HSetMaintainer<Transition,TransitionHashFun>::erase(trans);
+  _inEdges[trans.target].erase(transp);
+  size_t num=HSetMaintainer<Transition,TransitionHashFun>::erase(trans);
+  assert(num==1);
 }
 
 /*! 

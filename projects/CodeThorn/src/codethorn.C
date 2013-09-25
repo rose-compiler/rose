@@ -429,6 +429,7 @@ int main( int argc, char * argv[] ) {
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
+    ("semantic-elimination",po::value< string >(),"eliminate input-input transitions in STG [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
@@ -494,6 +495,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
+  boolOptions.registerOption("semantic-elimination",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("post-collapse-stg",true);
@@ -680,6 +682,9 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;
     analyzer.semanticFoldingOfTransitionGraph();
+  }
+  if(boolOptions["semantic-elimination"]) {
+    analyzer.semanticEliminationOfTransitions();
   }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
