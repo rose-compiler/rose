@@ -318,7 +318,7 @@ sub load_config {
       $_ = $1 . $extra;
     }
     s/\s*#.*//;
-    s/\$\{(\w+)\}/exists $vars{$1} ? $vars{$1} : $1/eg;
+    s/\$\{(\w+)\}/exists $vars{$1} ? $vars{$1} : ''/eg;
     if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
       die "$file: unknown setting: $var\n" unless exists $conf{$var};
       if (ref $conf{$var}) {
@@ -456,7 +456,7 @@ my %config = load_config $config_file, %variables;
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
 my $test_title = $config{title} || $target;
-if ($config{disabled} ne 'no') {
+if ($config{disabled} && $config{disabled} ne 'no') {
   print "  TESTING $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
