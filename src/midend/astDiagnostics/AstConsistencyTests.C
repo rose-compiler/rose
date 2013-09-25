@@ -288,9 +288,12 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Redundent Statement Test finished." << endl;
 
+  // DQ (9/24/2013): Fortran support has excessive output spew specific to this test.  We will fix this in 
+  // the new fortran work, but we can't have this much output spew presently.
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // merge is to share IR nodes, it is pointless to detect sharing and generate output for each identified case).
-     if (sageProject->get_astMerge() == false)
+  // if (sageProject->get_astMerge() == false)
+     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (4/2/2012): Added test for unique IR nodes in the AST.
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -766,7 +769,8 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // detect inconsistancy in parent child relationships and these will be present when astMerge is active.
-     if (sageProject->get_astMerge() == false)
+  // if (sageProject->get_astMerge() == false)
+     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
           TestForParentsMatchingASTStructure::test(sageProject);

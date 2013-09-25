@@ -5148,8 +5148,10 @@ HEADER_APPLICATION_FILE_START
       //! Generate an output filename from the source file name (xxx.C -> rose_xxx.C -> xxx.o -> xxx)
           std::string generateOutputFileName() const;
 
+       // DQ (9/24/2013): I think this is more useful as a static function (and I need it this way in the unparser).
       //! Support for C preprocessed files (Fortran only).
-          std::string generate_C_preprocessor_intermediate_filename( std::string filename );
+       // std::string generate_C_preprocessor_intermediate_filename( std::string filename );
+          static std::string generate_C_preprocessor_intermediate_filename( std::string filename );
 
        // The unparser and vendor compiler needs access to many variables
        // that are protected (Later this should be a member function).
@@ -5212,6 +5214,9 @@ HEADER_APPLICATION_FILE_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 #endif
+
+       // DQ (9/24/2013): Added function to output the name of the language for the generated code.
+          static std::string get_outputLanguageOptionName ( outputLanguageOption_enum lang );
 
 HEADER_APPLICATION_FILE_END
 
@@ -13065,6 +13070,47 @@ SOURCE_FILE_INFORMATION_END
 
 SOURCE_APPLICATION_FILE_START
 
+std::string
+SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
+   {
+     string s;
+     switch (lang)
+        {
+#if 1
+          case SgFile::e_error_output_language:   s = "error";   break;
+          case SgFile::e_default_output_language: s = "default"; break;
+          case SgFile::e_C_output_language:       s = "C";       break;
+          case SgFile::e_Cxx_output_language:     s = "C++";     break;
+          case SgFile::e_Fortran_output_language: s = "Fortran"; break;
+          case SgFile::e_Java_output_language:    s = "Java";    break;
+          case SgFile::e_X10_output_language:     s = "X10";     break;
+          case SgFile::e_PHP_output_language:     s = "PHP";     break;
+          case SgFile::e_Python_output_language:  s = "Python";  break;
+          case SgFile::e_Promela_output_language: s = "Promela"; break;
+#else
+          case e_error_output_language:   s = "error_output_language";   break;
+          case e_default_output_language: s = "default_output_language"; break;
+          case e_C_output_language:       s = "C_output_language";       break;
+          case e_Cxx_output_language:     s = "Cxx_output_language";     break;
+          case e_Fortran_output_language: s = "Fortran_output_language"; break;
+          case e_Java_output_language:    s = "Java_output_language";    break;
+          case e_X10_output_language:     s = "X10_output_language";     break;
+          case e_Promela_output_language: s = "Promela_output_language"; break;
+          case e_PHP_output_language:     s = "PHP_output_language";     break;
+          case e_Python_output_language:  s = "Python_output_language";  break;
+          case e_last_output_language:    s = "last_output_language";    break;
+#endif
+          default:
+             {
+               printf ("In SgFile::outputLanguageOption(): lang = %zu \n",(size_t)lang);
+            // printf ("In SgFile::outputLanguageOption(): lang = %d \n",lang);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine )
    {
      printf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
@@ -14066,7 +14112,10 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_unparse_raw_memory_contents          = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
      printf ("     p_unparse_binary_file_format           = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
 
-     string outputLanguageName;
+#if 1
+     string outputLanguageName = get_outputLanguageOptionName(p_outputLanguage);
+#else
+  // string outputLanguageName;
      switch(p_outputLanguage)
         {
           case SgFile::e_error_output_language:   outputLanguageName = "error";   break;
@@ -14086,6 +14135,7 @@ SgFile::display ( const std::string & label ) const
                assert(false);
              }
         }
+#endif
 
      printf ("     p_outputLanguage                       = %s output language \n",outputLanguageName.c_str());
 
@@ -16559,7 +16609,10 @@ SgUnparse_Info::display ( const std::string & label ) const
   // DQ (5/21/2011): Added support for name qualification...
      printf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
 
-     printf ("p_language                             = %d \n",p_language);
+     printf ("p_language (value)                     = %d \n",p_language);
+
+  // DQ (9/24/2013): Added function to output the name of the language for the generated code.
+     printf ("p_language (name)                      = %s \n",SgFile::get_outputLanguageOptionName(p_language).c_str());
    }
 
 string

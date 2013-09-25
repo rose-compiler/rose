@@ -1466,15 +1466,20 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // if (targetNode->get_file_info()->get_file_id() < 0)
                             if (targetNode->get_file_info()->get_physical_file_id() < 0)
                                {
+#if 0
                                  printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
+#endif
+#if 0
                                  printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id());
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());
-
+#endif
                               // DQ (9/12/2010): This is something caught in compiling the Fortran LLNL_POP code file: prognostic.F90
                               // ROSE_ASSERT(false);
-                                 printf ("Skipping abort in processing a Fortran LLNL_POP code file: prognostic.F90 (unclear how to handle this error, if it is an error) \n");
+                              // printf ("Skipping abort in processing a Fortran LLNL_POP code file: prognostic.F90 (unclear how to handle this error, if it is an error) \n");
+
+                              // DQ (9/25/2013): FIXME: I don't like this design using a break statement at this specific location (in the middle of the case implementation) in this case.
                                  break;
                                  
                               // return returnSynthesizeAttribute;
