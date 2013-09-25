@@ -1378,7 +1378,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   } // end of omp pragma
 }
 
-void Analyzer::semanticEliminationOfSelfInInTransitions() {
+int Analyzer::semanticEliminationOfSelfInInTransitions() {
   cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
   set<const Transition*> transitionsToEliminate;
   int eliminated;
@@ -1404,9 +1404,10 @@ void Analyzer::semanticEliminationOfSelfInInTransitions() {
 	eliminated++;
   }
   cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
+  return eliminated;
 }
 
-void Analyzer::semanticEliminationOfDeadStates() {
+int Analyzer::semanticEliminationOfDeadStates() {
   set<const EState*> toEliminate;
   for(EStateSet::const_iterator i=estateSet.begin();
 	  i!=estateSet.end();
@@ -1422,81 +1423,56 @@ void Analyzer::semanticEliminationOfDeadStates() {
 	transitionGraph.eliminateEState(*i);
 	estateSet.erase(**i);
   }
+  return toEliminate.size();
 }
-
+int Analyzer::semanticFoldingOfInInTransitions() {
+  int elim=0;
+  set<const EState*> toReduce;
+  for(TransitionGraph::iterator i=transitionGraph.begin();
+	  i!=transitionGraph.end();
+	  ++i) {
+	if((getLabeler()->isStdInLabel((*i).source->label()))
+	   &&
+	   (getLabeler()->isStdInLabel((*i).target->label())) ) {
+	  // found in-in edge; we reduce the source-node
+	  toReduce.insert((*i).source);
+	}
+  }
+  cout<<"STATUS: to eliminate "<<toReduce.size()<<" in-in transition source-nodes."<<endl;
+#if 0
+  transitionGraph.reduceEStates2(toReduce);
+#else
+  for(set<const EState*>::const_iterator i=toReduce.begin();
+	  i!=toReduce.end();
+	  ++i) {
+	assert(estateSet.estateId(*i)!=NO_ESTATE);
+	cout<<"Eliminating: "<<*i<<endl;
+	cout<<(*i)->toString()<<endl;
+	transitionGraph.reduceEState2(*i);
+	estateSet.erase(**i);
+	elim++;
+	break;
+  }
+#endif
+  cout<<"STATUS: Eliminated "<<elim<<" in-in transition source-nodes."<<endl;
+  return elim;
+}
 
 void Analyzer::semanticEliminationOfTransitions() {
   cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
-  assert(transitionGraph.checkConsistency());
-  semanticEliminationOfSelfInInTransitions();
-  semanticEliminationOfDeadStates();
-  assert(transitionGraph.checkConsistency());
-  return;
-  set<const EState*> toReduce1;
-#if 1
-  int eliminated;
+  int elim;
   do {
-	semanticEliminationOfSelfInInTransitions();
-	eliminated=0;
-	toReduce1.clear();
-	for(TransitionGraph::iterator i=transitionGraph.begin();
-		i!=transitionGraph.end();
-		++i) {
-	  if((getLabeler()->isStdInLabel((*i).source->label()))
-		 &&
-		 (getLabeler()->isStdInLabel((*i).target->label())) ) {
-		// found in-in edge
-		toReduce1.insert((*i).source);
-		break;
-	  }
-	}
-	cout<<"STATUS: to eliminate "<<toReduce1.size()<<" in-in transition source-nodes."<<endl;
-#if 0
-	transitionGraph.reduceEStates2(toReduce1);
-#else
-	for(set<const EState*>::const_iterator i=toReduce1.begin();
-		i!=toReduce1.end();
-		++i) {
-	  assert(estateSet.estateId(*i)!=NO_ESTATE);
-	  cout<<"Eliminating: "<<*i<<endl;
-	  cout<<(*i)->toString()<<endl;
-	  transitionGraph.reduceEState2(*i);
-	  estateSet.erase(**i);
-	  eliminated++;
-	}
-	cout<<"STATUS: Eliminated "<<eliminated<<" in-in transition source-nodes."<<endl;
-#endif
-  } while (eliminated>0 && true);
-#endif
-  
-#if 1
-  set<const EState*> statesToReduce;
-  cout<<"STATUS: eliminating dead nodes."<<endl;
-  // eliminate nodes without in-going edges
-
-  int nonreachablenodes;
-  do {
-	int nonreachablenodes=0;
-	set<const EState*> nodes=transitionGraph.estateSet();
-	for(set<const EState*>::iterator i=nodes.begin();
-		i!=nodes.end();
-		++i) {
-	  if(transitionGraph.inEdges(*i).size()==0 && !isStartLabel((*i)->label())) {
-		transitionGraph.reduceEState2(*i);
-		estateSet.erase(**i);
-		//cout<<"Reduced state "<<*i<<endl;
-		nonreachablenodes++;
-	  }
-	}
-	cout<<"STATUS: eliminated "<<nonreachablenodes<<" non-reachable nodes."<<endl;
-  } while(nonreachablenodes>0);
-#endif
-  assert(transitionGraph.checkConsistency());  
+	elim=0;
+	assert(transitionGraph.checkConsistency());
+	elim+=semanticEliminationOfSelfInInTransitions();
+	elim+=semanticEliminationOfDeadStates();
+	// this function does not work in general yet
+	// probably because of self-edges
+	elim+=semanticFoldingOfInInTransitions();
+	assert(transitionGraph.checkConsistency());
+  } while (elim>0);
   return;
 }
-
-
-
 
 void Analyzer::runSolver2() {
   size_t prevStateSetSize=_displayDiff+1; // force immediate report at start
