@@ -3,3 +3,7 @@
 # looks at its exit status.
 
 cmd = ${VALGRIND} ${CMD}
+
+# Extra stuff that might be useful to specify in the makefile
+title = ${TITLE}
+disabled = ${DISABLED}
