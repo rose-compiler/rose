@@ -276,15 +276,17 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   void erase(const Transition trans);
 #endif
 
-  //! reduces all non-maintained estates and unions edge-annotations. Adds edge-annotation PATH. Returns number of reduced estates.
+  //! deprecated
   void reduceEStates(set<const EState*> toReduce);
   void reduceEState(const EState* estate);
+  //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
   void reduceEStates2(set<const EState*> toReduce);
   void reduceEState2(const EState* estate); // used for semantic folding
   TransitionPtrSet inEdges(const EState* estate);
   TransitionPtrSet outEdges(const EState* estate);
   bool checkConsistency();
-
+  // deletes EState and *deletes* all ingoing and outgoing transitions
+  void eliminateEState(const EState* estate);
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet

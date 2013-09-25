@@ -1406,11 +1406,30 @@ void Analyzer::semanticEliminationOfSelfInInTransitions() {
   cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
 }
 
+void Analyzer::semanticEliminationOfDeadStates() {
+  set<const EState*> toEliminate;
+  for(EStateSet::const_iterator i=estateSet.begin();
+	  i!=estateSet.end();
+	  ++i) {
+	if(transitionGraph.outEdges(&(*i)).size()==0) {
+	  toEliminate.insert(&(*i));
+	}
+  }
+  for(set<const EState*>::const_iterator i=toEliminate.begin();
+	i!=toEliminate.end();
+	  ++i) {
+	// eliminate node in estateSet (only because LTL is using it)
+	transitionGraph.eliminateEState(*i);
+	estateSet.erase(**i);
+  }
+}
+
 
 void Analyzer::semanticEliminationOfTransitions() {
   cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
   assert(transitionGraph.checkConsistency());
   semanticEliminationOfSelfInInTransitions();
+  semanticEliminationOfDeadStates();
   assert(transitionGraph.checkConsistency());
   return;
   set<const EState*> toReduce1;

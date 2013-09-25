@@ -693,6 +693,16 @@ void TransitionGraph::erase(const Transition trans) {
   assert(num==1);
 }
 
+void TransitionGraph::eliminateEState(const EState* estate) {
+  TransitionGraph::TransitionPtrSet in=inEdges(estate);
+  for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i)
+	erase(**i);
+  TransitionGraph::TransitionPtrSet out=outEdges(estate);
+  for(TransitionPtrSet::iterator i=out.begin();i!=out.end();++i)
+	erase(**i);
+  // we only represent edges, nothing else to do
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
