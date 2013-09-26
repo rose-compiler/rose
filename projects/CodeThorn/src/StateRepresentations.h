@@ -295,6 +295,7 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   EStatePtrSet pred(const EState* estate);
   EStatePtrSet succ(const EState* estate);
   bool checkConsistency();
+  const Transition* hasSelfEdge(const EState* estate);
   // deletes EState and *deletes* all ingoing and outgoing transitions
   void eliminateEState(const EState* estate);
  private:

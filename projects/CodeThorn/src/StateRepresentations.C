@@ -809,6 +809,15 @@ bool TransitionGraph::checkConsistency() {
   return ok;
 }
 
+const Transition* TransitionGraph::hasSelfEdge(const EState* estate) {
+  TransitionPtrSet in=inEdges(estate);
+  for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
+	if((*i)->source==estate)
+	  return *i;
+  }
+  // checking in edges only is sufficient because a self edge must be both
+  return 0;
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -828,9 +837,13 @@ void TransitionGraph::reduceEState2(const EState* estate) {
    
    */
   assert(estate);
+  // check self-edge
+  if(const Transition* trans=hasSelfEdge(estate)) {
+	this->erase(*trans);
+  }
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   TransitionGraph::TransitionPtrSet out=outEdges(estate);
-  if(in.size()!=0 /*&& out.size()!=0*/) {
+  if(in.size()!=0 && out.size()!=0 ) {
     set<Transition> newTransitions;
     for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
       for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
@@ -842,25 +855,24 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     }
     //cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
 
+	TransitionPtrSet all=in;
+	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+	  all.insert(*j);
+	}
+    // 1. remove all old transitions
+    for(TransitionPtrSet::iterator i=all.begin();i!=all.end();++i) {
+		this->erase(**i);
+    }
+
     // 2. add new transitions
     for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
       this->add(*k);
       //assert(find(*k)!=end());
     }
     assert(newTransitions.size()<=in.size()*out.size());
-#if 1
-    // 1. remove all old transitions
-    for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
-      this->erase(**i);
-    }
-#endif
-#if 1
-    for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-      this->erase(**j);
-    }
-#endif
   } else {
-    //cout<< "DEBUG: not eliminating node because #in==0 or #out==0: node: "<<estate<<", #in="<<in.size()<<", #out="<<out.size()<<endl;
+	// need to eliminate node instead
+	eliminateEState(estate);
   }
 }
 

@@ -1428,7 +1428,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
 
 
 int Analyzer::semanticEliminationOfSelfInInTransitions() {
-  cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
+  //cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
   set<const Transition*> transitionsToEliminate;
   int eliminated;
   transitionsToEliminate.clear();
@@ -1452,7 +1452,7 @@ int Analyzer::semanticEliminationOfSelfInInTransitions() {
 	transitionGraph.erase(**i);
 	eliminated++;
   }
-  cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
+  //cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
   return eliminated;
 }
 
@@ -1475,40 +1475,29 @@ int Analyzer::semanticEliminationOfDeadStates() {
   return toEliminate.size();
 }
 int Analyzer::semanticFoldingOfInInTransitions() {
-  int elim=0;
   set<const EState*> toReduce;
   for(TransitionGraph::iterator i=transitionGraph.begin();
 	  i!=transitionGraph.end();
 	  ++i) {
 	if((getLabeler()->isStdInLabel((*i).source->label()))
 	   &&
-	   (getLabeler()->isStdInLabel((*i).target->label())) ) {
-	  // found in-in edge; we reduce the source-node
-	  toReduce.insert((*i).source);
+	   (getLabeler()->isStdInLabel((*i).target->label()))
+	   &&
+	   ((*i).source!=(*i).target)
+	   ) {
+	  // found in-in edge; we reduce the target-node
+	  // but only if there is no connection to already collected nodes (cycle check)
+	  if(toReduce.find((*i).source)==toReduce.end())
+		toReduce.insert((*i).target);
 	}
   }
-  cout<<"STATUS: to eliminate "<<toReduce.size()<<" in-in transition source-nodes."<<endl;
-#if 0
   transitionGraph.reduceEStates2(toReduce);
-#else
-  for(set<const EState*>::const_iterator i=toReduce.begin();
-	  i!=toReduce.end();
-	  ++i) {
-	assert(estateSet.estateId(*i)!=NO_ESTATE);
-	cout<<"Eliminating: "<<*i<<endl;
-	cout<<(*i)->toString()<<endl;
-	transitionGraph.reduceEState2(*i);
-	estateSet.erase(**i);
-	elim++;
-	break; // workaround (requires FIX of reduceEState2 function; fails with self edges)
-  }
-#endif
-  cout<<"STATUS: Eliminated "<<elim<<" in-in transition source-nodes."<<endl;
-  return elim;
+  //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
+  return toReduce.size();
 }
 
 void Analyzer::semanticEliminationOfTransitions() {
-  cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
+  cout << "STATUS: (Experimental) semantic elimination of transitions ... ";
   int elim;
   do {
 	elim=0;
@@ -1520,6 +1509,7 @@ void Analyzer::semanticEliminationOfTransitions() {
 	elim+=semanticFoldingOfInInTransitions();
 	assert(transitionGraph.checkConsistency());
   } while (elim>0);
+  cout << "done."<<endl;
   return;
 }
 
