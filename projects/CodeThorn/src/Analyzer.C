@@ -1343,7 +1343,9 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
     // filter for worklist
 	// iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
 	int numFiltered=0;
-	cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
+	if(boolOptions["report-semantic-fold"]) {
+	  cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
+	}
 	for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
 	  if(!isLTLRelevantLabel((*i)->label())) {
 		_newNodesToFold.erase(*i);

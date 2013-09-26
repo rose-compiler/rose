@@ -461,6 +461,7 @@ int main( int argc, char * argv[] ) {
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
+    ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -527,6 +528,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
   boolOptions.registerOption("stderr-like-failed-assert",false);
   boolOptions.registerOption("rersmode",false);
+  boolOptions.registerOption("rers-numeric",false);
 
   boolOptions.processOptions();
 

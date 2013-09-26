@@ -288,7 +288,21 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
-    name+=number.toString();
+	if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+	  if(!number.isTop() && !number.isBot()) {
+		// convert number to letter
+		int num=number.getIntValue();
+		num+='A'-1;
+		char numc=num;
+		stringstream ss;
+		ss<<numc;
+		name+=ss.str();
+	  } else {
+		name+=number.toString();
+	  }
+	} else {
+	  name+=number.toString();
+	}
     name+="\"";
     ss<<name;
     stringstream newedges;
