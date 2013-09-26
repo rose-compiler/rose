@@ -275,6 +275,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     ss<<"n"<<*i<<" [label=";
     Label lab=(*i)->label();
     string name="\"";
+#if 0
     stringstream ss2;
     ss2<<lab;
     name+="L"+ss2.str()+":";
@@ -284,27 +285,28 @@ string Visualizer::transitionGraphWithIOToDot() {
       name+="C:";
     if(labeler->isFunctionCallReturnLabel(lab))
       name+="R:";
+#endif
     // generate number which is used in IO operation
     AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
     name+=number.toString();
     name+="\"";
     ss<<name;
-	stringstream newedges;
-	  // generate constraint on each edge of following state
-	TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
-	for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
-		j!=outTrans.end();
-		++j) {
-	  newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
-	  if(number.isTop()) {
-		newedges<<" [label=\"";
-		newedges<<(*j)->target->constraints()->toString()<<"\"";
-		if((*j)->source==(*j)->target)
-		  newedges<<" color=red ";
-		newedges<<"];"<<endl;
-	  }
+    stringstream newedges;
+    // generate constraint on each edge of following state
+    TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
+    for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
+	j!=outTrans.end();
+	++j) {
+      newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
+      if(number.isTop()) {
+	newedges<<" [label=\"";
+	newedges<<(*j)->target->constraints()->toString()<<"\"";
+	if((*j)->source==(*j)->target)
+	  newedges<<" color=red ";
+	newedges<<"];"<<endl;
+      }
 	  newedges<<endl;
-	}
+    }
     
     // determine color based on IO type
     string color="grey";

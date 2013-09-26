@@ -1406,8 +1406,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
       EState newState=**k; // copy all information from following output state
       newState.setLabel(originalLabel); // overwrite label
       // convert IO information
-      if(originalIO.op==InputOutput::STDOUT_VAR) newState.io.op=InputOutput::STDIN_VAR;
-      if(originalIO.op==InputOutput::STDOUT_CONST) newState.io.op=InputOutput::STDIN_VAR; // NO STDIN_CONST
+      newState.io.op=InputOutput::STDIN_VAR;
       newState.io.var=originalVar;
       // register new EState now
       const EState* newEStatePtr=processNewOrExisting(newState);
