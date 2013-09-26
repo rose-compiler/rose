@@ -260,13 +260,17 @@ class EStateList : public list<EState> {
   * \author Markus Schordan
   * \date 2012.
  */
+ 
+ typedef set<const EState*> EStatePtrSet;
+ typedef set<const Transition*> TransitionPtrSet;
+
 class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
-  typedef set<const Transition*> TransitionPtrSet;
+   typedef set<const Transition*> TransitionPtrSet;
  TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
-  set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-  set<const EState*> estateSetOfLabel(Label lab);
-  set<const EState*> estateSet();
+  EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
+  EStatePtrSet estateSetOfLabel(Label lab);
+  EStatePtrSet estateSet();
   void add(Transition trans);
   string toString() const;
   CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
@@ -288,6 +292,8 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   void reduceEState2(const EState* estate); // used for semantic folding
   TransitionPtrSet inEdges(const EState* estate);
   TransitionPtrSet outEdges(const EState* estate);
+  EStatePtrSet pred(const EState* estate);
+  EStatePtrSet succ(const EState* estate);
   bool checkConsistency();
   // deletes EState and *deletes* all ingoing and outgoing transitions
   void eliminateEState(const EState* estate);

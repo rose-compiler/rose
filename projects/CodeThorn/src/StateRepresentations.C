@@ -543,7 +543,7 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
   * \author Markus Schordan
   * \date 2012.
  */
-// MS: we definitely need to cache all the results or use a proper graph structure
+
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
   assert(estate);
 #if 1
@@ -595,6 +595,26 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   return out;
 #endif
 }
+
+EStatePtrSet TransitionGraph::pred(const EState* estate) {
+  EStatePtrSet predNodes;
+  TransitionPtrSet tset=inEdges(estate);
+  for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
+    predNodes.insert((*i)->source);
+  }
+  return predNodes;
+}
+
+EStatePtrSet TransitionGraph::succ(const EState* estate) {
+  EStatePtrSet succNodes;
+  TransitionPtrSet tset=outEdges(estate);
+  for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
+    succNodes.insert((*i)->target);
+  }
+  return succNodes;
+}
+
+
 
 /*! 
   * \author Markus Schordan

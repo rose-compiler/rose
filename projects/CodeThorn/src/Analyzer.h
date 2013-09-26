@@ -93,18 +93,21 @@ namespace CodeThorn {
     void printStatusMessage(bool);
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
-	bool isStartLabel(Label label);
+    bool isStartLabel(Label label);
     set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
-    // 5 experimental functions
-	// reduces all states different to stdin and stdout.
+    // 6 experimental functions
+    // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
     void semanticEliminationOfTransitions();
-	int semanticEliminationOfSelfInInTransitions();
-	int semanticEliminationOfDeadStates();
-	int semanticFoldingOfInInTransitions();
+    int semanticEliminationOfSelfInInTransitions();
+    // eliminates only input states
+    int semanticEliminationOfDeadStates();
+    int semanticFoldingOfInInTransitions();
+    // requires semantically reduced STG
+    int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();

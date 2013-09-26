@@ -698,6 +698,7 @@ int main( int argc, char * argv[] ) {
   }
   if(boolOptions["semantic-elimination"]) {
     analyzer.semanticEliminationOfTransitions();
+    //analyzer.semanticExplosionOfInputNodesFromOutputNodeConstraints();
   }
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 

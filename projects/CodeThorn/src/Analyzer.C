@@ -1377,6 +1377,55 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   } // end of omp pragma
 }
 
+int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
+  set<const EState*> toExplode;
+  // collect input states
+  for(EStateSet::const_iterator i=estateSet.begin();
+      i!=estateSet.end();
+      ++i) {
+    // we require that the unique value is Top; otherwise we use the existing one and do not back-propagate
+    if((*i).io.isStdInIO() && (*i).determineUniqueIOValue().isTop()) {
+      toExplode.insert(&(*i));
+    }
+  }
+  // explode input states
+  for(set<const EState*>::const_iterator i=toExplode.begin();
+      i!=toExplode.end();
+      ++i) {
+    EStatePtrSet predNodes=transitionGraph.pred(*i);
+    EStatePtrSet succNodes=transitionGraph.succ(*i);
+    Label originalLabel=(*i)->label();
+    InputOutput originalIO=(*i)->io;
+    // eliminate original input node
+    transitionGraph.eliminateEState(*i);
+    estateSet.erase(**i);
+    // create new edges to and from new input state
+    for(EStatePtrSet::iterator k=succNodes.begin();k!=succNodes.end();++k) {
+      // create new input state      
+      EState newState=**k; // copy all information from following output state
+      newState.setLabel(originalLabel); // overwrite label
+      // convert IO information
+      if(originalIO.op==InputOutput::STDOUT_VAR) newState.io.op=InputOutput::STDIN_VAR;
+      if(originalIO.op==InputOutput::STDOUT_CONST) newState.io.op=InputOutput::STDIN_VAR; // NO STDIN_CONST
+      // register new EState now
+      const EState* newEStatePtr=processNewOrExisting(newState);
+
+      // create new edge from new input state to output state
+      // since each outgoing edge produces a new input state (if constraint is different)
+      // I create a set of ingoing edges for each outgoing edge (= new inputstate)
+      Edge outEdge(originalLabel,EDGE_PATH,(*k)->label());
+      recordTransition(newEStatePtr,outEdge,(*k)); // new outgoing edge
+      for(EStatePtrSet::iterator j=predNodes.begin();j!=predNodes.end();++j) {
+	//create edge: predecessor->newInputNode
+	Edge inEdge((*j)->label(),EDGE_PATH,originalLabel);
+	recordTransition((*j),inEdge,newEStatePtr); // new ingoing edge
+      }
+    }
+  }
+  return 0;
+}
+
+
 int Analyzer::semanticEliminationOfSelfInInTransitions() {
   cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
   set<const Transition*> transitionsToEliminate;
@@ -1411,7 +1460,7 @@ int Analyzer::semanticEliminationOfDeadStates() {
   for(EStateSet::const_iterator i=estateSet.begin();
 	  i!=estateSet.end();
 	  ++i) {
-	if(transitionGraph.outEdges(&(*i)).size()==0) {
+    if(transitionGraph.outEdges(&(*i)).size()==0 && (*i).io.isStdInIO()) {
 	  toEliminate.insert(&(*i));
 	}
   }
@@ -1450,7 +1499,7 @@ int Analyzer::semanticFoldingOfInInTransitions() {
 	transitionGraph.reduceEState2(*i);
 	estateSet.erase(**i);
 	elim++;
-	break;
+	break; // workaround (requires FIX of reduceEState2 function; fails with self edges)
   }
 #endif
   cout<<"STATUS: Eliminated "<<elim<<" in-in transition source-nodes."<<endl;
@@ -1812,9 +1861,8 @@ void Analyzer::runSolver4() {
   } // while
   // ensure that the STG is folded properly when finished
   if(boolOptions["semantic-fold"]) {
-	semanticFoldingOfTransitionGraph();
+    semanticFoldingOfTransitionGraph();
   }  
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
-  //semanticEliminationOfTransitions();
 }
