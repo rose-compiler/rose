@@ -100,8 +100,8 @@ load_function_api_calls_for(int func_id)
 using namespace boost;
 
 
-bool
-normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity_threshold, CallVec* func1_vec, CallVec* func2_vec)
+void
+normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map)
 {
   std::string _query_condition(
       //all function pairs that are semantically similar
@@ -110,7 +110,6 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
       " where sem.similarity >= ? "
       " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
-      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? "
 
       " UNION "
 
@@ -133,15 +132,13 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   stmt->bind(2, func2_id);
   stmt->bind(3, func1_id);
   stmt->bind(4, func2_id);
-  stmt->bind(5, igroup_id);
-  stmt->bind(6, igroup_id);
+  stmt->bind(5, func1_id);
+  stmt->bind(6, func2_id);
   stmt->bind(7, func1_id);
   stmt->bind(8, func2_id);
-  stmt->bind(9, func1_id);
-  stmt->bind(10, func2_id);
 
   if(stmt->begin() == stmt->end())
-    return false;
+    return;
 
   //Count how many vertices we have for boost graph
 
@@ -197,42 +194,24 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   // Iterate through the component indices
   BOOST_FOREACH(VertexIndex current_index, components) {
 
-    std::set<int> component_funcs;
+    int first_value = -1;
 
     // Iterate through the child vertex indices for [current_index]
     BOOST_FOREACH(VertexIndex child_index,
         components[current_index]) {
-      component_funcs.insert(child_index);
-    }
 
-
-
-    if (component_funcs.size() > 1){
-
-      BOOST_FOREACH(VertexIndex child_index,
-          components[current_index]) {
-        component_funcs.insert(child_index);
-      }
-
-
-      for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
-        if(component_funcs.find(*it) != component_funcs.end())
-          *it = *component_funcs.begin();
-
-      for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
-        if(component_funcs.find(*it) != component_funcs.end())
-          *it = *component_funcs.begin();
+      if(first_value >= 0) 
+        norm_map[child_index] = first_value;
+      else
+        first_value = child_index;
 
     }
-
 
   }
 
 
-  return true;
-
-
 }
+
 
 /* Remove the functions from the compilation unit that is only available in one of the traces.
  *   - criteria complement of the functions from the files of the caller functions in the 
@@ -328,7 +307,8 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
 double
-similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_inline_candidates, bool ignore_no_compares, int call_depth, bool expand_ncalls )
+similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_inline_candidates, bool ignore_no_compares, int call_depth, bool expand_ncalls, 
+    std::map<int,int>& norm_map)
 {
 
 
@@ -339,10 +319,28 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
 
  //Detect and normalize similar function calls
 
-if( (func1_vec->size() == 0) & (func2_vec->size() == 0) )
+ if( (func1_vec->size() == 0) & (func2_vec->size() == 0) )
    return -1;
 
- normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec) ; 
+ for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
+ {
+
+   std::map<int,int>::iterator located_it = norm_map.find(*it);
+
+   if(located_it != norm_map.end())
+     *it = located_it->second;
+ }
+
+ for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
+ {
+
+   std::map<int,int>::iterator located_it = norm_map.find(*it);
+
+   if(located_it != norm_map.end())
+     *it = located_it->second;
+ }
+
+
 
 
  //remove possible inlined functions from the traces
@@ -384,13 +382,38 @@ if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
 };
 
 double 
-whole_function_similarity(int func1_id, int func2_id)
+whole_function_similarity(int func1_id, int func2_id, std::map<int,int>& norm_map)
 {
 
 
   CallVec* func1_vec = load_function_api_calls_for(func1_id);
   CallVec* func2_vec = load_function_api_calls_for(func2_id);
 
+  //normalize functions
+
+
+  for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
+  {
+
+    std::map<int,int>::iterator located_it = norm_map.find(*it);
+
+    if(located_it != norm_map.end())
+      *it = located_it->second;
+  }
+
+  for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
+  {
+
+    std::map<int,int>::iterator located_it = norm_map.find(*it);
+
+    if(located_it != norm_map.end())
+      *it = located_it->second;
+  }
+
+
+
+
+  //compute similarity
   size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
 
   double dl_similarity = 1.0;
@@ -539,11 +562,17 @@ main(int argc, char *argv[])
       double min_api_similarity = INT_MAX;
       double ave_api_similarity = 0;
 
+
+
+      std::map<int,int> norm_map;
+      normalize_func_to_id(func1_id, func2_id, semantic_similarity_threshold, norm_map);
+
+
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
         int igroup_id = row.get<int>(0);
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_inline_candidates, 
-            ignore_no_compares, call_depth, expand_ncalls  );
+            ignore_no_compares, call_depth, expand_ncalls, norm_map  );
 
         if( api_similarity < 0)
           continue;
@@ -555,6 +584,7 @@ main(int argc, char *argv[])
 
         ncompares++;
       }
+
 
       if( ncompares == 0)
       {
@@ -571,7 +601,7 @@ main(int argc, char *argv[])
 
       //find call similarity between functions
 
-      double cg_similarity = whole_function_similarity(func1_id, func2_id);
+      double cg_similarity = whole_function_similarity(func1_id, func2_id, norm_map);
 
 
       insert_stmt->bind(0, func1_id);
