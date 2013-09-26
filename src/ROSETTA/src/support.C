@@ -782,6 +782,8 @@ Grammar::setUpSupport ()
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      File.setDataPrototype         ( "bool", "C89_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
