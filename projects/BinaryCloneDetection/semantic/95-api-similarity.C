@@ -76,6 +76,27 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
   return call_vec;
 }
 
+CallVec* 
+load_function_api_calls_for(int func_id)
+{
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+     "select distinct callee from semantic_cg  where caller=? ORDER BY callee"
+     );
+ 
+  stmt->bind(0, func_id);
+
+
+  CallVec* call_vec = new CallVec; 
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+    int callee_id = row.get<int>(0);
+
+    call_vec->push_back(callee_id);
+  }
+
+  return call_vec;
+}
+
+
 using namespace boost;
 
 
@@ -362,6 +383,34 @@ if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
  return dl_similarity;
 };
 
+double 
+whole_function_similarity(int func1_id, int func2_id)
+{
+
+
+  CallVec* func1_vec = load_function_api_calls_for(func1_id);
+  CallVec* func2_vec = load_function_api_calls_for(func2_id);
+
+  size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
+
+  double dl_similarity = 1.0;
+
+  if ( dl_max > 0 ){
+
+    size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+
+    dl_similarity = 1.0 - (double)dl / dl_max;
+
+  }
+
+
+  delete func1_vec;
+  delete func2_vec;
+
+  return dl_similarity;
+
+};
+
 
 class FunctionPair{
 
@@ -467,8 +516,8 @@ main(int argc, char *argv[])
 
     SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into api_call_similarity"
                                                             // 0        1         2           3          4
-                                                            "(func1_id, func2_id, max_similarity, min_similarity, ave_similarity)"
-                                                            " values (?, ?, ?, ?, ?)");
+                                                            "(func1_id, func2_id, max_similarity, min_similarity, ave_similarity, cg_similarity )"
+                                                            " values (?, ?, ?, ?, ?, ?)");
  
     for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
       int func1_id = row.get<int>(0);
@@ -492,8 +541,6 @@ main(int argc, char *argv[])
 
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
         int igroup_id = row.get<int>(0);
-
-        std::cout << "  igroup " << igroup_id << std::endl; 
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_inline_candidates, 
             ignore_no_compares, call_depth, expand_ncalls  );
@@ -521,11 +568,18 @@ main(int argc, char *argv[])
 
       }
 
+
+      //find call similarity between functions
+
+      double cg_similarity = whole_function_similarity(func1_id, func2_id);
+
+
       insert_stmt->bind(0, func1_id);
       insert_stmt->bind(1, func2_id);
       insert_stmt->bind(2, max_api_similarity);
       insert_stmt->bind(3, min_api_similarity);
       insert_stmt->bind(4, ave_api_similarity);
+      insert_stmt->bind(5, cg_similarity);
 
       insert_stmt->execute();
 
