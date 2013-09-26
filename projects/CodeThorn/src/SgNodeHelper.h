@@ -223,8 +223,8 @@ namespace SgNodeHelper {
   string doubleQuotedEscapedString(string s1);
 
   /*!
-	Same as doubleQuotedEscapedString but also replaces <,<=,>=,> with the corresponding HTML codes.
-	This is required when printing program code inside HTML tables of a dot file.
+    Same as doubleQuotedEscapedString but also replaces <,<=,>=,> with the corresponding HTML codes.
+    This is required when printing program code inside HTML tables of a dot file.
   */
   string doubleQuotedEscapedHTMLString(string s1);
 

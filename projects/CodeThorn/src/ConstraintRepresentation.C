@@ -401,7 +401,7 @@ void Constraint::swapVars() {
 ConstraintSet ConstraintSet::constraintsOfVariable(VariableId varId) {
   ConstraintSet cset;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-	
+    
   }
   return cset;
 }

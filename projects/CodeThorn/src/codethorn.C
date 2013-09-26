@@ -52,7 +52,7 @@ public:
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
   }
   string toString() { 
-	return "// POINTEREXPR: "+pointerExprToString(_node);
+    return "// POINTEREXPR: "+pointerExprToString(_node);
   }
 private:
   SgNode* _node;
@@ -94,13 +94,13 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   if(boolOptions["rers-binary"]) {
-	int assertStart=-1;
-	int assertEnd=-1;
-	switch(resultsFormat) {
-	case RF_RERS2012: assertStart=0; assertEnd=60;break;
-	case RF_RERS2013: assertStart=100; assertEnd=159;break;
-	default: assert(0);
-	}
+    int assertStart=-1;
+    int assertEnd=-1;
+    switch(resultsFormat) {
+    case RF_RERS2012: assertStart=0; assertEnd=60;break;
+    case RF_RERS2013: assertStart=100; assertEnd=159;break;
+    default: assert(0);
+    }
     for(int i=assertStart;i<=assertEnd;i++) {
       *csv << i<<",";
       if(analyzer.binaryBindingAssert[i]) {
@@ -115,14 +115,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
       string name=SgNodeHelper::getLabelName((*i).first);
       if(name=="globalError")
         name="error_60";
-	  int num;
-	  stringstream(name.substr(6,name.size()-6))>>num;
-	  switch(resultsFormat) {
-	  case RF_RERS2012: *csv<<(num);break;
-	  case RF_RERS2013: *csv<<(num+100);break;
-	  default: assert(0);
-	  } 
-	  *csv <<",";
+      int num;
+      stringstream(name.substr(6,name.size()-6))>>num;
+      switch(resultsFormat) {
+      case RF_RERS2012: *csv<<(num);break;
+      case RF_RERS2013: *csv<<(num+100);break;
+      default: assert(0);
+      } 
+      *csv <<",";
       Label lab=analyzer.getLabeler()->getLabel((*i).second);
       if(lset.find(lab)!=lset.end()) {
         *csv << "yes,9";
@@ -137,13 +137,13 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
 
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
   if(boolOptions["rers-binary"]) {
-	int assertStart=-1;
-	int assertEnd=-1;
-	switch(resultsFormat) {
-	case RF_RERS2012: assertStart=0; assertEnd=60;break;
-	case RF_RERS2013: assertStart=100; assertEnd=159;break;
-	default: assert(0);
-	}
+    int assertStart=-1;
+    int assertEnd=-1;
+    switch(resultsFormat) {
+    case RF_RERS2012: assertStart=0; assertEnd=60;break;
+    case RF_RERS2013: assertStart=100; assertEnd=159;break;
+    default: assert(0);
+    }
     for(int i=assertStart;i<=assertEnd;i++) {
       cout <<color("white")<<"assert: error_"<<i<<": ";
       if(analyzer.binaryBindingAssert[i]) {
@@ -236,10 +236,10 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getEStateSet(),
                              *analyzer.getTransitionGraph());
 #else
-	  {
-		checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getTransitionGraph()->estateSet());
+      {
+        checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getTransitionGraph()->estateSet());
                              *analyzer.getTransitionGraph());
-	  }
+      }
 #endif
       break;
     default: 
@@ -291,14 +291,14 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
 
-	  if(csv) {
-		switch(resultsFormat) {
-		case RF_RERS2012: *csv << (n-1)+61 <<",";break; // MS: n starts at 1
-		case RF_RERS2013: *csv << (n-1) <<",";break;
-		case RF_UNKNOWN: /* intentional fall-through */
-		default: assert(0);
-		}
-	  }
+      if(csv) {
+        switch(resultsFormat) {
+        case RF_RERS2012: *csv << (n-1)+61 <<",";break; // MS: n starts at 1
+        case RF_RERS2013: *csv << (n-1) <<",";break;
+        case RF_UNKNOWN: /* intentional fall-through */
+        default: assert(0);
+        }
+      }
       try {
     AType::BoolLattice result;
     if (checker1) result = checker1->verify(*ltl_val);
@@ -587,11 +587,11 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("rersformat")) {
     int year=args["rersformat"].as<int>();
-	if(year==2012)
-	  resultsFormat=RF_RERS2012;
-	if(year==2013)
-	  resultsFormat=RF_RERS2013;
-	// otherwise it remains RF_UNKNOWN
+    if(year==2012)
+      resultsFormat=RF_RERS2012;
+    if(year==2013)
+      resultsFormat=RF_RERS2013;
+    // otherwise it remains RF_UNKNOWN
   }
 
   if(args.count("max-transitions")) {
@@ -701,7 +701,7 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-	analyzer.setSolver(4);
+        analyzer.setSolver(4);
   }
   analyzer.runSolver();
 
@@ -737,7 +737,7 @@ int main( int argc, char * argv[] ) {
   }
   if(boolOptions["tg-ltl-reduced"]) {
 #if 1
-	analyzer.stdIOFoldingOfTransitionGraph();
+    analyzer.stdIOFoldingOfTransitionGraph();
 #else
     cout << "(Experimental) Reducing transition graph ..."<<endl;
     set<const EState*> xestates=analyzer.nonLTLRelevantEStates();

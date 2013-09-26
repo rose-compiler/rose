@@ -75,7 +75,7 @@ class Edge {
 
   //LabelSet reachableNodesOnPath(Label start, Label target);
   /* computes all nodes which are reachable in the graph from the start node. A path is terminated by either the target node 
-	or by a node without successors. The start node is not included in the result set, except
+    or by a node without successors. The start node is not included in the result set, except
      it is reachable on some path starting from the start node.
   */
   LabelSet reachableNodesButNotBeyondTargetNode(Label start, Label target);

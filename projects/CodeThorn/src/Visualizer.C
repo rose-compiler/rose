@@ -264,10 +264,10 @@ string Visualizer::transitionGraphWithIOToDot() {
   stringstream ss;
 #if 0
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-	// do not generate input->output edges here because we generate them later
-	if(!(labeler->isStdInLabel((*j).source->label()) && labeler->isStdOutLabel((*j).source->label()))) {
-	  ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
-	}
+    // do not generate input->output edges here because we generate them later
+    if(!(labeler->isStdInLabel((*j).source->label()) && labeler->isStdOutLabel((*j).source->label()))) {
+      ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
+    }
   }
 #endif
   set<const EState*> estatePtrSet=transitionGraph->estateSet();
@@ -288,38 +288,38 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
-	if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
-	  if(!number.isTop() && !number.isBot()) {
-		// convert number to letter
-		int num=number.getIntValue();
-		num+='A'-1;
-		char numc=num;
-		stringstream ss;
-		ss<<numc;
-		name+=ss.str();
-	  } else {
-		name+=number.toString();
-	  }
-	} else {
-	  name+=number.toString();
-	}
+    if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+      if(!number.isTop() && !number.isBot()) {
+        // convert number to letter
+        int num=number.getIntValue();
+        num+='A'-1;
+        char numc=num;
+        stringstream ss;
+        ss<<numc;
+        name+=ss.str();
+      } else {
+        name+=number.toString();
+      }
+    } else {
+      name+=number.toString();
+    }
     name+="\"";
     ss<<name;
     stringstream newedges;
     // generate constraint on each edge of following state
     TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
     for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
-	j!=outTrans.end();
-	++j) {
+    j!=outTrans.end();
+    ++j) {
       newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
       if(number.isTop()) {
-	newedges<<" [label=\"";
-	newedges<<(*j)->target->constraints()->toString()<<"\"";
-	if((*j)->source==(*j)->target)
-	  newedges<<" color=red ";
-	newedges<<"];"<<endl;
+    newedges<<" [label=\"";
+    newedges<<(*j)->target->constraints()->toString()<<"\"";
+    if((*j)->source==(*j)->target)
+      newedges<<" color=red ";
+    newedges<<"];"<<endl;
       }
-	  newedges<<endl;
+      newedges<<endl;
     }
     
     // determine color based on IO type
@@ -335,7 +335,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     ss<<" color="<<color<<" style=\"filled\"";
     ss<<"];";
     ss<<endl;
-	ss<<newedges.str();
+    ss<<newedges.str();
   }
   return ss.str();
 }

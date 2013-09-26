@@ -111,8 +111,8 @@ namespace CodeThorn {
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
-	// this function requires that no LTL graph is computed
-	void deleteNonRelevantEStates();
+    // this function requires that no LTL graph is computed
+    void deleteNonRelevantEStates();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -224,8 +224,8 @@ namespace CodeThorn {
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
     int _solver;
-	AnalyzerMode _analyzerMode;
-	set<const EState*> _newNodesToFold;
+    AnalyzerMode _analyzerMode;
+    set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
     bool _treatStdErrLikeFailedAssert;
   };

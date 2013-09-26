@@ -29,7 +29,7 @@ class VariableIdMapping {
   /* TODO: possible workaround: because the AST implementation is not completed for the following cases:
      1) SgInitializedName in forward declaration (symbol=0)
      2) CtorInitializerList (symbol=0)
-	 the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
+     the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
   */
 
  public:

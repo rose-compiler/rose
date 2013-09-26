@@ -445,7 +445,7 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
   //if(initName->get_prev_decl_item()==0 && initName->get_symbol_from_symbol_table()==0) {
     //cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
     //return 0;
-	//}
+    //}
   SgSymbol* varsym=initName->search_for_symbol_from_symbol_table();
   return varsym;
 }
@@ -1037,14 +1037,14 @@ SgNode* SgNodeHelper::getLastOfBlock(SgNode* node) {
 void replaceInString(string toReplace, string with, string& str) {
   size_t index = 0;
   while (index<str.size()) {
-	/* find the substring to replace. */
-	index = str.find(toReplace, index);
-	if (index == string::npos) break;
-	
-	/* replace the subsring */
-	str.replace(index, toReplace.size(), with);
-	/* advance index forward past the replaced string */
-	index += with.size();
+    /* find the substring to replace. */
+    index = str.find(toReplace, index);
+    if (index == string::npos) break;
+    
+    /* replace the subsring */
+    str.replace(index, toReplace.size(), with);
+    /* advance index forward past the replaced string */
+    index += with.size();
   }
 }
 

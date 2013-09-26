@@ -80,17 +80,17 @@ LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
   LabelSetSet result;
   LabelSet feLabels=functionEntryLabels(flow);
   for(LabelSet::iterator i=feLabels.begin();i!=feLabels.end();++i) {
-	Label entryLabel=*i;
-	LabelSet fLabels=functionLabelSet(entryLabel, flow);
-	result.insert(fLabels);
+    Label entryLabel=*i;
+    LabelSet fLabels=functionLabelSet(entryLabel, flow);
+    result.insert(fLabels);
   }
   return result;
 }
 
 LabelSet CFAnalyzer::functionLabelSet(Label entryLabel, Flow& flow) {
-	Label exitLabel=correspondingFunctionExitLabel(entryLabel);
-	LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
-	return fLabels;
+    Label exitLabel=correspondingFunctionExitLabel(entryLabel);
+    LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
+    return fLabels;
 }
 
 
@@ -329,28 +329,28 @@ int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
   int numInlined=0;
   LabelSet lnLabs=functionEntryLabels(flow);
   for(LabelSet::iterator i=lnLabs.begin();i!=lnLabs.end();++i) {
-	LabelSet pred=flow.pred(*i);
-	if(pred.size()==1) {
-	  Label lc=*pred.begin();
-	  ROSE_ASSERT(getLabeler()->isFunctionCallLabel(lc));
-	  // check the number of formal parameters of ln
-	  if(numberOfFunctionParameters(*i)==0 && isVoidFunction(*i)) {
+    LabelSet pred=flow.pred(*i);
+    if(pred.size()==1) {
+      Label lc=*pred.begin();
+      ROSE_ASSERT(getLabeler()->isFunctionCallLabel(lc));
+      // check the number of formal parameters of ln
+      if(numberOfFunctionParameters(*i)==0 && isVoidFunction(*i)) {
 
-		// reduce all four nodes: lc,ln,lx,lr (this also reduces a possibly existing local edge)
-		Label ln=*i;
-		Label lx=correspondingFunctionExitLabel(ln);
-		LabelSet succ=flow.succ(lx);
-		// since we have exactly one call there must be exactly one return edge
-		ROSE_ASSERT(succ.size()==1);
-		Label lr=*succ.begin();
-		// reduce all four nodes now
-		reduceNode(flow,lc);
-		reduceNode(flow,ln);
-		reduceNode(flow,lx);
-		reduceNode(flow,lr);
-		numInlined++;
-	  }
-	}
+        // reduce all four nodes: lc,ln,lx,lr (this also reduces a possibly existing local edge)
+        Label ln=*i;
+        Label lx=correspondingFunctionExitLabel(ln);
+        LabelSet succ=flow.succ(lx);
+        // since we have exactly one call there must be exactly one return edge
+        ROSE_ASSERT(succ.size()==1);
+        Label lr=*succ.begin();
+        // reduce all four nodes now
+        reduceNode(flow,lc);
+        reduceNode(flow,ln);
+        reduceNode(flow,lx);
+        reduceNode(flow,lr);
+        numInlined++;
+      }
+    }
   }
   return numInlined;
 }
@@ -359,9 +359,9 @@ int CFAnalyzer::reduceEmptyConditionNodes(Flow& flow) {
   LabelSet labs=conditionLabels(flow);
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-	if(flow.succ(*i).size()==1) {
+    if(flow.succ(*i).size()==1) {
       cnt+=reduceNode(flow,*i);
-	}
+    }
   }
   return cnt;
 }
@@ -377,23 +377,23 @@ int CFAnalyzer::reduceNode(Flow& flow, Label lab) {
    *   insert(n1,n2)
    */
   if(inFlow.size()==0 && outFlow.size()==0)
-	return 0;
+    return 0;
 
   if(inFlow.size()==0 || outFlow.size()==0) {
-	Flow edges=inFlow+outFlow;
-	flow.deleteEdges(edges);
-	return 1;
+    Flow edges=inFlow+outFlow;
+    flow.deleteEdges(edges);
+    return 1;
   }
 
   for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
-	for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
-	  Edge e1=*initer;
-	  Edge e2=*outiter;
-	  Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-	  flow.erase(e1);
-	  flow.erase(e2);
-	  flow.insert(newEdge);
-	}
+    for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+      Edge e1=*initer;
+      Edge e2=*outiter;
+      Edge newEdge=Edge(e1.source,e1.types(),e2.target);
+      flow.erase(e1);
+      flow.erase(e2);
+      flow.insert(newEdge);
+    }
   }
   return 1;
 }
@@ -404,9 +404,9 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
     if(isSgBasicBlock(getNode(*i))) {
 #if 1
-	  cnt+=reduceNode(flow,*i);
+      cnt+=reduceNode(flow,*i);
 #else
-	  cnt++;
+      cnt++;
       Flow inFlow=flow.inEdges(*i);
       Flow outFlow=flow.outEdges(*i);
 
@@ -453,14 +453,14 @@ void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
 LabelSet CFAnalyzer::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
   LabelSet ls;
   if(node==0)
-	return ls;
+    return ls;
   if(!isSgStatement(node)) {
-	cerr<<"ERROR: "<<node->class_name()<<endl;
+    cerr<<"ERROR: "<<node->class_name()<<endl;
   }
   size_t len=node->get_numberOfTraversalSuccessors();
   for(size_t i=0;i<len;++i) {
-	SgNode* childNode=node->get_traversalSuccessorByIndex(i);
-	ls.insert(initialLabel(childNode));
+    SgNode* childNode=node->get_traversalSuccessorByIndex(i);
+    ls.insert(initialLabel(childNode));
   }
   return ls;
 }
@@ -470,28 +470,28 @@ Flow CFAnalyzer::controlDependenceGraph(Flow& controlFlow) {
   LabelSet targetLabels;
   Flow controlDependenceEdges;
   for(LabelSet::iterator i=condLabels.begin();i!=condLabels.end();++i) {
-	SgNode* condition=getLabeler()->getNode(*i);
-	cerr<<"DEBUG: cond:"<<condition->class_name()<<endl;
-	SgNode* stmt=SgNodeHelper::getParent(condition);
-	cerr<<"DEBUG: stmt:"<<stmt->class_name()<<endl;
-	// while/dowhile/for
-	if(SgNodeHelper::isLoopCond(condition)) {
-	  SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
-	  cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
-	  LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
-	  targetLabels=loopBodyInitLabels;
-	}
-	// if
-	if(isSgIfStmt(stmt)) {
-	  SgNode* trueBranch=SgNodeHelper::getTrueBranch(stmt);
-	  LabelSet trueBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(trueBranch);
-	  SgNode* falseBranch=SgNodeHelper::getFalseBranch(stmt);
-	  LabelSet falseBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(falseBranch);
-	  targetLabels=trueBranchInitLabels+falseBranchInitLabels;
-	}
-	for(LabelSet::iterator j=targetLabels.begin();j!=targetLabels.end();++j) {
-	  controlDependenceEdges.insert(Edge(*i,EDGE_FORWARD,*j));
-	}
+    SgNode* condition=getLabeler()->getNode(*i);
+    cerr<<"DEBUG: cond:"<<condition->class_name()<<endl;
+    SgNode* stmt=SgNodeHelper::getParent(condition);
+    cerr<<"DEBUG: stmt:"<<stmt->class_name()<<endl;
+    // while/dowhile/for
+    if(SgNodeHelper::isLoopCond(condition)) {
+      SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
+      cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
+      LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
+      targetLabels=loopBodyInitLabels;
+    }
+    // if
+    if(isSgIfStmt(stmt)) {
+      SgNode* trueBranch=SgNodeHelper::getTrueBranch(stmt);
+      LabelSet trueBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(trueBranch);
+      SgNode* falseBranch=SgNodeHelper::getFalseBranch(stmt);
+      LabelSet falseBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(falseBranch);
+      targetLabels=trueBranchInitLabels+falseBranchInitLabels;
+    }
+    for(LabelSet::iterator j=targetLabels.begin();j!=targetLabels.end();++j) {
+      controlDependenceEdges.insert(Edge(*i,EDGE_FORWARD,*j));
+    }
   }
   return controlDependenceEdges;
 }
@@ -538,18 +538,18 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
   size_t oldSize=0;
   size_t newSize=0;
   do {
-	LabelSet newToVisitSet;
-	for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
-	  LabelSet succSet=succ(*i);
-	  for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
-		if(reachableNodes.find(*j)==reachableNodes.end())
-		  newToVisitSet.insert(*j);
-	  }
-	}
-	toVisitSet=newToVisitSet;
-	oldSize=reachableNodes.size();
-	reachableNodes+=toVisitSet;
-	newSize=reachableNodes.size();
+    LabelSet newToVisitSet;
+    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
+      LabelSet succSet=succ(*i);
+      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+        if(reachableNodes.find(*j)==reachableNodes.end())
+          newToVisitSet.insert(*j);
+      }
+    }
+    toVisitSet=newToVisitSet;
+    oldSize=reachableNodes.size();
+    reachableNodes+=toVisitSet;
+    newSize=reachableNodes.size();
   } while(oldSize!=newSize);
   return reachableNodes;
 }

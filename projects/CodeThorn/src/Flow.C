@@ -36,12 +36,12 @@ void Edge::addType(EdgeType et) {
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
   if(et==EDGE_PATH) {
-	_types.clear();
-	_types.insert(EDGE_PATH);
-	return;
+    _types.clear();
+    _types.insert(EDGE_PATH);
+    return;
   }
   if(isType(EDGE_PATH))
-	return;
+    return;
   if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
     switch(et) {
     case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
@@ -244,8 +244,8 @@ void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
   edge_t e; bool b;
   for(Flow::iterator i=begin();i!=end();++i) {
-	tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
-	_flowGraph[e]=(*i).getTypes();
+    tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
+    _flowGraph[e]=(*i).getTypes();
   }
   _boostified=true;
   cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
@@ -316,7 +316,7 @@ void Flow::setTextOptionPrintType(bool opt) {
 string Flow::toDot(Labeler* labeler) {
   stringstream ss;
   if(_dotOptionHeaderFooter)
-	ss<<"digraph G {\n";
+    ss<<"digraph G {\n";
   LabelSet nlabs=nodeLabels();
   for(LabelSet::iterator i=nlabs.begin();i!=nlabs.end();++i) {
     if(_dotOptionDisplayLabel) {
@@ -344,7 +344,7 @@ string Flow::toDot(Labeler* labeler) {
       SgNode* node=labeler->getNode(*i);
       if(SgNodeHelper::isCond(node)) {
         ss << " shape=oval style=filled ";
-		ss<<"color=yellow "; 
+        ss<<"color=yellow "; 
       } else {
         ss << " shape=box ";
       }
@@ -356,7 +356,7 @@ string Flow::toDot(Labeler* labeler) {
     ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
   }
   if(_dotOptionHeaderFooter)
-	ss<<"}";
+    ss<<"}";
   return ss.str();
 }
 
@@ -364,12 +364,12 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   Flow::iterator i=begin();
   size_t numDeleted=0;
   while(i!=end()) {
-	if((*i).isType(edgeType)) {
-	  erase(i++);
-	  numDeleted++;
-	} else {
-	  ++i;
-	}
+    if((*i).isType(edgeType)) {
+      erase(i++);
+      numDeleted++;
+    } else {
+      ++i;
+    }
   }
   return numDeleted;
 }
@@ -384,8 +384,8 @@ size_t Flow::deleteEdges(Flow& edges) {
   size_t numDeleted=0;
   Flow::iterator i=edges.begin();
   while(i!=end()) {
-	erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
-	  numDeleted++;
+    erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
+      numDeleted++;
   }
   return numDeleted;
 }
@@ -404,22 +404,22 @@ Flow Flow::inEdges(Label label) {
 Flow Flow::outEdges(Label label) {
   Flow flow;
   if(!_boostified) {
-	for(Flow::iterator i=begin();i!=end();++i) {
-	  if((*i).source==label)
-		flow.insert(*i);
-	}
+    for(Flow::iterator i=begin();i!=end();++i) {
+      if((*i).source==label)
+        flow.insert(*i);
+    }
   } else {
-	typedef graph_traits<FlowGraph> GraphTraits;
-	//	typename property_map<FlowGraph, vertex_index_t>::type 
-	// index = get(vertex_index, _flowGraph);
-	GraphTraits::out_edge_iterator out_i, out_end;
-	GraphTraits::edge_descriptor e;
-	for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
-		 out_i != out_end; ++out_i) {
-	  e = *out_i;
-	  Label src = source(e, _flowGraph), targ = target(e, _flowGraph);
-	  flow.insert(Edge(src,_flowGraph[e],targ));
-	}
+    typedef graph_traits<FlowGraph> GraphTraits;
+    //    typename property_map<FlowGraph, vertex_index_t>::type 
+    // index = get(vertex_index, _flowGraph);
+    GraphTraits::out_edge_iterator out_i, out_end;
+    GraphTraits::edge_descriptor e;
+    for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
+         out_i != out_end; ++out_i) {
+      e = *out_i;
+      Label src = source(e, _flowGraph), targ = target(e, _flowGraph);
+      flow.insert(Edge(src,_flowGraph[e],targ));
+    }
   }
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
@@ -477,8 +477,8 @@ LabelSet Flow::targetLabels() {
 }
 
 LabelSet Flow::pred(Label label) {
-	Flow flow=inEdges(label);
-	return flow.sourceLabels();
+    Flow flow=inEdges(label);
+    return flow.sourceLabels();
 }
 
 LabelSet Flow::succ(Label label) {

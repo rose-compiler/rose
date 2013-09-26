@@ -5,12 +5,12 @@
 using std::string;
 
 enum DFInfoSelector { DFISEL_DEFAULT, 
-					  //DFISEL_FUNCTION_CALL,
-					  DFISEL_FUNCTION_CALLRETURN,
-					  //DFISEL_FUNCTION_ENTRY,
-					  DFISEL_FUNCTION_EXIT,
-					  //DFISEL_BLOCK_BEGIN,
-					  //DFIDEL_BLOCK_END
+                      //DFISEL_FUNCTION_CALL,
+                      DFISEL_FUNCTION_CALLRETURN,
+                      //DFISEL_FUNCTION_ENTRY,
+                      DFISEL_FUNCTION_EXIT,
+                      //DFISEL_BLOCK_BEGIN,
+                      //DFIDEL_BLOCK_END
 };
 
 /*! 

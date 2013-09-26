@@ -18,8 +18,8 @@ using namespace CodeThorn;
 #include "CollectionOperators.h"
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
-		     _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),
-		     _maxTransitions(0),_treatStdErrLikeFailedAssert(false) {
+             _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),
+             _maxTransitions(0),_treatStdErrLikeFailedAssert(false) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -63,19 +63,19 @@ Analyzer::~Analyzer() {
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
   transitionGraph.add(Transition(sourceState,e,targetState));
   if(boolOptions["semantic-fold"]) {
-	Label s=sourceState->label();
-	Label t=targetState->label();
-	Label stgsl=getTransitionGraph()->getStartLabel();
-	if(!isLTLRelevantLabel(s) && s!=stgsl)
+    Label s=sourceState->label();
+    Label t=targetState->label();
+    Label stgsl=getTransitionGraph()->getStartLabel();
+    if(!isLTLRelevantLabel(s) && s!=stgsl)
 #pragma omp critical
-	  {
-		_newNodesToFold.insert(sourceState);
-	  }
-	if(!isLTLRelevantLabel(t) && t!=stgsl)
+      {
+        _newNodesToFold.insert(sourceState);
+      }
+    if(!isLTLRelevantLabel(t) && t!=stgsl)
 #pragma omp critical
-	  {
-		_newNodesToFold.insert(targetState);
-	  }
+      {
+        _newNodesToFold.insert(targetState);
+      }
   }
 }
 
@@ -94,7 +94,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<color("yellow")<<constraintSetMaintainer.size()
        <<color("white")<<"/"
-	   <<estateWorkList.size();
+       <<estateWorkList.size();
     ss<<endl;
     cout<<ss.str();
   }
@@ -114,10 +114,10 @@ void Analyzer::addToWorkList(const EState* estate) {
       cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
       exit(1);
     }
-	if(!(estateWorkList.size()>0))
-	  estateWorkList.push_front(estate); // depth first
-	else
-	  estateWorkList.push_back(estate); // breadths first (definitely better for finding reachable)
+    if(!(estateWorkList.size()>0))
+      estateWorkList.push_front(estate); // depth first
+    else
+      estateWorkList.push_back(estate); // breadths first (definitely better for finding reachable)
   }
 }
 
@@ -137,9 +137,9 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
   t=isStdIOLabel(label) 
-	//	|| getLabeler()->isStdErrLabel(label)
-	//|| isTerminationRelevantLabel(label)
- 	|| isStartLabel(label) // we keep the start state
+    //    || getLabeler()->isStdErrLabel(label)
+    //|| isTerminationRelevantLabel(label)
+     || isStartLabel(label) // we keep the start state
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -152,9 +152,9 @@ bool Analyzer::isStartLabel(Label label) {
 bool Analyzer::isStdIOLabel(Label label) {
   bool t;
   t=
-	(getLabeler()->isStdInLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
-	|| 
-	(getLabeler()->isStdOutLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+    (getLabeler()->isStdInLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+    || 
+    (getLabeler()->isStdOutLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -287,7 +287,7 @@ void Analyzer::runSolver1() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);            
-			  recordTransition(currentEStatePtr,e,newEStatePtr);
+              recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
@@ -867,8 +867,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     }
     if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
       {
-	newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-	assert(newio.var==varId);
+    newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+    assert(newio.var==varId);
       }
       if(boolOptions["report-stdout"]) {
         cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
@@ -884,12 +884,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     {
       int constvalue;
       if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
-	{
-	  newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
-	}
-	if(boolOptions["report-stdout"]) {
-	  cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
-	}
+    {
+      newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+    }
+    if(boolOptions["report-stdout"]) {
+      cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
+    }
       }
     }
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
@@ -1076,7 +1076,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
-	cnt=cfanalyzer->reduceBlockBeginNodes(flow);
+    cnt=cfanalyzer->reduceBlockBeginNodes(flow);
     cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block nodes)"<<endl;
     cnt=cfanalyzer->reduceEmptyConditionNodes(flow);
     cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
@@ -1108,7 +1108,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     cout << globalVars.size()<<endl;
 
-	VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
 
     cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
@@ -1301,13 +1301,13 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
 void Analyzer::deleteNonRelevantEStates() {
   size_t numEStatesBefore=estateSet.size();
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
-	if(isLTLRelevantLabel((*i).label())) {
-	  estateSet.erase(i);
-	}
+    if(isLTLRelevantLabel((*i).label())) {
+      estateSet.erase(i);
+    }
   }
   size_t numEStatesAfter=estateSet.size();
   if(numEStatesBefore!=numEStatesAfter)
-	cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
+    cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
 
 void Analyzer::stdIOFoldingOfTransitionGraph() {
@@ -1315,10 +1315,10 @@ void Analyzer::stdIOFoldingOfTransitionGraph() {
   assert(estateWorkList.size()==0);
   set<const EState*> toReduceSet;
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
-	Label lab=(*i).label();
-	if(!isStdIOLabel(lab) && !isStartLabel(lab)) {
-	  toReduceSet.insert(&(*i));
-	}
+    Label lab=(*i).label();
+    if(!isStdIOLabel(lab) && !isStartLabel(lab)) {
+      toReduceSet.insert(&(*i));
+    }
   }
   cout << "STATUS: stdio-folding: "<<toReduceSet.size()<<" states to fold."<<endl;
   getTransitionGraph()->reduceEStates2(toReduceSet);
@@ -1331,30 +1331,30 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
     //cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
     //assert(checkEStateSet());
     if(boolOptions["post-semantic-fold"]) {
-	  cout << "STATUS: post-semantic folding: computing states to fold."<<endl;
-	} 
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 1: computing states to fold."<<endl;
-	}
-	if(_newNodesToFold.size()==0) {
-	  _newNodesToFold=nonLTLRelevantEStates();
-	}
+      cout << "STATUS: post-semantic folding: computing states to fold."<<endl;
+    } 
+    if(boolOptions["report-semantic-fold"]) {
+      cout << "STATUS: semantic folding: phase 1: computing states to fold."<<endl;
+    }
+    if(_newNodesToFold.size()==0) {
+      _newNodesToFold=nonLTLRelevantEStates();
+    }
 
     // filter for worklist
-	// iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
-	int numFiltered=0;
-	if(boolOptions["report-semantic-fold"]) {
-	  cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
-	}
-	for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
-	  if(!isLTLRelevantLabel((*i)->label())) {
-		_newNodesToFold.erase(*i);
-		numFiltered++;
-	  }
-	}
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 3: reducing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
-	}
+    // iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
+    int numFiltered=0;
+    if(boolOptions["report-semantic-fold"]) {
+      cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
+    }
+    for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
+      if(!isLTLRelevantLabel((*i)->label())) {
+        _newNodesToFold.erase(*i);
+        numFiltered++;
+      }
+    }
+    if(boolOptions["report-semantic-fold"]) {
+      cout << "STATUS: semantic folding: phase 3: reducing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
+    }
     int tg_size_before_folding=getTransitionGraph()->size();
     getTransitionGraph()->reduceEStates2(_newNodesToFold);
     int tg_size_after_folding=getTransitionGraph()->size();
@@ -1363,14 +1363,14 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
       bool res=estateSet.erase(**i);
       if(res==false) {
         cerr<< "Error: Semantic folding of transition graph: new estate could not be deleted."<<endl;
-		//cerr<< (**i).toString()<<endl;
+        //cerr<< (**i).toString()<<endl;
         exit(1);
       }
     }
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 4: clearing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
-	}
-	_newNodesToFold.clear();
+    if(boolOptions["report-semantic-fold"]) {
+      cout << "STATUS: semantic folding: phase 4: clearing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
+    }
+    _newNodesToFold.clear();
     //assert(checkEStateSet());
     //assert(checkTransitionGraph());
     if(boolOptions["report-semantic-fold"] && tg_size_before_folding!=tg_size_after_folding)
@@ -1419,9 +1419,9 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
       Edge outEdge(originalLabel,EDGE_PATH,(*k)->label());
       recordTransition(newEStatePtr,outEdge,(*k)); // new outgoing edge
       for(EStatePtrSet::iterator j=predNodes.begin();j!=predNodes.end();++j) {
-	//create edge: predecessor->newInputNode
-	Edge inEdge((*j)->label(),EDGE_PATH,originalLabel);
-	recordTransition((*j),inEdge,newEStatePtr); // new ingoing edge
+    //create edge: predecessor->newInputNode
+    Edge inEdge((*j)->label(),EDGE_PATH,originalLabel);
+    recordTransition((*j),inEdge,newEStatePtr); // new ingoing edge
       }
     }
   }
@@ -1436,23 +1436,23 @@ int Analyzer::semanticEliminationOfSelfInInTransitions() {
   transitionsToEliminate.clear();
   eliminated=0;
   for(TransitionGraph::iterator i=transitionGraph.begin();
-	  i!=transitionGraph.end();
-	  ++i) {
-	const Transition* t=&(*i);
-	if((t->source==t->target)
-	   &&
-	   (getLabeler()->isStdInLabel(t->source->label()))
-	   &&
-	   (getLabeler()->isStdInLabel(t->target->label())) ) {
-	  // found in-in edge
-	  transitionsToEliminate.insert(t);
-	}
+      i!=transitionGraph.end();
+      ++i) {
+    const Transition* t=&(*i);
+    if((t->source==t->target)
+       &&
+       (getLabeler()->isStdInLabel(t->source->label()))
+       &&
+       (getLabeler()->isStdInLabel(t->target->label())) ) {
+      // found in-in edge
+      transitionsToEliminate.insert(t);
+    }
   }
   for(set<const Transition*>::iterator i=transitionsToEliminate.begin();
-	  i!=transitionsToEliminate.end();
-	  ++i) {
-	transitionGraph.erase(**i);
-	eliminated++;
+      i!=transitionsToEliminate.end();
+      ++i) {
+    transitionGraph.erase(**i);
+    eliminated++;
   }
   //cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
   return eliminated;
@@ -1461,37 +1461,37 @@ int Analyzer::semanticEliminationOfSelfInInTransitions() {
 int Analyzer::semanticEliminationOfDeadStates() {
   set<const EState*> toEliminate;
   for(EStateSet::const_iterator i=estateSet.begin();
-	  i!=estateSet.end();
-	  ++i) {
+      i!=estateSet.end();
+      ++i) {
     if(transitionGraph.outEdges(&(*i)).size()==0 && (*i).io.isStdInIO()) {
-	  toEliminate.insert(&(*i));
-	}
+      toEliminate.insert(&(*i));
+    }
   }
   for(set<const EState*>::const_iterator i=toEliminate.begin();
-	i!=toEliminate.end();
-	  ++i) {
-	// eliminate node in estateSet (only because LTL is using it)
-	transitionGraph.eliminateEState(*i);
-	estateSet.erase(**i);
+    i!=toEliminate.end();
+      ++i) {
+    // eliminate node in estateSet (only because LTL is using it)
+    transitionGraph.eliminateEState(*i);
+    estateSet.erase(**i);
   }
   return toEliminate.size();
 }
 int Analyzer::semanticFoldingOfInInTransitions() {
   set<const EState*> toReduce;
   for(TransitionGraph::iterator i=transitionGraph.begin();
-	  i!=transitionGraph.end();
-	  ++i) {
-	if((getLabeler()->isStdInLabel((*i).source->label()))
-	   &&
-	   (getLabeler()->isStdInLabel((*i).target->label()))
-	   &&
-	   ((*i).source!=(*i).target)
-	   ) {
-	  // found in-in edge; we reduce the target-node
-	  // but only if there is no connection to already collected nodes (cycle check)
-	  if(toReduce.find((*i).source)==toReduce.end())
-		toReduce.insert((*i).target);
-	}
+      i!=transitionGraph.end();
+      ++i) {
+    if((getLabeler()->isStdInLabel((*i).source->label()))
+       &&
+       (getLabeler()->isStdInLabel((*i).target->label()))
+       &&
+       ((*i).source!=(*i).target)
+       ) {
+      // found in-in edge; we reduce the target-node
+      // but only if there is no connection to already collected nodes (cycle check)
+      if(toReduce.find((*i).source)==toReduce.end())
+        toReduce.insert((*i).target);
+    }
   }
   transitionGraph.reduceEStates2(toReduce);
   //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
@@ -1502,14 +1502,14 @@ void Analyzer::semanticEliminationOfTransitions() {
   cout << "STATUS: (Experimental) semantic elimination of transitions ... ";
   int elim;
   do {
-	elim=0;
-	assert(transitionGraph.checkConsistency());
-	elim+=semanticEliminationOfSelfInInTransitions();
-	elim+=semanticEliminationOfDeadStates();
-	// this function does not work in general yet
-	// probably because of self-edges
-	elim+=semanticFoldingOfInInTransitions();
-	assert(transitionGraph.checkConsistency());
+    elim=0;
+    assert(transitionGraph.checkConsistency());
+    elim+=semanticEliminationOfSelfInInTransitions();
+    elim+=semanticEliminationOfDeadStates();
+    // this function does not work in general yet
+    // probably because of self-edges
+    elim+=semanticFoldingOfInInTransitions();
+    assert(transitionGraph.checkConsistency());
   } while (elim>0);
   cout << "done."<<endl;
   return;
@@ -1660,8 +1660,8 @@ void Analyzer::runSolver3() {
       printStatusMessage(true);
       prevStateSetSize=estateSet.size();
     }
-	if(isEmptyWorkList())
-	  break;
+    if(isEmptyWorkList())
+      break;
 #pragma omp parallel for private(threadNum)
     for(int j=0;j<workers;++j) {
       threadNum=omp_get_thread_num();
@@ -1670,61 +1670,61 @@ void Analyzer::runSolver3() {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
-		assert(currentEStatePtr);
+        assert(currentEStatePtr);
       
-		Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-		//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
-		for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-		  Edge e=*i;
-		  list<EState> newEStateList;
-		  newEStateList=transferFunction(e,currentEStatePtr);
-		  //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
-		  for(list<EState>::iterator nesListIter=newEStateList.begin();
-			  nesListIter!=newEStateList.end();
-			  ++nesListIter) {
-			// newEstate is passed by value (not created yet)
-			EState newEState=*nesListIter;
-			assert(newEState.label()!=Labeler::NO_LABEL);
-			if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
-			  const EState* newEStatePtr=pres.second;
-			  if(pres.first==true)
-				addToWorkList(newEStatePtr);            
-			  recordTransition(currentEStatePtr,e,newEStatePtr);
-			}
-			if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
-			  // failed-assert end-state: do not add to work list but do add it to the transition graph
-			  const EState* newEStatePtr;
-			  newEStatePtr=processNewOrExisting(newEState);
-			  recordTransition(currentEStatePtr,e,newEStatePtr);        
-			  
-			  if(boolOptions["report-failed-assert"]) {
+        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+          Edge e=*i;
+          list<EState> newEStateList;
+          newEStateList=transferFunction(e,currentEStatePtr);
+          //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          for(list<EState>::iterator nesListIter=newEStateList.begin();
+              nesListIter!=newEStateList.end();
+              ++nesListIter) {
+            // newEstate is passed by value (not created yet)
+            EState newEState=*nesListIter;
+            assert(newEState.label()!=Labeler::NO_LABEL);
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+              HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
+              const EState* newEStatePtr=pres.second;
+              if(pres.first==true)
+                addToWorkList(newEStatePtr);            
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+            if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+              // failed-assert end-state: do not add to work list but do add it to the transition graph
+              const EState* newEStatePtr;
+              newEStatePtr=processNewOrExisting(newEState);
+              recordTransition(currentEStatePtr,e,newEStatePtr);        
+              
+              if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
-				{
-				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
-				}
-			  }
-			  if(_csv_assert_live_file.size()>0) {
-				string name=labelNameOfAssertLabel(currentEStatePtr->label());
-				if(name=="globalError")
-				  name="error_60";
-				name=name.substr(6,name.size()-6);
-				std::ofstream fout;
-				// csv_assert_live_file is the member-variable of analyzer
+                {
+                  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+                }
+              }
+              if(_csv_assert_live_file.size()>0) {
+                string name=labelNameOfAssertLabel(currentEStatePtr->label());
+                if(name=="globalError")
+                  name="error_60";
+                name=name.substr(6,name.size()-6);
+                std::ofstream fout;
+                // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-				{
-				  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-				  assert (!fout.fail( ));
-				  fout << name << ",yes,9"<<endl;
-				  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-				  
-				  fout.close(); 
-				}
-			  } // if
-			}
-		  } // end of loop on transfer function return-estates
-		} // just for proper auto-formatting in emacs
-	  } // conditional: test if work is available
+                {
+                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                  assert (!fout.fail( ));
+                  fout << name << ",yes,9"<<endl;
+                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                  
+                  fout.close(); 
+                }
+              } // if
+            }
+          } // end of loop on transfer function return-estates
+        } // just for proper auto-formatting in emacs
+      } // conditional: test if work is available
     } // worklist-parallel for
     if(isIncompleteSTGReady()) {
       // we report some information and finish the algorithm with an incomplete STG
@@ -1756,8 +1756,8 @@ void Analyzer::runSolver4() {
       printStatusMessage(true);
       prevStateSetSize=estateSet.size();
     }
-	if(isEmptyWorkList())
-	  break;
+    if(isEmptyWorkList())
+      break;
 #pragma omp parallel for private(threadNum)
     for(int j=0;j<workers;++j) {
 #ifdef _OPENMP
@@ -1768,66 +1768,66 @@ void Analyzer::runSolver4() {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
-		assert(currentEStatePtr);
+        assert(currentEStatePtr);
       
-		Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-		//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
-		for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-		  Edge e=*i;
-		  list<EState> newEStateList;
-		  newEStateList=transferFunction(e,currentEStatePtr);
+        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+          Edge e=*i;
+          list<EState> newEStateList;
+          newEStateList=transferFunction(e,currentEStatePtr);
           if(isTerminationRelevantLabel(e.source)) {
             #pragma omp atomic
             analyzedSemanticFoldingNode++;
           }
 
-		  //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
-		  for(list<EState>::iterator nesListIter=newEStateList.begin();
-			  nesListIter!=newEStateList.end();
-			  ++nesListIter) {
-			// newEstate is passed by value (not created yet)
-			EState newEState=*nesListIter;
-			assert(newEState.label()!=Labeler::NO_LABEL);
-			if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
-			  const EState* newEStatePtr=pres.second;
-			  if(pres.first==true)
-				addToWorkList(newEStatePtr);            
-			  recordTransition(currentEStatePtr,e,newEStatePtr);
-			}
-			if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
-			  // failed-assert end-state: do not add to work list but do add it to the transition graph
-			  const EState* newEStatePtr;
-			  newEStatePtr=processNewOrExisting(newEState);
-			  recordTransition(currentEStatePtr,e,newEStatePtr);        
-			  
-			  if(boolOptions["report-failed-assert"]) {
+          //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          for(list<EState>::iterator nesListIter=newEStateList.begin();
+              nesListIter!=newEStateList.end();
+              ++nesListIter) {
+            // newEstate is passed by value (not created yet)
+            EState newEState=*nesListIter;
+            assert(newEState.label()!=Labeler::NO_LABEL);
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+              HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
+              const EState* newEStatePtr=pres.second;
+              if(pres.first==true)
+                addToWorkList(newEStatePtr);            
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+            if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+              // failed-assert end-state: do not add to work list but do add it to the transition graph
+              const EState* newEStatePtr;
+              newEStatePtr=processNewOrExisting(newEState);
+              recordTransition(currentEStatePtr,e,newEStatePtr);        
+              
+              if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
-				{
-				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
-				}
-			  }
-			  if(_csv_assert_live_file.size()>0) {
-				string name=labelNameOfAssertLabel(currentEStatePtr->label());
-				if(name=="globalError")
-				  name="error_60";
-				name=name.substr(6,name.size()-6);
-				std::ofstream fout;
-				// csv_assert_live_file is the member-variable of analyzer
+                {
+                  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+                }
+              }
+              if(_csv_assert_live_file.size()>0) {
+                string name=labelNameOfAssertLabel(currentEStatePtr->label());
+                if(name=="globalError")
+                  name="error_60";
+                name=name.substr(6,name.size()-6);
+                std::ofstream fout;
+                // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-				{
-				  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-				  assert (!fout.fail( ));
-				  fout << name << ",yes,9"<<endl;
-				  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-				  
-				  fout.close(); 
-				}
-			  } // if
-			}
-		  } // end of loop on transfer function return-estates
-		} // just for proper auto-formatting in emacs
-	  } // conditional: test if work is available
+                {
+                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                  assert (!fout.fail( ));
+                  fout << name << ",yes,9"<<endl;
+                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                  
+                  fout.close(); 
+                }
+              } // if
+            }
+          } // end of loop on transfer function return-estates
+        } // just for proper auto-formatting in emacs
+      } // conditional: test if work is available
     } // worklist-parallel for
     if(boolOptions["semantic-fold"]) {
       if(analyzedSemanticFoldingNode>_semanticFoldThreshold) {
@@ -1843,7 +1843,7 @@ void Analyzer::runSolver4() {
     if(isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
       if(boolOptions["semantic-fold"]) {
-	semanticFoldingOfTransitionGraph();
+    semanticFoldingOfTransitionGraph();
       }  
       // we report some information and finish the algorithm with an incomplete STG
       cout << "-------------------------------------------------"<<endl;

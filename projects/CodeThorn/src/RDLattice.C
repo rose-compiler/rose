@@ -28,8 +28,8 @@ void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
       os<<",";
       if(vim)
         os<<vim->uniqueShortVariableName((*i).second);
-	  else
-		os<<(*i).second.toString();
+      else
+        os<<(*i).second.toString();
       os<<")";
     }
     os<<"}";
@@ -81,11 +81,11 @@ void RDLattice::erasePair(Label lab,VariableId var) {
 void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
   RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
-	if(var==(*i).second) {
-	   rdSet.erase(i++);
-	}
-	 else
-	   ++i;
+    if(var==(*i).second) {
+       rdSet.erase(i++);
+    }
+     else
+       ++i;
   }
 }
 /*! 

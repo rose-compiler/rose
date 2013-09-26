@@ -27,50 +27,50 @@ using namespace CodeThorn;
 bool trivialInline(SgFunctionCallExp* funCall) {
   /*
     0) check if it is a trivial function call (no return value, no params)
-	1) find function to inline
-	2) determine body of function to inline
-	3) delete function call
-	4) clone body of function to inline
-	5) insert cloned body as block
+    1) find function to inline
+    2) determine body of function to inline
+    3) delete function call
+    4) clone body of function to inline
+    5) insert cloned body as block
   */
   string fname=SgNodeHelper::getFunctionName(funCall);
   SgFunctionDefinition* functionDef=isSgFunctionDefinition(SgNodeHelper::determineFunctionDefinition(funCall));
   if(!functionDef)
-	return false;
+    return false;
   SgBasicBlock* functionBody=isSgBasicBlock(functionDef->get_body());
   if(!functionBody)
-	return false;
+    return false;
   SgTreeCopy tc;
   SgBasicBlock* functionBodyClone=isSgBasicBlock(functionBody->copy(tc));
   // set current basic block as parent of body
   if(!functionBodyClone)
-	return false;
+    return false;
   SgExprStatement* functionCallExprStmt=isSgExprStatement(funCall->get_parent());
   if(!functionCallExprStmt)
-	return false;
+    return false;
   SgBasicBlock* functionCallBlock=isSgBasicBlock(functionCallExprStmt->get_parent());
   if(!functionCallBlock)
-	return false;
+    return false;
   if(functionCallBlock->get_statements().size()>0) {
-	SgStatement* oldStmt=functionCallExprStmt;
-	SgStatement* newStmt=functionBodyClone;
-	SageInterface::replaceStatement(oldStmt, newStmt,false);
-	return true;
+    SgStatement* oldStmt=functionCallExprStmt;
+    SgStatement* newStmt=functionBodyClone;
+    SageInterface::replaceStatement(oldStmt, newStmt,false);
+    return true;
   }
   return false;
 }
 
 SgFunctionCallExp* isTrivialFunctionCall(SgNode* node) {
   if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-	SgExpressionPtrList& args=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-	if(args.size()==0) {
-	  if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall)) {
-		SgType* returnType=SgNodeHelper::getFunctionReturnType(funDef);
-		if(isSgTypeVoid(returnType)) {
-		  return funCall;
-		}		 
-	  }
-	}
+    SgExpressionPtrList& args=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+    if(args.size()==0) {
+      if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall)) {
+        SgType* returnType=SgNodeHelper::getFunctionReturnType(funDef);
+        if(isSgTypeVoid(returnType)) {
+          return funCall;
+        }                
+      }
+    }
   }
   return 0;
 }
@@ -79,9 +79,9 @@ list<SgFunctionCallExp*> trivialFunctionCalls(SgNode* node) {
   RoseAst ast(node);
   list<SgFunctionCallExp*> funCallList;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
-	if(SgFunctionCallExp* funCall=isTrivialFunctionCall(*i)) {
-	  funCallList.push_back(funCall);
-	}
+    if(SgFunctionCallExp* funCall=isTrivialFunctionCall(*i)) {
+      funCallList.push_back(funCall);
+    }
   }
   return funCallList;
 }
@@ -90,35 +90,35 @@ size_t numberOfFunctions(SgNode* node) {
   RoseAst ast(node);
   size_t num=0;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
-	if(isSgFunctionDefinition(*i))
-	  num++;
+    if(isSgFunctionDefinition(*i))
+      num++;
   }
   return num;
 }
 
 size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
-  size_t num;
+  size_t num=0;
   for(list<SgFunctionCallExp*>::iterator i=funCallList.begin();i!=funCallList.end();i++) {
-	SgFunctionCallExp* funCall=*i;
-	cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
-	bool success=trivialInline(funCall);
-	if(success) {
-	  cout<<"inlined."<<endl;
-	  num++;
-	}
-	else
-	  cout<<"not inlined."<<endl;
+    SgFunctionCallExp* funCall=*i;
+    cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
+    bool success=trivialInline(funCall);
+    if(success) {
+      cout<<"inlined."<<endl;
+      num++;
+    }
+    else
+      cout<<"not inlined."<<endl;
   }
   return num;
 }
 
 bool isEmptyBlock(SgNode* node) {
   if(node==0)
-	return true;
+    return true;
   //cout<<"isEmptyBasicBlock:"<<node->class_name()<<endl;
   if(SgBasicBlock* block=isSgBasicBlock(node)) {
-	const SgStatementPtrList& stmtList=block->get_statements(); 
-	return stmtList.size()==0;
+    const SgStatementPtrList& stmtList=block->get_statements(); 
+    return stmtList.size()==0;
   }
   return false;
 }
@@ -135,16 +135,16 @@ size_t eliminateEmptyIfStmts(SgNode* node) {
   list<SgIfStmt*> ifstmts;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
-	if(SgIfStmt* ifStmt=isSgIfStmt(*i)) {
-	  if(isEmptyIfStmt(ifStmt)) {
-		//cout<<"-- Found empty if statement"<<endl;
-		ifstmts.push_back(ifStmt);
-	  }
-	}
+    if(SgIfStmt* ifStmt=isSgIfStmt(*i)) {
+      if(isEmptyIfStmt(ifStmt)) {
+        //cout<<"-- Found empty if statement"<<endl;
+        ifstmts.push_back(ifStmt);
+      }
+    }
   }
   for(list<SgIfStmt*>::iterator i=ifstmts.begin();i!=ifstmts.end();i++) {
-	SageInterface::removeStatement (*i, false);
-	numElim++;
+    SageInterface::removeStatement (*i, false);
+    numElim++;
   }
   cout<<"Number of if-statements eliminated: "<<numElim<<endl;
   return numElim;
@@ -164,43 +164,43 @@ int main(int argc, char* argv[]) {
   RoseAst completeast(root);
   SgFunctionDefinition* mainFunctionRoot=completeast.findFunctionByName(funtofind);
   if(!mainFunctionRoot) {
-	cerr<<"No main function available. "<<endl;
-	exit(1);
+    cerr<<"No main function available. "<<endl;
+    exit(1);
   } else {
-	cout << "Found main function."<<endl;
+    cout << "Found main function."<<endl;
   }
   list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
   while(remainingFunCalls.size()>0) {
-	size_t numFunCall=remainingFunCalls.size();
-	cout<<"Remaing function calls in main function: "<<numFunCall<<endl;
-	if(numFunCall>0)
-	  inlineFunctionCalls(remainingFunCalls);
-	remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
+    size_t numFunCall=remainingFunCalls.size();
+    cout<<"Remaing function calls in main function: "<<numFunCall<<endl;
+    if(numFunCall>0)
+      inlineFunctionCalls(remainingFunCalls);
+    remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
   }
-
+  
   size_t num=0;
   size_t numTotal=num;
   do {
-	num=eliminateEmptyIfStmts(mainFunctionRoot);
-	numTotal+=num;
+    num=eliminateEmptyIfStmts(mainFunctionRoot);
+    numTotal+=num;
   } while(num>0);
   cout<<"Total number of if-statements eliminated: "<<numTotal<<endl;
-
+  
   //TODO: create ICFG and compute non reachable functions (from main function)
   list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
   for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
-	string funName=SgNodeHelper::getFunctionName(*i);
-	SgFunctionDeclaration* funDecl=(*i)->get_declaration();
-	if(funName!="main") {
-	  cout<<"Deleting function: "<<funName<<endl;
-	  SgStatement* stmt=funDecl;
-	  SageInterface::removeStatement (stmt, false);
-	  //SageInterface::deleteAST(funDef);
-	}
+    string funName=SgNodeHelper::getFunctionName(*i);
+    SgFunctionDeclaration* funDecl=(*i)->get_declaration();
+    if(funName!="main") {
+      cout<<"Deleting function: "<<funName<<endl;
+      SgStatement* stmt=funDecl;
+      SageInterface::removeStatement (stmt, false);
+          //SageInterface::deleteAST(funDef);
+    }
   }
-
-
-
+  
+  
+  
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();

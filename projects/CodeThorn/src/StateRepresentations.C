@@ -715,10 +715,10 @@ void TransitionGraph::erase(const Transition trans) {
 void TransitionGraph::eliminateEState(const EState* estate) {
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i)
-	erase(**i);
+    erase(**i);
   TransitionGraph::TransitionPtrSet out=outEdges(estate);
   for(TransitionPtrSet::iterator i=out.begin();i!=out.end();++i)
-	erase(**i);
+    erase(**i);
   // we only represent edges, nothing else to do
 }
 
@@ -812,8 +812,8 @@ bool TransitionGraph::checkConsistency() {
 const Transition* TransitionGraph::hasSelfEdge(const EState* estate) {
   TransitionPtrSet in=inEdges(estate);
   for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
-	if((*i)->source==estate)
-	  return *i;
+    if((*i)->source==estate)
+      return *i;
   }
   // checking in edges only is sufficient because a self edge must be both
   return 0;
@@ -839,7 +839,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
   assert(estate);
   // check self-edge
   if(const Transition* trans=hasSelfEdge(estate)) {
-	this->erase(*trans);
+    this->erase(*trans);
   }
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   TransitionGraph::TransitionPtrSet out=outEdges(estate);
@@ -855,13 +855,13 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     }
     //cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
 
-	TransitionPtrSet all=in;
-	for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-	  all.insert(*j);
-	}
+    TransitionPtrSet all=in;
+    for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+      all.insert(*j);
+    }
     // 1. remove all old transitions
     for(TransitionPtrSet::iterator i=all.begin();i!=all.end();++i) {
-		this->erase(**i);
+        this->erase(**i);
     }
 
     // 2. add new transitions
@@ -871,8 +871,8 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     }
     assert(newTransitions.size()<=in.size()*out.size());
   } else {
-	// need to eliminate node instead
-	eliminateEState(estate);
+    // need to eliminate node instead
+    eliminateEState(estate);
   }
 }
 
