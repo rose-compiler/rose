@@ -774,9 +774,9 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 check-local:
 	@$(MAKE) TEST_C
 	@$(MAKE) TEST_CXX
-	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
+	@echo "******************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test: make check rule complete (terminated normally) ******"
+	@echo "******************************************************************************************************************************"
 
 clean-local:
 	rm -f *.o *.c *.C

@@ -97,7 +97,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // DQ (6/8/2010): Commented out this assertion... as a test...
   // DQ (5/31/2007): Force this to be true for testing AST merge
   // ROSE_ASSERT(skipFrontendSpecificIRnodes == true);
+#if 0
      printf ("Commented out this assertion... (skipFrontendSpecificIRnodes == true) as a test... \n");
+#endif
 
   // Generate the filename to be used as a base for generated dot files (graphs)
      string filename = SageInterface::generateProjectName(project);
@@ -658,15 +660,15 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           mergeEfficency = percentageSpaceSavings * fileNumberMultiplier;
         }
 
-     if (SgProject::get_verbose() >= 0)
+     if (SgProject::get_verbose() > 0)
         {
           printf ("\n\n");
-          printf ("********************************************************************************************************************************************************************************************* \n");
+          printf ("***************************************************************************************************************************************************************************************************************** \n");
        // printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
        //      numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
           printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf, mergeFactor = %2.4lf) \n",
                   numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency,mergeFactor);
-          printf ("********************************************************************************************************************************************************************************************* \n\n\n");
+          printf ("***************************************************************************************************************************************************************************************************************** \n\n\n");
         }
 #if 0
      reportUnsharedDeclarationsTraversal();
@@ -1102,7 +1104,9 @@ buildDeleteSet( SgProject* project )
      set<SgNode*> saveSet;
      set<SgNode*> returnDeleteSet;
 
+#if 0
      printf ("Computing the IR nodes to be deleted \n");
+#endif
 
      int numberOfASTnodesBeforeComputingDeleteSet = numberOfNodes();
   // printf ("numberOfASTnodesBeforeComputingDeleteSet = %d \n",numberOfASTnodesBeforeComputingDeleteSet);
@@ -1176,11 +1180,15 @@ buildDeleteSet( SgProject* project )
   // printf ("Handle Sg_File_Info objects that are associated with PreprocessingInfo objects: Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
      accumulateSaveSetForPreprocessingInfo(saveSet);
 
+#if 0
      printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+#endif
 
      set<SgNode*> tempDeleteSet = accumulateDeleteSet(project,saveSet);
-     printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
 
+#if 0
+     printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
+#endif
 #if 0
      displaySet(tempDeleteSet,"buildDeleteSet: Computing the IR nodes to be deleted");
 #endif
@@ -1193,8 +1201,10 @@ buildDeleteSet( SgProject* project )
      printf ("Returning an empty list of IR nodes to delete! \n");
 #endif
 
+#if 0
      printf ("DONE: Computing the IR nodes to be deleted \n");
   // ROSE_ASSERT(false);
+#endif
 
      int numberOfASTnodesAfterComputingDeleteSet = numberOfNodes();
 

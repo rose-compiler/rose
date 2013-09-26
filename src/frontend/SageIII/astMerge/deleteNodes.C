@@ -56,29 +56,33 @@ preDeleteTests ( set<SgNode*> & listToDelete )
 
                SgClassType* classType = isSgClassType(type);
                ROSE_ASSERT(classType != NULL);
-#if 1
+#if 0
                if ( (listToDelete.find(type) != listToDelete.end()) || (listToDelete.find(classType->get_declaration()) != listToDelete.end()) )
                   {
                     printf ("Error preDeleteTests(): looking for type = %p = %s from classDeclaration = %p = %s = %s \n",
                          type,type->class_name().c_str(),classDeclaration,classDeclaration->class_name().c_str(),SageInterface::get_name(classDeclaration).c_str());
+#if 0
                     classDeclaration->get_file_info()->display("Error deleteNodes(): classDeclaration: debug");
+#endif
                     printf ("Error preDeleteTests(): classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
                   }
 #endif
             // ROSE_ASSERT(listToDelete.find(type) != listToDelete.end());
             // ROSE_ASSERT(listToDelete.find(classType->get_declaration()) != listToDelete.end());
-
+#if 0
                if (listToDelete.find(type) != listToDelete.end())
                   {
                     printf ("WARNING Make sure that for a class declaration the type is in the delete list if we remove the associated declaration: type = %p = %s found in listToDelete \n",type,type->class_name().c_str());
                   }
+#endif
             // DQ (7/4/2010): Make this a warning since it happens for an odd corner of C++ (un-named PADDING_VARIABLE declarations in classes).
             // ROSE_ASSERT(listToDelete.find(type) == listToDelete.end());
-
+#if 0
                if (listToDelete.find(classType->get_declaration()) != listToDelete.end())
                   {
                     printf ("WARNING Make sure that for a class declaration the type is in the delete list if we remove the associated declaration: classType->get_declaration() = %p = %s found in listToDelete \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
                   }
+#endif
             // DQ (7/4/2010): Make this a warning since it happens for an odd corner of C++ (un-named PADDING_VARIABLE declarations in classes).
             // ROSE_ASSERT(listToDelete.find(classType->get_declaration()) == listToDelete.end());
             }

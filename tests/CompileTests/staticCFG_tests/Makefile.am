@@ -471,74 +471,104 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 # list of generated files to avoid unnecessary re-test
 # Liao, 11/13/2012, differentiate generated files between testStaticCFG and testInterproceduralCFG so one success won't mask the failure of others
-CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
-CXX_INTER_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-INT-o}
+# CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
+# CXX_INTER_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-INT-o}
 
-C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
-C_INTER_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-INT-o}
+# C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
+# C_INTER_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-INT-o}
 
-C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
-C99_INTER_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-INT-o}
+# C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
+# C99_INTER_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-INT-o}
 
-F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
-F90_INTER_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-INT-o}
+# F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
+# F90_INTER_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-INT-o}
 
-F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
-F77_INTER_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-INT-o}
+# F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
+# F77_INTER_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-INT-o}
 
-F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
-F03_INTER_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-INT-o}
+# F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
+# F03_INTER_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-INT-o}
+
+CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX.passed}
+CXX_INTER_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-INT.passed}
+
+C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C.passed}
+C_INTER_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-INT.passed}
+
+C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99.passed}
+C99_INTER_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-INT.passed}
+
+F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90.passed}
+F90_INTER_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-INT.passed}
+
+F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F.passed}
+F77_INTER_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-INT.passed}
+
+F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03.passed}
+F03_INTER_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-INT.passed}
 
 $(CXX_FILES): testStaticCFG
-	./testStaticCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+#	./testStaticCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(CXX_INTER_FILES): testInterproceduralCFG
-	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT-o=.C) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 
-$(C_FILES): testStaticCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
-	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
-	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+$(C_FILES): testStaticCFG $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)
+	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.temp.c)
+#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
-$(C_INTER_FILES): testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-INT-o=.C)
-	cp $(srcdir)/../Cxx_tests/$(@:.C-INT-o=.C) $(@:.C-INT-o=.temp.int.c)
-	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-INT-o=.temp.int.c) && touch $@
+$(C_INTER_FILES): testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-INT.passed=.C)
+	@cp $(srcdir)/../Cxx_tests/$(@:.C-INT.passed=.C) $(@:.C-INT.passed=.temp.int.c)
+#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-INT-o=.temp.int.c) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 
-$(C99_FILES): testStaticCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
-	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
-	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+$(C99_FILES): testStaticCFG $(srcdir)/../C99_tests/$(@:.C99.passed=.c)
+	@cp $(srcdir)/../C99_tests/$(@:.C99.passed=.c) $(@:.C99.passed=.temp.c)
+#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
-$(C99_INTER_FILES): testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-INT-o=.c)
-	cp $(srcdir)/../C99_tests/$(@:.C99-INT-o=.c) $(@:.C99-INT-o=.temp.int.c)
-	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-INT-o=.temp.int.c) && touch $@
+$(C99_INTER_FILES): testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-INT.passed=.c)
+	@cp $(srcdir)/../C99_tests/$(@:.C99-INT.passed=.c) $(@:.C99-INT.passed=.temp.int.c)
+#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-INT-o=.temp.int.c) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # All of the tests passing for the virtualCFG tests also pass for the staticCFG tests.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testStaticCFG
-	./testStaticCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+#	./testStaticCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(F90_INTER_FILES): ./testInterproceduralCFG
-	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-INT-o=.f90) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-INT-o=.f90) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-INT.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # All of the tests passing for the virtualCFG tests also pass for the staticCFG tests.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F77_FILES): ./testStaticCFG 
-	./testStaticCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+#	./testStaticCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(F77_INTER_FILES): ./testInterproceduralCFG
-	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-INT-o=.f) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-INT-o=.f) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-INT.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # All of the tests passing for the virtualCFG tests also pass for the staticCFG tests.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F03_FILES): ./testStaticCFG
-	./testStaticCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+#	./testStaticCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03.passed=.f03)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(F03_INTER_FILES): ./testInterproceduralCFG
-	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-INT-o=.f03) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-INT-o=.f03) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-INT.passed=.f03)" $(top_srcdir)/scripts/test_exit_status $@
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -585,3 +615,6 @@ clean-local:
 	rm -f test_*.dot
 	rm -f *.dot
 	rm -rf QMTest
+	rm -f *.passed *.failed *.err *.out
+	rm -f *.temp.int.c
+

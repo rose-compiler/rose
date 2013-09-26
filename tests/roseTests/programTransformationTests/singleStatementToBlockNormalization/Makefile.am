@@ -23,9 +23,9 @@ $(singleStatementToBlockNormalization_TEST_TARGETS): \
 	@$(RTH_RUN) CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$@"
 
 check-local: $(singleStatementToBlockNormalization_TEST_TARGETS)
-	@echo "***********************************************************************************************************"
+	@echo "*************************************************************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/programTransformationTests/singleStatementToBlockNormalization: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "*************************************************************************************************************************************************"
 
 clean-local:
 	rm -f -- *.out
