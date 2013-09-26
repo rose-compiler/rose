@@ -119,7 +119,7 @@ SgValueExp::get_constant_folded_value_as_string() const
              }
 
           case V_SgUnsignedShortVal:
-          {
+             {
                const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                unsigned short int numericValue = integerValueExpression->get_value();
@@ -127,8 +127,8 @@ SgValueExp::get_constant_folded_value_as_string() const
                snprintf (buffer,max_buffer_size,"%u",numericValue);
                s = buffer;
                break;
-          }
-          
+             }
+
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
