@@ -1396,6 +1396,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
     EStatePtrSet succNodes=transitionGraph.succ(*i);
     Label originalLabel=(*i)->label();
     InputOutput originalIO=(*i)->io;
+    VariableId originalVar=(*i)->io.var;
     // eliminate original input node
     transitionGraph.eliminateEState(*i);
     estateSet.erase(**i);
@@ -1407,6 +1408,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
       // convert IO information
       if(originalIO.op==InputOutput::STDOUT_VAR) newState.io.op=InputOutput::STDIN_VAR;
       if(originalIO.op==InputOutput::STDOUT_CONST) newState.io.op=InputOutput::STDIN_VAR; // NO STDIN_CONST
+      newState.io.var=originalVar;
       // register new EState now
       const EState* newEStatePtr=processNewOrExisting(newState);
 
