@@ -159,6 +159,18 @@ when they pass, and if absent prevents their promotion.
 Note: The file, when present, should be empty.  We reserve the possibility of adding additional instructions to the file itself
 in order to control promotability in more detail.
 
+=item set VARIABLE = VALUE
+
+Assign a new value to a variable.  The VARIABLE must be a variable name without enclosing curly braces or the leading dollar
+sign.  White space is stripped from the beginning and end of VALUE.  Variable settings are processed in the order they occur
+in the config file and are expanded in all subsequent lines. It is permissible to assign a new value to an existing variable.
+
+=item subdir = yes | no | NAME
+
+Run all commands in a subdirectory.  If the value is "no" or empty, then all commands run in the current working directory.
+If the value is "yes" then a new temporary subdirectory is created before any commands are run, and removed during cleanup.
+Any other value is the name of an existing directory which is not removed during cleanup.
+
 =item timeout = never | LIMIT
 
 If a test runs longer than the specified time limit then it will be aborted and assume to have failed.  The limit applies
@@ -197,10 +209,12 @@ File name of the configuration file without directory components.
 
 The name of the target without directory components and without the ".passed" or ".failed" extension.
 
-=item srcdir, top_srcdir, VALGRIND, BINARY_SAMPLES, ...
+=item srcdir, top_srcdir, blddir, top_blddir, VALGRIND, etc.
 
 These variables, and perhaps others, are passed to all invocations of the test harness when run from ROSE makefiles with the
-$(RTH_RUN) variable.
+$(RTH_RUN) variable.  The names of source and build directories are absolute even though the corresponding variable in
+the makefile might be relative.  Also note that "source" and "build" are both abbreviated to three letters (makefiles
+inconsistently abbreviate source, but not build).
 
 =back
 
@@ -307,9 +321,9 @@ sub help {
 # Parse specified configuration file or die trying. Return value is a hash whose keys are the variable names and whose
 # values are the values or an array of values.
 sub load_config {
-  my($file,%vars) = @_;
+  my($file,$vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>[], lockdir=>undef,
-               may_fail=>'no', promote=>'yes', timeout=>15*60, title=>undef);
+               may_fail=>'no', promote=>'yes', subdir=>undef, timeout=>15*60, title=>undef);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     while (/(.*)\\\n$/s) {
@@ -318,8 +332,10 @@ sub load_config {
       $_ = $1 . $extra;
     }
     s/\s*#.*//;
-    s/\$\{(\w+)\}/exists $vars{$1} ? $vars{$1} : ''/eg;
-    if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
+    s/\$\{(\w+)\}/exists $vars->{$1} ? $vars->{$1} : ''/eg;
+    if (my($var,$val) = /^\s*set\s+(\w+)\s*=\s*(.*?)\s*$/) {
+	$vars->{$var} = $val;
+    } elsif (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
       die "$file: unknown setting: $var\n" unless exists $conf{$var};
       if (ref $conf{$var}) {
         push @{$conf{$var}}, $val;
@@ -352,7 +368,7 @@ sub load_config {
 # SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out tests that continue to suck up
 # resources).
 sub run_command {
-  my($stdout,$stderr,$timelimit,@commands) = @_;
+  my($stdout,$stderr,$timelimit,$subdir,@commands) = @_;
   defined (my $pid = fork) or return "fork: $!";
   if (!$pid) {
     open STDOUT, ">", $stdout or return 255;
@@ -360,6 +376,7 @@ sub run_command {
     setpgrp; # so we can kill the whole group on a timeout
     my $status = 0;
     for my $cmd (@commands) {
+      $cmd = "cd '$subdir'; $cmd" if $subdir;
       print STDERR "+ $cmd\n";
       $status = system $cmd;
       # The shell usually prints messages about signals, so we'll take over that job since there's no shell.  In fact, we'll
@@ -450,8 +467,7 @@ if ($target =~ /(.+)\.\w+$/) {
   ($target_pass,$target_fail) = ("$target.passed","$target.failed");
 }
 $variables{TARGET} = $target;
-my %config = load_config $config_file, %variables;
-
+my %config = load_config $config_file, \%variables;
 
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
@@ -465,10 +481,24 @@ if ($config{disabled} && $config{disabled} ne 'no') {
 }
 print "  TESTING $test_title\n";
 
+# Should everything run in a subdirectory?
+my $subdir;
+if ($config{subdir} eq 'yes') {
+    # run in a temporary subdirectory to be created now and removed later
+    $subdir = $variables{SUBDIR} = tempname;
+    my $status = system "mkdir", $subdir;
+    die "$0: $subdir: $!\n" if $status;
+} elsif ($config{subdir} eq 'no' || $config{subdir} eq '') {
+    # run in the current working directory
+} else {
+    # run in a user-specified subdir which we neither create nor remove
+    $subdir = $variables{SUBDIR} = $config{subdir}
+}
+
 # Run the commands, capturing their output into files.
 my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
 unlink $cmd_stdout, $cmd_stderr;
-my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, @{$config{cmd}});
+my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, $subdir, @{$config{cmd}});
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
@@ -631,6 +661,9 @@ if ($status) {
 ## close XML;
 
 # Clean up. These names might actually be directories, otherwise we could have just unlinked.
-system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
+unless ($ENV{RTH_NO_CLEANUP}) {
+    system "rm", "-rf", $subdir if $subdir && $subdir ne $config{subdir};
+    system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
+}
 
 exit($status ? 1 : 0);
