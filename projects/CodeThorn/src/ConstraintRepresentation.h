@@ -33,6 +33,10 @@ typedef list<AValue> ListOfAValue;
   NEQ_VAR_VAR  : not equal (==) [not supported yet]
   DEQ          : (##)
 */
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class Constraint {
  public:
   enum ConstraintOp {UNDEFINED,EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
@@ -76,8 +80,13 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
 // we use only one disequality constraint to mark constraint set representing non-reachable states
 #define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class ConstraintSet : public set<Constraint> {
  public:
+  ConstraintSet constraintsOfVariable(VariableId varId);
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op) const;
@@ -140,6 +149,10 @@ class ConstraintSet : public set<Constraint> {
   EqualityMaintainer<VariableId> equalityMaintainer;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class ConstraintSetHashFun {
    public:
     ConstraintSetHashFun(long prime=99991) : tabSize(prime) {}
@@ -167,6 +180,10 @@ bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
  class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
  public:
   typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;

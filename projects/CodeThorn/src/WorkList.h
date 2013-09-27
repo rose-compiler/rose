@@ -11,6 +11,11 @@
 #include <list>
 
 namespace CodeThorn {
+
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 template <typename Element>
 class WorkList {
  public:    

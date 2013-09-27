@@ -1,0 +1,6 @@
+/* A value used as final outcome of all heuristics.  */
+DEF_PREDICTOR (PRED_COMBINED, "combined", 0, 0)
+
+/* An outcome estimated by Dempster-Shaffer theory.  */
+DEF_PREDICTOR (PRED_DS_THEORY, "DS theory", 1, 0)
+

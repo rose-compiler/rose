@@ -30,10 +30,10 @@ void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attribut
       DFAstAttribute* artAttribute=dynamic_cast<DFAstAttribute*>(stmt->getAttribute(attributeName));
       // if this fails, no attribute was attached
       if(artAttribute) {
-		ROSE_ASSERT(_labeler);
-		//cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
-		string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
-		string commentStart="// ";
+        ROSE_ASSERT(_labeler);
+        //cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
+        string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
+        string commentStart="// ";
         insertComment(commentStart+labelString+": "+artAttribute->toString(),posSpecifier,stmt);
       }
     }

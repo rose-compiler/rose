@@ -14,6 +14,10 @@ using std::set;
 using namespace CodeThorn;
 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
     os<<"("<<i
@@ -25,6 +29,10 @@ void VariableIdMapping::toStream(ostream& os) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   VariableIdSet set;
   for(map<SgSymbol*,size_t>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
@@ -36,12 +44,20 @@ VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   return set;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId VariableIdMapping::variableIdFromCode(int i) {
   VariableId id;
   id.setIdCode(i);
   return id;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* node,VariableId id) {
   file<<"_"<<node<<" "
       <<"->"
@@ -49,7 +65,10 @@ void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* n
       << endl;
 }
 
-
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string VariableIdMapping::generateDotSgSymbol(SgSymbol* sym) {
   stringstream ss;
   ss<<"_"<<sym;
@@ -83,6 +102,10 @@ my_search_for_symbol_from_symbol_table(SgInitializedName* initname) const
 #endif
 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
@@ -149,7 +172,10 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   myfile.close();
 }
 
-
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
   VariableId newId;
@@ -158,6 +184,10 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   return newId;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   return mappingVarIdToSym[varid._id];
 }
@@ -165,6 +195,10 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 //  return varId.getSymbol();
 //}
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
@@ -231,6 +265,10 @@ bool VariableIdMapping::isUniqueVariableSymbolMapping() {
   return ((nameSet.size()==numOfPairs) && (symbolSet.size()==numOfPairs)&& mappingOK);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
   // in case of an error we perform some expensive operations to provide a proper error explanation
   if(!isUniqueVariableSymbolMapping()) {
@@ -269,11 +307,18 @@ void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
   }
 }
 
-string VariableIdMapping::variableName(VariableId varId) {
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */string VariableIdMapping::variableName(VariableId varId) {
   SgSymbol* sym=getSymbol(varId);
   return SgNodeHelper::symbolToString(sym);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     return variableName(varId);
@@ -283,6 +328,10 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     return variableName(varId)+"_"+varId.toString().substr(1);
@@ -292,10 +341,18 @@ string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
   return variableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
   return variableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
@@ -309,10 +366,18 @@ VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
     return VariableId(); // always defaults to a value different to all mapped values
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
   return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId));
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
@@ -342,6 +407,10 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId))
@@ -350,19 +419,35 @@ void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
     throw "VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.";
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableIdMapping::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(string name) : SgVariableSymbol() {
   _tmpName=name;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableId::VariableId():_id(-1){
 }
 //VariableId::VariableId(int id):_id(id){
 //}
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string
 VariableId::toString() const {
   stringstream ss;
@@ -406,10 +491,18 @@ bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 size_t hash_value(const CodeThorn::VariableId& vid) {
   return vid.getIdCode();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
   VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
@@ -421,6 +514,10 @@ VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariab
   return resultSet;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
   VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
