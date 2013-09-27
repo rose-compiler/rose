@@ -369,6 +369,11 @@ analyze_interp(SgAsmInterpretation *interp)
         MyDispatcher dispatcher(operators);
 #   if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
         operators.set_solver(make_solver());
+        SymbolicSemantics::Formatter formatter;
+        formatter.expr_formatter.do_rename = true;
+        formatter.expr_formatter.add_renames = true;
+#   elif SEMANTIC_DOMAIN != FINDCONST_DOMAIN && SEMANTIC_DOMAIN != FINDCONSTABI_DOMAIN
+        BaseSemantics::Formatter formatter;
 #   endif
 #endif
 
@@ -389,18 +394,22 @@ analyze_interp(SgAsmInterpretation *interp)
 #if SEMANTIC_API == NEW_API
             try {
                 dispatcher->processInstruction(insn);
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
-                show_state(operators);
-#else
+#   if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
+                show_state(operators); // for comparing RegisterStateGeneric with the old RegisterStateX86 output
+#   else
                 std::cout <<(*operators + formatter);
-#endif
+#   endif
             } catch (const BaseSemantics::Exception &e) {
                 std::cout <<e <<"\n";
             }
 #else       // OLD API
             try {
                 dispatcher.processInstruction(insn);
+#   if SEMANTIC_DOMAIN == FINDCONST_DOMAIN || SEMANTIC_DOMAIN == FINDCONSTABI_DOMAIN
                 operators.print(std::cout);
+#   else
+                operators.print(std::cout, formatter);
+#   endif
             } catch (const MyDispatcher::Exception &e) {
                 std::cout <<e <<"\n";
                 break;

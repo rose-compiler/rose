@@ -237,29 +237,39 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
                 /** @} */
 
-                /** Print the value. Prints subvalues that are marked as valid. */
+                /** Print the value. Prints subvalues that are marked as valid.
+                 * @{ */
                 void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
                     std::string sep="";
                     if (is_valid(SP0())) {
-                        o <<sep <<"SP0: " <<get_subvalue(SP0());
+                        o <<sep <<"SP0: ";
+                        get_subvalue(SP0()).print(o, fmt);
                         sep = "; ";
                     }
                     if (is_valid(SP1())) {
-                        o <<sep <<"SP1: " <<get_subvalue(SP1());
+                        o <<sep <<"SP1: ";
+                        get_subvalue(SP1()).print(o, fmt);
                         sep = "; ";
                     }
                     if (is_valid(SP2())) {
-                        o <<sep <<"SP2: " <<get_subvalue(SP2());
+                        o <<sep <<"SP2: ";
+                        get_subvalue(SP2()).print(o, fmt);
                         sep = "; ";
                     }
                     if (is_valid(SP3())) {
-                        o <<sep <<"SP3: " <<get_subvalue(SP3());
+                        o <<sep <<"SP3: ";
+                        get_subvalue(SP3()).print(o, fmt);
                     }
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e) {
                     e.print(o);
                     return o;
                 }
+                /** @} */
 
             protected:
                 // Internal function to help set sub-value validity.
@@ -1033,18 +1043,22 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  **************************************************************************************************************/
             public:
 
-                /** Print each sub-policy.  The print method of each active sub-policy is called. */
+                /** Print each sub-policy.  The print method of each active sub-policy is called.
+                 * @{ */
                 void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
                     //before() -- not really a RISC operation
-                    CALL_SUBS_0xNR(print, (o));
+                    CALL_SUBS_0xNR(print, (o, fmt));
                     //after()
                 }
-
-                /** Print each sub-policy.  The print method of each active sub-policy is called. */
                 friend std::ostream& operator<<(std::ostream &o, const Policy &policy) {
                     policy.print(o);
                     return o;
                 }
+                /** @} */
             };
 
         };

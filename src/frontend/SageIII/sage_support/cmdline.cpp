@@ -259,6 +259,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:includeFile" ||
           argument == "-rose:excludeFile" ||
           argument == "-rose:astMergeCommandFile" ||
+          argument == "-rose:projectSpecificDatabaseFile" ||
 
           // Support for java options
           argument == "-rose:java:cp" ||
@@ -1127,6 +1128,20 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_astMergeCommandFile = astMergeFilenameParameter;
         }
 
+   // Milind Chabbi (9/9/2013): Added an option to store all files compiled by a project.
+   // When we need to have a unique id for the same file used acroos different compilation units, this file provides such capability.
+     std::string  projectSpecificDatabaseFileParamater;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
+          "-rose:","(projectSpecificDatabaseFile)",projectSpecificDatabaseFileParamater,true) == true )
+        {
+          printf ("-rose:projectSpecificDatabaseFile %s \n",projectSpecificDatabaseFileParamater.c_str());
+       // Make our own copy of the filename string
+       // set_astMergeCommandLineFilename(xxx);
+          p_projectSpecificDatabaseFile = projectSpecificDatabaseFileParamater;
+        }
+
+
+
   // DQ (8/29/2006): Added support for accumulation of performance data into CSV data file (for later processing to build performance graphs)
      std::string compilationPerformanceFilenameParameter;
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
@@ -1318,6 +1333,9 @@ SgFile::usage ( int status )
 "     -rose:astMergeCommandFile FILE\n"
 "                             filename where compiler command lines are stored\n"
 "                             for later processing (using AST merge mechanism)\n"
+"     -rose:projectSpecificDatabaseFile FILE\n"
+"                             filename where a database of all files used in a project are stored\n"
+"                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
 "     -rose:compilationPerformanceFile FILE\n"
 "                             filename where compiler performance for internal\n"
 "                             phases (in CSV form) is placed for later\n"
@@ -3042,6 +3060,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(astMerge)",1);
      char* filename = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(astMergeCommandFile)",filename,1);
+     optionCount = sla(argv, "-rose:", "($)^", "(projectSpecificDatabaseFile)",filename,1);
      optionCount = sla(argv, "-rose:", "($)^", "(compilationPerformanceFile)",filename,1);
 
          //AS(093007) Remove paramaters relating to excluding and include comments and directives

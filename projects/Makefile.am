@@ -50,6 +50,7 @@ SUBDIRS = \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+	RoseBlockLevelTracing\
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 

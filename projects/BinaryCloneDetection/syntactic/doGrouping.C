@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
 
 
-  vector<Range> ranges = computeranges(distBound, 50, 100000);
+  vector<CloneRange> ranges = computeranges(distBound, 50, 100000);
 
   
   map<size_t, int> groupSizes;

@@ -253,7 +253,6 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     bool ignore_final_ip = true;
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
-        PartialSymbolicSemantics::RenameMap rmap;
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }

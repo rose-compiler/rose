@@ -26,7 +26,7 @@ size_t createOrGetFileID(ostream& myfile, const string& filename) {
   if (i == fileIDs.end()) {
     size_t id = fileIDs.size();
     fileIDs.insert(std::make_pair(filename, id));
-    string nametail = boost::filesystem::path(filename).leaf();
+    string nametail = boost::filesystem::path(filename).leaf().string();
     if (nametail.rfind('-') != string::npos) { // Remove "expanded-" prefix
       nametail = nametail.substr(nametail.rfind('-') + 1);
     }
@@ -46,7 +46,7 @@ int main(int ac, char* av[])
     exit (1);
   }
   string filen = av[1];
-  std::string filename = boost::filesystem::path(filen).leaf()+".dot";
+  std::string filename = boost::filesystem::path(filen).leaf().string()+".dot";
 
   sqlite3_connection con;
   con.open(filen.c_str());
@@ -75,7 +75,7 @@ int main(int ac, char* av[])
       if (haveRecord) {
         cluster = datasets.getstring(0);
         filename = datasets.getstring(1);
-        filename = boost::filesystem::path(filename).leaf();
+        filename = boost::filesystem::path(filename).leaf().string();
         // cerr << "Have record " << cluster << ": " << filename << endl;
       } else {
         // cerr << "End of data" << endl;

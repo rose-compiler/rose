@@ -24,7 +24,7 @@ rose_paths.C:
 noinst_LTLIBRARIES = libroseutil.la
 
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
-libroseutil_la_SOURCES = processSupport.C rose_getline.C rose_strtoull.C
+libroseutil_la_SOURCES = processSupport.C rose_getline.C rose_strtoull.C compilationFileDatabase.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
@@ -38,7 +38,7 @@ libroseutil_la_LIBADD = \
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 # DISTCLEANFILES = rose_paths.C
 
-include_HEADERS = FormatRestorer.h setup.h processSupport.h rose_paths.h rose_getline.h rose_strtoull.h Map.h
+include_HEADERS = FormatRestorer.h setup.h processSupport.h rose_paths.h rose_getline.h rose_strtoull.h Map.h compilationFileDatabase.h roseTraceLib.c
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 

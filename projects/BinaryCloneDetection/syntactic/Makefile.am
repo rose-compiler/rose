@@ -80,7 +80,8 @@ lshCloneDetection_SOURCES = lsh.C lshCloneDetection.C lsh.h vectorCompression.h 
 
 # undocumented
 bin_PROGRAMS += lshParameterFinding
-lshParameterFinding_SOURCES = lshParameterFinding.C lsh.C lsh.h computerangesFunc.C vectorCompression.h vectorCompression.C
+lshParameterFinding_SOURCES = lshParameterFinding.C lsh.C lsh.h computerangesFunc.C vectorCompression.h vectorCompression.C \
+	lshParameterFinding2.C
 
 # undocumented
 bin_PROGRAMS += computeStatistics

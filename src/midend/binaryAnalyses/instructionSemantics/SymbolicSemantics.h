@@ -45,6 +45,12 @@ namespace BinaryAnalysis {              // documented elsewhere
             typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
             typedef std::set<SgAsmInstruction*> InsnSet;
 
+            /** Formatter for symbolic values. */
+            class Formatter: public BaseSemantics::Formatter {
+            public:
+                InsnSemanticsExpr::Formatter expr_formatter;
+            };
+
             /******************************************************************************************************************
              *                          ValueType
              ******************************************************************************************************************/
@@ -178,9 +184,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
                 /** @} */
 
-                /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See
-                 *  the rename() method for details. */
-                virtual void print(std::ostream &o, InsnSemanticsExpr::Formatter *phelp=NULL) const {
+                /** Print the value.
+                 * @{ */
+                virtual void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                virtual void print(std::ostream &o, BaseSemantics::Formatter &fmt_) const {
+                    Formatter fmt_dflt;
+                    Formatter *fmt_ptr = dynamic_cast<Formatter*>(&fmt_);
+                    if (!fmt_ptr)
+                        fmt_ptr = &fmt_dflt;
                     o <<"defs={";
                     size_t ndefs=0;
                     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -189,18 +203,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                             o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
                     }
                     o <<"} expr=";
-                    InsnSemanticsExpr::Formatter ph;
-                    expr->print(o, phelp ? *phelp : ph);
-                }
-                virtual void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
-                    InsnSemanticsExpr::Formatter fmt;
-                    print(o, &fmt);
+                    expr->print(o, fmt_ptr->expr_formatter);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
-                    InsnSemanticsExpr::Formatter fmt;
-                    e.print(o, &fmt);
+                    e.print(o);
                     return o;
                 }
+                /** @} */
 
                 /** Returns true if the value is a known constant. */
                 virtual bool is_known() const {
@@ -350,26 +359,31 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return SMTSolver::SAT_NO != solver->satisfiable(assertion);
                 }
 
-                /** Print a memory cell. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    o <<prefix <<"address = { ";
-                    address().print(o, ph);
+                /** Print a memory cell.
+                 *  @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    o <<fmt.get_line_prefix() <<"address = { ";
+                    address().print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  value = { ";
-                    value().print(o, ph);
+                    o <<fmt.get_line_prefix() <<"  value = { ";
+                    value().print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  flags = {";
+                    o <<fmt.get_line_prefix() <<"  flags = {";
                     if (!written) o <<" rdonly";
                     o <<" }\n";
                 }
 
                 friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
-                    mc.print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    mc.print(o);
                     return o;
                 }
+                /** @} */
             };
 
             /******************************************************************************************************************
@@ -522,12 +536,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return cell_list.end();
                 }
 
-                /** Print values of all memory. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    for (typename CellList::const_iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli)
-                        cli->print(o, prefix, ph);
+                /** Print values of all memory.
+                 * @{ */
+                void print(std::ostream &o) {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
                 }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    for (typename CellList::const_iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli)
+                        cli->print(o, fmt);
+                }
+                /** @} */
             };
 
             /******************************************************************************************************************
@@ -556,9 +575,14 @@ namespace BinaryAnalysis {              // documented elsewhere
                 Registers registers;
                 Memory memory;
 
-                /** Print info about how registers differ.  If a print helper is specified then it will be passed on to the
-                 *  InsnSemanticsExpr::print() method. */
-                void print_diff_registers(std::ostream &o, const State&, InsnSemanticsExpr::Formatter *phelp=NULL) const;
+                /** Print info about how registers differ.
+                 * @{ */
+                void print_diff_registers(std::ostream &o, const State &state) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, state, fmt);
+                }
+                void print_diff_registers(std::ostream &o, const State&, BaseSemantics::Formatter &fmt) const;
+                /** @} */
 
                 /** Tests registers of two states for equality. */
                 bool equal_registers(const State&) const;
@@ -570,7 +594,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 friend std::ostream& operator <<(std::ostream &o, const State &state) {
-                    state.template print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    state.print(o);
                     return o;
                 }
 
@@ -588,12 +612,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                     memory.clear();
                 }
 
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    std::string prefix = fmt.get_line_prefix();
+                    BaseSemantics::Indent indent(fmt);
                     o <<prefix <<"registers:\n";
-                    registers.print(o, prefix+"    ", ph);
+                    registers.print(o, fmt);
                     o <<prefix <<"memory:\n";
-                    memory.print(o, prefix+"    ", ph);
+                    memory.print(o, fmt);
                 }
 #endif
             };
@@ -712,19 +741,27 @@ namespace BinaryAnalysis {              // documented elsewhere
                 bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
                 /** Print the current state of this policy.  If a print helper is specified then it will be passed along to the
-                 *  InsnSemanticsExpr::print() method. */
-                void print(std::ostream &o, const std::string prefix="", InsnSemanticsExpr::Formatter *phelp=NULL) const {
+                 *  InsnSemanticsExpr::print() method.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    std::string prefix = fmt.get_line_prefix();
+                    BaseSemantics::Indent indent(fmt);
                     o <<prefix <<"registers:\n";
-                    cur_state.registers.print(o, prefix+"    ", phelp);
+                    cur_state.registers.print(o, fmt);
                     o <<prefix <<"memory:\n";
-                    cur_state.memory.print(o, prefix+"    ", phelp);
+                    cur_state.memory.print(o, fmt);
                     o <<prefix <<"init mem:\n";
-                    orig_state.memory.print(o, prefix+"    ", phelp);
+                    orig_state.memory.print(o, fmt);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
-                    p.print(o, "", NULL);
+                    p.print(o);
                     return o;
                 }
+                /** @} */
 
                 /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The
                  *  stack pointer need not have a known value. */
@@ -742,23 +779,26 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return p_discard_popped_memory;
                 }
 
-                /** Print only the differences between two states.  If a print helper is specified it will be passed along to
-                 *  the InsnSemanticsExpr::print() method. */
+                /** Print only the differences between two states.
+                 * @{ */
+                void print_diff(std::ostream &o, const State<ValueType> &s1, const State<ValueType> &s2) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, s1, s2, fmt);
+                }
                 void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&,
-                                InsnSemanticsExpr::Formatter *pehlp=NULL) const ;
+                                BaseSemantics::Formatter &fmt) const;
+                /** @} */
 
-                /** Print the difference between a state and the initial state.  If a print helper is specified then it will be
-                 *  passed along to the InsnSemanticsExpr::print() method. */
-                void print_diff(std::ostream &o, const State<ValueType> &state,
-                                InsnSemanticsExpr::Formatter *phelp=NULL) const {
-                    print_diff(o, orig_state, state, phelp);
-                }
 
-                /** Print the difference between the current state and the initial state.  If a print helper is specified then
-                 *  it will be passed along to the InsnSemanticsExpr::print() method. */
-                void print_diff(std::ostream &o, InsnSemanticsExpr::Formatter *phelp=NULL) const {
-                    print_diff(o, orig_state, cur_state, phelp);
+                /** Print the difference between the current state and the initial state.
+                 * @{ */
+                void print_diff(std::ostream &o) const {
+                    print_diff(o, orig_state, cur_state);
                 }
+                void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
+                    print_diff(o, orig_state, cur_state, fmt);
+                }
+                /** @} */
 
                 /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is
                  *  not available then the return value will be an empty string. */

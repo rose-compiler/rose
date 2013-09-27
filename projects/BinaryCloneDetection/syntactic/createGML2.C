@@ -39,7 +39,7 @@ size_t createOrGetFileID(ostream& myfile, const string& filename, const string& 
     size_t id = fileIDs.size();
     fileIDs.insert(std::make_pair(filename, id));
     path = boost::filesystem::path(filename).remove_leaf().string();
-    string nametail = boost::filesystem::path(filename).leaf();
+    string nametail = boost::filesystem::path(filename).leaf().string();
     cerr << " filename  " << filename << " tail : " << nametail << endl;
 
     string nodeColor="BBBBBB"; // grey
@@ -104,7 +104,7 @@ int main(int ac, char* av[])
     exit (1);
   }
   string filen = av[1];
-  std::string filename = boost::filesystem::path(filen).leaf()+".gml";
+  std::string filename = boost::filesystem::path(filen).leaf().string()+".gml";
 
   sqlite3_connection con;
   con.open(filen.c_str());

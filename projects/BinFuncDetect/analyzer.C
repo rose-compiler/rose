@@ -744,7 +744,7 @@ main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating control flow graph...\n";
     struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
-        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *blk) {
+        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *blk) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(blk);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
