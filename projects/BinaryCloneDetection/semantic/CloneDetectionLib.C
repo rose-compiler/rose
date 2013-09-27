@@ -41,6 +41,7 @@ get_instr_map(InstructionMapMap& instr_map_map, SgAsmInterpretation* top)
   {
     instr_map = new Disassembler::InstructionMap;
 
+    instr_map_map[top] = instr_map;
     std::vector<SgAsmInstruction*> tmp_insns;
 
     FindInstructionsVisitor vis;

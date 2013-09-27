@@ -78,7 +78,7 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 
 CallVec* 
 load_function_api_calls_for(int func_id)
-e
+{
   SqlDatabase::StatementPtr stmt = transaction->statement(
      "select distinct scg.callee from semantic_cg as scg "  
      " join tmp_interesting_funcs as tif on tif.func_id = scg.callee "
