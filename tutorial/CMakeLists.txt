@@ -1,36 +1,75 @@
+include_directories(${ROSE_INCLUDES})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-add_subdirectory(roseHPCT)
+if(enable-rosehpct)
+  add_subdirectory(roseHPCT)
+endif()
 add_subdirectory(outliner)
 add_subdirectory(intelPin)
 
-
 ########### next target ###############
 
-set($(TUTORIAL_EXAMPLES)_SRCS ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp)
+set(tutorials
+  binaryFileRead binaryFileWrite ASTGraphGenerator
+  ASTGraphGeneratorCustomized AST_PDF_Generator wholeASTGraphGenerator
+  identityTranslator lineReplacement queryLibraryExample nestedQueryExample
+  visitorTraversal prePostTraversal combinedTraversals traverseIRnodeTypes
+  classicObjectOrientedVisitorPatternTraversal inheritedAttributeTraversal
+  synthesizedAttributeTraversal inheritedAndSynthesizedAttributeTraversal
+  accumulatorAttributeTraversal persistantAttributes nestedTraversal
+  visitorMemoryPoolTraversal
+  classicObjectOrientedVisitorPatternMemoryPoolTraversal loopRecognition
+  typeInfoFromFunctionParameters resolveOverloadedFunction templateParameter
+  instrumentEndOfFunction reductionRecognition instrumentationExample
+  addVariableDeclaration addVariableDeclaration2
+  addAssignmentStmt addExpression addFunctionCalls addFunctionDeclaration
+  addFunctionDeclaration2 addFunctionDeclaration3 loopOptimization LoopProcessor
+  binaryAnalysisExample binaryAnalysis_symbolTable
+  bin_example buildCallGraph buildVFA livenessAnalysis CharmSupport
+  debuggingIRnodeToString debuggingSourceCodePositionInformation
+  commandlineProcessing interveneAtVariables changeFunction classHierarchyGraph
+  dataBaseUsage dwarfAnalysis dwarfInstructionAddressToSourceLineAnalysis
+  loopNestingInfoProcessing tauInstrumenter typeTransformation
+  astFileIO_GenerateBinaryFile generatingUniqueNamesFromDeclaration
+  symbolTableHandling scopeInformation customGraphGeneration inlineTransformations
+  addComments addArbitraryTextForUnparser collectComments
+  collectDefineDirectives partialRedundancyElimination
+  codeGenerationFormatControl dataFlowGraph customGraphGenerationWithFiltering
+  graphTraversal wholeGraphAST traversalShortCircuit
+  customGraphGenerationWithColors astFileIO_ReadMultipleASTs
+  constantFoldingTransformation constantUnFoldingTransformation
+  selectedFileTranslation wholeGraphFilterOnPersistantAttributes
+  graphGenerationOfSubtree virtualCFG interproceduralCFG
+  virtualFunctionIdentification switchWithoutDefault addStruct
+  sprintf_to_snprintf seedBugsExample_arrayIndexing volatileTypeModifier
+  findVariableDeclarations
+)
 
-kde4_add_executable($(TUTORIAL_EXAMPLES) ${$(TUTORIAL_EXAMPLES)_SRCS})
+if(HAVE_PTHREAD_H)
+  list(APPEND tutorials sharedMemoryTraversals)
+endif()
 
-target_link_libraries($(TUTORIAL_EXAMPLES) ${KDE4_KDECORE_LIBS})
+foreach(tutorial ${tutorials})
+  add_executable(${tutorial}Tutorial "${tutorial}.C")
+  target_link_libraries(${tutorial}Tutorial ROSE_DLL ${Boost_LIBRARIES})
+endforeach()
 
+#if ROSE_HAVE_YICES
+#yicesTutorialExample yicesTutorialExample.C)
+#endif
 
-########### next target ###############
+if(HAVE_SYS_TIME_H)
+  add_executable(codeCoverage codeCoverage.C coverageCodeFromShmuel.c)
+  target_link_libraries(codeCoverage ROSE_DLL ${Boost_LIBRARIES})
+endif()
 
-set($(TUTORIAL_EXAMPLES)_SRCS ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp)
+add_executable(abstractHandle1 abstractHandle1.cpp)
+target_link_libraries(abstractHandle1 ROSE_DLL ${Boost_LIBRARIES})
 
-kde4_add_executable($(TUTORIAL_EXAMPLES) ${$(TUTORIAL_EXAMPLES)_SRCS})
+add_executable(abstractHandle2 abstractHandle2.cpp)
+target_link_libraries(abstractHandle2 ROSE_DLL ${Boost_LIBRARIES})
 
-target_link_libraries($(TUTORIAL_EXAMPLES) ${KDE4_KDECORE_LIBS})
-
-
-########### next target ###############
-
-set(sharedMemoryTraversals_SRCS sharedMemoryTraversals.C)
-
-kde4_add_executable(sharedMemoryTraversals ${sharedMemoryTraversals_SRCS})
-
-target_link_libraries(sharedMemoryTraversals ${KDE4_KDECORE_LIBS})
+add_executable(sb_callgraphAnalysis callGraphSourceBinaryExample.C)
+target_link_libraries(sb_callgraphAnalysis ROSE_DLL ${Boost_LIBRARIES})
 
 
 ########### install files ###############

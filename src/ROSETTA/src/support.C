@@ -782,6 +782,8 @@ Grammar::setUpSupport ()
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      File.setDataPrototype         ( "bool", "C89_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1616,6 +1618,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::string","astMergeCommandFile", "= \"\"",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Milind Chabbi (9/9/2013): Added a commandline option to use a file to generate persistent id for files
+  // used in different compilation units.
+     Project.setDataPrototype("std::string","projectSpecificDatabaseFile", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/16/2005): Added support to detect use of "-E" on compiler's command line.
   // Special processing is done when "-E" is used with multiple file names on the command line.
      Project.setDataPrototype         ( "bool", "C_PreprocessorOnly", "= false",
@@ -1767,7 +1774,8 @@ Grammar::setUpSupport ()
   // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
   // the identical rules for resolving head files as it would have for the original input file (had it been compiled
   // using the backend compiler instead).
-     Project.setDataPrototype("bool", "build_generated_file_in_same_directory_as_input_file", "= false",
+  // DQ (9/16/2013): Changed name from "build_generated_file_in_same_directory_as_input_file" to "unparse_in_same_directory_as_input_file".
+     Project.setDataPrototype("bool", "unparse_in_same_directory_as_input_file", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",

@@ -4,5 +4,5 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  lib/ecjROSE.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
+install(FILES  ecjROSE.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
 

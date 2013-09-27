@@ -25,7 +25,7 @@ class Parser {
         bool parse(std::string &, Recipient &);
 };
 
-class GrammarNode {
+class ROSE_DLL_API GrammarNode {
     public:
         struct LexemeInstance {
             std::string original_string;
@@ -45,7 +45,7 @@ class GrammarNode {
     friend class Grammar;
 };
 
-class NonTerminalNode : public GrammarNode {
+class ROSE_DLL_API NonTerminalNode : public GrammarNode {
     public:
         struct NonTerminalLexemeInstance : public GrammarNode::LexemeInstance {
             std::vector<LexemeInstance *> childs_productions;
@@ -70,7 +70,7 @@ class NonTerminalNode : public GrammarNode {
     friend class Grammar;
 };
 
-class ZeroOrOne : public NonTerminalNode {
+class ROSE_DLL_API ZeroOrOne : public NonTerminalNode {
     protected:
         GrammarNode * p_node;
         
@@ -86,7 +86,7 @@ class ZeroOrOne : public NonTerminalNode {
     friend class Grammar;
 };
 
-class Any : public NonTerminalNode {
+class ROSE_DLL_API Any : public NonTerminalNode {
     protected:
         GrammarNode * p_node;
         
@@ -102,7 +102,7 @@ class Any : public NonTerminalNode {
     friend class Grammar;
 };
 
-class OneOrMore : public NonTerminalNode {
+class ROSE_DLL_API OneOrMore : public NonTerminalNode {
     protected:
         GrammarNode * p_node;
         
@@ -118,7 +118,7 @@ class OneOrMore : public NonTerminalNode {
     friend class Grammar;
 };
 
-class TerminalNode : public GrammarNode {
+class ROSE_DLL_API TerminalNode : public GrammarNode {
     public:
         struct TerminalNodeLexemeInstance : public GrammarNode::LexemeInstance {
             virtual ~TerminalNodeLexemeInstance();
@@ -134,7 +134,7 @@ class TerminalNode : public GrammarNode {
     friend class Grammar;
 };
 
-class SpaceNode : public TerminalNode {
+class ROSE_DLL_API SpaceNode : public TerminalNode {
     public:
         struct SpaceNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
             virtual ~SpaceNodeLexemeInstance();
@@ -150,7 +150,7 @@ class SpaceNode : public TerminalNode {
     friend class Grammar;
 };
 
-class LabelNode : public TerminalNode {
+class ROSE_DLL_API LabelNode : public TerminalNode {
     public:
         struct LabelNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
             virtual ~LabelNodeLexemeInstance();
@@ -169,7 +169,7 @@ class LabelNode : public TerminalNode {
     friend class Grammar;
 };
 
-class SageNode : public TerminalNode {
+class ROSE_DLL_API SageNode : public TerminalNode {
     public:
         struct SageNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
             SgNode * sage_node;
@@ -192,7 +192,7 @@ class SageNode : public TerminalNode {
     friend class Grammar;
 };
 
-class EqualityExpressionSageNode : public SageNode {
+class ROSE_DLL_API EqualityExpressionSageNode : public SageNode {
     public:
         EqualityExpressionSageNode(SgScopeStatement *);
         virtual ~EqualityExpressionSageNode();
@@ -203,7 +203,7 @@ class EqualityExpressionSageNode : public SageNode {
     friend class Grammar;
 };
 
-class RelationalExpressionSageNode : public SageNode {
+class ROSE_DLL_API RelationalExpressionSageNode : public SageNode {
     public:
         RelationalExpressionSageNode(SgScopeStatement *);
         virtual ~RelationalExpressionSageNode();
