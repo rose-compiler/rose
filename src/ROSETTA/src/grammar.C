@@ -3192,7 +3192,7 @@ Grammar::buildCode ()
      string  variantEnumNames=buildVariantEnumNames();
 
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
-     variantEnumNamesFile << "\n const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
+     variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;

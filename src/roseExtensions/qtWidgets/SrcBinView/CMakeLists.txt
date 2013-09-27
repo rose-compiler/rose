@@ -1,35 +1,7 @@
+QT4_WRAP_UI(SrcBinView_UI_CPP SrcBinView.ui)
+QT4_WRAP_CPP(SrcBinView_MOC_CPP SrcBinView.h)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-
-########### next target ###############
-
-
-########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
-
-##------------ AsmView Makefile.am -----------
-#include ../Make.inc 
-#
-#if ROSE_WITH_ROSEQT
-#
-#noinst_LTLIBRARIES = libSrcBinView.la 
-#
-#libSrcBinView_la_SOURCES = SrcBinView.cpp
-#
-#nodist_libSrcBinView_la_SOURCES = moc_SrcBinView.cxx \
-#                                  ui_SrcBinView.h
-#
-#BUILT_SOURCES = ui_SrcBinView.h
-#
-#EXTRA_DIST = SrcBinView.ui
-#
-## Target for installing header 
-#headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-#headerTarget_HEADERS = SrcBinView.h
-#
-#endif
+add_library(SrcBinView OBJECT
+  SrcBinView.cpp ${SrcBinView_UI_CPP} ${SrcBinView_MOC_CPP})

@@ -27,8 +27,8 @@ void read_graph(Graph& g, std::istream& in, const std::string& hint)
     }  
   }
 
-template <class Graph, class OUT>
-void write_graph( const Graph& g, OUT& out, const std::string& hint) 
+template <class Graph, class OUTPUT>
+void write_graph( const Graph& g, OUTPUT& out, const std::string& hint) 
   {
      typename Graph::NodeIterator nodes = g.GetNodeIterator();
      for ( ; !nodes.ReachEnd() ; ++nodes) {
@@ -63,8 +63,8 @@ void write_graph_node_edge(Graph& g, const Node* curnode,
    }
 }
 
-template <class Graph, class OUT>
-void write_graph2( const Graph& g, OUT& out, const std::string& hint) 
+template <class Graph, class OUTPUT>
+void write_graph2( const Graph& g, OUTPUT& out, const std::string& hint) 
   {
      typename Graph::NodeIterator nodes = g.GetNodeIterator();
      for ( ; !nodes.ReachEnd() ; ++nodes) {

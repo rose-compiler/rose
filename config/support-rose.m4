@@ -1999,6 +1999,8 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 tests/Makefile
@@ -2033,6 +2035,7 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile

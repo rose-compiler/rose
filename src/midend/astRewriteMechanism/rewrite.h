@@ -571,7 +571,7 @@ class MidLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<M
                            IntermediateFileStringPositionEnum filePosition );
    };
 
-class HighLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<HighLevelCollectionTypedefs>
+class ROSE_DLL_API HighLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<HighLevelCollectionTypedefs>
    {
      public:
        // Constants used to dimension arrays (read only constants) and simplify the code
