@@ -182,6 +182,18 @@ public:
      <<" = "<<state.valstack[e]<<"\"];\n    ";
     return newAttr(node);
   }
+  IAttr visit(True* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"true\"];\n    ";
+    return newAttr(node);
+  }
+  IAttr visit(False* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"false\"];\n    ";
+    return newAttr(node);
+  }
   IAttr visit(NegOutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
@@ -962,6 +974,19 @@ public:
       if (verbose) cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
+
+    /**                                                                                                                                             * TRUE 
+     */
+    void visit(const True* expr) {
+      result.valstack[expr->label] = true;
+    }
+
+    /**                                                                                                                                             * FALSE 
+     */
+    void visit(const False* expr) {
+      result.valstack[expr->label] = false;
+    }
+
 
     /**
      * NOT
