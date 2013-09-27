@@ -413,7 +413,6 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e,
 class UVerifier {
   EStateSet& eStateSet;
   deque<const EState*> endpoints;
-  Label start;
   unsigned short progress;
   const Formula& f;
 
@@ -425,8 +424,8 @@ public:
   LTLStateTransitionGraph stg;
 
   UVerifier(EStateSet& ess, BoostTransitionGraph& g,
-    Label start_label, Label max_label, const Formula& _f)
-    : eStateSet(ess), start(start_label), progress(0), f(_f) {
+    Label max_label, const Formula& _f)
+    : eStateSet(ess), progress(0), f(_f) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
 
@@ -560,14 +559,14 @@ public:
       //assert(stg.vertex.size()==old+1);
 
       if (out_degree(v, stg.g) == 0) {
-    //cerr<<"registered endpoint "<<stg.g[v]<<endl;
-    endpoints.insert(v);
+	//cerr<<"registered endpoint "<<stg.g[v]<<endl;
+	endpoints.insert(v);
       }
 
       // scan the entire STG for input vars
       if (degree(v, stg.g) != 0) {
-    assert(state.estate);
-    updateInputVar(state.estate, input_vars);
+	assert(state.estate);
+	updateInputVar(state.estate, input_vars);
       }
 
       worklist.push(stg.vertex[state]);
@@ -1157,11 +1156,15 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   }
   //cerr<<" finished labeling "<<flush;
 
+  // Do not add the start state.
+  const EState *start = transitionGraph.getStartEState();
+
   BoostTransitionGraph full_graph(ess.size());
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
     Label tgt = estate_label[((*t).target)];
-    add_edge(src, tgt, full_graph);
+    if ((*t).source != start)
+      add_edge(src, tgt, full_graph);
     full_graph[src] = (*t).source;
     full_graph[tgt] = (*t).target;
     //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
@@ -1169,9 +1172,6 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[tgt]);
   }
   cerr<<"done"<<endl;
-  //start = estate_label[transitionGraph.begin()->source];
-  //Transition st = transitionGraph.getStartTransition();
-  start = estate_label[transitionGraph.getStartEState()];
 
   // Optimization
   if(option_debug_mode==200) {
@@ -1183,7 +1183,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 
   if(boolOptions["post-collapse-stg"]) {
     // Optimization
-    start = collapse_transition_graph(full_graph, g);
+    collapse_transition_graph(full_graph, g);
 
   } else {
     g = full_graph;
@@ -1202,8 +1202,8 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
  *
  * Creates reduced_eStateSet
  */
-Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
-              BoostTransitionGraph& reduced) const {
+void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
+					 BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
 
@@ -1211,7 +1211,7 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
 
-    // Completele eradicate error states. This is part of the RERS rules.
+    // Completely eradicate error states. This is part of the RERS rules.
     if (g[label]->io.op == InputOutput::STDERR_VAR ||
     g[label]->io.op == InputOutput::STDERR_CONST ||
     g[label]->io.op == InputOutput::FAILED_ASSERT) {
@@ -1303,8 +1303,6 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"## done "<<endl<<endl;
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
-
-  return renumbered[start];
 }
 
 
@@ -1313,7 +1311,7 @@ UChecker::verify(const Formula& f)
 {
   // Verify!
   const Expr& e = f;
-  UVerifier v(eStateSet, g, start, num_vertices(g), f);
+  UVerifier v(eStateSet, g, num_vertices(g), f);
   v.analyze(boolOptions["ltl-verbose"]);
 
   // Visualization:
