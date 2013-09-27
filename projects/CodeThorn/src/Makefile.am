@@ -180,6 +180,8 @@ woodpecker_LDADD = -lrose
 woodpecker_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AstAnnotator.h AstAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
+  AType.h                          \
+  AType.C                          \
   DFAstAttribute.h           \
   DFAstAttribute.C           \
   RDAstAttributeInterface.h \

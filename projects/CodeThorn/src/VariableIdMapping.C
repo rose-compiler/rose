@@ -334,7 +334,10 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
  */
 string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
-    return variableName(varId)+"_"+varId.toString().substr(1);
+    if(!varId.isValid())
+      return "$invalidId";
+    else
+      return variableName(varId)+"_"+varId.toString().substr(1);
     //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
     return string("tmp")+"_"+varId.toString().substr(1);
