@@ -857,10 +857,12 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     set<Transition> newTransitions;
     for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
       for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-        Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
-        Transition t((*i)->source,newEdge,(*j)->target);
-        newTransitions.insert(t);
+		if((*i)->source!=estate && (*j)->target!=estate) {
+		  Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
+		  Transition t((*i)->source,newEdge,(*j)->target);
+		  newTransitions.insert(t);
         //assert(newTransitions.find(t)!=newTransitions.end());
+		}
       }
     }
     //cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
@@ -879,6 +881,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
       this->add(*k);
       //assert(find(*k)!=end());
     }
+	eliminateEState(estate);
     assert(newTransitions.size()<=in.size()*out.size());
   } else {
     // need to eliminate node instead

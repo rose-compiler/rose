@@ -105,7 +105,7 @@ namespace CodeThorn {
     int semanticEliminationOfSelfInInTransitions();
     // eliminates only input states
     int semanticEliminationOfDeadStates();
-    int semanticFoldingOfInInTransitions();
+    int semanticFusionOfInInTransitions();
     // requires semantically reduced STG
     int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
