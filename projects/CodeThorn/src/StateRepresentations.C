@@ -407,8 +407,17 @@ EStateId EStateSet::estateId(const EState estate) const {
   * \author Markus Schordan
   * \date 2012.
  */
+const EState* TransitionGraph::getStartEState() {
+  for(TransitionGraph::iterator i=begin();i!=end();++i) {
+    if((*i).source->label()==getStartLabel()) {
+	  return (*i).source;
+	}
+  }
+  return 0;
+}
+
 Transition TransitionGraph::getStartTransition() {
-  // we intentionally ensure that only exactly one start transition exists
+  // we ensure that all start transitions share the same start label
   TransitionGraph::iterator foundElementIter=end();
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
     if((*i).source->label()==getStartLabel()) {
@@ -421,8 +430,9 @@ Transition TransitionGraph::getStartTransition() {
   }
   if(foundElementIter!=end())
     return *foundElementIter;
-  else
+  else {
     throw "TransitionGraph: no start transition found.";
+  }
 }
 
 /*! 

@@ -1145,8 +1145,8 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   }
   cerr<<"done"<<endl;
   //start = estate_label[transitionGraph.begin()->source];
-  Transition st = transitionGraph.getStartTransition();
-  start = estate_label[st.source];
+  //Transition st = transitionGraph.getStartTransition();
+  start = estate_label[transitionGraph.getStartEState()];
 
   // Optimization
   if(option_debug_mode==200) {
