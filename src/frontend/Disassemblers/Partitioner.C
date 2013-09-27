@@ -1272,7 +1272,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         if (!insn_x86) continue;
 
-        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va()+gotplt->get_mapped_preferred_rva());
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
             continue; /* jump is not indirect through the .got.plt section */
@@ -2439,7 +2439,7 @@ Partitioner::value_of(SgAsmValueExpression *e)
 
 /* class method */
 rose_addr_t
-Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
+Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
 {
     rose_addr_t retval = 0;
 
@@ -2458,8 +2458,12 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
         SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
         SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
-        if (reg->get_descriptor().get_major()==x86_regclass_ip && val!=NULL) {
-            retval = value_of(val) + insn->get_address() + insn->get_size();
+        if (reg!=NULL && val!=NULL) {
+            if (reg->get_descriptor().get_major()==x86_regclass_ip) {
+                retval = value_of(val) + insn->get_address() + insn->get_size();
+            } else if (reg->get_descriptor().get_major()==x86_regclass_gpr) {
+                retval = value_of(val) + offset;
+            }
         }
     } else if (isSgAsmValueExpression(mref_addr)) {
         retval = value_of(isSgAsmValueExpression(mref_addr));
@@ -2518,7 +2522,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
          * linked function (or to the dynamic linker itself). The .got.plt address is what we're really interested in. */
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
-        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va() + gotplt->get_mapped_preferred_rva());
 
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
