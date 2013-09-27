@@ -1,31 +1,33 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
+EXTRA_DIST =
+TEST_TARGETS =
 
-EXTRA_DIST = test_astLValues.C
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+#------------------------------------------------------------------------------------------------------------------------
+# testLValues
 
-bin_PROGRAMS  = testLValues
-
+noinst_PROGRAMS += testLValues
 testLValues_SOURCES = runTest.C
-
+testLValues_CPPFLAGS = $(ROSE_INCLUDES)
 testLValues_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-ROSE_FLAGS = -rose:verbose 0
+TEST_TARGETS += testLValues_1.passed
+EXTRA_DIST += test_astLValues.C
+testLValues_1.passed: test_astLValues.C testLValues
+	@$(RTH_RUN) \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/testLValues $<" \
+		$(TEST_EXIT_STATUS) $@
 
-TEST_TRANSLATOR = ./testLValues $(ROSE_FLAGS)
-TESTCODE_INCLUDES =
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
 
-CLEANFILES = rose_*.C rose_*.c output
-
-check-local: testLValues
-	./testLValues $(srcdir)/test_astLValues.C | tee output; [ $${PIPESTATUS[0]} -eq 0 ]
-	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astLValueTests/testLValues: make check rule complete (terminated normally) ***"
-	@echo "*********************************************************************************************************************"
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf test* rose_*.C rose_*.c
-
-distclean-local:
-	rm -rf rose_*.C rose_*.c
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.err)
+	rm -f $(TEST_TARGETS:.passed=.out)
