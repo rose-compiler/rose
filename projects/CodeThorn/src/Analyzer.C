@@ -1476,26 +1476,46 @@ int Analyzer::semanticEliminationOfDeadStates() {
   }
   return toEliminate.size();
 }
-int Analyzer::semanticFoldingOfInInTransitions() {
+int Analyzer::semanticFusionOfInInTransitions() {
   set<const EState*> toReduce;
   for(TransitionGraph::iterator i=transitionGraph.begin();
       i!=transitionGraph.end();
       ++i) {
-    if((getLabeler()->isStdInLabel((*i).source->label()))
+    if(((*i).source->io.isStdInIO())
        &&
-       (getLabeler()->isStdInLabel((*i).target->label()))
+       ((*i).target->io.isStdInIO())
        &&
        ((*i).source!=(*i).target)
        ) {
-      // found in-in edge; we reduce the target-node
-      // but only if there is no connection to already collected nodes (cycle check)
-      if(toReduce.find((*i).source)==toReduce.end())
-        toReduce.insert((*i).target);
+      // found in-in edge; fuse source and target state into target state (VERY different to reduction!)
+	  // 1) all in edges of source become in-edges of target
+      // 2) all out edges of source become out-edges of target
+      // 3) eliminate source
+	  set<Transition> newTransitions;
+	  const EState* remapped=(*i).target;
+	  TransitionPtrSet in=transitionGraph.inEdges((*i).source);
+	  for(TransitionPtrSet::iterator j=in.begin();j!=in.end();++j) {
+		newTransitions.insert(Transition((*j)->source,
+										 Edge((*j)->source->label(),EDGE_PATH,remapped->label()),
+										 remapped));
+	  }
+	  TransitionPtrSet out=transitionGraph.outEdges((*i).source);
+	  for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+		newTransitions.insert(Transition(remapped,
+										 Edge(remapped->label(),EDGE_PATH,(*j)->target->label()),
+										 (*j)->target));
+	  }
+	  for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
+		transitionGraph.add(*k);
+		//assert(find(*k)!=end());
+	  }
+	  transitionGraph.eliminateEState((*i).source);
+	  return 1;
     }
   }
-  transitionGraph.reduceEStates2(toReduce);
   //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
-  return toReduce.size();
+  //return toReduce.size();
+  return 0;
 }
 
 void Analyzer::semanticEliminationOfTransitions() {
@@ -1508,7 +1528,7 @@ void Analyzer::semanticEliminationOfTransitions() {
     elim+=semanticEliminationOfDeadStates();
     // this function does not work in general yet
     // probably because of self-edges
-    elim+=semanticFoldingOfInInTransitions();
+    elim+=semanticFusionOfInInTransitions();
     assert(transitionGraph.checkConsistency());
   } while (elim>0);
   cout << "done."<<endl;
