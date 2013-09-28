@@ -52,6 +52,11 @@ YicesSolver::available_linkage()
 SMTSolver::Satisfiable
 YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
+    clear_evidence();
+    Satisfiable retval = trivially_satisfiable(exprs);
+    if (retval!=SAT_UNKNOWN)
+        return retval;
+
 #ifdef ROSE_HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
 

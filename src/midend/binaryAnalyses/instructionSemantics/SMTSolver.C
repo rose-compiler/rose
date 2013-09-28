@@ -40,9 +40,24 @@ SMTSolver::reset_class_stats()
 }
 
 SMTSolver::Satisfiable
+SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs_)
+{
+    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
+    for (size_t i=0; i<exprs.size(); ++i) {
+        if (exprs[i]->is_known()) {
+            assert(1==exprs[i]->get_nbits());
+            if (0==exprs[i]->get_value())
+                return SAT_NO;
+            std::swap(exprs[i], exprs.back()); // order of exprs is not important
+            exprs.resize(exprs.size()-1);
+        }
+    }
+    return exprs.empty() ? SAT_YES : SAT_UNKNOWN;
+}
+
+SMTSolver::Satisfiable
 SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 {
-    Satisfiable retval = SAT_UNKNOWN;
     bool got_satunsat_line = false;
 
 #ifdef _MSC_VER
@@ -51,6 +66,12 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 #else
 
     clear_evidence();
+
+    Satisfiable retval = trivially_satisfiable(exprs);
+    if (retval!=SAT_UNKNOWN)
+        return retval;
+
+    // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
     RTS_MUTEX(class_stats_mutex) {
         ++class_stats.ncalls;
