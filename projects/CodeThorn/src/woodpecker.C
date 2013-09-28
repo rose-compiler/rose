@@ -30,6 +30,15 @@ using namespace std;
 using namespace CodeThorn;
 using namespace AType;
 
+static VariableIdSet variablesOfInterest;
+
+static bool detailedOutput=0;
+
+bool isVariableOfInterest(VariableId varId) {
+  return variablesOfInterest.find(varId)!=variablesOfInterest.end();
+}
+
+
 bool trivialInline(SgFunctionCallExp* funCall) {
   /*
     0) check if it is a trivial function call (no return value, no params)
@@ -265,7 +274,7 @@ void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, Va
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
-      cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
+      if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
     }
     if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
@@ -281,7 +290,6 @@ void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, Va
     }
     // ignore everything else (as of now)
   }
-  cout<< "STATUS: finished."<<endl;
 }
 
 // does not support -inf, +inf yet
@@ -296,7 +304,7 @@ public:
   ConstIntLattice maxValue() const { return _max; }
   int minIntValue() const { assert(_min.isConstInt()); return _min.getIntValue(); }
   int maxIntValue() const { assert(_max.isConstInt()); return _max.getIntValue(); }
-  ConstIntLattice width() const;
+  ConstIntLattice width() const { return _width; }
   string toString() const {
     if(isBot())
       return "bot";
@@ -324,10 +332,14 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLat
 VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
   _min=value;
   _max=value;
-  if(value.isTop())
+  if(value.isTop()) {
     _width=ConstIntLattice(Top());
-  if(value.isBot())
+	return;
+  }
+  if(value.isBot()) {
     _width=ConstIntLattice(Bot());
+	return;
+  }
   _width=1;
 }
 
@@ -348,8 +360,6 @@ VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSe
   }
   if(minVal.isBot()||maxVal.isBot())
     return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
-  cout<<minVal.toString()<<","<<maxVal.toString()<<";";
-  cout<<minVal.isConstInt()<<","<<maxVal.isConstInt()<<";";
   return VariableValueRangeInfo(minVal,maxVal);
 }
 
@@ -366,33 +376,46 @@ ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice>
   return ConstIntLattice(false);
 }
 
+class VariableConstInfo {
+public:
+  VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map);
+  bool isAny(VariableId);
+  bool isUniqueConst(VariableId);
+  bool isMultiConst(VariableId);
+  int width(VariableId);
+  bool isInConstSet(VariableId varId, int varVal);
+  int uniqueConst(VariableId);
+private:
+  VariableIdMapping* _variableIdMapping;
+  VarConstSetMap* _map;
+};
 
-
-void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
-  cout<<"Result:"<<endl;
-  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
-    VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
-    string variableName=variableIdMapping.variableName(varId);
-    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
-    stringstream setstr;
-    setstr<<"{";
-    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
-      if(i!=valueSet.begin())
-        setstr<<",";
-      setstr<<(*i).getValue().toString();
-    }
-    setstr<<"}";
-    cout<<variableName<<"="<<setstr.str()<<";";
-    cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
-    ConstIntLattice myTestConst=ConstIntLattice(34);
-    cout<<"Test:34: "<<isConstInSet(myTestConst,valueSet).toString();
-    
-    
-
-    cout<<endl;
-  }
-  cout<<"---------------------"<<endl;
+VariableConstInfo::VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map):_variableIdMapping(variableIdMapping),_map(map) {
+}
+bool VariableConstInfo::isAny(VariableId varId) {
+  return createVariableValueRangeInfo(varId,*_map).isTop();
+}
+bool VariableConstInfo::isUniqueConst(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  return !vri.isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
+}
+bool VariableConstInfo::isMultiConst(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  return !vri.isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
+}
+int VariableConstInfo::width(VariableId varId) {
+  ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
+  assert(width.isConstInt());
+  return width.getIntValue();
+}
+bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  return isConstInSet(ConstIntLattice(varVal),(*_map)[varId]).isTrue();
+}
+int VariableConstInfo::uniqueConst(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  assert(!vri.isTop() && !vri.isBot() && vri.minIntValue()==vri.maxIntValue());
+  return vri.minIntValue();
 }
 
 // intra-procedural; ignores function calls
@@ -407,18 +430,13 @@ VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* m
     set<CppCapsuleConstIntLattice> emptySet;
     varConstIntMap[*i]=emptySet;
   }
-
-
   cout<<"STATUS: Initialized const map for "<<varConstIntMap.size()<< " variables."<<endl;
 
   cout << "STATUS: Number of global variables: ";
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
   cout << globalVars.size()<<endl;
-
   VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
-
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-
   int filteredVars=0;
   set<CppCapsuleConstIntLattice> emptySet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -428,6 +446,7 @@ VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* m
       ConstIntLattice varValue=p.varValue;
       varConstIntMap[p.varId]=emptySet; // create mapping
       varConstIntMap[p.varId].insert(CppCapsuleConstIntLattice(varValue));
+	  variablesOfInterest.insert(p.varId);
       //set<CppCapsuleConstIntLattice>& myset=varConstIntMap[p.varId];
     } else {
       filteredVars++;
@@ -439,6 +458,126 @@ VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* m
   determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
   return varConstIntMap;
 }
+
+// returns the number of eliminated expressions
+int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
+					   VariableIdMapping* variableIdMapping,
+					   VariableConstInfo& vci) {
+  RoseAst ast1(root);
+
+  // eliminate variables with one value only
+  // 1) eliminate declaration of variable
+  // 2) eliminate assignment to variable
+  // 3) replace use of variable
+  cout<<"STATUS: Eliminating variables."<<endl;
+  list<SgVariableDeclaration*> toDeleteVarDecls;
+  list<SgAssignOp*> toDeleteAssignments;
+  list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
+  for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
+	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+	  VariableId declVarId=variableIdMapping->variableId(varDecl);
+	  if(isVariableOfInterest(declVarId) && vci.isUniqueConst(declVarId)) {
+		toDeleteVarDecls.push_back(varDecl);
+	  }
+	}
+	if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+	  VariableValuePair varValPair;
+	  bool found=analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
+	  if(found) {
+		VariableId varId=varValPair.varId;
+		if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
+		  toDeleteAssignments.push_back(assignOp);
+		}
+	  }
+	}
+	if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+	  VariableId varId;
+	  bool found=determineVariable(varRef, varId, *variableIdMapping);
+	  if(found) {
+		if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
+		  SgIntVal* newSgIntValExpr=SageBuilder::buildIntVal(vci.uniqueConst(varId));
+		  toReplaceExpressions.push_back(make_pair(varRef,newSgIntValExpr));
+		}
+	  }
+	}
+  }
+
+  int elimVar=0;
+  for(list<SgVariableDeclaration*>::iterator i=toDeleteVarDecls.begin();
+	  i!=toDeleteVarDecls.end();
+	  ++i) {
+	elimVar++;
+	if(detailedOutput) cout<<"Eliminating dead variable's declaration: "<<(*i)->unparseToString()<<endl;
+	SageInterface::removeStatement(*i, false);
+  }
+  int elimAssignment=0;
+  for(list<SgAssignOp*>::iterator i=toDeleteAssignments.begin();
+	  i!=toDeleteAssignments.end();
+	  ++i) {
+	SgExprStatement* exprStatAssign=isSgExprStatement(SgNodeHelper::getParent(*i));
+	if(!exprStatAssign) {
+	  cerr<<"Error: assignments inside expressions are not supported yet.";
+	  cerr<<"Problematic assignment: "<<(*i)->unparseToString()<<endl;
+	  exit(1);
+	}
+	elimAssignment++;
+	if(detailedOutput) cout<<"Eliminating dead variable assignment: "<<(*i)->unparseToString()<<endl;
+	SageInterface::removeStatement(exprStatAssign, false);
+  }
+  int elimVarUses=0;
+  for(list<pair<SgExpression*,SgExpression*> >::iterator i=toReplaceExpressions.begin();
+	  i!=toReplaceExpressions.end();
+	  ++i) {
+	elimVarUses++;
+	if(detailedOutput) cout<<"Replacing use of variable with constant: "<<(*i).first->unparseToString()<<" replaced by "<<(*i).second->unparseToString()<<endl;
+	SageInterface::replaceExpression((*i).first, (*i).second);
+  }
+
+  cout<<"STATUS: Eliminated "<<elimVar<<" variable declarations."<<endl;
+  cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
+  cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variable with constant."<<endl;
+  cout<<"STATUS: Eliminated "<<elimVar<<" dead variables."<<endl;
+
+  return 0;
+}
+
+void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
+  cout<<"Result:"<<endl;
+  VariableConstInfo vci(&variableIdMapping, &map);
+  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
+    VariableId varId=(*i).first;
+    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
+    string variableName=variableIdMapping.variableName(varId);
+    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
+    stringstream setstr;
+    setstr<<"{";
+    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+      if(i!=valueSet.begin())
+        setstr<<",";
+      setstr<<(*i).getValue().toString();
+    }
+    setstr<<"}";
+    cout<<variableName<<"="<<setstr.str()<<";";
+#if 0
+    cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
+    cout<<" width: "<<createVariableValueRangeInfo(varId,map).width().toString();
+	cout<<" top: "<<createVariableValueRangeInfo(varId,map).isTop();
+	cout<<endl;
+#endif
+	cout<<" isAny:"<<vci.isAny(varId)
+		<<" isUniqueConst:"<<vci.isUniqueConst(varId)
+		<<" isMultiConst:"<<vci.isMultiConst(varId)<<"##";
+	if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
+	  cout<<" width:"<<vci.width(varId);
+	} else {
+	  cout<<" width:unknown";
+	}
+	cout<<" Test34:"<<vci.isInConstSet(varId,34);
+    cout<<endl;
+  }
+  cout<<"---------------------"<<endl;
+}
+
 
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
@@ -493,7 +632,9 @@ int main(int argc, char* argv[]) {
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
   VarConstSetMap varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
-  printResult(variableIdMapping,varConstSetMap);
+  if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
+  VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
+  eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
@@ -501,5 +642,6 @@ int main(int argc, char* argv[]) {
   cout << "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
   cout << "INFO: generating transformed source code."<<endl;
   root->unparse(0,0);
+  cout<< "STATUS: finished."<<endl;
   return 0;
 }
