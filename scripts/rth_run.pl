@@ -417,12 +417,18 @@ sub run_command {
 }
 
 
-# Produce a temporary name for files, directories, etc.
-my $tempname = "AAA";
+# Produce a temporary name for files, directories, etc. without creating a file. We need a name that is unlikely to
+# be in use or left over from a previous run that didn't clean up, so use Perl's rand() to create one. This not
+# cryptographically strong, but at least we're unlikely to have conflicts.
 sub tempname {
-  my $name = sprintf "/tmp/th-%05d-%1s", $$, $tempname++;
-  unlink $name;
-  return $name;
+    my @chars = qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
+                   A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+                   0 1 2 3 4 5 6 7 8 9 _ +/;
+    while (1) {
+	my $retval = "/tmp/rose";
+	$retval .= $chars[int rand 64] for 0 .. 15;
+	return $retval unless -e $retval;
+    }
 }
 
 # Returns true if a test should be promoted.  The argument is the value of the "promote" property.
