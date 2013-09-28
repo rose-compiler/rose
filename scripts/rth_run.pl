@@ -299,10 +299,13 @@ Licensed under Revised BSD License (see COPYRIGHT file at top of ROSE source cod
 use strict;
 use Config;
 
-my $usage = <<EOF;
-usage: $0 [VAR=VALUE...] CONFIG TARGET
-       $0 --help
-EOF
+sub usage {
+    print STDERR "usage: $0 [VAR=VALUE...] CONFIG TARGET\n";
+    print STDERR "       $0 --help\n";
+    print STDERR "was invoked with ", scalar(@ARGV), " argument", (1==@ARGV?"":"s"), (0==@ARGV?"":":"), "\n";
+    print STDERR "   '$_'\n" for @ARGV;
+    exit 1
+}
 
 sub help {
   local $_ = `(pod2man $0 |nroff -man) 2>/dev/null` ||
@@ -463,9 +466,9 @@ while (@ARGV) {
     $target = $_;
     next;
   }
-  die $usage;
+  usage;
 }
-die $usage if @ARGV || !$config_file;
+usage if @ARGV || !$config_file;
 if ($target =~ /(.+)\.\w+$/) {
   ($target, $target_pass, $target_fail) = ($1, $target, "$1.failed");
 } else {
