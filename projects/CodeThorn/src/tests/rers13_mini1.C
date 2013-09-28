@@ -6,19 +6,19 @@
         // inputs
         int f= 6;
 
-int calculate_output(int input) {
+void calculate_output(int input) {
   if(input==1 && f==7) {
     f=6;
     if(f!=6) {
     error_1: assert(0); // unreachable!
     }
-    return 23; // W (unreachable!)
+    printf("%d",23); // W (unreachable!)
   } else if(input==1 && f==6) {
     f=5;
-    return 24; // X
+    printf("%d",24); // X
   } else if(f==5) {
     f=4;
-    return 25; // Y
+    printf("%d",25); // Y
   } else if(f==4) {
     f=3;
   } else {
@@ -29,9 +29,7 @@ int calculate_output(int input) {
   if(f==2) {
 	// intentionally empty block to be reduce
   }
-  if(input==7)
-    return -2;
-  return -1;
+  printf("%d",-1);
 }
 
 
@@ -48,11 +46,9 @@ int main()
         scanf("%d", &input);        
 
         // operate eca engine
-        output = calculate_output(input);
+        calculate_output(input);
 
         if(output == -2)
                 fprintf(stderr, "Invalid input: %d\n", input);
-        else if(output != -1)
-                        printf("%d\n", output);
     }
 }
