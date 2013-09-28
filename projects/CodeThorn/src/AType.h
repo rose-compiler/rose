@@ -109,6 +109,7 @@ class ConstIntLattice {
   bool isTrue() const;
   bool isFalse() const;
   bool isBot() const;
+  // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus

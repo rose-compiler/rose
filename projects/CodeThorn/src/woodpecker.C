@@ -154,6 +154,9 @@ size_t eliminateEmptyIfStmts(SgNode* node) {
   cout<<"Number of if-statements eliminated: "<<numElim<<endl;
   return numElim;
 }
+
+// analysis
+
 typedef map<VariableId, set<CppCapsuleConstIntLattice> > VarConstSetMap;
 
 ConstIntLattice analyzeAssignRhs(SgNode* rhs) {
@@ -205,7 +208,6 @@ public:
   VariableId varId;
   ConstIntLattice varValue;
   string toString(VariableIdMapping& varIdMapping) {
-    return "fakestring";
     string varNameString=varIdMapping.uniqueShortVariableName(varId);
     string varValueString=varValue.toString();
     return varNameString+"="+varValueString;
@@ -282,6 +284,89 @@ void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, Va
   cout<< "STATUS: finished."<<endl;
 }
 
+// does not support -inf, +inf yet
+class VariableValueRangeInfo {
+public:
+  VariableValueRangeInfo(ConstIntLattice min, ConstIntLattice max);
+  VariableValueRangeInfo(ConstIntLattice value);
+  bool isTop() const { return _width.isTop(); }
+  bool isBot() const { return _width.isBot(); }
+  bool isEmpty() const { return (_width==0).isTrue(); }
+  ConstIntLattice minValue() const { return _min; }
+  ConstIntLattice maxValue() const { return _max; }
+  int minIntValue() const { assert(_min.isConstInt()); return _min.getIntValue(); }
+  int maxIntValue() const { assert(_max.isConstInt()); return _max.getIntValue(); }
+  ConstIntLattice width() const;
+  string toString() const {
+    if(isBot())
+      return "bot";
+    if(isTop())
+      return "top";
+    return string("[")+_min.toString()+","+_max.toString()+"]";
+  }
+private:
+  ConstIntLattice _width;
+  ConstIntLattice _min;
+  ConstIntLattice _max;
+};
+
+VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLattice max0) {
+  assert(min0.isConstInt() && max0.isConstInt());
+  _width=max0-min0;
+  _min=min0;
+  _max=max0;
+  if((_width<0).isTrue())
+    _width=ConstIntLattice(0);
+  ConstIntLattice one=AType::ConstIntLattice(1);
+  _width=(VariableValueRangeInfo::_width+one);
+}
+
+VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
+  _min=value;
+  _max=value;
+  if(value.isTop())
+    _width=ConstIntLattice(Top());
+  if(value.isBot())
+    _width=ConstIntLattice(Bot());
+  _width=1;
+}
+
+VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
+  set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
+  AType::ConstIntLattice minVal;
+  AType::ConstIntLattice maxVal;
+  for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
+    AType::ConstIntLattice aint=(*i).getValue();
+    if(aint.isTop()) {
+      return VariableValueRangeInfo(AType::ConstIntLattice(AType::Top()));
+    }
+    if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
+    if((aint<minVal).isTrue())
+      minVal=aint;
+    if((aint>maxVal).isTrue())
+      maxVal=aint;
+  }
+  if(minVal.isBot()||maxVal.isBot())
+    return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
+  cout<<minVal.toString()<<","<<maxVal.toString()<<";";
+  cout<<minVal.isConstInt()<<","<<maxVal.isConstInt()<<";";
+  return VariableValueRangeInfo(minVal,maxVal);
+}
+
+// returns true if is in set
+// returns false if not in set
+// returns top if set contains top
+ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet) {
+  if(valSet.find(CppCapsuleConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
+    return ConstIntLattice(AType::Top());
+  }
+  if(valSet.find(CppCapsuleConstIntLattice(val))!=valSet.end()) {  
+    return ConstIntLattice(true);
+  }
+  return ConstIntLattice(false);
+}
+
+
 
 void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"Result:"<<endl;
@@ -298,20 +383,24 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
       setstr<<(*i).getValue().toString();
     }
     setstr<<"}";
-    cout<<variableName<<"="<<setstr.str()<<endl;
+    cout<<variableName<<"="<<setstr.str()<<";";
+    cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
+    ConstIntLattice myTestConst=ConstIntLattice(34);
+    cout<<"Test:34: "<<isConstInSet(myTestConst,valueSet).toString();
+    
+    
+
+    cout<<endl;
   }
   cout<<"---------------------"<<endl;
 }
 
 // intra-procedural; ignores function calls
-void computeVarConstValues(SgProject* node, SgFunctionDefinition* mainFunctionRoot) {
-  SgProject* project=node;
-  VariableIdMapping variableIdMapping;
+VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping) {
+  VarConstSetMap varConstIntMap;  
 
-  // TODO: compute mapping for mainFunctionRoot only
-  variableIdMapping.computeVariableSymbolMapping(node);
-  VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(node,&variableIdMapping);
-  VarConstSetMap varConstIntMap;
+  VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+
   // initialize map such that it is resized to number of variables of interest
 
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
@@ -348,11 +437,12 @@ void computeVarConstValues(SgProject* node, SgFunctionDefinition* mainFunctionRo
 
   // traverse the AST now and collect information
   determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
-  printResult(variableIdMapping,varConstIntMap);
+  return varConstIntMap;
 }
 
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
+  boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   SgProject* root = frontend(argc,argv);
@@ -399,9 +489,11 @@ int main(int argc, char* argv[]) {
       //SageInterface::deleteAST(funDef);
     }
   }
-  
-  computeVarConstValues(root,mainFunctionRoot);
-  
+
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(root);
+  VarConstSetMap varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+  printResult(variableIdMapping,varConstSetMap);
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
