@@ -1,10 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+MOSTLYCLEANFILES =
 
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
 
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
+
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 F77_TESTCODES_REQUIRED_TO_COMPILE = \
   array-one.f \
@@ -71,16 +74,28 @@ TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-fno-u
 
 # rules to build .o from .f for OpenMP test codes
 $(PASSING_F77_TEST_Objects): %.o: $(TEST_DIR)/%.f ../roseomp
-	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 $(F77_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f ../roseomp
-	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_F90_TEST_Objects): %.o: $(TEST_DIR)/%.f90 ../roseomp
-	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 $(F90_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f90 ../roseomp
-	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 
 if WITH_GOMP_OPENMP_LIB
@@ -140,7 +155,18 @@ check-local: ../roseomp
 endif # ROSE_USE_OMNI_OPENMP
 endif  
 
+OBJECTS_WITH_TESTS =				\
+	$(PASSING_F77_TEST_Objects)		\
+	$(F77_TEST_OBJECT_REQUIRED_TO_RUN)	\
+	$(PASSING_F90_TEST_Objects)		\
+	$(F90_TEST_OBJECT_REQUIRED_TO_RUN)
+
 clean-local:
+	rm -f $(OBJECTS_WITH_TESTS)
+	rm -f $(addsuffix .passed, $(OBJECTS_WITH_TESTS))
+	rm -f $(addsuffix .failed, $(OBJECTS_WITH_TESTS))
+	rm -f $(addsuffix .err, $(OBJECTS_WITH_TESTS))
+	rm -f $(addsuffix .out, $(OBJECTS_WITH_TESTS))
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
 EXTRA_DIST = 
