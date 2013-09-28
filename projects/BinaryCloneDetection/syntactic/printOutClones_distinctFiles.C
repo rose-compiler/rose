@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
 	  bool found = false;
 	  multimap<int, int>::const_iterator low = edges.lower_bound(Cluster.nr);
 	  multimap<int, int>::const_iterator up = edges.upper_bound(Cluster.nr);
-	  for (low; low !=up;++low) {
+	  for (/*void*/; low !=up;++low) {
 	    if (low->second==node.nr) {
 	      found = true;
 	      filterMultiEdges++;
@@ -407,7 +407,7 @@ int main(int argc, char* argv[])
     if (edge.size()==1) {
       multimap<std::string, std::string>::const_iterator low = edge.lower_bound(key);
       multimap<std::string, std::string>::const_iterator up = edge.upper_bound(key);
-      for (low; low !=up;++low) {
+      for (/*void*/; low !=up;++low) {
 	std::string sourceName = low->first; // file
 	std::string targetName = low->second; // cluster
 	// if a node has only 1 edge, aggregate.
@@ -467,7 +467,7 @@ int main(int argc, char* argv[])
 	bool mergedNode=false;
 	multimap<std::string, std::string>::const_iterator lower = edge.lower_bound(key);
 	multimap<std::string, std::string>::const_iterator uper = edge.upper_bound(key);
-	for (lower; lower !=uper;++lower) {
+	for (/*void*/; lower !=uper;++lower) {
 	  std::string sourceName = lower->first; // file
 	  std::string targetName = lower->second; // cluster
 	  // the first node is a cluster (source) the second the file
@@ -505,7 +505,7 @@ int main(int argc, char* argv[])
 	  //cerr << "   Erasing edge " << " " << source.nr << " -> " << target.nr << endl;
 	  multimap<int, int>::iterator lowIt = edges.lower_bound(source.nr);
 	  multimap<int, int>::iterator upIt = edges.upper_bound(source.nr);
-	  for (lowIt; lowIt !=upIt;++lowIt) {
+	  for (/*void*/; lowIt !=upIt;++lowIt) {
 	    if (lowIt->second==target.nr) {
 	      edges.erase(lowIt);
 	      break;
@@ -518,14 +518,14 @@ int main(int argc, char* argv[])
 	  bool foundS = false;
 	  multimap<int, int>::const_iterator low = edges.lower_bound(sourceE.nr);
 	  multimap<int, int>::const_iterator up = edges.upper_bound(sourceE.nr);
-	  for (low; low !=up;++low) {
+	  for (/*void*/; low !=up;++low) {
 	    if (low->second==targetE.nr)
 	      foundS = true;
 	  }
 	  bool foundT = false;
 	  low = edges.lower_bound(targetE.nr);
 	  up = edges.upper_bound(targetE.nr);
-	  for (low; low !=up;++low) {
+	  for (/*void*/; low !=up;++low) {
 	    if (low->second==sourceE.nr)
 	      foundT = true;
 	  }
@@ -553,8 +553,6 @@ int main(int argc, char* argv[])
 
   set<int> all_nodes;
 
-  double min = 0.5;
-
   map<std::string, Node_type>::const_iterator vec=clusters.begin();
   for (;vec!=clusters.end();++vec) {
     Node_type cluster = vec->second;
@@ -562,7 +560,6 @@ int main(int argc, char* argv[])
     int nr = cluster.nr;
     all_nodes.insert(nr);
     int len = cluster.size;
-    int fac = 3;
     string color = cluster.color;
     int w = len;
     myfile << "  node [ id " << nr << endl;
@@ -573,6 +570,8 @@ int main(int argc, char* argv[])
       myfile << "    label \"" << int2str(nr) <<"\""; //<< endl 
     }
 #if VIZZ3D
+    int fac = 3;
+    double min = 0.5;
     myfile << "    Node_Color_ \"" << color << "\"" //<< endl
 	   << "    Node_Shape_ \"0\"" //<< endl
 	   << "    Width_ \""<< (log(len/fac+min)) << "\"" //<< endl
@@ -596,10 +595,10 @@ int main(int argc, char* argv[])
     if (len<=0) len =0.5;
     int h = (int)(15*log(len)+15);
 
-    int fac = 3;
     myfile << "  node [ id " << nr << endl 
 	   << "    label \"" << vecName <<"\""; //<< endl 
 #if VIZZ3D
+    int fac = 3;
     myfile << "    Node_Color_ \""<< color << "\"" //<< endl
 	   << "    Node_Shape_ \"0\"" //<< endl
 	   << "    Width_ \""<< (log(w/fac+min)) << "\"" //<< endl

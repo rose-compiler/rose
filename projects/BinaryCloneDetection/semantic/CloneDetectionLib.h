@@ -1278,9 +1278,13 @@ public:
     }
 
     // Printing
-    void print(std::ostream &o, unsigned domain_mask=0x07) const {
-        BaseSemantics::SEMANTIC_NO_PRINT_HELPER *helper = NULL;
-        this->registers.print(o, "   ", helper);
+    void print(std::ostream &o) const {
+        BaseSemantics::Formatter fmt;
+        fmt.set_line_prefix("    ");
+        print(o, fmt);
+    }
+    void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+        this->registers.print(o, fmt);
         size_t ncells=0, max_ncells=100;
         o <<"== Memory ==\n";
         for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
@@ -2314,8 +2318,12 @@ public:
         
 
     // Print the state, including memory and register access flags
-    void print(std::ostream &o, bool abbreviated=false) const {
-        state.print(o, abbreviated?this->get_active_policies() : 0x07);
+    void print(std::ostream &o) const {
+        BaseSemantics::Formatter fmt;
+        print(o, fmt);
+    }
+    void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+        state.print(o, fmt);
     }
     
     friend std::ostream& operator<<(std::ostream &o, const Policy &p) {

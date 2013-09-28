@@ -143,8 +143,6 @@ int main(int argc, char* argv[])
     sqlite3_command cmd(con, selectSeparateDatasets.c_str());
     sqlite3_reader datasets=cmd.executereader();
 
-    int thisClusterName;
-    
     size_t eltCount = 0;
 
     try {
@@ -196,7 +194,7 @@ int main(int argc, char* argv[])
   //completeley by (function_id,begin_index) which makes it possible to use canto_pairing.
   std::vector<int> indexForChange;
   int size = listOfClonePairs[0].end_index_within_function_B-listOfClonePairs[0].index_within_function_B;
-  for( int i =0; i < listOfClonePairs.size(); i++   )
+  for( size_t i =0; i < listOfClonePairs.size(); i++   )
   {
     if( listOfClonePairs[i].end_index_within_function_B -  listOfClonePairs[i].index_within_function_B != size )
     {
@@ -208,7 +206,7 @@ int main(int argc, char* argv[])
 
   int cluster =0;
   //Find clusters as dsjoint sets
-  for( int i=0; i < indexForChange.size(); i++ )
+  for( size_t i=0; i < indexForChange.size(); i++ )
   {
     int begin_index = 0;
     
@@ -231,7 +229,7 @@ int main(int argc, char* argv[])
     for(int j=begin_index; j < end_index; j++ )
     {
       Element& cur_elem = listOfClonePairs[j];
-      assert(size == cur_elem.end_index_within_function_B-cur_elem.index_within_function_B);
+      assert(size == (uint64_t)cur_elem.end_index_within_function_B-cur_elem.index_within_function_B);
 
       uniqueElements.push_back(std::pair<int,int>(cur_elem.function_id_A, cur_elem.index_within_function_A) );
       uniqueElements.push_back(std::pair<int,int>(cur_elem.function_id_B, cur_elem.index_within_function_B) );
@@ -251,7 +249,7 @@ int main(int argc, char* argv[])
     std::cout << "Size:" << end_index-begin_index << std::endl;
      
     //Insert each A and B in a clone pair (A,B) into set
-    for(int j =0; j < uniqueElements.size() ; j++) ds.make_set(j);
+    for(size_t j =0; j < uniqueElements.size() ; j++) ds.make_set(j);
      
     std::map<std::pair<int,int>,int> hack;
     //Pair A and B in a clone pair (A,B)
@@ -365,8 +363,6 @@ int main(int argc, char* argv[])
   //Sort set of clone pairs
 
   //Perform clone merging
-
-  bool first = true;
 
   try{
     sqlite3_transaction trans2(con);

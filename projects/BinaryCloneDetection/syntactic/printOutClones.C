@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
     std::cout << "Cluster " << vectorOfClusters[i][0].cluster <<
       " has " << vectorOfClusters[i].size() << " elements. " << std::endl;
 
-    for(int j=0; j < vectorOfClusters[i].size(); j++)
+    for(size_t j=0; j < vectorOfClusters[i].size(); j++)
     {
       std::cout << "  elem " << j << ": row in vectors " << vectorOfClusters[i][j].vectors_row
                 << " function id " << vectorOfClusters[i][j].function_id 
