@@ -429,18 +429,13 @@ public:
  
     /** Get instructions covered by trace in the order in which they were encountered.
      */
-    void get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembler::InstructionMap& instr_map, SgAsmFunction* top = NULL);    
+    void get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top = NULL);    
 protected:
     int func_id, igroup_id;
  
     typedef std::map<rose_addr_t, InsnCoverageRow> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
-
-typedef std::map<SgAsmInterpretation*, Disassembler::InstructionMap*> InstructionMapMap;
-
-Disassembler::InstructionMap*
-get_instr_map(InstructionMapMap& instr_map_map, SgAsmInterpretation* top);
 
 /*******************************************************************************************************************************
  *                                      Dynamic Function Call Graph
@@ -1302,25 +1297,25 @@ public:
 
     // Printing
     void print(std::ostream &o, unsigned domain_mask=0x07) const {
-        BaseSemantics::SEMANTIC_NO_PRINT_HELPER *helper = NULL;
-        this->registers.print(o, "   ", helper);
-        size_t ncells=0, max_ncells=100;
-        o <<"== Memory ==\n";
-        for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
-            uint32_t addr = ci->first;
-            const MemoryValue &mval = ci->second;
-            if (++ncells>max_ncells) {
-                o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
-                break;
-            }
-            o <<"         cell access:"
-              <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
-              <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-              <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
-              <<"\n"
-              <<"    address " <<addr <<"\n";
-            o <<"      value " <<mval.val <<"\n";
+      BaseSemantics::SEMANTIC_NO_PRINT_HELPER *helper = NULL;
+      this->registers.print(o, "   ", helper);
+      size_t ncells=0, max_ncells=100;
+      o <<"== Memory ==\n";
+      for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
+        uint32_t addr = ci->first;
+        const MemoryValue &mval = ci->second;
+        if (++ncells>max_ncells) {
+          o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
+          break;
         }
+        o <<"         cell access:"
+          <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+          <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+          <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+          <<"\n"
+          <<"    address " <<addr <<"\n";
+        o <<"      value " <<mval.val <<"\n";
+      }
     }
 
     friend std::ostream& operator<<(std::ostream &o, const State &state) {

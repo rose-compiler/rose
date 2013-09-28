@@ -1163,8 +1163,6 @@ main(int argc, char *argv[])
     FuncAnalyses funcinfo;
 
 
-    InstructionMapMap instr_map_map;
-
     while (!worklist.empty()) {
         ++progress;
         WorkItem work = worklist.shift();
@@ -1284,12 +1282,10 @@ main(int argc, char *argv[])
 
         std::vector<SgAsmInstruction*> insns;
 
-        Disassembler::InstructionMap* instr_map = get_instr_map(instr_map_map, interp); 
-
         if ( opt.params.path_syntactic == PATH_SYNTACTIC_ALL ){
-          insn_coverage.get_instructions(insns, *instr_map);
+          insn_coverage.get_instructions(insns, interp);
         }else if(opt.params.path_syntactic == PATH_SYNTACTIC_FUNCTION ){
-          insn_coverage.get_instructions(insns, *instr_map, func );
+          insn_coverage.get_instructions(insns, interp, func );
         }
 
         int syntactic_ninsns = insns.size(); 

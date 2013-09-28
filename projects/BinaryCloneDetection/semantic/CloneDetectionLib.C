@@ -16,6 +16,7 @@
 #include <string>
 #include <sys/mman.h>
 #include <unistd.h>
+#include "sqlite3x.h"
 
 using namespace sqlite3x;
 
@@ -24,42 +25,6 @@ using namespace sqlite3x;
 namespace CloneDetection {
 
 const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
-
-/*******************************************************************************************************************************
- *                                      Helpers
- *******************************************************************************************************************************/
-
-
-
-Disassembler::InstructionMap*
-get_instr_map(InstructionMapMap& instr_map_map, SgAsmInterpretation* top)
-{
-  InstructionMapMap::iterator it = instr_map_map.find(top);
-  Disassembler::InstructionMap* instr_map;
-  
-  if ( it == instr_map_map.end())
-  {
-    instr_map = new Disassembler::InstructionMap;
-
-    instr_map_map[top] = instr_map;
-    std::vector<SgAsmInstruction*> tmp_insns;
-
-    FindInstructionsVisitor vis;
-    AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &tmp_insns ));
-
-
-    //Addresses and map of instructions in the subtree of top
-    for(std::vector<SgAsmInstruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it) {
-      (*instr_map)[(*it)->get_address()] = (*it);
-    }
-
-  }else{
-    instr_map = it->second;
-  }
-
-  return instr_map;
-}
-
 
 
 
@@ -810,11 +775,12 @@ InsnCoverage::get_ratio(SgAsmFunction *func, int func_id, int igroup_id) const
 
 
 void
-InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembler::InstructionMap& instr_map, SgAsmFunction* top )
+InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top )
 {
   //Find the instructions 
   std::vector<SgAsmx86Instruction*> tmp_insns;
 
+  InstructionMap instr_map = interp->get_instruction_map(interp);
   if (top != NULL){
 
     FindInstructionsVisitor vis;
