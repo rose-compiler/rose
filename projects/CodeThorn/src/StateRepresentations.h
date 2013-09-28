@@ -278,6 +278,8 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   long removeDuplicates();
   Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
+  // this allows to deal with multiple start transitions (must share same start state)
+  const EState* getStartEState();
   Transition getStartTransition();
 #if 1
   void erase(TransitionGraph::iterator transiter);

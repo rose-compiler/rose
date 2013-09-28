@@ -407,8 +407,17 @@ EStateId EStateSet::estateId(const EState estate) const {
   * \author Markus Schordan
   * \date 2012.
  */
+const EState* TransitionGraph::getStartEState() {
+  for(TransitionGraph::iterator i=begin();i!=end();++i) {
+    if((*i).source->label()==getStartLabel()) {
+	  return (*i).source;
+	}
+  }
+  return 0;
+}
+
 Transition TransitionGraph::getStartTransition() {
-  // we intentionally ensure that only exactly one start transition exists
+  // we ensure that all start transitions share the same start label
   TransitionGraph::iterator foundElementIter=end();
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
     if((*i).source->label()==getStartLabel()) {
@@ -421,8 +430,9 @@ Transition TransitionGraph::getStartTransition() {
   }
   if(foundElementIter!=end())
     return *foundElementIter;
-  else
+  else {
     throw "TransitionGraph: no start transition found.";
+  }
 }
 
 /*! 
@@ -847,10 +857,12 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     set<Transition> newTransitions;
     for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
       for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-        Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
-        Transition t((*i)->source,newEdge,(*j)->target);
-        newTransitions.insert(t);
+		if((*i)->source!=estate && (*j)->target!=estate) {
+		  Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
+		  Transition t((*i)->source,newEdge,(*j)->target);
+		  newTransitions.insert(t);
         //assert(newTransitions.find(t)!=newTransitions.end());
+		}
       }
     }
     //cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
@@ -869,6 +881,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
       this->add(*k);
       //assert(find(*k)!=end());
     }
+	eliminateEState(estate);
     assert(newTransitions.size()<=in.size()*out.size());
   } else {
     // need to eliminate node instead
