@@ -42,4 +42,4 @@ clean-local:
 	rm -f $(TEST_TARGETS:.passed=.err)
 	rm -f $(TEST_TARGETS:.passed=.out)
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST += CMakeLists.txt

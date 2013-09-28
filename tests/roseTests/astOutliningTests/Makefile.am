@@ -81,7 +81,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	moreTest5.cpp				\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
-	reference.cpp				\
+	reference.cpp
 
 FORTRAN_TESTCODES_REQUIRED_TO_PASS =		\
 	array-variable.f			\
@@ -157,7 +157,7 @@ TESTCODE_CURRENTLY_FAILING =			\
 	real8.f					\
 	stop2.f90				\
 	triangle.cpp				\
-	useModule1.f90				\
+	useModule1.f90
 
 EXTRA_DIST += $(TESTCODE_CURRENTLY_FAILING)
 
@@ -285,7 +285,7 @@ endif
 
 $(noswitch_test_targets): noswitch_%.passed: % outline
 	@$(RTH_RUN) \
-		TITLE"outline $(notdir $<) [$@]" \
+		TITLE="outline $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(noswitch_test_args) -c $<" \
 		$(TEST_EXIT_STATUS) $@

@@ -8,7 +8,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 #------------------------------------------------------------------------------------------------------------------------
 # inlineEverything
 
-noinst_PROGRAMS = inlineEverything
+noinst_PROGRAMS += inlineEverything
 inlineEverything_SOURCES = inlineEverything.C
 inlineEverything_CPPFLAGS = $(ROSE_INCLUDES)
 inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)

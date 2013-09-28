@@ -145,7 +145,7 @@ graph_test_6c.passed: $(top_srcdir)/binaries/samples/pocketputty.exe graph_test_
 qm_script = $(abspath $(top_srcdir)/scripts/qm.sh)
 qm_specimens = inputCode_main.C
 qm_test_targets = $(addprefix qm_, $(addsuffix .passed, $(qm_specimens)))
-EXTRA_DIST = $(qm_specimens)
+EXTRA_DIST += $(qm_specimens)
 
 TEST_TARGETS += $(qm_test_targets)
 $(qm_test_targets): qm_%.passed: %
