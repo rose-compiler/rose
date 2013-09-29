@@ -201,13 +201,8 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
     int func1 = row.get<int>(0);
     int func2 = row.get<int>(1);
 
-    if ( func1 < func2 ){
-      boost::tie(edge, flag) = add_edge(func1, func2, graph);
-      ds.union_set(func1,func2);
-    }else{
-      boost::tie(edge, flag) = add_edge(func2, func1, graph);
-      ds.union_set(func2,func1);
-    }
+    boost::tie(edge, flag) = add_edge(func1, func2, graph);
+    ds.union_set(func1,func2);
 
 
   }
