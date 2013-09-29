@@ -10,6 +10,7 @@
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
 // Written by Adrian Prantl <adrian@llnl.gov>.
+// Several bugfixes & improvements (c) 2013 Adrian Prantl.
 //
 // UCRL-CODE-155962.
 // All rights reserved.
@@ -126,6 +127,21 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   return preds;
 }
 
+static AType::BoolLattice flip(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice raise(AType::BoolLattice b) {
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice lower(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  return b;
+}
 
 /**
  * DOT visualization of the LTL Checker result
@@ -588,26 +604,27 @@ public:
 
       // Endpoint handling
       if (is_leaf(succ, stg.g)) {
-    if (endpoints.count(succ) == 0) {
-      //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
-      // Orphan: did it become an orphan because it was replaced by a new node?
-      FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
-        FOR_EACH_SUCCESSOR(s, pred, stg.g)
-          worklist.push(s);
-        END_FOR;
-        // should be redundant: worklist.push(pred);
-      } END_FOR;
-      // Cut it off.
-      clear_vertex(succ, stg.g);
-    } else {
-      //cerr<<"hit a real endpoint: "<<succ<<endl;
-      // Real endpoint (ie. exit/assert)
-      // Endpoints always receive a strong update, because there is no ambiguity
-      LTLState old_state = stg.g[succ];
-      LTLState new_state = transfer(old_state, end_state, verbose, true);
-      stg.g[succ] = new_state;
-      stg.vertex[new_state] = succ;
-    }
+	if (endpoints.count(succ) == 0) {
+	  //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
+	  // Orphan: did it become an orphan because it was replaced by a new node?
+          // (technically, this is the inverse of an orphan: A parent without kids. A DINK?)
+	  FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
+	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
+	      worklist.push(s);
+	    END_FOR;
+	    worklist.push(pred);
+	  } END_FOR;
+	  // Cut it off.
+	  clear_vertex(succ, stg.g);
+	} else {
+	  //cerr<<"hit a real endpoint: "<<succ<<endl;
+	  // Real endpoint (ie. exit/assert)
+	  // Endpoints always receive a strong update, because there is no ambiguity
+	  LTLState old_state = stg.g[succ];
+	  LTLState new_state = transfer(old_state, end_state, verbose, true);
+	  stg.g[succ] = new_state;
+	  stg.vertex[new_state] = succ;
+	}
       }
 
       // Store all successors in the temporary list vs because our
@@ -691,7 +708,8 @@ public:
         FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
           worklist.push(v_succ);
         END_FOR;
-        // should be redundant: worklist.push(v);
+        // Add v to the worklist so it can be removed if it has no other successors any more.
+	worklist.push(v);
 
 #ifdef ANIM_OUTPUT
         if (anim_i++ > ANIM_START) {
@@ -1020,7 +1038,8 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
+      // Use the neutral element instead of Bot.
+      BoolLattice new_val  = /*old_val ||*/ e1 || (succ_val.isBot()?false:succ_val);
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1038,10 +1057,7 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      // TODO: I'm not sure about the correct way to combine old_val with the new one
-      // And my current intuition is that it is safe to ignore it, since it
-      // will be propagated back to this node, if we have a loop, anyway.
-      BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
+      BoolLattice new_val = /*old_val &&*/ e1 && (succ_val.isBot()?true:succ_val);
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1093,7 +1109,7 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
-      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && (succ_val.isBot()?true:succ_val)));
       if (verbose) cerr<<"  Until(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1132,7 +1148,7 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
-      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || (succ_val.isBot()?false:succ_val)));
       if (verbose) cerr<<"  Release(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1337,7 +1353,7 @@ UChecker::verify(const Formula& f)
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
       //cerr<<"Value at START = "<<s.top()<<endl;
-      b = b && s.top();
+      b = b && lower(s.top());
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;

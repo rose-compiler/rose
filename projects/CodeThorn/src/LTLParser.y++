@@ -181,15 +181,15 @@ int ltl_lex(void) {
                 ungetc(ltl_next_char, ltl_input);
                 return ltl_next_char;
               }
-  case 'f':   if(getc(ltl_input) != 'a' && 
-		 getc(ltl_input) != 'l' &&
-		 getc(ltl_input) != 's' &&
-		 getc(ltl_input) != 'e') return '#';
-              return FALSE;
-  case 't':   if(getc(ltl_input) != 'r' && 
-		 getc(ltl_input) != 'u' &&
-		 getc(ltl_input) != 'e') return '#';
-              return TRUE;
+  case 'f':   if(getc(ltl_input) == 'a' && 
+		 getc(ltl_input) == 'l' &&
+		 getc(ltl_input) == 's' &&
+		 getc(ltl_input) == 'e') return FALSE;
+              return '#';
+  case 't':   if(getc(ltl_input) == 'r' && 
+		 getc(ltl_input) == 'u' &&
+		 getc(ltl_input) == 'e') return TRUE;
+              return '#';
 
   case '\r':
   case '\n':  ltl_line++; 
