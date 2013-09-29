@@ -25,19 +25,23 @@
 #include <vector>
 #include <set>
 #include <list>
+#include <string>
 
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
 
-static VariableIdSet variablesOfInterest;
+#include "ReachabilityResults.h"
 
+static VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
+char* csvAssertFileName=0;
+
+ReachabilityResults reachabilityResults;
 
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
 }
-
 
 bool trivialInline(SgFunctionCallExp* funCall) {
   /*
@@ -546,30 +550,30 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 int isIfWithLabeledAssert(SgNode* node) {
   if(isSgIfStmt(node)) {
 	node=SgNodeHelper::getTrueBranch(node);
-	cout<<"TrueBranch:";
-	cout<<node->class_name();
 	RoseAst block(node);
 	for(RoseAst::iterator i=block.begin();i!=block.end();++i) {
 	  SgNode* node2=*i;
 	  if(SgExprStatement* exp=isSgExprStatement(node2))
 		node2=SgNodeHelper::getExprStmtChild(exp);
-	  cout<<":"<<node2->class_name();
-	  if(SgNodeHelper::Pattern::matchAssertExpr(node2)) {
-		cout<<"ASSERT FOUND:";
-		if(isSgLabelStatement(node2)) {
-		  cout<<"LabelFound ";
+	  if(isSgLabelStatement(node2)) {
+		RoseAst::iterator next=i;
+		next++;
+		if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
+		  //		  cout<<"ASSERT FOUND with Label found:"<<endl;
+		  SgLabelStatement* labStmt=isSgLabelStatement(*i);
+		  assert(labStmt);
+		  string name=SgNodeHelper::getLabelName(labStmt);
 #if 0
-		  SgLabelStatement* labStmt=isSgLabelStatement(node);
 		  string name=labelNameOfAssertLabel(node->label());
+#endif
 		  if(name=="globalError")
 			name="error_60";
 		  name=name.substr(6,name.size()-6);
-		  cout<<name;
+		  std::istringstream ss(name);
+		  int num;
+		  ss>>num;
 		  // extract error number
-#endif
-		  cout<<endl;
-		  return 1000;
-
+		  return num;
 		}
 	  }
 	}
@@ -662,48 +666,49 @@ EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult) {
 
 EvalValueType eval(SgExpression* node) {
   EvalValueType res;
+  stringstream watch;
   if(dynamic_cast<SgBinaryOp*>(node)) {
 	SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
 	assert(lhs);
 	SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
 	assert(rhs);
-	cout<<"(";
+	watch<<"(";
 	EvalValueType lhsResult=eval(lhs);
-	cout<<",";
+	watch<<",";
 	EvalValueType rhsResult=eval(rhs);
-	cout<<")";
+	watch<<")";
 	switch(node->variantT()) {
-	case V_SgAndOp: cout<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
-	case V_SgOrOp : cout<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
+	case V_SgAndOp: watch<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
+	case V_SgOrOp : watch<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
 
-	case V_SgEqualityOp: cout<<"==";res=(lhsResult==rhsResult);break;
-	case V_SgNotEqualOp: cout<<"!=";res=(lhsResult!=rhsResult);break;
-	case V_SgGreaterOrEqualOp: cout<<">=";res=(lhsResult>=rhsResult);break;
-	case V_SgGreaterThanOp: cout<<">";res=(lhsResult>rhsResult);break;
-	case V_SgLessThanOp: cout<<"<";res=(lhsResult<rhsResult);break;
-	case V_SgLessOrEqualOp: cout<<"<=";res=(lhsResult<=rhsResult);break;
+	case V_SgEqualityOp: watch<<"==";res=(lhsResult==rhsResult);break;
+	case V_SgNotEqualOp: watch<<"!=";res=(lhsResult!=rhsResult);break;
+	case V_SgGreaterOrEqualOp: watch<<">=";res=(lhsResult>=rhsResult);break;
+	case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
+	case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
+	case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
 
-	default:cout<<"#1:";cout<<node->class_name();cout<<"#";assert(0);
+	default:watch<<"#1:";watch<<node->class_name();watch<<"#";assert(0);
 	}
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
 	SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
-	cout<<"(";
+	watch<<"(";
 	EvalValueType childVal=eval(child);
-	cout<<")";
+	watch<<")";
 	assert(child);
 	switch(node->variantT()) {
-	case V_SgNotOp:cout<<"!";res=!childVal;break;
-	case V_SgCastExp:cout<<"C";res=childVal;break; // requires refinement for different types
-	case V_SgMinusOp:cout<<"-";res=-childVal; break;
-	default:cout<<"#2:";cout<<node->class_name();cout<<"#";assert(0);
+	case V_SgNotOp:watch<<"!";res=!childVal;break;
+	case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
+	case V_SgMinusOp:watch<<"-";res=-childVal; break;
+	default:watch<<"#2:";watch<<node->class_name();watch<<"#";assert(0);
 	}
   } else {
   // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
 	switch(node->variantT()) {
-	case V_SgBoolValExp: cout<<"B";res=evalSgBoolValExp(node);break;
-	case V_SgIntVal:cout<<"I";res=evalSgIntVal(node);break;
-	case V_SgVarRefExp:cout<<"V";res=evalSgVarRefExp(node);break;
-	default:cout<<"#3:";cout<<node->class_name();cout<<"#";assert(0);
+	case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
+	case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
+	case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
+	default:watch<<"#3:";watch<<node->class_name();watch<<"#";assert(0);
 	}
   }
   return res;
@@ -737,12 +742,16 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	  exp=isSgExpression(node);
 	  if(exp) {
 		ConstIntLattice res=eval(exp);
-		if(res.isTrue()||res.isFalse()) {
-		  cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString();
-		  int isAssert=isIfWithLabeledAssert(*i);
-		  cout<<(*i)->unparseToString();
+		int assertCode=isIfWithLabeledAssert(*i);
+		if(assertCode>=0) {
+		  if(res.isTrue()) {
+			reachabilityResults.reachable(assertCode);
+		  }
+		  if(res.isFalse()) {
+			reachabilityResults.nonReachable(assertCode);
+		  }
 		}
-		cout<<endl;
+		//cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString()<<endl;
 	  }
 	}
   }
@@ -788,6 +797,11 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
 
 
 int main(int argc, char* argv[]) {
+  if(argc==3) {
+	csvAssertFileName=argv[2];
+	argc=2; // don't confuse ROSE command line
+	cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
+  }
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -845,6 +859,11 @@ int main(int argc, char* argv[]) {
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
   eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
   eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
+  if(csvAssertFileName) {
+	cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
+	reachabilityResults.write2013File(csvAssertFileName,true);
+  }
+
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();

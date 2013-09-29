@@ -204,6 +204,8 @@ woodpecker_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.
   addressTakenAnalysis/VariableIdUtils.h \
   addressTakenAnalysis/addressTakenAnalysis.C \
   addressTakenAnalysis/addressTakenAnalysis.h \
+  ReachabilityResults.h \
+  ReachabilityResults.C \
   woodpecker.C
 
 
