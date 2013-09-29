@@ -8,6 +8,10 @@
 #include <boost/graph/incremental_components.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
+#include <boost/graph/breadth_first_search.hpp> 
+#include <boost/graph/visitors.hpp> 
+#include <vector> 
+
 #include <algorithm>
 #include <set>
 #include <iterator>
@@ -101,6 +105,124 @@ load_function_api_calls_for(int func_id)
 
 using namespace boost;
 
+
+typedef boost::adjacency_list< boost::vecS, 
+        boost::vecS, 
+        boost::directedS > DirectedGraph; 
+
+
+void
+create_reachable_node_graph()
+{
+  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
+
+
+  SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into semantic_rg"
+      // 0        1         2  
+      "(caller, callee, file_id)"
+      " values (?, ?, ?)");
+
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+      "select id from semantic_files"
+      );
+
+
+  // Delete from the database all call graph edges that correspond to one of our specimen files.
+  std::set<int> file_ids;
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
+    file_ids.insert(row.get<int>(0));
+  }
+  std::string sql = "delete from semantic_cg where file_id in (";
+  for (std::set<int>::iterator i=file_ids.begin(); i!=file_ids.end(); ++i)
+    sql += (i==file_ids.begin()?"":", ") + StringUtility::numberToString(*i);
+  sql += ")";
+  transaction->execute(sql);
+
+
+
+  //Create the new reachability graph
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
+
+    DirectedGraph G( VERTEX_COUNT );
+
+    //add all edges from functions in file
+
+    int file_id = row.get<int>(0); 
+
+    SqlDatabase::StatementPtr func_in_file_stmt = transaction->statement(
+        "select scg.caller, scg.callee from semantic_cg as scg "
+        " join semantic_functions as sf on scg.caller = sf.id "
+        " where sf.file_id = ? "
+        );
+
+    func_in_file_stmt->bind(0,file_id);
+
+    std::set<int> callers_in_file; 
+
+    //insert edges into graph
+    for (SqlDatabase::Statement::iterator func_row = func_in_file_stmt->begin(); func_row != func_in_file_stmt->end(); ++func_row) {
+
+      int caller = func_row.get<int>(0);
+      int callee = func_row.get<int>(1);
+
+      boost::add_edge(caller, callee, G); 
+
+      callers_in_file.insert(caller);
+
+    }
+
+    typedef graph_traits<DirectedGraph>::vertex_iterator vertex_iter;
+    std::pair<vertex_iter, vertex_iter> vp;
+
+    //iterate over each vertex of the graph, find all reachable nodes,
+    //and insert them into the db
+    for (vp = boost::vertices(G); vp.first != vp.second; ++vp.first)
+    {
+      int caller = *vp.first;
+
+      //if the vertex is a function in the file, analyze it, otherwise skip.
+      if( callers_in_file.find(caller) == callers_in_file.end() )
+        continue;
+
+
+      //find all reachable nodes
+
+      typedef DirectedGraph::vertex_descriptor Vertex; 
+      std::vector<Vertex> reachable; 
+
+      boost::breadth_first_search(G, *vp.first, 
+          boost::visitor( 
+            boost::make_bfs_visitor( 
+              boost::write_property( 
+                boost::identity_property_map(), 
+                std::back_inserter(reachable), 
+                boost::on_discover_vertex())))); 
+
+
+      //insert all callees by function into db
+      for(std::vector<Vertex>::iterator r_it = reachable.begin(); r_it != reachable.end(); ++r_it)
+      {
+        int callee = *r_it;
+        //std::cout << " caller " << caller << " callee " << callee << std::endl;
+
+        if ( caller == callee )
+          continue;
+
+        insert_stmt->bind(0, caller);
+        insert_stmt->bind(1, callee);
+        insert_stmt->bind(2, file_id);
+
+        insert_stmt->execute();
+
+      }
+
+
+    }
+  }
+
+}
 
 void
 normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map)
@@ -201,8 +323,8 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
     int func1 = row.get<int>(0);
     int func2 = row.get<int>(1);
 
-    boost::tie(edge, flag) = add_edge(func1, func2, graph);
-    ds.union_set(func1,func2);
+      boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      ds.union_set(func1,func2);
 
 
   }
@@ -553,6 +675,12 @@ main(int argc, char *argv[])
     transaction->execute("create index fr_tmp_library_funcs_name_index on tmp_library_funcs(name)");
 
 
+    //create reachability graph
+    std::cout << "START creating reachability graph" << std::endl;
+
+    create_reachable_node_graph();
+
+    std::cout << "END creating reachability graph" << std::endl;
 
 
     //Creat list of functions and igroups to analyze

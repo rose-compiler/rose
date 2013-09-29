@@ -113,6 +113,16 @@ create table semantic_cg (
        cmd bigint references semantic_history(hashkey) -- Command that created this row
 );
 
+-- Function reachability graph
+create table semantic_rg (
+       caller integer references semantic_functions(id),
+       callee integer references semantic_functions(id),
+       file_id integer references semantic_files(id) -- File from which this call originates (used during update)
+       --cmd bigint references semantic_history(hashkey) -- Command that created this row
+);
+
+
+
 -- This is the list of instructions for each function.  Functions need not be contiguous in memory, and two instructions
 -- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
 -- function.
