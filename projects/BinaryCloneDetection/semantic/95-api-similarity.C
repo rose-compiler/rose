@@ -81,7 +81,7 @@ load_function_api_calls_for(int func_id)
 {
   SqlDatabase::StatementPtr stmt = transaction->statement(
      "select distinct scg.callee from semantic_cg as scg "  
-     " join tmp_interesting_funcs as tif on tif.func_id = scg.callee "
+     //" join tmp_interesting_funcs as tif on tif.func_id = scg.callee "
      " where scg.caller=? ORDER BY scg.callee"
      );
  
@@ -115,12 +115,31 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
 
       " UNION "
 
-      //all library call pairs that has the same name
+      //all library call pairs that has the same name in the call trace
       " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
       " join tmp_library_funcs sem2 on sem.name = sem2.name "
       " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
       " where sem.func_id < sem2.func_id AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
+
+      " UNION "
+
+      //all library calls that has the same name as a tested function
+      " select distinct tplt.func_id as func1_id, tlib.func_id as func2_id from tmp_plt_func_names as tplt" 
+      " join tmp_library_funcs as tlib on tplt.name = tlib.name "
+      " join semantic_cg as scg on tplt.func_id  = scg.callee "
+      " where scg.caller IN (?,?) "
+
+      " UNION "
+
+      //all library call pairs that has the same name in the static cg
+      " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
+      " join tmp_library_funcs sem2 on sem.name = sem2.name "
+      " join semantic_cg as tcf1 on sem.func_id  = tcf1.callee "
+      " join semantic_cg as tcf2 on sem2.func_id = tcf2.callee "
+      " where sem.func_id < sem2.func_id AND tcf1.caller IN (?,?) AND tcf2.caller IN (?,?) "
+
+
 
       );
 
@@ -138,6 +157,12 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
   stmt->bind(6, func2_id);
   stmt->bind(7, func1_id);
   stmt->bind(8, func2_id);
+  stmt->bind(9, func1_id);
+  stmt->bind(10, func2_id);
+  stmt->bind(11, func1_id);
+  stmt->bind(12, func2_id);
+  stmt->bind(13, func1_id);
+  stmt->bind(14, func2_id);
 
   if(stmt->begin() == stmt->end())
     return;
@@ -504,9 +529,10 @@ main(int argc, char *argv[])
     //table of tested functions. Criteria is that it needs to pass at least one test.
     transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
     
-    transaction->execute("create temporary table tmp_plt_func_names as ( select distinct name||'@plt' as name from semantic_functions where name NOT LIKE '%@plt')");
+    transaction->execute("create temporary table tmp_plt_func_names as ( select distinct name||'@plt' as name, id as func_id from semantic_functions where name NOT LIKE '%@plt')");
     transaction->execute("create temporary table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt'" 
-        " EXCEPT  (select distinct sem.id as func_id, sem.name from semantic_functions sem join tmp_plt_func_names plt on plt.name = sem.name) )"
+        //" EXCEPT  (select distinct sem.id as func_id, sem.name from semantic_functions sem join tmp_plt_func_names plt on plt.name = sem.name)"
+        " )"
         );
     transaction->execute("create temporary table tmp_interesting_funcs as ( select func_id from tmp_tested_funcs UNION select func_id from tmp_library_funcs ) ");
 
