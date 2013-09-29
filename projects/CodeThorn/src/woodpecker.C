@@ -469,7 +469,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   // 1) eliminate declaration of variable
   // 2) eliminate assignment to variable
   // 3) replace use of variable
-  cout<<"STATUS: Eliminating variables."<<endl;
+  cout<<"STATUS: Dead code elimination phase 1: Eliminating variables."<<endl;
   list<SgVariableDeclaration*> toDeleteVarDecls;
   list<SgAssignOp*> toDeleteAssignments;
   list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
@@ -537,7 +537,215 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
   cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variable with constant."<<endl;
   cout<<"STATUS: Eliminated "<<elimVar<<" dead variables."<<endl;
+  cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
+  return elimVar+elimAssignment+elimVarUses;
+}
 
+// returns the error_XX label number or -1
+//  error_0 is a valid label number (therefore -1 is returned if no label is found)
+int isIfWithLabeledAssert(SgNode* node) {
+  if(isSgIfStmt(node)) {
+	node=SgNodeHelper::getTrueBranch(node);
+	cout<<"TrueBranch:";
+	cout<<node->class_name();
+	RoseAst block(node);
+	for(RoseAst::iterator i=block.begin();i!=block.end();++i) {
+	  SgNode* node2=*i;
+	  if(SgExprStatement* exp=isSgExprStatement(node2))
+		node2=SgNodeHelper::getExprStmtChild(exp);
+	  cout<<":"<<node2->class_name();
+	  if(SgNodeHelper::Pattern::matchAssertExpr(node2)) {
+		cout<<"ASSERT FOUND:";
+		if(isSgLabelStatement(node2)) {
+		  cout<<"LabelFound ";
+#if 0
+		  SgLabelStatement* labStmt=isSgLabelStatement(node);
+		  string name=labelNameOfAssertLabel(node->label());
+		  if(name=="globalError")
+			name="error_60";
+		  name=name.substr(6,name.size()-6);
+		  cout<<name;
+		  // extract error number
+#endif
+		  cout<<endl;
+		  return 1000;
+
+		}
+	  }
+	}
+  }
+  return -1;
+}
+// ===================== EVALUATION ========================
+
+// to become a template/pattern
+typedef ConstIntLattice EvalValueType;
+EvalValueType evalSgBoolValExp(SgExpression* node) {
+  EvalValueType res;
+  SgBoolValExp* boolValExp=isSgBoolValExp(node);
+  assert(boolValExp);
+  int boolVal= boolValExp->get_value();
+  if(boolVal==0) {
+	res=false;
+	return res;
+  }
+  if(boolVal==1) {
+	res=true;
+	return res;
+  }
+  cerr<<"Error: boolean value different to 0 and 1.";
+  assert(0);
+}
+
+EvalValueType evalSgIntVal(SgExpression* node) {
+  EvalValueType res;
+  SgIntVal* intValNode=isSgIntVal(node);
+  int intVal=intValNode->get_value();
+  res=intVal;
+  return res;
+}
+
+// uses global environment (for this prototype only)
+// putting eval functions into an evaluator-class will model this properly
+// globals (for this function only):
+// global_xxx, global_variableIdMappingPtr
+VariableIdMapping* global_variableIdMappingPtr=0;
+VariableConstInfo* global_variableConstInfo=0;
+EvalValueType evalSgVarRefExp(SgExpression* node) {
+  assert(global_variableIdMappingPtr);
+  assert(global_variableConstInfo);
+  VariableId varId;
+  bool isVar=determineVariable(node, varId, *global_variableIdMappingPtr);
+  assert(isVar);
+  // varId is now VariableId of VarRefExp
+  if(global_variableConstInfo->isUniqueConst(varId)) {
+	return ConstIntLattice(global_variableConstInfo->uniqueConst(varId));
+  } else {
+	return ConstIntLattice(AType::Top());
+  }
+}
+
+bool isRelationalOp(SgExpression* node) {
+  switch(node->variantT()) {
+  case V_SgEqualityOp:
+  case V_SgNotEqualOp:
+  case V_SgGreaterOrEqualOp:
+  case V_SgGreaterThanOp:
+  case V_SgLessThanOp:
+  case V_SgLessOrEqualOp:
+	return true;
+  default: return false;
+  }
+}
+
+EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult) {
+  EvalValueType res;
+  // short-circuit CPP-AND semantics
+  if(lhsResult.isFalse()) {
+	res=lhsResult;
+  } else {
+	res=(lhsResult&&rhsResult);
+  }
+  return res;
+}
+
+EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult) {
+  EvalValueType res;
+  // short-circuit CPP-OR semantics
+  if(lhsResult.isTrue()) {
+	res=lhsResult;
+  } else {
+	res=(lhsResult||rhsResult);
+  }
+  return res;
+}
+
+EvalValueType eval(SgExpression* node) {
+  EvalValueType res;
+  if(dynamic_cast<SgBinaryOp*>(node)) {
+	SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
+	assert(lhs);
+	SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
+	assert(rhs);
+	cout<<"(";
+	EvalValueType lhsResult=eval(lhs);
+	cout<<",";
+	EvalValueType rhsResult=eval(rhs);
+	cout<<")";
+	switch(node->variantT()) {
+	case V_SgAndOp: cout<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
+	case V_SgOrOp : cout<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
+
+	case V_SgEqualityOp: cout<<"==";res=(lhsResult==rhsResult);break;
+	case V_SgNotEqualOp: cout<<"!=";res=(lhsResult!=rhsResult);break;
+	case V_SgGreaterOrEqualOp: cout<<">=";res=(lhsResult>=rhsResult);break;
+	case V_SgGreaterThanOp: cout<<">";res=(lhsResult>rhsResult);break;
+	case V_SgLessThanOp: cout<<"<";res=(lhsResult<rhsResult);break;
+	case V_SgLessOrEqualOp: cout<<"<=";res=(lhsResult<=rhsResult);break;
+
+	default:cout<<"#1:";cout<<node->class_name();cout<<"#";assert(0);
+	}
+  } else if(dynamic_cast<SgUnaryOp*>(node)) {
+	SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
+	cout<<"(";
+	EvalValueType childVal=eval(child);
+	cout<<")";
+	assert(child);
+	switch(node->variantT()) {
+	case V_SgNotOp:cout<<"!";res=!childVal;break;
+	case V_SgCastExp:cout<<"C";res=childVal;break; // requires refinement for different types
+	case V_SgMinusOp:cout<<"-";res=-childVal; break;
+	default:cout<<"#2:";cout<<node->class_name();cout<<"#";assert(0);
+	}
+  } else {
+  // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
+	switch(node->variantT()) {
+	case V_SgBoolValExp: cout<<"B";res=evalSgBoolValExp(node);break;
+	case V_SgIntVal:cout<<"I";res=evalSgIntVal(node);break;
+	case V_SgVarRefExp:cout<<"V";res=evalSgVarRefExp(node);break;
+	default:cout<<"#3:";cout<<node->class_name();cout<<"#";assert(0);
+	}
+  }
+  return res;
+}
+
+
+int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
+							VariableIdMapping* variableIdMapping,
+							VariableConstInfo& vci) {
+  // temporary global var
+  global_variableIdMappingPtr=variableIdMapping;
+  global_variableConstInfo=&vci;
+
+  RoseAst ast1(root);
+
+  cout<<"STATUS: Dead code elimination phase 2: Eliminating sub expressions."<<endl;
+  list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
+  int elimExpr=0;
+  for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
+	// determine expressions of blocks/ifstatements
+	SgExpression* exp=0;
+	SgStatement* stmt=0;
+	// we exclude ?-operator because this would eliminate all assert(0) expressions
+	// NOTE: assert needs to be handled with exit(int) to allow such operations
+	if(isSgIfStmt(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)) {
+	  SgNode* node=SgNodeHelper::getCond(*i);
+	  if(isSgExprStatement(node)) {
+		node=SgNodeHelper::getExprStmtChild(node);
+	  }
+	  //cout<<node->class_name()<<";";
+	  exp=isSgExpression(node);
+	  if(exp) {
+		ConstIntLattice res=eval(exp);
+		if(res.isTrue()||res.isFalse()) {
+		  cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString();
+		  int isAssert=isIfWithLabeledAssert(*i);
+		  cout<<(*i)->unparseToString();
+		}
+		cout<<endl;
+	  }
+	}
+  }
   return 0;
 }
 
@@ -584,6 +792,7 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
+  boolOptions.registerOption("precision-intbool",false); // temporary
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
@@ -635,6 +844,7 @@ int main(int argc, char* argv[]) {
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
   eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
+  eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
