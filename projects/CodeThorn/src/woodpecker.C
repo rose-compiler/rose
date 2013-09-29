@@ -36,11 +36,7 @@ using namespace AType;
 static VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 char* csvAssertFileName=0;
-
 ReachabilityResults reachabilityResults;
-
-static VariableIdSet variablesOfInterest;
-static bool detailedOutput=0;
 
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
@@ -476,11 +472,8 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   // 1) eliminate declaration of variable
   // 2) eliminate assignment to variable
   // 3) replace use of variable
-<<<<<<< HEAD
   cout<<"STATUS: Dead code elimination phase 1: Eliminating variables."<<endl;
-=======
   cout<<"STATUS: Eliminating variables."<<endl;
->>>>>>> 848f76e4f2ba2aabdc5e921e8f11b5b372abda27
   list<SgVariableDeclaration*> toDeleteVarDecls;
   list<SgAssignOp*> toDeleteAssignments;
   list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
@@ -548,7 +541,6 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
   cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variable with constant."<<endl;
   cout<<"STATUS: Eliminated "<<elimVar<<" dead variables."<<endl;
-<<<<<<< HEAD
   cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
   return elimVar+elimAssignment+elimVarUses;
 }
@@ -759,9 +751,6 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	  }
 	}
   }
-=======
-
->>>>>>> 848f76e4f2ba2aabdc5e921e8f11b5b372abda27
   return 0;
 }
 
