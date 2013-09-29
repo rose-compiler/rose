@@ -107,7 +107,9 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
 {
   std::string _query_condition(
       //all function pairs that are semantically similar
-      " select distinct sem.func1_id, sem.func2_id from semantic_funcsim as sem "
+
+      " select distinct func1_id, func2_id from ("
+      " select sem.func1_id, sem.func2_id from semantic_funcsim as sem "
       " join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
       " where sem.similarity >= ? "
@@ -116,16 +118,16 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
       " UNION "
 
       //all library call pairs that has the same name in the call trace
-      " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
+      " select sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
       " join tmp_library_funcs sem2 on sem.name = sem2.name "
       " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
-      " where sem.func_id < sem2.func_id AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
+      " where (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
 
       " UNION "
 
       //all library calls that has the same name as a tested function
-      " select distinct tplt.func_id as func1_id, tlib.func_id as func2_id from tmp_plt_func_names as tplt" 
+      " select tplt.func_id as func1_id, tlib.func_id as func2_id from tmp_plt_func_names as tplt" 
       " join tmp_library_funcs as tlib on tplt.name = tlib.name "
       " join semantic_cg as scg on tplt.func_id  = scg.callee "
       " where scg.caller IN (?,?) "
@@ -133,14 +135,13 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
       " UNION "
 
       //all library call pairs that has the same name in the static cg
-      " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
+      " select sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
       " join tmp_library_funcs sem2 on sem.name = sem2.name "
       " join semantic_cg as tcf1 on sem.func_id  = tcf1.callee "
       " join semantic_cg as tcf2 on sem2.func_id = tcf2.callee "
-      " where sem.func_id < sem2.func_id AND tcf1.caller IN (?,?) AND tcf2.caller IN (?,?) "
+      " where tcf1.caller IN (?,?) AND tcf2.caller IN (?,?) "
 
-
-
+      ") as functions_to_normalize"
       );
 
 
@@ -200,14 +201,13 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
     int func1 = row.get<int>(0);
     int func2 = row.get<int>(1);
 
-    boost::tie(edge, flag) = add_edge(func1, func2, graph);
-
-    ds.union_set(func1,func2);
-
-    boost::tie(edge, flag) = add_edge(func2, func1, graph);
-
-    ds.union_set(func2,func1);
-
+    if ( func1 < func2 ){
+      boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      ds.union_set(func1,func2);
+    }else{
+      boost::tie(edge, flag) = add_edge(func2, func1, graph);
+      ds.union_set(func2,func1);
+    }
 
 
   }
