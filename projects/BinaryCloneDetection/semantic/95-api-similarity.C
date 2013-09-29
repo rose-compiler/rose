@@ -81,10 +81,11 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 }
 
 CallVec* 
-load_function_api_calls_for(int func_id)
+load_function_api_calls_for(int func_id, bool reachability_graph)
 {
   SqlDatabase::StatementPtr stmt = transaction->statement(
-     "select distinct scg.callee from semantic_cg as scg "  
+     "select distinct scg.callee from "  
+     + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg "  
      //" join tmp_interesting_funcs as tif on tif.func_id = scg.callee "
      " where scg.caller=? ORDER BY scg.callee"
      );
@@ -134,7 +135,7 @@ create_reachable_node_graph()
   for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
     file_ids.insert(row.get<int>(0));
   }
-  std::string sql = "delete from semantic_cg where file_id in (";
+  std::string sql = "delete from semantic_rg where file_id in (";
   for (std::set<int>::iterator i=file_ids.begin(); i!=file_ids.end(); ++i)
     sql += (i==file_ids.begin()?"":", ") + StringUtility::numberToString(*i);
   sql += ")";
@@ -225,7 +226,7 @@ create_reachable_node_graph()
 }
 
 void
-normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map)
+normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map, bool reachability_graph)
 {
   std::string _query_condition(
       //all function pairs that are semantically similar
@@ -251,7 +252,7 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
       //all library calls that has the same name as a tested function
       " select tplt.func_id as func1_id, tlib.func_id as func2_id from tmp_plt_func_names as tplt" 
       " join tmp_library_funcs as tlib on tplt.name = tlib.name "
-      " join semantic_cg as scg on tplt.func_id  = scg.callee "
+      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg on tplt.func_id  = scg.callee "
       " where scg.caller IN (?,?) "
 
       " UNION "
@@ -259,8 +260,8 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
       //all library call pairs that has the same name in the static cg
       " select sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
       " join tmp_library_funcs sem2 on sem.name = sem2.name "
-      " join semantic_cg as tcf1 on sem.func_id  = tcf1.callee "
-      " join semantic_cg as tcf2 on sem2.func_id = tcf2.callee "
+      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee "
+      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee "
       " where tcf1.caller IN (?,?) AND tcf2.caller IN (?,?) "
 
       ") as functions_to_normalize"
@@ -526,12 +527,12 @@ if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
 };
 
 double 
-whole_function_similarity(int func1_id, int func2_id, std::map<int,int>& norm_map)
+whole_function_similarity(int func1_id, int func2_id, std::map<int,int>& norm_map, bool reachability_graph)
 {
 
 
-  CallVec* func1_vec = load_function_api_calls_for(func1_id);
-  CallVec* func2_vec = load_function_api_calls_for(func2_id);
+  CallVec* func1_vec = load_function_api_calls_for(func1_id, reachability_graph);
+  CallVec* func2_vec = load_function_api_calls_for(func2_id, reachability_graph);
 
   //normalize functions
 
@@ -613,6 +614,8 @@ main(int argc, char *argv[])
     double semantic_similarity_threshold = 0.70;
 
     bool expand_ncalls = false;
+
+    bool reachability_graph = true;
 
     int argno = 1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -716,7 +719,7 @@ main(int argc, char *argv[])
 
 
       std::map<int,int> norm_map;
-      normalize_func_to_id(func1_id, func2_id, semantic_similarity_threshold, norm_map);
+      normalize_func_to_id(func1_id, func2_id, semantic_similarity_threshold, norm_map, reachability_graph);
 
 
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
@@ -752,7 +755,7 @@ main(int argc, char *argv[])
 
       //find call similarity between functions
 
-      double cg_similarity = whole_function_similarity(func1_id, func2_id, norm_map);
+      double cg_similarity = whole_function_similarity(func1_id, func2_id, norm_map, reachability_graph);
 
 
       insert_stmt->bind(0, func1_id);
