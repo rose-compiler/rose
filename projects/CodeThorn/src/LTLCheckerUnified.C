@@ -10,6 +10,7 @@
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
 // Written by Adrian Prantl <adrian@llnl.gov>.
+// Several bugfixes & improvements (c) 2013 Adrian Prantl.
 //
 // UCRL-CODE-155962.
 // All rights reserved.
@@ -588,26 +589,27 @@ public:
 
       // Endpoint handling
       if (is_leaf(succ, stg.g)) {
-    if (endpoints.count(succ) == 0) {
-      //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
-      // Orphan: did it become an orphan because it was replaced by a new node?
-      FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
-        FOR_EACH_SUCCESSOR(s, pred, stg.g)
-          worklist.push(s);
-        END_FOR;
-        // should be redundant: worklist.push(pred);
-      } END_FOR;
-      // Cut it off.
-      clear_vertex(succ, stg.g);
-    } else {
-      //cerr<<"hit a real endpoint: "<<succ<<endl;
-      // Real endpoint (ie. exit/assert)
-      // Endpoints always receive a strong update, because there is no ambiguity
-      LTLState old_state = stg.g[succ];
-      LTLState new_state = transfer(old_state, end_state, verbose, true);
-      stg.g[succ] = new_state;
-      stg.vertex[new_state] = succ;
-    }
+	if (endpoints.count(succ) == 0) {
+	  //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
+	  // Orphan: did it become an orphan because it was replaced by a new node?
+          // (technically, this is the inverse of an orphan: A parent without kids. A DINK?)
+	  FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
+	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
+	      worklist.push(s);
+	    END_FOR;
+	    worklist.push(pred);
+	  } END_FOR;
+	  // Cut it off.
+	  clear_vertex(succ, stg.g);
+	} else {
+	  //cerr<<"hit a real endpoint: "<<succ<<endl;
+	  // Real endpoint (ie. exit/assert)
+	  // Endpoints always receive a strong update, because there is no ambiguity
+	  LTLState old_state = stg.g[succ];
+	  LTLState new_state = transfer(old_state, end_state, verbose, true);
+	  stg.g[succ] = new_state;
+	  stg.vertex[new_state] = succ;
+	}
       }
 
       // Store all successors in the temporary list vs because our
@@ -691,7 +693,8 @@ public:
         FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
           worklist.push(v_succ);
         END_FOR;
-        // should be redundant: worklist.push(v);
+        // Add v to the worklist so it can be removed if it has no other successors any more.
+	worklist.push(v);
 
 #ifdef ANIM_OUTPUT
         if (anim_i++ > ANIM_START) {

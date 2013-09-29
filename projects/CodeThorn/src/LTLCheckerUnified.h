@@ -62,7 +62,7 @@ namespace UnifiedLTL {
     bool operator<(const LTLState& other) const {
       if (estate  < other.estate) return true;
       if (estate == other.estate)
-    return (valstack  < other.valstack);
+	return (valstack  < other.valstack);
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);
