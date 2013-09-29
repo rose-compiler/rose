@@ -127,6 +127,21 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   return preds;
 }
 
+static AType::BoolLattice flip(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice raise(AType::BoolLattice b) {
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice lower(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  return b;
+}
 
 /**
  * DOT visualization of the LTL Checker result
@@ -1023,7 +1038,8 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
+      // Use the neutral element instead of Bot.
+      BoolLattice new_val  = /*old_val ||*/ e1 || (succ_val.isBot()?false:succ_val);
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1041,10 +1057,7 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      // TODO: I'm not sure about the correct way to combine old_val with the new one
-      // And my current intuition is that it is safe to ignore it, since it
-      // will be propagated back to this node, if we have a loop, anyway.
-      BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
+      BoolLattice new_val = /*old_val &&*/ e1 && (succ_val.isBot()?true:succ_val);
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1096,7 +1109,7 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
-      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && (succ_val.isBot()?true:succ_val)));
       if (verbose) cerr<<"  Until(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1135,7 +1148,7 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
-      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || (succ_val.isBot()?false:succ_val)));
       if (verbose) cerr<<"  Release(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1340,7 +1353,7 @@ UChecker::verify(const Formula& f)
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
       //cerr<<"Value at START = "<<s.top()<<endl;
-      b = b && s.top();
+      b = b && lower(s.top());
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;
