@@ -22,6 +22,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "ReachabilityResults.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -181,7 +182,7 @@ namespace CodeThorn {
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
-      assert(labelName.size()>0);
+      //assert(labelName.size()>0);
       return labelName;
     }
     
@@ -208,6 +209,8 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     bool isIncompleteSTGReady();
+	ReachabilityResults reachabilityResults;
+	int reachabilityAssertCode(const EState* currentEStatePtr);
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;

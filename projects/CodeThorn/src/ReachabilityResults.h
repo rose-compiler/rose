@@ -17,8 +17,10 @@ class ReachabilityResults {
   void reachable(int num);
   void nonReachable(int num);
   void finished();
-  void write2013File(char* filename, bool onlyyesno=false);
-  void write2012File(char* filename, bool onlyyesno=false);
+  void write2013File(const char* filename, bool onlyyesno=false);
+  void write2012File(const char* filename, bool onlyyesno=false);
+  void printResults();
+  void printResultsStatistics();
  private:
   string reachToString(Reachability num);
   void init();

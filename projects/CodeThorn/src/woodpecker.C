@@ -563,16 +563,12 @@ int isIfWithLabeledAssert(SgNode* node) {
 		  SgLabelStatement* labStmt=isSgLabelStatement(*i);
 		  assert(labStmt);
 		  string name=SgNodeHelper::getLabelName(labStmt);
-#if 0
-		  string name=labelNameOfAssertLabel(node->label());
-#endif
 		  if(name=="globalError")
 			name="error_60";
 		  name=name.substr(6,name.size()-6);
 		  std::istringstream ss(name);
 		  int num;
 		  ss>>num;
-		  // extract error number
 		  return num;
 		}
 	  }

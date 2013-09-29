@@ -93,6 +93,8 @@ codethorn_SOURCES = \
   RERS_empty_specialization.C      \
   Flow.h \
   Flow.C \
+  ReachabilityResults.h \
+  ReachabilityResults.C \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \

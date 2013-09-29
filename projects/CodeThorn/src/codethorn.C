@@ -727,12 +727,22 @@ int main( int argc, char * argv[] ) {
 
   cout << "=============================================================="<<endl;
   // TODO: reachability in presence of semantic folding
-  if(!boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
+  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+	analyzer.reachabilityResults.printResults();
+  } else {
     printAsserts(analyzer,sageProject);
   }
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-    generateAssertsCsvFile(analyzer,sageProject,filename);
+	if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+	  switch(resultsFormat) {
+	  case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
+	  case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
+	  default: assert(0);
+	  }
+	} else {
+	  generateAssertsCsvFile(analyzer,sageProject,filename);
+	}
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
@@ -756,10 +766,10 @@ int main( int argc, char * argv[] ) {
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
   if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-      cout << "NOTE: no reachability results with semantic folding (not implemented yet)."<<endl;
-    } else {
-      printAssertStatistics(analyzer,sageProject);
-    }
+	analyzer.reachabilityResults.printResultsStatistics();
+  } else {
+	printAssertStatistics(analyzer,sageProject);
+  }
   cout << "=============================================================="<<endl;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;

@@ -44,7 +44,7 @@ void ReachabilityResults::finished() {
 	}
   }
 }
-void ReachabilityResults::write2013File(char* filename, bool onlyyesno) {
+void ReachabilityResults::write2013File(const char* filename, bool onlyyesno) {
   ofstream myfile;
   myfile.open(filename);
   for(int i=0;i<60;++i) {
@@ -54,7 +54,7 @@ void ReachabilityResults::write2013File(char* filename, bool onlyyesno) {
   }
   myfile.close();
 }
-void ReachabilityResults::write2012File(char* filename, bool onlyyesno) {
+void ReachabilityResults::write2012File(const char* filename, bool onlyyesno) {
   ofstream myfile;
   myfile.open(filename);
   // 2012: difference by 1 to 2013
@@ -64,4 +64,32 @@ void ReachabilityResults::write2012File(char* filename, bool onlyyesno) {
 	myfile<<i<<","<<reachToString(_reachable[i])<<endl;
   }
   myfile.close();
+}
+void ReachabilityResults::printResults() {
+  cout<<"Reachability Results:"<<endl;
+  int maxCode=59;
+  for(int i=0;i<=maxCode;++i) {
+	cout<<"error_"<<i<<": ";
+	switch(_reachable[i]) {
+	case REACH_UNKNOWN: cout <<"UNKNOWN";break;
+	case REACH_YES: cout <<"YES (REACHABLE)";break;
+	case REACH_NO: cout  <<"NO (UNREACHABLE)";break;
+	default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
+	}
+	cout<<endl;
+  }
+}
+
+void ReachabilityResults::printResultsStatistics() {
+  int maxCode=59;
+  int numReach=0, numNonReach=0;
+  for(int i=0;i<=maxCode;++i) {
+	switch(_reachable[i]) {
+	case REACH_UNKNOWN:break;
+	case REACH_YES: numReach++;break;
+	case REACH_NO: numNonReach++;break;
+	default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
+	}
+  }
+  cout<<"Assert reachability statistics: "<<"YES: "<<numReach<<" NO: "<<numNonReach<<" Total: "<<maxCode+1<<endl;
 }

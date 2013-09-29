@@ -303,20 +303,22 @@ void Analyzer::runSolver1() {
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name=="globalError")
-                  name="error_60";
-                name=name.substr(6,name.size()-6);
-                std::ofstream fout;
-                // csv_assert_live_file is the member-variable of analyzer
+				if(name.size()>0) {
+				  if(name=="globalError")
+					name="error_60";
+				  name=name.substr(6,name.size()-6);
+				  std::ofstream fout;
+				  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-                {
-                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-                  assert (!fout.fail( ));
-                  fout << name << ",yes,9"<<endl;
-                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-                  
-                  fout.close(); 
-                }
+				  {
+					fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+					assert (!fout.fail( ));
+					fout << name << ",yes,9"<<endl;
+					//cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+					
+					fout.close(); 
+				  }
+				} // if (assert-label was found)
               } // if
             }
           } // end of loop on transfer function return-estates
@@ -1758,6 +1760,21 @@ void Analyzer::runSolver3() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
+int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
+  string name=labelNameOfAssertLabel(currentEStatePtr->label());
+  if(name.size()==0)
+	return -1;
+  if(name=="globalError")
+	name="error_60";
+  name=name.substr(6,name.size()-6);
+  std::istringstream ss(name);
+  int num;
+  ss>>num;
+  return num;
+}
+
+
+// algorithm 4 also records reachability for incomplete STGs (analyzer::reachabilityResults)
 void Analyzer::runSolver4() {
   //flow.boostify();
   size_t prevStateSetSize=0; // force immediate report at start
@@ -1820,29 +1837,40 @@ void Analyzer::runSolver4() {
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
               recordTransition(currentEStatePtr,e,newEStatePtr);        
-              
+
+			  // record reachability
+			  int assertCode=reachabilityAssertCode(currentEStatePtr);
+			  if(assertCode>=0) {
+                #pragma omp critical
+				{
+				  reachabilityResults.reachable(assertCode);
+				}
+			  }
+
               if(boolOptions["report-failed-assert"]) {
-#pragma omp critical
+                #pragma omp critical
                 {
                   cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
                 }
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name=="globalError")
-                  name="error_60";
-                name=name.substr(6,name.size()-6);
-                std::ofstream fout;
-                // csv_assert_live_file is the member-variable of analyzer
+				if(name.size()>0) {
+				  if(name=="globalError")
+					name="error_60";
+				  name=name.substr(6,name.size()-6);
+				  std::ofstream fout;
+				  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-                {
-                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-                  assert (!fout.fail( ));
-                  fout << name << ",yes,9"<<endl;
-                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-                  
-                  fout.close(); 
-                }
+				  {
+					fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+					assert (!fout.fail( ));
+					fout << name << ",yes,9"<<endl;
+					//cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+					
+					fout.close(); 
+				  }
+				}// if label of assert was found (name.size()>0)
               } // if
             }
           } // end of loop on transfer function return-estates
@@ -1863,7 +1891,7 @@ void Analyzer::runSolver4() {
     if(isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
       if(boolOptions["semantic-fold"]) {
-    semanticFoldingOfTransitionGraph();
+		semanticFoldingOfTransitionGraph();
       }  
       // we report some information and finish the algorithm with an incomplete STG
       cout << "-------------------------------------------------"<<endl;
@@ -1878,4 +1906,5 @@ void Analyzer::runSolver4() {
   }  
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
+  reachabilityResults.finished(); // sets all unknown entries to NO.
 }
