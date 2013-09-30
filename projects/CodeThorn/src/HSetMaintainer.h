@@ -12,6 +12,10 @@ using namespace br_stl;
 //#include "/usr/include/valgrind/memcheck.h"
 //#define HSET_MAINTAINER_DEBUG_MODE
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename KeyType,typename HashFun>
 class HSetMaintainer : public HSet<KeyType,HashFun> {
 public:

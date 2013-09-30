@@ -1432,7 +1432,19 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // if (!info.SkipFunctionDefinition())
           if (functionDeclaration->get_functionModifier().isInline())
              {
-               curprint( "inline ");
+            // DQ (9/25/2013): Check if this is a C file using -std=c89, and if so then unparse "__inline__" instead of "inline".
+            // curprint( "inline ");
+               SgFile* file = TransformationSupport::getFile(functionDeclaration);
+               ROSE_ASSERT(file != NULL);
+               if (file->get_C89_only() == true && file->get_C89_gnu_only() == false)
+                  {
+                 // DQ (9/25/2013): This is what is required when using -std=c89 (the default for GNU gcc is -std=gnu89).
+                    curprint( "__inline__ ");
+                  }
+                 else
+                  {
+                    curprint( "inline ");
+                  }
              }
 
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration

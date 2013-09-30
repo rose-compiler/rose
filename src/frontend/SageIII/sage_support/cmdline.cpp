@@ -1874,6 +1874,34 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   // DQ (9/3/2013): We need to support -std=c99 explicitly (makes a difference for asm test codes).
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c89)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C89 mode ON \n");
+          set_C89_only(true);
+
+       // Set gnu specific level of C99 support to false.
+          set_C89_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
+  // DQ (8/30/2013): We need to support -std=gnu99 seperately from -std=c99 (makes a difference for asm test codes).
+     if ( CommandlineProcessing::isOption(argv,"-std=","(gnu89)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("GNU C89 mode ON \n");
+          set_C89_only(true);
+          set_C89_gnu_only(true);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
+  // DQ (9/3/2013): We need to support -std=c99 explicitly (makes a difference for asm test codes).
      if ( CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -1885,18 +1913,20 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
        // DQ (7/31/2013): If we turn on C99, then turn off C89.
           set_C89_only(false);
+          set_C89_gnu_only(false);
         }
 
   // DQ (8/30/2013): We need to support -std=gnu99 seperately from -std=c99 (makes a difference for asm test codes).
      if ( CommandlineProcessing::isOption(argv,"-std=","(gnu99)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("C99 mode ON \n");
+               printf ("GNU C99 mode ON \n");
           set_C99_only(true);
           set_C99_gnu_only(true);
 
        // DQ (7/31/2013): If we turn on C99, then turn off C89.
           set_C89_only(false);
+          set_C89_gnu_only(false);
         }
 
   //
@@ -3552,7 +3582,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
 
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  // PL (09/25/2013) This is still required for the EDG 4.X
+//#ifndef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
   // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
   // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
@@ -3561,7 +3592,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
-#endif
+//#endif
 
      if ( SgProject::get_verbose() >= 1 )
           printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());

@@ -119,7 +119,7 @@ SgValueExp::get_constant_folded_value_as_string() const
              }
 
           case V_SgUnsignedShortVal:
-          {
+             {
                const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                unsigned short int numericValue = integerValueExpression->get_value();
@@ -127,8 +127,8 @@ SgValueExp::get_constant_folded_value_as_string() const
                snprintf (buffer,max_buffer_size,"%u",numericValue);
                s = buffer;
                break;
-          }
-          
+             }
+
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
@@ -718,7 +718,7 @@ SgSourceFile::initializeGlobalScope()
      string filename = p_sourceFileNameWithPath;
      if (get_requires_C_preprocessor() == true)
         {
-       // This must be a Fortran source file (requiring the use of CPP to process its directives.
+       // This must be a Fortran source file (requiring the use of CPP to process its directives).
           filename = generate_C_preprocessor_intermediate_filename(filename);
         }
 
@@ -1387,8 +1387,12 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
         }
 #endif
 
+  // DQ (9/24/2013): Added assertion.
+     ROSE_ASSERT(file != NULL);
+
 #if 0
-     printf ("Leaving determineFileType() \n");
+     printf ("Leaving determineFileType() = %d \n",file->get_outputLanguage());
+     printf ("Leaving determineFileType() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
 #endif
 
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
@@ -2174,18 +2178,31 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 string
 SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
    {
+  // DQ (9/24/2013): We need this assertion to make sure we are not causing what might be strange errors in memory.
+     ROSE_ASSERT(sourceFilename.empty() == false);
+
   // Note: for "foo.F90" the fileNameSuffix() returns "F90"
      string filenameExtension              = StringUtility::fileNameSuffix(sourceFilename);
+
+  // DQ (9/24/2013): We need this assertion to make sure we are not causing what might be strange errors in memory.
+     ROSE_ASSERT(filenameExtension.empty() == false);
+
      string sourceFileNameWithoutExtension = StringUtility::stripFileSuffixFromFileName(sourceFilename);
 
-  // string sourceFileNameInputToCpp = get_sourceFileNameWithPath();
+  // DQ (9/24/2013): We need this assertion to make sure we are not causing what might be strange errors in memory.
+     ROSE_ASSERT(sourceFileNameWithoutExtension.empty() == false);
 
-  // printf ("Before lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+  // string sourceFileNameInputToCpp = get_sourceFileNameWithPath();
+#if 0
+     printf ("In SgFile::generate_C_preprocessor_intermediate_filename(): Before lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+#endif
 
   // We need to turn on the 5th bit to make the capital a lower case character (assume ASCII)
      filenameExtension[0] = filenameExtension[0] | (1 << 5);
 
-  // printf ("After lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+#if 0
+     printf ("In SgFile::generate_C_preprocessor_intermediate_filename(): After lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+#endif
 
   // Rename the CPP generated intermediate file (strip path to put it in the current directory)
   // string sourceFileNameOutputFromCpp = sourceFileNameWithoutExtension + "_preprocessed." + filenameExtension;
@@ -4669,7 +4686,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
-#if 1
        // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
        // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we 
        // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
@@ -4677,7 +4693,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(project != NULL);
           if (project != NULL)
              {
+#if 0
                printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                     outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
@@ -4691,7 +4709,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
              {
                printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
              }
-#endif
 
           if (get_unparse_output_filename().empty())
              {
