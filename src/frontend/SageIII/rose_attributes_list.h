@@ -499,6 +499,9 @@ class ROSEAttributesList
           void deepClean(void);
           void clean(void);
 
+      // DQ (9/19/2013): generate the number associated with each position relative to the attached IR node.
+      // size_t numberByRelativePosition(PreprocessingInfo::RelativePositionType pos);
+
        // Access function for list
           std::vector<PreprocessingInfo*> & getList() { return attributeList; };
 
