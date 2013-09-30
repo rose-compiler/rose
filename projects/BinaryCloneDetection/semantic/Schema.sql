@@ -14,6 +14,7 @@ drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
 drop table if exists semantic_cg;
+drop table if exists semantic_rg;
 drop table if exists semantic_binaries;
 drop table if exists semantic_functions;
 drop table if exists semantic_specfiles;
