@@ -35,7 +35,7 @@ using namespace AType;
 
 static VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
-char* csvAssertFileName=0;
+const char* csvAssertFileName=0;
 ReachabilityResults reachabilityResults;
 
 bool isVariableOfInterest(VariableId varId) {
@@ -163,7 +163,7 @@ size_t eliminateEmptyIfStmts(SgNode* node) {
     SageInterface::removeStatement (*i, false);
     numElim++;
   }
-  cout<<"Number of if-statements eliminated: "<<numElim<<endl;
+  cout<<"STATUS: Number of if-statements eliminated: "<<numElim<<endl;
   return numElim;
 }
 
@@ -751,6 +751,7 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	  }
 	}
   }
+  cout<<"STATUS: Dead code elimination phase 2: finished."<<endl;
   return 0;
 }
 
@@ -793,80 +794,182 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
 
 
 int main(int argc, char* argv[]) {
-  if(argc==3) {
-	csvAssertFileName=argv[2];
-	argc=2; // don't confuse ROSE command line
-	cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
+  try {
+	if(argc==1) {
+	  cout << "Error: wrong command line options."<<endl;
+	  exit(1);
+	}
+#if 0
+	if(argc==3) {
+	  csvAssertFileName=argv[2];
+	  argc=2; // don't confuse ROSE command line
+	  cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
+	}
+#endif
+  // Command line option handling.
+	namespace po = boost::program_options;
+  po::options_description desc
+    ("Woodpecker V0.1\n"
+     "Written by Markus Schordan\n"
+     "Supported options");
+  
+  desc.add_options()
+    ("help,h", "produce this help message")
+    ("rose-help", "show help for compiler frontend options")
+    ("version,v", "display the version")
+    ("inline",po::value< string >(), "perform inlining ([yes]|no).")
+    ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
+    ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
+    ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
+    ("csv-assert",po::value< string >(), "name of csv file with reachability assert results")
+	;
+  //    ("int-option",po::value< int >(),"option info")
+
+
+  po::store(po::command_line_parser(argc, argv).
+			options(desc).allow_unregistered().run(), args);
+  po::notify(args);
+
+  if (args.count("help")) {
+	cout << "woodpecker <filename> [OPTIONS]"<<endl;
+    cout << desc << "\n";
+    return 0;
   }
-  cout << "INIT: Parsing and creating AST."<<endl;
+  if (args.count("rose-help")) {
+    argv[1] = strdup("--help");
+  }
+
+  if (args.count("version")) {
+    cout << "Woodpecker version 0.1\n";
+    cout << "Written by Markus Schordan 2013\n";
+    return 0;
+  }
+  if (args.count("csv-assert")) {
+	csvAssertFileName=args["csv-assert"].as<string>().c_str();
+  }
+  
+  boolOptions.init(argc,argv);
+  // temporary fake optinos
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   boolOptions.registerOption("precision-intbool",false); // temporary
+  // regular options
+  boolOptions.registerOption("inline",true);
+  boolOptions.registerOption("eliminate-empty-if",true);
+  boolOptions.registerOption("eliminate-dead-code",true);
+  boolOptions.registerOption("generate-transformed-code",true);
+  boolOptions.processOptions();
+
+  // clean up string-options in argv
+  for (int i=1; i<argc; ++i) {
+    if (string(argv[i]) == "--csv-assert" 
+        ) {
+      // do not confuse ROSE frontend
+      argv[i] = strdup("");
+      assert(i+1<argc);
+        argv[i+1] = strdup("");
+    }
+  }
+
+  
+
+  cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
-  list<SgFunctionCallExp*> funCallList=trivialFunctionCalls(root);
-  cout<<"Number of trivial function calls (with existing function bodies): "<<funCallList.size()<<endl;
 
   std::string funtofind="main";
   RoseAst completeast(root);
   SgFunctionDefinition* mainFunctionRoot=completeast.findFunctionByName(funtofind);
   if(!mainFunctionRoot) {
-    cerr<<"No main function available. "<<endl;
+    cerr<<"Error: No main function available. "<<endl;
     exit(1);
   } else {
-    cout << "Found main function."<<endl;
+    cout << "STATUS: Found main function."<<endl;
   }
-  list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
-  while(remainingFunCalls.size()>0) {
-    size_t numFunCall=remainingFunCalls.size();
-    cout<<"Remaing function calls in main function: "<<numFunCall<<endl;
-    if(numFunCall>0)
-      inlineFunctionCalls(remainingFunCalls);
-    remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
+  if(boolOptions["inline"]) {
+	list<SgFunctionCallExp*> funCallList=trivialFunctionCalls(root);
+	cout<<"STATUS: Inlining: Number of trivial function calls (with existing function bodies): "<<funCallList.size()<<endl;
+	list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
+	while(remainingFunCalls.size()>0) {
+	  size_t numFunCall=remainingFunCalls.size();
+	  cout<<"INFO: Remaing function calls in main function: "<<numFunCall<<endl;
+	  if(numFunCall>0)
+		inlineFunctionCalls(remainingFunCalls);
+	  remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
+	}
+  } else {
+	cout<<"INFO: Inlining: turned off."<<endl;
   }
   
-  size_t num=0;
-  size_t numTotal=num;
-  do {
-    num=eliminateEmptyIfStmts(mainFunctionRoot);
-    numTotal+=num;
-  } while(num>0);
-  cout<<"Total number of if-statements eliminated: "<<numTotal<<endl;
-  
-  //TODO: create ICFG and compute non reachable functions (from main function)
-  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
-  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
-    string funName=SgNodeHelper::getFunctionName(*i);
-    SgFunctionDeclaration* funDecl=(*i)->get_declaration();
-    if(funName!="main") {
-      cout<<"Deleting function: "<<funName<<endl;
-      SgStatement* stmt=funDecl;
-      SageInterface::removeStatement (stmt, false);
-      //SageInterface::deleteAST(funDef);
-    }
+  if(boolOptions["eliminate-empty-if"]) {
+	cout<<"STATUS: Eliminating empty if-statements in main function."<<endl;
+	size_t num=0;
+	size_t numTotal=num;
+	do {
+	  num=eliminateEmptyIfStmts(mainFunctionRoot);
+	  numTotal+=num;
+	} while(num>0);
+	cout<<"STATUS: Total number of empty if-statements in main function eliminated: "<<numTotal<<endl;
   }
 
+  //TODO: create ICFG and compute non reachable functions (from main function)
+  if(boolOptions["inline"]) {
+	cout<<"STATUS: deleting inlined functions."<<endl;
+	list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
+	for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
+	  string funName=SgNodeHelper::getFunctionName(*i);
+	  SgFunctionDeclaration* funDecl=(*i)->get_declaration();
+	  if(funName!="main") {
+		cout<<"Deleting function: "<<funName<<endl;
+		SgStatement* stmt=funDecl;
+		SageInterface::removeStatement (stmt, false);
+		//SageInterface::deleteAST(funDef);
+	  }
+	}
+  }
+
+  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
   VarConstSetMap varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
-  eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
-  eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
+
+  if(boolOptions["eliminate-dead-code"]) {
+	cout<<"STATUS: performing dead code elimination."<<endl;
+	eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
+	eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
+  } else {
+	cout<<"STATUS: Dead code elimination: turned off."<<endl;
+  }
   if(csvAssertFileName) {
 	cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
 	reachabilityResults.write2013File(csvAssertFileName,true);
   }
-
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
 #endif
-  cout << "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
-  cout << "INFO: generating transformed source code."<<endl;
-  root->unparse(0,0);
+  cout << "INFO: Remaining functions in program: "<<numberOfFunctions(root)<<endl;
+  if(boolOptions["generate-transformed-code"]) {
+	cout << "STATUS: generating transformed source code."<<endl;
+	root->unparse(0,0);
+  }
+
   cout<< "STATUS: finished."<<endl;
+
+  // main function try-catch
+  } catch(char* str) {
+    cerr << "*Exception raised: " << str << endl;
+    return 1;
+  } catch(const char* str) {
+    cerr << "Exception raised: " << str << endl;
+    return 1;
+  } catch(string str) {
+    cerr << "Exception raised: " << str << endl;
+    return 1;
+  }
   return 0;
 }
