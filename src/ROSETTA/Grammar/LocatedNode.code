@@ -854,7 +854,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      ROSE_ASSERT(prepInfoPtr != NULL);
 
 #if 0
-     printf ("Current node is a %s: prepInfoPtr->stringPointer = %s \n",class_name().c_str(),prepInfoPtr->stringPointer);
+     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node is a %s: prepInfoPtr->getString() = %s \n",class_name().c_str(),prepInfoPtr->getString().c_str());
 #endif
 
   // Nodes that should not have comments attached (since they are not unparsed)
@@ -888,6 +888,10 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
           p_attachedPreprocessingInfoPtr = new AttachedPreprocessingInfoType;
           ROSE_ASSERT(p_attachedPreprocessingInfoPtr != NULL);
         }
+
+#if 0
+     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): locationInList = %s \n",PreprocessingInfo::relativePositionName(locationInList).c_str());
+#endif
 
   // Add the current PreprocessingInfo object
      switch (locationInList)
