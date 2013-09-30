@@ -21,7 +21,6 @@ endif
 TARGET_OFP_SOURCE_FILES = token.c jni_token_funcs.c c_actions_jni.c
 
 extract_rose_required_ofp_source_files: token.c
-	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 OFP_SOURCE_FILES = \
