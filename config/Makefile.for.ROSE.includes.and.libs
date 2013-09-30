@@ -451,8 +451,12 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
 # Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
-# "make" command-line
-RTH_RUN_FLAGS =
+# "make" command-line, but the default depends on the value of the verbosity $(V) flag.
+
+RTH_RUN_FLAGS_V_ =
+RTH_RUN_FLAGS_V_0 =
+RTH_RUN_FLAGS_V_1 = --immediate-output
+RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
