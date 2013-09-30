@@ -205,7 +205,7 @@ measure: s (the default), sec, second, or seconds; m, min, minute, or minutes; h
 
 =item title = TITLE
 
-When a test runs the test harness emits the line "TESTING xxx" where "xxx" is the makefile target sans ".passed". If the
+When a test runs the test harness emits the line "TEST   xxx" where "xxx" is the makefile target sans ".passed". If the
 title property has a non-empty value then the TITLE is used in place of the target name.
 
 =back
@@ -507,13 +507,13 @@ my %config = load_config $config_file, \%variables;
 # is disabled.
 my $test_title = $config{title} || $target;
 if ($config{disabled} && $config{disabled} ne 'no') {
-  print "  TESTING $test_title (disabled: $config{disabled})\n";
+  print "  TEST   $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
 }
-print "  TESTING $test_title\n";
+print "  TEST   $test_title\n";
 
 # Should everything run in a subdirectory?
 my $subdir;
@@ -710,7 +710,7 @@ if ($do_cleanup) {
 close TARGET;
 if ($status) {
   unlink $target_pass;
-  print STDERR "  FAILED  $test_title; output saved in '$target_fail'\n" if $quiet_failure;
+  print STDERR "  FAILED $test_title; output saved in '$target_fail'\n" if $quiet_failure;
 } elsif ($ignored_failure) {
   system "ln", "-sf", $target_fail, $target_pass and die "$0: $target_pass: $!\n";
 } else {
