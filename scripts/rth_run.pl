@@ -61,6 +61,31 @@ are created in the current working directory having the same base name as the fi
 a configuration file. The configuration file lists the commands that must be run, and how to determine whether the test passed
 or failed.  Configuration files generally have a ".conf" extension.
 
+=head1 SWITCHES
+
+The following command-line switches are understood.  Within the ROSE project, these command-line switches are specified
+with the RTH_RUN_FLAGS variable which can be set on the "make" command.  For instance, to turn on immediate printing of all
+standard output and standard error invoke make as "make RTH_RUN_FLAGS=--immediate-output check".
+
+=over
+
+=item --cleanup
+
+=item --no-cleanup
+
+Enables or disables the automatic cleanup of temporary files and directories.  The default is to remove these.
+
+=item --immediate-output
+
+The command lines and their output are immediately echoed to this script's standard output and error as well as saving them
+in the passed or failed files.
+
+=item --quite-failure
+
+If a test fails, rather than emitting its output, just emit a line that indicates that it failed.
+
+=back
+
 =head1 CONFIGURATION
 
 Configuration files contain blank lines, comment lines, or property settings.  Comments begin with a hash character ("#") and
@@ -320,7 +345,6 @@ sub help {
   }
 };
 
-
 # Parse specified configuration file or die trying. Return value is a hash whose keys are the variable names and whose
 # values are the values or an array of values.
 sub load_config {
@@ -365,17 +389,17 @@ sub load_config {
   return %conf;
 }
 
-# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout occurs. The
-# command's standard output and error are captured to the specified files (which are created if necessary).  This function
-# returns the exit status, or a negative value on error; zero on success.  We have to do this the hard way in order to send
-# SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out tests that continue to suck up
-# resources).
+# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout
+# occurs. The command's standard output and error are redirected to the already-opened CMD_STDOUT and CMD_STDERR
+# streams. This function returns the exit status, or a negative value on error; zero on success.  We have to do this the
+# hard way in order to send SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out
+# tests that continue to suck up resources).
 sub run_command {
-  my($stdout,$stderr,$timelimit,$subdir,@commands) = @_;
+  my($timelimit,$subdir,@commands) = @_;
   defined (my $pid = fork) or return "fork: $!";
   if (!$pid) {
-    open STDOUT, ">", $stdout or return 255;
-    open STDERR, ">", $stderr or return 254;
+    open STDOUT, ">&CMD_STDOUT" or return 255;
+    open STDERR, ">&CMD_STDERR" or return 254;
     setpgrp; # so we can kill the whole group on a timeout
     my $status = 0;
     for my $cmd (@commands) {
@@ -411,10 +435,7 @@ sub run_command {
     kill -1, $pid; sleep 5; # give the test a chance to clean up gracefully
     kill -9, $pid; # kill the whole process group in case the above exec used the shell.
     $status = $? if $pid == waitpid $pid, 0;
-    if (open LOG, ">>", $stderr) {
-      print LOG "\nterminated after $timelimit seconds\n";
-      close LOG;
-    }
+    print CMD_STDERR "\nterminated after $timelimit seconds\n";
   }
   return $status;
 }
@@ -448,11 +469,15 @@ my %variables;
 $variables{"TEMP_FILE_$_"} = tempname for 0 .. 9;
 
 # Parse command-line switches and arguments
-my($config_file,$target,$target_pass,$target_fail);
+my($do_cleanup,$quiet_failure,$immediate_output,$config_file,$target,$target_pass,$target_fail) = (1);
 while (@ARGV) {
   local($_) = shift @ARGV;
   /^--$/ and last;
   /^(-h|-\?|--help)$/ and do { help && exit 0 };
+  /^--no-cleanup$/ and do {$do_cleanup=0; next};
+  /^--cleanup$/ and do {$do_cleanup=1; next};
+  /^--immediate-output$/ and do {$immediate_output=1; next};
+  /^--quiet-failure$/ and do {$quiet_failure=1; next};
   /^-/ and die "$0: unknown command line switch: $_\n";
   /^(\w+)=(.*)/ and do {$variables{$1} = $2; next};
   /=/ and die "$0: malformed variable definition: $_\n";
@@ -505,9 +530,20 @@ if ($config{subdir} eq 'yes') {
 }
 
 # Run the commands, capturing their output into files.
-my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
-unlink $cmd_stdout, $cmd_stderr;
-my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, $subdir, @{$config{cmd}});
+my($cmd_stdout_file,$cmd_stderr_file) = map {tempname} qw/out err/;
+unlink $cmd_stdout_file, $cmd_stderr_file;
+if (!$immediate_output) {
+    open CMD_STDOUT, ">", $cmd_stdout_file or die "$cmd_stdout_file: $!\n";
+    open CMD_STDERR, ">", $cmd_stderr_file or die "$cmd_stderr_file: $!\n";
+} else {
+    open CMD_STDOUT, "|tee $cmd_stdout_file |sed 's/^/$target: /'" or die "tee $cmd_stdout_file: $!\n";
+    open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target: /' >&2" or die "tee $cmd_stderr_file: $!\n";
+}
+my($status) = run_command($config{timeout}, $subdir, @{$config{cmd}});
+
+# Close the CMD_STDOUT before we start comparing it with an answer.  All subsequent command stdout will
+# be redirected to CMD_STDERR instead.
+open CMD_STDOUT, ">&CMD_STDERR";
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
@@ -517,33 +553,33 @@ if (!$status && $config{answer} ne 'no') {
     $answer .= ".ans";
   }
   if (! -r $answer) {
-    system "echo '$answer: no such file' >>$cmd_stderr";
+    print CMD_STDERR "$answer: no such file\n";
     $status = 1;
   } elsif (0 != @{$config{filter}} ) {
-      system "echo 'Running filters:' >>$cmd_stderr";
-    my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout, tempname);
+    print CMD_STDERR "Running filters:\n";
+    my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout_file, tempname);
     foreach my $filter (@{$config{filter}}) {
-	$status ||= system "(set -x; $filter) <$a1 >$a2 2>>$cmd_stderr";
-	$status ||= system "(set -x; $filter) <$b1 >$b2 2>>$cmd_stderr";
+	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$a1 >$a2");
+	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$b1 >$b2");
 	$a1 = tempname if $a1 eq $answer;
-	$b1 = tempname if $b1 eq $cmd_stdout;
+	$b1 = tempname if $b1 eq $cmd_stdout_file;
 	($a1,$a2) = ($a2,$a1);
 	($b1,$b2) = ($b2,$b1);
 	last if $status;
     }
     if (!$status) {
-	system "echo 'Comparing filter output with filtered answer' >>$cmd_stderr";
-	$status ||= system "(set -x; $config{diff} $a1 $b1) >>$cmd_stderr 2>&1";
+	print CMD_STDERR "Comparing filter output with filtered answer\n";
+	$status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $a1 $b1) >&2");
     }
     unlink $a1, $a2, $b1, $b2;
   } else {
-    system "echo 'Comparing output with answer' >>$cmd_stderr";
-    $status = system "(set -x; $config{diff} $answer $cmd_stdout) >>$cmd_stderr 2>&1";
+    print CMD_STDERR "Comparing output with answer\n";
+    $status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $answer $cmd_stdout_file) >&2");
   }
 }
 
-# Run clean-up commands
-run_command("/dev/null", "/dev/null", $config{timeout}, @{$config{cleanup}});
+# Run clean-up commands (their stdout is automatically redirected to stderr by now)
+run_command($config{timeout}, undef, @{$config{cleanup}});
 
 # If the test failed and the "may_fail" property is "yes" then pretend the test was successfull.
 # If the test passed and the "may_fail" property is "promote" then we need to change the property
@@ -635,44 +671,50 @@ if ($config{may_fail} eq 'yes') {
 }
 print "$target: ignoring failure\n" if $ignored_failure;
 
-# Produce output for failing tests, overwriting previous target. We should have only
-# one target file: either $target_pass or $target_fail.
+# Create the *.failed file and populate it with the commands' stdout and stderr
+close CMD_STDOUT;
+close CMD_STDERR;
 open TARGET, ">", $target_fail or die "$0: $target_fail: $!\n";
-for my $output ($cmd_stdout, $cmd_stderr) {
+for my $output ($cmd_stdout_file, $cmd_stderr_file) {
   if (open OUTPUT, "<", $output) {
     while (<OUTPUT>) {
       print TARGET $_;
-      print "$target: ", $_ if $status;
+      if ($status && !$immediate_output && !$quiet_failure) {
+	  print "$target: ", $_;
+      }
     }
     close OUTPUT;
-    unlink $output;
     print TARGET "======== CUT ========\n";
   }
 }
+
+# Clean up. These names might actually be directories, otherwise we could have just unlinked.  If cleanup is disabled then
+# append the file names to the end of the TARGET file.
+if ($do_cleanup) {
+    unlink $cmd_stdout_file;
+    unlink $cmd_stderr_file;
+    system "rm", "-rf", $subdir if $subdir && $subdir ne $config{subdir};
+    system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
+} else {
+    print TARGET "Temporary files not deleted:\n";
+    print TARGET "  Working subdirectory: $subdir\n" if $subdir;
+    print TARGET "  Command standard output is in $cmd_stdout_file\n";
+    print TARGET "  Command standard error is in $cmd_stderr_file\n";
+    for (0..9) {
+	my $filename = $variables{"TEMP_FILE_$_"};
+	print TARGET "  TEMP_FILE_$_: $filename\n" if -e $filename;
+    }
+}
+
+# Move or link the *.failed file to *.passed as appropriate.
 close TARGET;
 if ($status) {
   unlink $target_pass;
+  print STDERR "  FAILED  $test_title; output saved in '$target_fail'\n" if $quiet_failure;
 } elsif ($ignored_failure) {
   system "ln", "-sf", $target_fail, $target_pass and die "$0: $target_pass: $!\n";
 } else {
   rename $target_fail, $target_pass or die "$0: $target_pass: $!\n";
-}
-
-## # Produce JUnit XML file for the target
-## open XML, ">", $target_xml or die "$0: $target_xml: $!\n";
-## print XML "<testsuite", ($status?" failures=1":""), " name=\"$target\" tests=1 time=0>\n";
-## print XML "  <testcase classname=\"$target\" name=\"$text\" time=\"unknown\">\n";
-## print XML "    <failure message=\"test failed\"/>\n" if $status;
-## print XML "  </testcase>\n";
-## print XML "  <system-out>Not implmeneted yet.</system-out>\n";
-## print XML "  <system-err>Not implemented yet.</system-err>\n";
-## print XML "</testsuite>\n";
-## close XML;
-
-# Clean up. These names might actually be directories, otherwise we could have just unlinked.
-unless ($ENV{RTH_NO_CLEANUP}) {
-    system "rm", "-rf", $subdir if $subdir && $subdir ne $config{subdir};
-    system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
 }
 
 exit($status ? 1 : 0);
