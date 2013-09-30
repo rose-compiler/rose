@@ -38,7 +38,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 100                                            -- !!FIXME
+        where func2.id is null and func1.ninsns >= 100                                          -- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
 --     except (
@@ -71,13 +71,14 @@ create index fr_fio_func_id on fr_fio(func_id);
 create table fr_function_pairs as
     select distinct f1.id as func1_id, f2.id as func2_id
         from fr_functions as f1
-        join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id
+        join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id 
+        -- where f1.ninsns >= 100 AND f2.ninsns >= 100
 
         -- Uncomment the following lines to consider only those pairs of functions where both functions passed for
         -- at least one of the same input groups
-        --join fr_fio as test1 on f1.id = test1.func_id
-        --join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
-        --where test1.status = 0 and test2.status = 0
+        join fr_fio as test1 on f1.id = test1.func_id
+        join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
+        where test1.status = 0 and test2.status = 0 AND f1.ninsns >= 100 AND f2.ninsns >= 100
 
         -- Uncomment the following lines to consider only those pairs of functions where all tests were successful
 --      except
@@ -114,7 +115,13 @@ create table fr_negative_pairs as
 create table fr_clone_pairs as
     select sim.func1_id, sim.func2_id
         from semantic_funcsim sim 
-        where sim.similarity >= (select similarity_threshold from fr_settings) AND sim.path_ave_euclidean_d < 100 ;
+        join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
+        where sim.similarity >= (select similarity_threshold from fr_settings) 
+  AND api_sem.min_similarity >= 0.5 
+  AND api_sem.cg_similarity >= 0.3
+  --AND sim.path_max_euclidean_d_ratio - sim.path_min_euclidean_d_ratio < 0.5
+  --AND sim.path_max_euclidean_d_ratio < 3.0
+  ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
@@ -137,27 +144,29 @@ select 'The following table shows the true positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares,
+        sim.func1_id, func1.ninsns, sim.func2_id, func2.ninsns, sim.similarity, api_sem.cg_similarity, api_sem.min_similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d, sim.ncompares,
         sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d_ratio, sim.path_max_euclidean_d_ratio  
+        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d, sim.path_max_euclidean_d_ratio
     from fr_true_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
     join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
+    join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
     order by func1.name;
 
 
 select 'The following table shows the false positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
-        func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares, 
+        func1.name ,
+        sim.func1_id, func1.ninsns, func2.name, sim.func2_id, func2.ninsns, sim.similarity, api_sem.cg_similarity, api_sem.min_similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d, sim.ncompares, 
         sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
+        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d, sim.path_max_euclidean_d_ratio
     from fr_false_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
     join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
+    join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
     order by func1.name;
 
 
@@ -214,7 +223,7 @@ select 'The following table shows the false negative function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d_ratio,  sim.ncompares,
+        sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d,  sim.ncompares,
         sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
         sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
  
