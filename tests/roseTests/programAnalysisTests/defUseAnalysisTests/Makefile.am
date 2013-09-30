@@ -17,6 +17,9 @@ $(TEST_TARGETS): runTest_%.passed: runTest $(SPECIMEN_NAMES) $(TEST_CONFIG)
 	@tnum="$@"; tnum="$${tnum%.passed}"; tnum="$${tnum#runTest_}"; $(RTH_RUN) TESTNUM=$$tnum $(TEST_CONFIG) $@
 
 check-local: $(TEST_TARGETS)
+	@echo "***************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************************************"
 
 clean-local:
 	rm -rf $(MOSTLYCLEANFILES)

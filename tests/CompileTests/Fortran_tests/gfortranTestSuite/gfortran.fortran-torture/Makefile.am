@@ -212,19 +212,29 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+PASSING_TEST_F90_Sources = ${F90_TESTCODES:.f90=.f90.passed}
 PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
+PASSING_TEST_F77_Sources = ${F77_TESTCODES:.f77=..f77.passed}
 
 # DQ (3/11/2010): F77 tests were not being run, this fixes this.
 # PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_TESTCODES:.f=.o}
 PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.o}
+PASSING_TEST_F77_FIXED_FORMAT_Sources = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.f.passed}
 
 PASSING_TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
+PASSING_TEST_F03_Sources = ${F03_TESTCODES:.f03=.f03.passed}
+
 TEST_F90_Objects = ${ALL_F90_TESTCODES:.f90=.o}
+TEST_F90_Sources = ${ALL_F90_TESTCODES:.f90=.f90.passed}
 TEST_F77_Objects = ${ALL_F77_TESTCODES:.f77=.o}
+TEST_F77_Sources = ${ALL_F77_TESTCODES:.f77=.f77.passed}
 TEST_F77_FIXED_FORMAT_Objects = ${ALL_F77_FIXED_FORMAT_TESTCODES:.f=.o}
+TEST_F77_FIXED_FORMAT_Sources = ${ALL_F77_FIXED_FORMAT_TESTCODES:.f=.f.passed}
 TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
+TEST_F03_Sources = ${ALL_F03_TESTCODES:.f03=.f03.passed}
 
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+PASSING_TEST_Sources = $(PASSING_TEST_F90_Sources) $(PASSING_TEST_F77_Sources) $(PASSING_TEST_F77_FIXED_FORMAT_Sources) $(PASSING_TEST_F03_Sources) 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
@@ -236,30 +246,49 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 testTranslator: ../../testTranslator
 
-$(TEST_F90_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+# $(TEST_F90_Objects): ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
-$(TEST_F77_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+$(TEST_F90_Sources): %.passed: ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	@$(RTH_RUN) CMD="../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# $(TEST_F77_Objects): ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 
-$(TEST_F77_FIXED_FORMAT_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+$(TEST_F77_Sources): %.passed: ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	@$(RTH_RUN) CMD="../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $@
+
+# $(TEST_F77_FIXED_FORMAT_Objects): ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+
+$(TEST_F77_FIXED_FORMAT_Sources): %.passed: ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	@$(RTH_RUN) CMD="../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
 #       to avoid processing the generated code (which would have the same problem).  It is easier to just use
 #       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
 #       on versions of gfortran 4.2 and 4.3.
-$(TEST_F03_Objects): ../../../../testTranslator
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+# $(TEST_F03_Objects): ../../../../testTranslator
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
-	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
-	@touch $@
+#	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
+#	@touch $@
 
+$(TEST_F03_Sources): %.passed: ../../../../testTranslator ${ALL_TESTCODES}
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	@$(RTH_RUN) CMD="../../../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.f03.passed=.f03)" $(top_srcdir)/scripts/test_exit_status $@
+#	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
+#	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
+#	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
+#	@touch $@
 
 
 
@@ -274,7 +303,8 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Sources)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
 else
@@ -304,4 +334,5 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
 clean-local:
 	rm -f *.o rose_*.f* *.rmod
 	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
+	rm -f *.passed *.failed *.err
 

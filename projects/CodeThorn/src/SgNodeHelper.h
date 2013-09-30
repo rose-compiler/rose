@@ -14,10 +14,12 @@ using namespace std;
 
 namespace CodeThorn {
 
+namespace SgNodeHelper {
+
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
-  * \date 2012
+  * \date 2012, 2013.
 
   \details A collection of functions which simplify access to SgNode
   information. All functions are side-effect free and do not store any
@@ -26,7 +28,6 @@ namespace CodeThorn {
 
 
  */
-namespace SgNodeHelper {
 
   //! returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
@@ -195,6 +196,9 @@ namespace SgNodeHelper {
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
 
+  //! return a function-definition's return type
+  SgType* getFunctionReturnType(SgNode* node);
+
   //! returns the set of all local variable-declarations of a function
   set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
 
@@ -214,8 +218,15 @@ namespace SgNodeHelper {
 
   /*! computes a new string from s1 where each doublequote is replaced with a backslash followed by the doublequote. This is helpful when printing
    * unparsed program fragments which contain doublequoted strings to a dot file (used by nodeToString).
+   * This function also replaces <,<=,>=,> with the corresponding HTML codes.
    */
   string doubleQuotedEscapedString(string s1);
+
+  /*!
+    Same as doubleQuotedEscapedString but also replaces <,<=,>=,> with the corresponding HTML codes.
+    This is required when printing program code inside HTML tables of a dot file.
+  */
+  string doubleQuotedEscapedHTMLString(string s1);
 
   //! checks whether a SgVariableSymbol is representing a variable in
   //a forward declaration. This case no declaration for the variable

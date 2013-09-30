@@ -23,7 +23,6 @@ SOME_ROSE_FILE="scripts/autoconf-filter.pl"
 ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
 
 # Parse command-line
-do_quiet=yes
 do_timing=
 
 # Turn this on by default (header file dependence checking).
@@ -36,12 +35,6 @@ do_header_file_dependence_checking=no
 while [[ "$#" -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
-        --quiet)
-            do_quiet=yes
-            ;;
-        --verbose)
-            do_quiet=
-            ;;
         --timing)
             do_timing=yes
             ;;
@@ -300,25 +293,20 @@ if [[ -n "$do_timing" ]]; then
         -e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
 fi
 
-# Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
-# and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output. See also scripts/rosegit/bin/rosegit-make.
-#
-# Note:
-#     The '$(CXX)...' commands must be replaced also because automake generates them for *.o targets that depend on a *.C that
-#     includes a directory component. For example, the automake rule:
-#          rdis_SOURCES=RDis/main.C
-#     generates a Makefile rule like:
-#          main.o: RDis/main.C
-#                  $(CXX) $(DEFS) ....... `test -f 'RDis/main.C' || echo '$(srcdir)/'`RDis/main.C
-#     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
-#
-if [[ -n "$do_quiet" ]]; then
-    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
-fi
-
 # Save "--srcpath" value so rosegit-env can pick it up.  No need to do this for ROSE itself, just projects using the
 # ROSE build script.
 if [ ! -e "$srcdir/$SOME_ROSE_FILE" ]; then
     echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
 fi
 
+cat <<X
+
++-----------------------------------+
+| \$ROSE/build Terminated Normally!  |
++-----------------------------------+
+
+Now run \$ROSE/configure to generate a compilation directory with Makefiles.
+
+Thank you for using ROSE.
+
+X

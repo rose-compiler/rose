@@ -21,11 +21,15 @@ namespace CodeThorn {
 
   class VariableId;
   typedef string VariableName;
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class VariableIdMapping {
   /* TODO: possible workaround: because the AST implementation is not completed for the following cases:
      1) SgInitializedName in forward declaration (symbol=0)
      2) CtorInitializerList (symbol=0)
-	 the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
+     the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
   */
 
  public:
@@ -99,6 +103,10 @@ class VariableIdMapping {
 
  typedef VariableIdMapping::VariableIdSet VariableIdSet;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class VariableId {
   friend class VariableIdMapping;
   friend bool operator<(VariableId id1, VariableId id2);

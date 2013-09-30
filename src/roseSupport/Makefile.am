@@ -11,8 +11,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # This should probably also depend on all the source files that contain enum definitions.
 stringify.h: stringify.C
 stringify.C: $(top_srcdir)/scripts/stringify.pl
-	@echo "  GEN     $@"
-	@$(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
+	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
 
 threadSupport.lo: stringify.h
 
