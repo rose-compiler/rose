@@ -536,8 +536,8 @@ if (!$immediate_output) {
     open CMD_STDOUT, ">", $cmd_stdout_file or die "$cmd_stdout_file: $!\n";
     open CMD_STDERR, ">", $cmd_stderr_file or die "$cmd_stderr_file: $!\n";
 } else {
-    open CMD_STDOUT, "|tee $cmd_stdout_file |sed 's/^/$target: /'" or die "tee $cmd_stdout_file: $!\n";
-    open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target: /' >&2" or die "tee $cmd_stderr_file: $!\n";
+    open CMD_STDOUT, "|tee $cmd_stdout_file |sed 's/^/$target [out]: /'" or die "tee $cmd_stdout_file: $!\n";
+    open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target [err]: /' >&2" or die "tee $cmd_stderr_file: $!\n";
 }
 my($status) = run_command($config{timeout}, $subdir, @{$config{cmd}});
 
@@ -675,12 +675,13 @@ print "$target: ignoring failure\n" if $ignored_failure;
 close CMD_STDOUT;
 close CMD_STDERR;
 open TARGET, ">", $target_fail or die "$0: $target_fail: $!\n";
-for my $output ($cmd_stdout_file, $cmd_stderr_file) {
-  if (open OUTPUT, "<", $output) {
+my %output_filename = (out => $cmd_stdout_file, err => $cmd_stderr_file);
+for my $stream qw(out err) {
+  if (open OUTPUT, "<", $output_filename{$stream}) {
     while (<OUTPUT>) {
       print TARGET $_;
       if ($status && !$immediate_output && !$quiet_failure) {
-	  print "$target: ", $_;
+	  print "$target \[$stream]: ", $_;
       }
     }
     close OUTPUT;
