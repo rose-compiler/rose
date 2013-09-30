@@ -12,8 +12,6 @@ bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
-# DQ (9/12/2013): Need to add -fopenmp to link line to get portable handling via automake.
-#AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
 
 MYDATE = $(shell date +%Y_%m_%d)
