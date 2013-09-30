@@ -191,21 +191,21 @@ test_read_medium_arguments = $(addprefix $$(pwd)/, $(test_read_medium_specimens)
 #
 # Beware of the strange arguments for testAstFileRead: it takes "foo" as an argument, but actually reads "foo.binary".
 # Same thing applies to the output file name (the last argument).
-MOSTLYCLEANFILES += medium_output.C.binary $(addprefix medium_output, .passed .failed .err .out)
+MOSTLYCLEANFILES += medium_output.C.binary $(addprefix medium_output, .passed .failed)
 medium_output.C.binary: ../../testAstFileRead $(test_read_medium_binaries)
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/../../testAstFileRead $(test_read_medium_arguments) $$(pwd)/$(@:.binary=)" \
 		$(TEST_EXIT_STATUS) medium_output.passed
 
-MOSTLYCLEANFILES += large_output.C.binary $(addprefix large_output, .passed .failed .err .out)
+MOSTLYCLEANFILES += large_output.C.binary $(addprefix large_output, .passed .failed)
 large_output.C.binary: medium_output.C.binary
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/../../testAstFileRead $(foreach I, 1 2 3 4, $$(pwd)/$(<:.binary=)) $$(pwd)/$(@:.binary=)" \
 		$(TEST_EXIT_STATUS) large_output.passed
 
-MOSTLYCLEANFILES += huge_output.C.binary $(addprefix huge_output, .passed .failed .err .out)
+MOSTLYCLEANFILES += huge_output.C.binary $(addprefix huge_output, .passed .failed)
 huge_output.C.binary: large_output.C.binary
 	@$(RTH_RUN) \
 		DISABLED="too large for most systems" \
@@ -213,7 +213,7 @@ huge_output.C.binary: large_output.C.binary
 		CMD="$$(pwd)/../../testAstFileRead $(foreach I, 1 2 3 4, $$(pwd)/$(<:.binary=)) $$(pwd)/$(@:.binary=)" \
 		$(TEST_EXIT_STATUS) huge_output.passed
 
-MOSTLYCLEANFILES += reallyhuge_output.C.binary $(addprefix reallyhuge_output, .passed .failed .err .out)
+MOSTLYCLEANFILES += reallyhuge_output.C.binary $(addprefix reallyhuge_output, .passed .failed)
 reallyhuge_output.C.binary: huge_output.C.binary
 	@$(RTH_RUN) \
 		DISABLED="too large for most systems" \
@@ -545,11 +545,7 @@ check-local: $(Cxx_binaries) $(local_binaries) $(TEST_TARGETS)
 clean-local:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.err)
-	rm -f $(TEST_TARGETS:.passed=.out)
 	rm -f $(EXTRA_TEST_TARGETS)
 	rm -f $(EXTRA_TEST_TARGETS:.passed=.failed)
-	rm -f $(EXTRA_TEST_TARGETS:.passed=.err)
-	rm -f $(EXTRA_TEST_TARGETS:.passed=.out)
 	rm -f $(EXTRA_TEST_TARGETS:.passed=)
 

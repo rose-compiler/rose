@@ -27,8 +27,6 @@ $(singleStatementToBlockNormalization_TEST_TARGETS): \
 check-local: $(singleStatementToBlockNormalization_TEST_TARGETS)
 
 clean-local:
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.C

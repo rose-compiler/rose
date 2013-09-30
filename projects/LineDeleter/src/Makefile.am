@@ -78,8 +78,6 @@ clean-local:
 	rm -f coverage_*
 	rm -f deleted_*
 	rm -f sample3.*
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.c

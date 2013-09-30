@@ -22,4 +22,3 @@ clean-local:
 	rm -rf $(MOSTLYCLEANFILES)
 	rm -rf dfa.dot cfg.dot
 	rm -rf $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
-	rm -rf $(TEST_TARGETS:.passed=.err) $(TEST_TARGETS:.passed=.out)

@@ -33,9 +33,7 @@ $(LIN_TEST_TARGETS): lin_%.passed: ${srcdir}/tests/% testLinearization $(LIN_TES
 
 EXTRA_DIST += $(LIN_TEST_CONFIG)
 
-MOSTLYCLEANFILES += 										 \
-	$(LIN_TEST_TARGETS) $(LIN_TEST_TARGETS:.passed=.failed) $(LIN_TEST_TARGETS:.passed=.out) \
-	$(LIN_TEST_TARGETS:.passed=.err)
+MOSTLYCLEANFILES += $(LIN_TEST_TARGETS) $(LIN_TEST_TARGETS:.passed=.failed)
 
 
 

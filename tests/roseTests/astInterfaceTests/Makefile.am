@@ -541,5 +541,3 @@ clean-local:
 	rm -f $(generatedCodeExamples)
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
-	rm -f $(addsuffix .err, $(generatedCodeExamples))
-	rm -f $(addsuffix .out, $(generatedCodeExamples))

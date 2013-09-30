@@ -55,6 +55,4 @@ check-local: $(TEST_TARGETS)
 clean-local:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.err)
-	rm -f $(TEST_TARGETS:.passed=.out)
 	rm -f mangleTest--mangleTwo.C.dot

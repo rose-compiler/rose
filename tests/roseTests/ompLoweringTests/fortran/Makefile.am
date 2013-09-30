@@ -165,8 +165,6 @@ clean-local:
 	rm -f $(OBJECTS_WITH_TESTS)
 	rm -f $(addsuffix .passed, $(OBJECTS_WITH_TESTS))
 	rm -f $(addsuffix .failed, $(OBJECTS_WITH_TESTS))
-	rm -f $(addsuffix .err, $(OBJECTS_WITH_TESTS))
-	rm -f $(addsuffix .out, $(OBJECTS_WITH_TESTS))
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
 EXTRA_DIST = 

@@ -51,7 +51,5 @@ clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)
 	rm -f $(SPECIMENS:.C=.o)
 	rm -f $(addprefix rose_, $(SPECIMENS))

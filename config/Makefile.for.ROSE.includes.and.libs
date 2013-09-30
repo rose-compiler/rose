@@ -450,9 +450,11 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 # some of the binary analysis tests.
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
+# Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
+# "make" command-line
+RTH_RUN_FLAGS =
 
-# Test harness variables. See "rth_run.pl --help" for more info.
-RTH_RUN=$(top_srcdir)/scripts/rth_run.pl \
+RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
