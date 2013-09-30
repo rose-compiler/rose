@@ -118,10 +118,10 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
   size_t num=0;
   for(list<SgFunctionCallExp*>::iterator i=funCallList.begin();i!=funCallList.end();i++) {
     SgFunctionCallExp* funCall=*i;
-    cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
+	if(detailedOutput) cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
     bool success=trivialInline(funCall);
     if(success) {
-      cout<<"inlined."<<endl;
+      if(detailedOutput) cout<<"inlined."<<endl;
       num++;
     }
     else
@@ -473,7 +473,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   // 2) eliminate assignment to variable
   // 3) replace use of variable
   cout<<"STATUS: Dead code elimination phase 1: Eliminating variables."<<endl;
-  cout<<"STATUS: Eliminating variables."<<endl;
+  cout<<"STATUS: Collecting variables, assignments, and expressions."<<endl;
   list<SgVariableDeclaration*> toDeleteVarDecls;
   list<SgAssignOp*> toDeleteAssignments;
   list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
@@ -506,6 +506,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	}
   }
 
+  cout<<"STATUS: eliminating declarations."<<endl;
   int elimVar=0;
   for(list<SgVariableDeclaration*>::iterator i=toDeleteVarDecls.begin();
 	  i!=toDeleteVarDecls.end();
@@ -514,6 +515,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	if(detailedOutput) cout<<"Eliminating dead variable's declaration: "<<(*i)->unparseToString()<<endl;
 	SageInterface::removeStatement(*i, false);
   }
+  cout<<"STATUS: eliminating assignments."<<endl;
   int elimAssignment=0;
   for(list<SgAssignOp*>::iterator i=toDeleteAssignments.begin();
 	  i!=toDeleteAssignments.end();
@@ -528,6 +530,8 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 	if(detailedOutput) cout<<"Eliminating dead variable assignment: "<<(*i)->unparseToString()<<endl;
 	SageInterface::removeStatement(exprStatAssign, false);
   }
+
+  cout<<"STATUS: eliminating expressions."<<endl;
   int elimVarUses=0;
   for(list<pair<SgExpression*,SgExpression*> >::iterator i=toReplaceExpressions.begin();
 	  i!=toReplaceExpressions.end();
@@ -539,7 +543,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 
   cout<<"STATUS: Eliminated "<<elimVar<<" variable declarations."<<endl;
   cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
-  cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variable with constant."<<endl;
+  cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variables with constant."<<endl;
   cout<<"STATUS: Eliminated "<<elimVar<<" dead variables."<<endl;
   cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
   return elimVar+elimAssignment+elimVarUses;
@@ -780,7 +784,7 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
 #endif
 	cout<<" isAny:"<<vci.isAny(varId)
 		<<" isUniqueConst:"<<vci.isUniqueConst(varId)
-		<<" isMultiConst:"<<vci.isMultiConst(varId)<<"##";
+		<<" isMultiConst:"<<vci.isMultiConst(varId);
 	if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
 	  cout<<" width:"<<vci.width(varId);
 	} else {
@@ -821,6 +825,7 @@ int main(int argc, char* argv[]) {
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
     ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
+    ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results")
 	;
   //    ("int-option",po::value< int >(),"option info")
@@ -859,7 +864,11 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("eliminate-empty-if",true);
   boolOptions.registerOption("eliminate-dead-code",true);
   boolOptions.registerOption("generate-transformed-code",true);
+  boolOptions.registerOption("verbose",false);
   boolOptions.processOptions();
+
+  if(boolOptions["verbose"])
+	detailedOutput=1;
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -894,11 +903,12 @@ int main(int argc, char* argv[]) {
 	list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
 	while(remainingFunCalls.size()>0) {
 	  size_t numFunCall=remainingFunCalls.size();
-	  cout<<"INFO: Remaing function calls in main function: "<<numFunCall<<endl;
+	  cout<<"INFO: Remaining function calls in main function: "<<numFunCall<<endl;
 	  if(numFunCall>0)
 		inlineFunctionCalls(remainingFunCalls);
 	  remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
 	}
+	cout<<"INFO: Remaining function calls in main function: 0"<<endl;
   } else {
 	cout<<"INFO: Inlining: turned off."<<endl;
   }
@@ -922,7 +932,7 @@ int main(int argc, char* argv[]) {
 	  string funName=SgNodeHelper::getFunctionName(*i);
 	  SgFunctionDeclaration* funDecl=(*i)->get_declaration();
 	  if(funName!="main") {
-		cout<<"Deleting function: "<<funName<<endl;
+		if(detailedOutput) cout<<"Deleting function: "<<funName<<endl;
 		SgStatement* stmt=funDecl;
 		SageInterface::removeStatement (stmt, false);
 		//SageInterface::deleteAST(funDef);
