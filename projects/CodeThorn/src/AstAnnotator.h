@@ -12,6 +12,10 @@ using std::string;
 
 using namespace CodeThorn;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class AstAnnotator {
  public:
   AstAnnotator(Labeler* labeler);

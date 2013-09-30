@@ -48,6 +48,9 @@ check-local:	testSideEffect
 	diff -u tmp $(srcdir)/testLoop.outx
 	-rm *db
 	@echo "Side-Effect Tests Passed"
+	@echo "*******************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/sideEffectAnalysisTests: make check rule complete (terminated normally) ******"
+	@echo "*******************************************************************************************************************************"
 
 # endif for section of Makefile.am which is dependent upon the optional database support
 endif

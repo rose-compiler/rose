@@ -1192,8 +1192,23 @@ genEnumStub(ostream &stubs, SgEnumDeclaration *ed, list<string> &exports)
           if (fldInit != NULL)
              {
                SgIntVal *fldVal = isSgIntVal(fldInit->get_operand_i());
+#if 0
+            // DQ (9/22/2013): This older code likely worked for EDG3x, but is a problem for the more recent work in ROSE (EDG4x branch).
                ROSE_ASSERT(fldVal != NULL);
                enumVal = fldVal->get_value();
+#else
+            // DQ (9/22/2013): The enum value is usually an integer value, but can also be an enum value, so handle this case.
+               SgEnumVal *enum_fldVal = isSgEnumVal(fldInit->get_operand_i());
+               if (fldVal != NULL)
+                  {
+                    enumVal = fldVal->get_value();
+                  }
+                 else
+                  {
+                    printf ("NOTE: fldVal = isSgIntVal(fldInit->get_operand_i()) == NULL: fldInit->get_operand_i() = %p = %s \n",fldInit->get_operand_i(),(fldInit->get_operand_i() != NULL) ? fldInit->get_operand_i()->class_name().c_str() : "null");
+                    enumVal = enum_fldVal->get_value();
+                  }
+#endif
              }
           else
              {

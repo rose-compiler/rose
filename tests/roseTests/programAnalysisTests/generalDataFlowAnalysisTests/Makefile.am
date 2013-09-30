@@ -515,9 +515,9 @@ endif
 
 
 check-local: check-c-languages check-fortran-languages
-	@echo "*********************************************************************************************************"
+	@echo "************************************************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
+	@echo "************************************************************************************************************************************"
 
 
 # Clean only files that are created by the build system (i.e., no wild cards, because that tends to delete files that

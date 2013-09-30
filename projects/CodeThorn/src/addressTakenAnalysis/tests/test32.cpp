@@ -15,10 +15,10 @@ struct B
     int val;
     B() : val(0) { }
     B(int _val) : val(_val) { }
-    // B operator+(const B& other) {
-    //      val += other.val;
-    //      return *this;
-    //  }
+    B operator+(const B& other) {
+         val += other.val;
+         return *this;
+     }
     B& operator=(const B& other) {
         val = other.val;
         return *this;

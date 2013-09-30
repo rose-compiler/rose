@@ -50,6 +50,7 @@ SUBDIRS = \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+	RoseBlockLevelTracing\
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
@@ -88,7 +89,11 @@ if !ROSE_USING_BOOST_VERSION_1_36
 if !USING_GCC_4_0_4_BACKEND_COMPILER
 # DQ (4/8/2011): Directories of tests are a current problem for Insure++.
 if !ROSE_USE_INSURE
-   SUBDIRS += haskellport 
+# DQ (9/22/2013): This project is now excluded from being tested within ROSE.
+# The haskellport/README file details specific issues with the current implementation
+# the project will compile byt when run the generated code does not compile.
+# Please see the haskellport/README file for more detailed information about the status.
+#   SUBDIRS += haskellport 
 endif
 endif
 endif

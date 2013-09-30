@@ -54,7 +54,10 @@ run-genStubsAndWrappers-stamp: genStubsAndWrappers sage3.h.C rose.cabal.in heade
 	mkdir -p ROSE/Sage3/Methods
 if !ROSE_USING_ROSE_ANALYSIS
 #if !ROSE_USE_NEW_EDG_INTERFACE
-	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+
+# We should not be using both "-isystem" and "-I" with the headersWithoutLineDirective directory.
+#	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem $(top_builddir)/projects/haskellport/headersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) $(srcdir)/sage3.h.C
 #endif
 endif
 	touch $@

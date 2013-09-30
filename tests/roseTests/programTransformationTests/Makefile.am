@@ -165,6 +165,9 @@ if ROSE_BUILD_OS_IS_CYGWIN
 check-local:
 else
 check-local: $(TEST_TARGETS)
+	@echo "*************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programTransformationTests: make check rule complete (terminated normally) ******"
+	@echo "*************************************************************************************************************"
 endif
 
 clean-local:
