@@ -15,8 +15,8 @@ grep '^[\(]' $1 | \
         -e 's/ *! */ Not $ /g' \
         -e "s/ *o\([A-Z]\) */ Out '\1' /g" \
         -e "s/ *i\([A-Z]\) */ In '\1' /g" \
-        -e "s/true/TTrue/g" \
-        -e "s/false/FFalse/g"
+        -e "s/true/TTTrue/g" \
+        -e "s/false/FFFalse/g"
 
 echo "    None]"
 echo "frequencies = ["
