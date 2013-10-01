@@ -47,6 +47,8 @@ data LTL = In Char
          | U LTL LTL
          | WU LTL LTL
          | R LTL LTL
+         | TTTrue
+         | FFFalse
          | None deriving (Eq, Show)
 
 data State = StIn Char | StOut Char deriving (Eq, Show)
@@ -176,6 +178,8 @@ rersInt :: Char -> Int
 rersInt c = (ord c) - (ord 'A')+1
 
 holds :: LTL -> [State] -> BoolLattice
+holds (TTTrue)  _ = TTrue
+holds (FFFalse) _ = FFalse
 holds (In  c) ((StIn  stc):_) = lift (c == stc)
 holds (Out c) ((StOut stc):_) = lift (c == stc)
 holds (In  c) ((StOut stc):states) = holds (In  c) states
@@ -234,6 +238,6 @@ printResult (f, n) = do
   result <- quickCheckWithResult stdArgs { maxSuccess = 10, maxDiscard = 10 } (prop_holds f)
   printf " ]\n"
   case result of
-    Failure _ _ _ _ -> printf "%d FALSE, found counterexample\n" n
+    Failure _ _ _ _ _ _ _ -> printf "%d FALSE, found counterexample\n" n
     _ -> printf ""
   
