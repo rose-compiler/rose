@@ -315,7 +315,7 @@ group2 =						\
 	rose_inputbuildProcedureHeaderStatement.f	\
 	rose_inputbuildExternalStatement.f		\
 	rose_inputbuildCommonBlock.f			\
-	rose_inputbuildNormalization.f			\
+	rose_inputdoLoopNormalization.f			\
 	rose_inputbuildLabelStatement2.f
 
 $(group2): rose_input%.f: input%.f %
