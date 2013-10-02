@@ -24,7 +24,7 @@ class ArrayAbstractionInterface {
   virtual SymbolicVal CreateArrayAccess(
                                 const SymbolicVal& arr,
                                 const SymbolicVal& index) 
-     { /*QY: need to be defined by a derived class*/ assert(0); }
+     { /*QY: need to be defined by a derived class*/ assert(0); return SymbolicVal(0); }
   virtual ~ArrayAbstractionInterface() {}
 };
 
@@ -63,7 +63,7 @@ class AutoTuningInterface ;
 QY: Singular interface class which remembers configurations for loop 
     optimizations
 ***********/
-class LoopTransformInterface 
+class ROSE_DLL_API LoopTransformInterface 
 {
   static AstInterface* fa;
   static int configIndex;
@@ -150,7 +150,7 @@ class LoopTransformInterface
   i++ is normalized to i=i+1
   i-- is normalized to i=i-1
 */
-void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
+ROSE_DLL_API void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
 
 
 #endif

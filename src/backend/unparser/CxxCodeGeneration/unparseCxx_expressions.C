@@ -173,6 +173,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (7/12/2013): Added support for unparsing teyp trait builtin expressions (operators).
           case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
+       // DQ (9/4/2013): Added support for compund literals.
+          case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -416,6 +419,10 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
         }
 #endif
 
+#if 0
+     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+#endif
+
      SgUnparse_Info ninfo(info);
 
   // DQ (5/6/2013): This fixes the test2013_153.C test code.
@@ -442,7 +449,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -483,8 +490,58 @@ void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateParameter != NULL);
+
+     switch(templateParameter->get_parameterType())
+        {
+          case SgTemplateParameter::type_parameter:
+             {
+#if 1
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgTemplateParameter::nontype_parameter:
+             {
+               if (templateParameter->get_expression() != NULL)
+                  {
+                    unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(templateParameter->get_initializedName() != NULL);
+
+                    SgType* type = templateParameter->get_initializedName()->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+                    unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                  }
+
+               break;
+             }
+
+          case SgTemplateParameter::template_parameter:
+             {
+#if 1
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
+
+#if 0
      printf ("unparseTemplateParameter(): Sorry, not implemented! \n");
      ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -743,7 +800,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
      if (newInfo.SkipBaseType() == true)
         {
-#if 1
+#if 0
           printf ("In unparseTemplateArgument(): unset SkipBaseType() (how was this set? Maybe from the function reference expression?) \n");
 #endif
           newInfo.unset_SkipBaseType();
@@ -1020,21 +1077,47 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
           case SgTemplateArgument::nontype_argument:
              {
-               ROSE_ASSERT (templateArgument->get_expression() != NULL);
+            // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
+            // ROSE_ASSERT (templateArgument->get_expression() != NULL);
+               ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
+               ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
+               if (templateArgument->get_expression() != NULL)
+                  {
 #if 0
-               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
+                    printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
 #endif
 #if OUTPUT_DEBUGGING_INFORMATION
-               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
-               unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
+                    printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
+                    unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
 #endif
-            // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
+                 // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
 
-            // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
+                 // DQ (8/7/2013): Adding support for template functions overloaded on template parameters.
+                 // This should be present, but we don't use it directly in the name generation. We want 
+                 // to use the template arguments in the symbol table lookup, but not the name generation.
+                    ROSE_ASSERT(templateArgument->get_expression()->get_type() != NULL);
 #if 0
-               printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+                    printf ("Template argument (templateArgument->get_expression()->get_type() (not used in name generation)) = %p = %s \n",templateArgument->get_expression()->get_type(),templateArgument->get_expression()->get_type()->class_name().c_str());
 #endif
-               unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+                 // unp->u_type->unparseType(templateArgument->get_expression()->get_type(),newInfo);
+
+                 // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
+#if 0
+                    printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+#endif
+                    unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+                  }
+                 else
+                  {
+                 // Unparse this case of a SgInitializedName.
+#if 0
+                    printf ("In unparseTemplateArgument(): templateArgument->get_initializedName() = %s \n",templateArgument->get_initializedName()->get_name().str());
+#endif
+                    SgType* type = templateArgument->get_initializedName()->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+                    unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                  }
 
             // printf ("Error: nontype_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
             // ROSE_ABORT();
@@ -1535,6 +1618,36 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 
+// DQ (9/4/2013): Added support for compound literals.
+void
+Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgCompoundLiteralExp* compoundLiteral = isSgCompoundLiteralExp(expr);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     SgVariableSymbol* variableSymbol = compoundLiteral->get_symbol();
+     ROSE_ASSERT(variableSymbol != NULL);
+
+     SgInitializedName* initializedName = variableSymbol->get_declaration();
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_initptr() != NULL);
+
+     SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
+     ROSE_ASSERT(aggregateInitializer != NULL);
+     ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
+
+     unparseAggrInit(aggregateInitializer,info);
+
+#if 0
+     printf ("unparseCompoundLiteral not implemented yet! \n");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
 void
 Unparse_ExprStmt::unparseClassRef(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -1916,6 +2029,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if 0
      printf ("In unparseMFuncRefSupport(): uses_operator_syntax = %s \n",uses_operator_syntax ? "true" : "false");
+#endif
+#if 0
      curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 
@@ -1931,6 +2046,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if 0
      printf ("In unparseMFuncRefSupport(): expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
+#endif
+#if 0
      curprint ("\n /* Inside of unparseMFuncRef */ \n");
 #endif
 #if 0
@@ -1983,6 +2100,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                if (i != SgNode::get_globalQualifiedNameMapForNames().end())
                   {
                  // I think this branch supports template member functions (called with explicit template arguments) (see test2013_221.C).
+
+#error "DEAD CODE!"
 
                     printf ("Commented out usingGeneratedNameQualifiedFunctionNameString: Not using the saved generated name from globalQualifiedNameMapForNames() \n");
                  // usingGeneratedNameQualifiedFunctionNameString = true;
@@ -4574,20 +4693,38 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
         }
 
   // DQ (11/2/2012): This seems like it could be kind of expensive for each expression...
-     SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+     SgStatement* cur_stmt = SageInterface::getEnclosingStatement(lnode);
+     ROSE_ASSERT(cur_stmt != NULL);
+
+  // SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(cur_stmt);
+
      if (cur_file != NULL)
         {
+       // DQ (9/1/2013): Changed predicate to test for isCompilerGenerated() instead of isOutputInCodeGeneration().
+       // The proper source position is now set for the children of SgAssignInitializer.
+
        // normal file info 
        // if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isCompilerGenerated() == false)
-          if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isOutputInCodeGeneration() == false)
+       // if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isOutputInCodeGeneration() == false)
+          if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isCompilerGenerated() == false)
              {
-               if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+            // DQ (9/5/2013): We need to use the Sg_File_Info::get_physical_filename() instead of Sg_File_Info::get_filenameString() 
+            // because the file might have #line directives (see test2013_52.c).  Note that this much match the cur_file's get_physical_filename().
+            // if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+            // if (lnode->get_file_info()->get_filenameString() != "" && lnode->get_file_info()->get_filenameString() != "NULL_FILE" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+            // if (lnode->get_file_info()->get_physical_filename() != "" && lnode->get_file_info()->get_physical_filename() != "NULL_FILE" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_physical_filename())
+               if (lnode->get_file_info()->get_physical_filename() != "" && lnode->get_file_info()->get_physical_filename() != "NULL_FILE" && cur_file->get_file_info()->get_physical_filename() != lnode->get_file_info()->get_physical_filename())
                   {
                     result = true;
 #if 0
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_file_info()        = %p \n",lnode->get_file_info());
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_startOfConstruct() = %p \n",lnode->get_startOfConstruct());
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_endOfConstruct()   = %p \n",lnode->get_endOfConstruct());
+                    ROSE_ASSERT(cur_file->get_file_info() != NULL);
+                    ROSE_ASSERT(lnode->get_file_info() != NULL);
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): cur_file->get_file_info()->get_filenameString() = %s \n",cur_file->get_file_info()->get_filenameString().c_str());
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_file_info()->get_filenameString()    = %s \n",lnode->get_file_info()->get_filenameString().c_str());
                     lnode->get_file_info()->display("In isFromAnotherFile(): get_file_info(): returning TRUE: debug");
                     lnode->get_startOfConstruct()->display("In isFromAnotherFile(): get_startOfConstruct(): returning TRUE: debug");
 #endif
@@ -4595,7 +4732,13 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
              }
         }
 
-  // DQ (11/4/2012): This is a bit too mcuh trouble to support at the moment. I'm am getting tired of fighting it.
+#if 0
+  // DQ (9/1/2013): Now that we have modified EDG to supported the source position information in constants in the 
+  // SgAssignInitializer (in the case of SgAggregateInitializers), we can use the code above (finally) to suppress 
+  // the unparsing of the aggregate initializers when they were from a different include file (see test2013_05.c 
+  // as an example).
+
+  // DQ (11/4/2012): This is a bit too much trouble to support at the moment. I'm am getting tired of fighting it.
   // This is causing too many things to not be unparsed and needs to be iterated on when we are a bit further along
   // and under less pressure.  this support for expression level selection of what to unparse is only addrressing
   // a narrow part of the unparsing of expressions.  I understand that this is an attempt to support the case where
@@ -4616,6 +4759,7 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
              }
           result = false;
         }
+#endif
 
 #if 0
      printf ("In isFromAnotherFile(SgLocatedNode* lnode = %p = %s): result = %s \n",lnode,lnode->class_name().c_str(),result ? "true" : "false");
@@ -4674,17 +4818,66 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
 
      bool result = false;
      SgNamedType* namedType = isSgNamedType(expressionType);
+#if 1
+  // DQ (9/14/2013): I think this is a better implementation (test2012_46.c was failing before).
+  // This permits both test2013_70.c and test2012_46.c to unparse properly, where the two were 
+  // previously mutually exclusive.
+     if (namedType != NULL)
+        {
+          ROSE_ASSERT(namedType->get_declaration() != NULL);
+          SgDeclarationStatement* declarationStatementDefiningType = namedType->get_declaration();
+          SgDeclarationStatement* definingDeclarationStatementDefiningType = declarationStatementDefiningType->get_definingDeclaration();
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatementDefiningType);
+          if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false)
+             {
+            // This declaration IS defined imbedded in another statement.
+#if 0
+               printf ("This class declaration IS defined embedded in another statement. \n");
+#endif
+               result = true;
+             }
+            else
+             {
+            // This declaration is NOT defined imbedded in another statement.
+#if 0
+               printf ("This is not a class declaration OR the declaration is NOT defined embedded in another statement. \n");
+#endif
+               result = false;
+             }
+        }
+#else
      SgStatement* statementDefiningType         = NULL;
      if (namedType != NULL)
         {
           ROSE_ASSERT(namedType->get_declaration() != NULL);
-          statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+
+#error "DEAD CODE!"
+
+       // DQ (9/14/2013): If this is a scope statement then we want to use the declaration directly (else everything 
+       // will be an ancestor in the case of this being a global scope).  See test2013_70.c for what we need this.
+       // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+          if (isSgScopeStatement(namedType->get_declaration()->get_parent()) != NULL)
+             {
+            // The declaration for the type is declared in a scope and not as part of being embedded in another statement.
+            // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration());
+               statementDefiningType = namedType->get_declaration();
+             }
+            else
+             {
+            // This is the case of the type embedded in another statement (e.g. for a GNU statement expression).
+               statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+             }
         }
 
      if (statementDefiningType != NULL)
         {
+#if 0
+          printf ("Calling SageInterface::isAncestor(): statementDefiningType = %p = %s \n",statementDefiningType,statementDefiningType->class_name().c_str());
+          printf ("Calling SageInterface::isAncestor(): expr                  = %p = %s \n",expr,expr->class_name().c_str());
+#endif
           result = SageInterface::isAncestor(statementDefiningType,expr);
         }
+#endif
 
 #if 0
      printf ("In sharesSameStatement(SgExpression* expr, SgType* expressionType): result = %s \n",result ? "true" : "false");
@@ -4695,20 +4888,137 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
    }
 
 
+static bool
+containsIncludeDirective(SgLocatedNode* locatedNode)
+   {
+     bool returnResult = false;
+     AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+     if (comments != NULL)
+        {
+#if 0
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+#if 0
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+               if (locatedNode->get_startOfConstruct()->isSameFile((*i)->get_file_info()) == true)
+                  {
+                 // This should also be true.
+                    ROSE_ASSERT(locatedNode->get_endOfConstruct()->isSameFile((*i)->get_file_info()) == true);
+                  }
+
+               if ( *(locatedNode->get_startOfConstruct()) <= *((*i)->get_file_info()) && *(locatedNode->get_endOfConstruct()) >= *((*i)->get_file_info()) )
+                  {
+                 // Then the comment is in between the start of the construct and the end of the construct.
+                    if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+                       {
+                         returnResult = true;
+                       }
+                  }
+             }
+        }
+       else
+        {
+#if 0
+          printf ("In containsIncludeDirective(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+#endif
+        }
+
+#if 0
+     printf ("In containsIncludeDirective(): returnResult = %s locatedNode = %p = %s \n",returnResult ? "true" : "false",locatedNode,locatedNode->sage_class_name());
+#endif
+
+     return returnResult;
+   }
+
+
+static void
+removeIncludeDirective(SgLocatedNode* locatedNode)
+   {
+     bool returnResult = false;
+     AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+     AttachedPreprocessingInfoType includeDirectiveList;
+
+     if (comments != NULL)
+        {
+#if 0
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+          for (AttachedPreprocessingInfoType::iterator i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+#if 0
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+               if (locatedNode->get_startOfConstruct()->isSameFile((*i)->get_file_info()) == true)
+                  {
+                 // This should also be true.
+                    ROSE_ASSERT(locatedNode->get_endOfConstruct()->isSameFile((*i)->get_file_info()) == true);
+                  }
+
+               if ( *(locatedNode->get_startOfConstruct()) <= *((*i)->get_file_info()) && *(locatedNode->get_endOfConstruct()) >= *((*i)->get_file_info()) )
+                  {
+                 // Then the comment is in between the start of the construct and the end of the construct.
+                    if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+                       {
+                         printf ("Found cpp include directive \n");
+                         returnResult = true;
+                         includeDirectiveList.push_back(*i);
+                       }
+                  }
+             }
+
+       // Remove the list of include directives.
+          for (AttachedPreprocessingInfoType::iterator i = includeDirectiveList.begin(); i != includeDirectiveList.end(); i++)
+             {
+#if 0
+               printf ("In removeIncludeDirective(): Removing cpp include directive \n");
+
+               printf ("     Remove Comment (relativePosition=%s): %s\n",((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",(*i)->getString().c_str());
+               printf ("     Remove Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("remove comment/directive location");
+#endif
+               comments->erase(find(comments->begin(),comments->end(),*i));
+             }
+        }
+       else
+        {
+#if 0
+          printf ("In removeIncludeDirective(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+#endif
+        }
+   }
+
+
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
 
+#if 0
+  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
-#if 0
           printf ("In unparseAggrInit(): This SgAggregateInitializer (aggr_init = %p) is from another file so its subtree will not be output in the generated code \n",aggr_init);
-#endif
+
           return;
         }
+#endif
 
      SgUnparse_Info newinfo(info);
 
@@ -4734,13 +5044,26 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           SgUnparse_Info newinfo(info);
           if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
              {
+#if 0
+               printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
+#endif
                newinfo.unset_SkipClassDefinition();
+             }
+            else
+             {
+#if 0
+               printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == false) \n");
+#endif
              }
 #if 0
           newinfo.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
 #endif
           curprint ("(");
-          unp->u_type->unparseType(aggr_init->get_type(),newinfo);
+
+       // DQ (9/4/2013): We need to unparse the full type (both the first and second parts of the type).
+       // unp->u_type->unparseType(aggr_init->get_type(),newinfo);
+          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo);
+
           curprint (")");
 #if 0
           curprint ("/* DONE: output type in unparseAggrInit() */ ");
@@ -4802,15 +5125,48 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
-     for (size_t index =0; index < list.size(); index ++)
+#if 0
+     printf ("In unparseAggrInit(): printOutComments(aggr_init = %p = %s) \n",aggr_init,aggr_init->class_name().c_str());
+     printOutComments(aggr_init);
+
+     for (size_t index = 0; index < list.size(); index ++)
         {
+          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%zu] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
+          printOutComments(list[index]);
+        }
+#endif
+
+  // DQ (9/11/2013): Detect the use of an #include directive and remove the #include directive.
+     bool skipTestForSourcePosition = containsIncludeDirective(aggr_init);
+     if (skipTestForSourcePosition == true)
+        {
+#if 0
+          printf ("In unparseAggrInit(): Found an include directive to be removed \n");
+#endif
+          removeIncludeDirective(aggr_init);
+        }
+
+     for (size_t index = 0; index < list.size(); index ++)
+        {
+#if 1
+       // If there was an include then unparse everything (because we removed the include (above)).
+       // If there was not an include then still unparse everything!
+          unparseExpression(list[index], newinfo);
+          if (index!= last_index)
+               curprint ( ", ");
+#else
+       // DQ (9/11/2013): Older code that attempted to use the source position, but it is sensitive  
+       // to errors in the source position information in EDG (or maybe in the translation to ROSE).
        // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
           bool skipUnparsing = isFromAnotherFile(list[index]);
           if (!skipUnparsing)
              {
+
+#error "DEAD CODE!"
+
                unparseExpression(list[index], newinfo);
                if (index!= last_index)
-                    curprint ( ", ");
+                    curprint(", ");
              }
             else
              {
@@ -4818,6 +5174,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
+#endif
         }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
 
@@ -4835,6 +5192,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
      SgCompoundInitializer* comp_init = isSgCompoundInitializer(expr);
      ROSE_ASSERT(comp_init != NULL);
 
+#if 0
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
@@ -4843,10 +5201,11 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
           return;
         }
+#endif
 
      SgUnparse_Info newinfo(info);
 
-     curprint ( "(");
+     curprint("(");
 
      SgExpressionPtrList& list = comp_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
@@ -4869,7 +5228,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
         }
 
      unparseAttachedPreprocessingInfo(comp_init, info, PreprocessingInfo::inside);
-     curprint ( ")");
+     curprint(")");
    }
 
 
@@ -5034,7 +5393,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #error "DEAD CODE!"
 
 #else
- // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
+  // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
 
   // DQ (5/26/2013): Combined these predicates so that we could rewrite this to not generate a SgName and ouput it later.  
   // This is required to allow us to call the function that output the member function name (if used), so that we can 
@@ -5093,6 +5452,8 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
             // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
                printf ("In unparseConInit(): put out func_name = %s \n",func_name.str());
+#endif
+#if 0
                curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
 #endif
             // If this is a template then the name will include template arguments which require name qualification and the name 
@@ -5131,6 +5492,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
+            // In this case there is no constructor member function to name, and so there is only the name of the class to use as a default constructor call.
 #if 0
                printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
 #endif
@@ -5145,15 +5507,33 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
                     curprint(nameQualifier.str());
+#if 0
                     curprint(con_init->get_class_decl()->get_name().str());
+#else
+                 // DQ (8/19/2013): This handles the case represented by test2013_306.C.
+                    newinfo.set_reference_node_for_qualification(con_init);
+
+                 // DQ (8/19/2013): This is required to handle references to classes in the throw expression (at least), see test2004_150.C.
+                 // DQ (8/19/2013): This has no effect if the type string is taken from the type name map and so the "class" needs
+                 // to be eliminated in the generation of the intial string as part of the generation of the name qualification.
+                 // printf ("In unparseOneElemConInit(): calling set_SkipClassSpecifier() \n");
+                    newinfo.set_SkipClassSpecifier();
+#if 0
+                    printf ("In unparseConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
+#endif
+                    unp->u_type->unparseType(con_init->get_type(),newinfo);
+#if 0
+                    printf ("DONE: In unparseConInit(): unparseType() \n");
+#endif
+#endif
                   }
               // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
                  else
                   {
 #if 0
-                    printf ("Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
-                    printf ("Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
+                    printf ("In unparseConInit(): Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
+                    printf ("In unparseConInit(): Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
 #endif
                     unp->u_type->unparseType(con_init->get_type(),newinfo);
 
@@ -5227,7 +5607,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
      if (outputParenthisis == true)
-          curprint ( "(");
+        {
+          curprint("(");
+        }
 
      if (con_init->get_args() != NULL)
         {
@@ -5251,7 +5633,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
      if (outputParenthisis == true)
         {
-          curprint ( ")");
+          curprint(")");
         }
 
 #if 0
@@ -5430,7 +5812,9 @@ Unparse_ExprStmt::unparseVarArgStartOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT (lhsOperand != NULL);
      ROSE_ASSERT (rhsOperand != NULL);
 
-     curprint ( "va_start(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint ( "va_start(");
+     curprint ( "__builtin_va_start(");
      unparseExpression(lhsOperand,info);
      curprint ( ",");
      unparseExpression(rhsOperand,info);
@@ -5447,7 +5831,9 @@ Unparse_ExprStmt::unparseVarArgStartOneOperandOp(SgExpression* expr, SgUnparse_I
      SgExpression* operand = varArgStart->get_operand_expr();
      ROSE_ASSERT (operand != NULL);
 
-     curprint ( "va_start(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint ( "va_start(");
+     curprint ( "__builtin_va_start(");
      unparseExpression(operand,info);
      curprint ( ")");
    }
@@ -5485,7 +5871,9 @@ Unparse_ExprStmt::unparseVarArgEndOp(SgExpression* expr, SgUnparse_Info& info)
      SgExpression* operand = varArgEnd->get_operand_expr();
      ROSE_ASSERT (operand != NULL);
 
-     curprint ( "va_end(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint("va_end(");
+     curprint("__builtin_va_end(");
      unparseExpression(operand,info);
      curprint ( ")");
    }
@@ -5503,7 +5891,9 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT (lhsOperand != NULL);
      ROSE_ASSERT (rhsOperand != NULL);
 
-     curprint ( "va_copy(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint("va_copy(");
+     curprint("__builtin_va_copy(");
      unparseExpression(lhsOperand,info);
      curprint ( ",");
      unparseExpression(rhsOperand,info);

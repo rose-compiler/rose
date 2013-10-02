@@ -21,7 +21,7 @@ using VirtualCFG::CFGNode;
 using VirtualCFG::CFGEdge;
 
 
-class CFG
+class ROSE_DLL_API CFG
 {
 protected:
     //! The graph data structure holding the CFG.

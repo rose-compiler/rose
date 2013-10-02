@@ -6,7 +6,7 @@
 #include <rose.h>
 #include "dataflowCfgFilter.h"
 
-class ReachingDef
+class ROSE_DLL_API ReachingDef
 {
 public:
 
