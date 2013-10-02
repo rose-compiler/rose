@@ -5,7 +5,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # they are currently time consuming to run, interested user may run them directly)         #
 ############################################################################################
 
-TESTCODES_REQUIRED_TO_PASS =
+TESTCODES_REQUIRED_TO_PASS = \
+   test_unordered_map_include.C
 
 # DQ (11/3/2011): Can't find "boost/spirit/phoenix/core.hpp"
 # test_boost_phoenix_v2.C
@@ -34,7 +35,8 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 TRANSLATOR = ../../testTranslator
 
 $(TEST_Objects): $(TRANSLATOR) $(srcdir)/$(@:.o=.C)
-	$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)
+#	$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)
+	$(TRANSLATOR) $(ROSE_FLAGS) $(ROSE_BOOST_PREINCLUDE_PATH) -c $(srcdir)/$(@:.o=.C)
 
 # This test code currently fails due to mangled names being too long!
 test_boost_phoenix_v2.o: ../../testTranslator

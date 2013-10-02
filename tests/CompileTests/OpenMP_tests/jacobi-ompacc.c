@@ -11,7 +11,7 @@ double time_stamp()
 {
   struct timeval t;
   double time;
-  gettimeofday(&t, NULL);
+  gettimeofday(&t,(struct timezone*)NULL);
   time = t.tv_sec + 1.0e-6*t.tv_usec;
   return time;
 }

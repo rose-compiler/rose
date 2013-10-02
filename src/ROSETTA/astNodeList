@@ -38,6 +38,8 @@ SgAsmCommonSubExpression
 SgAsmControlFlagsExpression
 SgAsmDOSExtendedHeader
 SgAsmDOSFileHeader
+SgAsmSynthesizedDataStructureDeclaration
+SgAsmSynthesizedDeclaration
 SgAsmDoubleFloatValueExpression
 SgAsmDoubleWordValueExpression
 SgAsmDwarfAccessDeclaration
@@ -155,6 +157,7 @@ SgAsmElfSymverSection
 SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
+SgAsmSynthesizedFieldDeclaration
 SgAsmFunction
 SgAsmGenericArchitecture
 SgAsmGenericDLL
@@ -305,6 +308,7 @@ SgComprehension
 SgComprehensionList
 SgCompoundAssignOp
 SgCompoundInitializer
+SgCompoundLiteralExp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp

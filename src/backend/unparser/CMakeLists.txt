@@ -5,11 +5,19 @@ add_subdirectory(CxxCodeGeneration)
 if (WIN32)
   message ("WARNING : Fortran, Java, and PHP not supported yet on Windows")
 else (WIN32)
-# tps (11/23/2009) commented out fortran and php for windows for now
-add_subdirectory(FortranCodeGeneration)
-add_subdirectory(JavaCodeGeneration)
-add_subdirectory(PHPCodeGeneration)
-#add_subdirectory(PythonCodeGeneration)
+  # tps (11/23/2009) commented out fortran and php for windows for now
+  if(enable-fortran)
+    add_subdirectory(FortranCodeGeneration)
+  endif()
+  if(enable-java)
+    add_subdirectory(JavaCodeGeneration)
+  endif()
+  if(enable-php)
+    add_subdirectory(PHPCodeGeneration)
+  endif()
+  if(enable-python)
+    add_subdirectory(PythonCodeGeneration)
+  endif()
 endif (WIN32)
 
 add_subdirectory(languageIndependenceSupport)
@@ -24,7 +32,8 @@ add_subdirectory(formatSupport)
 #add_dependencies( unparser ROSETTA )
 ########### install files ###############
 
-install(FILES  $(unparser_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
+set(unparser_headers copy_unparser.h unparser.h unparse_sym.h)
+install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

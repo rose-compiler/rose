@@ -38,8 +38,12 @@ int main (int argc, char *argv[])
   // build a defining function declaration
 
   SgFunctionParameterList * paraList3 = isSgFunctionParameterList(deepCopy(paraList));
-  SgFunctionDeclaration *func3 =
-    buildDefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList3);
+
+// DQ (8/23/2013): The buildDefiningFunctionDeclaration requires the non-defining declaration to be specified.
+// SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType* return_type, SgFunctionParameterList* paralist, bool isMemberFunction, SgScopeStatement* scope, 
+//      SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefining_declaration, SgTemplateArgumentPtrList* templateArgumentsList)
+// SgFunctionDeclaration *func3 = buildDefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList3);
+  SgFunctionDeclaration *func3 = buildDefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList3);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body = func3->get_definition ()->get_body ();

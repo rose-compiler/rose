@@ -19,7 +19,7 @@
 #include <boost/program_options.hpp>
 #include <map>
 #include "InternalChecks.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
 
@@ -35,31 +35,25 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgRshiftOp, true);
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
-
 }
 
 
-class TermRepresentation : public AnalysisResultAttribute {
+class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
-  string getPreInfoString() { return "// AST: "+astTermWithNullValuesToString(_node); }
-  string getPostInfoString() { return ""; }
+  string toString() { return "AstTerm: "+astTermWithNullValuesToString(_node); }
 private:
   SgNode* _node;
 };
 
-class PointerExprListAnnotation : public AnalysisResultAttribute {
+class PointerExprListAnnotation : public DFAstAttribute {
 public:
   PointerExprListAnnotation(SgNode* node) : _node(node) {
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
   }
-  string getPreInfoString() { 
-    if(true||isSgAssignOp(_node))
-      return "// POINTEREXPR: "+pointerExprToString(_node);
-    else
-      return "x";
+  string toString() { 
+    return "// POINTEREXPR: "+pointerExprToString(_node);
   }
-  string getPostInfoString() { return ""; }
 private:
   SgNode* _node;
 };
@@ -100,7 +94,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   if(boolOptions["rers-binary"]) {
-    for(int i=0;i<62;i++) {
+    int assertStart=-1;
+    int assertEnd=-1;
+    switch(resultsFormat) {
+    case RF_RERS2012: assertStart=0; assertEnd=60;break;
+    case RF_RERS2013: assertStart=100; assertEnd=159;break;
+    default: assert(0);
+    }
+    for(int i=assertStart;i<=assertEnd;i++) {
       *csv << i<<",";
       if(analyzer.binaryBindingAssert[i]) {
         *csv << "yes,9";
@@ -114,10 +115,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
       string name=SgNodeHelper::getLabelName((*i).first);
       if(name=="globalError")
         name="error_60";
-      name=name.substr(6,name.size()-6);
-      *csv << name
-           <<","
-        ;
+      int num;
+      stringstream(name.substr(6,name.size()-6))>>num;
+      switch(resultsFormat) {
+      case RF_RERS2012: *csv<<(num);break;
+      case RF_RERS2013: *csv<<(num+100);break;
+      default: assert(0);
+      } 
+      *csv <<",";
       Label lab=analyzer.getLabeler()->getLabel((*i).second);
       if(lset.find(lab)!=lset.end()) {
         *csv << "yes,9";
@@ -132,7 +137,14 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
 
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
   if(boolOptions["rers-binary"]) {
-    for(int i=0;i<62;i++) {
+    int assertStart=-1;
+    int assertEnd=-1;
+    switch(resultsFormat) {
+    case RF_RERS2012: assertStart=0; assertEnd=60;break;
+    case RF_RERS2013: assertStart=100; assertEnd=159;break;
+    default: assert(0);
+    }
+    for(int i=assertStart;i<=assertEnd;i++) {
       cout <<color("white")<<"assert: error_"<<i<<": ";
       if(analyzer.binaryBindingAssert[i]) {
         cout << color("green")<<"YES (REACHABLE)";
@@ -217,10 +229,18 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
     case 1: 
       checker1 = new CodeThorn::FixpointLTL::Checker(*analyzer.getEStateSet(), 
                              *analyzer.getTransitionGraph());
+
       break;
     case 2:
+#if 1
       checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getEStateSet(),
                              *analyzer.getTransitionGraph());
+#else
+      {
+        checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getTransitionGraph()->estateSet());
+                             *analyzer.getTransitionGraph());
+      }
+#endif
       break;
     default: 
       cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
@@ -270,7 +290,15 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       string formula = *ltl_val;
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
-      if (csv) *csv << n+60 <<",";
+
+      if(csv) {
+        switch(resultsFormat) {
+        case RF_RERS2012: *csv << (n-1)+61 <<",";break; // MS: n starts at 1
+        case RF_RERS2013: *csv << (n-1) <<",";break;
+        case RF_UNKNOWN: /* intentional fall-through */
+        default: assert(0);
+        }
+      }
       try {
     AType::BoolLattice result;
     if (checker1) result = checker1->verify(*ltl_val);
@@ -400,6 +428,8 @@ int main( int argc, char * argv[] ) {
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
+    ("semantic-elimination",po::value< string >(),"eliminate input-input transitions in STG [=yes|no]")
+    ("semantic-explosion",po::value< string >(),"semantic explosion of input states (requires folding and elimination) [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
@@ -411,6 +441,8 @@ int main( int argc, char * argv[] ) {
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+    ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
+    ("ltl-verbose",po::value< string >(),"LTL verifier: print log of all derivations.")
     ("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
     ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
@@ -424,7 +456,12 @@ int main( int argc, char * argv[] ) {
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
-    ("skip-analysis",po::value< string >(),"Run without performing any analysis (only used for testing).")
+    ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
+    ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
+    ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
+    ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
+    ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
+    ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -442,7 +479,7 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("version")) {
     cout << "CodeThorn version 1.2\n";
-    cout << "Written by Markus Schordan and Adrian Prantl 2012\n";
+    cout << "Written by Markus Schordan and Adrian Prantl 2012-2013\n";
     return 0;
   }
 
@@ -461,6 +498,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
+  boolOptions.registerOption("semantic-elimination",false);
+  boolOptions.registerOption("semantic-explosion",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("post-collapse-stg",true);
@@ -476,6 +515,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("skip-analysis",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
+  boolOptions.registerOption("ltl-verbose",false);
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
@@ -486,6 +526,9 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("abstract-interpreter",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
+  boolOptions.registerOption("stderr-like-failed-assert",false);
+  boolOptions.registerOption("rersmode",false);
+  boolOptions.registerOption("rers-numeric",false);
 
   boolOptions.processOptions();
 
@@ -542,6 +585,19 @@ int main( int argc, char * argv[] ) {
 #endif
   }
 
+  if(args.count("rersformat")) {
+    int year=args["rersformat"].as<int>();
+    if(year==2012)
+      resultsFormat=RF_RERS2012;
+    if(year==2013)
+      resultsFormat=RF_RERS2013;
+    // otherwise it remains RF_UNKNOWN
+  }
+
+  if(args.count("max-transitions")) {
+    analyzer.setMaxTransitions(args["max-transitions"].as<int>());
+  }
+
   int numberOfThreadsToUse=1;
   if(args.count("threads")) {
     numberOfThreadsToUse=args["threads"].as<int>();
@@ -555,6 +611,10 @@ int main( int argc, char * argv[] ) {
   if(args.count("display-diff")) {
     int displayDiff=args["display-diff"].as<int>();
     analyzer.setDisplayDiff(displayDiff);
+  }
+  if(args.count("solver")) {
+    int solver=args["solver"].as<int>();
+    analyzer.setSolver(solver);
   }
   if(args.count("ltl-verifier")) {
     int ltlVerifier=args["ltl-verifier"].as<int>();
@@ -573,6 +633,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--display-diff"
         || string(argv[i])=="--input-var-values"
         || string(argv[i])=="--ltl-verifier"
+        || string(argv[i])=="--dot-io-stg"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -580,6 +641,24 @@ int main( int argc, char * argv[] ) {
         argv[i+1] = strdup("");
     }
   }
+
+  // handle RERS mode: reconfigure options
+  if(boolOptions["rersmode"]) {
+    cout<<"INFO: RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+    boolOptions.registerOption("stderr-like-failed-assert",true);
+  }
+
+  if(boolOptions["semantic-elimination"]) {
+    boolOptions.registerOption("semantic-fold",true);
+  }
+
+  if(boolOptions["semantic-explosion"]) {
+    boolOptions.registerOption("semantic-fold",true);
+    boolOptions.registerOption("semantic-elimination",true);
+  }
+
+  analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
+  
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
@@ -622,15 +701,22 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-    analyzer.runSolver2();
-  } else {
-    analyzer.runSolver1();
+        analyzer.setSolver(4);
   }
+  analyzer.runSolver();
 
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;
     analyzer.semanticFoldingOfTransitionGraph();
   }
+  if(boolOptions["semantic-elimination"]) {
+    analyzer.semanticEliminationOfTransitions();
+  }
+
+  if(boolOptions["semantic-explosion"]) {
+    analyzer.semanticExplosionOfInputNodesFromOutputNodeConstraints();
+  }
+
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
   // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
@@ -650,11 +736,15 @@ int main( int argc, char * argv[] ) {
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
+#if 1
+    analyzer.stdIOFoldingOfTransitionGraph();
+#else
     cout << "(Experimental) Reducing transition graph ..."<<endl;
     set<const EState*> xestates=analyzer.nonLTLRelevantEStates();
     cout << "Size of transition graph before reduction: "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "Number of EStates to be reduced: "<<xestates.size()<<endl;
     analyzer.getTransitionGraph()->reduceEStates(xestates);
+#endif
     cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "=============================================================="<<endl;
   }
@@ -691,7 +781,8 @@ int main( int argc, char * argv[] ) {
 
   cout <<color("white");
   cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
-  cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
+  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
+  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST))<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
   cout << "=============================================================="<<endl;
@@ -748,13 +839,13 @@ int main( int argc, char * argv[] ) {
     AssertionExtractor assertionExtractor(&analyzer);
     assertionExtractor.computeLabelVectorOfEStates();
     assertionExtractor.annotateAst();
-    AnalysisResultAnnotator ara;
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"ctgen-pre-condition");
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
 
+  Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
-    Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
     cout << "generating graphviz files:"<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
@@ -768,7 +859,7 @@ int main( int argc, char * argv[] ) {
     string datFile1=(analyzer.getTransitionGraph())->toString();
     write_file("transitiongraph1.dat", datFile1);
     cout << "generated transitiongraph1.dat."<<endl;
-
+    
     assert(analyzer.startFunRoot);
     //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
@@ -780,6 +871,17 @@ int main( int argc, char * argv[] ) {
     
     write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
     cout << "generated cfg.dot."<<endl;
+    cout << "=============================================================="<<endl;
+  }
+
+  if (args.count("dot-io-stg")) {
+    string filename=args["dot-io-stg"].as<string>().c_str();
+    cout << "generating dot IO graph file:"<<filename<<endl;
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.transitionGraphWithIOToDot();
+    dotFile+="}\n";
+    write_file(filename, dotFile);
+    cout << "=============================================================="<<endl;
   }
 
 #if 0
@@ -814,9 +916,9 @@ int main( int argc, char * argv[] ) {
     cout << "INFO: Annotating analysis results."<<endl;
     attachTermRepresentation(sageProject);
     attachPointerExprLists(sageProject);
-    AnalysisResultAnnotator ara;
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-pointer-expr-lists");
   }
 
   if (boolOptions["annotate-results"]||boolOptions["generate-assertions"]) {

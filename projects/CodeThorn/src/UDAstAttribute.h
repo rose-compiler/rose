@@ -11,21 +11,25 @@ using std::set;
 #include <string>
 using std::string;
 
-#include "RDAnalysisAstAttribute.h"
+#include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 
 
 typedef pair<VariableId,LabelSet> VariableIdLabelSetPair;
 typedef set<VariableIdLabelSetPair> UseDefInfo;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class UDAstAttribute : public AstSgNodeAttribute {
  public:
-  UDAstAttribute(RDAnalysisAstAttribute* rdAttr, SgNode* nodeForUseVarQuery);
+  UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery);
   VariableIdSet useVariables(VariableIdMapping& vidm);
   LabelSet definitionsOfVariable(VariableId var);
   void toStream(ostream& os, VariableIdMapping* vim);
  private:
-  RDAnalysisAstAttribute* _rdAttr;
+  RDAstAttribute* _rdAttr;
   SgNode* _node;
 };
 

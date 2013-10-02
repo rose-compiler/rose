@@ -11,6 +11,10 @@
 
 using namespace CodeThorn;
 
+/*! 
+ *  \author    Markus Schordan
+ *  \date      2012
+ */
 std::string nodeTypeName(SgNode* node) {
   if(node==0) {
     return "null";

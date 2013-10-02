@@ -15,19 +15,30 @@
 using namespace std;
 using namespace CodeThorn;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();
-  void attachResultsToAst(string attributeName);
+  void attachInInfoToAst(string attributeName);
+  void attachOutInfoToAst(string attributeName);
   RDLattice transfer(Label lab, RDLattice element);
-  // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
-  VariableIdSet determineLValueVariableIdSet(SgNode* node);
+
   typedef AnalyzerData::iterator iterator;
   iterator begin();
   iterator end();
   size_t size();
+
  private:
-  void transfer_assignment(SgAssignOp* assignOp, Label& label, RDLattice& element);
+  void attachInfoToAst(string attributeName,bool isInInfo);
+  void transferExpression(Label label, SgExpression* expr, RDLattice& element);
+  void transferDeclaration(Label label, SgVariableDeclaration* decl, RDLattice& element);
+  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, RDLattice& element);
+  void transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element);
+  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element);
+  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, RDLattice& element);
 };
 
 #endif

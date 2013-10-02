@@ -1788,9 +1788,25 @@ if (!sgClassType) { \
      __is_literal_type (type)
      If type is a literal type ([basic.types]) the trait is true, else it is false. 
      Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+
+     A literal type is a type that can qualify as constexpr. This is true for scalar types, references, certain classes, and arrays of any such types.
+     
+     http://www.cplusplus.com/reference/type_traits/is_literal_type/
+     A class that is a literal type is a class (defined with class, struct or union) that:
+     has a trivial destructor,
+     every constructor call and any non-static data member that has brace- or equal- initializers is a constant expression,
+     is an aggregate type, or has at least one constexpr constructor or constructor template that is not a copy or move constructor, and
+     has all non-static data members and base classes of literal types
+
      */
     bool IsLiteralType(const SgType * const inputType){
-        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_MODIFIER_TYPE);
+
+        // Scalars, Pointers and Reference are literal
+        if (isScalarType(type) || isReferenceType(type) || isPointerType(type)) {
+            return true;
+        }
+        
         ROSE_ASSERT(0 && "NYI, don't know what type to accept for this API");
         ENSURE_CLASS_TYPE(type, false);
     }

@@ -6,13 +6,20 @@
 // and AST. Large blocks of contiguous storage for each RI node is allocated
 // by a new operator written for each class.
 
-#include <pthread.h>
+#ifndef HAVE_PTHREAD_H
+	#pragma message("pthread.h is not available, synchronization being skipped") 
+	#ifndef ALLOC_MUTEX
+		#define ALLOC_MUTEX(CLASS_NAME, HOW)
+	#endif
+#else
+	#include <pthread.h>
+	static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 // Static variables supporting memory pools
 // Is there some reason these are global variables rather than class variables? [RPM 2011-01-27]
 int  $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
 $CLASSNAME* $CLASSNAME_Current_Link        = NULL;
-static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // This macro protects allocation functions by locking/unlocking a mutex. We have one mutex defined for each Sage class. The
 // HOW argument should be the word "lock" or "unlock".  Using a macro allows us to not have to use conditional compilation

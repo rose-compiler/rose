@@ -624,8 +624,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      ROSE_ASSERT(sageFilePtr != NULL);
 
 #if 0
-     printf ("Inside of attachPreprocessingInfo(): wave = %s file = %p = %s \n",
-          sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
+     printf ("In attachPreprocessingInfo(): wave = %s file = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
 #endif
 
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
@@ -659,14 +658,14 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      if (processAllFiles == true || requiresCPP == true)
         {
 #if 0
-          printf ("Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
+          printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
 #endif
           tt.traverse(sageFilePtr, inh);
         }
        else
         {
 #if 0
-          printf ("Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
+          printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
 #endif
           tt.traverseWithinFile(sageFilePtr,inh);
         }

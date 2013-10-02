@@ -11,24 +11,22 @@ singleStatementToBlockNormalization_SOURCES =  SingleStatementToBlockNormalizati
 singleStatementToBlockNormalization_CPPFLAGS = $(ROSE_INCLUDES)
 singleStatementToBlockNormalization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-singleStatementToBlockNormalization_SPECIMENS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
 singleStatementToBlockNormalization_SPECIMENS = $(ROSE__CXX_TESTS)
 
 singleStatementToBlockNormalization_TEST_TARGETS = $(addsuffix .passed, $(singleStatementToBlockNormalization_SPECIMENS))
 
 singleStatementToBlockNormalization_SWITCHES = \
-	--edg:no_warnings -w -rose:verbose 0 -I$(singleStatementToBlockNormalization_SPECIMENS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+	--edg:no_warnings -w -rose:verbose 0 -I$(ROSE__CXX_TESTS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 $(singleStatementToBlockNormalization_TEST_TARGETS): \
-	%.passed:  % singleStatementToBlockNormalization $(TEST_EXIT_STATUS)
-	cp "$$(echo "$@" | sed 's/\.passed$$//g')" "$$(basename "$@")"
-	@$(RTH_RUN) CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$(builddir)/$$(basename "$@")"
+	%.passed: $(ROSE__CXX_TESTS_DIR)/% singleStatementToBlockNormalization $(TEST_EXIT_STATUS)
+	@$(RTH_RUN) \
+		CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" \
+		$(TEST_EXIT_STATUS) "$@"
 
 check-local: $(singleStatementToBlockNormalization_TEST_TARGETS)
 
 clean-local:
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.C

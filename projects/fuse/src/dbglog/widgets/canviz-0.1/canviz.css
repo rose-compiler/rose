@@ -1,0 +1,63 @@
+/*
+ * This file is part of Canviz. See http://www.canviz.org/
+ * $Id: canviz.css 246 2008-12-27 08:36:24Z ryandesign.com $
+ */
+
+body {
+	background: #eee;
+	margin: 0;
+	padding: 0;
+}
+#busy {
+	position: fixed;
+	z-index: 1;
+	left: 50%;
+	top: 50%;
+	width: 10em;
+	height: 2em;
+	margin: -1em 0 0 -5em;
+	line-height: 2em;
+	text-align: center;
+	background: #333;
+	color: #fff;
+	opacity: 0.95;
+}
+#graph_form {
+	position: fixed;
+	z-index: 2;
+	left: 0;
+	top: 0;
+	background: #eee;
+	border: solid #ccc;
+	border-width: 0 1px 1px 0;
+	opacity: 0.95;
+}
+#graph_form,
+#graph_form input,
+#graph_form select {
+	font: 12px "Lucida Grande", Arial, Helvetica, sans-serif;
+}
+#graph_form fieldset {
+	margin: 0.5em;
+	padding: 0.5em 0;
+	text-align: center;
+	border: solid #ccc;
+	border-width: 1px 0 0 0;
+}
+#graph_form legend {
+	padding: 0 0.5em 0 0;
+}
+#graph_form input.little_button {
+	width: 3em;
+}
+#graph_form select,
+#graph_form input.big_button {
+	width: 15em;
+}
+#graph_container {
+	background: #fff;
+	margin: 0 auto;
+}
+#debug_output {
+	margin: 1em;
+}
