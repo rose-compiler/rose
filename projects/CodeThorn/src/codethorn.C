@@ -741,15 +741,12 @@ int main( int argc, char * argv[] ) {
 #endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-	if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-	  switch(resultsFormat) {
-	  case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
-	  case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
-	  default: assert(0);
-	  }
-	} else {
-	  generateAssertsCsvFile(analyzer,sageProject,filename);
+	switch(resultsFormat) {
+	case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
+	case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
+	default: assert(0);
 	}
+	//	OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
