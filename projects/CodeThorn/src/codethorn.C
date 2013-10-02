@@ -385,6 +385,8 @@ string readableruntime(double time) {
   return s.str();
 }
 
+static Analyzer* global_analyzer=0;
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -544,6 +546,7 @@ int main( int argc, char * argv[] ) {
   }
 
   Analyzer analyzer;
+  global_analyzer=&analyzer;
   
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
@@ -726,12 +729,16 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
+
+	analyzer.reachabilityResults.printResults();
+#if 0
   // TODO: reachability in presence of semantic folding
   if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-	analyzer.reachabilityResults.printResults();
+
   } else {
     printAsserts(analyzer,sageProject);
   }
+#endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
 	if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
@@ -765,11 +772,11 @@ int main( int argc, char * argv[] ) {
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+  //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
 	analyzer.reachabilityResults.printResultsStatistics();
-  } else {
-	printAssertStatistics(analyzer,sageProject);
-  }
+	//  } else {
+	//printAssertStatistics(analyzer,sageProject);
+	//}
   cout << "=============================================================="<<endl;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;

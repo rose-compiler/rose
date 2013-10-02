@@ -458,7 +458,13 @@ VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* m
   cout << "STATUS: Number of filtered variables for initial state: "<<filteredVars<<endl;
 
   // traverse the AST now and collect information
-  determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
+
+  if(boolOptions["inline"]) {
+	determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
+  } else {
+	// compute value-sets for entire program (need to cover all functions without inlining)
+	determineVarConstValueSet(project,variableIdMapping,varConstIntMap);
+  }
   return varConstIntMap;
 }
 
@@ -943,7 +949,11 @@ int main(int argc, char* argv[]) {
   cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-  VarConstSetMap varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+
+  VarConstSetMap varConstSetMap;
+  varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+  
+
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
 
