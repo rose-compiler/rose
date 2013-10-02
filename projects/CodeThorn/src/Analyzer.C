@@ -1736,8 +1736,11 @@ void Analyzer::runSolver3() {
 				  reachabilityResults.reachable(assertCode);
 				}
 			  } else {
-				cerr<<"Error: inconsistency detected of failed assert in EState and assert code extraction from AST."<<endl;
-				exit(1);
+				// TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+				if(!boolOptions["rersmode"]) {
+				  cerr<<"Error: inconsistency detected of failed assert in EState and assert code extraction from AST."<<endl;
+				  exit(1);
+				}
 			  }
 
               if(_csv_assert_live_file.size()>0) {
