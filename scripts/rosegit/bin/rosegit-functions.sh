@@ -1,5 +1,5 @@
 # This file is sourced by many of the rosegit scripts. It contains shell (Bash) functions.
-# Functions are alphabetical. They use underscores in their names while shell scripts use hypens.
+# Functions are mostly alphabetical. They use underscores in their names while shell scripts use hyphens.
 
 # Set up directory where calling script is running, and the base name of that script.
 # Note: the extra checks here are to do something reasonable if source directly from the shell PS1 level commandline.
@@ -363,6 +363,12 @@ rosegit_show_environment () {
     else
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
+
+    echo "PATH:"
+    path-adjust --list |sed 's/^/    /'
+
+    echo "LD_LIBRARY_PATH:"
+    path-adjust --var=LD_LIBRARY_PATH --list |sed 's/^/    /'
 
     echo "Configured from:"
     local x="$ROSEGIT_LOADED"
