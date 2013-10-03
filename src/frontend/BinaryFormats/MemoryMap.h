@@ -524,6 +524,10 @@ public:
      *  exception.   If an exception is thrown, then the memory map is not changed. */
     void insert(const Extent &range, const Segment &segment, bool erase_prior=true);
 
+    /** Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
+     *  creates a new MmapBuffer and inserts it into the mapping. */
+    void insert_file(const std::string &filename, rose_addr_t va, bool writable=false, bool erase_prior=true);
+
     /** Determines whether a virtual address is defined.  Returns true if the specified virtual address (or all addresses in a
      *  range of addresses) are defined, false otherwise.  An address is defined if it is associated with a Segment.  If @p
      *  required_perms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
