@@ -53,14 +53,13 @@ Description:\n\
     Convenience switch that turns on (or off) the --debug-disassembler,\n\
     --debug-loader, and --debug-partitioner switches.\n\
 \n\
-  --disassemble\n\
-    Call the disassembler explicitly, using the instruction search flags\n\
-    specified with the -rose:disassembler_search switch.  Without this\n\
-    --disassemble switch, the disassembler is called by the instruction\n\
-    partitioner whenever the partitioner needs an instruction. When the\n\
-    partitioner drives the disassembly we might spend substantially less time\n\
-    disassembling, but fail to discover functions that are never statically\n\
-    called.\n\
+  --disassemble=HOW\n\
+    Determines the interrelationship between the disassembler and the paritioner.\n\
+    The HOW should be one of the following: \"pd\" runs the partitioner as the\n\
+    master driving the disassembler; \"dp\" runs the disassembler first and then\n\
+    hands the results to the partitioner; \"d\" runs only the disassembler and\n\
+    places all instructions in a single function; \"none\" skips both the disassembly\n\
+    and partitioner and is useful if all you want to do is parse the container.\n\
 \n\
   --dos\n\
   --no-dos\n\
@@ -168,9 +167,6 @@ Description:\n\
     to not show these hashes in the listing. Regardless of this switch, the\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
-\n\
-  --skip-disassemble\n\
-    Skip the entire disassembly process; only parse the binary container (if any).\n\
 \n\
   --syscalls=linux32\n\
   --syscalls=none\n\
@@ -797,6 +793,54 @@ static struct LargeAnonymousRegion: public MemoryMap::Visitor {
     }
 } large_anonymous_region_p;
 
+// A simple partitioner that creates a single function having all instructions.
+class SimplePartitioner: public Partitioner {
+protected:
+    rose_addr_t entry_va;
+    Function *function;
+
+public:
+    SimplePartitioner(rose_addr_t entry_va): entry_va(entry_va), function(NULL) {}
+
+    virtual void pre_cfg(SgAsmInterpretation *interp) /*override*/ {
+        function = add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
+    }
+
+    virtual void post_cfg(SgAsmInterpretation *interp) /*override*/ {}
+
+    // Organize instructions into basic blocks
+    virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
+        assert(function!=NULL);
+        bool changed = true;
+        for (size_t pass=0; changed; ++pass) {
+            changed = false;
+            for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                rose_addr_t va = ii->first;
+                Instruction *insn = ii->second;
+                if (!insn->bblock) {
+                    BasicBlock *bb = find_bb_starting(va);
+                    assert(bb!=NULL);
+                    append(function, bb, SgAsmBlock::BLK_USERDEF);
+                    changed = true;
+                }
+            }
+            if (pass>=100) {
+                std::cerr <<"too many passes through simple partitioner\n";
+                abort();
+            }
+        }
+    }
+};
+
+static SgAsmBlock *
+simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, MemoryMap *mmap=NULL)
+{
+    assert(!insns.empty());
+    rose_addr_t entry_va = insns.begin()->first;
+    SimplePartitioner sp(entry_va);
+    return sp.partition(interp, insns, mmap);
+}
+
 int
 main(int argc, char *argv[]) 
 {
@@ -811,12 +855,11 @@ main(int argc, char *argv[])
     bool do_show_coverage = false;
     bool do_show_functions = false;
     bool do_rose_help = false;
-    bool do_call_disassembler = false;
+    char do_master='p', do_slave='d';           /* p=partitioner; d=disassembler; '\0'=none */
     bool do_show_hashes = false;
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
-    bool do_skip_disassemble = false;
     bool do_link = false;
     std::string do_generate_ipd;
     std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
@@ -874,9 +917,18 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--no-cfg-dot")) {
             do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
-            do_call_disassembler = true;
-        } else if (!strcmp(argv[i], "--skip-disassemble")) {
-            do_skip_disassemble = true;
+            do_master='d';
+            do_slave='p';
+        } else if (!strncmp(argv[i], "--disassemble=", 14)) {
+            if (!strcmp(argv[i]+14, "dp") || !strcmp(argv[i]+14, "pd") || !strcmp(argv[i]+14, "d")) {
+                do_master = argv[i][14];
+                do_slave = argv[i][15];
+            } else if (!strcmp(argv[i]+14, "none")) {
+                do_master = do_slave = '\0';
+            } else {
+                fprintf(stderr, "%s: --disassemble switch must be one of: dp, pd, d, or none\n", arg0);
+                exit(1);
+            }
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -1314,20 +1366,22 @@ main(int argc, char *argv[])
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns;
 
-    if (!do_skip_disassemble) {
-        try {
-            if (do_call_disassembler) {
-                insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+    try {
+        if ('p'==do_master) {
+            block = partitioner->partition(interp, disassembler, &map);
+            insns = partitioner->get_instructions();
+            bad = partitioner->get_disassembler_errors();
+        } else if ('d'==do_master) {
+            insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+            if ('p'==do_slave) {
                 block = partitioner->partition(interp, insns, &map);
             } else {
-                block = partitioner->partition(interp, disassembler, &map);
-                insns = partitioner->get_instructions();
-                bad = partitioner->get_disassembler_errors();
+                block = simple_partitioner(interp, insns, &map);
             }
-        } catch (const Partitioner::Exception &e) {
-            std::cerr <<"partitioner exception: " <<e <<"\n";
-            exit(1);
         }
+    } catch (const Partitioner::Exception &e) {
+        std::cerr <<"partitioner exception: " <<e <<"\n";
+        exit(1);
     }
 
     /* Link instructions into AST if possible */
