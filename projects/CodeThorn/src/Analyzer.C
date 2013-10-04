@@ -1738,8 +1738,7 @@ void Analyzer::runSolver3() {
 			  } else {
 				// TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
 				if(!boolOptions["rersmode"]) {
-				  cerr<<"Error: inconsistency detected of failed assert in EState and assert code extraction from AST."<<endl;
-				  exit(1);
+				  // assert without label
 				}
 			  }
 
@@ -1865,8 +1864,7 @@ void Analyzer::runSolver4() {
 				  reachabilityResults.reachable(assertCode);
 				}
 			  } else {
-				cerr<<"Error: inconsistency detected of failed assert in EState and assert code extraction from AST."<<endl;
-				exit(1);
+				// assert without label
 			  }
 
               if(boolOptions["report-failed-assert"]) {

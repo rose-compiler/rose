@@ -464,6 +464,7 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
+	("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -597,6 +598,17 @@ int main( int argc, char * argv[] ) {
     // otherwise it remains RF_UNKNOWN
   }
 
+  if(args.count("exploration-mode")) {
+    string explorationMode=args["exploration-mode"].as<string>();
+	if(explorationMode=="depth-first")
+	  analyzer.setExplorationMode(Analyzer::EXPL_DEPTH_FIRST);
+	else if(explorationMode=="breadth-first") {
+	  analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+	} else {
+	  cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
+	  exit(1);
+	}
+  }
   if(args.count("max-transitions")) {
     analyzer.setMaxTransitions(args["max-transitions"].as<int>());
   }
