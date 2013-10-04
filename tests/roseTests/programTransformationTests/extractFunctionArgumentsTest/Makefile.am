@@ -29,8 +29,6 @@ check-local: $(normalizationTranslator_TEST_TARGETS)
 	@echo "******************************************************************************************************************************************"
 
 clean-local:
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.C

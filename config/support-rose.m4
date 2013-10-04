@@ -544,22 +544,12 @@ fi
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
-# PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
-VALGRIND_BINARY=""
-AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that use Valgrind],
-            [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
-             if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
+ROSE_SUPPORT_VALGRIND
 
 AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default preprocessor],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
-
-# Don't set VALGRIND here because that turns on actually running valgrind in
-# many tests, as opposed to just having the path available for
-# uninitializedField_tests
-AC_SUBST(VALGRIND_BINARY)
-AM_CONDITIONAL(USE_VALGRIND, [test "x$VALGRIND_BINARY" != "x"])
 
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
@@ -2087,7 +2077,6 @@ tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
-tests/roseTests/astOutliningTests/fortranTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile

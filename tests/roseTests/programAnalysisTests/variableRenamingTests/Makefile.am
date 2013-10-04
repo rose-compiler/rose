@@ -57,5 +57,3 @@ check-local: $(testVariableRenamingTests)
 clean-local:
 	rm -f $(testVariableRenamingTests)
 	rm -f $(testVariableRenamingTests:.passed=.failed)
-	rm -f $(testVariableRenamingTests:.passed=.out)
-	rm -f $(testVariableRenamingTests:.passed=.err)
