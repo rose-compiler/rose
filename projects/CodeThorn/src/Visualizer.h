@@ -56,6 +56,7 @@ class Visualizer {
   string estateToDotString(const CodeThorn::EState* estate);
   string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   string transitionGraphToDot();
+  string transitionGraphWithIOToDot();
   string foldedTransitionGraphToDot();
   string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:

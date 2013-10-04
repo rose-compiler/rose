@@ -3834,6 +3834,11 @@ HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
 
+HEADER_BINARY_DECLARATION_START
+HEADER_BINARY_DECLARATION_END
+
+
+
 HEADER_BINARY_RET_START
    void append_dest( SgAsmStatement* instruction );     
 HEADER_BINARY_RET_END
@@ -4047,10 +4052,17 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
+HEADER_BINARY_DATA_STRUCTURE_START
+          void append_declaration( SgAsmSynthesizedDeclaration* declaration );
 
+       // SgAsmSynthesizedDeclarationPtrList & get_declarationList();
 
+     protected:
 
+          SgAsmSynthesizedDeclarationPtrList p_declarationList;
 
+     public:
+HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
@@ -4457,6 +4469,16 @@ SgAsmOperandList::append_operand( SgAsmExpression* operand )
 
 SOURCE_BINARY_OPERAND_LIST_END
 
+
+
+SOURCE_BINARY_DATA_STRUCTURE_START
+void
+SgAsmSynthesizedDataStructureDeclaration::append_declaration( SgAsmSynthesizedDeclaration* declaration )
+   {
+     p_declarationList.push_back(declaration);
+   }
+
+SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 

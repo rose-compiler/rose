@@ -74,15 +74,15 @@ set(GRAMMAR_SOURCE_FILES
      ../astNodeList
    )
 
-add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
+add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS})
 
 # build ROSETTA code generator
-#target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
-if (NOT WIN32)
-  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES})
-else (NOT WIN32)
-  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES} shlwapi.lib)
-endif (NOT WIN32)
+set(link_libs roseutil ${Boost_LIBRARIES})
+if (WIN32)
+  list(APPEND link_libs shlwapi.lib)
+endif (WIN32)
+target_link_libraries(CxxGrammarMetaProgram ${link_libs})
+
 
 
 
@@ -144,6 +144,7 @@ endif ( enable-smaller-generated-files  )
 add_custom_target( rosetta_generated ALL 
        DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC}
     )
+add_dependencies(rosetta_generated generate_rosePublicConfig)
 
 
 

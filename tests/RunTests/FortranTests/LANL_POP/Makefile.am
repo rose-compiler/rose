@@ -88,7 +88,7 @@ netcdf: $(netcdf_lib)
 $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
 	echo "  BUILD   NetCDF";					\
-	source $(builddir)/hudson-environment.sh;					\
+	source ./hudson-environment.sh;					\
 	cp -pPR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
 	cd $(netcdf_blddir);						\
@@ -97,6 +97,10 @@ $(netcdf_lib): hudson-environment.sh
 	$$HUDSON_MAKE -j1 all;						\
 	: $$HUDSON_MAKE -j1 check;					\
 	$$HUDSON_MAKE -j1 install;
+
+
+# DQ (9/23/2013): Replaced: "source $(builddir)/hudson-environment.sh;" with "source ./hudson-environment.sh;"
+
 
 # Rules to build NetCDF typesizes.rmod and netcdf.rmod and install them into the NetCDF include directory. Note that
 # the typesizes.rmod must be built before netcdf.rmod since the latter depends on the former.
@@ -125,7 +129,7 @@ $(netcdf_prefix)/include/netcdf.rmod: $(netcdf_lib) $(netcdf_prefix)/include/typ
 # if necessary).
 hudson.gnu: hudson-environment.sh
 	@set -e $(SETX);			     \
-	source $(builddir)/hudson-environment.sh;		     \
+	source ./hudson-environment.sh;		     \
 	sed < $(srcdir)/hudson.template >hudson.gnu  \
 	    -e "s%_HUDSON_FC_%$$HUDSON_FC%"	     \
 	    -e "s%_HUDSON_FFLAGS_%$$HUDSON_FFLAGS%"  \
@@ -136,18 +140,21 @@ hudson.gnu: hudson-environment.sh
 	    -e "s%_HUDSON_AWK_%$$HUDSON_AWK%"	     \
 	    -e "s%_HUDSON_LDLIBS_%$$HUDSON_LDLIBS%";
 
+# DQ (9/23/2013): Replaced: "source $(builddir)/hudson-environment.sh;" with "source ./hudson-environment.sh;"
 
 # The pop_pristine and pop_translated targets create POP build directories.  The pristine version contains source
 # code directly from the POP distribution (stored in ROSE's src), while the translated version will run certain
 # source files through a translator.
 pop_pristine_blddir_stamp pop_modified_blddir_stamp pop_modified_srcdir_stamp: hudson-environment.sh hudson.gnu
 	@set -e $(SETX);							\
-	source $(builddir)/hudson-environment.sh;						\
+	source ./hudson-environment.sh;						\
 	blddir=$(patsubst %_stamp,%,$@);					\
 	cp -pPR $(pop_srcdir) $$blddir;						\
 	chmod -R u+w $$blddir;							\
 	ARCHDIR=hudson $(srcdir)/setup_run_dir.ROSE $(pop_srcdir) $$blddir/run;	\
 	touch $@
+
+# DQ (9/23/2013): Replaced: "source $(builddir)/hudson-environment.sh;" with "source ./hudson-environment.sh;"
 
 pop_pristine: pop_pristine_blddir_stamp
 pop_modified: $(pop_modified_sources)
@@ -158,7 +165,7 @@ pop_modified: $(pop_modified_sources)
 $(pop_modified_sources): \
 pop_modified_blddir/%.rmod: \
    $(pop_srcdir)/%.F90 $(translator) pop_modified_blddir_stamp pop_modified_srcdir_stamp $(netcdf_modified_sources)
-	@set -e $(SETX);							  \
+	set -e $(SETX);							  \
 	base=$(patsubst pop_modified_blddir/%.rmod,%,$@);			  \
 	echo "  GEN     $$base.rmod";						  \
 	$(translator) $(translator_flags) -I$(netcdf_prefix)/include -rose:output \
@@ -248,14 +255,16 @@ pop_pristine_blddir/run/pop pop_modified_blddir/run/pop: \
 	@set -e $(SETX);							 \
 	type=$(patsubst pop_%_blddir/run/pop,%,$@);				 \
 	echo "  BUILD   LANL POP ($$type)";					 \
-	source $(builddir)/hudson-environment.sh;						 \
+	source ./hudson-environment.sh;						 \
 	cd $(dir $@);								 \
 	ARCHDIR=hudson NETCDF=$(netcdf_prefix) $$HUDSON_MAKE -j$$HUDSON_NUM_JOBS
+
+# DQ (9/23/2013): Replaced: "source $(builddir)/hudson-environment.sh;" with "source ./hudson-environment.sh;"
 
 # Run the "pop" executables
 pristine.ans modified.ans: %.ans: pop_%_blddir/run/pop
 	@set -e $(SETX);				       \
-	source $(builddir)/hudson-environment.sh;			       \
+	source ./hudson-environment.sh;			       \
 	type=$(patsubst %.ans,%,$@);			       \
 	echo "  RUN     LANL POP ($$type)";		       \
 	(cd pop_$${type}_blddir/run && ./pop) > $@.unfiltered; \
@@ -264,6 +273,8 @@ pristine.ans modified.ans: %.ans: pop_%_blddir/run/pop
 	    -e "s%Timer stats.* seconds%%"		       \
 	    -e "s%max = .* seconds%%"			       \
 	    -e "s%mean= .* seconds%%"
+
+# DQ (9/23/2013): Replaced: "source $(builddir)/hudson-environment.sh;" with "source ./hudson-environment.sh;"
 
 # Compare filtered output from "pop" executables
 compare_answers: pristine.ans modified.ans

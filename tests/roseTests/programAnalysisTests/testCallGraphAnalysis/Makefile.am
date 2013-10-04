@@ -101,9 +101,10 @@ MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test04Specimens))
 #########################################################################################################################
 
 check-local: $(TEST_TARGETS)
+	@echo "*****************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ******"
+	@echo "*****************************************************************************************************************************"
 
 clean-local:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)

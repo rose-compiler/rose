@@ -83,9 +83,9 @@ EXTRA_DIST = $(TESTCODES)
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
 	@$(MAKE) $(TEST_Objects)
-	@echo "*********************************************************************************************************************"
+	@echo "***********************************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests: make check rule complete (terminated normally) ***"
-	@echo "*********************************************************************************************************************"
+	@echo "***********************************************************************************************************************************"
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) testSlicing *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot

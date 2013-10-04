@@ -39,7 +39,7 @@ class LanguageRestrictor {
   virtual bool checkIfAstIsAllowed(SgNode* node); 
  private:
   void ensureVariantIsValid(VariantT variant);
-  bool variants[V_SgNumVariants];
+  bool variants[V_SgNumVariants+1];
 };
 
 #endif

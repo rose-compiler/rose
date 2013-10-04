@@ -339,12 +339,12 @@ public:
          *         added to one of the function callback lists.</li>
          *  </ol>
          *  @{ */
-        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
-        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); }
-        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
-        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
+        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); return false; }
+        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); return false; }
+        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); return false; }
+        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); return false; }
         /** @} */
     };
 

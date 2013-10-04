@@ -304,10 +304,10 @@ std::string ToString(T t) {
   }
 
 
-  template std::ostream& dfaToDot(std::ostream&, std::string,
+  template ROSE_DLL_API std::ostream& dfaToDot(std::ostream&, std::string,
                                   std::vector <FilteredCFGNode<IsDFAFilter> >,
                                   DefUseAnalysis* dfa);
-  template std::ostream& dfaToDot(std::ostream&, std::string,
+  template ROSE_DLL_API std::ostream& dfaToDot(std::ostream&, std::string,
                                   std::vector <FilteredCFGNode<IsDFAFilter> >,
                                   DefUseAnalysis* dfa,
                                   LivenessAnalysis* live);

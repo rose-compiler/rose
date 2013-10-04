@@ -1,6 +1,11 @@
 #ifndef EQUALITY_MAINTAINER_C
 #define EQUALITY_MAINTAINER_C
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+
 template<typename T>
 void EqualityMaintainer<T>::addEquality(T var1, T var2) {
   // 1) find set where var1 exists
@@ -46,6 +51,11 @@ void EqualityMaintainer<T>::addEquality(T var1, T var2) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+
 template<typename T>
 bool EqualityMaintainer<T>::removeEqualities(T var) {
   for(typename list<set<T> >::iterator i=equality.begin();i!=equality.end();++i) {
@@ -75,7 +85,10 @@ T EqualityMaintainer<T>::determineDedicatedElement(const T var) const {
   return var;
 }
 
-
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename T>
 bool EqualityMaintainer<T>::equalityExists(const T var1, const T var2) const {
   // both vars must exist in same set
@@ -83,6 +96,10 @@ bool EqualityMaintainer<T>::equalityExists(const T var1, const T var2) const {
   return determineDedicatedElement(var1)==determineDedicatedElement(var2);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename T>
 set<T> EqualityMaintainer<T>::equalElements(const T var) const {
   for(typename list<set<T> >::const_iterator i=equality.begin();i!=equality.end();++i) {
@@ -94,11 +111,19 @@ set<T> EqualityMaintainer<T>::equalElements(const T var) const {
   return s;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename T>
 int EqualityMaintainer<T>::numberOfEqualElements(const T var) const {
   return equalElements(var).size();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename T>
 string EqualityMaintainer<T>::toString() {
   string res;

@@ -81,7 +81,7 @@ std::string get_output_filename( SgFile& file);
 std::string get_type_name( SgType* t);
 
 //! Unparse the declaration as a string for use in prototypes within the AST rewrite mechanism prefix mechanism
-std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
+ROSE_DLL_API std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
 
 //! Unparse the header of the scope statement (used in the prefix generation to 
 //! permit context to be accounted for the in generation of AST fragements from 
@@ -270,13 +270,13 @@ void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unpars
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+ROSE_DLL_API void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! Support for handling directories of files in ROSE (useful for code generation).
 void unparseDirectory   ( SgDirectory* directory, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );

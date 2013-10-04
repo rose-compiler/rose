@@ -26,7 +26,7 @@ namespace CodeThorn {
 
 class CodeThornLanguageRestrictor : public LanguageRestrictorCppSubset1 {
 public:
-	void initialize();
+    void initialize();
 };
 
 } // end of namespace CodeThorn

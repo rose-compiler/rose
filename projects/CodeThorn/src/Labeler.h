@@ -21,6 +21,10 @@ namespace CodeThorn {
 
 typedef size_t Label;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
  class LabelProperty {
  public:
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
@@ -28,7 +32,7 @@ typedef size_t Label;
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND
    };
-   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUT, LABELIO_STDERR
+   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUTVAR, LABELIO_STDOUTCONST, LABELIO_STDERR
    };
 
    LabelProperty();
@@ -42,6 +46,8 @@ typedef size_t Label;
    bool isLTLRelevant();
    SgNode* getNode();
    bool isStdOutLabel();
+   bool isStdOutVarLabel();
+   bool isStdOutConstLabel();
    bool isStdInLabel();
    bool isStdErrLabel();
    bool isIOLabel();
@@ -52,18 +58,27 @@ typedef size_t Label;
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
    VariableId getIOVarId();
+   int getIOConst();
  private:
    bool _isValid;
    SgNode* _node;
    LabelType _labelType;
    IOType _ioType;
    VariableId _variableId;
+   int _ioValue;
    bool _isTerminationRelevant;
    bool _isLTLRelevant;
  };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class LabelSet : public set<Label> {
  public:
+
+   // temporary until all sets are properly using the std:algorithms for set operations
+#if 1
 LabelSet operator+(LabelSet& s2) {
   LabelSet result;
   result=*this;
@@ -71,6 +86,7 @@ LabelSet operator+(LabelSet& s2) {
     result.insert(*i2);
   return result;
 }
+#endif
 
 LabelSet& operator+=(LabelSet& s2) {
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
@@ -88,8 +104,17 @@ LabelSet& operator+=(LabelSet& s2) {
    ss<<"}";
    return ss.str();
  }
+ bool isElement(Label lab) {
+   return find(lab)!=end();
+ }
 };
 
+ typedef std::set<LabelSet> LabelSetSet;
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012, 2013.
+ */
 class Labeler {
  public:
   static const Label NO_LABEL=-1;
@@ -124,13 +149,16 @@ class Labeler {
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
   bool isStdInLabel(Label label, VariableId* id=0);
-  bool isStdOutLabel(Label label, VariableId* id=0);
+  bool isStdOutLabel(Label label); // deprecated
+  bool isStdOutVarLabel(Label label, VariableId* id=0);
+  bool isStdOutConstLabel(Label label, int* constvalue=0);
   bool isStdErrLabel(Label label, VariableId* id=0);
+  bool isConditionLabel(Label lab);
 
  private:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToNode;
+  vector<LabelProperty> mappingLabelToLabelProperty;
   map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
   bool _isValidMappingNodeToLabel;

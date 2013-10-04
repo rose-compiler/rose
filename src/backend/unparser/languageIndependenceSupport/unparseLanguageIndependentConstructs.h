@@ -131,7 +131,7 @@ class UnparseLanguageIndependentConstructs
 
       //! unparse expression functions implemented in unparse_expr.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
-          virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
+          ROSE_DLL_API virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
 

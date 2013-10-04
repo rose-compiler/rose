@@ -21,7 +21,7 @@ int main(int argc, char * argv[])
   SgExpression *lb=NULL, *ub=NULL, *step=NULL;
   bool isIncremental; 
   SgStatement* lbody=NULL;
-  if (SageInterface::isCanonicalForLoop(stmt,&ivar, &lb, &ub, &step, &lbody, &isIncremental))
+  if (SageInterface::isCanonicalForLoop((SgForStatement *)stmt,&ivar, &lb, &ub, &step, &lbody, &isIncremental))
   {
     cout<<"Found a canonical for loop: "<<endl;
     cout<<"loop index variable is:"<<ivar->unparseToString()

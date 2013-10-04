@@ -9,7 +9,8 @@
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
+#include "AType.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -17,11 +18,10 @@
 
 using namespace CodeThorn;
 
-class AssertionAttribute : public AnalysisResultAttribute {
+class AssertionAttribute : public DFAstAttribute {
 public:
   AssertionAttribute(string preCondition):_precond(preCondition) {}
-  string getPreInfoString() { return _precond; }
-  string getPostInfoString() { return ""; }
+  string toString() { return _precond; }
 private:
   string _precond;
 };
@@ -209,18 +209,13 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
     if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
     if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
     if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
+
     if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
+    if((*j)->io.isFailedAssertIO()) {bgcolor="black";textcolor="red";}
+
     // check for start state
     if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
 
-    // should not be necessary!
-#if 0
-    if((*j)->io.op==InputOutput::STDIN_VAR) bgcolor="dodgerblue";
-    if((*j)->io.op==InputOutput::STDOUT_VAR) bgcolor="orange";
-    if((*j)->io.op==InputOutput::STDERR_VAR) bgcolor="orangered";
-#endif
-
-    //if((*j)->io.op==InputOutput::FAILED_ASSERT) {bgcolor="black";textcolor="white";}
     sinline+="<TD BGCOLOR=\""+bgcolor+"\" PORT=\"P"+estateIdStringWithTemporaries(*j)+"\">";
     sinline+="<FONT COLOR=\""+textcolor+"\">"+estateToString(*j)+"</FONT>";
     sinline+="</TD>";
@@ -265,6 +260,87 @@ string Visualizer::transitionGraphToDot() {
   return ss.str();
 }
 
+string Visualizer::transitionGraphWithIOToDot() {
+  stringstream ss;
+#if 0
+  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
+    // do not generate input->output edges here because we generate them later
+    if(!(labeler->isStdInLabel((*j).source->label()) && labeler->isStdOutLabel((*j).source->label()))) {
+      ss<<"n"<<(*j).source<<"->"<<"n"<<(*j).target<<";"<<endl;
+    }
+  }
+#endif
+  set<const EState*> estatePtrSet=transitionGraph->estateSet();
+  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+    ss<<"n"<<*i<<" [label=";
+    Label lab=(*i)->label();
+    string name="\"";
+#if 0
+    stringstream ss2;
+    ss2<<lab;
+    name+="L"+ss2.str()+":";
+
+    // determine whether it is a call node (C) or a call-return node (R)
+    if(labeler->isFunctionCallLabel(lab))
+      name+="C:";
+    if(labeler->isFunctionCallReturnLabel(lab))
+      name+="R:";
+#endif
+    // generate number which is used in IO operation
+    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+      if(!number.isTop() && !number.isBot()) {
+        // convert number to letter
+        int num=number.getIntValue();
+        num+='A'-1;
+        char numc=num;
+        stringstream ss;
+        ss<<numc;
+        name+=ss.str();
+      } else {
+        name+=number.toString();
+      }
+    } else {
+      name+=number.toString();
+    }
+    name+="\"";
+    ss<<name;
+    stringstream newedges;
+    // generate constraint on each edge of following state
+    TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
+    for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
+    j!=outTrans.end();
+    ++j) {
+      newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
+      if(number.isTop()) {
+    newedges<<" [label=\"";
+    newedges<<(*j)->target->constraints()->toString()<<"\"";
+    if((*j)->source==(*j)->target)
+      newedges<<" color=red ";
+    newedges<<"];"<<endl;
+      }
+      newedges<<endl;
+    }
+    
+    // determine color based on IO type
+    string color="grey";
+    if(labeler->isStdInLabel(lab))
+      color="dodgerblue";
+    if(labeler->isStdOutLabel(lab))
+      color="orange";
+    if(labeler->isStdErrLabel(lab))
+      color="orangered";
+    if((*i)->io.op==InputOutput::FAILED_ASSERT)
+       color="grey10";
+    ss<<" color="<<color<<" style=\"filled\"";
+    ss<<"];";
+    ss<<endl;
+    ss<<newedges.str();
+  }
+  return ss.str();
+}
+
+
 string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   stringstream ss;
   EStateId estateId=estateSet->estateId(estate);
@@ -289,7 +365,7 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j).source;
     const EState* target=(*j).target;
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
     ss <<"->";
