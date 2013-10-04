@@ -13,7 +13,7 @@ ${CMAKE_SOURCE_DIR}/src/util/graphs
 ${CMAKE_SOURCE_DIR}/src/frontend/SageIII
 ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
 
-add_definitions(-DPOET_VERSION="1.03.06")
+#add_definitions(-DPOET_VERSION="1.03.06")
 
 ########### next target ###############
 
@@ -24,8 +24,8 @@ add_definitions(-DPOET_VERSION="1.03.06")
 #add_library(poet ${libpoet_SOURCES})
 
 ########### install files ###############
-link_libraries(poet)
-add_executable(pcg main.cpp)
+#link_libraries(poet)
+#add_executable(pcg main.cpp)
 
 install(
 FILES poet_ASTfactory.h poet_SymbolTable.h poet_AST.h poet_ASTinterface.h 
