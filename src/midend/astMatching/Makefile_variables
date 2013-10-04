@@ -1,6 +1,6 @@
 # Non-recursive Makefile
 
-mAstMatching_BUILT_SOURCES=matcherparser.C
+mAstMatching_built_sources=matcherparser.C
 
 mAstMatching_la_sources=\
 	matcherparser.C \
@@ -36,8 +36,9 @@ mAstMatching_distCleanLocal=\
 
 # explicit rules because of multiple bison parser
 matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstMatchingPath)/matcherparser.yy
-	$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/$(mAstMatchingPath)/matcherparser.yy # generates y.tab.h/c
-	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll
-	mv y.tab.h matcherparser.h
-	cat lex.yy.c y.tab.c > matcherparser.C
-	rm lex.yy.c y.tab.c
+	$(AM_V_GEN)
+	@$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/$(mAstMatchingPath)/matcherparser.yy # generates y.tab.h/c
+	@$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll
+	@mv y.tab.h matcherparser.h
+	@cat lex.yy.c y.tab.c > matcherparser.C
+	@rm lex.yy.c y.tab.c

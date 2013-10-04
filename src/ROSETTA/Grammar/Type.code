@@ -2005,6 +2005,13 @@ SgType::handledUsingLocalTable(SgType* t)
      return returnValue;
    }
 
+// Kitware 2013/03/25
+// This is a workaround for the lack of EDG on Windows.
+// Once that problem is resolved, this include file can go away.
+#ifdef USE_FAKE_EDG
+  #include "fake_EDG.h"
+#endif
+
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
 //  This function was designed to work with C/C++ and Fortran frontends to generate AST.
@@ -2941,6 +2948,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
+     mangled_name += StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());

@@ -284,6 +284,20 @@ HEADER_VAR_REF_EXPRESSION_START
 HEADER_VAR_REF_EXPRESSION_END
 
 
+HEADER_COMPOUND_LITERAL_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // get lvalue
+          virtual bool isDefinable() const;
+          virtual bool isLValue() const;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+HEADER_COMPOUND_LITERAL_EXPRESSION_END
+
+
 HEADER_LABEL_REF_EXPRESSION_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -507,6 +521,8 @@ HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
        // DQ (11/28/2011): Added to support template declarations in the AST.
           SgName get_template_parameter_name() const;
+
+          SgType* get_type() const;
 
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
@@ -1481,7 +1497,7 @@ SgExpression::get_qualified_name_prefix() const
   //    SgMemberFunctionRefExp
 
 #if 0
-     printf ("In get_qualified_name_prefix(): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
@@ -1495,13 +1511,13 @@ SgExpression::get_qualified_name_prefix() const
         {
           nameQualifier = i->second;
 #if 0
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
        else
         {
 #if 0
-          printf ("Could NOT find a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
 
@@ -1509,13 +1525,28 @@ SgExpression::get_qualified_name_prefix() const
      printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
 #endif
 
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
      return nameQualifier;
    }
  
+
 SgName
 SgExpression::get_qualified_name_prefix_for_referenced_type() const
    {
   // DQ (6/2/2011): Added to support for new qualified name generation.
+
+#if 0
+     printf ("In get_qualified_name_prefix_for_referenced_type(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
@@ -1526,10 +1557,28 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
         }
 
   // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
 
      return nameQualifier;
    }
@@ -2566,6 +2615,10 @@ SgVarRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
 SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
 
 
+SOURCE_COMPOUND_LITERAL_EXPRESSION_START
+SOURCE_COMPOUND_LITERAL_EXPRESSION_END
+
+
 SOURCE_LABEL_REFERENCE_EXPRESSION_START
 
 SgName
@@ -3094,6 +3147,8 @@ SgTemplateParameterVal::get_template_parameter_name() const
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
         }
 
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");
+
      SgName name;
      if (getParameterNameFromTemplateParameterList == true)
         {
@@ -3130,10 +3185,24 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
        // This is not the favored case since i think it can be problematic to use template parameter names.
           name = get_valueString();
-          printf ("Using the string in the template parameteer value = %s \n",name.str());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
         }
 
+#if 1
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
+#endif
+
      return name;
+   }
+
+SgType*
+SgTemplateParameterVal::get_type() const
+   {
+  // DQ (8/6/2013): The correct type is now saved explicitly so that it can be used to disambiguate 
+  // template functions overloaded on template parameters. See test2013_303.C for an example.
+     ROSE_ASSERT(this->get_valueType() != NULL);
+
+     return this->get_valueType();
    }
 
 
@@ -3303,32 +3372,25 @@ SgFunctionCallExp::get_type() const
        // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
 
        // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+       // Milind Chabbi, after discussing with DQ (7/29/2013), we need to strip all. See test: CompileTests/Cxx_tests/test2013_milind_01.C
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE | 
+                                                             SgType::STRIP_REFERENCE_TYPE | 
+                                                             SgType::STRIP_POINTER_TYPE | 
+                                                             SgType::STRIP_ARRAY_TYPE | 
+                                                             SgType::STRIP_TYPEDEF_TYPE);
 
        // printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
           functionType = isSgFunctionType(likelyFunctionType);
 
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
+       // if functionType is NULL (e.g SgTemplateType or SgClassType) we have no idea what the return type is, so we will return SgTypeUnknown
+          if (functionType == NULL) {
+              //printf ("Warning: Unable to infer the return type of %s in SgFunctionCallExp\n", likelyFunctionType->class_name().c_str());
+              return SgTypeUnknown::createType();
+          } 
         }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
+     ROSE_ASSERT(functionType);
      returnType = functionType->get_return_type();
-#endif
      ROSE_ASSERT(returnType != NULL);
-
      return returnType;
    }
 
@@ -3970,6 +4032,7 @@ SgTypeIdOp::set_type( SgType* type )
 SgType*
 SgTypeIdOp::get_type() const
    {
+#if 0
   // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
   // type of expression expr. You must include the standard template library header <typeinfo> to use the 
   // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a 
@@ -3997,6 +4060,34 @@ SgTypeIdOp::get_type() const
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
+#else
+    // get_type on SgTypeIdOp must always retuen a const referene to "std::type_info"
+
+     SgType* returnType = NULL;
+     // If we call get_type() on a node that is not fully build then this will break.
+     SgGlobal* globalScope = SageInterface::getGlobalScope(this);
+     ROSE_ASSERT(globalScope && "globalScope is NULL");
+
+     SgNamespaceSymbol* stdNamespaceSymbol = globalScope->lookup_namespace_symbol(SgName("std"));
+     ROSE_ASSERT(stdNamespaceSymbol && "lookup_namespace_symbol did not found std symbol");
+
+     SgNamespaceDeclarationStatement *  namespaceDeclarationStatement   = stdNamespaceSymbol->get_declaration ();
+     SgNamespaceDefinitionStatement * namespaceDefinitionStatement = namespaceDeclarationStatement->get_definition();
+     ROSE_ASSERT(namespaceDefinitionStatement && "get_definition() retured NULL");
+
+     SgClassSymbol * typeInfoClassSymbol = namespaceDefinitionStatement->lookup_class_symbol(SgName("type_info"));
+     ROSE_ASSERT(typeInfoClassSymbol && "lookup_class_symbol did not found type_info symbol");
+
+     //returnType = SageInterface::deepCopy(typeInfoClassSymbol->get_type());
+     returnType = typeInfoClassSymbol->get_type();
+     ROSE_ASSERT(isSgClassType(returnType));
+
+
+     SgModifierType* constType =  SageBuilder::buildConstType(returnType);
+     ROSE_ASSERT (constType);
+     SgReferenceType * constRefType = SageBuilder::buildReferenceType(constType);
+     return constRefType;
+#endif
    }
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_END
@@ -4323,7 +4414,10 @@ $CLASSNAME::get_type() const
         }
        else
         {
-          returnType = SgPointerType::createType(baseType);
+          // Milind Chabbi (8/1/2013) We must strip the reference else we will get pointer to a reference. 
+          // See CompileTests/Cxx_tests/test2004_157.C run under extractFunctionArgumentsNormalization
+          // TODO: should we strip STRIP_TYPEDEF_TYPE? Not sure, need to talk to Dan.
+          returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE));
         }
 
    //  ROSE_ASSERT(returnType != NULL);
@@ -4642,7 +4736,6 @@ SgPntrArrRefExp::get_type() const
                break;
              }
 
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (10/3/2006): Added case of array reference of string type (assume it returns a char).
        // Once we have a wcharString type then we have to add that case to this list as well!
           case V_SgTypeString:
@@ -4652,6 +4745,7 @@ SgPntrArrRefExp::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
      // Liao (1/25/2008) SgTypeUnknown is used to specify a temporary symbol generated 
      //during translation when the corresponding variable declaration is not yet declared.
           case V_SgTypeUnknown:

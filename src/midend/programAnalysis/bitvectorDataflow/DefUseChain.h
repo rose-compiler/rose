@@ -4,7 +4,7 @@
 #include "ReachingDefinition.h"
 #include "StmtInfoCollect.h"
 
-class DefUseChainNode : public MultiGraphElem
+class ROSE_DLL_API DefUseChainNode : public MultiGraphElem
 {
   bool isdef;
   AstNodePtr ref, stmt;

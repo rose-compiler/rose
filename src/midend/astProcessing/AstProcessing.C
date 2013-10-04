@@ -66,6 +66,10 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
   // Traverse this node if it is in the file we want to visit.
      bool isRightFile = node->get_file_info()->isSameFile(fileToVisit);
 
+#if 0
+     printf ("In SgTreeTraversal_inFileToTraverse(): node = %p = %s isRightFile = %s \n",node,node->class_name().c_str(),isRightFile ? "true" : "false");
+#endif
+
   // This function is meant to traverse input files in the sense of not
   // visiting "header" files (a fuzzy concept). But not every #included file
   // is a header, "code" (another fuzzy concept) can also be #included; see

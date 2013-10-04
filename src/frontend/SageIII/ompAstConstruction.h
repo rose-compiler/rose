@@ -7,11 +7,11 @@ namespace OmpSupport
 {
     class SgVarRefExpVisitor : public AstSimpleProcessing {
         private:
-            std::vector<SgVarRefExp*> expressions;
+            std::vector<SgExpression*> expressions;
             
         public:
             SgVarRefExpVisitor( );
-            std::vector<SgVarRefExp*> get_expressions();
+            std::vector<SgExpression*> get_expressions();
             void visit( SgNode* node );
     };
     

@@ -1,9 +1,11 @@
+QT4_WRAP_CPP(QUERYBOX_MOC_CPP QRQueryBox.h
+  OPTIONS -fsage3basic.h -f${CMAKE_CURRENT_SOURCE_DIR}/QRQueryBox.h)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+set(QUERYBOX_SOURCES
+  QRQueryBox.C QRQueryDomain.C QRQueryOp.C QRQueryRange.C)
 
-
-########### next target ###############
-
+add_library(qrquerybox ${QUERYBOX_SOURCES} ${QUERYBOX_MOC_CPP})
+add_dependencies(qrquerybox rosetta_generated)
 
 ########### install files ###############
 

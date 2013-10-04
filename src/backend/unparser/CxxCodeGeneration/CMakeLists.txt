@@ -7,7 +7,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  $(unparseCxxCodeGeneration_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
+set(unparseCxxCodeGeneration_headers unparseCxx.h unparseCxx_types.h)
+install(FILES  ${unparseCxxCodeGeneration_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

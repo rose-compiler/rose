@@ -7,16 +7,27 @@ IncludeDirective::IncludeDirective(const string& directiveText) {
     isQuotedIncludeDirective = false;
     size_t endPos;
     startPos = directiveText.find_first_of("\"");
-    if (startPos != string::npos) {
+    if (startPos != string::npos) {                     // #include "file"
+        startPos++; //skip the delimiter
         endPos = directiveText.find_last_of("\"");
         isQuotedIncludeDirective = true;
-    } else {
+    } else {                                            // #include <file>
         startPos = directiveText.find_first_of("<");
-        ROSE_ASSERT(startPos != string::npos); //should have at least "\"" or "<"
-        endPos = directiveText.find_last_of(">");
+        if (startPos != string::npos) {
+            startPos++; //skip the delimiter
+            endPos = directiveText.find_last_of(">");
+        }
+        else                                            // include macro
+        {
+            // Syntax of the accepted macros: BOOST_PP_ITERATE()
+            startPos = directiveText.find("#include") + 9;
+            while ((startPos < directiveText.size()) && (directiveText[startPos] == ' '))
+                startPos++;
+            endPos = directiveText.find(")", startPos)+1;
+            ROSE_ASSERT(endPos != string::npos);
+        }
     }
-    ROSE_ASSERT(endPos != string::npos); //should find the matching delimeter
-    startPos++; //skip the delimiter
+    
     includedPath = directiveText.substr(startPos, endPos - startPos);
 }
 

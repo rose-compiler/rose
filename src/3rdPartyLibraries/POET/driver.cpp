@@ -43,6 +43,10 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <ASTvisitor.h>
 #include <assert.h>
 
+#ifdef _MSC_VER
+  #include <windows_includes.h>
+#endif
+
 extern EvaluatePOET* evalPOET;
 extern POETProgram* curfile;
 typedef enum {DEBUG_NONE, DEBUG_XFORM = 1, DEBUG_PATTERN = 2, DEBUG_TIME = 4, DEBUG_PARSE= 8, DEBUG_LEX = 16}   
