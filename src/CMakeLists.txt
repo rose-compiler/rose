@@ -172,6 +172,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
    )
 
+add_definitions(-DPOET_VERSION="1.03.06")
 set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
@@ -189,6 +190,8 @@ set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
    )
 add_library(poet ${POET_SRC})
+link_libraries(poet)
+add_executable(pcg ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp)
 
 set(virtualCFG_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
