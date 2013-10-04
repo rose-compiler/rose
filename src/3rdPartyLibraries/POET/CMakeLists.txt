@@ -17,11 +17,11 @@ add_definitions(-DPOET_VERSION="1.03.06")
 
 ########### next target ###############
 
-set(libpoet_SOURCES
-poet_AST.cpp codegen.cpp parse.cpp eval.cpp eval_ext.cpp
-evalOp.cpp driver.cpp tokenize.cpp timing.cpp AutoTuningInterface.cpp
-poet_yacc.c poet_lex.c)
-add_library(poet ${libpoet_SOURCES})
+#set(libpoet_SOURCES
+#poet_AST.cpp codegen.cpp parse.cpp eval.cpp eval_ext.cpp
+#evalOp.cpp driver.cpp tokenize.cpp timing.cpp AutoTuningInterface.cpp
+#poet_yacc.c poet_lex.c)
+#add_library(poet ${libpoet_SOURCES})
 
 ########### install files ###############
 link_libraries(poet)
