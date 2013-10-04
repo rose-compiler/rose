@@ -175,6 +175,7 @@ set( sage3_SRC
 set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/tokenize.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/driver.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/eval.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalOp.cpp
@@ -187,6 +188,7 @@ set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.y
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
    )
+add_library(poet ${POET_SRC})
 
 set(virtualCFG_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
