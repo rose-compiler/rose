@@ -351,11 +351,15 @@ VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSe
   set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
   AType::ConstIntLattice minVal;
   AType::ConstIntLattice maxVal;
+  // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
+  if(cppCapsuleSet.size()==0)
+	return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
   for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
     AType::ConstIntLattice aint=(*i).getValue();
     if(aint.isTop()) {
       return VariableValueRangeInfo(AType::ConstIntLattice(AType::Top()));
     }
+ 
     if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
     if((aint<minVal).isTrue())
       minVal=aint;
@@ -411,8 +415,10 @@ bool VariableConstInfo::isMultiConst(VariableId varId) {
 }
 int VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
-  assert(width.isConstInt());
-  return width.getIntValue();
+  if(!width.isConstInt())
+	return 0;
+  else
+	return width.getIntValue();
 }
 int VariableConstInfo::minConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
@@ -818,7 +824,6 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
 void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, const char* filename) {
   ofstream myfile;
   myfile.open(filename);
-
 
   //  cout<<"Result:"<<endl;
   VariableConstInfo vci(&variableIdMapping, &map);
