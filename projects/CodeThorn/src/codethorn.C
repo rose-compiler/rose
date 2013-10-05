@@ -385,6 +385,8 @@ string readableruntime(double time) {
   return s.str();
 }
 
+static Analyzer* global_analyzer=0;
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -462,6 +464,7 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
+	("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -544,6 +547,7 @@ int main( int argc, char * argv[] ) {
   }
 
   Analyzer analyzer;
+  global_analyzer=&analyzer;
   
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
@@ -594,6 +598,17 @@ int main( int argc, char * argv[] ) {
     // otherwise it remains RF_UNKNOWN
   }
 
+  if(args.count("exploration-mode")) {
+    string explorationMode=args["exploration-mode"].as<string>();
+	if(explorationMode=="depth-first")
+	  analyzer.setExplorationMode(Analyzer::EXPL_DEPTH_FIRST);
+	else if(explorationMode=="breadth-first") {
+	  analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+	} else {
+	  cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
+	  exit(1);
+	}
+  }
   if(args.count("max-transitions")) {
     analyzer.setMaxTransitions(args["max-transitions"].as<int>());
   }
@@ -726,23 +741,24 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
+
+	analyzer.reachabilityResults.printResults();
+#if 0
   // TODO: reachability in presence of semantic folding
   if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-	analyzer.reachabilityResults.printResults();
+
   } else {
     printAsserts(analyzer,sageProject);
   }
+#endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-	if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-	  switch(resultsFormat) {
-	  case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
-	  case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
-	  default: assert(0);
-	  }
-	} else {
-	  generateAssertsCsvFile(analyzer,sageProject,filename);
+	switch(resultsFormat) {
+	case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
+	case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
+	default: assert(0);
 	}
+	//	OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
@@ -765,11 +781,11 @@ int main( int argc, char * argv[] ) {
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+  //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
 	analyzer.reachabilityResults.printResultsStatistics();
-  } else {
-	printAssertStatistics(analyzer,sageProject);
-  }
+	//  } else {
+	//printAssertStatistics(analyzer,sageProject);
+	//}
   cout << "=============================================================="<<endl;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;

@@ -1669,6 +1669,7 @@ void Analyzer::runSolver2() {
 
 void Analyzer::runSolver3() {
   flow.boostify();
+  reachabilityResults.init(); // set all reachability results to unknown
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
   vector<const EState*> workVector(_numberOfThreadsToUse);
@@ -1726,6 +1727,21 @@ void Analyzer::runSolver3() {
                   cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
                 }
               }
+
+			  // record reachability
+			  int assertCode=reachabilityAssertCode(currentEStatePtr);
+			  if(assertCode>=0) {
+                #pragma omp critical
+				{
+				  reachabilityResults.reachable(assertCode);
+				}
+			  } else {
+				// TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+				if(!boolOptions["rersmode"]) {
+				  // assert without label
+				}
+			  }
+
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
                 if(name=="globalError")
@@ -1756,6 +1772,7 @@ void Analyzer::runSolver3() {
       return;
     }
   } // while
+  reachabilityResults.finished(); // sets all unknown entries to NO.
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
 }
@@ -1777,6 +1794,7 @@ int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
 // algorithm 4 also records reachability for incomplete STGs (analyzer::reachabilityResults)
 void Analyzer::runSolver4() {
   //flow.boostify();
+  reachabilityResults.init(); // set all reachability results to unknown
   size_t prevStateSetSize=0; // force immediate report at start
   int analyzedSemanticFoldingNode=0;
   int threadNum;
@@ -1845,6 +1863,8 @@ void Analyzer::runSolver4() {
 				{
 				  reachabilityResults.reachable(assertCode);
 				}
+			  } else {
+				// assert without label
 			  }
 
               if(boolOptions["report-failed-assert"]) {
@@ -1904,7 +1924,7 @@ void Analyzer::runSolver4() {
   if(boolOptions["semantic-fold"]) {
     semanticFoldingOfTransitionGraph();
   }  
+  reachabilityResults.finished(); // sets all unknown entries to NO.
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
-  reachabilityResults.finished(); // sets all unknown entries to NO.
 }

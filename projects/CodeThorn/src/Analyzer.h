@@ -211,6 +211,8 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
 	ReachabilityResults reachabilityResults;
 	int reachabilityAssertCode(const EState* currentEStatePtr);
+	enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
+	void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -231,6 +233,7 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
     bool _treatStdErrLikeFailedAssert;
+	ExplorationMode _explorationMode;
   };
   
 } // end of namespace CodeThorn

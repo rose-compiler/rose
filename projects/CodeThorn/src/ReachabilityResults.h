@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include "Miscellaneous.h"
+
 using namespace std;
 
 enum Reachability { REACH_UNKNOWN,REACH_YES,REACH_NO };
@@ -21,9 +23,9 @@ class ReachabilityResults {
   void write2012File(const char* filename, bool onlyyesno=false);
   void printResults();
   void printResultsStatistics();
+  void init();
  private:
   string reachToString(Reachability num);
-  void init();
   vector<Reachability> _reachable;
 };
 

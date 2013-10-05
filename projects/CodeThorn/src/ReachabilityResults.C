@@ -6,6 +6,8 @@
 using namespace std;
 #include <cassert>
 
+using CodeThorn::color;
+
 ReachabilityResults::ReachabilityResults() {
   init();
 }
@@ -69,27 +71,34 @@ void ReachabilityResults::printResults() {
   cout<<"Reachability Results:"<<endl;
   int maxCode=59;
   for(int i=0;i<=maxCode;++i) {
-	cout<<"error_"<<i<<": ";
+	cout<<color("white")<<"error_"<<i<<": ";
 	switch(_reachable[i]) {
-	case REACH_UNKNOWN: cout <<"UNKNOWN";break;
-	case REACH_YES: cout <<"YES (REACHABLE)";break;
-	case REACH_NO: cout  <<"NO (UNREACHABLE)";break;
+	case REACH_UNKNOWN: cout <<color("magenta")<<"UNKNOWN";break;
+	case REACH_YES: cout <<color("green")<<"YES (REACHABLE)";break;
+	case REACH_NO: cout  <<color("cyan")<<"NO (UNREACHABLE)";break;
 	default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
 	}
-	cout<<endl;
+	cout<<color("normal")<<endl;
   }
+  cout<<color("default-text-color");
 }
 
 void ReachabilityResults::printResultsStatistics() {
   int maxCode=59;
   int numReach=0, numNonReach=0;
+  int numUnknown=0;
   for(int i=0;i<=maxCode;++i) {
 	switch(_reachable[i]) {
-	case REACH_UNKNOWN:break;
+	case REACH_UNKNOWN: numUnknown++;break;
 	case REACH_YES: numReach++;break;
 	case REACH_NO: numNonReach++;break;
 	default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
 	}
   }
-  cout<<"Assert reachability statistics: "<<"YES: "<<numReach<<" NO: "<<numNonReach<<" Total: "<<maxCode+1<<endl;
+  cout<<"Assert reachability statistics: "
+	  <<color("white")<<"YES: "<<color("green")<<numReach
+	  <<color("white")<<" NO: "<<color("cyan")<<numNonReach
+	  <<color("white")<<" UNKNOWN: "<<color("magenta")<<numUnknown
+	  <<color("default-text-color")<<" Total: "<<maxCode+1
+	  <<endl;
 }
