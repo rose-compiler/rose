@@ -389,6 +389,8 @@ public:
   int width(VariableId);
   bool isInConstSet(VariableId varId, int varVal);
   int uniqueConst(VariableId);
+  int minConst(VariableId);
+  int maxConst(VariableId);
 private:
   VariableIdMapping* _variableIdMapping;
   VarConstSetMap* _map;
@@ -411,6 +413,16 @@ int VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
   assert(width.isConstInt());
   return width.getIntValue();
+}
+int VariableConstInfo::minConst(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  assert(!(vri.isTop()||vri.isBot()));
+  return vri.minIntValue();
+}
+int VariableConstInfo::maxConst(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  assert(!(vri.isTop()||vri.isBot()));
+  return vri.maxIntValue();
 }
 bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
@@ -675,48 +687,48 @@ EvalValueType eval(SgExpression* node) {
   EvalValueType res;
   stringstream watch;
   if(dynamic_cast<SgBinaryOp*>(node)) {
-	SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
-	assert(lhs);
-	SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
-	assert(rhs);
-	watch<<"(";
-	EvalValueType lhsResult=eval(lhs);
-	watch<<",";
-	EvalValueType rhsResult=eval(rhs);
-	watch<<")";
-	switch(node->variantT()) {
-	case V_SgAndOp: watch<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
-	case V_SgOrOp : watch<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
-
-	case V_SgEqualityOp: watch<<"==";res=(lhsResult==rhsResult);break;
-	case V_SgNotEqualOp: watch<<"!=";res=(lhsResult!=rhsResult);break;
-	case V_SgGreaterOrEqualOp: watch<<">=";res=(lhsResult>=rhsResult);break;
-	case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
-	case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
-	case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
-
-	default:watch<<"#1:";watch<<node->class_name();watch<<"#";assert(0);
-	}
+    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
+    assert(lhs);
+    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
+    assert(rhs);
+    watch<<"(";
+    EvalValueType lhsResult=eval(lhs);
+    watch<<",";
+    EvalValueType rhsResult=eval(rhs);
+    watch<<")";
+    switch(node->variantT()) {
+    case V_SgAndOp: watch<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
+    case V_SgOrOp : watch<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
+      
+    case V_SgEqualityOp: watch<<"==";res=(lhsResult==rhsResult);break;
+    case V_SgNotEqualOp: watch<<"!=";res=(lhsResult!=rhsResult);break;
+    case V_SgGreaterOrEqualOp: watch<<">=";res=(lhsResult>=rhsResult);break;
+    case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
+    case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
+    case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
+      
+    default:watch<<"#1:";watch<<node->class_name();watch<<"#";assert(0);
+    }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
-	SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
-	watch<<"(";
-	EvalValueType childVal=eval(child);
-	watch<<")";
-	assert(child);
-	switch(node->variantT()) {
-	case V_SgNotOp:watch<<"!";res=!childVal;break;
-	case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
+    SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
+    watch<<"(";
+    EvalValueType childVal=eval(child);
+    watch<<")";
+    assert(child);
+    switch(node->variantT()) {
+    case V_SgNotOp:watch<<"!";res=!childVal;break;
+    case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
 	case V_SgMinusOp:watch<<"-";res=-childVal; break;
-	default:watch<<"#2:";watch<<node->class_name();watch<<"#";assert(0);
-	}
+    default:watch<<"#2:";watch<<node->class_name();watch<<"#";assert(0);
+    }
   } else {
-  // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
-	switch(node->variantT()) {
-	case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
-	case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
-	case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
-	default:watch<<"#3:";watch<<node->class_name();watch<<"#";assert(0);
-	}
+    // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
+    switch(node->variantT()) {
+    case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
+    case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
+    case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
+    default:watch<<"#3:";watch<<node->class_name();watch<<"#";assert(0);
+    }
   }
   return res;
 }
@@ -733,34 +745,32 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 
   cout<<"STATUS: Dead code elimination phase 2: Eliminating sub expressions."<<endl;
   list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
-  int elimExpr=0;
   for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
-	// determine expressions of blocks/ifstatements
-	SgExpression* exp=0;
-	SgStatement* stmt=0;
-	// we exclude ?-operator because this would eliminate all assert(0) expressions
-	// NOTE: assert needs to be handled with exit(int) to allow such operations
-	if(isSgIfStmt(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)) {
-	  SgNode* node=SgNodeHelper::getCond(*i);
-	  if(isSgExprStatement(node)) {
-		node=SgNodeHelper::getExprStmtChild(node);
-	  }
-	  //cout<<node->class_name()<<";";
-	  exp=isSgExpression(node);
-	  if(exp) {
-		ConstIntLattice res=eval(exp);
-		int assertCode=isIfWithLabeledAssert(*i);
-		if(assertCode>=0) {
-		  if(res.isTrue()) {
-			reachabilityResults.reachable(assertCode);
-		  }
-		  if(res.isFalse()) {
-			reachabilityResults.nonReachable(assertCode);
-		  }
-		}
-		//cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString()<<endl;
-	  }
-	}
+    // determine expressions of blocks/ifstatements
+    SgExpression* exp=0;
+    // we exclude ?-operator because this would eliminate all assert(0) expressions
+    // NOTE: assert needs to be handled with exit(int) to allow such operations
+    if(isSgIfStmt(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)) {
+      SgNode* node=SgNodeHelper::getCond(*i);
+      if(isSgExprStatement(node)) {
+        node=SgNodeHelper::getExprStmtChild(node);
+      }
+      //cout<<node->class_name()<<";";
+      exp=isSgExpression(node);
+      if(exp) {
+        ConstIntLattice res=eval(exp);
+        int assertCode=isIfWithLabeledAssert(*i);
+        if(assertCode>=0) {
+          if(res.isTrue()) {
+            reachabilityResults.reachable(assertCode);
+          }
+          if(res.isFalse()) {
+            reachabilityResults.nonReachable(assertCode);
+          }
+        }
+        //cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString()<<endl;
+      }
+    }
   }
   cout<<"STATUS: Dead code elimination phase 2: finished."<<endl;
   return 0;
@@ -803,6 +813,43 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"---------------------"<<endl;
 }
 
+/* format: varname, isAny, isUniqueconst, isMultiConst, width(>=1 or 0 or -1 (for any)), min, max, numBits, "{...}"
+*/
+void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, const char* filename) {
+  ofstream myfile;
+  myfile.open(filename);
+
+
+  //  cout<<"Result:"<<endl;
+  VariableConstInfo vci(&variableIdMapping, &map);
+  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
+    VariableId varId=(*i).first;
+    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
+    string variableName=variableIdMapping.variableName(varId);
+#if 0
+    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
+    stringstream setstr;
+    setstr<<"{";
+    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+      if(i!=valueSet.begin())
+        setstr<<",";
+      setstr<<(*i).getValue().toString();
+    }
+    setstr<<"}";
+#endif
+    myfile<<variableName;
+    myfile<<" isAny:"<<vci.isAny(varId)
+          <<" isUniqueConst:"<<vci.isUniqueConst(varId)
+          <<" isMultiConst:"<<vci.isMultiConst(varId);
+    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
+      //myfile<<" width:"<<vci.width(varId);
+    } else {
+      myfile<<" width:unknown";
+    }
+    myfile<<endl;
+  }
+  myfile.close();
+}
 
 int main(int argc, char* argv[]) {
   try {
@@ -964,8 +1011,11 @@ int main(int argc, char* argv[]) {
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
 
+  printResult(variableIdMapping, varConstSetMap);
+
   if(csvConstResultFileName) {
     cout<<"TODO: write const analysis results."<<endl;
+    writeCvsConstResult(variableIdMapping, varConstSetMap,csvConstResultFileName);
   }
 
   if(boolOptions["eliminate-dead-code"]) {
