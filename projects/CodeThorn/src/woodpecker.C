@@ -27,6 +27,10 @@
 #include <list>
 #include <string>
 
+#include "limits.h"
+#include <cmath>
+#include "assert.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -831,26 +835,53 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueShortVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
-#if 0
+    myfile<<variableName;
+	myfile<<",";
+    myfile<<vci.isAny(varId);
+	myfile<<",";
+	myfile<<vci.isUniqueConst(varId);
+	myfile<<",";
+	myfile<<vci.isMultiConst(varId);
+	myfile<<",";
+    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
+	  myfile<<vci.minConst(varId);
+	  myfile<<",";
+	  myfile<<vci.maxConst(varId);
+	  int mywidth=vci.width(varId);
+	  assert(mywidth==vci.maxConst(varId)-vci.minConst(varId)+1);
+	  int mylog2=log2(mywidth);
+	  // compute upper whole number
+	  int bits=-1;
+	  if(mywidth==pow(2,mylog2)) {
+		if(mylog2==0)
+		  bits=1;
+		else
+		  bits=mylog2;
+	  } else {
+		bits=mylog2+1;
+	  }
+	  assert(bits!=-1);
+	  myfile<<",";
+	  myfile<<bits;
+    } else {
+      myfile<<INT_MIN
+			<<","
+			<<INT_MAX
+			<<","
+			<<sizeof(int)*8;
+    }
+	myfile<<",";
+#if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
-    setstr<<"{";
+    myfile<<"{";
     for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
-        setstr<<",";
-      setstr<<(*i).getValue().toString();
+        myfile<<",";
+      myfile<<(*i).getValue().toString();
     }
-    setstr<<"}";
+    myfile<<"}";
 #endif
-    myfile<<variableName;
-    myfile<<" isAny:"<<vci.isAny(varId)
-          <<" isUniqueConst:"<<vci.isUniqueConst(varId)
-          <<" isMultiConst:"<<vci.isMultiConst(varId);
-    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
-      //myfile<<" width:"<<vci.width(varId);
-    } else {
-      myfile<<" width:unknown";
-    }
     myfile<<endl;
   }
   myfile.close();
@@ -1019,7 +1050,6 @@ int main(int argc, char* argv[]) {
   printResult(variableIdMapping, varConstSetMap);
 
   if(csvConstResultFileName) {
-    cout<<"TODO: write const analysis results."<<endl;
     writeCvsConstResult(variableIdMapping, varConstSetMap,csvConstResultFileName);
   }
 
