@@ -1,0 +1,485 @@
+include ExpStmt.incl
+include Loops.incl
+include omp.incl
+
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+
+<*****************************************************
+ syntax descriptions for the Fortran language
+******************************************************>
+
+<define KEYWORDS ("continue" "CONTINUE" "return" "while" "end" "enddo" "endif" "do" "if" "else" "dimension" "implicit" "double" "precision" "integer" "call")/>
+<define BACKTRACK FALSE/>
+<define PARSE NoParse/>
+<define UNPARSE UnparseLine[start_col=7;label_col=2; cont_col=6;text_len=66;is_omp=1]/>
+<define PREP ParseLine[comment_col=1;continue_col=6;text_len=66] />
+<define F77STMT CODE.Label|CODE.NestDO|CODE.NestIf|CODE.CallStmt|CODE.ParamDeclStmt|CODE.ImplicitDeclStmt|CODE.ExpStmt|CODE.VarDeclStmt />
+<define SymTable MAP{}/>
+
+<code Stmt parse=F77STMT/>
+
+<code D0FLOAT pars=(val:CODE.FLOAT,pre:"D0"|"d0"|"")
+        rebuild=((pre=="")?val:D0FLOAT#(val,pre))> @val pre@ </code>
+
+<define TOKEN (("." "true" ".") ("." "false" ".") ("." "not" ".") ("." "and" ".") ("." "or" ".") ("." "eq" ".") ("." "ne" ".") ("." "gt" ".") ("." "lt" ".") ("." "le" ".") ("." "ge" ".") CODE.FLOAT CODE.EndIf CODE.EndDo)/>
+
+<code EndIf parse=("end" " " "if") rebuild="endif"/> 
+<code EndDo parse=("end" " " "do") rebuild="enddo" />
+
+<define EXP_BASE INT|D0FLOAT|Name|".true."|".false." />
+<define EXP_BOP ("=" (".and." ".or.") (".eq." ".ne." ".gt." ".lt." ".le." ".ge.") ("+" "-") ("*" "/") ) />
+<define EXP_UOP (".not." "+" "-") />
+<define PARSE_CALL XFORM.BuildCall/>
+
+<xform F_buildBop pars=(op, lhs, rhs)>
+switch (op) {
+case "=" : Assign#(lhs, rhs)
+default: Bop#(op,lhs,rhs)
+}
+</xform>
+<define BUILD_BOP F_buildBop/>
+
+<xform BuildCall pars=(name,args)>
+tab=car(ERASE(GLOBAL.SymTable));
+if (!(tab : MAP)) ERROR("No symbol table!");
+switch (t=tab[name]) 
+{
+  case "": ArrayAccess#(name,args)
+  case TAG#(_,CODE.ArrayType)|CODE.ArrayType: ArrayAccess#(name,args)
+  default : tab[name] = TAG#("FUN",t); FunctionCall#(name,args) 
+}
+</xform>
+
+<*********************>
+<***** These code templates are used to build AST *>
+<*********************>
+
+<code MIN pars=(first,second)>
+min(@first@,@second@)
+</code>
+<code MAX pars=(first,second)>
+max(@first@,@second@)
+</code>
+
+<code ArrayAccess pars=(array:EXP,subscript:ExpList)>
+@array@(@subscript@)
+</code>
+
+<code Loop pars=( i, start, stop, step)>
+@i@=@start@, @stop@, @step@
+</code>
+
+<code NestLoop pars=(ctrl:CODE.While|CODE.ParseLoop, body:LIST(Stmt,"\n"))>
+@CODE.DO@ @ctrl@
+@body@
+enddo
+</code>
+
+<code Nest pars=(ctrl, body:LIST(Stmt,"\n"))>
+@(switch (ctrl) {
+  case CODE.Loop|CODE.While: NestLoop#(ctrl, body)
+  case CODE.If: NestIf#(ctrl, body,"endif")
+  case CODE.UnrolledLoopCheck#(_,i1,i2) : NestIf#(Bop#("<",i1,i2),body,"endif")
+})@
+
+</code>
+
+<*********************>
+<***** These code templates are used for parsing Fortran code *>
+<*********************>
+
+<code SingleLoop parse=(CODE.NestDO|"") />
+
+<code LoopNestList2 parse=LIST(CODE.NestDO|CODE.Label,"\n")/>
+<code LoopNestList pars=(content:LoopNestList2)>
+@content@
+
+</code>
+
+<code ParseLoop pars=( i:ID, start:EXP, stop:EXP, step:CODE.LoopStep|"")
+           rebuild=(Loop#(i,start,stop, ((step=="")? 1 : step)))>
+@i@=@start@, @stop@@step@
+</code>
+
+<code While pars=(condition:EXP)>
+while (@condition@)
+</code>
+
+<code DO match="DO"|"do" parse="DO"|"do"> do </code> 
+
+<code If pars=(condition:EXP)>
+if (@condition@) then
+</code>
+
+<code Type2 pars=(type : Name, len : INT) >
+@type@*@len@
+</code>
+
+<code LoopStep pars=(val: EXP) rebuild=val > , @val@ </code>
+
+<xform ParseLoopBody pars=(input) output=(_res,_left) label="">
+stop = (label=="")? "enddo" : label;
+(res,left) = ParseList[code=CODE.Stmt;stop=stop](input);
+stopToken = FirstToken(left);
+if (!(stopToken : stop)) {
+   ERROR("Unexpected stopping token:" stopToken "; expecting:" stop "\n parse result is : " res "\n leftover is: " left);
+}
+left2=NextToken(left);
+if (stop == label && !(FirstToken(left2) : CODE.Continue)) 
+   { <<* QY: include stmt as part of loop body
+      left2 => (next=CODE.Stmt,left2=_);
+      res=BuildList(res,next);
+      left = "\n"::stop::"continue"::"\n"::left2;
+   }
+(res,left)
+</xform>
+
+<code NestDO pars=(loop: CODE.While | CODE.ParseLoop, 
+                      body, label : INT|"")
+      rebuild=(CODE.Nest#(loop, body)) >
+@CODE.DO@ @label@ @loop@
+  @(body=XFORM.ParseLoopBody[label=label])@
+@("enddo"|"")@
+</code>
+
+<code EndElse pars=(body : LIST(Stmt,"\n"))>
+
+@body@
+endif
+</code>
+
+<code WithElse pars=(rest : CODE.NestIf | EndElse)>
+else @rest@
+</code>
+
+<code NestIf pars=(ctrl:CODE.If, body:LIST(Stmt,"\n"), rest:"endif"|WithElse)>
+@ctrl@
+@body@
+@rest@
+</code>
+
+<code Assign pars=(lhs:EXP, rhs:EXP) >
+@lhs@=@rhs@
+</code>
+
+<code ExpStmt pars=(exp:EXP) > 
+@exp@
+</code>
+
+<code CallStmt pars=(func : FunctionCall)>
+call @func@
+</code>
+
+<code Label pars=(val:INT) > 
+@val@ @CODE.Continue@ 
+
+</code>
+
+<code Continue parse="continue"|"CONTINUE" match="continue"|"CONTINUE">
+continue
+</code>
+
+<*********************************** Types ************************************>
+
+<code Type pars=(content: CODE.IntegerType
+                        | CODE.DoubleType
+                        | CODE.Name)>
+@content@
+</code>
+
+<code IntegerType>integer</code>
+<code DoubleType>double precision</code>
+
+<code IntType pars=(name:"int")>@ (name=="int")? IntegerType : name @</code>
+<code FloatType pars=(name:"double")>@ (name=="double")? DoubleType : name @</code>
+
+<******************************* Identifiers **********************************>
+
+<code ArrayDim pars=(dim:LIST(ID|INT,",")) rebuild=dim> (@dim@) </code>
+
+<code Variable pars=(name:Name, arrDim : CODE.ArrayDim | "")>
+@name@@arrDim@
+</code>
+
+<code VariableList parse=LIST(Variable,",") />
+
+<xform InsertTypeInfo pars=(type,vars) tab=GLOBAL.SymTable>
+tab=car(ERASE(tab));
+if (!(tab : MAP)) RETURN vars;
+switch (vars)
+{
+ case (a b) : InsertTypeInfo(type,a); InsertTypeInfo(type,b); vars
+ case Variable#(name,dim) : if (dim!="") type=ArrayType#(type,dim);
+                            pre=tab[name];
+                            if (pre:TAG#(tag,"")) type=TAG#(tag,type); 
+                            else if (pre != "") ERROR("duplicate decl:" name);
+                            tab[name]=type; 
+                            vars
+ case CODE.ParamName#(name): tab[name]=TAG#("PARAM",type); vars
+}
+</xform>
+
+<xform InsertParam pars=(var) tab=GLOBAL.SymTable>
+tab=car(ERASE(tab));
+if (!(tab : MAP)) RETURN var;
+tab[var]=TAG#("PARAM",tab[var]);
+</xform>
+
+<code VariableListStmt pars=(content:VariableList) rebuild=content >
+@content@
+
+</code>
+
+<******************************* Declarations *********************************>
+
+<code ParamDecl pars=(var:ID, val:INT) 
+      rebuild=(InsertParam(var);ParamDecl#(var,val))> @var@=@val@ </code>
+
+<code ParamDeclStmt
+      pars=(keyword:"PARAMETER"|"parameter", vars:LIST(ParamDecl,","))>
+@keyword@ (@vars@)
+
+</code>
+
+<code ImplicitDeclStmt
+      pars=(keyword:"IMPLICIT"|"implicit", type:Name, ids:EXP)>
+@keyword@ @type@ (@ids@)
+
+</code>
+
+<code VarDeclStmt
+      pars=(type:Type, var:VariableListStmt) rebuild=(InsertTypeInfo(type,var);VarDeclStmt#(type,var))>
+@type@ @var@
+</code>
+
+<code ParamName pars=(id:ID) 
+    rebuild=(InsertTypeInfo("",ParamName#id))> @id@ </code>
+
+<code SubroutineDecl pars=(name:ID, params:LIST(ParamName,","), body:LIST(F77STMT,"\n"))>
+subroutine @name@(@params@)
+@body@
+end
+</code>
+
+<***************************** OMP Instructions *******************************>
+
+<* \a private and \a shared are list of variable names *>
+<code OMPParallelDo>
+!$omp@@parallel do
+
+</code>
+
+<code OMPContinue pars=(content)>
+!$omp^@content@
+
+</code>
+
+<code PrivateNameList pars=(vars:NameList)>
+private(@vars@)
+</code>
+
+<code SharedNameList pars=(vars:NameList)>
+shared(@vars@)
+</code>
+
+<* Variables are seperated into lines to avoid going beyond limited columns. *>
+<code OMPParallelBegin pars=(private, shared)>
+@ ret=OMPParallelDo;
+for (rest=private; rest; rest=cdr rest)
+  ret=BuildList(OMPContinue#(PrivateNameList#(car rest)), ret);
+for (rest=shared; rest; rest=cdr rest)
+  ret=BuildList(OMPContinue#(SharedNameList#(car rest)), ret);
+ReverseList(ret) @
+</code>
+
+<code OMPParallelEnd>
+!$omp end parallel do
+
+</code>
+
+<code OMPDecl pars=(id:ID, type:ID) >
+ @type@ @id@
+
+</code>
+
+
+<code OMPSetNested pars=(num:EXP) >
+!$ call omp_set_nested(@num@)
+
+</code>
+
+<code OMPSetNumThreads pars=(num:EXP)>
+!$ call omp_set_num_threads(@num@)
+
+</code>
+
+<code OMPSetSchedule pars=(schedule:EXP, num:EXP) >
+!$ call omp_set_schedule(@schedule@, @num@)
+
+</code>
+
+
+<***************************** PAPI Instructions ******************************>
+<code PAPIIncl>
+
+include "f90papi.h"
+
+</code>
+
+<code PAPIDecl>
+
+INTEGER counters(4), ncounters, chkflg
+INTEGER*8 values(4)
+DOUBLE PRECISION t1, t2, OMP_GET_WTIME
+EXTERNAL OMP_GET_THREAD_NUM
+
+</code>
+
+<code PAPIInit pars=(counters:NameList)>
+
+chkflg = PAPI_VER_CURRENT 
+call PAPIF_library_init(chkflg)
+if (chkflg .ne. PAPI_VER_CURRENT) then
+Write(0, *) 'Error PAPI Library init fail', PAPI_VER_CURRENT
+call abort
+end if
+call PAPIF_thread_init(omp_get_thread_num, error)
+if(error .ne. PAPI_OK) then
+Write(0, *) 'PAPI with OpenMP fails'
+call abort
+end if
+counters(1) = @car(counters)@;
+counters(2) = @car(cdr(counters))@;
+counters(3) = @car(cdr(cdr(counters)))@;
+counters(4) = @car(cdr(cdr(cdr(counters))))@;
+
+ncounters = @LEN(counters)@;
+call PAPIF_START_COUNTERS(counters, ncounters, chkflg)
+t1 = OMP_GET_WTIME()
+
+</code>
+
+<code PAPIFinalize pars=(counters:NameList)>
+
+t2 = OMP_GET_WTIME()
+call PAPIF_STOP_COUNTERS(values, ncounters, chkflg);
+WRITE(0,*) "TIME : ", t2-t1, "seconds"
+WRITE(0,*) "@car(counters)@ : ", values(1)
+WRITE(0,*) "@car(cdr(counters))@ : ", values(2)
+WRITE(0,*) "@car(cdr(cdr(counters)))@ : ", values(3)
+WRITE(0,*) "@car(cdr(cdr(cdr(counters))))@ : ", values(4)
+
+</code>
+
+<**************************** Fortran Instructions ****************************>
+
+<define INCLUDE CODE.Include />
+
+<code SystemHeaders pars=(file:STRING)>
+<@file@>
+</code>
+
+<code UserHeaders pars=(file:STRING)>
+"@file@"
+</code>
+
+<code Headers pars=(content:SystemHeaders|UserHeaders|STRING)>
+@content@
+</code>
+
+<code Include pars=(content:Headers)>
+include @content@
+</code>
+
+<****************************** OpenMP Adaptors *******************************>
+
+<code OMP_MACRO pars=(content:OMP_INST) rebuild=(XFORM.RebuildOMPMacro(content))>
+!$omp @content@
+</code>
+
+<code OMPMacroCont pars=(content:UnknownUntilEOL)>
+!$omp^ @content@
+
+</code>
+
+<xform RebuildOMPMacro pars=(input)>
+<<* jichi (4/30/2010): Rebuild macro to prevent Fortran from columns overflow.
+switch(input) {
+case OMPParallelLoop#(content):
+  BuildList(OMPMacro#(OMPParallelLoop#(Nothing)),
+            RebuildOMPMacro(content))
+case OMPParallelSection#(content):
+  BuildList(OMPMacro#(OMPParallelSection#(Nothing)),
+            RebuildOMPMacro(content))
+case OMPAttrList#(attr):
+  ret = "";
+  foreach (attr : (shared = OMPSharedNameList) : TRUE)
+    ret = BuildList(RebuildOMPMacro(shared), ret);
+  foreach (attr : (private = OMPPrivateNameList) : TRUE)
+    ret = BuildList(RebuildOMPMacro(private), ret);
+  foreach (attr : (reduction = OMPReductionNameList) : TRUE)
+    ret = BuildList(RebuildOMPMacro(reduction), ret);
+  foreach (attr : (schedule = OMPSchedule) : TRUE)
+    ret = BuildList(OMPMacroCont#(schedule), ret);
+  foreach (attr : (threads = OMPNumThreads) : TRUE)
+    ret = BuildList(OMPMacroCont#(threads), ret);
+  ret
+
+case OMPSharedNameList#(vars):
+  (!(vars:NameList#(l)))? OMPMacroCont#(OMPSharedNameList#(vars))
+  : (
+    ret = "";
+    for (rest = l; rest; rest = cdr rest)
+      ret = BuildList(OMPMacroCont#(OMPSharedNameList#(car rest)),
+                      ret);
+    ret
+  )
+
+case OMPPrivateNameList#(vars):
+  (!(vars:NameList#(l)))? OMPMacroCont#(OMPPrivateNameList#(vars))
+  : (
+    ret = "";
+    for (rest = l; rest; rest = cdr rest)
+      ret = BuildList(OMPMacroCont#(OMPPrivateNameList#(car rest)),
+                      ret);
+    ret
+  )
+
+case OMPReductionNameList#(op, vars):
+  (!(vars:NameList#(l)))? OMPMacroCont#(OMPReductionNameList#(op, vars))
+  : (
+    ret = "";
+    for (rest = l; rest; rest = cdr rest)
+      ret = BuildList(OMPMacroCont#(OMPReductionNameList#(op, car rest)),
+                      ret);
+    ret
+  )
+
+default: PRINT(input); ERROR("unknown input type");
+}
+</xform>

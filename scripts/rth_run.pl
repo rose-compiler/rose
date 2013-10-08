@@ -61,6 +61,31 @@ are created in the current working directory having the same base name as the fi
 a configuration file. The configuration file lists the commands that must be run, and how to determine whether the test passed
 or failed.  Configuration files generally have a ".conf" extension.
 
+=head1 SWITCHES
+
+The following command-line switches are understood.  Within the ROSE project, these command-line switches are specified
+with the RTH_RUN_FLAGS variable which can be set on the "make" command.  For instance, to turn on immediate printing of all
+standard output and standard error invoke make as "make RTH_RUN_FLAGS=--immediate-output check".
+
+=over
+
+=item --cleanup
+
+=item --no-cleanup
+
+Enables or disables the automatic cleanup of temporary files and directories.  The default is to remove these.
+
+=item --immediate-output
+
+The command lines and their output are immediately echoed to this script's standard output and error as well as saving them
+in the passed or failed files.
+
+=item --quite-failure
+
+If a test fails, rather than emitting its output, just emit a line that indicates that it failed.
+
+=back
+
 =head1 CONFIGURATION
 
 Configuration files contain blank lines, comment lines, or property settings.  Comments begin with a hash character ("#") and
@@ -159,6 +184,18 @@ when they pass, and if absent prevents their promotion.
 Note: The file, when present, should be empty.  We reserve the possibility of adding additional instructions to the file itself
 in order to control promotability in more detail.
 
+=item set VARIABLE = VALUE
+
+Assign a new value to a variable.  The VARIABLE must be a variable name without enclosing curly braces or the leading dollar
+sign.  White space is stripped from the beginning and end of VALUE.  Variable settings are processed in the order they occur
+in the config file and are expanded in all subsequent lines. It is permissible to assign a new value to an existing variable.
+
+=item subdir = yes | no | NAME
+
+Run all commands in a subdirectory.  If the value is "no" or empty, then all commands run in the current working directory.
+If the value is "yes" then a new temporary subdirectory is created before any commands are run, and removed during cleanup.
+Any other value is the name of an existing directory which is not removed during cleanup.
+
 =item timeout = never | LIMIT
 
 If a test runs longer than the specified time limit then it will be aborted and assume to have failed.  The limit applies
@@ -168,7 +205,7 @@ measure: s (the default), sec, second, or seconds; m, min, minute, or minutes; h
 
 =item title = TITLE
 
-When a test runs the test harness emits the line "TESTING xxx" where "xxx" is the makefile target sans ".passed". If the
+When a test runs the test harness emits the line "TEST   xxx" where "xxx" is the makefile target sans ".passed". If the
 title property has a non-empty value then the TITLE is used in place of the target name.
 
 =back
@@ -197,10 +234,12 @@ File name of the configuration file without directory components.
 
 The name of the target without directory components and without the ".passed" or ".failed" extension.
 
-=item srcdir, top_srcdir, VALGRIND, BINARY_SAMPLES, ...
+=item srcdir, top_srcdir, blddir, top_blddir, VALGRIND, etc.
 
 These variables, and perhaps others, are passed to all invocations of the test harness when run from ROSE makefiles with the
-$(RTH_RUN) variable.
+$(RTH_RUN) variable.  The names of source and build directories are absolute even though the corresponding variable in
+the makefile might be relative.  Also note that "source" and "build" are both abbreviated to three letters (makefiles
+inconsistently abbreviate source, but not build).
 
 =back
 
@@ -285,10 +324,13 @@ Licensed under Revised BSD License (see COPYRIGHT file at top of ROSE source cod
 use strict;
 use Config;
 
-my $usage = <<EOF;
-usage: $0 [VAR=VALUE...] CONFIG TARGET
-       $0 --help
-EOF
+sub usage {
+    print STDERR "usage: $0 [VAR=VALUE...] CONFIG TARGET\n";
+    print STDERR "       $0 --help\n";
+    print STDERR "was invoked with ", scalar(@ARGV), " argument", (1==@ARGV?"":"s"), (0==@ARGV?"":":"), "\n";
+    print STDERR "   '$_'\n" for @ARGV;
+    exit 1
+}
 
 sub help {
   local $_ = `(pod2man $0 |nroff -man) 2>/dev/null` ||
@@ -303,13 +345,12 @@ sub help {
   }
 };
 
-
 # Parse specified configuration file or die trying. Return value is a hash whose keys are the variable names and whose
 # values are the values or an array of values.
 sub load_config {
-  my($file,%vars) = @_;
+  my($file,$vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>[], lockdir=>undef,
-               may_fail=>'no', promote=>'yes', timeout=>15*60, title=>undef);
+               may_fail=>'no', promote=>'yes', subdir=>undef, timeout=>15*60, title=>undef);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     while (/(.*)\\\n$/s) {
@@ -317,10 +358,11 @@ sub load_config {
       last unless defined $extra;
       $_ = $1 . $extra;
     }
-
     s/\s*#.*//;
-    s/\$\{(\w+)\}/exists $vars{$1} ? $vars{$1} : $1/eg;
-    if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
+    s/\$\{(\w+)\}/exists $vars->{$1} ? $vars->{$1} : ''/eg;
+    if (my($var,$val) = /^\s*set\s+(\w+)\s*=\s*(.*?)\s*$/) {
+	$vars->{$var} = $val;
+    } elsif (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
       die "$file: unknown setting: $var\n" unless exists $conf{$var};
       if (ref $conf{$var}) {
         push @{$conf{$var}}, $val;
@@ -347,20 +389,21 @@ sub load_config {
   return %conf;
 }
 
-# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout occurs. The
-# command's standard output and error are captured to the specified files (which are created if necessary).  This function
-# returns the exit status, or a negative value on error; zero on success.  We have to do this the hard way in order to send
-# SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out tests that continue to suck up
-# resources).
+# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout
+# occurs. The command's standard output and error are redirected to the already-opened CMD_STDOUT and CMD_STDERR
+# streams. This function returns the exit status, or a negative value on error; zero on success.  We have to do this the
+# hard way in order to send SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out
+# tests that continue to suck up resources).
 sub run_command {
-  my($stdout,$stderr,$timelimit,@commands) = @_;
+  my($timelimit,$subdir,@commands) = @_;
   defined (my $pid = fork) or return "fork: $!";
   if (!$pid) {
-    open STDOUT, ">", $stdout or return 255;
-    open STDERR, ">", $stderr or return 254;
+    open STDOUT, ">&CMD_STDOUT" or return 255;
+    open STDERR, ">&CMD_STDERR" or return 254;
     setpgrp; # so we can kill the whole group on a timeout
     my $status = 0;
     for my $cmd (@commands) {
+      $cmd = "cd '$subdir'; $cmd" if $subdir;
       print STDERR "+ $cmd\n";
       $status = system $cmd;
       # The shell usually prints messages about signals, so we'll take over that job since there's no shell.  In fact, we'll
@@ -392,21 +435,24 @@ sub run_command {
     kill -1, $pid; sleep 5; # give the test a chance to clean up gracefully
     kill -9, $pid; # kill the whole process group in case the above exec used the shell.
     $status = $? if $pid == waitpid $pid, 0;
-    if (open LOG, ">>", $stderr) {
-      print LOG "\nterminated after $timelimit seconds\n";
-      close LOG;
-    }
+    print CMD_STDERR "\nterminated after $timelimit seconds\n";
   }
   return $status;
 }
 
 
-# Produce a temporary name for files, directories, etc.
-my $tempname = "AAA";
+# Produce a temporary name for files, directories, etc. without creating a file. We need a name that is unlikely to
+# be in use or left over from a previous run that didn't clean up, so use Perl's rand() to create one. This not
+# cryptographically strong, but at least we're unlikely to have conflicts.
 sub tempname {
-  my $name = sprintf "/tmp/th-%05d-%1s", $$, $tempname++;
-  unlink $name;
-  return $name;
+    my @chars = qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
+                   A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+                   0 1 2 3 4 5 6 7 8 9 _ +/;
+    while (1) {
+	my $retval = "/tmp/rose";
+	$retval .= $chars[int rand 64] for 0 .. 15;
+	return $retval unless -e $retval;
+    }
 }
 
 # Returns true if a test should be promoted.  The argument is the value of the "promote" property.
@@ -423,11 +469,15 @@ my %variables;
 $variables{"TEMP_FILE_$_"} = tempname for 0 .. 9;
 
 # Parse command-line switches and arguments
-my($config_file,$target,$target_pass,$target_fail);
+my($do_cleanup,$quiet_failure,$immediate_output,$config_file,$target,$target_pass,$target_fail) = (1);
 while (@ARGV) {
   local($_) = shift @ARGV;
   /^--$/ and last;
   /^(-h|-\?|--help)$/ and do { help && exit 0 };
+  /^--no-cleanup$/ and do {$do_cleanup=0; next};
+  /^--cleanup$/ and do {$do_cleanup=1; next};
+  /^--immediate-output$/ and do {$immediate_output=1; next};
+  /^--quiet-failure$/ and do {$quiet_failure=1; next};
   /^-/ and die "$0: unknown command line switch: $_\n";
   /^(\w+)=(.*)/ and do {$variables{$1} = $2; next};
   /=/ and die "$0: malformed variable definition: $_\n";
@@ -441,9 +491,9 @@ while (@ARGV) {
     $target = $_;
     next;
   }
-  die $usage;
+  usage;
 }
-die $usage if @ARGV || !$config_file;
+usage if @ARGV || !$config_file;
 if ($target =~ /(.+)\.\w+$/) {
   ($target, $target_pass, $target_fail) = ($1, $target, "$1.failed");
 } else {
@@ -451,25 +501,49 @@ if ($target =~ /(.+)\.\w+$/) {
   ($target_pass,$target_fail) = ("$target.passed","$target.failed");
 }
 $variables{TARGET} = $target;
-my %config = load_config $config_file, %variables;
-
+my %config = load_config $config_file, \%variables;
 
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
 my $test_title = $config{title} || $target;
-if ($config{disabled} ne 'no') {
-  print "  TESTING $test_title (disabled: $config{disabled})\n";
+if ($config{disabled} && $config{disabled} ne 'no') {
+  print "  TEST   $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
 }
-print "  TESTING $test_title\n";
+print "  TEST   $test_title\n";
+
+# Should everything run in a subdirectory?
+my $subdir;
+if ($config{subdir} eq 'yes') {
+    # run in a temporary subdirectory to be created now and removed later
+    $subdir = $variables{SUBDIR} = tempname;
+    my $status = system "mkdir", $subdir;
+    die "$0: $subdir: $!\n" if $status;
+} elsif ($config{subdir} eq 'no' || $config{subdir} eq '') {
+    # run in the current working directory
+} else {
+    # run in a user-specified subdir which we neither create nor remove
+    $subdir = $variables{SUBDIR} = $config{subdir}
+}
 
 # Run the commands, capturing their output into files.
-my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
-unlink $cmd_stdout, $cmd_stderr;
-my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, @{$config{cmd}});
+my($cmd_stdout_file,$cmd_stderr_file) = map {tempname} qw/out err/;
+unlink $cmd_stdout_file, $cmd_stderr_file;
+if (!$immediate_output) {
+    open CMD_STDOUT, ">", $cmd_stdout_file or die "$cmd_stdout_file: $!\n";
+    open CMD_STDERR, ">", $cmd_stderr_file or die "$cmd_stderr_file: $!\n";
+} else {
+    open CMD_STDOUT, "|tee $cmd_stdout_file |sed 's/^/$target [out]: /'" or die "tee $cmd_stdout_file: $!\n";
+    open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target [err]: /' >&2" or die "tee $cmd_stderr_file: $!\n";
+}
+my($status) = run_command($config{timeout}, $subdir, @{$config{cmd}});
+
+# Close the CMD_STDOUT before we start comparing it with an answer.  All subsequent command stdout will
+# be redirected to CMD_STDERR instead.
+open CMD_STDOUT, ">&CMD_STDERR";
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
@@ -479,33 +553,33 @@ if (!$status && $config{answer} ne 'no') {
     $answer .= ".ans";
   }
   if (! -r $answer) {
-    system "echo '$answer: no such file' >>$cmd_stderr";
+    print CMD_STDERR "$answer: no such file\n";
     $status = 1;
   } elsif (0 != @{$config{filter}} ) {
-      system "echo 'Running filters:' >>$cmd_stderr";
-    my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout, tempname);
+    print CMD_STDERR "Running filters:\n";
+    my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout_file, tempname);
     foreach my $filter (@{$config{filter}}) {
-	$status ||= system "(set -x; $filter) <$a1 >$a2 2>>$cmd_stderr";
-	$status ||= system "(set -x; $filter) <$b1 >$b2 2>>$cmd_stderr";
+	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$a1 >$a2");
+	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$b1 >$b2");
 	$a1 = tempname if $a1 eq $answer;
-	$b1 = tempname if $b1 eq $cmd_stdout;
+	$b1 = tempname if $b1 eq $cmd_stdout_file;
 	($a1,$a2) = ($a2,$a1);
 	($b1,$b2) = ($b2,$b1);
 	last if $status;
     }
     if (!$status) {
-	system "echo 'Comparing filter output with filtered answer' >>$cmd_stderr";
-	$status ||= system "(set -x; $config{diff} $a1 $b1) >>$cmd_stderr 2>&1";
+	print CMD_STDERR "Comparing filter output with filtered answer\n";
+	$status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $a1 $b1) >&2");
     }
     unlink $a1, $a2, $b1, $b2;
   } else {
-    system "echo 'Comparing output with answer' >>$cmd_stderr";
-    $status = system "(set -x; $config{diff} $answer $cmd_stdout) >>$cmd_stderr 2>&1";
+    print CMD_STDERR "Comparing output with answer\n";
+    $status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $answer $cmd_stdout_file) >&2");
   }
 }
 
-# Run clean-up commands
-run_command("/dev/null", "/dev/null", $config{timeout}, @{$config{cleanup}});
+# Run clean-up commands (their stdout is automatically redirected to stderr by now)
+run_command($config{timeout}, undef, @{$config{cleanup}});
 
 # If the test failed and the "may_fail" property is "yes" then pretend the test was successfull.
 # If the test passed and the "may_fail" property is "promote" then we need to change the property
@@ -597,41 +671,51 @@ if ($config{may_fail} eq 'yes') {
 }
 print "$target: ignoring failure\n" if $ignored_failure;
 
-# Produce output for failing tests, overwriting previous target. We should have only
-# one target file: either $target_pass or $target_fail.
+# Create the *.failed file and populate it with the commands' stdout and stderr
+close CMD_STDOUT;
+close CMD_STDERR;
 open TARGET, ">", $target_fail or die "$0: $target_fail: $!\n";
-for my $output ($cmd_stdout, $cmd_stderr) {
-  if (open OUTPUT, "<", $output) {
+my %output_filename = (out => $cmd_stdout_file, err => $cmd_stderr_file);
+for my $stream qw(out err) {
+  if (open OUTPUT, "<", $output_filename{$stream}) {
     while (<OUTPUT>) {
       print TARGET $_;
-      print "$target: ", $_ if $status;
+      if ($status && !$immediate_output && !$quiet_failure) {
+	  print "$target \[$stream]: ", $_;
+      }
     }
     close OUTPUT;
-    unlink $output;
     print TARGET "======== CUT ========\n";
   }
 }
+
+# Clean up. These names might actually be directories, otherwise we could have just unlinked.  If cleanup is disabled then
+# append the file names to the end of the TARGET file.
+if ($do_cleanup) {
+    unlink $cmd_stdout_file;
+    unlink $cmd_stderr_file;
+    system "rm", "-rf", $subdir if $subdir && $subdir ne $config{subdir};
+    system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
+} else {
+    print TARGET "Temporary files not deleted:\n";
+    print TARGET "  Working subdirectory: $subdir\n" if $subdir;
+    print TARGET "  Command standard output is in $cmd_stdout_file\n";
+    print TARGET "  Command standard error is in $cmd_stderr_file\n";
+    for (0..9) {
+	my $filename = $variables{"TEMP_FILE_$_"};
+	print TARGET "  TEMP_FILE_$_: $filename\n" if -e $filename;
+    }
+}
+
+# Move or link the *.failed file to *.passed as appropriate.
 close TARGET;
 if ($status) {
   unlink $target_pass;
+  print STDERR "  FAILED $test_title; output saved in '$target_fail'\n" if $quiet_failure;
 } elsif ($ignored_failure) {
   system "ln", "-sf", $target_fail, $target_pass and die "$0: $target_pass: $!\n";
 } else {
   rename $target_fail, $target_pass or die "$0: $target_pass: $!\n";
 }
-
-## # Produce JUnit XML file for the target
-## open XML, ">", $target_xml or die "$0: $target_xml: $!\n";
-## print XML "<testsuite", ($status?" failures=1":""), " name=\"$target\" tests=1 time=0>\n";
-## print XML "  <testcase classname=\"$target\" name=\"$text\" time=\"unknown\">\n";
-## print XML "    <failure message=\"test failed\"/>\n" if $status;
-## print XML "  </testcase>\n";
-## print XML "  <system-out>Not implmeneted yet.</system-out>\n";
-## print XML "  <system-err>Not implemented yet.</system-err>\n";
-## print XML "</testsuite>\n";
-## close XML;
-
-# Clean up. These names might actually be directories, otherwise we could have just unlinked.
-system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;
 
 exit($status ? 1 : 0);

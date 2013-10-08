@@ -40,7 +40,6 @@ CLEAN_TARGETS += clean-findEnvironmentVars
 .PHONY: clean-findEnvironmentVars
 clean-findEnvironmentVars:
 	rm -f $(findEnvironmentVars_TESTS) $(findEnvironmentVars_TESTS:.passed=.failed)
-	rm -f $(findEnvironmentVars_TESTS:.passed=.out) $(findEnvironmentVars:.passed=.err)
 
 #------------------------------------------------------------------------------------------------------------------------
 # findFileInput (usig "ffi_" as a unique test prefix)
@@ -62,7 +61,6 @@ CLEAN_TARGETS += clean-findFileInput
 .PHONY: clean-findFileInput
 clean-findFileInput:
 	rm -f $(findFileInput_TESTS) $(findFileInput_TESTS:.passed=.failed)
-	rm -f $(findFileInput_TESTS:.passed=.out) $(findFileInput:.passed=.err)
 
 #------------------------------------------------------------------------------------------------------------------------
 # findSocketInput (using "fsi_" as a unique test prefix)
@@ -84,8 +82,6 @@ CLEAN_TARGETS += clean-findSocketInput
 .PHONY: clean-findSocketInput
 clean-findSocketInput:
 	rm -f $(findSocketInput_TESTS) $(findSocketInput_TESTS:.passed=.failed)
-	rm -f $(findSocketInput_TESTS:.passed=.out) $(findSocketInput:.passed=.err)
-
 
 #------------------------------------------------------------------------------------------------------------------------
 # findSharedMemory (using "fsm_" as a unique test prefix)
@@ -107,8 +103,6 @@ CLEAN_TARGETS += clean-findSharedMemory
 .PHONY: clean-findSharedMemory
 clean-findSharedMemory:
 	rm -f $(findSharedMemory_TESTS) $(findSharedMemory_TESTS:.passed=.failed)
-	rm -f $(findSharedMemory_TESTS:.passed=.out) $(findSharedMemory:.passed=.err)
-
 
 #------------------------------------------------------------------------------------------------------------------------
 # automake check and clean rules
