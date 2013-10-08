@@ -116,10 +116,15 @@ Description:\n\
   --raw=ENTRIES\n\
     Indicates that the specified file(s) contains raw machine instructions\n\
     rather than a binary container such as ELF or PE.  The ENTRIES argument\n\
-    is a comma-separated list of one or more virtual addresses that will be\n\
-    used to seed the recursive disassembler and instruction partitioner. The\n\
-    non-switch, positional arguments are either the name of an index file that\n\
-    was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
+    specifies virtual addresses where disassembly will be attempted. It is a\n\
+    comma-separated list of addresses or address ranges. An address range is\n\
+    a low and high address separated by a hyphen and the range includes both\n\
+    endpoints.  However, if the range is followed by a slash and an increment\n\
+    then assembly will be tried only at the low address and positive offsets\n\
+    from the low address in multiples of the increment.\n\
+\n\
+    The non-switch, positional arguments are either the name of an index file\n\
+    that was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
     for details about the file format), or pairs of file names and virtual\n\
     addresses where the file contents are to be mapped.  The virtual addresses\n\
     can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
@@ -835,7 +840,8 @@ public:
 static SgAsmBlock *
 simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, MemoryMap *mmap=NULL)
 {
-    assert(!insns.empty());
+    if (insns.empty())
+        return NULL;
     rose_addr_t entry_va = insns.begin()->first;
     SimplePartitioner sp(entry_va);
     return sp.partition(interp, insns, mmap);
@@ -1005,24 +1011,43 @@ main(int argc, char *argv[])
             do_reassemble = true;
         } else if (!strcmp(argv[i], "--no-reassemble")) {
             do_reassemble = false;
-        } else if (!strcmp(argv[i], "--raw") || !strncmp(argv[i], "--raw=", 6)) {
-            char *s = !strncmp(argv[i], "--raw=", 6) ? argv[i]+6 : (i+1<argc ? argv[++i] : NULL);
-            if (!s || !*s) {
-                fprintf(stderr, "%s: raw entry address(es) expceted for --raw switch\n", arg0);
-                exit(1);
-            }
-            while (*s) {
+        } else if (!strncmp(argv[i], "--raw=", 6)) {
+            std::vector<std::string> parts = StringUtility::split(',', argv[i]+6, (size_t)(-1), true);
+            for (size_t i=0; i<parts.size(); ++i) {
+                // each part is: LO[-HI[/INC]]
                 char *rest;
+                const char *s = parts[i].c_str();
                 errno = 0;
-                rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
-                if (rest==s || errno!=0) {
-                    fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
+                rose_addr_t lo = strtoull(s, &rest, 0);
+                if (errno || rest==s) {
+                    fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
                     exit(1);
                 }
-                raw_entries.insert(raw_entry_va);
-                if (','==*rest) rest++;
-                while (isspace(*rest)) rest++;
-                s = rest;
+                rose_addr_t hi = lo, inc = 1;
+                if ('-'==*rest) {
+                    s = rest+1;
+                    errno = 0;
+                    hi = strtoull(s, &rest, 0);
+                    if (errno || rest==s || hi<lo) {
+                        fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                        exit(1);
+                    }
+                    if ('/'==*rest) {
+                        s = rest+1;
+                        errno = 0;
+                        inc = strtoull(s, &rest, 0);
+                        if (errno || rest==s || 0==inc) {
+                            fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                            exit(1);
+                        }
+                    }
+                }
+                if (*rest) {
+                    fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                    exit(1);
+                }
+                for (rose_addr_t va=lo; va<=hi; va+=inc)
+                    raw_entries.insert(va);
             }
         } else if (!strncmp(argv[i], "--reserve=", 10)) {
             char *rest;
@@ -1136,10 +1161,10 @@ main(int argc, char *argv[])
                     exit(1);
                 }
             } else {
-                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-                 * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
-                 * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
-                 * is 'rx'. */
+                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine
+                 * instructions and the virtual address where those instructions are mapped.  The virtual address can be
+                 * suffixed with any combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when
+                 * no suffix is present is 'rx'. */
                 if (++i>=argc) {
                     fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
                     exit(1);
@@ -1161,10 +1186,8 @@ main(int argc, char *argv[])
                     }
                 }
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
-
-                MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(raw_filename);
-                raw_map.insert(Extent(start_va, buffer->size()),
-                               MemoryMap::Segment(buffer, 0, perm, raw_filename));
+                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va);
+                raw_map.mprotect(Extent(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
             }
         } else {
             nposargs++;
