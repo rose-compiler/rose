@@ -222,7 +222,7 @@ extern void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimensi
 // For the accelerator model experimental implementation, we use a two-level reduction method:
 // thread-block level within GPU + beyond-block level on CPU
 
-/* 
+/* an internal union type to be flexible for all types associated with reduction operations 
    We don't really want to expose this to the compiler to simplify the compiler translation.
 */
 // We try to limit the numbers of runtime data types exposed to a compiler.
@@ -259,6 +259,24 @@ XOMP_BEYOND_BLOCK_REDUCTION_DECL(float)
 XOMP_BEYOND_BLOCK_REDUCTION_DECL(double)
 
 #undef XOMP_BEYOND_BLOCK_REDUCTION_DECL
+// Liao, 8/29/2013
+// Support round-robin static scheduling of loop iterations running on GPUs (accelerator)
+// Static even scheduling may cause each thread to touch too much data, which stress memory channel.
+// NOT IN USE. We use compiler to generate the variables instead of using a runtime data structure.
+struct XOMP_accelerator_thread {
+    int num;            /* the thread number of this thread in team */
+    int num_thds;       /* current running thread, referenced by children */
+    int in_parallel;    /* current thread executes the region in parallel */
+
+    /* used for schedule */
+    int loop_chunk_size;  //*************  this is the chunk size
+    int loop_end;         //*************  equivalent to upper limit, up
+    int loop_sched_index; //*************  lb+chunk_size*tp->num  (num is the thread number of this thread in team)
+    int loop_stride;      //*************   chunk_size * nthds     /* used for static scheduling */
+
+    /* for 'lastprivate' */
+    int is_last;  
+};
 
 #define XOMP_MAX_MAPPED_VARS 256 // for simplicity, we use preallocated memory for storing the mapped variable list
 /* Test runtime support for nested device data environments */
