@@ -4,8 +4,8 @@
 #include "integerOps.h"
 #include "StringUtility.h"
 
+#include <iostream>
 #include <vector>
-
 
 /** Describes a pattern of bits in a finite number of words.
  *

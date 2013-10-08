@@ -855,34 +855,59 @@ RegisterDictionary::dictionary_mips32_altnames()
     return regs;
 }
 
-/** Motorola ColdFire 5484 register names. */
+/** Motorola M68332 register names */
 const RegisterDictionary *
-RegisterDictionary::dictionary_mcf5484()
+RegisterDictionary::dictionary_m68332() 
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
-        regs = new RegisterDictionary("mcf5484");
+        regs = new RegisterDictionary("m68332");
 
         // 32-bit data and address registers; 64-bit floating point registers
         for (size_t i=0; i<8; ++i) {
             regs->insert("d"+StringUtility::numberToString(i),       m68k_regclass_data, i, 0,  32);
             regs->insert("d"+StringUtility::numberToString(i)+".l",  m68k_regclass_data, i, 0,  16);
             regs->insert("d"+StringUtility::numberToString(i)+".u",  m68k_regclass_data, i, 16, 16);
-            regs->insert("a"+StringUtility::numberToString(i),       m68k_regclass_addr, i, 0, 32);
+            regs->insert("a"+StringUtility::numberToString(i),       m68k_regclass_addr, i, 0,  32);
             regs->insert("a"+StringUtility::numberToString(i)+".l",  m68k_regclass_addr, i, 0,  16);
             regs->insert("a"+StringUtility::numberToString(i)+".u",  m68k_regclass_addr, i, 16, 16);
-            regs->insert("fp"+StringUtility::numberToString(i), m68k_regclass_fpr,  i, 0, 64);
+            regs->insert("fp"+StringUtility::numberToString(i),      m68k_regclass_fpr,  i, 0,  64);
         }
         regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
+        
+        // Special-purpose registers
+        regs->insert("pc",    m68k_regclass_spr, m68k_spr_pc, 0,  32);          // program counter
+        regs->insert("ccr",   m68k_regclass_spr, m68k_spr_sr, 0,  8);           // condition code register
+        regs->insert("ccr_c", m68k_regclass_spr, m68k_spr_sr, 0,  1);           // condition code carry bit
+        regs->insert("ccr_v", m68k_regclass_spr, m68k_spr_sr, 1,  1);           // condition code overflow
+        regs->insert("ccr_z", m68k_regclass_spr, m68k_spr_sr, 2,  1);           // condition code zero bit
+        regs->insert("ccr_n", m68k_regclass_spr, m68k_spr_sr, 3,  1);           // condition code negative
+        regs->insert("ccr_x", m68k_regclass_spr, m68k_spr_sr, 4,  1);           // condition code extend
+        regs->insert("sr",    m68k_regclass_spr, m68k_spr_sr, 0,  16);          // status register
+        regs->insert("sr_i",  m68k_regclass_spr, m68k_spr_sr, 8,  3);           // interrupt priority mask
+        regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
+        regs->insert("sr_t",  m68k_regclass_spr, m68k_spr_sr, 14, 2);           // status register trace mode bits
+
+        // Supervisor registers
+        regs->insert("ssp",     m68k_regclass_sup, m68k_sup_ssp,     0, 32);    // supervisor A7 stack pointer
+        regs->insert("vbr",     m68k_regclass_sup, m68k_sup_vbr,     0, 32);    // vector base register
+        regs->insert("sfc",     m68k_regclass_sup, m68k_sup_sfc,     0, 32);    // alternate function (only 3 lsb implemented)
+        regs->insert("dfc",     m68k_regclass_sup, m68k_sup_dfc,     0, 32);    // code registers (only 3 lsb implemented)
+    }
+    return regs;
+}
+
+/** Freescale Motorola ColdFire 5484 register names. */
+const RegisterDictionary *
+RegisterDictionary::dictionary_mcf5484()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("mcf5484");
+        regs->insert(dictionary_m68332());
 
         // Special-purpose registers
-        regs->insert("pc",    m68k_regclass_spr,   m68k_spr_pc,      0, 32);    // program counter
-        regs->insert("ccr",   m68k_regclass_spr,   m68k_spr_ccr,     0, 8);     // condition code register
-        regs->insert("ccr_c", m68k_regclass_spr,   m68k_spr_ccr,     0, 1);     // condition code carry bit
-        regs->insert("ccr_v", m68k_regclass_spr,   m68k_spr_ccr,     1, 1);     // condition code overflow
-        regs->insert("ccr_z", m68k_regclass_spr,   m68k_spr_ccr,     2, 1);     // condition code zero bit
-        regs->insert("ccr_n", m68k_regclass_spr,   m68k_spr_ccr,     3, 1);     // condition code negative
-        regs->insert("ccr_x", m68k_regclass_spr,   m68k_spr_ccr,     4, 1);     // condition code extend
+        regs->insert("sr_m",  m68k_regclass_spr,   m68k_spr_sr,      12, 1);    // status register master (interrupt) state bit
         regs->insert("fpcr",  m68k_regclass_spr,   m68k_spr_fpcr,    0, 32);    // floating-point control register
         regs->insert("fpsr",  m68k_regclass_spr,   m68k_spr_fpsr,    0, 32);    // floating-point status register
         regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
@@ -902,20 +927,7 @@ RegisterDictionary::dictionary_mcf5484()
         regs->insert("emask", m68k_regclass_emac,  m68k_emac_mask,   0, 32);    // MAC mask register (high 16 are always zero)
 
         // supervisor registers
-        regs->insert("sr",      m68k_regclass_sup, m68k_sup_sr,      0, 16);    // status register
-        regs->insert("sr_ccr",  m68k_regclass_sup, m68k_sup_sr,      0, 8);     // status register condition code register
-        regs->insert("sr_c",    m68k_regclass_sup, m68k_sup_sr,      0, 1);     // status register carry bit
-        regs->insert("sr_v",    m68k_regclass_sup, m68k_sup_sr,      1, 1);     // status register overflow bit
-        regs->insert("sr_z",    m68k_regclass_sup, m68k_sup_sr,      2, 1);     // status register zero bit
-        regs->insert("sr_n",    m68k_regclass_sup, m68k_sup_sr,      3, 1);     // status register negative bit
-        regs->insert("sr_x",    m68k_regclass_sup, m68k_sup_sr,      4, 1);     // status register extend bit
-        regs->insert("sr_i",    m68k_regclass_sup, m68k_sup_sr,      8, 3);     // interrupt priority mask
-        regs->insert("sr_m",    m68k_regclass_sup, m68k_sup_sr,      12, 1);    // status register master (interrupt) state bit
-        regs->insert("sr_s",    m68k_regclass_sup, m68k_sup_sr,      13, 1);    // status register user mode bit
-        regs->insert("sr_t",    m68k_regclass_sup, m68k_sup_sr,      15, 1);    // status register trace mode bit
         regs->insert("other_a7", m68k_regclass_sup, m68k_sup_ssp,    0, 32);    // less-used name for "ssp"
-        regs->insert("ssp",     m68k_regclass_sup, m68k_sup_ssp,     0, 32);    // supervisor A7 stack pointer
-        regs->insert("vbr",     m68k_regclass_sup, m68k_sup_vbr,     0, 32);    // vector base register
         regs->insert("cacr",    m68k_regclass_sup, m68k_sup_cacr,    0, 32);    // cache control register
         regs->insert("asid",    m68k_regclass_sup, m68k_sup_asid,    0, 32);    // address space ID register
         regs->insert("acr0",    m68k_regclass_sup, m68k_sup_acr0,    0, 32);    // access control register 0 (data)

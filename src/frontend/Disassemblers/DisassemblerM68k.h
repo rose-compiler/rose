@@ -8,7 +8,10 @@
 
 class DisassemblerM68k: public Disassembler {
 public:
-    DisassemblerM68k() { init(); }
+    DisassemblerM68k()
+        : map(NULL), insn_va(0), niwords(0), niwords_used(0) {
+        init();
+    }
     virtual DisassemblerM68k *clone() const /*override*/ { return new DisassemblerM68k(*this); }
     virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) /*override*/;
@@ -44,16 +47,23 @@ public:
         insn_va = start_va;
         niwords = 0;
         memset(iwords, 0, sizeof iwords);
+        niwords_used = 0;
     }
 
     /** Return the Nth instruction word. */
     uint16_t instruction_word(size_t n);
+
+    /** Create an integer data type of specified width. */
+    SgAsmType *makeIntegerType(size_t nbits);
 
     /** Create a data register reference expression. */
     SgAsmM68kRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Create an address register reference expression. */
     SgAsmM68kRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+
+    /** Make register indirect address with predecrement mode. */
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPredecrement(unsigned regnum, size_t nbits);
 
     /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
      *  created; when @p regnum is eight through 15 an address register is created. */
@@ -74,13 +84,11 @@ public:
     /** Generic ways to make a register. */
     SgAsmM68kRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
 
-    /** Create an immediate value.
-     * @{ */
-    SgAsmIntegerValueExpression *makeImmediate1(unsigned value);
-    SgAsmIntegerValueExpression *makeImmediate8(unsigned value);
-    SgAsmIntegerValueExpression *makeImmediate16(unsigned value);
-    SgAsmIntegerValueExpression *makeImmediate32(unsigned value, unsigned hi_bits=0);
-    /** @} */
+    /** Create an integer expression from a specified value. */
+    SgAsmIntegerValueExpression *makeImmediateValue(size_t nbits, unsigned value);
+
+    /** Create an integer expression from extension words. */
+    SgAsmIntegerValueExpression *makeImmediateExtension(size_t nbits, size_t ext_word_idx);
 
     /** Create an expression for m68k "<ea>x" or "<ea>y". The @p modreg is a six-bit value whose high-order three bits are the
      * addressing mode and whose low-order three bits are (usually) a register number. The return value has a type of the
@@ -88,9 +96,11 @@ public:
      * consumed. */
     SgAsmExpression *makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext_offset);
 
+#if 0
     /** Determines the effective address mode for a 6-bit modreg value. The @p nbits is used only to distinguish between
      *  absolute short addressing mode (m68k_eam_absw) and absolute long addressing mode (m68k_eam_absl). */
     M68kEffectiveAddressMode effectiveAddressMode(unsigned modreg, size_t nbits);
+#endif
 
     /** Number of instruction extension words needed for the specified effective address mode.  The @p nbits is used only to
      *  distinguish between absolute short addressing mode (m68k_eam_absw) and absolute long addressing mode
@@ -105,14 +115,11 @@ public:
     /** Return the address of the instruction we are disassembling. */
     rose_addr_t get_insn_va() const { return insn_va; }
 
-    /** Convert a size in bits to a mnemonic suffix letter. */
-    char sizeToLetter(size_t nbits);
-
 private:
     void init();
     const MemoryMap *map;                       /**< Map from which to read instruction words. */
     rose_addr_t insn_va;                        /**< Address of instruction. */
-    uint16_t    iwords[3];                      /**< Instruction words. */
+    uint16_t    iwords[7];                      /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
     size_t      niwords_used;                   /**< High water number of instruction words used by instruction_word(). */
     typedef std::list<M68k*> IdisTable;

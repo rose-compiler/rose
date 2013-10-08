@@ -13,6 +13,8 @@ unparseM68kMnemonic(SgAsmM68kInstruction *insn)
 std::string
 unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers)
 {
+    if (!registers)
+        registers = RegisterDictionary::dictionary_mcf5484(); // FIXME: we should use something more generic [RPM 2013-10-07]
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==NULL)
