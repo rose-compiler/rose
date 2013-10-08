@@ -411,11 +411,11 @@ bool VariableConstInfo::isAny(VariableId varId) {
 }
 bool VariableConstInfo::isUniqueConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
 }
 bool VariableConstInfo::isMultiConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
 }
 size_t VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
@@ -745,8 +745,8 @@ EvalValueType eval(SgExpression* node) {
 
 
 int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
-							VariableIdMapping* variableIdMapping,
-							VariableConstInfo& vci) {
+                            VariableIdMapping* variableIdMapping,
+                            VariableConstInfo& vci) {
   // temporary global var
   global_variableIdMappingPtr=variableIdMapping;
   global_variableConstInfo=&vci;
@@ -803,7 +803,7 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     }
     setstr<<"}";
     cout<<variableName<<"="<<setstr.str()<<";";
-#if 0
+#if 1
     cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
     cout<<" width: "<<createVariableValueRangeInfo(varId,map).width().toString();
 	cout<<" top: "<<createVariableValueRangeInfo(varId,map).isTop();
