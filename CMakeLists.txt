@@ -354,7 +354,7 @@ else()
       "for the GCC compiler.\n" )
   endif()
   include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
-  set(edg_lib edg33)
+  set(edg_lib EDG)
   endif()
 endif()
 
