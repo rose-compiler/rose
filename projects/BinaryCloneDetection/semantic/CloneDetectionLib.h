@@ -8,6 +8,8 @@
 #include "LinearCongruentialGenerator.h"
 #include "Combinatorics.h"
 
+#include "compute_signature_vector.h"
+
 #include <stdint.h>
 #include <vector>
 #include <ostream>
@@ -28,6 +30,7 @@ typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
+enum PathSyntactic {PATH_SYNTACTIC_NONE, PATH_SYNTACTIC_ALL, PATH_SYNTACTIC_FUNCTION };
 extern const rose_addr_t GOTPLT_VALUE; /**< Address of all dynamic functions that are not loaded. */
 
 
@@ -419,13 +422,17 @@ public:
     /** Flush pending data to the database and clear this object. */
     void flush(const SqlDatabase::TransactionPtr&);
 
-    /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
+   /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
      *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
      *  instructions that belong to other functions also, and they are not counted. */
     double get_ratio(SgAsmFunction*, int func_id, int igroup_id) const;
-    
+ 
+    /** Get instructions covered by trace in the order in which they were encountered.
+     */
+    void get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top = NULL);    
 protected:
     int func_id, igroup_id;
+ 
     typedef std::map<rose_addr_t, InsnCoverageRow> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
@@ -731,6 +738,8 @@ public:
     }
 };
 
+
+
 /** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
  *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
  *  function, and the memory values whose memory cells are marked as having been written to.  We omit status flags since they
@@ -798,7 +807,11 @@ public:
     void set_ninsns(size_t ninsns) { this->ninsns = ninsns; }
     size_t get_ninsns() const { return ninsns; }
     /** @} */
-    
+
+    /** Accessor for signature vectors
+     * @{ */
+    SignatureVector& get_signature_vector() { return this->signature_vector; }
+    /** @} */
 
 protected:
     OUTPUTGROUP_VALUE_CONTAINER<value_type> values;
@@ -808,6 +821,8 @@ protected:
     size_t ninsns;                              // number of instructions executed
     value_type retval;                          // return value from function
     bool has_retval;                            // true if 'retval' is initialized
+    SignatureVector signature_vector;           // feature vector
+
 };
 
 // Used internally by OutputGroups so that we don't have to store OutputGroup objects in std::map. OutputGroup objects can be
@@ -1111,12 +1126,15 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000),
-          compute_coverage(false), compute_callgraph(false), top_callgraph(false), compute_consumed_inputs(false) {}
+        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), path_syntactic(PATH_SYNTACTIC_NONE), initial_stack(0x80000000),
+          compute_coverage(false), compute_callgraph(false), top_callgraph(false), compute_consumed_inputs(false) {} 
+
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
+    PathSyntactic path_syntactic;       /**< How to compute path sensistive syntactic signature */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
+    std::vector<std::string> signature_components; /**< How should the signature vectors be computed */
     bool compute_coverage;              /**< Compute instruction coverage information? */
     bool compute_callgraph;             /**< Compute dynamic call graph information? */
     bool top_callgraph;                 /**< Store only function call edges emanating from the top stack frame? */
@@ -1293,15 +1311,15 @@ public:
             if (++ncells>max_ncells) {
                 o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
-            }
-            o <<"         cell access:"
-              <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
-              <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-              <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
-              <<"\n"
-              <<"    address " <<addr <<"\n";
-            o <<"      value " <<mval.val <<"\n";
         }
+        o <<"         cell access:"
+          <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+          <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+          <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+          <<"\n"
+          <<"    address " <<addr <<"\n";
+        o <<"      value " <<mval.val <<"\n";
+      }
     }
 
     friend std::ostream& operator<<(std::ostream &o, const State &state) {

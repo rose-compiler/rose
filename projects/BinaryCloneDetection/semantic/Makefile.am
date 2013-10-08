@@ -8,7 +8,7 @@ noinst_PROGRAMS=
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
-libCloneDetection_la_CPPFLAGS = $(ROSE_INCLUDES)
+libCloneDetection_la_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 CloneDetectionLib.o: CloneDetectionLib.h
 CloneDetectionLib.lo: CloneDetectionLib.h
 
@@ -28,8 +28,8 @@ noinst_PROGRAMS += 10-generate-inputs
 10_generate_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 11-add-functions
-11_add_functions_SOURCES = 11-add-functions.C
-11_add_functions_CPPFLAGS = $(ROSE_INCLUDES)
+11_add_functions_SOURCES = 11-add-functions.C compute_signature_vector.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
+11_add_functions_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 11_add_functions_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 14-bulk-load
@@ -45,8 +45,8 @@ noinst_PROGRAMS += 20-get-pending-tests
 20_get_pending_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 25-run-tests
-25_run_tests_SOURCES = 25-run-tests.C
-25_run_tests_CPPFLAGS = $(ROSE_INCLUDES)
+25_run_tests_SOURCES = 25-run-tests.C compute_signature_vector.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
+25_run_tests_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -57,8 +57,8 @@ noinst_PROGRAMS += 31-func-similarity-worklist
 31_func_similarity_worklist_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 32-func-similarity
-32_func_similarity_SOURCES = 32-func-similarity.C
-32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
+32_func_similarity_SOURCES = 32-func-similarity.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
+32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -84,6 +84,11 @@ noinst_PROGRAMS += 90-list-ogroup
 90_list_ogroup_SOURCES = 90-list-ogroup.C
 90_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
 90_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += 95-api-similarity
+95_api_similarity_SOURCES = 95-api-similarity.C
+95_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
+95_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 99-grants
 99_grants_SOURCES = 99-grants.C

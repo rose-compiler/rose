@@ -2,6 +2,8 @@
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+#include "vectorCompression.h"
+
 #include "rose_getline.h"
 #include "AST_FILE_IO.h"        // only for the clearAllMemoryPools() function [Robb P. Matzke 2013-06-17]
 
@@ -44,7 +46,14 @@ usage(int exit_status)
               <<"            the value \"compute\" causes coverage to be computed but not saved; the value \"save\" causes\n"
               <<"            coverage to be computed and saved in the database.  Specifying just \"--coverage\" with no\n"
               <<"            value is the same as saying \"--coverage=save\".\n"
-              <<"    --dry-run\n"
+              <<"    --path-syntactic=no|function|all\n"
+              <<"            Determines whether the path sensistive syntactic clone detection should be computed from\n"
+              <<"            all instructions covered, instructions covered in the function scope or not at all.\n" 
+              <<"    --signature-components=by_category|total_for_variant|operand_total|ops_for_variant|specific_op|operand_pair|apply_log\n"
+              <<"            Select which, if any, properties should be counted and/or how they should be counted. By default no properties\n"
+              <<"            are counted. By default the instructions are counted by operation kind, but you can optionally choose to count\n"
+              <<"            by instruction category.\n"
+              <<"    --diry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
               <<"    --file=NAME\n"
@@ -907,6 +916,8 @@ checkpoint(const SqlDatabase::TransactionPtr &tx, Switches &opt, OutputGroups &o
     return conn->transaction();
 }
 
+
+
 int
 main(int argc, char *argv[])
 {
@@ -990,6 +1001,19 @@ main(int argc, char *argv[])
             opt.save_coverage = false;
         } else if (!strcmp(argv[argno], "--coverage=no") || !strcmp(argv[argno], "--no-coverage")) {
             opt.params.compute_coverage = opt.save_coverage = false;
+        } else if (!strcmp(argv[argno], "--path-syntactic") || !strcmp(argv[argno], "--path-syntactic=all")){
+          opt.params.path_syntactic = PATH_SYNTACTIC_ALL;
+        } else if (!strcmp(argv[argno], "--path-syntactic=function")){
+          opt.params.path_syntactic = PATH_SYNTACTIC_FUNCTION;
+        } else if (NULL != strstr(argv[argno], "--signature-components=")){
+
+          std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
+          for ( int comp_i = 0; comp_i < 7; comp_i++  )
+          {
+            if (NULL != strstr(argv[argno], comp_opts[comp_i].c_str()))
+              opt.params.signature_components.push_back(comp_opts[comp_i]);
+          }
+
         } else if (!strcmp(argv[argno], "--dry-run")) {
             opt.dry_run = true;
         } else if (!strncmp(argv[argno], "--file=", 7)) {
@@ -1137,6 +1161,8 @@ main(int argc, char *argv[])
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0;
     FuncAnalyses funcinfo;
+
+
     while (!worklist.empty()) {
         ++progress;
         WorkItem work = worklist.shift();
@@ -1244,11 +1270,29 @@ main(int argc, char *argv[])
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
                               ((double)stop_time.tv_usec - start_time.tv_usec) * 1e-6;
 
+
         // If clock_t is a 32-bit unsigned value then it will wrap around once every ~71.58 minutes. We expect clone
         // detection to take longer than that, so we need to be careful.
         double cpu_time = start_ticks <= stop_ticks ?
                                   (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
                                   (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
+
+
+        // Create syntactic signature vector 
+
+        std::vector<SgAsmInstruction*> insns;
+
+        if ( opt.params.path_syntactic == PATH_SYNTACTIC_ALL ){
+          insn_coverage.get_instructions(insns, interp);
+        }else if(opt.params.path_syntactic == PATH_SYNTACTIC_FUNCTION ){
+          insn_coverage.get_instructions(insns, interp, func );
+        }
+
+        int syntactic_ninsns = insns.size(); 
+
+        createVectorsForAllInstructions( ogroup.get_signature_vector() , insns, opt.params.signature_components);
+ 
+        std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
 
         // Find a matching output group, or create a new one
         int64_t ogroup_id = ogroups.find(ogroup);
@@ -1261,10 +1305,11 @@ main(int argc, char *argv[])
                                                        // 4               5                   6
                                                        "globals_consumed, functions_consumed, pointers_consumed,"
                                                        // 7                8                      9          10
-                                                       "integers_consumed, instructions_executed, ogroup_id, status,"
+                                                       "integers_consumed, instructions_executed, ogroup_id,"
+                                                       "counts_b64, syntactic_ninsns, status,"
                                                        // 11          12        13
                                                        "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
         stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
@@ -1275,10 +1320,12 @@ main(int argc, char *argv[])
         stmt->bind(7, igroup.nconsumed_virtual(IQ_INTEGER));
         stmt->bind(8, ogroup.get_ninsns());
         stmt->bind(9, ogroup_id);
-        stmt->bind(10, ogroup.get_fault());
-        stmt->bind(11, elapsed_time);
-        stmt->bind(12, cpu_time);
-        stmt->bind(13, cmd_id);
+        stmt->bind(10, StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
+        stmt->bind(11, syntactic_ninsns);
+        stmt->bind(12, ogroup.get_fault());
+        stmt->bind(13, elapsed_time);
+        stmt->bind(14, cpu_time);
+        stmt->bind(15, cmd_id);
         stmt->execute();
         ++ntests_ran;
 
