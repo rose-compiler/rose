@@ -597,6 +597,15 @@ MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
     return *this;
 }
 
+size_t
+MemoryMap::size() const
+{
+    size_t retval = 0;
+    for (const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si)
+        retval += si->first.size();
+    return retval;
+}
+
 void
 MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
 {
@@ -628,7 +637,7 @@ MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writabl
     if (0==sb.st_size)
         return 0;
 
-    Extent extent(va, va+sb.st_size);
+    Extent extent(va, sb.st_size);
     BufferPtr buf = MmapBuffer::create(sb.st_size, m_prot, m_flags, fd, 0);
     insert(extent, Segment(buf, 0, s_prot, filename), erase_prior);
     return sb.st_size;

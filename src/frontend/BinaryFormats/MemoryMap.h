@@ -507,6 +507,9 @@ public:
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
 
+    /** Number of bytes mapped. */
+    size_t size() const;
+
     /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
      *  The default byte order is little-endian.
      * @{ */
