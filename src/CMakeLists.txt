@@ -964,7 +964,7 @@ add_custom_target(
 
 add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
 generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
@@ -1037,7 +1037,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL ${edg_lib} ${link_with_libraries}
     )
 
 ########### install files ###############

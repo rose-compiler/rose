@@ -2,7 +2,7 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_executable( testTranslator testTranslator.C )
-target_link_libraries(testTranslator ROSE_DLL EDG ${link_with_libraries} )
+target_link_libraries(testTranslator ROSE_DLL ${edg_lib} ${link_with_libraries} )
 
 add_subdirectory (translatorTests)
 enable_testing()
