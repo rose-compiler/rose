@@ -784,6 +784,7 @@
 
 /* Build ROSE to support the Java langauge */
 #cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#cmakedefine USE_ROSE_INTERNAL_JAVA_SUPPORT
 
 /* Build ROSE to support the OpenCL langauge */
 #cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
