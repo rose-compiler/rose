@@ -119,10 +119,7 @@ set(F90_TESTCODES
   test2011_Rice_A-cant-assert-keyword-nonnull.f90
   test2011_Rice_B-cant-assert-keyword-nonnull.f90
   test2011_Rice_C-cant-assert-keyword-nonnull.f90
-  test2011_Rice_lost-func-return-type.f90 test2012_Rice_derived-type-array-2.f90
-  test2012_Rice_derived-type-array-3.f90 test2012_Rice_derived-type-array-4.f90
-  test2012_Rice_derived-type-array-5.f90 test2012_Rice_extern_func_call.f90
-  test2012_Rice_if-scope.f90 canonicalExample.f90)
+  test2011_Rice_lost-func-return-type.f90 canonicalExample.f90)
 
 if("${gfortran_version}" VERSION_LESS "4.5")
   # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).

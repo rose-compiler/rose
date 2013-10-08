@@ -11,7 +11,7 @@ set(TESTCODE_INCLUDES
   -I${CMAKE_SOURCE_DIR}/src/frontend/SageIII)
 
 set(ROSE_FLAGS
-  -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict)
+  --edg:no_warnings -w -rose:verbose 0 --edg:restrict)
 
 # This populates the list CXX_TESTCODES
 include(${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/Cxx_Testcodes.cmake)

@@ -15,11 +15,6 @@ set(files_to_test
   test2010_13.c test2010_15.c test2010_17.c test2011_05.c test2007_177.c
   math.c complex_01.c constants.c)
 
-# DQ (10/11/2012): Don't process this file within OSX since the socket API is different there.
-if (NOT APPLE AND NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  list(APPEND files_to_test test2012_12_release.c)
-endif()
-
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   list(APPEND files_to_test
     stdio.c test2006_48.c test2006_132.c test2010_04.c test2006_14.c

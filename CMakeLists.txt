@@ -390,6 +390,7 @@ if (enable-java)
   find_program(GCJH gcjh)
   find_package(JNI)
   set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
+  set(USE_ROSE_INTERNAL_JAVA_SUPPORT 1)
   get_filename_component(BACKEND_JAVA_COMPILER ${Java_JAVAC_EXECUTABLE} NAME)
 endif()
 
