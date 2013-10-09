@@ -5,9 +5,27 @@
 #include <cerrno>
 #include <fstream>
 
-#include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
+#ifndef _MSC_VER
+#include <unistd.h>
 #include <sys/mman.h>
+#else
+#include <io.h>
+  inline void * mmap(void*, size_t length, int, int, int, off_t)
+  {
+    return new char[length];
+  }
+  inline void munmap(void* p_data, size_t)
+  {
+    delete [] (char *)p_data;
+  }
+#define MAP_FAILED 0
+#undef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) expression
+#define PROT_WRITE 0x02
+#define F_OK 0
+#endif
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const MemoryMap::Exception    &x) { x.print(o); return o; }
@@ -211,11 +229,7 @@ MemoryMap::ByteBuffer::create_from_file(const std::string &filename, size_t offs
     // Read data from file until EOF
     rose_addr_t size = offset > (size_t)sb.st_size ? 0 : sb.st_size-offset;
     uint8_t *data = new uint8_t[size];
-#ifndef _MSC_VER
     ssize_t n = TEMP_FAILURE_RETRY(::read(fd, data, size));
-#else
-    ROSE_ASSERT(!"lacking Windows support");
-#endif
     if (-1==n || n!=sb.st_size) {
         delete[] data;
         close(fd);

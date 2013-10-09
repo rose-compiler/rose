@@ -762,4 +762,4 @@ check-cxx: $(CXX_FUSE_TESTS)
 check-local: check-fuse check-cxx
 
 clean-local:
-	rm -rf *.dot *.png dbg/ *.passed *.failed *.out *.err
+	rm -rf *.dot *.png dbg/ *.passed *.failed

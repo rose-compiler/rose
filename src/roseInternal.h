@@ -43,7 +43,7 @@ extern "C" char* C_output_file_name;
 
 extern int ROSE_DEBUG;
 
-extern const char* roseGlobalVariantNameList[];
+ROSE_DLL_API extern const char* roseGlobalVariantNameList[];
 
 // ifndef ROSE_INTERNAL_H
 #endif

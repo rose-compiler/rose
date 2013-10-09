@@ -1,9 +1,17 @@
+include_directories(${QT_QTXML_INCLUDE_DIR})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+set(SOURCEBOX_MOC_SOURCES
+  markerwidget.h qeditor.h levelwidget.h linenumberwidget.h q3richtext_px.h
+  QRSourceBox.h)
+QT4_WRAP_CPP(SOURCEBOX_MOC_CPP ${SOURCEBOX_MOC_SOURCES})
 
-
-########### next target ###############
-
+set(SOURCEBOX_SOURCES
+  cindent.C markerwidget.C  q3richtextx.C QRUnparser.C cpp_colorizer.C
+  paragdata.C qeditor.C qsourcecolorizer.C levelwidget.C parenmatcher.C
+  qeditor_indenter.C  simple_indent.C linenumberwidget.C  q3richtext_px.C
+  QRSourceBox.C yyindent.C)
+add_library(qrsourcebox ${SOURCEBOX_SOURCES} ${SOURCEBOX_MOC_CPP})
+add_dependencies(qrsourcebox rosetta_generated)
 
 ########### install files ###############
 

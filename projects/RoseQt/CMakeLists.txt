@@ -1,22 +1,19 @@
 
-list_subdirectories( WIDGETS_DIRECTORIES ${CMAKE_SOURCE_DIR}/widgets 0  EXCLUDE rose.h.gch )
 
-include_directories  ( ${WIDGETS_DIRECTORIES}
-                       ${CMAKE_CURRENT_BINARY_DIR} 
-                       ${ROSE_INCLUDE_DIRS} )
+#CXXFLAGS += -DFRONTEND_CALL=\"$(top_builddir)/src/roseExtensions/qtWidgets/frontend_process\"
 
-SET ( DEMO_HEADER_FILES MainWindow.h )
-SET ( DEMO_CPP_FILES    MainWindow.cpp main.cpp )
-SET ( DEMO_UI_FILES     MainWindow.ui )
+include_directories(
+  ${ROSE_SOURCE_DIR}/src/roseExtensions/roseHPCToolkit/include
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${qtWidgets_INCLUDE_DIRS}
+  ${LIBXML2_INCLUDE_DIR}
+)
 
-QT4_WRAP_CPP( DEMO_MOC_OUTPUT ${DEMO_HEADER_FILES} )
-QT4_WRAP_UI ( DEMO_UI_OUTPUT ${DEMO_UI_FILES}      )
+add_subdirectory(AstViewer)
 
-add_executable        ( roseQtDemo ${DEMO_CPP_FILES} ${DEMO_MOC_OUTPUT} ${DEMO_UI_FILES} )
-target_link_libraries ( roseQtDemo rose_widgets  )
-target_link_libraries ( roseQtDemo xml2 )
-target_link_libraries ( roseQtDemo rose rosehpct )
-target_link_libraries ( roseQtDemo ${QT_LIBRARIES} ${Boost_LIBRARIES}  )
-target_link_libraries ( roseQtDemo elf dwarf )
+QT4_WRAP_UI(ROSEQT_UI_CPP MainWindow.ui)
+QT4_WRAP_CPP(ROSEQT_MOC_CPP MainWindow.h)
 
-set_target_properties ( roseQtDemo PROPERTIES COMPILE_FLAGS "-DWITHOUT_QROSE")
+add_executable(roseQt
+  MainWindow.cpp main.cpp ${ROSEQT_UI_CPP} ${ROSEQT_MOC_CPP})
+target_link_librarieS(roseQt ROSE_DLL qrose RoseQtWidgets ${Boost_LIBRARIES})

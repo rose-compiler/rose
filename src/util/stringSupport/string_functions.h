@@ -27,7 +27,7 @@ namespace StringUtility
   // Rama (12/22/2006): Clearly, some of the following are not string utilities, but file utilities.
   // This class is the wrapper around the realpath of UNIX
 
-     std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny = false); // Real declaration is below
+     ROSE_UTIL_API std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny = false); // Real declaration is below
 
      struct StringWithLineNumber
         {
@@ -37,7 +37,7 @@ namespace StringUtility
 
           StringWithLineNumber(const std::string& str, const std::string& filename, unsigned int line): str(str), filename(filename), line(line) {}
 
-          std::string toString() const;
+          ROSE_UTIL_API std::string toString() const;
         };
 
 #ifndef USE_ROSE
@@ -57,7 +57,7 @@ namespace StringUtility
            return os;
          }
 
-         std::string toString(const FileWithLineNumbers& strings, const std::string& filename = "<unknown>", int line = 1);
+         ROSE_UTIL_API std::string toString(const FileWithLineNumbers& strings, const std::string& filename = "<unknown>", int line = 1);
 
          inline FileWithLineNumbers& operator+=(FileWithLineNumbers& a, const FileWithLineNumbers& b) {
            a.insert(a.end(), b.begin(), b.end());
@@ -99,13 +99,13 @@ namespace StringUtility
 #endif
 
       //! Generate a file
-          void  writeFile ( const std::string& outputString, const std::string& fileNameString, const std::string& directoryName );
+          ROSE_UTIL_API void  writeFile ( const std::string& outputString, const std::string& fileNameString, const std::string& directoryName );
 
       //! Read an existing file
-           std::string readFile ( const std::string& fileName );
+           ROSE_UTIL_API std::string readFile ( const std::string& fileName );
 
       //! Read a file, keeping source line number information
-           FileWithLineNumbers readFileWithPos(const std::string& fileName);
+           ROSE_UTIL_API FileWithLineNumbers readFileWithPos(const std::string& fileName);
 
        /*! @{ */
        /*! @name New C++ string functions
@@ -115,54 +115,54 @@ namespace StringUtility
            \internal Uses C++ string interface.
        */
        //! Substring replacement function
-           std::string copyEdit ( const std::string& inputString, const std::string & oldToken, const std::string & newToken );
+           ROSE_UTIL_API std::string copyEdit ( const std::string& inputString, const std::string & oldToken, const std::string & newToken );
        //! Convert a number to a string
-           std::string numberToString ( long long x );
-           std::string numberToString ( unsigned long long x );
-           std::string numberToString ( long x );
-           std::string numberToString ( unsigned long x );
-           std::string numberToString ( int x );
-           std::string numberToString ( unsigned int x );
+           ROSE_UTIL_API std::string numberToString ( long long x );
+           ROSE_UTIL_API std::string numberToString ( unsigned long long x );
+           ROSE_UTIL_API std::string numberToString ( long x );
+           ROSE_UTIL_API std::string numberToString ( unsigned long x );
+           ROSE_UTIL_API std::string numberToString ( int x );
+           ROSE_UTIL_API std::string numberToString ( unsigned int x );
        //! Convert an integer to a Hex string
-           std::string intToHex(uint64_t i);
+           ROSE_UTIL_API std::string intToHex(uint64_t i);
        //! Convert a unsigned integer (size_t) to a string
        //  string numberToString ( unsigned int x );
-       //  std::string numberToString ( size_t x );
+       //  ROSE_UTIL_API std::string numberToString ( size_t x );
 
 
        // DQ (8/10/2010): Changed to take parameter as const.
        //! Convert a pointer value to a string
-           std::string numberToString ( const void* x );
+           ROSE_UTIL_API std::string numberToString ( const void* x );
 
        //! Convert a number to a string
-           std::string numberToString ( double x );
+           ROSE_UTIL_API std::string numberToString ( double x );
 
        //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.  The second argument
        //  indicates the number of significant bits.  The third argument indicates whether the value is considered to be
        //  signed, in which case a negative value is also output, as in "0xff<-1>".
-           std::string addrToString(uint64_t x, size_t nbits=32, bool is_signed=false);
+           ROSE_UTIL_API std::string addrToString(uint64_t x, size_t nbits=32, bool is_signed=false);
 
        //! Formatting support for generated code strings
-           std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
+           ROSE_UTIL_API std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
 
       //! Generate a string from a list of ints
-           std::string listToString ( const std::list<int> & X, bool separateStrings = false );
+           ROSE_UTIL_API std::string listToString ( const std::list<int> & X, bool separateStrings = false );
       //! Generate a string from a list of strings
-           std::string listToString ( const std::list<std::string> & X, bool separateStrings = false );
+           ROSE_UTIL_API std::string listToString ( const std::list<std::string> & X, bool separateStrings = false );
       //! Generate a list of strings from a string (list elements are delimited by "\n"). \sa prefixLines().
-           std::list<std::string> stringToList ( const std::string & X );
+           ROSE_UTIL_API std::list<std::string> stringToList ( const std::string & X );
 
       //! Generate a string from a vector of strings
-           std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
+           ROSE_UTIL_API std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
 
-           std::list<std::string> tokenize ( std::string X, char delim );
+           ROSE_UTIL_API std::list<std::string> tokenize ( std::string X, char delim );
 
        //! Remove redundant lines (substrings must be separated by "\n". FIXME (spelling)
-           std::string removeRedundentSubstrings ( std::string X ); // sic
+           ROSE_UTIL_API std::string removeRedundentSubstrings ( std::string X ); // sic
       //! Remove redundant lines containing special substrings of form string#. FIXME (spelling)
-           std::string removePseudoRedundentSubstrings ( std::string X ); // sic
+           ROSE_UTIL_API std::string removePseudoRedundentSubstrings ( std::string X ); // sic
        //! Append an abbreviation or full name to a string.
-           void add_to_reason_string(std::string &result, bool isset, bool do_pad,
+           ROSE_UTIL_API void add_to_reason_string(std::string &result, bool isset, bool do_pad,
                                      const std::string &abbr, const std::string &full);
        /*! @} */
 
@@ -179,9 +179,9 @@ namespace StringUtility
            // int isSameName ( const std::string& s1, const std::string& s2 );
 
            // char* stringDuplicate ( const char* tempString );
-          std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
-          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
+          ROSE_UTIL_API std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
+          ROSE_UTIL_API FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
+          ROSE_UTIL_API FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
        //  bool isContainedIn ( const char* longString, const char* shortString );
            inline bool isContainedIn ( const std::string & longString, const std::string & shortString ) {
              return longString.find(shortString) != std::string::npos;
@@ -200,7 +200,7 @@ namespace StringUtility
            unsigned long generate_checksum( std::string s );
 
        //! Convert string to lower case (e.g. for module file name generation).
-           std::string convertToLowerCase( const std::string & inputString );
+           ROSE_UTIL_API std::string convertToLowerCase( const std::string & inputString );
 
    // std::string mangledName ( std::string s );
 
@@ -218,16 +218,16 @@ namespace StringUtility
 */
        // DQ (3/5/2006): Copies from ROSE class (deprecated in there previous location)
           //! Get name.suffix from /path/name.suffix
-           std::string stripPathFromFileName           ( const std::string & fileNameWithPath ); 
+          ROSE_UTIL_API std::string stripPathFromFileName           ( const std::string & fileNameWithPath ); 
            //! Get the path from the full file name: /path/name.suffix 
-           std::string getPathFromFileName             ( const std::string & fileNameWithPath );   
+          ROSE_UTIL_API std::string getPathFromFileName             ( const std::string & fileNameWithPath );   
            //! Get the file name without the ".suffix"
-           std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); 
+          ROSE_UTIL_API std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); 
            //! Get the absolute path from the relative path
-           std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       
+           ROSE_UTIL_API std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       
            //! Get the file name suffix (extension) without the leading dot, fileName could be either base name or name with full path. 
            // If no dot is found in the input fileName, the function just returns the original fileName
-           std::string fileNameSuffix                  ( const std::string & fileName );          
+           ROSE_UTIL_API std::string fileNameSuffix                  ( const std::string & fileName );          
 
   // True only if this is a valid C++ source file name extension (suffix). Duplicate of CommandlineProcessing::isCppFileNameSuffix(). 
 //           bool isCppFileNameSuffix                    ( const std::string & fileName ); 
@@ -244,7 +244,7 @@ namespace StringUtility
            std::list<std::string> findfile(std::string patternString, std::string pathString);
 
       //! Translates newline characters to linefeeds and escapes quotes (used to generate text for DOT nodes containing source code).
-           std::string escapeNewLineCharaters ( const std::string & X );
+           ROSE_UTIL_API std::string escapeNewLineCharaters ( const std::string & X );
 
            // RSS 7/1/2008 New functionality to support filename processing
            enum OSType 
@@ -256,7 +256,7 @@ namespace StringUtility
                                                  OS_TPYE_WINDOWSXP};
 
            // Return OSType based on uname kernel name results
-           OSType getOSType();
+           ROSE_UTIL_API OSType getOSType();
 
            // Populate homeDir from $HOME environment var
            void homeDir(std::string& homeDir);
@@ -374,14 +374,14 @@ namespace StringUtility
             * is part of the source code or some system library and
             * automatically determine the operating system from the
             * host uname */
-           FileNameClassification classifyFileName(const std::string& fileName,
+           ROSE_UTIL_API FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath);
 
            /* Given a fileName and an appPath that is a path to some
             * application's source code directory, return a
             * FileNameClassification indicating whether the fileName
             * is part of the source code or some system library */
-           FileNameClassification classifyFileName(const std::string& fileName,
+           ROSE_UTIL_API FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
                                                    OSType os);
 
@@ -391,7 +391,7 @@ namespace StringUtility
             * indicating whether the fileName is part of the source 
             * code or some system library and automatically determine 
             * the operating system from the host uname */
-           FileNameClassification classifyFileName(const std::string& fileName,
+           ROSE_UTIL_API FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
                                                    const std::map<std::string, std::string>& libPathCollection);
 
@@ -400,14 +400,14 @@ namespace StringUtility
             * of library paths, return a FileNameClassification
             * indicating whether the fileName is part of the source 
             * code or some system library */ 
-           FileNameClassification classifyFileName(const std::string& fileName,
+           ROSE_UTIL_API FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
                                                    const std::map<std::string, std::string>& libPathCollection,
                                                    OSType os);
 
            /* Remove leading dots plus a space from a header file name
             * that is fiven in the format that g++ -H returns */
-           const std::string
+           ROSE_UTIL_API const std::string
            stripDotsFromHeaderFileName(const std::string& name);
 
            /* Essentially the edit distance without substituion in
@@ -422,27 +422,27 @@ namespace StringUtility
             *
             * Between /a/b/c/file.h and /a/b/d/e/ the distance is 3
             * because one must cd ..; cd d; cd e */
-            int directoryDistance(const std::string& left,
+            ROSE_UTIL_API int directoryDistance(const std::string& left,
                                   const std::string& right);
 
 
             /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
-            std::string htmlEscape(const std::string& s);
+            ROSE_UTIL_API std::string htmlEscape(const std::string& s);
 
     // DQ (2/3/2009): Moved this function from attach_all_info.C
-       std::vector<std::string> readWordsInFile( std::string filename);
+       ROSE_UTIL_API std::vector<std::string> readWordsInFile( std::string filename);
 
        /** Insert a prefix string before every line.  This function breaks the @p lines string into individual lines,
         *  inserts the @p prefix string at the beginning of each line, then concatenates the lines together into a return
         *  value.  If @p prefixAtFront is true (the default) then the prefix is added to the first line of @p lines, otherwise
         *  the first line is unchanged.  An empty @p lines string is considered to be a single line.  If @p prefixAtBack is
         *  false (the default) then the prefix is not appended to the @p lines string if @p lines ends with a linefeed. */
-       std::string prefixLines(const std::string &lines, const std::string &prefix,
+       ROSE_UTIL_API std::string prefixLines(const std::string &lines, const std::string &prefix,
                                bool prefixAtFront=true, bool prefixAtBack=false);
 
        /** Returns true if the string ends with line termination. Only common ASCII-based line terminations are recognized:
         *  CR+LF, LF+CR, CR (only), or LF (only). */
-       bool isLineTerminated(const std::string &s);
+       ROSE_UTIL_API bool isLineTerminated(const std::string &s);
 
        /** Normalizes line termination.  Changes ASCII-based line termination conventions used by various operating systems
         *  into the LF (line-feed) termination used by Multics, Unix and Unix-like systems (GNU/Linux, Mac OS X, FreeBSD, AIX,
@@ -457,7 +457,7 @@ namespace StringUtility
         *  See roseTests/utilTests/stringTests.C for lots of examples.
         *
         *  A new string is returned. */
-       std::string makeOneLine(const std::string &s, std::string replacement=" ");
+       ROSE_UTIL_API std::string makeOneLine(const std::string &s, std::string replacement=" ");
 
    };
 

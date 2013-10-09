@@ -106,5 +106,4 @@ check-local: $(addsuffix .passed, $(TEST_NAMES))
 
 clean-local:
 	rm -f $(addsuffix .passed, $(TEST_NAMES)) $(addsuffix .failed, $(TEST_NAMES))
-	rm -f $(addsuffix .err, $(TEST_NAMES)) $(addsuffix .out, $(TEST_NAMES))
 	rm -rf $(addsuffix .wrk, $(TEST_NAMES))

@@ -594,51 +594,70 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
+PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
+TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
 
-CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
-C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
-C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
-F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
-F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
-F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
-JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java-o}
+# CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
+# C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
+# C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
+# F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
+# F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
+# F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
+# JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java-o}
 
-$(CXX_FILES): testVirtualCFG
+CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX.passed}
+C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C.passed}
+C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99.passed}
+F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90.passed}
+F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F.passed}
+F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03.passed}
+JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java.passed}
+
+$(CXX_FILES): %.passed: testVirtualCFG
 #	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
-$(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
-	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+# $(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
+$(C_FILES): %.passed: testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)
+#	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
+	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.temp.c)
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
-$(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
-	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+$(C99_FILES): %.passed: testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99.passed=.c)
+	@cp $(srcdir)/../C99_tests/$(@:.C99.passed=.c) $(@:.C99.passed=.temp.c)
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testVirtualCFG
-	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F77_FILES): ./testVirtualCFG
-	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F03_FILES): ./testVirtualCFG
-	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03.passed=.f03)" $(top_srcdir)/scripts/test_exit_status $@
 
 #$(JAVA_FILES): testVirtualCFG $(srcdir)/../Java_tests/$(@:.java-o=.java)
 #	cp $(srcdir)/../Java_tests/$(@:.java-o=.java) $(@:.java-o=.temp.java)
 #	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Java_tests -c $(@:.java-o=.temp.java) && touch $@
 
 $(JAVA_FILES): testVirtualCFG
-	cp $(srcdir)/../Java_tests/$(@:.java-o=.java) $(@:.java-o=.java)
-	./testVirtualCFG $(ROSE_FLAGS) -c $(@:.java-o=.java) && touch $@
+	@cp $(srcdir)/../Java_tests/$(@:.java.passed=.java) $(@:.java.passed=.java)
+#	./testVirtualCFG $(ROSE_FLAGS) -c $(@:.java-o=.java) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -c $(@:.java.passed=.java)" $(top_srcdir)/scripts/test_exit_status $@
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
@@ -671,7 +690,8 @@ else
 check-fortran:
 endif
 
-check-local: check-cxx check-c check-c99 check-fortran check-java
+# check-local: check-cxx check-c check-c99 check-fortran check-java
+check-local: check-c check-c99 check-fortran check-java check-cxx
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"
@@ -692,5 +712,7 @@ clean-local:
 	rm -f *.java
 	rm -f *.class
 	rm -fr rose-output* ecj-classes-* javac-output-classes javac-syntax-check-classes
+	rm -f *.passed *.failed *.err *.out
+
 
 
