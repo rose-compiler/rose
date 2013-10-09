@@ -53,7 +53,7 @@ usage(int exit_status)
               <<"            Select which, if any, properties should be counted and/or how they should be counted. By default no properties\n"
               <<"            are counted. By default the instructions are counted by operation kind, but you can optionally choose to count\n"
               <<"            by instruction category.\n"
-              <<"    --diry-run\n"
+              <<"    --dry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
               <<"    --file=NAME\n"
