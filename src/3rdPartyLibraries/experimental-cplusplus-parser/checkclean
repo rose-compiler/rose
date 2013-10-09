@@ -1,0 +1,6 @@
+rm -f *.o
+rm -f error-log.txt
+rm -f CPP.tbl
+rm -f CPP.def
+rm -f tmp.pt
+rm -f checkfile.cpp
