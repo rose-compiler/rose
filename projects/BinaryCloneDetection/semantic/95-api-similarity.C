@@ -230,39 +230,45 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
 {
   std::string _query_condition(
       //all function pairs that are semantically similar
-
       " select distinct func1_id, func2_id from ("
-      " select sem.func1_id, sem.func2_id from semantic_funcsim as sem "
-      " join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id "
-      " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
-      " where sem.similarity >= ? "
-      " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
+      "   select sem.func1_id, sem.func2_id"
+      "   from semantic_funcsim as sem"
+      "   join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id"
+      "   join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id"
+      //                          0                    1                    2
+      "   where sem.similarity >= ? and sem.func1_id = ? and sem.func2_id = ?"
 
-      " UNION "
+      " UNION"
 
       //all library call pairs that has the same name in the call trace
-      " select sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
-      " join tmp_library_funcs sem2 on sem.name = sem2.name "
-      " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
-      " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
-      " where (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
+      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
+      "   from tmp_library_funcs as sem"
+      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
+      "   join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id"
+      "   join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id"
+      //                         3                   4                       5                   6
+      "   where (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
 
-      " UNION "
+      " UNION"
 
       //all library calls that has the same name as a tested function
-      " select tplt.func_id as func1_id, tlib.func_id as func2_id from tmp_plt_func_names as tplt" 
-      " join tmp_library_funcs as tlib on tplt.name = tlib.name "
-      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg on tplt.func_id  = scg.callee "
-      " where scg.caller IN (?,?) "
+      "   select tplt.func_id as func1_id, tlib.func_id as func2_id"
+      "   from tmp_plt_func_names as tplt" 
+      "   join tmp_library_funcs as tlib on tplt.name = tlib.name"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg on tplt.func_id  = scg.callee"
+      //                       7 8
+      "   where scg.caller IN (?,?)"
 
       " UNION "
 
       //all library call pairs that has the same name in the static cg
-      " select sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
-      " join tmp_library_funcs sem2 on sem.name = sem2.name "
-      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee "
-      " join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee "
-      " where tcf1.caller IN (?,?) AND tcf2.caller IN (?,?) "
+      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
+      "   from tmp_library_funcs as sem" 
+      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee"
+      //                        9 10                     11 12
+      "   where tcf1.caller IN (?,?) AND tcf2.caller IN (?,?)"
 
       ") as functions_to_normalize"
       );
@@ -273,8 +279,8 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
   SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
 
   stmt->bind(0, similarity_threshold);
-  stmt->bind(1, func1_id);
-  stmt->bind(2, func2_id);
+  stmt->bind(1, std::min(func1_id, func2_id));
+  stmt->bind(2, std::max(func1_id, func2_id));
   stmt->bind(3, func1_id);
   stmt->bind(4, func2_id);
   stmt->bind(5, func1_id);
@@ -285,8 +291,6 @@ normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, st
   stmt->bind(10, func2_id);
   stmt->bind(11, func1_id);
   stmt->bind(12, func2_id);
-  stmt->bind(13, func1_id);
-  stmt->bind(14, func2_id);
 
   if(stmt->begin() == stmt->end())
     return;
@@ -647,19 +651,28 @@ main(int argc, char *argv[])
     transaction->execute("delete from api_call_similarity");
  
     //table of tested functions. Criteria is that it needs to pass at least one test.
-    transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
+    transaction->execute("create table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
     
-    transaction->execute("create temporary table tmp_plt_func_names as ( select distinct name||'@plt' as name, id as func_id from semantic_functions where name NOT LIKE '%@plt')");
-    transaction->execute("create temporary table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt'" 
+    transaction->execute("create table tmp_plt_func_names as ( select distinct name||'@plt' as name, id as func_id from semantic_functions where name NOT LIKE '%@plt')");
+    transaction->execute("create table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt'" 
         //" EXCEPT  (select distinct sem.id as func_id, sem.name from semantic_functions sem join tmp_plt_func_names plt on plt.name = sem.name)"
         " )"
         );
     transaction->execute("create temporary table tmp_interesting_funcs as ( select func_id from tmp_tested_funcs UNION select func_id from tmp_library_funcs ) ");
 
-    //table of called fuctions. 
-    transaction->execute("create temporary table tmp_called_functions as select distinct fio.igroup_id, fio.func_id, fio.callee_id from semantic_fio_calls fio"
-        " join tmp_interesting_funcs as ttf on ttf.func_id = fio.callee_id "
-        );
+    // Table of called fuctions.  Do this in two steps so we're not doing a join on the large semantic_fio_calls table. Also,
+    // we don't need to have the igroup_id column since it's never used. Note that this table is named "functions" not "funcs"
+    // like the rest.
+    transaction->execute("create table tmp_all_called_funcs as"
+                         "  select distinct caller_id as func_id, callee_id"
+                         "  from semantic_fio_calls");
+    transaction->execute("create table tmp_called_functions as"
+                         "  select f1.*"
+                         "  from tmp_all_called_funcs as f1"
+                         "  join tmp_interesting_funcs as f2"
+                         "    on f1.callee_id = f2.func_id");
+    transaction->execute("drop table tmp_all_called_funcs");
+    
 
     transaction->execute("drop index IF EXISTS fr_call_index");
     transaction->execute("drop index IF EXISTS fr_tmp_called_index");
@@ -685,6 +698,15 @@ main(int argc, char *argv[])
 
     std::cout << "END creating reachability graph" << std::endl;
 
+    // Create indexes for normalize_func_to_id()
+    transaction->execute("drop index if exists semantic_funcsim_similarity");
+    transaction->execute("create index semantic_funcsim_similarity on semantic_funcsim(similarity)");
+    transaction->execute("drop index if exists semantic_funcsim_func1_id");
+    transaction->execute("create index semantic_funcsim_func1_id on semantic_funcsim(func1_id)");
+    transaction->execute("drop index if exists semantic_funcsim_func2_id");
+    transaction->execute("create index semantic_funcsim_func2_id on semantic_funcsim(func2_id)");
+    transaction->execute("drop index if exists tmp_called_functions_func_id");
+    transaction->execute("create index tmp_called_functions_func_id on tmp_called_functions(func_id)");
 
     //Creat list of functions and igroups to analyze
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
