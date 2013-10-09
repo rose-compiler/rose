@@ -1,0 +1,54 @@
+1) Used versions of SDF Parser generators:
+
+Up to now 2 different SDF parser generator versions are used for testing. One
+version comes with the stratego package,
+
+sglri:
+http://strategoxt.org/Stratego/StrategoDownload
+
+and the other one as part of a SDF 2.6.3. linux binary distribution
+sglr:
+http://www.program-transformation.org/Sdf/SdfSoftware
+
+The parser-generator "sglri" is used the option "--heuristic-filters"
+whereas "sglr" does not have such an option (but actually seems to
+have it on by default, because I get identical time-measurements when
+using sglri with the above option and sglr for several files).
+
+In general, sglr appears to be more stable and parses properly all but
+3 test files. The sglri (sometimes fails (just stopping to parse, and
+producing an incomplete parse tree).  But for those 2 files of the
+1598 test files for which slgr does not terminate, slgri parses just
+fine.  Hence, by using both I think I can parse all files without
+error. I will extend my test script to test exactly those details as
+well.  The testscript also uses a timeout to terminate parse-checks if
+they take too long. Hence, the testscript will always terminate.
+
+2) Performance
+Performance is OK considering the high number of ambiguities of the C++ grammar. For 100K files it takes about 1 minute to parse.
+
+3) GNU-extensions
+The GNU-extensions have been added to the C++ grammar and are a super-set of the GNU-extensions.
+
+4) Detected syntax error in one of the tests which g++ does not detect:
+
+In test case, test2013_233.C, the parser finds a syntax error in line 81897 which the GNU compiler does not detect:
+./myparse Cxx_tests/test2013_233.C
+parser:error: parse error, 'i' unexpected
+--- input string [file: check.cpp line: 81897 col: 5]
+
+FRAGMENT START:
+    token_id id = token_id(t);
+    stream << setw(16)
+/*line 81897 */        << left << boost::wave::get_token_name(id) << " ("
+
+    if (ExtTokenTypeMask & id) {
+FRAGMENT END:
+
+At the end of line 81897 there is indeed a semicolon missing. It may
+be the case that GNU does not detect this because this code is inside
+a template code which is not instantiated, but it definitely is a
+syntax error (which GNU does not report when compiling this file).
+Therefore this test is excluded from the tests (expected fail) because
+it should actually fail.  The file parses without error, once the
+semicolon is added.
