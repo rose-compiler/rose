@@ -172,21 +172,26 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
    )
 
+add_definitions(-DPOET_VERSION="1.03.06")
 set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/tokenize.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/driver.cpp
-    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/eval.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalOp.cpp
-    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/eval_ext.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/parse.cpp
-    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poetAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_AST.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/timing.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.c
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.c
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.y
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
    )
+add_library(poet ${POET_SRC})
+link_libraries(poet)
+add_executable(pcg ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp)
 
 set(virtualCFG_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
@@ -969,11 +974,10 @@ add_custom_target(
 
 ###############################################################################################################################
 
-#Faizur(07/21/2011): POET VERSION ADDED
-add_definitions(-DPOET_VERSION="\\"1.02.06.10\\"")
-
+add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf generate_stringify generate_rosePublicConfig) 
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES
