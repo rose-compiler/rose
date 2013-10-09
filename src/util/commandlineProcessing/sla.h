@@ -39,6 +39,8 @@ $Id: sla.h,v 1.3 2008/01/08 02:56:44 dquinlan Exp $
 $Header: /nfs/casc/overture/ROSE/ROSE2_Repository/ROSE/src/util/commandlineProcessing/sla.h,v 1.3 2008/01/08 02:56:44 dquinlan Exp $
 */
 
+#include "rosedll.h"
+
 #ifdef __cplusplus
 #include <vector>
 #include <string>
@@ -48,7 +50,7 @@ $Header: /nfs/casc/overture/ROSE/ROSE2_Repository/ROSE/src/util/commandlineProce
 #define ARGVCONST
 #endif
 
-void sla_set_debug( int d );
+ROSE_UTIL_API void sla_set_debug( int d );
 
 #if 1
 #ifdef __cplusplus
@@ -67,16 +69,16 @@ void sla_set_debug( int d );
 #endif
 
 #ifdef __cplusplus
-int sla_none( std::vector<std::string> &argv, const std::string& flind, const std::string& assop, const std::string& pname, int argd=0 );
+ROSE_UTIL_API int sla_none( std::vector<std::string> &argv, const std::string& flind, const std::string& assop, const std::string& pname, int argd=0 );
 #else
-int sla_none( int *argc, ARGVCONST char **argv, const char *flind, const char *assop, const char *pname, int argd );
+ROSE_UTIL_API int sla_none( int *argc, ARGVCONST char **argv, const char *flind, const char *assop, const char *pname, int argd );
 #endif
 
 /*** generates code for sla prototypes ***/
 #ifndef SLA_FCN_PROTO
 #ifdef __cplusplus
 #define SLA_FCN_PROTO(N,T) \
-int N( std::vector<std::string>& argv   \
+ROSE_UTIL_API int N( std::vector<std::string>& argv   \
      , const std::string& flind \
      , const std::string& assop \
      , const std::string& pname \
@@ -85,7 +87,7 @@ int N( std::vector<std::string>& argv   \
      )
 #else
 #define SLA_FCN_PROTO(N,T) \
-int N( int *argc \
+ROSE_UTIL_API int N( int *argc \
      , ARGVCONST char **argv \
      , const char *flind \
      , const char *assop \
@@ -100,7 +102,7 @@ int N( int *argc \
 #ifndef SLA_FCN_BEGIN
 #ifdef __cplusplus
 #define SLA_FCN_BEGIN(N,T) \
-int N( std::vector<std::string>& argv   \
+ROSE_UTIL_API int N( std::vector<std::string>& argv   \
      , const std::string& flind \
      , const std::string& assop \
      , const std::string& pname \

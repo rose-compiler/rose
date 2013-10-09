@@ -1,0 +1,447 @@
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+
+<*****************************************************************
+    This file contains Source-language independent code templates, 
+        parse/unparse/rebuild functions, and xform routines 
+*****************************************************************>
+
+<************** tokens ************************>
+
+<* represents fix point *>
+<xform NullXform pars=(input)>
+input
+</xform>
+
+<code Char pars=(content:(~"'")....) parse="" >
+'@content@'
+</code>
+
+<code String pars=(content:((~"\"")...)) parse="">
+"@content@"
+</code>
+
+<code FileName pars=(content:((~(" "|"\t"|"\n")....))) rebuild=(content=>STRING) >
+@content@
+</code>
+
+<code ThrowAway pars=(anything:_) rebuild=""> @anything@ </code>
+
+<define TOKEN (("<" "*") ("*" ">")) />
+<code Comment pars=(content:(~"*>")...) rebuild="">
+<*@content@*>
+</code>
+<define TOKEN ""/>
+
+<**** tracing target for all transformations ***>
+<define TRACE_TARGET ""/>
+
+<************* parsing functions for code templates*****************>
+
+<* Parse from $input$ a sublist of tokens. Stop if encountering a token that 
+   matches the $stop$ pattern or that does not match the $continue$ pattern *>
+<xform ParseList pars=(input) stop="" code="" continue="" output=(result, leftOver)/>
+
+<************** unparsing functions for code templates *****************>
+
+<* line-based unparsing that ensures line break and continuation 
+   at certain columes  -- useful in punch-card style languages 
+   such as Fortran and Cobol *>
+<xform UnparseLine pars=(input, pos) cont_col=6 start_col=8 text_len=70 comment_prefix="" comment_char=""/> 
+
+<**********
+The target code template for no parsing
+************>
+<code NoParse pars=(content:_) > 
+@content@
+</code>
+
+<**********
+Scan a single line of unknown content 
+***********>
+<code UnknownUntilEOL pars=(content:(~"\n")...) >
+@content@
+</code>
+
+<*********
+Treating a list of IDs as a single name
+**********>
+<code Name pars=(content: ID....) 
+           rebuild=((content:ID)? content : Name#content)>
+@content@
+</code>
+
+<code NameList parse=LIST(Name,",") />
+<code NameOrStringList parse=LIST(String|Name,",") />
+
+<code IntList pars=(content:LIST(INT,",")) rebuild=content>
+(@content@)
+</code>
+
+<***** look for pattern in input  ******>
+<xform Lookup pars=(pattern, input)>
+  foreach (input : pattern : TRUE) { RETURN TRUE; }
+  RETURN FALSE;
+</xform>
+
+<xform Lookup_r pars=(pattern,input)>
+  foreach_r (input : pattern : TRUE) { RETURN TRUE; }
+  RETURN FALSE;
+</xform>
+
+<xform LookupList pars=(pattern, input)>
+  if (input : pattern) { TRUE}
+  else if (input : (first second)) 
+      { LookupList(pattern,first) || LookupList(pattern,second) } 
+  else { FALSE }
+</xform>
+
+<xform MapList pars=(op, input)>
+if (input == "") RETURN "";
+first = op(car(input));
+first :: MapList(op, cdr(input))
+</xform>
+
+<xform SelectList pars=(index, input)>
+if (input == "") RETURN "";
+first = car(input);
+for (i = 0; i < index; i = i+1) first = cdr(first);
+first = car(first);
+first :: SelectList(index, cdr(input))
+</xform>
+
+<****** 
+Build a list, skipping the components that are empty strings 
+*******>
+<xform BuildList pars=(first,rest)>
+  (first == "")? rest 
+: (rest == "")? first 
+: first::rest
+</xform>
+
+
+<*******
+Merge two lists into a single one where each item is a pair of the original ones 
+********>
+<xform MergeList pars=(first,second)>
+switch (first)
+{
+  case (first1 first2):
+      if (first2!="" && !(second : (second1 second2)))
+        ERROR("Mismatching in Merge List:" first " .vs. " second);
+      (first1,second1)::MergeList(first2,second2)
+  case "": ""
+  default: (first,second)
+}
+</xform>
+
+<*******
+Append the second list at the end of the first list 
+********>
+<xform AppendList pars=(first,second)>
+if (first : (elem1 elem2)) { AppendList(elem1, AppendList(elem2, second)) }
+else  { first :: second }
+</xform>
+
+<*******
+ reverse the given list.  
+*********>
+<xform ReverseList pars=(list) >
+  result = HEAD(list);
+  for (p_list = TAIL(list); p_list != ""; p_list = TAIL(p_list)) {
+     result = HEAD(p_list) :: result;
+  }
+  result
+</xform>
+
+<*******
+flatten a hierarchical list into a flat one 
+******>
+<xform FlattenList pars=(list) res="">
+if (list == "") {res}
+else {
+   result = FlattenList(cdr(list));
+   list1 = car(list);
+   if (list1 == list) { BuildList(list, result) }
+   else { FlattenList[res=result](list1) }
+}
+</xform>
+
+<******
+Remove the last item from the input list 
+*******>
+<xform ListRemoveLastItem pars=(list)>
+(cdr(list) == "")? "" : ((car list) :: ListRemoveLastItem(cdr list)) 
+</xform>
+
+<****** 
+split the $input$ at each $split$ separator 
+*******>
+<xform SplitList pars=(split, input)>
+ if (input : (first rest)) {
+     if (first == split) { (first, rest) }
+     else {
+        (before,after) = SplitList(split, first);
+        if (after == "") {
+            (before,after) = SplitList(split, rest);
+            (BuildList(first, before), after) 
+        }
+        else { (before, BuildList(after,rest)) }
+     }
+ }
+ else { (input,"") }
+</xform>
+
+
+<*******
+Erase $handle$ from $trace$. Return the erased $handle$ and modified $trace$
+if repl != "", use repl to substitute the erased handle
+********>
+<xform EraseTraceHandle repl="___keep" pars=(handle, trace)>
+
+  trace = ERASE(handle, trace);
+  origvalue=ERASE(handle);
+
+   if (repl != "___keep") trace = REPLACE(origvalue, repl, trace);
+   trace
+</xform>
+
+<******
+Replace handle with a newvalue 
+*******>
+<xform ModifyTraceHandle pars=(handle, newvalue) >
+   newvalue = ERASE(handle, newvalue);
+   REPLACE(ERASE(handle), newvalue,handle) 
+</xform>
+
+<******
+Move handle to a new location within trace; 
+assume newvalue is already in trace, use it to 
+*******>
+<xform MoveTraceHandle pars=(handle, newvalue) trace=GLOBAL.TRACE_TARGET>
+ if (trace : VAR || trace != "") {
+   trace = EraseTraceHandle(handle, trace);
+   handle = REPLACE(ERASE(handle), newvalue, handle);
+   REPLACE(newvalue, handle, trace);
+   handle
+ }
+ else {
+   newvalue = ERASE(handle, newvalue);
+   REPLACE(ERASE(handle), newvalue, handle)
+ }
+</xform>
+
+<****************** PARSE functions **************************>
+
+<* insert "()" and "," to a list of $elems$ to specify TUPLE parse format *>
+<xform BuildTupleParse pars=(elems)/>
+
+<*****
+skip empty spaces 
+*******>
+<xform SkipEmpty pars=(input) >
+for (p_input=input; 
+     (cur=car p_input)==" " || cur == "\n" || cur == "\t"; 
+     p_input=cdr p_input)  {""}
+p_input
+</xform>
+
+<*******
+return the first token in input 
+********>
+<xform FirstToken pars=(input) >
+for (cur=car input; (cur!=car(cur)); cur = car(cur)) {}
+cur
+</xform>
+
+<*******
+set input to start at the next token; skip empty spaces 
+********>
+<xform NextToken pars=(input) >
+for (p_input=cdr input; 
+     (cur=car p_input)==" " || cur == "\n" || cur == "\t"; 
+     p_input=cdr p_input)  {""}
+p_input
+</xform>
+
+<* line-based parsing that skip certain columes -- useful in 
+   punch-card style languages such as Fortran and Cobol *>
+<xform ParseLine pars=(input) 
+          comment_col=-1 continue_col=-1 start_col=1 text_len=66 
+          continue_endofline="" comment_prefix="" /> 
+
+<****** implementations of functions/routines *********>
+<xform BuildTupleParse pars=(elems)>
+ result = "\")\"";
+ for (p_elems = ReverseList(elems); cdr(p_elems) != ""; p_elems = cdr p_elems)
+  {
+    result = "\",\"" :: car(p_elems) ::  result; 
+  }
+ result = "\"(\"" :: HEAD(p_elems) :: result;
+ result
+</xform>
+
+
+<xform ParseList pars=(input) stop="" code="" continue="" output=(result, leftOver) >
+first = car(input);
+(first != "")? 
+ (
+  (first : stop)?  ("", input) 
+  : ((continue == "" || first : continue)? 
+     ( 
+       (code == "")? (resOfRest = ParseList(cdr(input));
+                      BuildList(first,resOfRest[0]), resOfRest[1]) 
+        :  (input => (first=code, rest=_); 
+            resOfRest=ParseList(rest);
+            (BuildList(first,resOfRest[0]),resOfRest[1])) )
+  : ("",input) ) )
+: (input : stop)?  ("",input) 
+: (continue == "" || first : continue)?  (input, "") 
+: ("",input)
+</xform>
+
+<xform ParseLine pars=(input) 
+          comment_col=-1 continue_col=-1 start_col=1 text_len=66 
+          continue_endofline="" comment_prefix=""> 
+ res = "";
+ for ( (curline,input) = SplitList("\n",input); curline ; 
+       (curline,input) = SplitList("\n",input)) {
+   if (car(cdr(curline)) == "\n") curline=car(curline);
+   if (comment_col > 0) {  <<* skip comments
+      curRes =  cdr (SPLIT(comment_col-1, curline));
+      (comment curRes1) = SPLIT(1,curRes);
+      if (!(FirstToken(curRes1) : STRING)) <<*QY: this is annotation
+          { res=BuildList(curRes1,BuildList("\n",res)); CONTINUE; }
+      else if (comment != " " && comment!="\t" 
+               && !(comment:INT && car(curRes1):INT)) {
+        if (comment_prefix != "") {
+          curRes = BuildList("\n", comment_prefix^curRes1);
+          res = BuildList(curRes, res);
+        }
+        CONTINUE
+      }
+    }
+    else comment = " ";
+    curRes = curline;
+    if (comment != "\t" && continue_col > 0) { 
+        (curRes1 curRes2)=  SPLIT(continue_col-1, curline);
+        curRes1=SkipEmpty(curRes1);
+        label = FirstToken(curRes1);
+        if (label : INT)  { 
+           curRes=SkipEmpty(NextToken(SkipEmpty(curline)));
+           curRes=BuildList(label,curRes); 
+           continue=" "; }
+        else  { (continue curRes2) = SPLIT(1,curRes2); curRes= " "::curRes2; }
+    } 
+    else if (continue_endofline != "") {
+       for (p = curRes; cdr(p) != ""; p = cdr(p)) {} 
+       if ((car p) == continue_endofline)
+         { curRes=ListRemoveLastItem(curRes); continue=(car p); }  <<* continue via end-of-line
+       else continue=" ";
+    }
+    else continue=" ";
+
+    if (text_len > 0)   <<* truncate columes out of \a text_len
+      curRes = car (SPLIT(text_len, curRes));
+
+    if (continue == " ") <<* QY: not continuation of the previous line
+          res = BuildList("\n",res);
+    else curRes=BuildList(" ",curRes);
+    res = BuildList(curRes, res);
+ }
+ res = ReverseList(res);
+ res 
+</xform>
+
+<xform UnparseLine pars=(input, pos) label_col=-1 cont_col=6 start_col=8 text_len=70 is_omp=0 comment_prefix="" comment_char="">
+
+if(is_omp) {
+  <* Purpose: If input is part of OMP prefix, do not indent it.
+   * Pattern (use default attributes):
+   * - !$OMP  ... -- new line
+   * - !$OMP^ ... -- contd.  *>
+  if ((pos == 0 && input == "!")
+      || (pos == 1 && input == "$")
+      || (pos == 2 && (input =="OMP" || input == "omp"))
+      || (pos == 5 && input =="^")) {
+    RETURN input;
+  }
+}
+
+if (comment_prefix != "") {
+  (inputPrefix  inputRest) = SPLIT(LEN(comment_prefix), input);
+  if (pos == 0 && comment_prefix == inputPrefix) {
+    RETURN (comment_char inputRest);
+  }
+}
+
+<* Skip processing comments. *>
+if (pos == 0 && input == "*")
+  RETURN input;
+
+  if(input == "\n") RETURN(input);
+
+  input_len = LEN(input);
+
+  diff = pos - start_col;
+  if (pos > start_col) {
+     if (diff + input_len < text_len || text_len == 0) RETURN input;
+     for (i=start_col; i >= cont_col; i -=1) { input = " "::input;  }
+     for ((input="*"::input;i-=1); i >= 0; i -=1) 
+         { input = " "::input;  }
+     input = "\n"::input;
+  }
+  else if ( (input : INT) && label_col > 0) {
+       if (pos > label_col) {
+          for (i=1; i < label_col; i +=1) 
+             { input = " "::input;  }
+          input="\n"::input::" "; 
+          
+       }
+       else {
+          for (i=pos+1; i < label_col; i +=1) 
+             { input = " "::input;  }
+       }
+       RETURN input;
+  }
+  else { for (""; pos < start_col; pos +=1) { input = " "::input;  } }
+  
+  if (input_len < text_len || text_len == 0) { RETURN input; } 
+
+  (input_curLine  input_nextLine) = SPLIT(input_len-diff-1,input);
+  for (i = start_col-1; i >= cont_col; i-=1)
+      { input_nextLine = " "::input_nextLine;}
+  input_nextLine = "*"::input_nextLine;
+  for (i = start_col-1; i >= cont_col; i-=1)
+     { input = " "::input_nextLine;}
+  input_nextLine = "*"::input_nextLine;
+  for (i-=1; i >= 0 ;  i-=1)
+     { input_nextLine = " "::input_nextLine;}
+  return = input_curLine :: "\n" :: input_nextLine;
+  (return) 
+</xform>
+

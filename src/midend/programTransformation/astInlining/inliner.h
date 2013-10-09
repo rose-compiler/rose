@@ -19,6 +19,6 @@
 //! Recursive procedures are handled properly (when allowRecursion is set), by
 //! inlining one copy of the procedure into itself.  Any other restrictions on
 //! what can be inlined are bugs in the inliner code.
-bool doInline(SgFunctionCallExp* funcall, bool allowRecursion = false);
+ROSE_DLL_API bool doInline(SgFunctionCallExp* funcall, bool allowRecursion = false);
 
 #endif // INLINER_H

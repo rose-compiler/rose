@@ -7,10 +7,14 @@
 #include <string>
 #include <typeinfo>
 #include "ObserveObject.h"
+#include "rosedll.h"
 
 class AstNodePtr;
-std::string AstToString( const AstNodePtr& s);
-std::string getAstLocation( const AstNodePtr& s);
+ROSE_DLL_API std::string AstToString( const AstNodePtr& s);
+ROSE_DLL_API std::string getAstLocation( const AstNodePtr& s);
+
+class SgProject;
+ROSE_DLL_API void FixSgProject( SgProject &sageProject);
 
 class AST_Error { 
    std::string msg;
@@ -80,7 +84,7 @@ class CopyAstRecord : public ObserveInfo< AstObserver>
 /**
  *  @brief  Holds entire AST, and provides interface to access/modify its nodes.
  */
-class AstInterface 
+class ROSE_DLL_API AstInterface 
 {
 protected:
   AstInterfaceImpl *impl;
@@ -366,11 +370,11 @@ class TransformAstTree
 };
 
 //! Traverse and transform an entire AST, where $op$ is invoked to transform each sub-Tree.
-AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
+ROSE_DLL_API AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
                     bool (*op)( AstInterface& fa, const AstNodePtr& head, 
                                 AstNodePtr& result), 
                     AstInterface::TraversalVisitType t = AstInterface::PreVisit );
-AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
+ROSE_DLL_API AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
                               TransformAstTree& op,
                         AstInterface::TraversalVisitType t = AstInterface::PreVisit);
 
