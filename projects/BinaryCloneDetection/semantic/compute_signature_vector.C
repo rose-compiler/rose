@@ -330,7 +330,7 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
 
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(*it);
 
-    assert(insns != NULL);
+    assert(insn != NULL);
 
     size_t var = insn->get_kind();
 
