@@ -972,11 +972,10 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
   // It does not make sense to reset the source file positions for a binary (at least not yet).
      ROSE_ASSERT (file->get_binary_only() == false);
 
-  // If we did unparse an intermediate file then we want to compile that 
-  // file instead of the original source file.
+  // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
      string outputFilename;
-      if (file->get_unparse_output_filename().empty() == true)
-      {
+     if (file->get_unparse_output_filename().empty() == true)
+        {
           outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)
@@ -993,16 +992,19 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
                ROSE_ASSERT(false);
              }
-          else if (file->get_X10_only() == true)
-          {
-               outputFilename = file->get_sourceFileNameWithoutPath();
+            else
+             {
+               if (file->get_X10_only() == true)
+                  {
+                    outputFilename = file->get_sourceFileNameWithoutPath();
 
-               printf ("[Warning] Output file name of generated X10 code is the "
+                    printf ("[Warning] Output file name of generated X10 code is the "
                        "same as the input file name, but must be build into a "
                        "separate directory.\n");
-               ROSE_ASSERT(false);
-          }
-      }
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
        else
         {
           outputFilename = file->get_unparse_output_filename();
@@ -1651,6 +1653,7 @@ string get_output_filename( SgFile& file)
           printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
         }
      ROSE_ASSERT(file.get_unparse_output_filename().empty() == false);
+
      return file.get_unparse_output_filename();
    }
 
@@ -1669,6 +1672,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
 #if 0
      printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
+#endif
+
+#if 0
+     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %d \n",file->get_outputLanguage());
+     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
 #endif
 
   // debugging assertions
@@ -1700,11 +1708,35 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called unparse()!
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
-  // If we did unparse an intermediate file then we want to compile that
-  // file instead of the original source file.
-    if (file->get_unparse_output_filename().empty() == true)
-    {
+  // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
+     if (file->get_unparse_output_filename().empty() == true)
+        {
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+
+       // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+          SgProject* project = TransformationSupport::getProject(file);
+       // ROSE_ASSERT(project != NULL);
+          if (project != NULL)
+             {
+#if 0
+               printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#endif
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
+                  {
+                    outputFilename = ROSE::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
+#if 0
+                    printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+#endif
+#if 0
+                    printf("Exiting as test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In unparseFile(): file = %p has no associated project \n",file);
+             }
 
         if (file->get_binary_only() == true)
         {
@@ -1798,10 +1830,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             //ROSE_ASSERT (! "Not implemented, or unknown file type");
         }
 
+       // DQ (9/15/2013): Added assertion.
+          ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
+#if 0
+          printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
+#endif
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
        // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
-    }
+     }
 
 #if 0
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
@@ -1903,6 +1940,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
 
+       // DQ (9/24/2013): Set the output language to the inpuse language.
+          inheritedAttributeInfo.set_language(file->get_outputLanguage());
+     
        // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process

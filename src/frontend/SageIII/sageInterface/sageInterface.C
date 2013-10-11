@@ -1363,8 +1363,23 @@ SageInterface::get_name ( const SgSupport* node )
                     case SgTemplateArgument::nontype_argument:
                        {
                          SgExpression* t = templateArgument->get_expression();
-                         ROSE_ASSERT(t != NULL);
-                         name += get_name(t);
+
+                      // DQ (8/11/2013): Adding support for including an initializedName instead of an expression (for template parameters used as expressions).
+                      // ROSE_ASSERT(t != NULL);
+                      // name += get_name(t);
+                         if (t != NULL)
+                            {
+                              ROSE_ASSERT(templateArgument->get_initializedName() == NULL);
+                              name += get_name(t);
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(t == NULL);
+                              SgInitializedName* initializedName = templateArgument->get_initializedName();
+                              ROSE_ASSERT(initializedName != NULL);
+
+                              name += get_name(initializedName);
+                            }
                          break;
                        }
 
@@ -1474,6 +1489,61 @@ SageInterface::get_name ( const SgSupport* node )
                const SgName* name_node = isSgName(node);
                ROSE_ASSERT(name_node != NULL);
                name = "_name_" + name_node->getString();
+               break;
+             }
+
+       // DQ (8/8/2013): Implemented case for SgTemplateParameter
+          case V_SgTemplateParameter:
+             {
+               const SgTemplateParameter* template_parameter_node = isSgTemplateParameter(node);
+               ROSE_ASSERT(template_parameter_node != NULL);
+               name = "_template_parameter_";
+
+               switch(template_parameter_node->get_parameterType())
+                  {
+                    case SgTemplateParameter::type_parameter:
+                       {
+                         name += "type_parameter_";
+                         break;
+                       }
+
+                    case SgTemplateParameter::nontype_parameter:
+                       {
+                         name += "nontype_parameter_";
+#if 1
+                         name += template_parameter_node->unparseToString();
+#else
+                         if (template_parameter_node->get_expression() != NULL)
+                            {
+                              name += template_parameter_node->get_expression()->unparseToString();
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(template_parameter_node->get_initializedName() != NULL);
+
+                           // DQ (8/8/2013): This does not handle the case of "template <void (foo::*M)()> void test() {}"
+                           // since what is unparsed is: "_template_parameter_nontype_parameter_M"
+                           // instead of a string to represent what is in "void (foo::*M)()"
+                           // and differentiate it from: "int foo::*M" in: "template <void (foo::*M)()> void test() {}"
+                              name += template_parameter_node->get_initializedName()->unparseToString();
+                            }
+#endif
+                         break;
+                       }
+
+                    case SgTemplateParameter::template_parameter:
+                       {
+                         name += "template_parameter_";
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Error: default reached \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+                  }
                break;
              }
 
@@ -2893,10 +2963,20 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                            // If this is a copy then it would be nice to make sure that the scope has been properly set.
                            // Check this by looking for the associated template declaration in the scope.
                            // SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
-                              SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                           // SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                              SgTemplateMemberFunctionDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
                               ROSE_ASSERT(templateDeclaration != NULL);
                            // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+
+                           // DQ (8/13/2013): Fixed the interface to avoid use of lookup_template_symbol() (removed).
+                           // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                           // In this case these are unavailable from this point.
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgType* functionType                               = templateDeclaration->get_type();
+                              SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+                           // SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_member_function_symbol(templateDeclaration->get_template_name(),functionType,&templateParameterList);
                               if (templateSymbol != NULL)
                                  {
                                 // The symbol is not present, so we have to build one and add it.
@@ -4728,13 +4808,18 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
 
 
 SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
-{
-  if (scope== NULL)
-          scope= SageBuilder::topScopeStack();
-  SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope);
-  if (symbol==NULL) return NULL;
-  else return symbol->get_type();
-}
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // DQ (8/16/2013): Added NULL pointers to at least handle the API change.
+     SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope,NULL,NULL);
+
+     if (symbol == NULL)
+          return NULL;
+       else 
+          return symbol->get_type();
+   }
 
 SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgName &functionName,
                                                         const SgType* t,
@@ -4760,7 +4845,9 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 // SgScopeStatement* SgStatement::get_scope
 // SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
 // not always true during translation.
-SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgSymbol*
+SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
      SgSymbol* symbol = NULL;
      if (cscope == NULL)
@@ -4769,8 +4856,9 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
      ROSE_ASSERT(cscope != NULL);
 
 #if 0
-     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
 #if 0
@@ -4796,7 +4884,11 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #if 0
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
-          symbol = cscope->lookup_symbol(name);
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
 #if 0
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
@@ -4807,13 +4899,15 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
             else
                cscope = NULL;
 
-       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if 0
+          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
         }
 
      if (symbol == NULL)
         {
 #if 0
-          printf ("Warning: could not locate the specified name %s in any outer symbol table \n",name.str());
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);
         }
@@ -4853,8 +4947,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
 
 SgVariableSymbol *
-SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
-                                                        SgScopeStatement *cscope)
+SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
   // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
@@ -4900,8 +4993,9 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
 #endif
    }
 
-SgClassSymbol *
-SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgClassSymbol* SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgClassSymbol*
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateArgumentPtrList* templateArgumentList)
    {
   // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
      SgClassSymbol* symbol = NULL;
@@ -4912,7 +5006,8 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_class_symbol(name,NULL);
+       // symbol = cscope->lookup_class_symbol(name,NULL);
+          symbol = cscope->lookup_class_symbol(name,templateArgumentList);
 
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
@@ -4946,7 +5041,12 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
      return symbol;
    }
 
-SgTemplateSymbol *
+#if 0
+// DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+// table handling more precise and we have to provide template parameters for any template lookup.
+// We also have to know if we want to lookup template classes, template functions, or template 
+// member functions (since each have specific requirements).
+SgTemplateSymbol*
 SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
@@ -4957,8 +5057,11 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      while ((cscope != NULL) && (symbol == NULL))
         {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_template_symbol(name);
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_symbol(name,NULL,NULL);
 #if 0
           printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
 #endif
@@ -4970,6 +5073,37 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      return symbol;
    }
+#endif
+
+
+SgTemplateClassSymbol*
+SageInterface::lookupTemplateClassSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgTemplateClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_class_symbol(name,templateParameterList,templateArgumentList);
+#if 0
+          printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
+#endif
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 SgEnumSymbol *
 SageInterface::lookupEnumSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
@@ -6949,8 +7083,10 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
     {
         name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
 
-        //Look up the name in the parent scopes
-        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+     // DQ (8/16/2013): Modified to reflect new API.
+     // Look up the name in the parent scopes
+     // SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope,NULL,NULL);
         collision = (nameSymbol != NULL);
 
         //Look up the name in the children scopes
@@ -6959,7 +7095,11 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
         BOOST_FOREACH(SgNode* childScope, childScopes)
         {
             SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-            nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+
+         // DQ (8/16/2013): Modified to reflect new API.
+         // nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+            nameSymbol = childScopeStatement->lookup_symbol(SgName(name),NULL,NULL);
+
             collision = collision || (nameSymbol != NULL);
         }
     } while (collision);
@@ -7029,6 +7169,35 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 
     return std::make_pair(tempVarDeclaration, varRefExpression);
 }
+
+// This function creates a temporary variable for a given expression in the given scope
+// This is different from SageInterface::createTempVariableForExpression in that it does not
+// try to be smart to create pointers to reference types and so on. The tempt is initialized to expression.
+// The caller is responsible for setting the parent of SgVariableDeclaration since buildVariableDeclaration
+// may not set_parent() when the scope stack is empty. See programTransformation/extractFunctionArgumentsNormalization/ExtractFunctionArguments.C for sample usage.
+
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableAndReferenceForExpression
+(SgExpression* expression, SgScopeStatement* scope)
+{
+    SgType* expressionType = expression->get_type();
+    SgType* variableType = expressionType;
+
+    //Generate a unique variable name
+    string name = generateUniqueVariableName(scope);
+    
+    //initialize the variable in its declaration
+    SgAssignInitializer* initializer = NULL;
+    SgExpression* initExpressionCopy = SageInterface::copyExpression(expression);
+    initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+    
+    SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
+    ROSE_ASSERT(tempVarDeclaration != NULL);
+    
+    //Build the variable reference expression that can be used in place of the original expression
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);    
+    return std::make_pair(tempVarDeclaration, varRefExpression);
+}
+
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
@@ -7118,6 +7287,26 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
                   //What other expressions can be children of an SgInitializedname?
                   ROSE_ASSERT(false);
           }
+  }
+  else if (isSgFortranDo(parent))
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if(oldExp == fortranDo->get_initialization())
+    {
+      fortranDo->set_initialization(newExp);
+    }
+    else if(oldExp == fortranDo->get_bound())
+    {
+      fortranDo->set_bound(newExp);
+    }
+    else if(oldExp == fortranDo->get_increment())
+    {
+      fortranDo->set_increment(newExp);
+    }
+    else
+    {
+      ROSE_ASSERT(false);
+    }
   }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
@@ -7459,8 +7648,7 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
-{
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
@@ -10391,10 +10579,17 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+        {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+        }
       }
       else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
       {
@@ -10410,14 +10605,23 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
       }
       else
 #endif
-          realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+      {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+      }
 
       // should find a real symbol at this final fixing stage!
       // This function can be called any time, not just final fixing stage
@@ -10650,10 +10854,29 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
          fTable->set_parent(getGlobalScope(scope));
        }
 
+#if 0
+     printf ("In SageInterface::fixStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-     SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
-     SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt); 
+     SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
+     SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
+     SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
+     SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
+     SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
+
+     if (tmfunc != NULL)
+       assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
+     else if (mfunc != NULL)
+       assert(mfunc->variantT() == V_SgMemberFunctionDeclaration || mfunc->variantT() == V_SgTemplateInstantiationMemberFunctionDecl);
+     else if (tfunc != NULL)
+       assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
+     else if (procfunc != NULL)
+        assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
+     else if (func != NULL)
+       assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
+     else assert(false);
 
 #if 0
      printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
@@ -10671,51 +10894,78 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #if 0
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
 #endif
-          SgFunctionSymbol* func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+#if 0
+          printf ("[SageInterface::fixFunctionDeclaration] Lookup Function func = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
+#endif
+          SgFunctionSymbol* func_symbol = NULL;
+
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+          if (tmfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tmfunc->get_templateParameters();
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (mfunc != NULL)
+          {
+            SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(mfunc);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationMemberFunctionDecl != NULL) ? &(templateInstantiationMemberFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+          }
+          else if (tfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tfunc->get_templateParameters();
+#if 0
+            printf ("In SageInterface::fixStatement(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (procfunc != NULL)
+          {
+#if 1
+            printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
+#endif
+            func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
+          else if (func != NULL)
+          {
+#if 0
+            printf ("In SageInterface::fixStatement(): func->get_name() = %s calling lookup_function_symbol() \n",func->get_name().str());
+#endif
+            SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(func);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationFunctionDecl != NULL) ? &(templateInstantiationFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+
+         // DQ (8/23/2013): Adding support for when the symbol is not present.  This can happen when building a new function as a copy of an existing
+         // function the symantics of the copy is that it will not add the symbol (since it does not know the scope). So this function is the first
+         // opportunity to fixup the function to have a symbol in the scope's symbol table.
+            if (func_symbol == NULL)
+               {
+              // scope->print_symboltable("In SageInterface::fixStatement()");
+                 func_symbol = new SgFunctionSymbol(func);
+                 scope->insert_symbol(func->get_name(), func_symbol);
+               }
+          }
+          else 
+          {
+            assert(false);
+          }
+#if 0
+          printf("[SageInterface::fixFunctionDeclaration]     -> func = %p, mfunc = %p, tmfunc = %p\n", func, mfunc, tmfunc);
+#endif
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
 #endif
-          if (func_symbol == NULL)
-             {
-            // DQ (12/3/2011): Added support for C++ member functions.
-            // func_symbol = new SgFunctionSymbol (func);
-               if (mfunc != NULL)
-                  {
-                    func_symbol = new SgMemberFunctionSymbol (func);
-                  }
-                 else
-                  {
-                    func_symbol = new SgFunctionSymbol (func);
-                  }
-               ROSE_ASSERT (func_symbol != NULL);
 
-               scope->insert_symbol(func->get_name(), func_symbol);
-             }
-            else
-             {
-#if 0
-               printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
-#endif
-             }
+          assert(func_symbol != NULL);
         }
-#if 0
-  // Fix local symbol, a symbol directly refer to this function declaration
-  // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
-  // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
-     SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
-     if (local_symbol == NULL) // 
-        {
-          if (func->get_definingDeclaration() == NULL) // prototype function
-             {
-               SgFunctionDeclaration * src_func = func_symbol->get_declaration();
-               if (func != src_func )
-                  {
-                    ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
-                    func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
-                  }
-             }
-        }
-#endif
    }
 
 //! fixup symbol table for SgFunctionDeclaration (and template instantiations, member functions, and member function template instantiations). Used Internally when the function is built without knowing its target scope. Both parameters cannot be NULL.
@@ -11243,6 +11493,17 @@ StringUtility::numberToString(++breakLabelCounter),
     else
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
+
+  bool SageInterface::isUnionDeclaration(SgNode* node)
+  {
+    ROSE_ASSERT(node!=NULL);
+    SgClassDeclaration *decl = isSgClassDeclaration(node);
+    if (decl==NULL)
+      return false;
+    else
+       return (decl->get_class_type() == SgClassDeclaration::e_union)? true:false;
+  }
+
 
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
@@ -13356,8 +13617,13 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                // and the original enclosing class of the outlined target has been changed already (replaced target with a call to OUT_xxx())
                // Also, getDependentDeclarations() recursively searches for declarations within the dependent class and hits OUT_xxx()
                // Liao, 5/8/2009
-               if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
-                 continue;
+
+               printf ("WARNING: In SageInterface -- generateCopiesOfDependentDeclarations(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+            // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+            // if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
+               if (targetScope->lookup_symbol(functionDeclaration->get_name(),NULL,NULL) !=NULL)
+                    continue;
 #endif
 #if 0
                printf ("In generateCopiesOfDependentDeclarations(): Copy mechanism appied to SgFunctionDeclaration functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
@@ -13830,7 +14096,12 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      ROSE_ASSERT(outlinedFunctionDeclaration != NULL);
      SgGlobal* originalFileGlobalScope = TransformationSupport::getGlobalScope(original_statement);
      ROSE_ASSERT(originalFileGlobalScope != NULL);
-     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+
+     printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+  // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+  // SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name(),NULL,NULL));
 
   // SgSymbol* outlinedFunctionSymbolFromOutlinedFile = scope->lookup_symbol(outlinedFunctionDeclaration->get_name());
      ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
@@ -14001,13 +14272,20 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                     printf ("lokup symbol in scope =                                = %p \n",scope);
 #endif
 
-                    if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
+                    printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+                 // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                 // if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
+                    if (scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == NULL)
                        {
                          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(copiedFunctionDeclaration);
                          ROSE_ASSERT(functionSymbol != NULL);
                       // printf ("copiedFunctionDeclaration = %p Inserting functionSymbol = %p with name = %s \n",copiedFunctionDeclaration,functionSymbol,copiedFunctionDeclaration->get_name().str());
                          scope->insert_symbol(copiedFunctionDeclaration->get_name(),functionSymbol);
-                         ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
+
+                      // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                      // ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
+                         ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == functionSymbol);
 
                          ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
                          copiedFunctionDeclaration->set_scope(scope);
@@ -15672,7 +15950,7 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
 //! This is a wrapper function to Qing's side effect analysis from loop optimization
 //! Liao, 2/26/2009
 bool
-SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs)
+SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse)
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
   ROSE_ASSERT(stmt !=NULL);
 
@@ -15703,10 +15981,15 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   AstInterfaceImpl faImpl(funcBody);
   AstInterface fa(&faImpl);
   ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-  ArrayInterface array_interface (*annot);
-  array_interface.initialize(fa, AstNodePtrImpl(funcDef));
-  array_interface.observe(fa);
-  LoopTransformInterface::set_arrayInfo(&array_interface);
+  if( useCachedDefUse ){
+    ArrayInterface* array_interface = ArrayInterface::get_inst(*annot, fa, funcDef, AstNodePtrImpl(funcDef));
+    LoopTransformInterface::set_arrayInfo(array_interface);
+  } else {
+    ArrayInterface array_interface(*annot);
+    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
+    array_interface.observe(fa);
+    LoopTransformInterface::set_arrayInfo(&array_interface);
+  }
   LoopTransformInterface::set_astInterface(fa);
 
   // variables to store results
@@ -16659,4 +16942,290 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
     
   }
 
+/*Winnie, loop collapse, collapse nested for loops into one large for loop
+ *  return a SgExprListExp *, which will contain a list of SgVarRefExp * to variables newly created, inserted outside of the 
+ *                            loop scope, and used inside the loop scope.
+ *                            If the target_loop comes with omp target directive, these variables should be added in map in clause in 
+ *                            transOmpCollpase(..) function in omp_lowering.cpp.
+ *                              
+ *
+ * 
+ *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
+ *  
+ *  to collapse two level of loops:
+ *  iteration_count_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
+ *  iteration_count_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
+ *  total_iteration_count = iteration_count_one * iteration_count_two
+ *
+ *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=, this is done in isCanonicalForLoop()
+ *
+ * Example 1:
+ * for (int i=lb2;i<ub2;i+=inc2)                 //incremental 
+ *  {
+ *      for (int j=lb1;j>ub1;i+=inc1)            //decremental
+ *      {
+ *                  for (int l=lb2;l<ub2;l+=inc2)        //incremental 
+ *              {
+ *               a[i][j][l]=i+j+l;      
+ *              }
+ *      }
+ *  }
+ *
+ *==> translated output code ==>
+ *  int i_nom_1_total_iters = (ub2 - 1 - lb2 + 1) % inc2 == 0?(ub2 - 1 - lb2 + 1) / inc2 : (ub2 - 1 - lb2 + 1) / inc2 + 1;
+ *  int j_nom_2_total_iters = (lb1 - (ub1 + 1) + 1) % (inc1 * -1) == 0?(lb1 - (ub1 + 1) + 1) / (inc1 * -1) : (lb1 - (ub1 + 1) + 1) / (inc1 * -1) + 1;
+ *  int l_nom_3_total_iters = (ub2 - 1 - lb2 + 1) % inc2 == 0?(ub2 - 1 - lb2 + 1) / inc2 : (ub2 - 1 - lb2 + 1) / inc2 + 1;
+ *  int final_total_iters = 1 * i_nom_1_total_iters* j_nom_2_total_iters* l_nom_3_total_iters;
+ *  int i_nom_1_interval = j_nom_2_total_iters * (l_nom_3_total_iters* 1);
+ *  int j_nom_2_interval = l_nom_3_total_iters * 1;
+ *  int l_nom_3_interval = 1;
+ *
+ *  for (int new_index = 0; new_index <= final_total_iters- 1; new_index += 1) {
+ *    i_nom_1 = new_index / i_nom_1_interval* inc2 + lb2;
+ *    int i_nom_1_remainder = new_index % i_nom_1_interval;
+ *    j_nom_2 = -(i_nom_1_remainder / j_nom_2_interval* (inc1 * -1)) + lb1;
+ *    l_nom_3 = i_nom_1_remainder % j_nom_2_interval* inc2 + lb2;
+ *    a[i_nom_1][j_nom_2][l_nom_3] = i_nom_1 + j_nom_2 + l_nom_3;
+ *  }
+ *
+ *  Example 2 with concrete numbers:
+ *
+ * // collapse the following two level of for loops:
+ *       for (i=1; i<=9; i+=1)      //incremental for loop
+ *       {
+ *          for(j=10; j>=1; j+=-2)    //decremental for loop
+ *         {
+ *              a[i][j]=i+j;
+ *         }
+ *       }
+ * // it becomes
+ *     // total iteration count = ((9 - 1 + 1)/1) * ((10 - 1 + 1)/2) = 45
+ *     // ub = 45
+ *     // lb = 0
+ *       
+ *     int i_nom_1_total_iters = 9;
+ *     int j_nom_1_total_iters = 5;      // 10 % (-2 * -1) == 0 ? 10 / (-2 * -1) : 10 /(-2 * -1) + 1;
+ *     int final_total_iters = 45;       // i_nom_1_total_iters * j_nom_2_total_iters;
+ *
+ *     int i_nom_1_interval = 5;        
+ * 
+ *     for (z=0; z<=44; z+=1)
+ *     {
+ *       i_nom_1 = z / 5 + 1;
+ *       j_nom_2 = -(z % 5 * 2) + 10;
+ *       a[i_nom_1][j_nom_2]=i_nom_1 + j_nom_2;
+ *     }
+ **
+*/
 
+#ifndef USE_ROSE
+SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t collapsing_factor)
+{
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+  //Handle 0 and 1, which means no collapsing at all
+    if (collapsing_factor <= 1)
+        return NULL;
+
+    SgExprListExp * new_var_list = buildExprListExp();  //expression list contains all the SgVarRefExp * to variables that need to be added in the mapin clause
+
+    /* 
+     *step 1: grab the target loops' header information
+     */
+    SgForStatement *& target_loop = loop;
+
+    SgInitializedName* ivar[collapsing_factor];
+    SgExpression* lb[collapsing_factor];
+    SgExpression* ub[collapsing_factor];
+    SgExpression* step[collapsing_factor];
+    SgStatement* orig_body[collapsing_factor]; 
+    
+    SgExpression* total_iters[collapsing_factor]; //Winnie, the real iteration counter in each loop level
+    SgExpression* interval[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
+    bool isPlus[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
+
+
+    //Winnie, get loops info first
+    std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(target_loop,V_SgForStatement);
+    ROSE_ASSERT(loops.size()>=collapsing_factor);
+ 
+    SgForStatement* temp_target_loop = NULL;
+    SgExpression* temp_range_exp = NULL; //Raw iteration range
+    SgExpression* temp_range_d_step_exp = NULL; //temp_range_exp / step[i]
+    SgExpression* temp_condition_1 = NULL; //Check whether temp_range_exp % step[i] == 0
+    SgExpression* temp_total_iter = NULL;
+    SgExpression* ub_exp = buildIntVal(1); //Winnie, upbound
+
+    /*
+    *    get lb, ub, step information for each level of the loops
+    *    ub_exp is the final iterantion range(starting from 0) after loop collapsing
+    *    total_iters[i], = (ub[i] - lb[i] + 1)/step[i]  is the total iter num in each level of loop before loop collapsing   
+    */
+
+    SgStatement* parent =  isSgStatement(getScope(target_loop)->get_parent());        //Winnie, the scope that include target_loop
+    ROSE_ASSERT(getScope(target_loop)->get_parent()!= NULL);
+    
+    SgScopeStatement* scope = isSgScopeStatement(parent);    //Winnie, the scope that include target_loop
+    
+    SgStatement* insert_target;
+    while(scope == NULL)
+    {
+       parent = isSgStatement(parent->get_parent());
+       scope = isSgScopeStatement(parent);
+    }
+
+    insert_target = findLastDeclarationStatement(scope);
+    if(insert_target != NULL)
+        insert_target = getNextStatement(insert_target);
+    else
+        insert_target = getFirstStatement(scope);
+
+    ROSE_ASSERT(scope != NULL); 
+
+
+    for(size_t i = 0; i < collapsing_factor; i ++)
+    {     
+        temp_target_loop = loops[i]; 
+
+        // normalize the target loop first  // adjust to numbering starting from 0
+        forLoopNormalization(temp_target_loop);  
+
+        if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i], &isPlus[i]))
+        {
+            cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
+            dumpInfo(target_loop);
+            return false;
+        }
+        
+        ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
+   
+      
+//Winnie, (ub[i]-lb[i]+1)%step[i] ==0?(ub[i]-lb[i]+1)/step[i]: (ub[i]-lb[i]+1)/step[i]+1; (need ceiling) total number of iterations in this level (ub[i] - lb[i] + 1)/step[i]
+        if(isPlus[i] == true)
+            temp_range_exp = buildAddOp(buildSubtractOp(copyExpression(ub[i]), copyExpression(lb[i])), buildIntVal(1));
+        else{
+            temp_range_exp = buildAddOp(buildSubtractOp(copyExpression(lb[i]), copyExpression(ub[i])), buildIntVal(1));
+            step[i] = buildMultiplyOp(step[i], buildIntVal(-1));
+        }
+        temp_range_d_step_exp = buildDivideOp(temp_range_exp,copyExpression(step[i]));//(ub[i]-lb[i]+1)/step[i]
+        
+        temp_condition_1 = buildEqualityOp(buildModOp(copyExpression(temp_range_exp),copyExpression(step[i])),buildIntVal(0)); //(ub[i]-lb[i]+1)%step[i] ==0
+
+        temp_total_iter = buildConditionalExp(temp_condition_1,temp_range_d_step_exp, buildAddOp(copyExpression(temp_range_d_step_exp),buildIntVal(1)));
+
+        //build variables to store iteration numbers in each loop, simplify the calculation of "final_total_iters"
+        //insert the new variable (store real iteration number of each level of the loop) before the target loop
+        string iter_var_name= "_total_iters";
+        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
+        SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
+        insertStatementBefore(insert_target, total_iter);    
+        total_iters[i] = buildVarRefExp(iter_var_name, scope);
+        ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range 
+    }
+
+
+    /*
+    * step 2: build new variables (new_index, final_total_iters, remainders...) for the new loop
+    */
+
+    /*Winnie, build another variable to store final total iteration counter of the loop after collapsing*/
+    string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
+    SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
+    insertStatementBefore(insert_target, final_total_iter);
+    ub_exp = buildVarRefExp(final_iter_counter_name, scope);
+    new_var_list->append_expression(isSgVarRefExp(ub_exp));
+  
+    /*Winnie, interval[i] will make the calculation of remainders simpler*/
+    for(unsigned int i = 0; i < collapsing_factor; i++)
+    {
+        interval[i] = buildIntVal(1);
+        for(unsigned int j = collapsing_factor - 1; j > i; j--)
+        {
+            interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
+        }
+        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
+        SgVariableDeclaration* temp_interval = buildVariableDeclaration(interval_name, buildIntType(), buildAssignInitializer(copyExpression(interval[i]), buildIntType()), scope);
+        insertStatementBefore(insert_target, temp_interval);
+        interval[i] = buildVarRefExp(interval_name, scope);
+        new_var_list->append_expression(isSgVarRefExp(interval[i]));
+    }
+
+
+   //Winnie, starting from here, we are dealing with variables inside loop, update scope
+      scope = getScope(target_loop);
+
+   //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
+    //Winnie, declare a brand new var as the new index
+      string ivar_name = "new_index";
+      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
+  
+  
+     SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
+     ROSE_ASSERT(body);
+     SgExpression* new_exp = NULL;
+     SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
+     std::vector<SgStatement*> new_stmt_list; 
+     
+     SgExprStatement* assign_stmt = NULL;
+     
+     /*  Winnie
+     *   express old iterator variables (i_norm, j_norm ...)  with new_index,  
+     *   new_exp, create new expression for each of the iterators
+     *   i_nom_1 = (_new_index / interval[0])*step[0] + lb[0] 
+     *   i_nom_1_remain_value = (_new_index % interval[0])*step[0] + lb[0], create a new var to store remain value
+     *   create a new var to store total_iters[i]
+     */ 
+     for(unsigned int i = 0; i < collapsing_factor - 1; i ++)  
+     {  
+         if(isPlus[i] == true)
+             new_exp = buildAddOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i]), copyExpression(lb[i]));  //Winnie, (i_remain/interval[i])*step[i] + lb[i]
+         else
+             new_exp = buildAddOp(buildMinusOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i])), copyExpression(lb[i]));  //Winnie, -(i_remain/interval[i])*step[i] + lb[i], for decremental loop
+
+         assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));   
+         new_stmt_list.push_back(assign_stmt); 
+         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i])); 
+
+         if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
+             string remain_var_name= "_remainder";
+             remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  
+             SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
+             remain_exp_temp = buildVarRefExp(remain_var_name, scope);
+             new_stmt_list.push_back(loop_index_decl); 
+         }
+         new_exp = NULL;
+     }
+
+//Winnie, the inner most loop, iter
+    if(isPlus[collapsing_factor - 1] == true)
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1]), lb[collapsing_factor - 1]));  
+    else
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMinusOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1])), lb[collapsing_factor - 1]));   
+     new_stmt_list.push_back(assign_stmt);
+     prependStatementList(new_stmt_list, body);
+
+    /*
+    * step 3: build the new loop, new step is always 1, disregard value of step[i]
+    */
+    SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), buildIntVal(1)); 
+
+    //Winnie, build the new conditional expression/ub
+    SgExprStatement* cond_stmt = NULL;
+    ub_exp = buildSubtractOp(ub_exp, buildIntVal(1));
+    cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar_name,scope),copyExpression(ub_exp)));
+    ROSE_ASSERT(cond_stmt != NULL);
+
+    SgForStatement* new_loop = buildForStatement(init_stmt, cond_stmt,incr_exp, body);  //Winnie, add in the new block!
+    new_loop->set_parent(scope);  //TODO: what's the correct parent?
+
+    replaceStatement(target_loop, new_loop);
+
+    target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
+   // constant folding for the transformed AST
+   ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
+
+    #endif
+
+    return new_var_list;
+}
+
+#endif

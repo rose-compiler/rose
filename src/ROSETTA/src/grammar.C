@@ -2240,11 +2240,32 @@ Grammar::buildForwardDeclarations ()
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n#include \"rosedll.h\"\n", "" /* "<unknown>" */, 1));
+     // Milind Chabbi (8/28/2013): Performance refactoring: make rose_ClassHierarchyCastTable accessible for IS_SgXXX_FAST_MACRO()s
+     size_t maxRows= getRowsInClassHierarchyCastTable();
+     size_t maxCols = getColumnsInClassHierarchyCastTable();
+     string externDeclarationForClassHierarchyCastTable = "\nextern const uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] ;\n";
+     returnString.push_back(StringUtility::StringWithLineNumber(externDeclarationForClassHierarchyCastTable, "", 1));
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
           string className = terminalList[i]->name;
           returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
           returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
+          // Milind Chabbi (8/28/2013): Performance refactoring. 
+          // Providing additional MACRO for each isSgXXX() function.
+          // One can substitue each isSgXXX() function with IS_SgXXX_FAST_MACRO() function.
+          // Being a macro, IS_SgXXX_FAST_MACRO() is unsafe and should be used with care. 
+          // Using IS_SgXXX_FAST_MACRO() with side effect expressions. e.g., IS_SgXXX_FAST_MACRO(*it++) will cause undefined effects.
+          // However, it can be used safely for side effect free expressions e.g., IS_SgXXX_FAST_MACRO(node) and this will improve performance.
+          // A good use case of using IS_SgXXX_FAST_MACRO() is in places where isSgXXX() is very heavily used. 
+          // Substituting all isSgXXX() with IS_SgXXX_FAST_MACRO() worked fine for entire of rose but failed in unsafe uses in tests e.g. src/optimizer/programAnalysis/StencilAnalysis.C
+          string fromVariantString = "(node)->variantT()";
+          string toVariantString = className +"::static_variant";
+          string toVariantBytePositionString = toVariantString + " >> 3";
+          string toVariantbitMaskPositionString =  "(1 << (" +  toVariantString + " & 7))";
+          string rose_ClassHierarchyCastTableAccessString = " (rose_ClassHierarchyCastTable[" + fromVariantString + "][" + toVariantBytePositionString + "] & " + toVariantbitMaskPositionString   + ")";
+          returnString.push_back(StringUtility::StringWithLineNumber("#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + rose_ClassHierarchyCastTableAccessString + ") ? ((" + className + "*) (node)) : NULL) : NULL)", "" /* "<downcast MACRO for " + className + ">" */, 1));
+          // One can replace all isSgXXX() with IS_SgXXX_FAST_MACRO() by enabling the line below. This exists for possible future use.
+          //returnString.push_back(StringUtility::StringWithLineNumber("#define is" + className + "(node) IS_" + className + "_FAST_MACRO(node)", "" /* "<MACRO replacement for " + className + ">" */, 1));
         }
 
   // printf ("In Grammar::buildForwardDeclarations (): returnString = \n%s\n",returnString.c_str());
@@ -2397,6 +2418,119 @@ Grammar::buildVariantEnums() {
   return s;
 }
 
+// Milind Chabbi (8/28/2013): Performance refactoring
+// classHierarchyCastTable is a table where each row represents a SgXXX node and each column represents
+// if the node can be dynamically casted to the other SgXXX node.
+// Sample classHierarchyCastTable 
+//                   | SgNode | SgStatement | SgBreakStmt |
+// --------------------------------------------------------
+// SgNode            | true   |  false      | false       |
+// SgStatement       | true   |  true       | false       |
+// SgBreakStmt       | true   |  true       | true        |
+// --------------------------------------------------------
+// The table, however, instead of storing booleans, is represented using bits in a byte.
+
+
+static uint8_t ** classHierarchyCastTable;
+
+// Set the correct bit in classHierarchyCastTable correspinding to the given row and column
+static void SetBitInClassHierarchyCastTable(size_t row, size_t col){
+    size_t bytePosition = col  >> 3;
+    uint8_t bitPosition = col & 7;
+    classHierarchyCastTable[row][bytePosition] |=  (1 << bitPosition);
+}
+
+// Get the correct bit value from classHierarchyCastTable correspinding to the given row and column
+static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
+    size_t bytePosition = col  >> 3;
+    size_t bitMask = 1 << (col & 7);
+    bool val = classHierarchyCastTable[row][bytePosition] &  bitMask;
+    return val;
+}
+
+// Gets the number of rows in classHierarchyCastTable
+size_t Grammar::getRowsInClassHierarchyCastTable(){
+    return this->astVariantToNodeMap.rbegin()->first;
+}
+
+// Gets the number of columns in classHierarchyCastTable
+size_t Grammar::getColumnsInClassHierarchyCastTable(){
+    return (this->astVariantToNodeMap.rbegin()->first / 8) + 1;
+}
+
+
+// Generates a table (classHierarchyCatTable) populated with information
+// about whether a given SgXXX node can be casted to other SgYYY node.
+// The technique has constant lookup time.
+string
+Grammar::generateClassHierarchyCastTable() {
+    // First allocate the classHierarchyCastTable table
+    size_t maxRows = getRowsInClassHierarchyCastTable();
+    size_t maxCols = getColumnsInClassHierarchyCastTable();
+    classHierarchyCastTable = new uint8_t* [maxRows];
+    for(size_t i = 0 ; i < maxRows; i++){
+        classHierarchyCastTable[i] = new uint8_t[maxCols]();
+    }
+
+    // Populate classHierarchyCastTable by visiting the Sg node tree
+    vector<Terminal*> myParentsDescendents;
+    buildClassHierarchyCastTable(getRootOfGrammar(), myParentsDescendents);
+    
+    // Output the table as a constant in the generated code
+    string s="\nconst uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] = {";
+    bool outerLoopFirst = true;
+    for(size_t i = 0 ; i < maxRows; i++) {
+        if(!outerLoopFirst) {
+            s += ",";
+        } else {
+            outerLoopFirst = false;
+        }
+        bool innerLoopFirst = true;
+        for(size_t j = 0 ; j < maxCols; j++) {
+            if (innerLoopFirst){
+                s +=  "{";
+                innerLoopFirst = false;
+            } else {
+                s += ",";
+            }
+            s += StringUtility::numberToString(classHierarchyCastTable[i][j]);
+        }
+        s += "}\n";
+    }
+    s += "};\n";
+
+    for(size_t i = 0 ; i < maxRows; i++){
+        delete [] classHierarchyCastTable[i]; 
+    }
+    delete []classHierarchyCastTable;
+
+    return s;
+}
+
+// Populates the classHierarchyCastTable with all the types that can be casted to terminal type
+void Grammar::buildClassHierarchyCastTable(Terminal * terminal, vector<Terminal*> & myParentsDescendents) {
+    // obtain the immediate derived classes of the given terminal.
+    vector<Terminal*> myImmediateDescendents = terminal->subclasses;
+    vector<Terminal*> myDescendents ;
+   
+    // recur on the immediate derived classes to obtain the entire class hierarchy rooted at the given node. 
+    for(vector<Terminal*>::iterator it = myImmediateDescendents.begin(), e = myImmediateDescendents.end(); it != e; it++){
+        buildClassHierarchyCastTable(*it, myDescendents);
+    }
+    
+    // add self to the vector
+    myDescendents.push_back(terminal);
+    
+    size_t toVariant= getVariantForTerminal(*terminal);
+    
+    // Set the bits in classHierarchyCastTable indicating all derived types in this subtree can be casted to the type of the terminal.
+    for(vector<Terminal*>::iterator it = myDescendents.begin(), e = myDescendents.end(); it != e; it++){
+        size_t fromVariant= getVariantForTerminal(*(*it));
+        SetBitInClassHierarchyCastTable(fromVariant, toVariant);
+    }
+    // return the list of all types rooted at this subtree to the caller
+    myParentsDescendents.insert(myParentsDescendents.end(), myDescendents.begin(), myDescendents.end());
+}
 
 // AS: new automatically generated variant. Replaces variant().
 // used in variantT()
@@ -2411,6 +2545,13 @@ Grammar::buildClassHierarchySubTreeFunction() {
   s+="switch(v){\n ";
   unsigned int i;
   for (i=0; i < terminalList.size(); i++) {
+    // Chabbi & TV : This generated function is causing a lot of ICACHE misses
+    // This optimization generates case labels iff needed and rest all fall into "default"
+    // TODO: A better way to generate switch case statements is to put common case in the top
+    // and put less common into a nested switch inside the default.
+    if (terminalList[i]->subclasses.empty())
+        continue;
+ 
     s+="case " + string("V_")+string(terminalList[i]->name)+":\n";
 
         s+="{\n";
@@ -2904,6 +3045,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      ROSE_returnClassHierarchySubTreeSourceFile << buildClassHierarchySubTreeFunction();
+     // Include the classHierarchyCastTable in the file for fast casting between compatible types
+     ROSE_returnClassHierarchySubTreeSourceFile << generateClassHierarchyCastTable();
      cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
      ROSE_returnClassHierarchySubTreeSourceFile.close();
 
@@ -3049,7 +3192,7 @@ Grammar::buildCode ()
      string  variantEnumNames=buildVariantEnumNames();
 
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
-     variantEnumNamesFile << "\n const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
+     variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;
@@ -3229,6 +3372,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
         ||nodeName == "SgOmpTargetStatement"
         ||nodeName == "SgOmpTargetDataStatement"
         ||nodeName == "SgOmpSingleStatement"
+        ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
         ||nodeName == "SgOmpDoStatement"
@@ -3518,6 +3662,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                else if (string(node.getName()) == "SgOmpClauseBodyStatement"
                  ||string(node.getName()) == "SgOmpParallelStatement"
                  ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpSimdStatement"
                  ||string(node.getName()) == "SgOmpTaskStatement"
                  ||string(node.getName()) == "SgOmpSectionsStatement"
                  ||string(node.getName()) == "SgOmpTargetStatement"
@@ -3620,6 +3765,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                else if (string(node.getName()) == "SgOmpClauseBodyStatement"
                  ||string(node.getName()) == "SgOmpParallelStatement"
                  ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpSimdStatement"
                  ||string(node.getName()) == "SgOmpTaskStatement"
                  ||string(node.getName()) == "SgOmpSectionsStatement"
                  ||string(node.getName()) == "SgOmpTargetStatement"

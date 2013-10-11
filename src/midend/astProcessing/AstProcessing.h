@@ -32,7 +32,7 @@
 
 
 
-bool 
+ROSE_DLL_API bool 
 SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile* fileToVisit);
 
 /*

@@ -32,6 +32,6 @@ void moveForDeclaredVariables(SgNode* root);
 
 //! Do a simple form of finite differencing on all functions contained within
 //! root (which should be a project, file, or function definition).
-void simpleIndexFiniteDifferencing(SgNode* root);
+void ROSE_DLL_API simpleIndexFiniteDifferencing(SgNode* root);
 
 #endif // FINITEDIFFERENCING_H

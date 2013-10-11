@@ -146,8 +146,16 @@ namespace OmpSupport
     e_map_out,
     e_map_inout,
 
+    // experimental SIMD directive, phlin 8/5/2013
+    e_simd,
+    e_safelen,
+    e_uniform,
+    e_aligned,
+    e_linear,
+
     // not an OpenMP construct
     e_not_omp
+
   }; //end omp_construct_enum
 
   //-------------------------------------------------------------------
@@ -179,20 +187,20 @@ namespace OmpSupport
   //! Some utility functions to manipulate OmpAttribute
   //
   //! A builder for OmpAttribute, useDefined indicates if the directive is added by programmer or not (by autoParallelization)
-  OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node, bool useDefined);
+  ROSE_DLL_API OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node, bool useDefined);
 
   //! Add OmpAttribute to a SgNode
-  void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
+  ROSE_DLL_API void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
   //! Remove OmpAttribute from a SgNode
-  void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
+  ROSE_DLL_API void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
   //! Check if two OmpAttributes are semantically equivalent to each other 
-  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
+  ROSE_DLL_API bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
   
   class OmpAttributeList;
   //! Get OmpAttribute from a SgNode, return NULL if not found
-  OmpAttributeList* getOmpAttributeList(SgNode* node);
+  ROSE_DLL_API OmpAttributeList* getOmpAttributeList(SgNode* node);
 
   //! Get the first OmpAttribute from a SgNode, return NULL if not found
   OmpAttribute* getOmpAttribute(SgNode* node);
@@ -207,12 +215,12 @@ namespace OmpSupport
   omp_construct_enum getEndOmpConstructEnum (omp_construct_enum begin_enum);
 
   //! Generate a pragma declaration from OmpAttribute attached to a statement
-  void generatePragmaFromOmpAttribute(SgNode* sg_node); 
+  ROSE_DLL_API void generatePragmaFromOmpAttribute(SgNode* sg_node); 
   //TODO this is duplicated from autoParallization project's generatedOpenMPPragmas() 
   // We should remove this duplicate once autopar is moved into rose/src 
   
   //! Generate diff text from OmpAttribute attached to a statement
-  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
+  ROSE_DLL_API std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
 
   //------------------------------------------------------------------
   // By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST
@@ -232,7 +240,7 @@ namespace OmpSupport
   //    'omp for' needs scheduling type 
   //------------------------------------------------------------------
 
-  class OmpAttributeList :public AstAttribute
+  class ROSE_DLL_API OmpAttributeList :public AstAttribute
   {
     public:
       std::vector<OmpAttribute*> ompAttriList;
@@ -244,7 +252,7 @@ namespace OmpSupport
   };                      
 
   // One attribute object stores all information within an OpenMP pragma (directive and clauses)
-  class OmpAttribute
+  class ROSE_DLL_API OmpAttribute
   {
     public:
       //!--------------AST connection------------------

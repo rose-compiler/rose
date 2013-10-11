@@ -1142,9 +1142,9 @@ cout.flush();
      if (bases.size() - first_index > 0) {
          curprint(classdecl_stmt -> get_explicit_interface() ? " extends " : " implements ");
          for (int i = first_index; i < bases.size(); i++) {
-             SgBaseClass *interface = isSgBaseClass(bases[i]);
-             ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
-             unparseBaseClass(interface, info);
+             SgBaseClass *iface = isSgBaseClass(bases[i]);
+             ROSE_ASSERT(iface -> get_base_class() -> get_explicit_interface());
+             unparseBaseClass(iface, info);
              if (i + 1 < bases.size()) {
                  curprint(", ");
              }

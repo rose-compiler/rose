@@ -2009,7 +2009,7 @@ int __builtin_ia32_loadupd(double const *);
 int __builtin_ia32_shufpd(double,double,int);
 int __builtin_ia32_storeupd(double*,double);
 int __builtin_ia32_vec_ext_v2df(double,int);
-int __builtin_ia32_shufpd();
+/* int __builtin_ia32_shufpd(); */
 int __builtin_ia32_vec_ext_v4si(int,int);
 int __builtin_ia32_vec_ext_v2di(long long,int);
 int __builtin_ia32_addpd(double,double);

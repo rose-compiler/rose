@@ -409,88 +409,11 @@ AC_SUBST(ROSE_HOME)
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 AC_LANG(C++)
-AX_BOOST_BASE([1.36.0], [], [echo "Boost 1.36.0 or above is required for ROSE" 1>&2; exit 1])
-AC_SUBST(ac_boost_path) dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only be used to set --with-boost in distcheck
 
-# Requested boost version
-echo "Requested minimum boost version: boost_lib_version_req_major     = $boost_lib_version_req_major"
-echo "Requested minimum boost version: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
-echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
-
-# Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
-echo "Boost version being used is: $_version"
-
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
-echo "rose_boost_version = $rose_boost_version"
-
-# Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-#
-# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
-#
-
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
-# not ready
-#AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
-
-# DQ (10/18/2010): Error checking for Boost version.
-if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
-   -o "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37" \
-   -o "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38" \
-   -o "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39" \
-   -o "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40" \
-   -o "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41" \
-   -o "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42" \
-   -o "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43" \
-   -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
-   -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
-   -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" 
-# Not ready   
-#   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
-then
-    echo "Reasonable version of Boost found!"
-else
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version'). Only 1.36 to 1.47 is supported now.])
-fi
-
-# DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
-# not work with ROSE, and use the newer version specified by the user on the configure line.
-echo "In ROSE/configure: ac_boost_path = $ac_boost_path"
-#AC_DEFINE([ROSE_BOOST_PATH],"$ac_boost_path",[Location of Boost specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Boost specified on configure line.])
-#AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) of Wave specified on configure line.])
+ROSE_SUPPORT_BOOST
 
 # DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
-AX_BOOST_THREAD
-AX_BOOST_DATE_TIME
-AX_BOOST_REGEX
-AX_BOOST_PROGRAM_OPTIONS
-#AX_BOOST_SERIALIZATION
-#AX_BOOST_ASIO
-#AX_BOOST_SIGNALS
-#AX_BOOST_TEST_EXEC_MONITOR
-AX_BOOST_SYSTEM
-AX_BOOST_FILESYSTEM
-AX_BOOST_WAVE
-
-# AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
@@ -621,22 +544,12 @@ fi
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
-# PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
-VALGRIND_BINARY=""
-AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that use Valgrind],
-            [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
-             if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
+ROSE_SUPPORT_VALGRIND
 
 AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default preprocessor],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
-
-# Don't set VALGRIND here because that turns on actually running valgrind in
-# many tests, as opposed to just having the path available for
-# uninitializedField_tests
-AC_SUBST(VALGRIND_BINARY)
-AM_CONDITIONAL(USE_VALGRIND, [test "x$VALGRIND_BINARY" != "x"])
 
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
@@ -738,6 +651,8 @@ ROSE_SUPPORT_ATERM
 
 ROSE_SUPPORT_MINT
 
+ROSE_SUPPORT_VECTORIZATION
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
@@ -745,6 +660,22 @@ AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
+AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
+PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
+PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
+
+
+if test "$PYTHON_VERSION_MAJOR_VERSION" -ge "2" && test "$PYTHON_VERSION_MINOR_VERSION" -ge "7"; then
+  approved_python_version=true
+elif  test "$PYTHON_VERSION_MAJOR_VERSION" -ge "3"; then
+  approved_python_version=true
+else
+  approved_python_version=false
+fi
+
+AM_CONDITIONAL(ROSE_APPROVED_PYTHON_VERSION, [$approved_python_version])
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -1877,9 +1808,14 @@ projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/ConstructNameSimilarityAnalysis/Makefile
+projects/CodeThorn/Makefile
+projects/CodeThorn/src/Makefile
+projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1894,7 +1830,11 @@ projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
+projects/EditDistanceMetric/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/fuse/Makefile
+projects/fuse/src/Makefile
+projects/fuse/tests/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
@@ -2028,12 +1968,16 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/StencilManyCore/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
+projects/vectorization/Makefile
+projects/vectorization/src/Makefile
+projects/vectorization/tests/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
@@ -2046,6 +1990,10 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
+projects/LineDeleter/Makefile
+projects/LineDeleter/src/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2078,6 +2026,7 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
@@ -2128,7 +2077,6 @@ tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
-tests/roseTests/astOutliningTests/fortranTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
@@ -2145,6 +2093,7 @@ tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/ompLoweringTests/fortran/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
