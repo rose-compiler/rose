@@ -1,0 +1,231 @@
+include ExpStmt.incl
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+<***********************************************************
+  POET syntax descriptions that translates C language syntax to Fortran
+***********************************************************>
+
+<define UNPARSE UnparseLine/>
+
+<code VoidType> subroutine </code>
+<code IntType pars=(name:"char"|"int"|"unsigned"|"long")> 
+@(switch(name)
+ {
+  case "char": "integer*1"
+  case ("int"|"unsigned"): "integer"
+  case "long" : "integer*4"
+ })
+@
+</code>
+<code FloatType pars=(name:"float"|"double")> 
+@(switch(name)
+ {
+  case "float": "real"
+  case "double" : "double precision"
+ })
+@
+</code>
+<code DeclarationList/>
+
+<code TypeDecl pars=(type) > @type@; </code>
+<code TypeDef pars=(name, type)> typedef @type@ @name@; </code>
+
+<code DeclarationList pars=(content)  rebuild=content parse=LIST(GLOBAL.DECLARATION,"\n")> 
+@content@ 
+</code>
+
+<*********** top-level declarations  ********************>
+
+<code FunctionDecl pars=(name:Name, params : CODE.ParamDeclList, returnType:Type, body:LIST(Stmt,"\n")) >
+@returnType@ @name@(@NameList#(XFORM.GetNamesFromVarDecl(params))@) 
+  @params@
+  @body@
+end
+</code>
+
+<code VarDeclStmt pars=(type, var:NameList) >
+@type@ @var@
+</code>
+
+
+<********************************Types ***************>
+<code Type pars=(content)> @content@ </code>
+<code ConstType pars=(base : Type)>  @base@ </code>
+
+<code PtrType pars=(base) > @base@ </code>
+<code RefType pars=(base) > @base@ </code>
+
+<code CompoundType pars=(base: BaseType, annot : TypeAnnot) >
+@base@ @annot@
+</code>
+
+<code ArrayDim pars=(dim:Name|INT)> @dim@ </code>
+<code ArrayAnnot pars=(dim,init) >
+@dim@
+</code>
+
+<code ArrayType pars=(base:BaseType, dim:ArrayAnnot) > 
+@base@@dim@
+</code>
+
+<********************** Variables **************************>
+
+<code FunctionParameter pars=(content,extraDecls)>
+@content@
+@extraDecls@
+</code>
+
+<code VarDecl pars=(type, var) >
+@type@ @var@ @((type : PtrType|ConstType#(PtrType#_))?@
+dimension @var@(*) @ : "")@
+</code>
+<code ParamDeclList parse=LIST(VarDecl,"\n") />
+
+<xform GetNamesFromVarDecl pars=(input)>
+switch (input)
+{
+case VarDecl#(type,name) : name
+case (first second) : BuildList(GetNamesFromVarDecl(first),GetNamesFromVarDecl(second))
+case ParamDeclList#content: GetNamesFromVarDecl(content)
+case VoidType|"": ""
+case FunctionParameter#(params,extra): BuildList(GetNamesFromVarDecl(params),GetNamesFromVarDecl(extra)) 
+default: ERROR("expecting variable decl but get: " input);
+}
+</xform>
+
+<code VariableWithAnnot pars=(name, annot1, annot2) >
+@annot1 name annot2@
+</code>
+
+<code VariableList pars=(content) parse=LIST(VariableWithAnnot,",") rebuild=content> 
+@content@
+</code>
+
+
+<***********  statements  ********************>
+
+<code EmptyStmt rebuild=""> ; </code>
+<code Break> break; </code>
+<code Continue> continue; </code>
+<code Return pars=(exp)> return @exp@; </code>
+
+<code StmtBlock pars=(stmts) parse=LIST(Stmt,"\n")>
+@stmts@
+</code>
+
+<code ExpStmt pars=(exp)> 
+@exp@
+</code>
+<code SwitchStmt/>
+
+<code Loop pars=(i:Name,start, stop, step)>
+do @i@=@start@,@(stop-1)@,@step@
+</code>
+
+
+<code If pars=(condition) >
+if (@condition@) then
+</code>
+
+<code Else >
+else
+</code>
+
+<code While pars=(condition) >
+while (@condition@) do
+</code>
+
+<code For pars=(init,test,incr) >
+for (@init@; @test@; @incr@)
+</code>
+
+<code Nest pars=(ctrl , body:LIST(Stmt,"\n")) >
+@ctrl@
+   @body@
+@(switch(ctrl)
+{
+ case Loop: "enddo"
+ case If : "endif"
+})@
+</code>
+
+<code CaseLabels/>
+<code SwitchStmt pars=(condition, cases : CaseLabels)>
+switch (@condition@)
+{
+  @cases@
+}
+</code>
+
+<code CaseLabel pars=(label, stmt:LIST(Stmt,"\n"))>
+case @label@: @stmt@
+</code>
+
+<code DefaultLabel pars=(stmt:LIST(Stmt,"\n"))>
+default: @stmt@
+</code>
+
+<code CaseLabels pars=(content) parse=LIST(CaseLabel|DefaultLabel, "\n") rebuild=content>
+@content@
+</code>
+
+
+<**************************** Expressions *********************>
+
+<code ArrayAccess pars=(array,subscript)>
+@array@(@subscript@)
+</code>
+
+<code StructRef pars=(structName:Name,var:Name) >
+@structName@.@var@
+</code>
+
+<code PtrDeref pars=(ptr,var:Name)>
+@ptr@->@var@
+</code>
+
+<code PtrRef pars=(ptr ) >
+*(@ptr@)
+</code>
+
+<code AddrOf pars=(var)>
+&@var@
+</code>
+
+<code Min pars=(s1,s2) > 
+((@s1@ < @s2@)? @s1@ : @s2@)
+</code>
+
+<code Max pars=(s1,s2) > 
+((@s1@ < @s2@)? @s2@ : @s1@)
+</code>
+
+
+<code Assign pars=(lhs, rhs) >
+@lhs@ = @rhs@
+</code>
+

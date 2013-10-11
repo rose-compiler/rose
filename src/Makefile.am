@@ -101,6 +101,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(libroseBinaryLibraries)
 else
 libroseLibraries = \
