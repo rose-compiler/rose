@@ -10,7 +10,7 @@ EXTRA_DIST =
 # ROSE Test Harness scripts
 CHECK_ANSWER = $(srcdir)/check_rose_output
 EXTRA_DIST += check_rose_output
-CHECK_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 # All these executables have the same includes and libraries
 INCLUDES = $(ROSE_INCLUDES) 
@@ -83,8 +83,12 @@ noinst_PROGRAMS += finiteDifferencingDemo
 finiteDifferencingDemo_SOURCES = finiteDifferencingDemo.C
 finiteDifferencingDemo_LDADD = $(LDADD)
 
-#Note: finiteDifferencingDemo was not actually ever run in the original makefile
-
+TEST_TARGETS += finiteDifferencingDemo.passed
+finiteDifferencingDemo.passed:
+	@$(RTH_RUN) \
+		DISABLED="not tested in the original makefile" \
+		CMD=false \
+		$(TEST_EXIT_STATUS) $@
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -94,8 +98,12 @@ noinst_PROGRAMS += testFunctionNormalization
 testFunctionNormalization_SOURCES = testFunctionNormalization.C
 testFunctionNormalization_LDADD = $(LDADD)
 
-#Note: testFunctionNormalization was not actually ever run in the original makefile
-
+TEST_TARGETS += testFunctionNormalization.passed
+testFunctionNormalization.passed:
+	@$(RTH_RUN) \
+		DISABLED="not tested in the original makefile" \
+		CMD=false \
+		$(TEST_EXIT_STATUS) $@
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -112,17 +120,17 @@ cf_TEST_TARGETS = $(addsuffix .passed, $(cf_TEST_NAMES))
 TEST_TARGETS += $(cf_TEST_TARGETS)
 EXTRA_DIST += inputCode_constantFoldingTransformation.C inputCode_constantFoldingTransformation2.C
 
-cf_1.passed: $(srcdir)/inputCode_constantFoldingTransformation.C $(CHECK_EXIT_STATUS) constantFoldingTest 
-	@$(RTH_RUN) CMD="./constantFoldingTest -c $<" $(CHECK_EXIT_STATUS) $@
+cf_1.passed: $(srcdir)/inputCode_constantFoldingTransformation.C $(TEST_EXIT_STATUS) constantFoldingTest 
+	@$(RTH_RUN) CMD="./constantFoldingTest -c $<" $(TEST_EXIT_STATUS) $@
 
 # Liao, 6/27/2009. This test cannot really test what I want. The EDG frontend will do the constant folding (mysteriously to me). 
 # Only translator-introduced constant expressions will be optimized by ROSE.
-cf_2.passed: $(srcdir)/inputCode_constantFoldingTransformation.C $(CHECK_EXIT_STATUS) constantFoldingTest2
+cf_2.passed: $(srcdir)/inputCode_constantFoldingTransformation.C $(TEST_EXIT_STATUS) constantFoldingTest2
 	@$(RTH_RUN) CMD="./constantFoldingTest2 -c $< -rose:output rose_inputCode_constantFoldingTransformation_1.C" \
-		$(CHECK_EXIT_STATUS) $@
+		$(TEST_EXIT_STATUS) $@
 
-cf_3.passed: $(srcdir)/inputCode_constantFoldingTransformation2.C $(CHECK_EXIT_STATUS) constantFoldingTest2
-	@$(RTH_RUN) CMD="./constantFoldingTest2 -c $<" $(CHECK_EXIT_STATUS) $@
+cf_3.passed: $(srcdir)/inputCode_constantFoldingTransformation2.C $(TEST_EXIT_STATUS) constantFoldingTest2
+	@$(RTH_RUN) CMD="./constantFoldingTest2 -c $<" $(TEST_EXIT_STATUS) $@
 
 .PHONY: check-constantFoldingTests
 check-constantFoldingTests: $(cf_TEST_TARGETS)
@@ -142,10 +150,10 @@ TEST_TARGETS += $(icg_TEST_TARGETS)
 EXTRA_DIST += inputCode_implicitCodeGenerationTest.C
 
 icg_SWITCHES = -icg:defaultFunctionGenerator -icg:shortCircuitingTransformation -icg:destructorCallAnnotator
-icg_1.passed: $(top_srcdir)/tests/CompileTests/Cxx_tests/test2004_116.C $(CHECK_EXIT_STATUS) implicitCodeGenerationTest
-	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(CHECK_EXIT_STATUS) $@
-icg_2.passed: $(srcdir)/inputCode_implicitCodeGenerationTest.C $(CHECK_EXIT_STATUS) implicitCodeGenerationTest
-	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(CHECK_EXIT_STATUS) $@
+icg_1.passed: $(top_srcdir)/tests/CompileTests/Cxx_tests/test2004_116.C $(TEST_EXIT_STATUS) implicitCodeGenerationTest
+	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(TEST_EXIT_STATUS) $@
+icg_2.passed: $(srcdir)/inputCode_implicitCodeGenerationTest.C $(TEST_EXIT_STATUS) implicitCodeGenerationTest
+	@$(RTH_RUN) CMD="./implicitCodeGenerationTest $(icg_SWITCHES) -c $<" $(TEST_EXIT_STATUS) $@
 
 
 
@@ -157,10 +165,11 @@ if ROSE_BUILD_OS_IS_CYGWIN
 check-local:
 else
 check-local: $(TEST_TARGETS)
+	@echo "*************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programTransformationTests: make check rule complete (terminated normally) ******"
+	@echo "*************************************************************************************************************"
 endif
 
 clean-local:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(TEST_TARGETS:.passed=.out)
-	rm -f $(TEST_TARGETS:.passed=.err)

@@ -787,8 +787,12 @@ Grammar::setUpSupport ()
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      File.setDataPrototype         ( "bool", "C89_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      File.setDataPrototype         ( "bool", "C99_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "C99_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1619,6 +1623,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::string","astMergeCommandFile", "= \"\"",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Milind Chabbi (9/9/2013): Added a commandline option to use a file to generate persistent id for files
+  // used in different compilation units.
+     Project.setDataPrototype("std::string","projectSpecificDatabaseFile", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/16/2005): Added support to detect use of "-E" on compiler's command line.
   // Special processing is done when "-E" is used with multiple file names on the command line.
      Project.setDataPrototype         ( "bool", "C_PreprocessorOnly", "= false",
@@ -1760,7 +1769,20 @@ Grammar::setUpSupport ()
   // useful in the future for multiple file handling in other languages.
      Project.setDataPrototype("SgGlobal*", "globalScopeAcrossFiles", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     
+
+  // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
+  // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
+  // "libavutil/file.c" on the command line and we by default put it into the current directory (top level directory 
+  // in the directory structure).  But it is a subtle and difficult to reproduce error that the generated file will
+  // not compile properly from the top level directory (even when the "-I<absolute path>/libavutil" is specified).
+  // We need an option to put the generated file back into the original directory where the input source files is
+  // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
+  // the identical rules for resolving head files as it would have for the original input file (had it been compiled
+  // using the backend compiler instead).
+  // DQ (9/16/2013): Changed name from "build_generated_file_in_same_directory_as_input_file" to "unparse_in_same_directory_as_input_file".
+     Project.setDataPrototype("bool", "unparse_in_same_directory_as_input_file", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);
@@ -2047,7 +2069,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgType*", "type", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Could be an array bound (integer) or some unkown type
+  // Could be an array bound (integer) or some unknown type
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2062,7 +2084,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
 #if 1
      TemplateArgument.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/10/2013): template arguments can be a SgInitializedName or an expression when it is a non-type (see test2013_303.C).
+  // I think we want to eventually make this a constructor argument, but not at first.
+     TemplateArgument.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateClassDeclaration*", "templateClassDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype     ( "SgTemplateFunctionDeclaration*", "templateFunctionDeclaration", "= NULL",
@@ -2073,6 +2103,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -2105,7 +2138,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
   // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
-  // function parameters, and I am not sure if it is useful anyhwere else.
+  // function parameters, and I am not sure if it is useful anywhere else.
      TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

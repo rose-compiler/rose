@@ -1,0 +1,7 @@
+sed 's/\[[a-zA-Z=!&|"_ 0-9:;{}(),-]*\]//g' $1 > tmp1.dot
+grep '\->' tmp1.dot > tmp2.dot
+echo "digraph G {" > nolabels_$1
+cat tmp2.dot >> nolabels_$1
+echo "}" >> nolabels_$1
+rm tmp1.dot
+rm tmp2.dot

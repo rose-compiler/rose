@@ -230,6 +230,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/astProcessing \
+     -I$(top_srcdir)/src/midend/astMatching \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/binaryAnalyses \
      -I$(top_srcdir)/src/midend/programAnalysis \
@@ -289,6 +290,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/programTransformation/astInlining \
      -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
      -I$(top_srcdir)/src/midend/astProcessing \
+     -I$(top_srcdir)/src/midend/astMatching \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
      -I$(top_srcdir)/src/midend/astUtil/annotation \
@@ -448,10 +450,17 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 # some of the binary analysis tests.
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
+# Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
+# "make" command-line, but the default depends on the value of the verbosity $(V) flag.
 
-# Test harness variables. See "rth_run.pl --help" for more info.
-RTH_RUN=$(top_srcdir)/scripts/rth_run.pl \
-	srcdir=$(srcdir) top_srcdir=$(top_srcdir) \
+RTH_RUN_FLAGS_V_ =
+RTH_RUN_FLAGS_V_0 =
+RTH_RUN_FLAGS_V_1 = --immediate-output
+RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
+
+RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
+	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
+	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl

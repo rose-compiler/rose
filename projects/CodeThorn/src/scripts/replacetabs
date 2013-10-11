@@ -1,0 +1,2 @@
+#/bin/bash
+sed 's/\t/    /g' $1 > /tmp/__notabs && mv /tmp/__notabs $1

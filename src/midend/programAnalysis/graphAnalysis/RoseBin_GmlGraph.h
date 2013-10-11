@@ -11,7 +11,7 @@
 #include "RoseBin_Graph.h"
 
 
-class RoseBin_GMLGraph : public RoseBin_Graph {
+class ROSE_DLL_API RoseBin_GMLGraph : public RoseBin_Graph {
  private:
   std::string getInternalNodes(SgGraphNode* node,
                                bool forward_analysis, SgAsmNode* internal);

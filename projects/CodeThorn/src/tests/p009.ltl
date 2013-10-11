@@ -1,0 +1,16 @@
+----------------------------------------
+(G ! oF)
+output F does never occur
+----------------------------------------
+(G (! iA | (F oA)))
+output A responds to input A
+----------------------------------------
+(G (! iB | (F oC)))
+output C responds to input B
+----------------------------------------
+(G (! iC | (F oD)))
+output D responds to input C
+----------------------------------------
+(G (! iD | (F oB)))
+output B responds to input D
+----------------------------------------

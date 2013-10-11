@@ -144,10 +144,25 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("In UnparseLanguageIndependentConstructs::statementFromFile(): sourceFilename = %s \n",sourceFilename.c_str());
+     if (stmt->get_file_info()->isFrontendSpecific() == false)
+        {
+          int    stmt_line              = stmt->get_file_info()->get_line();
+          int    stmt_physical_line     = stmt->get_file_info()->get_physical_line();
+          string stmt_filename          = stmt->get_file_info()->get_filenameString();
+          string stmt_physical_filename = stmt->get_file_info()->get_physical_filename();
+
+          printf ("In UnparseLanguageIndependentConstructs::statementFromFile(): sourceFilename = %s \n",sourceFilename.c_str());
+          printf ("   --- stmt_physical_filename = %s stmt_physical_line = %d \n",stmt_physical_filename.c_str(),stmt_physical_line);
+          printf ("   --- stmt = %p = %s stmt_filename  = %s line = %d \n",stmt,stmt->class_name().c_str(),stmt_filename.c_str(),stmt_line);
+
+          if (isSgTemplateInstantiationDecl(stmt) != NULL)
+             {
+               stmt->get_file_info()->display("case of SgTemplateInstantiationDecl: debug");
+             }
+        }
 #endif
 
-#if 1
+#if 0
   // DQ (2/15/2013): This might not be required now that we support physical filenames (and physical line numbers).
 
   // DQ (12/23/2012): This special handling of the "conftest.c" file is no linger required.
@@ -156,11 +171,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
   // to both the logical source position AND the physical source position, this should not 
   // be required.
 
+  // DQ (9/17/2013): Updated this test to handle C++ versions of autoconf tests.
   // DQ (10/8/2012): We want to allow ROSE to work with autoconf tests.  The nature
   // of these tests are that they have a #line directive "#line 1227 "configure"" 
   // and are in a file called: "conftest.c" and in some cases have a include file 
   // named: "confdef.h".
-     if (StringUtility::stripPathFromFileName(sourceFilename) == "conftest.c") 
+     string stmt_filename = StringUtility::stripPathFromFileName(sourceFilename);
+     if ( (stmt_filename == "conftest.c") || (stmt_filename == "conftest.C") )
         {
           ROSE_ASSERT(stmt->get_file_info() != NULL);
           string statementfilename = stmt->get_file_info()->get_filenameString();
@@ -172,7 +189,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
           if (statementfilename == "configure")
              {
 #if 0
-               printf ("In statementFromFile(): Detected an autocon generated file used to test aspects of the system as part of an application's build system stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               printf ("In statementFromFile(): Detected an autoconf (configure) generated file used to test aspects of the system as part of an application's build system stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
                return true;
              }
@@ -181,8 +198,18 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
      if (unp->opt.get_unparse_includes_opt() == true)
         {
-        // If we are to unparse all included files into the source file this this is ALWAYS true
-           statementInFile = true;
+       // If we are to unparse all included files into the source file this this is ALWAYS true
+          statementInFile = true;
+
+       // DQ (9/16/2013): Restrict the unparsing using the -rose:unparse_includes option to eliminate the declarations added as part of the front-end support for compatability with the backend.
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+          if (declarationStatement != NULL && stmt->get_file_info()->isFrontendSpecific() == true)
+             {
+#if 0
+               curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (skipped) */ \n");
+#endif
+               statementInFile = false;
+             }
         }
        else
         {
@@ -211,9 +238,11 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
           bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
 #if 0
-          printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
-          printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
-          info.display("Inside of statementFromFile()");
+          printf ("In statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
+          printf ("In statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
+#endif
+#if 0
+          info.display("In statementFromFile()");
 #endif
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
@@ -230,13 +259,50 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // DQ (8/17/2005): Need to replace this with call to compare Sg_File_Info::file_id 
             // numbers so that we can remove the string comparision operator.
             // statementfilename = ROSE::getFileName(stmt);
-               statementfilename = stmt->get_file_info()->get_filenameString();
+
+            // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
+            // statementfilename = stmt->get_file_info()->get_filenameString();
+               statementfilename = stmt->get_file_info()->get_physical_filename();
+
+               if (info.get_language() == SgFile::e_Fortran_output_language)
+                  {
+                 // DQ (9/24/2013): In the case of Fortran we need to generate the preprocessor name (at least for file requireing CPP).
+                 // This was handled properly under the previous implementation using the logical source position, so for Fortran we 
+                 // use the logical source position as a basis for knowing which statements to be output.  The case of C/C++ is 
+                 // more sophisticated (test autoconf test codes) and so it requires the physical source position.  Ideally, the 
+                 // fortran support would have the same implementation, but the handling of intermdiate preprocessed files makes 
+                 // this more complex (and it should be a seperate fix to handle that).
+                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(stmt->get_file_info()->get_physical_filename());
+                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(sourceFilename);
+                    statementfilename = stmt->get_file_info()->get_filenameString();
 #if 0
-               printf ("Inside of statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
+                    printf ("sourceFilename                                 = %s \n",sourceFilename.c_str());
+                    printf ("statementfilename                              = %s \n",statementfilename.c_str());
+                    printf ("stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
+                    printf ("stmt->get_file_info()->get_filenameString()    = %s \n",stmt->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                    printf ("In statementFromFile(): Exiting as a test in the Fortran support for source file identification \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                    statementfilename = stmt->get_file_info()->get_physical_filename();
+#if 0
+                    printf ("In statementFromFile(): Exiting as a test in the NON-Fortran support for source file identification \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#if 0
+               printf ("In statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
+               printf ("In statementFromFile(): stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
 #endif
             // DQ (10/22/2007): Allow empty name strings (to support #line n "")
             // ROSE_ASSERT (statementfilename.empty() == false);
 
+            // DQ (9/20/2013): If this is a performance issue, an optimization would be to use file_id's instead of strings (filenames).
+            // However, this does not appear to be an important optimization.
                if ( statementfilename == sourceFilename )
                   {
                     statementInFile = true;
@@ -247,14 +313,14 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
                if (includeDirectiveStatement != NULL) 
                   {
-                    if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename)
+                    if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                        {
                          statementInFile = true;
                        }
                   }
              }
 #if 0
-          printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
+          printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
                stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(),statementfilename.c_str(), sourceFilename.c_str());
 #endif
@@ -264,7 +330,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("\nstatementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     printf ("In statementFromFile(): statementInFile = %p = %s = %s = %s \n\n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
 #endif
 #if 0
   // stmt->get_file_info()->display("debug why false");
@@ -784,6 +850,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
+               case V_SgOmpSimdStatement:
                     unparseOmpGenericStatement (stmt, info); 
                     break;
 
@@ -1652,10 +1719,44 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
                if (unp->opt.get_unparse_includes_opt() == true)
                   {
-                 // If we are unparsing the include files then we can simplify the 
+                 // DQ (9/16/2013): This is an error for C style comments spanning more than one line.
+                 // To fix this just unparse the comment directly, since the syntax to make it a comment 
+                 // is included in the string.
+                 // Original comment: If we are unparsing the include files then we can simplify the 
                  // CPP directive processing and unparse them all as comments!
                  // Comments can also be unparsed as comments (I think!).
-                    curprint (  "// " + (*i)->getString());
+                 // curprint (  "// " + (*i)->getString());
+
+                 // DQ (9/16/2013): New version of code.
+                    switch ( (*i)->getTypeOfDirective() )
+                       {
+                      // Comments don't have to be further commented
+                         case PreprocessingInfo::FortranStyleComment:
+                         case PreprocessingInfo::F90StyleComment:
+                         case PreprocessingInfo::C_StyleComment:
+                         case PreprocessingInfo::CplusplusStyleComment:
+                              if ( !info.SkipComments() )
+                                 {
+                                   curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                         default:
+                            {
+                              if ((*i)->getNumberOfLines() == 1)
+                                 {
+                                // DQ (9/16/2013): Commented out single line CPP directives is easy, so go ahead and do that.
+                                // This used later style C comment syntax.  This permits the user to see the original CPP
+                                // directives in a way that they will have no effect.
+                                   curprint("// " + (*i)->getString());
+                                 }
+                                else
+                                 {
+                                // DQ (9/16/2013): Multi-line CPP directives are a bit more complex so ignore them.
+                                   curprint("/* multi-line CPP directive ignored (no robust way to comment them out yet implemented) */\n");
+                                 }
+                            }
+                       }
                   }
                  else
                   {
@@ -1671,10 +1772,17 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
                               if ( !info.SkipComments() )
                                  {
+                                   ROSE_ASSERT(unp->opt.get_unparse_includes_opt() == false);
+#if 1
+                                // DQ (9/16/2013): This is simpler code.
+                                   curprint((*i)->getString());
+#else
+                                // DQ (9/16/2013): This predicate should be always false.
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                         curprint ( string("// " ) + (*i)->getString());
                                      else
                                         curprint ( (*i)->getString());
+#endif
                                  }
                               break;
 
@@ -4350,12 +4458,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     case V_SgOmpPrivateClause:
       curprint(string(" private("));
       break;
+    case V_SgOmpUniformClause:
+      curprint(string(" uniform("));
+      break;
+    case V_SgOmpAlignedClause:
+      curprint(string(" aligned("));
+      break;
     case V_SgOmpReductionClause:
       {
         curprint(string(" reduction("));
         //reductionOperatorToString() will handle language specific issues 
         curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
         curprint(string(" : "));
+      break;
+    case V_SgOmpLinearClause:
+      curprint(string(" linear("));
       break;
       }
     case V_SgOmpMapClause:
@@ -4516,6 +4633,9 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpReductionClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
+    case V_SgOmpLinearClause:
+    case V_SgOmpUniformClause:
+    case V_SgOmpAlignedClause:
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
         break;
@@ -4734,6 +4854,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("single "));
+        break;
+      }
+      case V_SgOmpSimdStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("simd "));
         break;
       }
      case V_SgOmpSectionsStatement:
@@ -5121,10 +5247,23 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // Make this the same precedence as a SgFunctionCallExp.
           case V_SgTypeTraitBuiltinOperator: return 16;
 
+       // DQ (9/25/2013): Adding support for new IR node (C90 and C++ compound literals).
+          case V_SgCompoundLiteralExp: return 0;
+
+       // DQ (9/25/2013): Adding support for Fortran user defined binary operators (however, I am not certain this is the correct precedence).
+          case V_SgUserDefinedBinaryOp: return 0;
+
+       // DQ (9/25/2013): Adding support for C/C++ asm operator (however, I am not certain this is the correct precedence).
+          case V_SgAsmOp: return 0;
+
           default:
              {
-#if PRINT_DEVELOPER_WARNINGS | 1
+            // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
                printf ("Warning: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#if 0
+            // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
+               printf ("Error: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               ROSE_ASSERT(false);
 #endif
              }
         }
@@ -5142,6 +5281,14 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
   // I have added the case for SgCastExp, but noticed that there appear to be many incorrect entries for associativity for the 
   // other operators.  This function is called in the evaluation for added "()" using the operator precedence (obtained from
   // the function: getPrecedence()).
+
+  // DQ (9/25/2013): It is an additional issue that some associativity rules are language dependent.  For example, I understand 
+  // that Fortran supports A - B - C as A - (B - C) (right associative) where as C and C++ would treat it as (A - B) - C (left 
+  // associative).  Currently all associativity is defined in terms of C/C++, this is something to fix for the Fortran.  In 
+  // general we add parenthesis to support the explict handling wherever possible (I think). As a rule, Fortran relational 
+  // operators are not associative.  The exponentiation operator associates right to left (right associative).  Thus, A**B**C 
+  // is equal to A**(B**C) rather than (A**B)**C. All other FORTRAN operators are left to right associative (left associative)
+  // (however it appears to contradict the stated rule for minus (above).
 
      int variant = GetOperatorVariant(expr);
      switch (variant)
@@ -5240,12 +5387,24 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgDotExp:
               return e_assoc_right;
 
+       // DQ (9/25/2013): The Fortran SgExponentiationOp has right associativity.
+           case V_SgExponentiationOp:
+              return e_assoc_right;
+
+       // DQ (9/25/2013): I believe that the Fortran SgConcatenationOp has left associativity.
+          case V_SgConcatenationOp:
+              return e_assoc_left;
+
           default:
              {
+            // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
             // The implementation of this function assumes unhandled cases are not associative.
-// #if PRINT_DEVELOPER_WARNINGS
-               printf ("getAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-// #endif
+               printf ("Warning: getAssociativity(): Undefined expression variant = %d = %s (returning e_assoc_none) \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+#if 0
+            // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
+               printf ("Error: getAssociativity(): Undefined expression variant = %d = %s (returning e_assoc_none) \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               ROSE_ASSERT(false);
+#endif
              }
         }
 

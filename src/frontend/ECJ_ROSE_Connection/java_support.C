@@ -1366,10 +1366,12 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && (*i) != ::globalScope /* astJavaScopeStack.end() */; i++) {
         symbol = (isSgClassDefinition(*i)
                       ? lookupSimpleNameVariableInClass(name, (SgClassDefinition *) (*i))
-                      : (*i) -> lookup_symbol(name));
-// TODO: Remove this!
-//        if ((*i) == ::globalScope)
-//            break;
+                   // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
+                   // lookup_variable_symbol() should have been called in place of the more general lookup_symbol() function.
+                   // : (*i) -> lookup_symbol(name));
+                      : (*i) -> lookup_variable_symbol(name));
+        if ((*i) == ::globalScope)
+            break;
     }
 
     return isSgVariableSymbol(symbol);
@@ -1392,7 +1394,9 @@ SgJavaLabelSymbol *lookupLabelByName(const SgName &name) {
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgJavaLabelSymbol(symbol))) && (*i) != ::globalScope /* astJavaScopeStack.end() */; i++) {
         if (isSgClassDefinition(*i))
             break;
-        symbol = (*i) -> lookup_symbol(name);
+     // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
+     // symbol = (*i) -> lookup_symbol(name);
+        symbol = (*i) -> lookup_symbol(name,NULL,NULL);
 // TODO: Remove this!
 //        if ((*i) == ::globalScope)
 //            break;

@@ -145,8 +145,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_38.c \
      test2012_39.c \
      test2012_40.c \
-     test2012_41.c \
      test2012_42.c \
+     test2012_41.c \
      test2012_43.c \
      test2012_46.c \
      test2012_47.c \
@@ -273,6 +273,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_01.c \
      test2013_02.c \
      test2013_03.c \
+     test2013_05.c \
      test2013_06.c \
      test2013_07.c \
      test2013_08.c \
@@ -303,16 +304,76 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_33.c \
      test2013_34.c \
      test2013_35.c \
+     test2013_36.c \
+     test2013_37.c \
+     test2013_38.c \
+     test2013_39.c \
+     test2013_40.c \
+     test2013_41.c \
+     test2013_42.c \
+     test2013_43.c \
+     test2013_44.c \
+     test2013_45.c \
+     test2013_46.c \
+     test2013_47.c \
+     test2013_48.c \
+     test2013_49.c \
+     test2013_50.c \
+     test2013_51.c \
+     test2013_52.c \
+     test2013_53.c \
+     test2013_54.c \
+     test2013_55.c \
+     test2013_56.c \
+     test2013_57.c \
+     test2013_58.c \
+     test2013_59.c \
+     test2013_60.c \
+     test2013_61.c \
+     test2013_62.c \
+     test2013_63.c \
+     test2013_64.c \
+     test2013_65.c \
+     test2013_66.c \
+     test2013_67.c \
+     test2013_68.c \
+     test2013_69.c \
+     test2013_70.c \
+     test2013_71.c \
+     test2013_72.c \
+     test2013_73.c \
+     test2013_74.c \
      math.c \
      complex_01.c \
+     stdio.c \
+     test2006_48.c  \
+     test2006_132.c \
+     test2010_04.c \
+     test2010_10.c \
+     test2010_12.c \
+     test2010_11.c \
+     test2010_14.c \
      constants.c
 
-# DQ (7/28/2013): This is a problem for the new block support.
+# DQ (9/9/2013): This is a problem for the new block support.
+#     test2012_23.c 
+#     test2012_25.c 
+#     test2012_36.c 
+#     test2012_42.c
+#     test2012_101.c
+#     test2012_102.c
+#     test2012_103.c 
+#     test2012_104.c 
+#     test2012_105.c 
+#     test2012_116.c 
+#     test2012_118.c 
+#     test2012_119.c 
 
 
 # DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
 # test2013_04.c 
 
+# DQ (9/2/2013): This is now fixed.
 # DQ (6/19/2013): Failing case of include used to initialize array (still working on this case).
 # test2013_05.c 
 
@@ -393,7 +454,6 @@ endif
 if !ROSE_USE_CLANG_FRONTEND
    TESTCODES_REQUIRED_TO_PASS += \
      test2004_21.c \
-     test2005_168.c \
      test2006_65.c
 if !ROSE_USE_EDG_VERSION_4_4
 if !ROSE_USE_EDG_VERSION_4_7
@@ -449,10 +509,8 @@ TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
-ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING) \
-$(OLD_TESTCODES_REQUIRED_TO_PASS)
+# ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) $(OLD_TESTCODES_REQUIRED_TO_PASS)
+ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
@@ -466,9 +524,16 @@ if !ROSE_USE_CLANG_FRONTEND
 endif
 ROSE_FLAGS += -w
 
+# TOO1 (2013-09-17): Required by test2005_168.o to find "rosedll.h",
+#                    introduced by CMake work.
+ROSE_FLAGS += -I$(top_srcdir)/src/frontend/SageIII/
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
+PASSING_TEST_Objects_passed = ${TESTCODES:.c=.o.passed}
+PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
+TEST_Objects_passed = ${ALL_TESTCODES:.c=.o.passed}
+TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
@@ -486,20 +551,52 @@ testTranslator = ../../testTranslator
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-$(TEST_Objects): ../../testTranslator
-	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+#$(TEST_Objects): ../../testTranslator
+#	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+
+# DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
+$(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
+# test2005_168.o: $(srcdir)/test2005_168.c
 test2005_168.o: $(srcdir)/test2005_168.c
-	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+#	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (11/1/2012): Added test code to test string concatination using a value defined 
 # via a macro specified on the command line. This tests the string quoting mechanism.
 test2012_145.o: $(srcdir)/test2012_145.c
-	$(testTranslator) $(ROSE_FLAGS) -DSTRING_MACRO=\"some_text\" -c $(srcdir)/test2012_145.c
+#	NOTE: Additional escapes are required to handle quoted string handed on command line for ROSE Test Harness (RTH).
+#	$(testTranslator) $(ROSE_FLAGS) -DSTRING_MACRO=\"some_text\" -c $(srcdir)/test2012_145.c
+	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) -DSTRING_MACRO=\\\"some_text\\\" -c $(srcdir)/test2012_145.c" $(top_srcdir)/scripts/test_exit_status $@
 
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
+
+test_build_generated_file_in_same_directory_as_input_file.passed: %.passed: $(testTranslator)
+	@mkdir -p test_directory
+	@cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
+#	$(testTranslator) -rose:unparse_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+	@$(RTH_RUN) CMD="$(testTranslator) -rose:unparse_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option.passed: %.passed: $(testTranslator)
+#	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_75.c -o test2013_75_unparse_headers.o
+	@$(RTH_RUN) CMD="$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_75.c -o test2013_75_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
+# is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
+test_unparse_includes_option_with_link.passed: %.passed: $(testTranslator)
+#	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) $(srcdir)/test2013_76.c -o test2013_76_unparse_headers
+	@$(RTH_RUN) CMD="$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_76.c -o test2013_76_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/17/2013): Added autoconf style link test.
+test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
+#	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
+	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -511,8 +608,13 @@ caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(testTranslator) $(ROSE_FLAGS) $^ -o caller.out
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
-test2008_02.o: $(srcdir)/test2008_02.c
-	env ROSE_TEST_ELSE_DISAMBIGUATION=x $(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
+# test2008_02.o: $(srcdir)/test2008_02.c
+#	env ROSE_TEST_ELSE_DISAMBIGUATION=x $(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
+
+# test2008_02.o: $(srcdir)/test2008_02.c
+test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
+	@cp $(srcdir)/test2008_02.c else_case_disambiguation_test.c
+	@$(RTH_RUN) CMD="env ROSE_TEST_ELSE_DISAMBIGUATION=x $(testTranslator) $(ROSE_FLAGS) -c else_case_disambiguation_test.c" $(top_srcdir)/scripts/test_exit_status $@
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -543,16 +645,26 @@ check-local:
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects_passed)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
+	@$(MAKE) test_unparse_includes_option.passed
+	@$(MAKE) test_unparse_includes_option_with_link.passed
+	@$(MAKE) test_else_case_disambiguation.passed
+	@$(MAKE) test_common_configure_test_with_link.passed
+	@$(MAKE) test2005_168.o
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
+	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out *.dot
 	rm -rf QMTest
+	rm -rf test_directory
+	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
+	rm -f *.err *.passed *.failed
 
 ################################################################################
 #

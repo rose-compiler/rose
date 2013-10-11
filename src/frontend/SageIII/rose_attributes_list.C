@@ -2274,6 +2274,25 @@ ROSEAttributesList::get_filenameIdSet()
    }
 
 
+#if 0
+// DQ (9/19/2013): generate the number associated with each position relative to the attached IR node.
+size_t
+ROSEAttributesList::numberByRelativePosition(PreprocessingInfo::RelativePositionType pos)
+   {
+     size_t returnValue = 0;
+
+     vector<PreprocessingInfo*>::iterator i = attributeList.begin();
+     for (i = attributeList.begin(); i != attributeList.end(); i++)
+        {
+          if ( (*i)->getRelativePosition() == pos )
+             {
+               returnValue++;
+             }
+        }
+
+     return returnValue;
+   }
+#endif
 
 //##############################################################################
 //

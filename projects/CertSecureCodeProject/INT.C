@@ -444,15 +444,16 @@ bool INT14_C( const SgNode *node ) {
         return false;
 }
 
-
-/**
+/* *
  * Ensure that operations on signed integers do not result in overflow
  *
- * \note We only check the Unary negation case here
+ * note We only check the Unary negation case here
  *
- * \see INT33_C
+ * see INT33_C
  */
-bool INT32_C( const SgNode *node ) {
+// DQ (9/5/2013): Note that INT32_C is the name of a typename in a header file somewhere in the GNU or Linux system (so it is a bad function name).
+// bool INT32_C( const SgNode *node )
+bool INT32_C_XXX( const SgNode *node ) {
         const SgMinusOp *negOp = isSgMinusOp(node);
         if(!negOp)
                 return false;
@@ -562,7 +563,9 @@ bool INT(const SgNode *node) {
   violation |= INT12_C(node);
   violation |= INT13_C(node);
   violation |= INT14_C(node);
-  violation |= INT32_C(node);
+// DQ (9/5/2013): Note that INT32_C is the name of a typename in a header file somewhere in the GNU or Linux system (so it is a bad function name).
+// violation |= INT32_C(node);
+  violation |= INT32_C_XXX(node);
   violation |= INT33_C(node);
   violation |= INT34_C(node);
   return violation;

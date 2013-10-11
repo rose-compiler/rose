@@ -20,7 +20,8 @@ class GenericGrid
 #endif
 
           typedef GenericGridData RCData;
-       // Note that currently the unparse reports that the parent of rcData
+
+       // Note that currently the unparser reports that the parent of rcData
           RCData* rcData;
 
 #if ALTERNATE_FIX
