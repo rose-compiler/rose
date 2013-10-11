@@ -1,46 +1,43 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
+TEST_TARGETS =
+EXTRA_DIST =
 
-# To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-bin_PROGRAMS = traversalArray
-
-# This appears to be a generic translator
+#------------------------------------------------------------------------------------------------------------------------
+# traversalArray: this appears to be a generic translator
+noinst_PROGRAMS += traversalArray
 traversalArray_SOURCES = traversalArray.C
 
-# DQ (8/14/2004) Developer's Note:
-# This permits the use of the pair of libraries -lrose -ledg OR the longer 
-# list of libraries (the later option is much faster for development work).
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-# Turn on GNU Coverage Tool (gcov)
-# CXX += -fprofile-arcs -ftest-coverage
-
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
 # This was a bug specific to the normalization of source file names to absolute paths
-testTraversalArray: traversalArray
-	./traversalArray -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/input_traversalArray.C
+TEST_TARGETS += traversalArray1.passed
+EXTRA_DIST += input_traversalArray.C
+traversalArray1.passed: input_traversalArray.C traversalArray
+	@$(RTH_RUN) \
+		DISABLED="not tested in original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
 # Pick a random large file...
-testRoseTraversalArray: traversalArray
-	./traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+TEST_TARGETS += traversalArray2.passed
+traversalArray2.passed: $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C traversalArray
+	@$(RTH_RUN) \
+		DISABLED="not tested in original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-check-local:
-	@echo "*******************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/mergeTraversal_tests: make check rule complete (terminated normally) ******"
-	@echo "*******************************************************************************************************"
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
 
-distclean-local:
-	rm -rf Makefile
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf *.o *.ps *.dot rose_*.C rose_*.c core *.int.c a.out 
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
 
-cleandata:
-	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o
-
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST += CMakeLists.txt

@@ -30,7 +30,22 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_257.C \
    test2013_258.C \
    test2013_259.C \
-   test2013_260.C
+   test2013_260.C \
+   test2013_261.C 
+
+# Current problem test codes:
+#  test2013_262.C 
+#  test2013_263.C 
+#  test2013_264.C 
+#  test2013_265.C 
+#  test2013_266.C 
+#  test2013_267.C 
+#  test2013_268.C 
+#  test2013_269.C 
+
+# This fails on gnu 4.4.5 compiler, and is a part of "make test_common_configure_test_with_link_part_3"
+#  test2013_270.C
+
 
 # DQ (9/10/2013): Test failing for switch without case statement (made up example, 
 # but we will want it to pass as part of further switch statement work later).
@@ -556,7 +571,9 @@ TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
+PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed} ${ROSE__CXX_TESTS__BOOST:.C=.C.passed}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
+TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
 
 # DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
@@ -574,9 +591,27 @@ TEST_TRANSLATOR = ../../testTranslator
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 # $(TEST_Objects):
-$(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
+# $(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
+# if !ROSE_USE_INSURE
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
+# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# else
+# #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+# #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
+# #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	echo "Removing the just built copy of lt-testTranslator to save space..."
+# #	rm -f testTranslator_$(@:.o=)
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+# endif
+
+# $(TEST_Sources_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+# $(TEST_Sources): %.passed: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
+$(TEST_Sources): %.passed: $(TEST_TRANSLATOR)
 if !ROSE_USE_INSURE
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
@@ -607,48 +642,74 @@ test2005_56.o: $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
 
 test2010_01.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+	@echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_02.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+	@echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
 
 test2010_07.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+	@echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $(srcdir)/test2010_07.C -o test2010_07.o
 
 test2010_08.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+	@echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
 
-$(ROSE__CXX_TESTS_DIR)/test2013_09.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+#$(ROSE__CXX_TESTS_DIR)/test2013_09.o: $(TEST_TRANSLATOR)
+test2013_09.C.passed: $(TEST_TRANSLATOR)
+	@echo "Running boost specific test."
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/test2013_09.C -o test2013_09.o
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/test2013_09.C -o test2013_09.o
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
+	@echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
 
-$(ROSE__CXX_TESTS_DIR)/test2013_235.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_235.C -o test2013_235.o
+# $(ROSE__CXX_TESTS_DIR)/test2013_235.o: $(TEST_TRANSLATOR)
+test2013_235.C.passed: $(TEST_TRANSLATOR)
+	@echo "Running boost specific test."
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_235.C -o test2013_235.o
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
-$(ROSE__CXX_TESTS_DIR)/test2013_236.o: $(TEST_TRANSLATOR)
-	echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
+# $(ROSE__CXX_TESTS_DIR)/test2013_236.o: $(TEST_TRANSLATOR)
+test2013_236.C.passed: $(TEST_TRANSLATOR)
+	@echo "Running boost specific test."
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
 # and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
-test_unparse_includes_option: $(TEST_TRANSLATOR)
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
+test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
-test_unparse_includes_option_with_link: $(TEST_TRANSLATOR)
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
+test_unparse_includes_option_with_link.passed: $(TEST_TRANSLATOR)
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/17/2013): Added autoconf style link test.
+test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/conftest.C conftest.C
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_1
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_1" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/22/2013): Added autoconf style link test.
+test_common_configure_test_with_link_part_2.passed: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/conftest_2.C conftest.C
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_2
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (9/22/2013): Added autoconf style link test.
+test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/conftest_3.C conftest.C
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_3
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
@@ -737,20 +798,27 @@ hpctoolkit:
 
 
 check-local:
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@$(MAKE) test_unparse_includes_option
-	@$(MAKE) test_unparse_includes_option_with_link
+#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Sources)
+	@$(MAKE) test_unparse_includes_option.passed
+	@$(MAKE) test_unparse_includes_option_with_link.passed
+	@$(MAKE) test_common_configure_test_with_link_part_1.passed
+	@$(MAKE) test_common_configure_test_with_link_part_2.passed
+#	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
+#	@$(MAKE) test_common_configure_test_with_link_part_3
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
-	rm -f test2013_260_unparse_headers
+	rm -f test2013_260_unparse_headers conftest_configure_test*
+	rm -f conftest.C
+	rm -f *.passed *.failed *.err
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
@@ -808,14 +876,14 @@ TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
                           # tests = $gnu_time * $TIMEOUT_TOLERANCE
 
 check-performance-timing:
-	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed)
+	@$(MAKE) $(TEST_Sources:.C.passed=.timed)
 
 check-performance-timing-with-threshold:
-	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed_with_threshold)
+	@$(MAKE) $(TEST_Sources:.C.passed=.timed_with_threshold)
 
-$(PASSING_TEST_Objects:.o=.timed):
-	rm -f $(@:.timed=.o) &&                                                        \
-	$(top_srcdir)/scripts/timeout.sh $(TIMEOUT) $(MAKE) $(@:.timed=.o) ||          \
+$(TEST_Sources:.C.passed=.timed):
+	rm -f $(@:.timed=.C.passed) &&                                                 \
+	$(top_srcdir)/scripts/timeout.sh $(TIMEOUT) $(MAKE) $(@:.timed=.C.passed) ||   \
 			(                                                                          \
 				test $$? -eq 124 &&                                                      \
 				echo "[ERROR] '$@' compilation timed out after '$(TIMEOUT)' seconds" &&  \
@@ -827,13 +895,13 @@ $(PASSING_TEST_Objects:.o=.timed):
 #
 # Uses $(TESTCODES_REQUIRED_TO_PASS)
 #
-$(PASSING_TEST_Objects:.o=.timed_with_threshold):
-	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+$(TEST_Sources:.C.passed=.timed_with_threshold):
+	rm -f $(@:.timed_with_threshold=.C.passed) &&                                            \
 	SECONDS=0 &&                                                                             \
-			$(MAKE) TEST_TRANSLATOR=g++ ROSE_FLAGS=  $(@:.timed_with_threshold=.o) &&            \
+			$(MAKE) TEST_TRANSLATOR=g++ ROSE_FLAGS=  $(@:.timed_with_threshold=.C.passed) &&     \
 	gnu_time="$$((($$SECONDS + 1)))" &&                                                      \
 	echo "[INFO] '$@' compiled with GNU in '$$gnu_time' seconds" &&                          \
-	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+	rm -f $(@:.timed_with_threshold=.C.passed) &&                                            \
 	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                   \
 	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&       \
 	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)

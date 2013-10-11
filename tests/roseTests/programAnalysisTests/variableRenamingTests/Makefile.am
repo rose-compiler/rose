@@ -50,9 +50,10 @@ $(testVariableRenamingTests): tvr_%.passed: $(SPECIMEN_DIR)/% $(TEST_EXIT_STATUS
 ###############################################################################################################################
 
 check-local: $(testVariableRenamingTests)
+	@echo "*****************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/variableRenamingTests: make check rule complete (terminated normally) ******"
+	@echo "*****************************************************************************************************************************"
 
 clean-local:
 	rm -f $(testVariableRenamingTests)
 	rm -f $(testVariableRenamingTests:.passed=.failed)
-	rm -f $(testVariableRenamingTests:.passed=.out)
-	rm -f $(testVariableRenamingTests:.passed=.err)

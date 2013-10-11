@@ -25,7 +25,7 @@ trace.passed: $(TEST_EXIT_STATUS) trace $(trace_SPECIMEN)
 	@$(RTH_RUN) CMD="./trace $(trace_SPECIMEN)" $< $@
 
 MOSTLYCLEANFILES += a.exe a.out trace.out
-MOSTLYCLEANFILES += trace.passed trace.failed trace.out trace.err
+MOSTLYCLEANFILES += trace.passed trace.failed
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # The usual automake boilerplate

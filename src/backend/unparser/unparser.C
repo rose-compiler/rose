@@ -1674,6 +1674,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
 #endif
 
+#if 0
+     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %d \n",file->get_outputLanguage());
+     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
+#endif
+
   // debugging assertions
   // ROSE_ASSERT ( file.get_verbose() == true );
   // ROSE_ASSERT ( file.get_skip_unparse() == false );
@@ -1906,6 +1911,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
 
+       // DQ (9/24/2013): Set the output language to the inpuse language.
+          inheritedAttributeInfo.set_language(file->get_outputLanguage());
+     
        // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process

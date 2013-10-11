@@ -543,22 +543,12 @@ fi
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
-# PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
-VALGRIND_BINARY=""
-AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that use Valgrind],
-            [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
-             if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
+ROSE_SUPPORT_VALGRIND
 
 AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default preprocessor],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
-
-# Don't set VALGRIND here because that turns on actually running valgrind in
-# many tests, as opposed to just having the path available for
-# uninitializedField_tests
-AC_SUBST(VALGRIND_BINARY)
-AM_CONDITIONAL(USE_VALGRIND, [test "x$VALGRIND_BINARY" != "x"])
 
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
@@ -1977,6 +1967,7 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/StencilManyCore/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
@@ -1998,6 +1989,8 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 tests/Makefile
@@ -2032,6 +2025,7 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
@@ -2082,7 +2076,6 @@ tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
-tests/roseTests/astOutliningTests/fortranTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile

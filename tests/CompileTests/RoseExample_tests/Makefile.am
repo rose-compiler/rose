@@ -38,7 +38,9 @@ $(TESTCODE_CURRENTLY_FAILING)
 ROSE_FLAGS = --edg:no_warnings -w --edg:restrict 
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
+PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
+TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
 
 TEST_TRANSLATOR = ../../testTranslator
 
@@ -46,8 +48,12 @@ TEST_TRANSLATOR = ../../testTranslator
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) test
 
-$(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+# $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
+#	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+
+$(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/$(@:.C.passed=.C)
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -190,13 +196,24 @@ hpctoolkit-test3: ../../testGraphGeneration
 	$(HPCTOOLKIT_HOME)/bin/hpcstruct  ../../.libs/testGraphGeneration
 	$(HPCTOOLKIT_HOME)/bin/hpcprof -S testGraphGeneration.hpcstruct -o database_papi_testRoseHeaders_03 measure_*
 
+callcount-test3:
+	rm -f rose_call_count_test_roseRoseHeaders_03.out
+	${VALGRIND_HOME}/bin/valgrind --tool=callgrind --callgrind-out-file=rose_call_count_test_roseRoseHeaders_03.out ../../.libs/testGraphGeneration $(ROSE_FLAGS) -rose:skipfinalCompileStep -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+	@echo "*******************************************************************************************************************************"
+	@echo "****** : Call counts generated via VALGRIND. Open via kcachegrind GUI (usually present with your OS) for visualization ********"
+	@echo "*******************************************************************************************************************************"
+
+
+
+
 
 # Exclude the Cxx_Grammar.C file from being part of the distribution
 EXTRA_DIST = $(TESTCODES)
 
 check-local:
 	@echo "Tests of ROSE example translators (compiling ROSE using ROSE)."
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Sources)
 	@echo "*******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/RoseExample_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************"
