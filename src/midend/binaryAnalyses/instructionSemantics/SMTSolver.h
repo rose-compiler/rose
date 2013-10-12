@@ -1,8 +1,14 @@
 #ifndef Rose_SMTSolver_H
 #define Rose_SMTSolver_H
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
 #include "InsnSemanticsExpr.h"
 #include "threadSupport.h"
+
+#include <inttypes.h>
 
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
@@ -68,9 +74,7 @@ public:
      *  a value for the specified memory address that satisfies the expression in conjunction with the other evidence. Not
      *  all SMT solvers can return this information. Returns the null pointer if no evidence is available for the memory
      *  address. */
-    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_address(uint64_t addr) {
-        return evidence_for_name(StringUtility::addrToString(addr));
-    }
+    virtual InsnSemanticsExpr::TreeNodePtr evidence_for_address(uint64_t addr);
 
     /** Evidence of satisfiability for a variable or memory address.  If the string starts with the letter 'v' then variable
      *  evidence is returned, otherwise the string must be an address.  The strings are those values returned by the

@@ -1,4 +1,5 @@
-#include "rose.h"
+#include "sage3basic.h"
+
 #include "InsnSemanticsExpr.h"
 #include "SMTSolver.h"
 #include "stringify.h"
@@ -43,13 +44,17 @@ TreeNode::get_variables() const
 {
     struct T1: public Visitor {
         std::set<LeafNodePtr> vars;
-        void operator()(const TreeNodePtr &node) {
+        VisitAction preVisit(const TreeNodePtr&) {
+            return CONTINUE;
+        }
+        VisitAction postVisit(const TreeNodePtr &node) {
             LeafNodePtr l_node = node->isLeafNode();
             if (l_node && !l_node->is_known())
                 vars.insert(l_node);
+            return CONTINUE;
         }
     } t1;
-    depth_first_visit(&t1);
+    depth_first_traversal(t1);
     return t1.vars;
 }
 
@@ -68,6 +73,36 @@ TreeNode::hash() const
     return hashval;
 }
 
+size_t
+TreeNode::nnodes() const
+{
+    std::vector<TreeNodePtr> trees;
+    trees.push_back(shared_from_this());
+    return total_nnodes(trees.begin(), trees.end());
+}
+
+void
+TreeNode::assert_acyclic() const
+{
+#ifndef NDEBUG
+    struct T1: Visitor {
+        std::vector<const TreeNode*> ancestors;
+        VisitAction preVisit(const TreeNodePtr &node) {
+            assert(std::find(ancestors.begin(), ancestors.end(), node.get())==ancestors.end());
+            ancestors.push_back(node.get());
+            return CONTINUE;
+        }
+        VisitAction postVisit(const TreeNodePtr &node) {
+            assert(!ancestors.empty() && ancestors.back()==node.get());
+            ancestors.pop_back();
+            return CONTINUE;
+        }
+    } t1;
+    depth_first_traversal(t1);
+#endif
+}
+
+
 /*******************************************************************************************************************************
  *                                      InternalNode methods
  *******************************************************************************************************************************/
@@ -75,64 +110,79 @@ TreeNode::hash() const
 void
 InternalNode::add_child(const TreeNodePtr &child)
 {
-    ROSE_ASSERT(child!=0);
+    assert(child!=0);
     children.push_back(child);
 }
 
 void
-InternalNode::print(std::ostream &o, Formatter &formatter) const
+InternalNode::print(std::ostream &o, Formatter &fmt) const
 {
+    struct FormatGuard {
+        Formatter &fmt;
+        FormatGuard(Formatter &fmt): fmt(fmt) {
+            ++fmt.cur_depth;
+        }
+        ~FormatGuard() {
+            --fmt.cur_depth;
+        }
+    } formatGuard(fmt);
+    
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
+    if (fmt.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
-    for (size_t i=0; i<children.size(); i++) {
-        bool printed = false;
-        LeafNodePtr child_leaf = children[i]->isLeafNode();
-        o <<" ";
-        switch (op) {
-            case OP_ASR:
-            case OP_ROL:
-            case OP_ROR:
-            case OP_UEXTEND:
-                if (0==i && child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
 
-            case OP_EXTRACT:
-                if ((0==i || 1==i) && child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
-                
-            case OP_BV_AND:
-            case OP_BV_OR:
-            case OP_BV_XOR:
-            case OP_CONCAT:
-            case OP_UDIV:
-            case OP_UGE:
-            case OP_UGT:
-            case OP_ULE:
-            case OP_ULT:
-            case OP_UMOD:
-            case OP_UMUL:
-                if (child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
+    if (fmt.max_depth!=0 && fmt.cur_depth>=fmt.max_depth && 0!=nchildren()) {
+        o <<" ...";
+    } else {
+        for (size_t i=0; i<children.size(); i++) {
+            bool printed = false;
+            LeafNodePtr child_leaf = children[i]->isLeafNode();
+            o <<" ";
+            switch (op) {
+                case OP_ASR:
+                case OP_ROL:
+                case OP_ROR:
+                case OP_UEXTEND:
+                    if (0==i && child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
 
-            default:
-                break;
+                case OP_EXTRACT:
+                    if ((0==i || 1==i) && child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
+
+                case OP_BV_AND:
+                case OP_BV_OR:
+                case OP_BV_XOR:
+                case OP_CONCAT:
+                case OP_UDIV:
+                case OP_UGE:
+                case OP_UGT:
+                case OP_ULE:
+                case OP_ULT:
+                case OP_UMOD:
+                case OP_UMUL:
+                    if (child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (!printed)
+                children[i]->print(o, fmt);
         }
-
-        if (!printed)
-            children[i]->print(o, formatter);
+        o <<")";
     }
-    o <<")";
 }
 
 bool
@@ -231,13 +281,21 @@ InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
     return InternalNode::create(get_nbits(), get_operator(), newnodes, get_comment());
 }
 
-void
-InternalNode::depth_first_visit(Visitor *v) const
+VisitAction
+InternalNode::depth_first_traversal(Visitor &v) const
 {
-    assert(v!=NULL);
-    for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
-        (*ci)->depth_first_visit(v);
-    (*v)(shared_from_this());
+    TreeNodePtr self = shared_from_this();
+    VisitAction action = v.preVisit(self);
+    if (CONTINUE==action) {
+        for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
+            action = (*ci)->depth_first_traversal(v);
+            if (TERMINATE==action)
+                break;
+        }
+    }
+    if (TERMINATE!=action)
+        action = v.postVisit(self);
+    return action;
 }
 
 InternalNodePtr
@@ -293,9 +351,9 @@ TreeNodePtr
 InternalNode::involutary() const
 {
     if (InternalNodePtr inode = isInternalNode()) {
-        if (1==inode->size()) {
+        if (1==inode->nchildren()) {
             if (InternalNodePtr sub1 = inode->child(0)->isInternalNode()) {
-                if (sub1->get_operator() == inode->get_operator() && 1==sub1->size()) {
+                if (sub1->get_operator() == inode->get_operator() && 1==sub1->nchildren()) {
                     return sub1->child(0);
                 }
             }
@@ -332,7 +390,7 @@ InternalNode::identity(uint64_t ident) const
 TreeNodePtr
 InternalNode::unaryNoOp() const
 {
-    return 1==size() ? child(0) : shared_from_this();
+    return 1==nchildren() ? child(0) : shared_from_this();
 }
 
 TreeNodePtr
@@ -369,7 +427,7 @@ InternalNode::constant_folding(const Simplifier &simplifier) const
         delete retval;
         return shared_from_this()->isInternalNode();
     }
-    if (1==retval->size()) {
+    if (1==retval->nchildren()) {
         TreeNodePtr tmp = TreeNodePtr(retval->child(0)); // need to hold this pointer while we delete
         delete retval;
         return tmp;
@@ -403,7 +461,7 @@ AddSimplifier::rewrite(const InternalNode *inode) const
             if ((negate_a==NULL) xor (negate_b==NULL)) {
                 if (negate_a==NULL)
                     std::swap(negate_a, negate_b);
-                assert(1==negate_a->size());
+                assert(1==negate_a->nchildren());
                 return negate_a->child(0)->equivalent_to(b);
             }
             return false;
@@ -424,7 +482,7 @@ AddSimplifier::rewrite(const InternalNode *inode) const
     children.erase(std::remove(children.begin(), children.end(), TreeNodePtr()), children.end());
 
     // Create a new node if we removed any children. */
-    if (children.size()!=inode->size()) {
+    if (children.size()!=inode->nchildren()) {
         if (children.empty())
             return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
         if (children.size()==1)
@@ -449,7 +507,7 @@ TreeNodePtr
 AndSimplifier::rewrite(const InternalNode *inode) const
 {
     // Result is zero if any argument is zero
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         LeafNodePtr child = inode->child(i)->isLeafNode();
         if (child && child->is_known() && 0==child->get_value())
             return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
@@ -472,7 +530,7 @@ OrSimplifier::rewrite(const InternalNode *inode) const
 {
     // Result has all bits set if any argument has all bits set
     uint64_t allset = IntegerOps::genMask<uint64_t>(inode->get_nbits());
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         LeafNodePtr child = inode->child(i)->isLeafNode();
         if (child && child->is_known() && child->get_value()==allset)
             return LeafNode::create_integer(inode->get_nbits(), allset, inode->get_comment());
@@ -496,12 +554,12 @@ XorSimplifier::rewrite(const InternalNode *inode) const
     SMTSolver *solver = NULL;   // FIXME
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
-    std::vector<bool> removed(inode->size(), false);
+    std::vector<bool> removed(inode->nchildren(), false);
     bool modified = false;
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         if (removed[i])
             continue;
-        for (size_t j=i+1; j<inode->size(); ++j) {
+        for (size_t j=i+1; j<inode->nchildren(); ++j) {
             if (!removed[j] && inode->child(i)->must_equal(inode->child(j), solver)) {
                 removed[i] = removed[j] = modified = true;
                 break;
@@ -511,7 +569,7 @@ XorSimplifier::rewrite(const InternalNode *inode) const
     if (!modified)
         return TreeNodePtr();
     TreeNodes newargs;
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         if (!removed[i])
             newargs.push_back(inode->child(i));
     }
@@ -584,7 +642,7 @@ ConcatSimplifier::rewrite(const InternalNode *inode) const
     //   v2
     TreeNodePtr retval;
     size_t offset = 0;
-    for (size_t i=inode->size(); i>0; --i) { // process args in little endian order
+    for (size_t i=inode->nchildren(); i>0; --i) { // process args in little endian order
         InternalNodePtr extract = inode->child(i-1)->isInternalNode();
         if (!extract || OP_EXTRACT!=extract->get_operator())
             break;
@@ -592,7 +650,7 @@ ConcatSimplifier::rewrite(const InternalNode *inode) const
         if (!from_node || !from_node->is_known() || from_node->get_value()!=offset ||
             extract->child(2)->get_nbits()!=inode->get_nbits())
             break;
-        if (inode->size()==i) {
+        if (inode->nchildren()==i) {
             retval = extract->child(2);
         } else if (!extract->child(2)->must_equal(retval, solver)) {
             break;
@@ -634,7 +692,7 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     InternalNodePtr ioperand = operand->isInternalNode();
     if (ioperand && OP_CONCAT==ioperand->get_operator()) {
         size_t offset = ioperand->get_nbits(); // most significant bits are in concat's first argument
-        for (size_t i=0; i<ioperand->size() && offset>=from; ++i) {
+        for (size_t i=0; i<ioperand->nchildren() && offset>=from; ++i) {
             offset -= ioperand->child(i)->get_nbits();
             if (offset==from && ioperand->child(i)->get_nbits()==to-from)
                 return ioperand->child(i);
@@ -715,7 +773,7 @@ IteSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 NoopSimplifier::rewrite(const InternalNode *inode) const
 {
-    if (1==inode->size())
+    if (1==inode->nchildren())
         return inode->child(0);
     return TreeNodePtr();
 }
@@ -1370,9 +1428,9 @@ LeafNode::get_name() const
 }
 
 void
-LeafNode::print(std::ostream &o, Formatter &formatter) const
+LeafNode::print(std::ostream &o, Formatter &formatter) const 
 {
-    print_as_signed(o, formatter, true);
+    print_as_signed(o, formatter);
 }
 
 void
@@ -1410,7 +1468,7 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
     } else {
         uint64_t renamed = name;
         if (formatter.do_rename) {
-            Formatter::RenameMap::iterator found = formatter.renames.find(name);
+            RenameMap::iterator found = formatter.renames.find(name);
             if (found==formatter.renames.end() && formatter.add_renames) {
                 renamed = formatter.renames.size();
                 formatter.renames.insert(std::make_pair(name, renamed));
@@ -1503,16 +1561,20 @@ LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
     return shared_from_this();
 }
 
-void
-LeafNode::depth_first_visit(Visitor *v) const
+VisitAction
+LeafNode::depth_first_traversal(Visitor &v) const
 {
-    assert(v!=NULL);
-    (*v)(shared_from_this());
+    TreeNodePtr self = shared_from_this();
+    VisitAction retval = v.preVisit(self);
+    if (TERMINATE!=retval)
+        retval = v.postVisit(self);
+    return retval;
 }
 
 std::ostream&
 operator<<(std::ostream &o, const TreeNode &node) {
-    node.print(o);
+    Formatter fmt;
+    node.print(o, fmt);
     return o;
 }
 
