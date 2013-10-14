@@ -394,7 +394,7 @@ public:
   bool isAny(VariableId);
   bool isUniqueConst(VariableId);
   bool isMultiConst(VariableId);
-  int width(VariableId);
+  size_t width(VariableId);
   bool isInConstSet(VariableId varId, int varVal);
   int uniqueConst(VariableId);
   int minConst(VariableId);
@@ -411,16 +411,16 @@ bool VariableConstInfo::isAny(VariableId varId) {
 }
 bool VariableConstInfo::isUniqueConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
 }
 bool VariableConstInfo::isMultiConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
 }
-int VariableConstInfo::width(VariableId varId) {
+size_t VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
   if(!width.isConstInt())
-	return 0;
+    return ((size_t)INT_MAX)-INT_MIN;
   else
 	return width.getIntValue();
 }
@@ -745,8 +745,8 @@ EvalValueType eval(SgExpression* node) {
 
 
 int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
-							VariableIdMapping* variableIdMapping,
-							VariableConstInfo& vci) {
+                            VariableIdMapping* variableIdMapping,
+                            VariableConstInfo& vci) {
   // temporary global var
   global_variableIdMappingPtr=variableIdMapping;
   global_variableConstInfo=&vci;
@@ -803,7 +803,7 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     }
     setstr<<"}";
     cout<<variableName<<"="<<setstr.str()<<";";
-#if 0
+#if 1
     cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
     cout<<" width: "<<createVariableValueRangeInfo(varId,map).width().toString();
 	cout<<" top: "<<createVariableValueRangeInfo(varId,map).isTop();
@@ -847,8 +847,8 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
 	  myfile<<vci.minConst(varId);
 	  myfile<<",";
 	  myfile<<vci.maxConst(varId);
-	  int mywidth=vci.width(varId);
-	  assert(mywidth==vci.maxConst(varId)-vci.minConst(varId)+1);
+	  size_t mywidth=vci.width(varId);
+	  assert(mywidth==(size_t)vci.maxConst(varId)-vci.minConst(varId)+1);
 	  int mylog2=log2(mywidth);
 	  // compute upper whole number
 	  int bits=-1;

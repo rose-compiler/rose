@@ -19,7 +19,7 @@
 
  */
 
-class SlicingInfo:public AstSimpleProcessing
+class ROSE_DLL_API SlicingInfo:public AstSimpleProcessing
 {
 
   public:

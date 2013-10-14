@@ -2,12 +2,22 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 add_subdirectory(MSTL)
-add_subdirectory(libharu-2.1.0)
-#add_subdirectory(libharu-200910170404)
-add_subdirectory(fortran-parser)
-add_subdirectory(antlr-jars)
-add_subdirectory(POET)
-#add_subdirectory(qrose)
+if (NOT enable-internalFrontendDevelopment)
+  add_subdirectory(libharu-2.1.0)
+  #add_subdirectory(libharu-200910170404)
+  add_subdirectory(antlr-jars)
+  add_subdirectory(POET)
+  if(with-roseQt)
+    add_subdirectory(qrose)
+  endif()
+endif()
+
+if (enable-fortran)
+  add_subdirectory(fortran-parser)
+endif()
+if (enable-java)
+  add_subdirectory(java-parser)
+endif()
 
 
 ########### install files ###############

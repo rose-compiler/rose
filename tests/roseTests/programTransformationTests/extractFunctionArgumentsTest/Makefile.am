@@ -24,10 +24,11 @@ $(normalizationTranslator_TEST_TARGETS): \
 	@$(RTH_RUN) CMD="./normalizationTranslator $(normalizationTranslator_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$@"
 
 check-local: $(normalizationTranslator_TEST_TARGETS)
+	@echo "******************************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programTransformationTests/extractFunctionArgumentsTest: make check rule complete (terminated normally) ******"
+	@echo "******************************************************************************************************************************************"
 
 clean-local:
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.C

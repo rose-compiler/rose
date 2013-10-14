@@ -80,8 +80,3 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += binaryTests
 endif
 endif
-
-check-local:
-	@echo "**********************************************************************************"
-	@echo "****** ROSE/tests/roseTests: make check rule complete (terminated normally) ******"
-	@echo "**********************************************************************************"

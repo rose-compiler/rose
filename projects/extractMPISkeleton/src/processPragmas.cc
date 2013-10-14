@@ -317,12 +317,13 @@ int match (const char *input, const char *prefix) {
 
   // create sscanf format string in 's':
   static const char fmt[] = "%n";
-  char s[strlen(prefix)+strlen(fmt)];
+  char *s = new char[strlen(prefix)+strlen(fmt)+1];
 
   strcpy(s,prefix);
   strcat(s,fmt);
 
   sscanf(input, s, &i);
+  delete [] s;
   return i;
 }
 

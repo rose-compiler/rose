@@ -1,5 +1,5 @@
 
-class HighLevelRewrite : public MidLevelRewrite<HighLevelInterfaceNodeCollection>
+class ROSE_DLL_API HighLevelRewrite : public MidLevelRewrite<HighLevelInterfaceNodeCollection>
    {
   // Interface classification:
   //      Permits String Based Specification of Transformation: YES
@@ -48,7 +48,7 @@ class HighLevelRewrite : public MidLevelRewrite<HighLevelInterfaceNodeCollection
 
       //! Class representing synthesized attribute for use in tree traversal
       //  class SynthesizedAttribute : public MiddleLevelRewrite::CollectionType
-          class SynthesizedAttribute : public HighLevelInterfaceNodeCollection
+          class ROSE_DLL_API SynthesizedAttribute : public HighLevelInterfaceNodeCollection
              {
             //! This class attempts to provide an interface definition for all Synthesised attributes.  We are
             //! still searching for what would represent a base class set of abstractions for the difinition of

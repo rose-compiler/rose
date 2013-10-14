@@ -1,0 +1,6 @@
+#/bin/bash
+INCLUDEPATH=`dirname $1`
+cpp -P -I$INCLUDEPATH $1 check.cpp >/dev/null
+sglri --heuristic-filters on -p CPP.tbl -i check.cpp -o tmp.ast
+rm -f tmp.ast
+
