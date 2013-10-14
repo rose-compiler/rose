@@ -143,3 +143,27 @@ CodeThorn::Parse::whitespaces(istream& is) {
   }
   return num;
 }
+
+set<int>
+CodeThorn::Parse::integerSet(string setstring) {
+  set<int> intSet;
+      stringstream ss(setstring);
+    if(ss.peek()=='{')
+      ss.ignore();
+    else
+      throw "Error: option input-var-values: wrong input format (at start).";
+    int i;
+    while(ss>>i) {
+      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
+      intSet.insert(i);
+      if(ss.peek()==','||ss.peek()==' ')
+        ss.ignore();
+    }
+#if 0
+    if(ss.peek()=='}')
+      ss.ignore();
+    else
+      throw "Error: parse integer-values: wrong input format (at end).";
+#endif
+	return intSet;
+}

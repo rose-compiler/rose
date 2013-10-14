@@ -569,24 +569,11 @@ int main( int argc, char * argv[] ) {
   if(args.count("input-var-values")) {
     string setstring=args["input-var-values"].as<string>();
     cout << "STATUS: input-var-values="<<setstring<<endl;
-    stringstream ss(setstring);
-    if(ss.peek()=='{')
-      ss.ignore();
-    else
-      throw "Error: option input-var-values: wrong input format (at start).";
-    int i;
-    while(ss>>i) {
-      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
-      analyzer.insertInputVarValue(i);
-      if(ss.peek()==','||ss.peek()==' ')
-        ss.ignore();
-    }
-#if 0
-    if(ss.peek()=='}')
-      ss.ignore();
-    else
-      throw "Error: option input-var-values: wrong input format (at end).";
-#endif
+
+	set<int> intSet=Parse::integerSet(setstring);
+	for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
+	  analyzer.insertInputVarValue(*i);
+	}
   }
 
   if(args.count("rersformat")) {
