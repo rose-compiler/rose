@@ -151,7 +151,7 @@ CodeThorn::Parse::integerSet(string setstring) {
     if(ss.peek()=='{')
       ss.ignore();
     else
-      throw "Error: option input-var-values: wrong input format (at start).";
+      throw "Error: parse integer-values: wrong input format (at start).";
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    

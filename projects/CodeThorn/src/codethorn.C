@@ -449,8 +449,8 @@ int main( int argc, char * argv[] ) {
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
     ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
     ("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
-    ("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
-    ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+    ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
+    ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
     ("assign-top",po::value< string >(),"Assignment always evaluate to top [=yes|no]")
     ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
@@ -522,7 +522,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
-  boolOptions.registerOption("input-var-values-as-constraints",false);
+  boolOptions.registerOption("input-values-as-constraints",false);
 
   boolOptions.registerOption("arith-top",false);
   boolOptions.registerOption("assign-top",false);
@@ -557,9 +557,9 @@ int main( int argc, char * argv[] ) {
     analyzer._csv_assert_live_file=args["csv-assert-live"].as<string>();
   }
 
-  if(args.count("input-var-values")) {
-    string setstring=args["input-var-values"].as<string>();
-    cout << "STATUS: input-var-values="<<setstring<<endl;
+  if(args.count("input-values")) {
+    string setstring=args["input-values"].as<string>();
+    cout << "STATUS: input-values="<<setstring<<endl;
 
 	set<int> intSet=Parse::integerSet(setstring);
 	for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
@@ -624,10 +624,11 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--csv-assert-live"
         || string(argv[i])=="--threads" 
         || string(argv[i])=="--display-diff"
-        || string(argv[i])=="--input-var-values"
+        || string(argv[i])=="--input-values"
         || string(argv[i])=="--ltl-verifier"
         || string(argv[i])=="--dot-io-stg"
         || string(argv[i])=="--verify"
+        || string(argv[i])=="--csv-ltl"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");

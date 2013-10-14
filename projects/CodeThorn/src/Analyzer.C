@@ -825,7 +825,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
-          if(boolOptions["input-var-values-as-constraints"]) {
+          if(boolOptions["input-values-as-constraints"]) {
             newCSet.removeAllConstraintsOfVar(varId);
             newPState[varId]=AType::Top();
             newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
