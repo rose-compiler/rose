@@ -552,15 +552,6 @@ int main( int argc, char * argv[] ) {
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
-    for (int i=1; i<argc; ++i) {
-      if ((string(argv[i]) == "--verify") || 
-          (string(argv[i]) == "--csv-ltl")) {
-        // do not confuse ROSE frontend
-        argv[i] = strdup("");
-        assert(i+1<argc);
-        argv[i+1] = strdup("");
-      }
-    }
   }
   if(args.count("csv-assert-live")) {
     analyzer._csv_assert_live_file=args["csv-assert-live"].as<string>();
@@ -636,6 +627,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--input-var-values"
         || string(argv[i])=="--ltl-verifier"
         || string(argv[i])=="--dot-io-stg"
+        || string(argv[i])=="--verify"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
