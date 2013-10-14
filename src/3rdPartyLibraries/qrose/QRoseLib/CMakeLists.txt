@@ -6,9 +6,11 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 set(qrose_LIB_SRCS qroselib.C)
 
-kde4_add_library(qrose SHARED ${qrose_LIB_SRCS})
+add_library(qrose SHARED ${qrose_LIB_SRCS})
 
-target_link_libraries(qrose ${KDE4_KDECORE_LIBS} qrframework qrwidgets qrcommon qrquerybox qrsourcebox qrtreebox)
+target_link_libraries(qrose
+  qrsourcebox qrquerybox qrtreebox qrwidgets qrframework qrcommon
+  ${QT_LIBRARIES} ${QT_QT3SUPPORT_LIBRARY})
 
 set_target_properties(qrose PROPERTIES VERSION 1.0.0 SOVERSION 1)
 install(TARGETS qrose ${INSTALL_TARGETS_DEFAULT_ARGS})

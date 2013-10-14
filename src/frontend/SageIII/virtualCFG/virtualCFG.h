@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
+#include "rosedll.h"
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
@@ -63,7 +64,7 @@ extern int efgh;
 
   //! A node in the control flow graph.  Each CFG node corresponds to an AST
   //! node, but there can be several CFG nodes for a given AST node.  
-  class CFGNode {
+  class ROSE_DLL_API CFGNode {
     //! The AST node from this CFG node
     SgNode* node; // Must be either a SgStatement, SgExpression, or SgInitializedName (FIXME: change this to just SgLocatedNode if SgInitializedName becomes a subclass of that)
 
@@ -104,7 +105,7 @@ extern int efgh;
 
   //! A control flow edge connecting two CFG nodes, with an edge condition to
   //! indicate edge types
-  class CFGEdge {
+  class ROSE_DLL_API CFGEdge {
     CFGNode src, tgt;
     public:
     //! Constructor
