@@ -1152,13 +1152,6 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   bool isRhsIntVal=false;
   bool isRhsVar=false;
 
-  if(boolOptions["assign-top"]) {
-    PState newPState=currentPState;
-    cset.removeAllConstraintsOfVar(lhsVar);
-    newPState[lhsVar]=AType::Top();
-    return newPState;
-  }
-
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
     if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
