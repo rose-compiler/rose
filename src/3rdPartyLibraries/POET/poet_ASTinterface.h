@@ -1,3 +1,4 @@
+
 /*
    POET : Parameterized Optimizations for Empirical Tuning
    Copyright (c)  2008,  Qing Yi.  All rights reserved.
@@ -24,21 +25,46 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
 OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#ifndef POET_EXT_AST_INTERFACE_H
+#define POET_EXT_AST_INTERFACE_H
 
-#include <poet_ASTeval.h>
+#include <vector>
+#include <map>
 
-extern bool debug_time;
-
-int main(int argc, char** argv)
+class POETCode_ext;
+class POETCode;
+class POETAstInterface 
 {
-  int index = initialize(argc, argv);
-  EvaluatePOET::startup();
-  try {
-  for ( ; index < argc; ++index) {
-     const char* fname = argv[index];
-     EvaluatePOET::eval_program(process_file(fname));
-  }
-  }
-  catch (Error err) { return 1;}
-  return 0;
-}
+  static std::map<void*, POETCode*> codeMap;
+public:
+  typedef void* Ast;
+  typedef void* AstType;
+  typedef std::vector<Ast>  AstList;
+  typedef std::vector<AstType>  AstTypeList;
+
+  static std::string Ast2String(const Ast & n);
+  static std::string unparseToString(const Ast & n);
+
+  static AstList GetChildrenList( const Ast &n);
+  static bool MatchAstTypeName(const Ast& n, const std::string& tname, std::vector<POETCode*>* children=0);
+
+  static void set_Ast2POET(const Ast& n, POETCode* p)
+    { codeMap[n] = p; }
+  static POETCode* find_Ast2POET(const Ast& n)
+    {
+      std::map<void*, POETCode*>::const_iterator p = codeMap.find(n);
+      if (p != codeMap.end()) { return (*p).second; }
+      return 0;
+    }
+  static POETCode* Ast2POET(const Ast& n) 
+    { 
+      POETCode* res = find_Ast2POET(n);
+      if (res == 0) {
+         res = new POETCode_ext(n);
+         codeMap[n] = res;
+      }
+      return res;
+    }
+};
+
+#endif

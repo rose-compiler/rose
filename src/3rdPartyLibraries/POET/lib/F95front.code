@@ -1,0 +1,9 @@
+include Ffront.code
+
+<define PREP ParseLine[comment_col=1;continue_endofline="&";text_len=66] />
+
+<code F95Comment pars=(content:CODE.UnknownUntilEOL)>
+!@content@
+</code>
+
+<code Stmt parse=CODE.F95Comment | F77STMT />
