@@ -320,11 +320,24 @@ public:
       return "top";
     return string("[")+_min.toString()+","+_max.toString()+"]";
   }
+  void setArraySize(int asize);
+  int arraySize();
 private:
   ConstIntLattice _width;
   ConstIntLattice _min;
   ConstIntLattice _max;
+  int _asize;
 };
+
+void
+VariableValueRangeInfo::setArraySize(int asize) {
+  _asize=asize;
+}
+
+int
+VariableValueRangeInfo::arraySize() {
+  return _asize;
+}
 
 VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLattice max0) {
   assert(min0.isConstInt() && max0.isConstInt());
@@ -335,6 +348,7 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLat
     _width=ConstIntLattice(0);
   ConstIntLattice one=AType::ConstIntLattice(1);
   _width=(VariableValueRangeInfo::_width+one);
+  _asize=1;
 }
 
 VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
@@ -399,6 +413,7 @@ public:
   int uniqueConst(VariableId);
   int minConst(VariableId);
   int maxConst(VariableId);
+  int arraySize(VariableId);
 private:
   VariableIdMapping* _variableIdMapping;
   VarConstSetMap* _map;
@@ -406,6 +421,12 @@ private:
 
 VariableConstInfo::VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map):_variableIdMapping(variableIdMapping),_map(map) {
 }
+
+int VariableConstInfo::arraySize(VariableId varId) {
+  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  return vri.arraySize();
+}
+
 bool VariableConstInfo::isAny(VariableId varId) {
   return createVariableValueRangeInfo(varId,*_map).isTop();
 }
@@ -871,6 +892,10 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
 			<<sizeof(int)*8;
     }
 	myfile<<",";
+
+	// TODO: print array size
+	// myfile<<",";
+
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
