@@ -1,0 +1,258 @@
+include ExpStmt.incl
+include Loops.incl
+include omp.incl
+
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+
+<*****************************************************
+Support for using macros to represent linearization of array dimensions
+******************************************************>
+<parameter arrref default="" 
+       parse=LIST(ID," ") message="arrays to translate using macro refs"/>
+<trace arrref_macro=MAP{}/>
+
+<code MacroDef pars=(array, dim)>
+@(sub=sub1=""; for (i=0;i<LEN(dim);i=i+1) { sub=BuildList(("a"^i),sub); sub1=BuildList(("("^"a"^i^")"),sub1); } <*QY: sub1 adds () around each macro variable*>
+)@#ifndef arr_ref_@array@
+#define arr_ref_@array@(array,@ExpList#sub@) @array@[@XFORM.UnparseArraySub(dim,sub1)@]
+#endif
+
+</code>
+
+<code F2CInclude >
+@res="";
+for (p=GLOBAL.arrref; p != ""; p=cdr(p)) 
+{
+  array=car(p);
+  TAG#(_,ArrayType#(_,dim))|ArrayType#(_,dim)=GLOBAL.SymTable[array];
+  GLOBAL.arrref_macro[array]=1;
+  res= MacroDef#(array,dim) :: res;
+}
+res@
+</code>
+
+<*****************************************************
+ syntax descriptions for the Fortran language
+******************************************************>
+
+<code D0FLOAT pars=(val:CODE.FLOAT,pre:"D0"|"")> @val@ </code>
+
+<code EndIf parse=("end" " " "if") rebuild="endif"/> 
+<code EndDo parse=("end" " " "do") rebuild="enddo" />
+
+<*********************>
+<***** These code templates are used to build AST *>
+<*********************>
+
+<code MIN pars=(first,second)>
+min(@first@,@second@)
+</code>
+<code MAX pars=(first,second)>
+max(@first@,@second@)
+</code>
+
+<xform UnparseArraySub pars=(dim,sub)> 
+switch (sub)
+{
+ case "" : 0
+ case (a b): a * Reduce_listExp("*",cdr dim) + UnparseArraySub(cdr dim, b)
+ default :  sub
+}
+</xform>
+
+<code ArrayAccess pars=(array,subscript)>
+@ if (GLOBAL.arrref_macro[array]=="") {
+  TAG#(_,ArrayType#(_,dim))|ArrayType#(_,dim)=GLOBAL.SymTable[array];
+(array@[@UnparseArraySub(dim,subscript)@]@)
+  }
+  else {
+@arr_ref_@array@(@array@,@(CODE.ExpList#subscript)@)@
+  }@
+</code>
+
+<code Loop pars=( i, start, stop, step)>
+for (@i@=@((start:INT)?REBUILD(start-1):start)@; @i@<@stop@; @i@+=@step@)
+</code>
+
+<code NestLoop pars=(ctrl:CODE.While|CODE.ParseLoop, body:LIST(Stmt,"\n"))>
+@ctrl@
+{
+  @body@
+}
+</code>
+
+<code Nest pars=(ctrl, body:LIST(Stmt,"\n"))>
+@(switch (ctrl) {
+  case CODE.Loop|CODE.While: NestLoop#(ctrl, body)
+  case CODE.If: NestIf#(ctrl, body,"endif")
+})@
+</code>
+
+<code BlockLoopTileEnd pars=(bloop, no_mod)>
+@ Loop#(bvar, _,stop,step) = bloop;
+  min=(step < 0)? MAX : MIN;
+  (no_mod)? min#(stop, bvar + step-1) : min#(stop-bvar, step-1)@
+</code>
+
+<*********************>
+<***** These code templates are used for Fortran code *>
+<*********************>
+
+<code ParamName pars=(id : ID) >
+@(car(GLOBAL.SymTable))[id]@ @id@
+</code>
+
+<code SubroutineDecl pars=(name:ID, params:LIST(ParamName,","), body:LIST(F77STMT,"\n"))>
+void @name@(@params@)@((body == "")?";":@
+{
+  @body@
+}@)@
+</code>
+
+
+<code SingleLoop parse=(CODE.NestDO|"") />
+
+<code LoopNestList pars=(content:LoopNestList2)>
+@content@
+
+</code>
+
+<code While pars=(condition:EXP)>
+while (@condition@)
+</code>
+
+<code DO match="DO"|"do" parse="DO"|"do"> do </code> 
+
+<code If pars=(condition:EXP)>
+if (@condition@) then
+</code>
+
+<code Type2 pars=(type : Name, len : INT) >
+@type@*@len@
+</code>
+
+<code LoopStep pars=(val: EXP) rebuild=val > , @val@ </code>
+
+<code EndElse pars=(body : LIST(Stmt,"\n"))>
+
+@body@
+endif
+</code>
+
+<code WithElse pars=(rest : CODE.NestIf | EndElse)>
+else @rest@
+</code>
+
+<code NestIf pars=(ctrl:CODE.If, body:LIST(Stmt,"\n"), rest:"endif"|WithElse)>
+@ctrl@
+@body@
+@rest@
+</code>
+
+<code Assign pars=(lhs:EXP, rhs:EXP) >
+@lhs@ = @rhs@
+</code>
+
+<code ExpStmt pars=(exp:EXP) > 
+@exp@;
+</code>
+
+<code CallStmt pars=(func : FunctionCall)>
+@func@
+</code>
+
+<*********************************** Types ************************************>
+
+<code Type pars=(content: CODE.IntegerType
+                        | CODE.DoubleType
+                        | CODE.Name)>
+@content@
+</code>
+
+<code IntegerType>int</code>
+<code DoubleType>double</code>
+<code ArrayType pars=(base,dim)> @base@* </code>
+
+<******************************* Identifiers **********************************>
+
+<code ArrayDim pars=(dim:LIST(EXP,"*"))> [@dim@] </code>
+
+<code Variable pars=(name,arrDim)> 
+@(tab=car(GLOBAL.SymTable);
+if (!(tab : MAP)) ERROR("No Symbol Table!");
+switch(m=tab[name])
+{
+case TAG#("PARAM",type): "" 
+case TAG#("FUN",type): (type " " name "();\n")
+case "": ERROR("No type info for variable:" name);
+default: (m " "  name arrDim ";\n")
+})@
+</code>
+
+<code VarDeclStmt pars=(type, var)> 
+@var@
+</code>
+
+
+<******************************* Declarations *********************************>
+
+<code DeclStmt pars=(content:CODE.ImplicitDeclStmt
+                           | CODE.ParamDeclStmt
+                           | CODE.VarDeclStmt)>
+@content@
+</code>
+
+<code ParamDecl pars=(var,val)> 
+#ifndef @var@
+#define @var@ @val@ 
+#endif
+</code>
+
+<code ParamDeclStmt pars=(keyword, vars:LIST(ParamDecl,"\n"))>
+@vars@ 
+</code>
+
+<code ImplicitDeclStmt
+      pars=(keyword:"IMPLICIT"|"implicit", type:Name, ids:EXP)>
+@keyword@ @type@ (@ids@)
+
+</code>
+
+<define REPL (("dsqrt", "sqrt") ("abs", "fabs"))/>
+<xform RenameFunctions pars=(inputCode,pos)>
+      tab=car(GLOBAL.SymTable); 
+      foreach(REPL : (CLEAR from,CLEAR to) : TRUE) {
+         cur=tab[from];
+         if (cur != "") {
+            tab[to] = cur;
+            inputCode=REPLACE(from,to,inputCode);
+         }
+      }
+inputCode
+</xform>      
+<define UNPARSE RenameFunctions/>

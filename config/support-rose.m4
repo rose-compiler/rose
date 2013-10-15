@@ -184,18 +184,17 @@ AC_SUBST(GCC_MINOR_VERSION)
 # *******************************************************
 # ROSE/projects directory compilation & testing
 # *******************************************************
-AC_MSG_CHECKING([if we should build & test the ROSE/projects directory])
-AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Disable compilation and testing of the ROSE/projects directory]),[],[enableval=yes])
-support_projects_directory=yes
-if test "x$enableval" = "xyes"; then
-   support_projects_directory=yes
-   AC_MSG_RESULT(enabled)
+ROSE_ARG_ENABLE(
+  [projects-directory],
+  [if we should enable the ROSE/projects directory],
+  [Toggle compilation and testing of the the ROSE/projects directory (disabled by default)],
+  [no])
+
+if test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
-else
-   support_projects_directory=no
-   AC_MSG_RESULT(disabled)
 fi
-AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
+
 # ****************************************************
 # ROSE/tests directory compilation & testing 
 # ****************************************************
@@ -1968,6 +1967,7 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/StencilManyCore/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile

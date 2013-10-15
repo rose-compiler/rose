@@ -1,0 +1,591 @@
+include PAPI_C.code
+include ExpStmt.incl  <<* definitions for FLOAT,etc.
+
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+<***********************************************************
+  POET syntax descriptions for The C language 
+***********************************************************>
+
+<**********
+TOKENS
+***********>
+<code INT_UL pars=(content:INT) rebuild=(content)> @content@UL  </code>
+<***********
+Parsing Macros
+************>
+<define TOKEN (("+" "+") ("-" "-") ("=""=") ("<""=") (">""=") ("!""=") ("+""=") ("-""=") ("*""=") ("/""=") ("&""&") ("|""|") ("-"">") ("*""/") ("<""<") (">"">") CODE.INT_UL CODE.FLOAT CODE.Char CODE.String)/>
+
+<define KEYWORDS ("float" "int" "unsigned" "long" "char" "struct" "union" "extern" "static" "const" "restrict" "register" "if" "else" "switch" "case" "default" "continue" "break" "for" "while" "goto")/>
+
+<define BACKTRACK FALSE/>  <<* don't backtrack to speedup parsing
+
+<define PARSE CODE.DeclStmtList/>
+<define UNPARSE CODE.FinalOutput/>
+
+<define VAR_DECL CODE.BaseTypeVarDeclStmt|CODE.IDTypeVarDeclStmt/>
+<define DECLARATION CODE.StaticDecl | CODE.ExternDecl 
+                   | CODE.Comment | CODE.Macro |CODE.TypeDef | VAR_DECL/>
+<code DeclStmtList parse=LIST(GLOBAL.DECLARATION,"\n")/>
+
+<code FinalOutput pars=(res)>
+@(if (XFORM.Lookup(GLOBAL.NEED_MIN_MAX,res)) {@#define max(a,b) (((a) < (b))? (b) : (a))
+#define min(a,b) (((a) < (b))? (a) : (b))
+@}) DeclStmtList#res@
+
+</code>
+
+<********************************Types **************************>
+<define C_TYPE_BASE CODE.VoidType
+                   |CODE.IntType 
+                   |CODE.IntType1 
+                   |CODE.FloatType
+                   |CODE.StructType
+                   |CODE.EnumType
+                   |CODE.UnionType />
+<define TYPE_BASE C_TYPE_BASE/>  <*QY: allow redefinition of type base*>
+
+<code BaseType parse=TYPE_BASE/>
+<code Type parse=CODE.Type1|ID />
+
+<code ConstType pars=(base:CODE.Type)> const @base@ </code>
+<code RestrictType pars=(base:CODE.Type)> restrict @base@ </code>
+<code RegisterType pars=(base:CODE.Type)> register @base@ </code>
+<code PtrType pars=(base:CODE.Type) > @base@* </code> 
+<code RefType pars=(base:CODE.Type) > @base@& </code> 
+<code VoidType> void </code>
+<code IntType pars=(name:"char"|"int") > @name@ </code>
+<code IntType1 pars=(annot:"unsigned"|"long",name:"char"|"int"|"long"|"") > @annot@ @name@ </code>
+<code FloatType pars=(name:"float"|"double")> @name@ </code>
+
+<code ArrayType pars=(base:CODE.Type, dim:CODE.ArrayDimLIST) > 
+@base@@dim@
+</code>
+<code FunctionType pars=(params:(CODE.Type)...,return:CODE.Type) > 
+@params@->@return@
+</code>
+
+<code EnumType pars=(name:ID|"", values : CODE.EnumTypeValues|"")>
+enum @name@@values@
+</code>
+<code EnumTypeValues pars=(content:NameList) rebuild=content > 
+{@content@}
+</code>
+<code EnumTypeName pars=(name:ID) > enum @name@ </code>
+<code StructType pars=(name:ID|"",body:CODE.StructBody|"") >
+struct @name@@body@
+</code>
+<code StructBody pars=(content:CODE.DeclStmtList) >
+{
+  @content@
+}
+</code>
+<code UnionType pars=(name:ID|"",body:StructBody)>
+union @name@@body@
+</code>
+
+
+<*********** variables and expressions *****************>
+<code ArrayDim pars=(dim:ID|INT|"")> [@dim@] </code>
+<code ArrayDimList parse=LIST1(ArrayDim,"") />
+<code ArrayInit pars=(elems : ExpList) >
+= { @elems@ }
+</code>
+
+
+<***************** statements ******************************>
+
+<define CALL_STMT CODE.ExpStmt />
+
+<code Comment pars=(content:(~"*/")...) > /*@content@*/ </code>
+<code EmptyStmt > ; </code>
+<code Break> break; </code>
+<code Continue> continue; </code>
+<code Return pars=(exp:EXP|"")> return @exp@; </code>
+
+<code StmtBlock pars=(stmts:LIST(CODE.Stmt,"\n")) >
+{
+   @stmts@
+}
+</code>
+
+<*********** global declarations  ********************>
+<code Macro pars=(content:UnknownUntilEOL)> #@content@ </code>
+<code TypeDef pars=(name:ID, type: CODE.Type)> typedef @type@ @name@; </code>
+
+<code StaticDecl pars=(content:GLOBAL.VAR_DECL) >
+static @content@ 
+</code>
+
+<code ExternDecl pars=(content:GLOBAL.VAR_DECL) >
+extern @content@ 
+</code>
+
+<code TypeDecl pars=(type)> @type@; </code>
+
+<code ParamExtra> ... </code>
+<code FunctionParameter pars=(content:CODE.ParamDeclList,
+                          extraDecls:CODE.DeclStmtList)> 
+(@content@)@extraDecls@
+</code>
+
+<code FunctionBody pars=(stmts:CODE.EmptyStmt|CODE.StmtBlock) >
+@stmts@
+</code>
+
+<code FunctionDecl pars=(name:Name, 
+                         params: CODE.FunctionParameter,
+                         returnType:CODE.Type, 
+                         body:CODE.FunctionBody)  >
+@returnType@ @name@@params@ 
+@body@
+</code>
+
+<code TypeInfo pars=(type:Type, name:ID)> @type@ @name@ </code>
+
+<xform C_RebuildTypeInfo pars=(base,vars) >
+switch (vars)
+{
+case (first second): BuildList(C_RebuildTypeInfo(base,first), C_RebuildTypeInfo(base, second))
+case CODE.VariableWithAnnot#(name,annot1,annot2): 
+     TypeInfo#(XFORM.C_RebuildType(XFORM.C_RebuildType(base,annot1), annot2), name)
+case CODE.FunctionPtr#(name,params) : TypeInfo#(CODE.FunctionType#(params,base), name)
+default : TypeInfo#(base,vars)
+}
+</xform>
+
+
+<code VarDecl pars=(type:CODE.Type, var:CODE.Variable|"")
+         typeInfo="" 
+       rebuild=(VarDecl[typeInfo=XFORM.C_RebuildTypeInfo(type,var)]#(type,var))>
+@type@ @var@
+</code>
+
+<code ParamDeclList pars=(content) parse=LIST(VarDecl|ParamExtra,",")/>
+
+<code VarDeclStmt pars=(type:CODE.Type, var:CODE.VariableListStmt)  
+                  typeInfo="" >
+@type@ @var@
+</code>
+
+<******** top level parsing *******************>
+
+<code BaseTypeVarDeclStmt pars=(type:CODE.Type1, 
+                           var:CODE.FunctionVarStmt|CODE.VariableListStmt) 
+            match=CODE.FunctionDecl|CODE.TypeDecl|CODE.VarDeclStmt
+            rebuild=(XFORM.C_RebuildVarDeclStmt(type,var)) >
+@type@ @var@ 
+</code>
+
+<*QY: used to resolve ambiguity between VarDeclStmt and ExpStmt*>
+<code IDTypeVarDeclStmt pars=(first: ID, 
+                              extra:CODE.FunctionVarStmt|CODE.VariableListStmt) 
+            match=CODE.FunctionDecl|CODE.TypeDecl|CODE.VarDeclStmt
+             lookahead=2 rebuild=(XFORM.C_RebuildVarDeclStmt(first,extra))>
+@first@ @extra@
+</code>
+
+<***************** type parsing ****************************>
+
+<code TypeAnnot parse=LIST("restrict"|"const"|"*"|"&", " ") />
+<code Type1 pars=(base:CODE.ConstType|CODE.RegisterType|CODE.BaseType,
+                  annot:TypeAnnot) rebuild=(XFORM.C_RebuildType(base,annot)) >
+@base@ @annot@
+</code>
+
+<******************* Variable and expression parsing **********************>
+
+<code FunctionVarStmt pars=(name:ID, params: CODE.FunctionParameter,
+                            body:CODE.EmptyStmt|CODE.StmtBlock) lookahead=2 >
+@name@@params@@body@
+</code>
+
+<code VariableListStmt pars=(content:CODE.VariableList) rebuild=content>
+@content@;
+</code>
+<code VariableList parse=LIST(CODE.Variable,",") />
+<code Variable parse=CODE.FunctionPtr|CODE.VariableWithAnnot/>
+
+<code FunctionPtr pars=( name:ID, params:CODE.FunctionParameter ) lookahead=2>
+(*@name@)@params@
+</code>
+
+<code VariableWithAnnot pars=(name: ID, 
+                              annot1: CODE.TypeAnnot, 
+                              annot2: CODE.ArrayAnnot|CODE.VarInit|"") >
+@annot1@ @name annot2@
+</code>
+
+<code ArrayAnnot pars=(dim:CODE.ArrayDimList, init:CODE.ArrayInit|"") > 
+@dim init@
+</code>
+
+<code VarInit pars=(value:EXP) >
+=@value@
+</code>
+
+<xform C_RebuildVarDeclStmt pars=(type,vars)>
+switch (vars)
+{
+ case "": TypeDecl#type
+ case CODE.FunctionVarStmt#(name,params,body): 
+       CODE.FunctionDecl#(name,params,type,body)
+ default: CODE.VarDeclStmt[typeInfo=XFORM.C_RebuildTypeInfo(type,vars)]#(type,vars)
+}
+</xform>
+
+<**************************** Expressions *********************>
+
+<* Base Expressions*>
+<code FLOAT_ext pars=(content:FLOAT,ext:"f"|"d"|"") 
+          rebuild=((ext=="")?content:FLOAT_ext#(content,ext))> 
+@content@@ext@  
+</code>
+
+<define EXP_BASE FLOAT_ext|INT|String|Char|CODE.SizeOf|CODE.VarRef|CODE.TypeCast />
+<define EXP_BOP ( (",") ("?" ":")("=" "+=" "-=" "*=" "/=" "%=") ("&" "|") ("&&" "||") ("==" ">=" "<=" "!=" ">" "<") 
+                       ("<<" ">>") ("+" "-") ("*" "%" "/") ("." "->") ) />
+<define EXP_UOP ("++" "--" "*" "&" "~" "!" "+" "-" "new" )/>
+
+<code SizeOf pars=(type:Type)> sizeof(@type@) </code>
+
+<code TypeCast pars=(to: Type, opd: EXP) lookahead=2 > (@to@)@opd@ </code>
+
+<code MIN pars=(first,second)>
+min(@first@,@second@)
+</code>
+<code MAX pars=(first,second)>
+max(@first@,@second@)
+</code>
+
+
+<code VarRef pars=(name:ID, uop:"++"|"--"|"")
+             rebuild=((uop=="")?name:VarRef#(name,uop)) >
+@name uop@
+</code>
+
+<code ArrayAccess pars=(array,subscript)>  @array@[@subscript@] </code>
+
+<code StructRef pars=(structName:ID,var:ID) >
+@structName@.@var@
+</code>
+
+<code PtrDeref pars=(ptr,var:ID)>
+@ptr@->@var@
+</code>
+
+<code VALUE pars=(ptr : EXP) >
+*(@ptr@)
+</code>
+
+<code AddrOf pars=(var: EXP)>
+&@var@
+</code>
+
+<code Min pars=(s1,s2) > 
+((@s1@ < @s2@)? @s1@ : @s2@)
+</code>
+
+<code Max pars=(s1,s2) > 
+((@s1@ < @s2@)? @s2@ : @s1@)
+</code>
+
+<xform C_rebuildUop pars=(op,exp)>
+switch (op) {
+case "*": VALUE#(exp)
+default: RebuildExp(Uop#(op,exp))
+}
+</xform>
+<code Uop pars=(op,opd) rebuild=(C_rebuildUop(op,opd))/>
+
+<code Initialize pars=(var, init)>
+@var@=@init@
+</code>
+
+
+<xform RebuildAssign/>
+<code Assign pars=(lhs:EXP, rhs:EXP) rebuild=(RebuildAssign(lhs,rhs))> 
+@lhs@ = @rhs@
+</code>
+<<* Rebuild assignment; if lhs==rhs, skip the assignment
+<xform RebuildAssign pars=(lhs,rhs)>
+  (lhs == rhs)? "" : Assign#(lhs,rhs)
+</xform>
+
+<xform C_buildBop pars=(op, lhs, rhs) >
+switch (op) {
+case "=" : Assign#(lhs, rhs)
+case "+=" : Assign#(lhs, Bop#("+", lhs,rhs))
+case "-=" : Assign#(lhs, Bop#("-", lhs,rhs))
+case "*=" : Assign#(lhs, Bop#("*", lhs,rhs))
+case "/=" : Assign#(lhs, Bop#("/", lhs,rhs))
+case "," : FlattenList(lhs::rhs);
+default: Bop#(op,lhs,rhs)
+}
+</xform>
+<define BUILD_BOP C_buildBop/>
+
+
+<***********  statements  ********************>
+
+<define C_STMT_BASE CODE.EmptyStmt|CODE.Break|CODE.Continue|CODE.Return|CODE.SwitchStmt|CODE.Nest|DECLARATION|CODE.BaseTypeVarDeclStmt|CODE.IDTypeVarDeclStmt|CODE.Comment|CODE.ExpStmt|CODE.GotoStmt|CODE.LabelStmt/>
+<define STMT_BASE C_STMT_BASE/> <*QY: allow redefinition of stmt base*>
+
+<code Stmt parse=CODE.StmtBlock|GLOBAL.STMT_BASE match=(GLOBAL.STMT_BASE....) />
+<code SingleStmt pars=(content:CODE.NestBody|GLOBAL.STMT_BASE) match=CODE.StmtBlock|(GLOBAL.STMT_BASE....) 
+           rebuild=content
+           output=((content : (first second))? (StmtBlock#content) : content) >
+@content@ </code>
+
+<code NestBody pars=(content:LIST(Stmt,"\n")) rebuild=content >
+{
+  @content@
+}
+</code>
+
+<code ExpStmt pars=(exp:EXP)> 
+@exp@;
+</code>
+
+<code SwitchStmt/>
+<code Nest/>
+
+<code Loop pars=(i:ID,start:EXP, stop:EXP, step:EXP) >
+for (@i@=@start@; @i@<@stop@; @i@+=@step@)
+</code>
+
+<code Loop_r pars=(i:ID,start:EXP, stop:EXP, step:EXP) >
+for (@i@=@start@; @i@>@stop@; @i@-=@step@)
+</code>
+
+<xform RebuildLoop pars=(start:EXP, stop:EXP, incr:EXP)>
+  if (start : CODE.Assign#(ivar, lb)) {  
+     if (stop : Bop#(compare,ivar,ub)) {
+         switch (compare) {
+         case "<":
+            ((incr : Assign#(ivar,Bop#("+",ivar,step)))? 
+                 Loop#(ivar,lb,ub,step)
+           : (incr : Uop#("++",ivar) || VarRef#(ivar,"++"))?
+                 Loop#(ivar,lb,ub,1)
+           :     CODE.For#(start,stop,incr))
+         case "<=":
+            ((incr : Assign#(ivar,Bop#("+",ivar,step)))? 
+                  Loop#(ivar,lb,REBUILD(ub+1),step)
+           : (incr : Uop#("++",ivar)|VarRef#(ivar,"++"))?  
+                  Loop#(ivar,lb,REBUILD(ub+1),1)
+           :      CODE.For#(start,stop,incr))
+         case ">=":
+            ((incr : Assign#(ivar,Bop#("-",ivar,step)))? 
+                  Loop_r#(ivar,lb,REBUILD(ub-1),step)
+           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?  
+                  Loop_r#(ivar,lb,REBUILD(ub-1),1)
+           :      CODE.For#(start,stop,incr))
+         case ">":
+            ((incr : Assign#(ivar,Bop#("-",ivar,step)))? 
+                 Loop_r#(ivar,lb,ub,step)
+           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?  
+                 Loop_r#(ivar,lb,ub,1)
+           :     CODE.For#(start,stop,incr))
+        }
+     }
+  }
+  else { CODE.For#(start,stop,incr) }
+</xform>
+
+<code If pars=(condition:EXP) >
+if (@condition@) 
+</code>
+
+<code Else ifNest=INHERIT>
+else
+</code>
+
+<code While pars=(condition:EXP) >
+while (@condition@) 
+</code>
+
+<code GotoStmt pars=(target:EXP) >
+goto @target@;
+</code>
+
+<code LabelStmt pars=(target:EXP) >
+(@target@):
+</code>
+
+
+<code For pars=(init:EXP|VarDecl|"",test:EXP|"",incr:EXP|"") 
+          rebuild=(RebuildLoop(init,test,incr)) >
+for (@init@; @test@; @incr@)
+</code>
+
+<code Ctrl parse=If|While|For|Else match=Loop|If|While|For|Else />
+
+<code Nest pars=(ctrl : Ctrl, body : CODE.SingleStmt) annot="" >
+@annot ctrl@ 
+  @body@
+</code>
+
+<code CaseLabels/>
+<code SwitchStmt pars=(condition:EXP, cases : CaseLabels)>
+switch (@condition@)
+{
+  @cases@
+}
+</code>
+
+<code CaseLabel pars=(label : INT, stmt:LIST(CODE.Stmt,"\n"))>
+case @label@: @stmt@
+</code>
+
+<code DefaultLabel pars=(stmt:LIST(CODE.Stmt,"\n"))>
+default: @stmt@
+</code>
+
+<code CaseLabels parse=LIST(CaseLabel|DefaultLabel, "\n") />
+
+
+<********************************code templates from opt.pi ***************>
+
+<code OMPPragma pars=(content)>
+#pragma omp @content@
+
+</code>
+
+<code IntegerType>
+int
+</code>
+
+<code IfStmt pars=(condition:EXP,body:SingleStmt)>
+if (@condition@) @body@
+</code>
+
+<code PostIncrement pars=(ivar)>
+@ivar@++
+</code>
+
+<code VecZero pars=(reg)>
+vec_zero(reg@reg@)
+</code>
+
+<code VecRegMov pars=(reg1,reg2)>
+vec_mov_rr(reg@reg1@,reg@reg2@)
+</code>
+
+<code VecReg2ArrU pars=(reg,vec)>
+vec_mov_rm(reg@reg@,@vec@)
+</code>
+
+<code Arr2VecRegU pars=(vec:EXP,reg)>
+vec_mov_mr(@vec@,reg@reg@)
+</code>
+
+<code Var2VecReg pars=(ptr,reg)>
+vec_splat(@ptr@,reg@reg@)
+</code>
+
+<code Var2VecRegL pars=(ptr,reg)>
+vec_mov_mr_1(@ptr@,reg@reg@)
+</code>
+
+<code VecReg2Var pars=(reg,ptr)>
+vec_mov_rm_1(reg@reg@,@ptr@)
+</code>
+
+<code VecRegRed2Arr4 pars=(reg1, reg2, reg3, reg4, wkreg1, wkreg2,ptr)>
+vec_red4(reg@reg1@,reg@reg2@, reg@reg3@, reg@reg4@, reg@wkreg1@, reg@wkreg2@);
+vec_mov_rm(reg@reg1@,@ptr@)
+</code>
+
+<code VecRegRed2Arr2 pars=(reg1, reg2, wkreg, ptr)>
+vec_red2(reg@reg1@,reg@reg2@, reg@wkreg@);
+vec_mov_rm(reg@reg1@,@ptr@)
+</code>
+
+<code VecRegRed2Var pars=(reg,ptr, wkreg)>
+vec_red(reg@reg@,reg@wkreg@);
+vec_mov_rm_1(reg@reg@,@ptr@)
+</code>
+
+<code VecReg2Arr pars=(reg,ptr)>
+vec_mov_rm_a(reg@reg@,@ptr@)
+</code>
+
+<code Arr2VecReg pars=(ptr,reg)>
+vec_mov_mr_a(@ptr@,reg@reg@)
+</code>
+
+
+<code VecRegMul pars=(reg1,reg2)>
+vec_mul_rr(reg@reg1@,reg@reg2@)
+</code>
+
+<code VecRegAdd pars=(reg1,reg2)>
+vec_add_rr(reg@reg1@,reg@reg2@)
+</code>
+
+<code VecRegMinus pars=(reg1,reg2)>
+vec_sub_rr(reg@reg1@,reg@reg2@)
+</code>
+
+<code AddrAlign pars=(addr, elemsize)>
+(@elemsize@ - (((size_t)(@addr@)) & 0xF) / @elemsize@) 
+</code>
+
+<code AddrPrefetch pars=(addr)>
+ATL_pfl1R(@addr@)
+</code>
+
+<code SSEincl pars=(pre)>
+@ ((pre=="d")? @#define SSE2@ : @#define SSE @)@
+#include <SSE3Dnow.h>
+#include <stdlib.h>
+</code>
+
+<code Include_Allocate>
+#include <stdlib.h>
+</code>
+
+<code InclPrefetch >
+#include <atlas_prefetch.h>
+</code>
+
+<code InclOmp >
+#include <omp.h>
+</code>
+
+<code InclStdio>
+#include <stdio.h>
+</code>
+
+<code AllocateStore pars=(ptr, type,size)>
+@ptr@=(@type@*)malloc(@size@ * sizeof(@type@));
+</code>
+
+<code DeleteStore pars=(ptr,size)>
+free(@ptr@);
+</code>
+
