@@ -300,6 +300,8 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   const Transition* hasSelfEdge(const EState* estate);
   // deletes EState and *deletes* all ingoing and outgoing transitions
   void eliminateEState(const EState* estate);
+  int eliminateBackEdges();
+  void determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet);
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet

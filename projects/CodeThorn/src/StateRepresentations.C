@@ -1002,6 +1002,31 @@ string EStateSet::toString() const {
   return ss.str();
 }
 
+int TransitionGraph::eliminateBackEdges() {
+  const EState* startState=getStartEState();
+  set<const EState*> visited;
+  visited.insert(startState);
+  TransitionPtrSet backEdges; // default empty
+  determineBackEdges(startState, visited, backEdges);
+  for(TransitionPtrSet::iterator i=backEdges.begin();i!=backEdges.end();++i) {
+	
+  }
+  return backEdges.size();
+}
+void TransitionGraph::determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet) {
+  TransitionPtrSet succPtrs=outEdges(state);
+  for(TransitionPtrSet::iterator i=succPtrs.begin();i!=succPtrs.end();++i) {
+	if(visited.find((*i)->target)!=visited.end()) {
+	  // target node exists in visited-set
+	  tpSet.insert(*i);
+	  return;
+	}
+	visited.insert((*i)->target);
+	determineBackEdges((*i)->target,visited,tpSet);
+  }
+  return;
+}
+
 #ifdef USER_DEFINED_PSTATE_COMP
 bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   if(s1.size()!=s2.size())

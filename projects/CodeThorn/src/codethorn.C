@@ -465,6 +465,7 @@ int main( int argc, char * argv[] ) {
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
 	("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
+	("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -532,6 +533,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("stderr-like-failed-assert",false);
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);
+  boolOptions.registerOption("eliminate-stg-back-edges",false);
 
   boolOptions.processOptions();
 
@@ -754,6 +756,11 @@ int main( int argc, char * argv[] ) {
     cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "=============================================================="<<endl;
   }
+  if(boolOptions["eliminate-stg-back-edges"]) {
+	int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
+	cout<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
+  }
+
   timer.start();
   if (ltl_file.size()) {
     generateLTLOutput(analyzer,ltl_file);
