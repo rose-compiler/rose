@@ -424,8 +424,6 @@ int main( int argc, char * argv[] ) {
     ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
-    ("precision-intbool",po::value< string >(),
-     "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
@@ -497,7 +495,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("report-stdout",false);
   boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
-  boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);

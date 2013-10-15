@@ -953,7 +953,6 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
-  boolOptions.registerOption("precision-intbool",false); // temporary
   // regular options
   boolOptions.registerOption("inline",true);
   boolOptions.registerOption("eliminate-empty-if",true);
