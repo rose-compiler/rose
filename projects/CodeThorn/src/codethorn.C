@@ -438,7 +438,6 @@ int main( int argc, char * argv[] ) {
     ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
-    ("reset-state-on-input",po::value< string >(),"Resets all current state to empty state on input input. Default is No. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
@@ -510,7 +509,6 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
-  boolOptions.registerOption("reset-state-on-input",false);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",true);
   boolOptions.registerOption("print-all-options",false);

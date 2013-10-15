@@ -857,11 +857,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             newCSet.removeAllConstraintsOfVar(varId);
             newPState[varId]=AType::Top();
           }
-          if(boolOptions["reset-state-on-input"]) {
-            newPState.setAllVariablesToTop();
-            ConstraintSet emptyCSet;
-            newCSet=emptyCSet;
-          }
         }
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         return elistify(createEState(edge.target,newPState,newCSet,newio));
