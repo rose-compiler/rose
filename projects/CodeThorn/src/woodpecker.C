@@ -895,7 +895,16 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
 
 	// TODO: print array size
 	// myfile<<",";
-
+	SgType* varType=variableIdMapping.getType(varId);
+	if(isSgArrayType(varType))
+	  myfile<<"array";
+	else if(isSgPointerType(varType))
+	  myfile<<"ptr";
+	else if(isSgTypeInt(varType))
+	  myfile<<"int";
+	else
+	  myfile<<"unknown";
+	myfile<<",";	
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
