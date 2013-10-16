@@ -737,8 +737,8 @@ EvalValueType eval(SgExpression* node) {
     case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
     case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
     case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
-      
-    default:watch<<"#1:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
+    case V_SgPntrArrRefExp: res=AType::Top();break;
+    default:watch<<"#1:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
@@ -749,8 +749,9 @@ EvalValueType eval(SgExpression* node) {
     switch(node->variantT()) {
     case V_SgNotOp:watch<<"!";res=!childVal;break;
     case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
-	case V_SgMinusOp:watch<<"-";res=-childVal; break;
-    default:watch<<"#2:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
+    case V_SgMinusOp:watch<<"-";res=-childVal; break;
+    case V_SgPointerDerefExp: watch<<"*";res=AType::Top();break;
+    default:watch<<"#2:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else {
     // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
@@ -758,7 +759,7 @@ EvalValueType eval(SgExpression* node) {
     case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
     case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
     case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
-    default:watch<<"#3:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
+    default:watch<<"#3:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   }
   return res;
