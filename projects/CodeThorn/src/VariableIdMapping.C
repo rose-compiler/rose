@@ -4,8 +4,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "sage3basic.h"
-
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
@@ -13,6 +11,15 @@
 using std::set;
 using namespace CodeThorn;
 
+SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
+  SgSymbol* varSym=getSymbol(varId);
+  return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(varSym));
+}
+
+SgType* VariableIdMapping::getType(VariableId varId) {
+  SgSymbol* varSym=getSymbol(varId);
+  return varSym->get_type();
+}
 
 /*! 
   * \author Markus Schordan

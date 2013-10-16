@@ -12,6 +12,7 @@
 #include <vector>
 #include <boost/unordered_set.hpp>
 
+#include "sage3basic.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 
@@ -68,6 +69,8 @@ class VariableIdMapping {
   VariableId variableId(SgSymbol* sym);
   VariableId variableIdFromCode(int);
   SgSymbol* getSymbol(VariableId varId);
+  SgType* getType(VariableId varId);
+  SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
   string uniqueLongVariableName(VariableId varId);
