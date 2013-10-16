@@ -738,7 +738,7 @@ EvalValueType eval(SgExpression* node) {
     case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
     case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
       
-    default:watch<<"#1:";watch<<node->class_name();watch<<"#";assert(0);
+    default:watch<<"#1:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
@@ -750,7 +750,7 @@ EvalValueType eval(SgExpression* node) {
     case V_SgNotOp:watch<<"!";res=!childVal;break;
     case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
 	case V_SgMinusOp:watch<<"-";res=-childVal; break;
-    default:watch<<"#2:";watch<<node->class_name();watch<<"#";assert(0);
+    default:watch<<"#2:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
     }
   } else {
     // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
@@ -758,7 +758,7 @@ EvalValueType eval(SgExpression* node) {
     case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
     case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
     case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
-    default:watch<<"#3:";watch<<node->class_name();watch<<"#";assert(0);
+    default:watch<<"#3:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator.\n"; return res;
     }
   }
   return res;
@@ -897,13 +897,13 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
 	// myfile<<",";
 	SgType* varType=variableIdMapping.getType(varId);
 	if(isSgArrayType(varType))
-	  myfile<<"array";
+	  myfile<<"CA_ARRAY";
 	else if(isSgPointerType(varType))
-	  myfile<<"ptr";
+	  myfile<<"CA_PTR";
 	else if(isSgTypeInt(varType))
-	  myfile<<"int";
+	  myfile<<"CA_INT";
 	else
-	  myfile<<"unknown";
+	  myfile<<"CA_UNKNOWN";
 	myfile<<",";	
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
