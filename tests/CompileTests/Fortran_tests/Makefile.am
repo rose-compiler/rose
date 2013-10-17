@@ -1028,6 +1028,9 @@ testTokenGeneration: ../../testTokenGeneration
 # 	rm -f testTranslator_$(@:.o=)
 # endif
 
+# DQ (9/25/2013): The location of the SDF version of OFP.
+SDF_OFP = $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser
+
 $(TEST_F90_Sources): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
@@ -1037,6 +1040,13 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testTokenGeneration.passed)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+#	sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f90.passed=.f90).aterm
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f90.passed=.f90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGeneration.passed) || true
+if ROSE_WITH_ATERM
+	@$(RTH_RUN) CMD="../../testAtermGraphGeneration $(@:.f90.passed=.f90.aterm)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGraphGeneration.passed) || true
+endif
+endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
@@ -1066,9 +1076,12 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
 #	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testGraphGeneration.passed)
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testTokenGeneration.passed)
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.F90.passed=.F90) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.F90.passed=.F90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testAtermGeneration.passed) || true
+endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
@@ -1100,9 +1113,12 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $@
 #	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testGraphGeneration.passed)
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testTokenGeneration.passed)
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f77.passed=.f77) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f77.passed=.f77).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testAtermGeneration.passed) || true
+endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
@@ -1135,9 +1151,12 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
 #	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
-	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testGraphGeneration.passed)
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
-	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testTokenGeneration.passed)
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f.passed=.f) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f.passed=.f).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testAtermGeneration.passed) || true
+endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
@@ -1183,6 +1202,9 @@ if !ROSE_USE_INSURE
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
 	@touch $@
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f03.passed=.f03) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f03.passed=.f03).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f03.passed=.f03.testAtermGeneration.passed)
+endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
@@ -1399,6 +1421,7 @@ clean-local:
 	rm -f *_postprocessed.* 
 	rm -rf QMTest
 	rm -f *.passed *.failed *.err
+	rm -f *.aterm
 if ROSE_USE_INSURE
 #	Remove the links built to get the filename being compiled into the name of the executable.
 	rm -f testTranslator_*

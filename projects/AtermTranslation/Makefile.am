@@ -12,11 +12,13 @@ INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
 # DQ (10/27/2004): Removed because it has dependence upon Stratego (which may not be installed)
 # This will be made a option in the future and the location of the Stratego package will
 # have to be specified on the configure command line!
-bin_PROGRAMS = termToStratego strategoToTerm
+bin_PROGRAMS = termToStratego strategoToTerm termGraph
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
 strategoToTerm_SOURCES = strategoToTerm.C atermToAstImpl.C atermTranslation.h
+
+termGraph_SOURCES = termGraph.C
 
 include_HEADERS = atermTranslation.h
 
@@ -45,7 +47,6 @@ ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 #        -L/usr/apps/gcc/3.3.2/lib /usr/apps/gcc/3.3.2/lib/libgc.a -lc
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
 
-
 TESTCODES_REQUIRED_TO_PASS = test2013_01.C
 
 TESTCODE_CURRENTLY_FAILING =
@@ -68,6 +69,17 @@ rose_%: $(srcdir)/% termToStratego
 	cd ../..; $(MAKE) testTranslator
 
 
+
+
+test: termGraph
+	./termGraph atermFile.aterm
+
+
+
+if ROSE_WITH_ATERM
+status:
+	echo "ROSE_WITH_ATERM is defined"
+endif
 
 check-local:
 	@echo "Tests for ATerm examples."
