@@ -1,6 +1,11 @@
 #include <cerrno>
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+#include "rose_getline.h"
+#include "Combinatorics.h"
+
+#include <cerrno>
+
 
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -37,12 +42,64 @@ usage(int exit_status)
               <<"    --ignore-no-compares\n"
               <<"            Ignore functions that in the semantic clone detection never succeeded for any test.\n"
               <<"\n"
+              <<"  Other switches and arguments:\n"
+              <<"    --file=NAME\n"
+              <<"            Read pairs from this file instead of standard input.\n"
+              <<"    --verbose\n"
+              <<"            Show lots of diagnostics.\n"
+              <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
               <<"            containing the driver type and all necessary connection parameters.\n";
     exit(exit_status);
 }
+
+typedef WorkList< std::pair<int/*func1_id*/, int/*func2_id*/> > FunctionPairs;
+
+static FunctionPairs
+load_worklist(const std::string &input_name, FILE *f)
+{
+    FunctionPairs worklist;
+    char *line = NULL;
+    size_t line_sz = 0, line_num = 0;
+    while (rose_getline(&line, &line_sz, f)>0) {
+        ++line_num;
+        if (char *c = strchr(line, '#'))
+            *c = '\0';
+        char *s = line + strspn(line, " \t\r\n"), *rest;
+        if (!*s)
+            continue; // blank line
+
+        errno = 0;
+        int func1_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func1_id expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        errno = 0;
+        int func2_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func2_id expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        while (isspace(*s)) ++s;
+        if (*s) {
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after func2_id\n";
+            exit(1);
+        }
+
+        worklist.push(std::make_pair(std::min(func1_id, func2_id), std::max(func1_id, func2_id)));
+    }
+    return worklist;
+}
+
+
+
 
 typedef std::vector<int> CallVec;
 
@@ -106,124 +163,6 @@ load_function_api_calls_for(int func_id, bool reachability_graph)
 
 using namespace boost;
 
-
-typedef boost::adjacency_list< boost::vecS, 
-        boost::vecS, 
-        boost::directedS > DirectedGraph; 
-
-
-void
-create_reachable_node_graph()
-{
-  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
-
-
-  SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into semantic_rg"
-      // 0        1         2  
-      "(caller, callee, file_id)"
-      " values (?, ?, ?)");
-
-
-  SqlDatabase::StatementPtr stmt = transaction->statement(
-      "select id from semantic_files"
-      );
-
-
-  // Delete from the database all call graph edges that correspond to one of our specimen files.
-  std::set<int> file_ids;
-
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
-    file_ids.insert(row.get<int>(0));
-  }
-  std::string sql = "delete from semantic_rg where file_id in (";
-  for (std::set<int>::iterator i=file_ids.begin(); i!=file_ids.end(); ++i)
-    sql += (i==file_ids.begin()?"":", ") + StringUtility::numberToString(*i);
-  sql += ")";
-  transaction->execute(sql);
-
-
-
-  //Create the new reachability graph
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
-
-    DirectedGraph G( VERTEX_COUNT );
-
-    //add all edges from functions in file
-
-    int file_id = row.get<int>(0); 
-
-    SqlDatabase::StatementPtr func_in_file_stmt = transaction->statement(
-        "select scg.caller, scg.callee from semantic_cg as scg "
-        " join semantic_functions as sf on scg.caller = sf.id "
-        " where sf.file_id = ? "
-        );
-
-    func_in_file_stmt->bind(0,file_id);
-
-    std::set<int> callers_in_file; 
-
-    //insert edges into graph
-    for (SqlDatabase::Statement::iterator func_row = func_in_file_stmt->begin(); func_row != func_in_file_stmt->end(); ++func_row) {
-
-      int caller = func_row.get<int>(0);
-      int callee = func_row.get<int>(1);
-
-      boost::add_edge(caller, callee, G); 
-
-      callers_in_file.insert(caller);
-
-    }
-
-    typedef graph_traits<DirectedGraph>::vertex_iterator vertex_iter;
-    std::pair<vertex_iter, vertex_iter> vp;
-
-    //iterate over each vertex of the graph, find all reachable nodes,
-    //and insert them into the db
-    for (vp = boost::vertices(G); vp.first != vp.second; ++vp.first)
-    {
-      int caller = *vp.first;
-
-      //if the vertex is a function in the file, analyze it, otherwise skip.
-      if( callers_in_file.find(caller) == callers_in_file.end() )
-        continue;
-
-
-      //find all reachable nodes
-
-      typedef DirectedGraph::vertex_descriptor Vertex; 
-      std::vector<Vertex> reachable; 
-
-      boost::breadth_first_search(G, *vp.first, 
-          boost::visitor( 
-            boost::make_bfs_visitor( 
-              boost::write_property( 
-                boost::identity_property_map(), 
-                std::back_inserter(reachable), 
-                boost::on_discover_vertex())))); 
-
-
-      //insert all callees by function into db
-      for(std::vector<Vertex>::iterator r_it = reachable.begin(); r_it != reachable.end(); ++r_it)
-      {
-        int callee = *r_it;
-        //std::cout << " caller " << caller << " callee " << callee << std::endl;
-
-        if ( caller == callee )
-          continue;
-
-        insert_stmt->bind(0, caller);
-        insert_stmt->bind(1, callee);
-        insert_stmt->bind(2, file_id);
-
-        insert_stmt->execute();
-
-      }
-
-
-    }
-  }
-
-}
 
 void
 normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map, bool reachability_graph)
@@ -611,7 +550,7 @@ main(int argc, char *argv[])
 
     bool ignore_inline_candidates = false;
     bool ignore_no_compares = false;
-    int  call_depth = 0;
+    int  call_depth = -1;
 
  
     bool ignore_faults = true;
@@ -620,6 +559,12 @@ main(int argc, char *argv[])
     bool expand_ncalls = false;
 
     bool reachability_graph = true;
+
+    bool show_progress = false;
+
+    bool verbose = false;
+
+    std::string input_file_name;
 
     int argno = 1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -632,8 +577,14 @@ main(int argc, char *argv[])
             ignore_inline_candidates = true;
         } else if (!strcmp(argv[argno], "--ignore-no-compares")) {
           ignore_no_compares = false;
+        } else if (!strcmp(argv[argno], "--progress")) {
+          show_progress = true;
         } else if (!strcmp(argv[argno], "--no-expand-ncalls")) {
           expand_ncalls = false;
+        } else if (!strncmp(argv[argno], "--file=", 7)) {
+            input_file_name = argv[argno]+7;
+        } else if (!strcmp(argv[argno], "--verbose")) {
+            verbose = true;
         } else if (!strncmp(argv[argno], "--call-depth=",13)) {
           call_depth = strtol(argv[argno]+13, NULL, 0);
         } else {
@@ -644,85 +595,49 @@ main(int argc, char *argv[])
     };
     if (argno+1!=argc)
         usage(1);
+
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
-
-    //delete old data
-    transaction->execute("delete from api_call_similarity");
- 
-    //table of tested functions. Criteria is that it needs to pass at least one test.
-    transaction->execute("create table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
-    
-    transaction->execute("create table tmp_plt_func_names as ( select distinct name||'@plt' as name, id as func_id from semantic_functions where name NOT LIKE '%@plt')");
-    transaction->execute("create table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt'" 
-        //" EXCEPT  (select distinct sem.id as func_id, sem.name from semantic_functions sem join tmp_plt_func_names plt on plt.name = sem.name)"
-        " )"
-        );
-    transaction->execute("create temporary table tmp_interesting_funcs as ( select func_id from tmp_tested_funcs UNION select func_id from tmp_library_funcs ) ");
-
-    // Table of called fuctions.  Do this in two steps so we're not doing a join on the large semantic_fio_calls table. Also,
-    // we don't need to have the igroup_id column since it's never used. Note that this table is named "functions" not "funcs"
-    // like the rest.
-    transaction->execute("create table tmp_all_called_funcs as"
-                         "  select distinct caller_id as func_id, callee_id"
-                         "  from semantic_fio_calls");
-    transaction->execute("create table tmp_called_functions as"
-                         "  select f1.*"
-                         "  from tmp_all_called_funcs as f1"
-                         "  join tmp_interesting_funcs as f2"
-                         "    on f1.callee_id = f2.func_id");
-    transaction->execute("drop table tmp_all_called_funcs");
-    
-
-    transaction->execute("drop index IF EXISTS fr_call_index");
-    transaction->execute("drop index IF EXISTS fr_tmp_called_index");
-    transaction->execute("drop index IF EXISTS fr_tmp_interesting_funcs_index");
-
-    if( call_depth >= 0)
-      transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id, caller_id)");
-    else
-      transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id)");
-
- 
-    transaction->execute("create index fr_tmp_called_index on tmp_called_functions(callee_id)");
- 
-    transaction->execute("create index fr_tmp_interesting_funcs_index on tmp_interesting_funcs(func_id)");
-    transaction->execute("create index fr_tmp_library_funcs_index on tmp_library_funcs(func_id)");
-    transaction->execute("create index fr_tmp_library_funcs_name_index on tmp_library_funcs(name)");
+    int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating api similarity");
 
 
-    //create reachability graph
-    std::cout << "START creating reachability graph" << std::endl;
+    // Read function pairs from standard input or the file
+    FunctionPairs worklist;
+    if (input_file_name.empty()) {
+        std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
+        worklist = load_worklist("stdin", stdin);
+    } else {
+        FILE *in = fopen(input_file_name.c_str(), "r");
+        if (NULL==in) {
+            std::cerr <<argv0 <<": " <<strerror(errno) <<": " << input_file_name <<"\n";
+            exit(1);
+        }
+        worklist = load_worklist(input_file_name, in);
+        fclose(in);
+    }
+    size_t npairs = worklist.size();
+    std::cerr <<argv0 <<": work list has " <<npairs <<" function pair" <<(1==npairs?"":"s") <<"\n";
 
-    create_reachable_node_graph();
+    // Process each function pair
+    CloneDetection::Progress progress(npairs);
+    progress.force_output(show_progress);
 
-    std::cout << "END creating reachability graph" << std::endl;
 
-    // Create indexes for normalize_func_to_id()
-    transaction->execute("drop index if exists semantic_funcsim_similarity");
-    transaction->execute("create index semantic_funcsim_similarity on semantic_funcsim(similarity)");
-    transaction->execute("drop index if exists semantic_funcsim_func1_id");
-    transaction->execute("create index semantic_funcsim_func1_id on semantic_funcsim(func1_id)");
-    transaction->execute("drop index if exists semantic_funcsim_func2_id");
-    transaction->execute("create index semantic_funcsim_func2_id on semantic_funcsim(func2_id)");
-    transaction->execute("drop index if exists tmp_called_functions_func_id");
-    transaction->execute("create index tmp_called_functions_func_id on tmp_called_functions(func_id)");
 
     //Creat list of functions and igroups to analyze
-    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
-
-    similarity_stmt->bind(0, semantic_similarity_threshold);
 
     SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into api_call_similarity"
                                                             // 0        1         2           3          4
                                                             "(func1_id, func2_id, max_similarity, min_similarity, ave_similarity, cg_similarity )"
                                                             " values (?, ?, ?, ?, ?, ?)");
  
-    for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
-      int func1_id = row.get<int>(0);
-      int func2_id = row.get<int>(1);
+    while (!worklist.empty()) {
+      ++progress;
+      int func1_id, func2_id;
+      boost::tie(func1_id, func2_id) = worklist.shift();
+      if (verbose)
+        std::cerr <<argv0 <<": func1_id=" <<func1_id <<" func2_id=" <<func2_id <<"\n";
 
-      std::cout << "Comparing function " << func1_id << " and " << func2_id << std::endl;
 
       SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct sem1.igroup_id from semantic_fio as sem1 "
           " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id AND sem2.func_id = ?"
@@ -790,12 +705,16 @@ main(int argc, char *argv[])
       insert_stmt->execute();
 
     }
-   
-    transaction->execute("drop index fr_call_index");
-   
+    
+    progress.message("committing changes");
+    std::string mesg = "calculated api similarity for "+
+                       StringUtility::numberToString(npairs)+" function pair"+(1==npairs?"":"s");
+    CloneDetection::finish_command(transaction, cmd_id, mesg);
+
+
     transaction->commit();
 
-
+    progress.clear();
 
     return 0;
 } 
