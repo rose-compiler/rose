@@ -228,6 +228,9 @@ CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
          --ltl-verifier=2 --semantic-fold=yes \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
          --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<)
+
+# DQ (10/21/2013): Changed with permission from Markus.
+dummy_target:
         # DOS2UNIX
 	perl -pe 's/\r?\n|\r/\n/g' -i $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<)
         # paste all csv's line-by-line
