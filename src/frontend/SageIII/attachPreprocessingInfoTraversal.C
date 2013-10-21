@@ -377,14 +377,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                if ( attachCommentOrDirective == true )
                   {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d \n",
+                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
                          currentPreprocessingInfoPtr->getString().c_str(),
                          currentPreprocessingInfoPtr->getLineNumber(),
                          (locatedNode->get_file_info()->isCompilerGenerated() == true) ? "compiler-generated" : "non-compiler-generated",
                          locatedNode,
                          locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str(),
                       // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
-                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line());
+                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(),
+                         PreprocessingInfo::relativePositionName(location).c_str());
                  // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
 #endif
                  // Mark this PreprocessingInfo object as having been placed into the AST
@@ -852,7 +853,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
           printf ("Found the raw token stream in ROSE! returnListOfAttributes->get_rawTokenStream() = %p \n",returnListOfAttributes->get_rawTokenStream());
 #endif
+#if 0
           LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
+#endif
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of CPP directives and comments = %d): \n",returnListOfAttributes->size());
           printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of tokens = %zu): \n",tokenList.size());
