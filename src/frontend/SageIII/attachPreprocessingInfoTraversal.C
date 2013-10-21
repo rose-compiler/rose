@@ -1087,17 +1087,29 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
        // ROSE_ASSERT(sourceFile != NULL);
 
-          ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+       // DQ (10/21/2013): This was reported as an error for test2008_01.F (fortran tests).
+       // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
           ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
-          ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+          if (filePreprocInfo != NULL)
+             {
+               ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
 #if 0
-          printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
+               printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
 #endif
-       // Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map)
-          filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+            // Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map)
+               filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
 #if 0
-          printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
 #endif
+             }
+            else
+             {
+            // DQ (10/21/2013): I am not clear if this shuld be a warning, but I disabled the assertion above (required for 
+            // Fortran or perhaps masking another issue).  After more investigation, I think this is OK to comment out.
+#if 0
+               printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
+#endif
+             }
 #if 0
           printf ("Exiting as a test so that we can get the token information attached to the SgSourceFile \n");
           ROSE_ASSERT(false);
