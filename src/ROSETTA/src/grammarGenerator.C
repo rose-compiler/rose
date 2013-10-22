@@ -1,0 +1,323 @@
+/**********************************
+ * Terminal/Nonterminal functions *
+ **********************************/
+
+#if 0
+bool
+Grammar::isTerminal ( const string& terminalName ) const {
+  bool returnValue = terminalList.containedInList(terminalName);
+  return returnValue;
+}
+
+bool
+Grammar::isNonTerminal ( const string& nonTerminalName ) const {
+  return nonTerminalList.containedInList(nonTerminalName);
+}
+#endif
+
+//////////////////////////////////
+// GRAMMAR OUTPUT/VISUALIZATION //
+//////////////////////////////////
+// MS: 2002
+
+using namespace std;
+
+Grammar::GrammarSynthesizedAttribute 
+Grammar::CreateGrammarDotString(Terminal* grammarnode,
+				  vector<GrammarSynthesizedAttribute> v) {
+  GrammarSynthesizedAttribute saDot;
+  string s;
+
+  if(grammarnode->isInnerNode()) {
+    // (traversed) data member information for current grammar node
+    vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+    for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
+      stringListIterator != includeList.end();
+	stringListIterator++) {
+      if ((*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+	string type = (*stringListIterator)->getTypeNameString();
+	type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
+	type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
+	type=GrammarString::copyEdit (type,"*","");
+	s+=string(grammarnode->getName())+" -> "+type
+	  +" [label=\""+(*stringListIterator)->getVariableNameString()+"\"];\n";
+      }
+    }
+    // approximation: if the node has at least one successor that is a non-terminal then
+    //                create successor information
+    // unfortunately GrammarString does not contain this information
+    bool createSuccessorInfo=false;
+    for(vector<Terminal *>::iterator succiter=grammarnode->subclasses.begin();
+	succiter!=grammarnode->subclasses.end();
+	succiter++) {
+      if((*succiter)->isInnerNode())
+	createSuccessorInfo=true;
+    }
+
+    // inheritance hierarchy information
+    // create data for current node (edges to subtree nodes) (only edges for inner nodes)
+    if(createSuccessorInfo) {
+      for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
+	s+=string(grammarnode->getName())+" -> "+(*viter).grammarnode->getName()+" [color=\"blue\"];\n";
+      }
+    }
+  }
+  // union data of subtree nodes
+  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
+    s+=(*viter).text;
+  }
+  saDot.grammarnode=grammarnode;
+  saDot.text=s;
+  return saDot;
+}
+
+bool 
+Grammar::isAbstractGrammarSymbol(string s) {
+  //set<string>::iterator posIter = traversedTerminals.find(s);
+  //if (posIter != traversedTerminals.end())
+  //  return true;
+  //compute all basetypes of the above set and you are done!
+
+  // hack: exclude symbols explicitely which are not traversed but are included in the type hierarchy
+  //"SgFunctionType","SgNamedType","SgUnparse_Info"};
+  list<string> excl;
+  excl.push_back("SgType");
+  excl.push_back("SgFunctionType");
+  excl.push_back("SgNamedType");
+  excl.push_back("SgMemberFunctionType");
+  excl.push_back("SgClassType");
+  excl.push_back("SgPointerType");
+  excl.push_back("SgUnparse_Info");
+  excl.push_back("Sg_File_Info");
+  for(list<string>::iterator i=excl.begin();i!=excl.end();i++) {
+    string::size_type posIter = s.find(*i);
+    if (posIter != string::npos)
+      return false;
+  }
+  return true;
+}
+
+
+
+// MS: 2003
+// MS: We compute the set of traversed terminals to restrict the abstract grammar to traversed nodes only.
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
+				     vector<Grammar::GrammarSynthesizedAttribute> v) {
+  if(grammarnode->isLeafNode()) {
+    vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+    for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
+	stringListIterator != includeList.end(); // ", " only between the elements of the list
+	stringListIterator++) {
+      if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+	traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
+  
+      }
+    }  
+  }
+  GrammarSynthesizedAttribute dummy;
+  return dummy;
+}
+
+// MS: 2003
+string
+Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
+  string type=typeStringOfGrammarString(gs);
+  string::size_type posIter = type.find("*");
+  if (posIter != string::npos)
+    type.replace(posIter, 1, "");
+  GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
+  if(gInfo.numContainerMembers>0) { // there can be only one container member!
+    //cout << "ContainerMembers>0: " << type << endl;
+    type = replaceString("PtrList","",type);
+    type = replaceString("List","",type); // only SgInitializedNameList as of 05/20/03, MS
+    type = grammarSymListOpPrefix+type+grammarSymListOpPostfix; // EBNF notation for lists
+  } else {
+    type = replaceString("PtrListPtr","",type);
+    //cout << "ContainerMembers<=0: " << type << endl;
+  }
+  return type;
+}
+
+
+// MS: 2002,2003
+Grammar::GrammarSynthesizedAttribute 
+Grammar::CreateGrammarLatexString(Terminal* grammarnode,
+				  vector<GrammarSynthesizedAttribute> v) {
+  //cout << "Creating grammar latex string:" << endl;
+  GrammarSynthesizedAttribute saLatex;
+  string s;
+
+  // EBNF generated Grammar symbols (this can be parameterized in future)
+  // tree grammar
+  string grammarSymTreeLB=" \"(\" ";
+  string grammarSymTreeRB=" \")\" ";
+  string GrammarSymTreeElSep=""; // "\",\" "; comma no longer necessary
+  // kontext free grammar
+  string grammarSymArrow=" = ";
+  string grammarSymOr     ="    | ";
+  string grammarSymEndRule="    .\n";
+  string grammarSymListOpPrefix=" { ";
+  string grammarSymListOpPostfix=" } ";
+
+    if(grammarnode->isLeafNode()) {
+      string rhsTerminalSuccessors;
+      /*
+	bool containermembers=0; // (non-pointer)
+	bool singledatamembers=0;      // (pointer or non-pointer)
+    */
+      vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+      for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
+	  stringListIterator != includeList.end(); // ", " only between the elements of the list
+	  stringListIterator++) {
+	if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+	  if(rhsTerminalSuccessors!="") // before each element but not the first one
+	    rhsTerminalSuccessors+=GrammarSymTreeElSep;
+	  /*
+	    char* type =new char[300];type[0]='\0';
+	    (void) strcat( type, (*stringListIterator)->getTypeNameString());
+	    type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
+	    type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
+	    //type=GrammarString::copyEdit (type,"*","");
+	    */
+	  string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
+	  rhsTerminalSuccessors+=type+string(" "); // MS: NO VARNAME: +string((*stringListIterator)->getVariableNameString());
+	  
+	  // based on the type*name* used it is infered whether it is a
+	  // a container or a single data member (single pointer or single obj)
+	  // this is just a "heuristic" test. Changing the typenames invalidates
+	  // it
+	  //string stype=string(type);
+	  /*
+	    if( (stype.find("*") == string::npos) // not found, not a pointer
+	    && (stype.find("List") == stype.size()-4) ) // postfix
+	    containermembers++;
+	    else 
+	    singledatamembers++;
+	  */
+	}
+      }
+      // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
+      /*
+	for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
+	stringListIterator != includeList.end(); // ", " only between the elements of the list
+	stringListIterator++) {
+	if ( !(*stringListIterator)->getToBeTraversed()) {
+	if(s3!="") // before each element but not the first one
+	s3+=",\n";
+	char* type =new char[300];type[0]='\0';
+	(void) strcat( type, (*stringListIterator)->getTypeNameString());
+	type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
+	type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
+	type=GrammarString::copyEdit (type,"*","");
+	s3+=string("          ")+type+string(" "); //MS: NO VARNAME: +string((*stringListIterator)->getVariableNameString());
+	}
+	}
+	
+	if(false) {
+	saLatex.nodetext=string(grammarnode->getName())+grammarSymTreeLB+s2+grammarSymTreeRB//+"\n"
+	//+"{\n" s3 + "\n}\n"
+	;
+	}
+	else {
+      */
+      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
+	saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
+      else {
+// DQ (5/24/2005): debugging code (not generally required)
+// cout << "Terminal " << grammarnode->getName() << " excluded." << endl;
+	saLatex.nodetext="";
+      }
+    } // end of terminal handling
+    else {
+      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
+	saLatex.nodetext=grammarnode->getName();
+      else
+	saLatex.nodetext="";
+    }
+  // create BNF grammar rule for current grammar node and its successors
+  string grammarRule;
+  bool first=true;
+  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
+    if((*viter).nodetext!="" && isAbstractGrammarSymbol(string(grammarnode->getName())) ) {
+      if(first) {
+	grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
+	first=false;
+      } else {
+	grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
+      }
+    }
+  }
+  if(v.size()>0 && isAbstractGrammarSymbol(string(grammarnode->getName())) )
+    grammarRule+=grammarSymEndRule;
+
+  // union data of subtree nodes
+  saLatex.grammarnode=grammarnode;
+  saLatex.text=grammarRule;
+  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
+    saLatex.text+=(*viter).text;
+  }
+  
+  // create problematic node info
+  GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
+  if(gInfo.numSingleDataMembers>0 && gInfo.numContainerMembers>0) 
+    saLatex.problematicnodes+=string(grammarnode->getName())+"\n";
+
+  // ------------------------------------------------------------
+  // create terminal and nonterminal (and problematic node) lists 
+  // ------------------------------------------------------------
+
+  // create terminal or non-terminal entry
+  if(grammarnode->isLeafNode()) {
+    saLatex.terminalsbunch+=string(grammarnode->getName())+"\n";
+  } else {
+    saLatex.nonterminalsbunch+=string(grammarnode->getName())+"\n";
+  }
+  // union non-terminal, terminal, and problematic nodes data of subtree nodes
+  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
+    // union subtrees
+    saLatex.nonterminalsbunch+=(*viter).nonterminalsbunch;
+    saLatex.terminalsbunch+=(*viter).terminalsbunch;
+    saLatex.problematicnodes+=(*viter).problematicnodes;
+  }
+  return saLatex;
+}
+
+void Grammar::buildGrammarDotFile(Terminal* rootNode, ostream& GrammarDotFile) {
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarDotString);
+  GrammarDotFile << "digraph G {\n";
+  GrammarDotFile << a.text;
+  GrammarDotFile << "\n}" << endl;
+}
+
+// MS:2002
+void Grammar::buildGrammarLatexFile(Terminal* rootNode, ostream& GrammarLatexFile) {
+  GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
+#if 0
+// DQ (5/24/2005): debugging code (not required generally)
+  for(set<string>::iterator i=traversedTerminals.begin();i!=traversedTerminals.end();i++)
+     {
+       cout << "traversed Terminal: " << *i << endl;
+     }
+#endif
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarLatexString);
+  /*
+  GrammarLatexFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
+  GrammarLatexFile << "NonTerminals:\n" << a.nonterminalsbunch;
+  GrammarLatexFile << "\nTerminals:\n" << a.terminalsbunch;
+  GrammarLatexFile << "\nRules:\n" << a.text;
+  GrammarLatexFile << "\nProblematic Nodes:\n" << a.problematicnodes;
+  GrammarLatexFile << endl;
+  */
+  //GrammarLatexFile << "$CX /* Generate main module */ \n";
+  GrammarLatexFile << "/* Abstract C++ Attribute Grammar */\n";
+  GrammarLatexFile << "$CX /* Generate C++ code */\n";
+  GrammarLatexFile << "COMPILER SgNode\n #include \"slangs.hpp\"\n\n";
+  GrammarLatexFile << "\nTOKENS\n\n" << a.terminalsbunch;
+  GrammarLatexFile << "\nPRODUCTIONS\n\n" << a.text;
+  GrammarLatexFile << "\nEND SgNode.\n";
+  GrammarLatexFile << endl;
+  
+}
+
+

@@ -3184,8 +3184,9 @@ Grammar::buildCode ()
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
      cout << "finished." << endl;
 
-  // MS: not really needed because of typeid(node).name()
-  // MS: generation of VariantName Strings
+  // --------------------------------------------
+  // generate code for variantT enum names
+  // --------------------------------------------
      string variantEnumNamesFileName = string(getGrammarName())+"VariantEnumNames.C";
      ofstream variantEnumNamesFile(string(target_directory+"/"+variantEnumNamesFileName).c_str());
      ROSE_ASSERT(variantEnumNamesFile.good() == true);     
@@ -3194,6 +3195,9 @@ Grammar::buildCode ()
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
      variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
+  // --------------------------------------------
+  // generate code for RTI support
+  // --------------------------------------------
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;
      rtiFile << includeHeaderString;
@@ -3215,6 +3219,19 @@ Grammar::buildCode ()
      ROSE_TransformationSupportFile << transformationSupportString;
      ROSE_TransformationSupportFile.close();
 #endif
+
+  // ---------------------------------------------------------------------------
+  // generate grammar representations (from class hierarchy and node attributes)
+  // ---------------------------------------------------------------------------
+     // MS: 2002: Generate the grammar that defines the set of all ASTs as dot and latex file
+     ofstream GrammarDotFile("grammar.dot");
+     ROSE_ASSERT (GrammarDotFile.good());
+     buildGrammarDotFile(rootNode, GrammarDotFile);
+     cout << "DONE: buildGrammarDotFile" << endl;
+     ofstream GrammarLatexFile("generated_abstractcppgrammar.atg");
+     ROSE_ASSERT (GrammarLatexFile.good());
+     buildGrammarLatexFile(rootNode, GrammarLatexFile);
+     cout << "DONE: buildGrammarLatexFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3301,7 +3318,7 @@ Grammar::buildCode ()
      ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
-     printf ("Calling outputClassesAndFields() \n");
+     printf ("Building OutputClassesAndFields() \n");
   // outputClassesAndFields ( *rootNode, ROSE_outputClassesAndFieldsSourceFile);
      ROSE_outputClassesAndFieldsSourceFile << outputClassesAndFields ( *rootNode );
 #endif
@@ -3380,6 +3397,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   }
   return info;
 }
+
+#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
