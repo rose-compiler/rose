@@ -25,60 +25,77 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 */
 
 //********************************************************************
-//  Routines for implementing code generation from POET AST
+//  Routines implementing dynamic top-down parsing from syntax specifications
 //********************************************************************
 
 #include <fstream>
 #include <iostream>
-#include <set>
 #include <list>
-#include <poetAST.h>
-#include <ASTvisitor.h>
-#include <ASTfactory.h>
-#include <ASTeval.h>
-#include <error_config.h>
+#include <poet_ASTvisitor.h>
+#include <poet_ASTeval.h>
 #include <timing.h>
 #include <assert.h>
 
 extern bool debug_time();
 extern bool debug_parse();
-extern bool debug_lex();
 extern "C" POETCode* make_sourceString( const char* text, int len);
+
+class ParseError : public Error {
+  POETCode* r1, *r2;
+  int lineno;
+ public:
+  ParseError(POETCode* _r1, POETCode *_r2, int _lineno) : r1(_r1), r2(_r2), lineno(_lineno) {}
+  std::string message() const 
+   { std:: stringstream msg; msg << "Parsing type mismatch at line " << lineno << ": " << SHORT(r1->toString(),100) << "\n=> " << r2->toString() << "\n";  
+     return msg.str(); }
+};
+#define PARSE_MISMATCH(r1,r2,ln)  { throw ParseError(r1,r2,ln); }
+
+
+POETCode* InvokeExpMacro(POETCode* op, POETCode* args)
+{
+  XformVar* xvar = dynamic_cast<XformVar*>(op);
+  if (xvar != 0) return xvar->eval(args);
+  CodeVar* fvar = dynamic_cast<CodeVar*>(op);
+  if (fvar != 0) return CODE_REF(fvar,args);
+  INCORRECT_CVAR(op);
+}  
+
 
 /***************** computation of lookahead info **************************/
 
 //#define DEBUG_LOOKAHEAD
 /*QY: compute lookahead info; return the min len of tokens in lookahead */
 unsigned POETParseList::
-compute_lookaheadInfo(EvaluatePOET* op, std::vector<POETCode*>& res, 
+compute_lookaheadInfo(std::vector<POETCode*>& res, 
                             unsigned need) 
 {
      if (!itemFilter.size()) { 
-        lookahead = op->compute_lookaheadInfo(get_arg(0), itemFilter, need);
+        lookahead = EvaluatePOET::compute_lookaheadInfo(get_arg(0), itemFilter, need);
      }
      for (unsigned i = 0; i < itemFilter.size(); ++i)
          res.push_back(itemFilter[i]);
      return lookahead;
 }
 
-bool POETParseList:: match_lookahead(EvaluatePOET* op, POETCode* input)
+bool POETParseList:: match_lookahead(POETCode* input)
 {
   if (!itemFilter.size())  {
-     lookahead = op->compute_lookaheadInfo(get_arg(0), itemFilter, 1);
+     lookahead = EvaluatePOET::compute_lookaheadInfo(get_arg(0), itemFilter, 1);
   }
   for (unsigned i = 0; i < itemFilter.size(); ++i)
-     if (op->match_lookahead(input, itemFilter[i]))
+     if (EvaluatePOET::match_lookahead(input, itemFilter[i]))
           return true;
   return false; 
 }
 
-unsigned POETTypeTor::compute_lookaheadInfo(EvaluatePOET* op, unsigned index, unsigned need)
+unsigned POETTypeTor::compute_lookaheadInfo(unsigned index, unsigned need)
 {
      for (unsigned i = parseInfo.size(); i <= index; ++i) 
          { parseInfo.push_back(ParseInfo()); }
      ParseInfo& cur = parseInfo[index];
      if (!cur.filter.size()) {
-        cur.lookahead = op->compute_lookaheadInfo(args[index], cur.filter, need);
+        cur.lookahead = EvaluatePOET::compute_lookaheadInfo(args[index], cur.filter, need);
 #ifdef DEBUG_LOOKAHEAD
 std::cerr << "lookahead for: " << toString() << ":" << index << ":";
         for (int i = 0; i < cur.filter.size(); ++i) 
@@ -90,13 +107,13 @@ std::cerr << cur.filter[i]->toString() << ";";
 }
 
 unsigned POETTypeTor::
-compute_lookaheadInfo(EvaluatePOET* op, std::vector<POETCode*>& res, unsigned need)
+compute_lookaheadInfo(std::vector<POETCode*>& res, unsigned need)
 {
     int size = args.size();
     unsigned len = -1;
     for (int i = 0; i < size; ++i)
      {
-        unsigned curlen = compute_lookaheadInfo(op, i,need);
+        unsigned curlen = compute_lookaheadInfo(i,need);
         if (len > curlen) len = curlen;
         ParseInfo& cur = parseInfo[i];
         for (unsigned i = 0; i < cur.filter.size(); ++i) {
@@ -106,19 +123,19 @@ compute_lookaheadInfo(EvaluatePOET* op, std::vector<POETCode*>& res, unsigned ne
     return len;
 }
 
-POETCode* POETTypeTor::get_parseInfo(EvaluatePOET* op, POETCode* r1)
+POETCode* POETTypeTor::get_parseInfo(POETCode* r1)
 { /*QY: compute and set parsing information*/
     unsigned size = args.size();
     if (!size) return 0;
     for (unsigned i = 0; i < size-1; ++i)
      {
-        compute_lookaheadInfo(op, i, 1);
+        compute_lookaheadInfo(i, 1);
         ParseInfo& cur = parseInfo[i];
         if (cur.lookahead == 0) LOOKAHEAD_EMPTY(args[i]);  
         assert(cur.filter.size() > 0);
         for (unsigned j = 0; j < cur.filter.size(); ++j) {
             POETCode* cur_filter = cur.filter[j];
-            if (op->match_lookahead(r1, cur_filter))
+            if (EvaluatePOET::match_lookahead(r1, cur_filter))
                return args[i];
         }
      }
@@ -213,7 +230,7 @@ compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, unsigned need)
         switch(op->get_op()) {
         case TYPE_TOR: {
             POETTypeTor* tor = static_cast<POETTypeTor*>(cur);
-            return tor->compute_lookaheadInfo(this, res, need);
+            return tor->compute_lookaheadInfo(res, need);
            }
         case POET_OP_LIST1: 
         case TYPE_LIST1: 
@@ -239,7 +256,6 @@ bool EvaluatePOET::match_lookahead(POETCode* r1, POETCode* cur_filter)
 #ifdef DEBUG_LOOKAHEAD
 std::cerr << "trying to match " << r1->toString() << " with lookahead:" << cur_filter->toString() << "\n";
 #endif
-
     POETCode* r1_first = get_head(r1);
     switch (cur_filter->get_enum()) {
      case SRC_STRING: 
@@ -262,7 +278,7 @@ std::cerr << "trying to match " << r1->toString() << " with lookahead:" << cur_f
         }  
      case SRC_OP: {
         POETParseList* parse = dynamic_cast<POETParseList*>(cur_filter);
-        if (parse != 0) return parse->match_lookahead(this,r1);
+        if (parse != 0) return parse->match_lookahead(r1);
      }
      default: std::cerr << "Unexpected: " << cur_filter->toString() << "\n"; assert(0);
     }
@@ -275,12 +291,7 @@ class ParseExp : public EvaluatePOET
    bool backtrack; 
 
    static ParseExp* my;
-   ParseExp() {
-      backtrack=curfile->get_backtrack();
-      compute_exp_lookahead(itemFilter);
-      if (exp_bop->get_entry().get_code() == 0)
-         SYM_UNDEFINED("EXP_BOP");
-   }
+
    bool match_expItem(POETCode* input)
    { 
        for (unsigned i = 0; i < itemFilter.size(); ++i) {
@@ -298,10 +309,18 @@ class ParseExp : public EvaluatePOET
         if (curop == 0) return (input==0)? EMPTY : input;
         return 0;
      }
-
+   ParseExp() {
+      backtrack=curfile->get_backtrack();
+      compute_exp_lookahead(itemFilter);
+      if (exp_bop->get_entry().get_code() == 0)
+         SYM_UNDEFINED("EXP_BOP");
+   }
  public:
-   static ParseExp* inst() { if (my==0) my=new ParseExp(); return my; }
-
+   static void reset() { if (my != 0) delete my; 
+                    my = 0; }
+   static ParseExp* inst() { 
+            if (my == 0) my = new ParseExp();
+            return my; }
    typedef std::pair<POETCode*, POETCode*> Result;
    Result ParseItemType(POETCode* input, int *p_lineno = 0);
    Result ParseExpImpl(POETCode* input, POETCode* bop, POETCode* inherit, int *p_lineno=0);
@@ -313,10 +332,33 @@ class ParseExp : public EvaluatePOET
 
 };
 
+ParseExp* ParseExp::my = 0;
+
 ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
    {
       POETCode* res = 0, *tail=0;
-      if ( get_head(input) == lp) {
+      if (match_expItem(input)) {
+          try {
+           res = EvaluatePOET::parse_AST(input, exp_item->get_entry().get_code(), &tail);
+           assert(res != 0);
+           input=SkipEmpty(tail, p_lineno);
+          }
+          catch (ParseError err) { 
+               if (get_head(input) == lp) { /* QY: treat lp the default way */
+                  Result resOfRest = ParseExpImpl(NextToken(input),exp_bop->get_entry().get_code(),0, p_lineno);
+                  if (get_head(resOfRest.second) == rp) {
+                        input = NextToken(resOfRest.second);
+                        res = resOfRest.first;
+                  }
+                  else {
+                      return Result(0,input);
+                   }
+               }
+               else if (backtrack) return Result(0,input); 
+               else throw err;
+          }
+      }
+      else if ( get_head(input) == lp) {
            Result resOfRest = ParseExpImpl(NextToken(input),exp_bop->get_entry().get_code(),0, p_lineno);
            if (get_head(resOfRest.second) == rp) {
                  input = NextToken(resOfRest.second);
@@ -324,22 +366,9 @@ ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
            }
            else return Result(0,input);
       }
-      else if (match_expItem(input)) {
-          try {
-           res = parse_AST(input, exp_item->get_entry().get_code(), &tail);
-           assert(res != 0);
-           input=SkipEmpty(tail, p_lineno);
-          }
-          catch (ParseError err) { 
-                   if (backtrack) return Result(0,input); 
-                   throw err;
-             }
-      }
       else return Result(0,input);
      if (funcall->get_entry().get_code() != 0 && get_head(input) == lp)
      {
-        CodeVar* fvar = dynamic_cast<CodeVar*>(funcall->get_entry().get_code());
-        if (fvar == 0) INCORRECT_CVAR(funcall->get_entry().get_code());
         Result resOfTail = ParseExpImpl(NextToken(input),exp_bop->get_entry().get_code(),0, p_lineno);
         std::vector<POETCode*> argVec; 
         while (resOfTail.first!=0 && (get_head(resOfTail.second) != rp)) {
@@ -349,13 +378,12 @@ ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
         argVec.push_back(resOfTail.first);
         POETCode* args = Vector2List(argVec);
         if (args == 0) args = EMPTY;
-        return Result(CODE_REF(fvar,PAIR(res,args)),
-                      NextToken(resOfTail.second));
+        return Result(InvokeExpMacro(funcall->get_entry().get_code(),
+                                     PAIR(res,args)),
+                          NextToken(resOfTail.second));
      }
      else if (arrref->get_entry().get_code() != 0 && get_head(input) == lb )
      {
-        CodeVar* fvar = dynamic_cast<CodeVar*>(arrref->get_entry().get_code());
-        if (fvar == 0) INCORRECT_CVAR(arrref->get_entry().get_code());
         std::vector<POETCode*> argVec; 
         while (get_head(input) == lb) 
         {
@@ -367,7 +395,9 @@ ParseExp::Result ParseExp::ParseItemType(POETCode* input, int *p_lineno)
         }
         POETCode* args = Vector2List(argVec);
         if (args == 0) args = EMPTY;
-        return Result(CODE_REF(fvar,PAIR(res,args)),input);
+        CodeVar* fvar = dynamic_cast<CodeVar*>(arrref->get_entry().get_code());
+        return Result(InvokeExpMacro(arrref->get_entry().get_code(),
+                                     PAIR(res,args)),input);
      }
      return Result(res, input);
   }
@@ -434,8 +464,6 @@ ParseExp::ParseExpImpl(POETCode* input, POETCode* bop, POETCode* inherit, int *p
    }
    return Result(inherit, input) ;
 }
-
-ParseExp* ParseExp::my = 0;
 
 inline POETCode* SubList(POETCode* l1, POETCode* stop, POETCode*& rest) {
   if (l1 == stop) { rest = l1; return EMPTY; }
@@ -604,8 +632,9 @@ class ParseMatchVisitor  : public EvaluatePOET, public POETCodeVisitor
   void parseList( POETParseList* op, POETCode* elemType, POETCode* sep)
   {
      if (r1 == 0 || r1 == EMPTY) { res = EMPTY; return; }
-     if (get_head(r1)->get_enum()==SRC_STRING && !backtrack && !op->match_lookahead(this, r1))
-       { res = EMPTY; return; }
+     POETCode* r1_first = get_head(r1);
+     if (r1_first->get_enum()==SRC_STRING && !backtrack && !op->match_lookahead(r1)) { res = EMPTY; return; }
+     else if (r1_first->get_enum() == SRC_LVAR && !match_AST(r1_first, elemType, MATCH_AST_PATTERN)) { res = EMPTY; return; }
      POETCode* r1save = r1;
      apply(elemType, EMPTY);
      if (r1save == r1 && res == EMPTY) return;
@@ -754,16 +783,16 @@ class ParseMatchVisitor  : public EvaluatePOET, public POETCodeVisitor
        }
      case TYPE_TOR: {
         POETCode* r1_first = get_head(r1);
-        if (r1_first->get_enum() == SRC_CVAR &&
-             static_cast<CodeVar*>(r1_first)->get_parseInfo() != EMPTY) 
-            { /*QY: r1_first is already parsed and is not a token*/  
-              if (!match_eval(op)) PARSE_MISMATCH(r1,op,lineno);
-              return;
+        if (r1_first->get_enum() == SRC_LVAR // r1 is a trace handle
+           || (r1_first->get_enum() == SRC_CVAR &&
+             static_cast<CodeVar*>(r1_first)->get_parseInfo() != EMPTY)) 
+            { //QY: r1_first is already parsed and is not a token  
+              if (match_eval(op)) return;
             }
  
          if (!backtrack) {
             POETTypeTor* tor = static_cast<POETTypeTor*>(op);
-            POETCode* arg = tor->get_parseInfo(this, r1);
+            POETCode* arg = tor->get_parseInfo(r1);
             apply(arg, fullmatch); 
             if (fullmatch != 0) fullmatch=EMPTY; 
             return;
@@ -985,7 +1014,34 @@ class ParseMatchVisitor  : public EvaluatePOET, public POETCodeVisitor
    }
 };
 
-POETCode* parse_AST(POETCode* input, POETCode* pattern, POETCode** leftOver)
+class ApplyTokenOperator : public ReplInfoVisitor
+{
+  POETCode* tokens;
+ public: 
+  ApplyTokenOperator(POETCode* _t) : tokens(_t) { assert(tokens!=0); }
+  virtual void visitList(POETList* l)
+   { 
+     ReplInfoVisitor::visitList(l);
+     if (res->get_enum() == SRC_LIST)
+       res = apply_tokens(static_cast<POETList*>(res)); 
+     if (res == 0) res = EMPTY;
+   }
+   virtual void visitCodeVar( CodeVar* v) { res = v; }
+   virtual void visitOperator(POETOperator *op)
+   {
+    if (op->get_op() == POET_OP_TYPEMATCH || op->get_op() == POET_OP_TYPEMATCH_Q) 
+    {
+       POETBop* bop = dynamic_cast<POETBop*>(op);
+       assert(bop != 0);
+       POETCode* arg = bop->get_arg1();
+       arg->visit(this); 
+       if (arg != res) bop->set_arg1(res);
+       res = op;
+     }
+   }
+};
+
+POETCode* EvaluatePOET::parse_AST(POETCode* input, POETCode* pattern, POETCode** leftOver)
 {  
       ParseMatchVisitor matchop(input, curfile->get_backtrack());
       POETCode* res = matchop.apply(pattern, (leftOver==0)? 0 : EMPTY, leftOver);
@@ -995,190 +1051,61 @@ POETCode* parse_AST(POETCode* input, POETCode* pattern, POETCode** leftOver)
       return res;
 }
 
-
 POETCode* EvaluatePOET::
-apply_tokenFilter(POETCode* pattern, POETList* input, 
-                  POETCode*& leftOver, bool make_string)
+eval_TypeMatch(POETCode* input, POETCode* pattern, bool throwError)
 {
-     if (pattern == EMPTY) { leftOver=input; return pattern; }
-     if (input == 0)  return 0;
-     if (debug_lex()) {
-         std::cerr << "apply token filter: " << pattern->toString() << " to input " << input->toString() << "\n";
-     }
-     leftOver = input;
-     switch (pattern->get_enum())
-        {
-        case SRC_STRING: {
-            POETCode* cur_input = input->get_first();
-            if (cur_input->get_enum() != SRC_STRING) return 0;
-            std::string str_pat = static_cast<POETString*>(pattern)->get_content();
-            std::string str_input = static_cast<POETString*>(cur_input)->get_content();
-            size_t pos = str_input.find(str_pat); 
-            if (pos == 0) {
-              pos = str_pat.size();
-              char nextchar = str_input[pos];
-              if (str_input.size() == pos) {
-                  leftOver=input->get_rest();
-                  return pattern;
-              }
-              else if (nextchar <= '9' && nextchar >= '0') { /*QY: split identifier*/
-                  leftOver=ASTFactory::inst()->new_string(str_input.substr(pos,str_input.size()-pos));
-                  leftOver=ASTFactory::inst()->new_list(leftOver,input->get_rest());
-                  return pattern;
-              }
-            }
-            return 0;
-           }
-        case SRC_ICONST:
-            if (input != 0 && input->get_first() == pattern) {
-                leftOver = input->get_rest();
-                return pattern;
-            }
-            return 0;
-        case SRC_TYPE: {
-            if (input != 0) { 
-              POETCode* cur_token = get_head(input);
-              if (match_Type(cur_token, static_cast<POETType*>(pattern), true))
-                   leftOver = input->get_rest();
-              else cur_token=0;
-              return cur_token;
-             }
-             return 0;
-          }
-        case SRC_LVAR: {
-          LvarSymbolTable::Entry entry = static_cast<LocalVar*>(pattern)->get_entry();
-          POETCode* restr = entry.get_restr();
-          if (restr == 0) { SYM_UNDEFINED(pattern->toString()); }
-          POETCode* cur_token = apply_tokenFilter(restr, input, leftOver);
-          if (cur_token != 0) { entry.set_code(cur_token); }
-          return cur_token;
-          }
-        case SRC_LIST: {
-            if (input==0) return 0;
-            POETList* p_input = input;
-            POETList* p_content = static_cast<POETList*>(pattern);
-            std::string token_content;
-            std::vector<POETCode*> match_res;
-            for ( ; p_content != 0; p_content=p_content->get_rest()) { 
-                POETCode* cur_token = apply_tokenFilter(p_content->get_first(), p_input, leftOver,make_string);
-                if (cur_token == 0) return 0;
-                assert(leftOver==0 || leftOver->get_enum() == SRC_LIST);
-                p_input=dynamic_cast<POETList*>(leftOver); // leftOver must be a list
-                match_res.push_back(cur_token);
-                if (cur_token->get_enum() != SRC_STRING)
-                    make_string=false;
-                else token_content=token_content+static_cast<POETString*>(cur_token)->get_content();
-            }
-            if (make_string) return fac->new_string(token_content);
-            return  Vector2List(match_res);
-         }
-         case SRC_CVAR: {  
-             if (input == 0) return 0;
-             POETCode* first = input->get_first();
-              CodeVar* cvar = static_cast<CodeVar*>(pattern);
-             if (first->get_enum() == SRC_CVAR && static_cast<CodeVar*>(first)->get_entry() == cvar->get_entry()) { 
-                 leftOver=input->get_rest();
-                 return first;
-             }
-              POETCode* pars=cvar->get_entry().get_param();
-              POETCode* code=cvar->get_entry().get_code();
-              if (code == 0) code=cvar->get_entry().get_parse();
-              if (code == 0) CODE_SYNTAX_UNDEFINED(cvar->toString()); 
-              try { 
-                   if (pars != 0) cvar->get_entry().get_symTable()->push_table(false);
-                   POETCode* cur_token = apply_tokenFilter(code, input, leftOver, false); 
-                   if (cur_token != 0) {
-                      if (pars != 0) { pars=eval_AST(pars); }
-                       cur_token= cvar->invoke_rebuild(pars);
-                       if (cur_token == 0) { cur_token = fac->build_codeRef(cvar->get_entry(),pars); }
-                    }
-                   if (pars != 0)  cvar->get_entry().get_symTable()->pop_table();
-                   return cur_token;
-              }
-              catch (Error err) { std::cerr << "From recognizing token: " << cvar->toString() << "\n"; throw err; }
-            } 
-         case SRC_OP: {
-              POETOperator *op = static_cast<POETOperator*>(pattern);
-              switch (op->get_op()) {
-                case POET_OP_CONCAT: 
-                  if (input != 0) {
-                    POETCode* arg1 = op->get_arg(0), *arg2=op->get_arg(1);
-                    if (arg1->get_enum() == SRC_STRING)
-                        input=dynamic_cast<POETList*>(split_string(static_cast<POETString*>(arg1)->get_content(), input));
-                    else if (arg2->get_enum() == SRC_STRING)
-                        input=dynamic_cast<POETList*>(split_string(static_cast<POETString*>(arg2)->get_content(), input));
-                    else LEX_INCORRECT(op);
-                    POETCode* first=apply_tokenFilter(arg1,input,leftOver,make_string);
-                    if (first == 0)  { leftOver=input; return 0; }
-                    POETCode* second=apply_tokenFilter(arg2,dynamic_cast<POETList*>(leftOver),leftOver,make_string);
-                    if (second == 0)  { leftOver=input; return 0; }
-                    return fac->new_string(first->toString() + second->toString());
-                  } 
-                  return 0;
-              case POET_OP_RANGE:
-                 if (input != 0) {
-                    POETCode* cur_token = get_head(input);
-                    if (match_AST(cur_token, pattern, MATCH_AST_PATTERN)) 
-                         leftOver = input->get_rest();
-                    else cur_token=0;
-                    return cur_token;
-                  }
-                  return 0;
-              case TYPE_LIST1:
-              case TYPE_LIST: {
-                  POETCode* arg = op->get_arg(0);
-                  std::vector<POETCode*> match_res;
-                  do {
-                     POETCode* r1_first=apply_tokenFilter(arg,input,leftOver,make_string);
-                     if (r1_first == 0)  { leftOver=input; break; }
-                     match_res.push_back(r1_first);
-                     input = dynamic_cast<POETList*>(leftOver);
-                  } while (input != 0);
-                  if (op->get_op() == TYPE_LIST1 && match_res.size()==0)
-                      return 0;
-                  return Vector2List(match_res);
-                }
-                case TYPE_TOR: {
-                   for (unsigned i = 0; i < op->numOfArgs(); ++i)
-                   {            
-                      POETCode* arg=op->get_arg(i);
-                      POETCode* res=apply_tokenFilter(arg,input,leftOver,make_string);
-                      if (res != 0) return res; 
-                      leftOver=input;
-                   }
-                 }
-                 return 0;
-                default: LEX_INCORRECT(pattern);
-               }
-            }
-         default: 
-            LEX_INCORRECT(pattern);
-      }
+  try { return parse_AST(input, pattern); }
+  catch (ParseError err) {
+       if (!throwError) return 0;
+        else { EXIT(err.message()); }
+  }
 }
 
-POETCode* EvaluatePOET:: apply_tokens(POETCode* tokens, POETList* input)
+POETCode* EvaluatePOET::parse_input(POETCode* input, POETCode* pattern)
 {
-   if (tokens != 0)
-   {
-      POETList* p_tokens=dynamic_cast<POETList*>(tokens); 
-      POETCode* input1 = 0;
-      POETCode* first_token=0;
-      /* there is only a single token specifiation*/
-      if (p_tokens == 0 || p_tokens->get_first()->get_enum() == SRC_STRING) 
-            first_token = apply_tokenFilter(tokens,input, input1); 
-      else { /* there is a list of token specs. */
-         for ( ; first_token == 0 && p_tokens != 0; p_tokens = p_tokens->get_rest())
-            first_token = apply_tokenFilter(p_tokens->get_first(),input,input1); 
-      }
-      assert(input1==0 || input1->get_enum() == SRC_LIST);
-      if (first_token==0) return input;
-      if (first_token != EMPTY)
-      {
-          POETCode* res= new POETInputList(first_token,dynamic_cast<POETList*>(input1));
-          return res;
-      }
-      return input1;
-   }
-   return input;
+   static double token_time = 0, prep_time=0, parse_time=0;
+   static bool  first=true;
+   ParseExp::reset();
+
+   bool dt = debug_time();
+if (dt) {
+ if (first) {
+    register_timing(&token_time, "time spent in tokenizer:");
+    register_timing(&prep_time, "time spent in parse preparation:");
+    register_timing(&parse_time, "time spent in parsing and AST construction:");
+ }
+first=false;
 }
+
+   if (prep->get_entry().get_code() != 0) {
+      double cur = (dt?GetWallTime():0);
+      XformVar* prep_xform = dynamic_cast<XformVar*>(prep->get_entry().get_code());
+      if (prep_xform == 0) INCORRECT_XVAR(prep);
+      input = prep_xform->eval(input, false);
+      if (dt) prep_time +=GetWallTime()-cur;
+   }
+   if (tokens->get_entry().get_code() != 0) {
+      double cur = (dt?GetWallTime():0);
+      ApplyTokenOperator op(tokens->get_entry().get_code());
+      input = op.apply(input);
+      if (dt) token_time +=GetWallTime()-cur;
+   }
+   input = eval_AST(input);
+   if (pattern == 0) pattern = parseTarget->get_entry().get_code();
+   if (pattern == 0) return input; 
+   switch (pattern->get_enum())
+    {
+    case SRC_READ_INPUT: return input;
+    default:
+       try { 
+          double cur = (dt?GetWallTime():0);
+          POETCode* result = parse_AST(input, pattern);
+          if (dt) parse_time +=GetWallTime()-cur;
+            return result;
+          }
+       catch (ParseError err) { EXIT(err.message()); }
+   }
+}
+
+
 
