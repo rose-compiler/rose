@@ -722,44 +722,39 @@ EvalValueType eval(SgExpression* node) {
     assert(lhs);
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
     assert(rhs);
-    watch<<"(";
     EvalValueType lhsResult=eval(lhs);
-    watch<<",";
     EvalValueType rhsResult=eval(rhs);
-    watch<<")";
     switch(node->variantT()) {
-    case V_SgAndOp: watch<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
-    case V_SgOrOp : watch<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
-      
-    case V_SgEqualityOp: watch<<"==";res=(lhsResult==rhsResult);break;
-    case V_SgNotEqualOp: watch<<"!=";res=(lhsResult!=rhsResult);break;
-    case V_SgGreaterOrEqualOp: watch<<">=";res=(lhsResult>=rhsResult);break;
-    case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
-    case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
-    case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
+    case V_SgAndOp: res=evalSgAndOp(lhsResult,rhsResult);break;
+    case V_SgOrOp : res=evalSgOrOp(lhsResult,rhsResult);break;
+    case V_SgEqualityOp: res=(lhsResult==rhsResult);break;
+    case V_SgNotEqualOp: res=(lhsResult!=rhsResult);break;
+    case V_SgGreaterOrEqualOp: res=(lhsResult>=rhsResult);break;
+    case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
+    case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
+    case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
+
     case V_SgPntrArrRefExp: res=AType::Top();break;
-    default:watch<<"#1:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
-    watch<<"(";
-    EvalValueType childVal=eval(child);
-    watch<<")";
     assert(child);
+    EvalValueType childVal=eval(child);
     switch(node->variantT()) {
-    case V_SgNotOp:watch<<"!";res=!childVal;break;
-    case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
-    case V_SgMinusOp:watch<<"-";res=-childVal; break;
-    case V_SgPointerDerefExp: watch<<"*";res=AType::Top();break;
-    default:watch<<"#2:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    case V_SgNotOp: res=!childVal;break;
+    case V_SgCastExp: res=childVal;break; // requires refinement for different types
+    case V_SgMinusOp: res=-childVal; break;
+    case V_SgPointerDerefExp: res=AType::Top();break;
+    default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else {
     // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
     switch(node->variantT()) {
-    case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
-    case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
-    case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
-    default:watch<<"#3:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    case V_SgBoolValExp: res=evalSgBoolValExp(node);break;
+    case V_SgIntVal: res=evalSgIntVal(node);break;
+    case V_SgVarRefExp: res=evalSgVarRefExp(node);break;
+    default: cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   }
   return res;
