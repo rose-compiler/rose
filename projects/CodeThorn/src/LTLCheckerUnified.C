@@ -585,8 +585,16 @@ public:
 	updateInputVar(state.estate, input_vars);
       }
 
-      worklist.push(stg.vertex[state]);
     } END_FOR;
+    if (endpoints.empty()) {
+      FOR_EACH_VERTEX(v, stg.g) {
+      worklist.push(v);
+      } END_FOR;
+    } else {
+      for (unordered_set<LTLVertex>::iterator i = endpoints.begin();
+	   i!= endpoints.end(); ++i) 
+	worklist.push(*i);
+    }
 
     //cerr<<stg.vertex.size()<<endl;
     //cerr<<num_vertices(stg.g)<<endl;
@@ -1222,6 +1230,7 @@ void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
 					 BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
+  bool isTree = boolOptions["eliminate-stg-back-edges"];
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
@@ -1272,8 +1281,8 @@ void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
 
-    if (( in_degree(label, g) >= 1) && // keep start
-    (out_degree(label, g) >= 0) && // DO NOT keep exits
+    if (!isTree && ( in_degree(label, g) >= 1) && // keep start
+      (out_degree(label, g) >= 0) && // DO NOT keep exits
     (g[label]->io.op == InputOutput::NONE /*||
                         g[label]->io.op == InputOutput::FAILED_ASSERT*/)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
