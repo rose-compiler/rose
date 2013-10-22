@@ -7,13 +7,17 @@
 
 using namespace std;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 template<typename T>
 class EqualityMaintainer {
  public:
   void addEquality(T var1, T var2);
   bool removeEquality(T var1, T var2);
   bool removeEqualities(T var1);
-  /* according to normalization criterion: the dedicated element is
+  /*! according to normalization criterion: the dedicated element is
      the element which binds all associated constraints of equal
      elements. Equal elements are those for which an equality
      constraint exists (transitive closure).

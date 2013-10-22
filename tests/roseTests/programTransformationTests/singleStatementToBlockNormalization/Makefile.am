@@ -20,16 +20,13 @@ singleStatementToBlockNormalization_SWITCHES = \
 
 $(singleStatementToBlockNormalization_TEST_TARGETS): \
 	%.passed: $(ROSE__CXX_TESTS_DIR)/% singleStatementToBlockNormalization $(TEST_EXIT_STATUS)
-	@$(RTH_RUN) CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$@"
+	@$(RTH_RUN) \
+		CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" \
+		$(TEST_EXIT_STATUS) "$@"
 
 check-local: $(singleStatementToBlockNormalization_TEST_TARGETS)
-	@echo "*************************************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programTransformationTests/singleStatementToBlockNormalization: make check rule complete (terminated normally) ******"
-	@echo "*************************************************************************************************************************************************"
 
 clean-local:
-	rm -f -- *.out
-	rm -f -- *.err
 	rm -f -- *.passed
 	rm -f -- *.failed
 	rm -f -- *.C

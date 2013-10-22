@@ -13,6 +13,8 @@ EXTRA_DIST = barrier.upc bupcr_magic.c hello.upc shared_1.upc unshared_2.upc \
              extern.upc unshared_1.upc
 
 #individual compilation targets
+../roseupcc:
+	make -C../. roseupcc
 rose_barrier.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/barrier.upc
 rose_hello.c:../roseupcc

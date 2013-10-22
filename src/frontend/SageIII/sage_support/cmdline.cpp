@@ -3588,7 +3588,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
 
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  // PL (09/25/2013) This is still required for the EDG 4.X
+//#ifndef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
   // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
   // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
@@ -3597,7 +3598,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
-#endif
+//#endif
 
      if ( SgProject::get_verbose() >= 1 )
           printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());

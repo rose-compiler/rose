@@ -1,0 +1,13 @@
+<parameter inputFile default="" message="input file name"/>
+<parameter inputLang default="" message="file name for input language syntax" />
+
+<parameter outputFile default=""  message="output file name"/>
+<parameter outputLang default="" message="file name for output language syntax" />
+
+<input cond=(inputLang!="") from=(inputFile) syntax=(inputLang) to=inputCode/>
+<input cond=(inputLang=="") from=(inputFile) annot=0 to=inputCode/>
+
+<eval  resultCode= XFORM.TransformCode(inputCode);  />
+
+<output cond=(outputLang!="") to=(outputFile) syntax=(outputLang) from=resultCode/>
+<output cond=(outputLang=="") to=(outputFile) from=resultCode/>

@@ -13,6 +13,8 @@ roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
+
 # all input files are put into tests/CompileTests/OpenMP_tests
 # They are shared by both OpenMP parsing tests and OpenMP lowering tests
 
@@ -216,24 +218,39 @@ PASSING_OMP_ACC_TEST_EXE_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.out)
 
 # rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #$(C_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
 $(C_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #$(CXX_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 # Experimental translation for OpenMP accelerator model directives
 # no final compilation for now, which requires CUDA compiler for the generated code
 # each rose_*.cu file depends o its corresponding *.c file
 $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<
+	@$(RTH_RUN) \
+		TITLE="roseompacc $(notdir $<) [$@.passed]" \
+		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #rose_axpy_ompacc.cu:roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
@@ -242,7 +259,10 @@ $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
 
 # build executables using nvcc
 $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
-	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+	@$(RTH_RUN) \
+		TITLE="nvcc $(notdir $<) [$@.passed]" \
+		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 # a short cut to run omp-acc support test
 ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
@@ -252,6 +272,9 @@ ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
 #matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
 #	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
+# NOTE: ROSE Test Harness has mechanisms for checking answers via diffs that could possibly be used here. It would also
+# be able to handle via its filters the cases mentioned below where function names have random integer numbers. [RPM
+# 2013-09-28]
 OMP_ACC_DIFF_FILES=$(PASSING_OMP_ACC_TEST_CUDA_Files:.cu=.cu.diff)
 DIFF=diff
 EXPECTED_PATH = $(top_srcdir)/tests/roseTests/ompLoweringTests/referenceResults
@@ -295,7 +318,7 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 else
@@ -338,17 +361,16 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 # USE gcc GOMP library
 else
 
 #-------------compile only --------------------------------	
-check-local: roseomp
-	@echo "Test for ROSE OpenMP lowering."
-	@echo "***************** Testing C input *******************"
-	$(MAKE) $(PASSING_C_TEST_Objects)
+check-local: roseomp \
+		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
+		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -358,24 +380,44 @@ if OS_MACOSX
 	@echo "/* threadprivate.c not run on MAC OSX (no thread local storage on OSX). */" > rose_threadprivate.c
 endif
 #	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
-	$(MAKE)	$(C_TEST_OBJECT_REQUIRED_TO_RUN)
-	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
-	@echo "***************** Testing C++ input ******************"
-	$(MAKE) $(PASSING_CXX_TEST_Objects)
-	$(MAKE)	$(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                              *******************************"
-	@echo "****       compilation tests completed but executables are not generated and run***************************"
-	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP   ******"
-	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/              ********"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                                                        ******"
+	@echo "******       compilation tests completed but executables are not generated and run                   ******"
+	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP        ******"
+	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/                   ******"
 	@echo "***********************************************************************************************************"
 
 endif # ROSE_USE_OMNI_OPENMP
  
 endif # 
 
+# Try not to delete files that a developer might have sitting in this directory--delete only things created by
+# running the makefile.  I.e., try not to use wildcards!  Also, we could have combined these variables into a
+# single list, but sometimes those lists tend to get too long, so we just do them one at a time.
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.cu *.diff
+	rm -f $(addprefix rose_, $(C_TESTCODES_REQUIRED_TO_COMPILE))
+	rm -f $(addprefix rose_, $(CXX_TESTCODES_REQUIRED_TO_COMPILE))
+	rm -f $(addprefix rose_, $(C_TESTCODES_REQUIRED_TO_RUN))
+	rm -f $(addprefix rose_, $(CXX_TESTCODES_REQUIRED_TO_RUN))
+	rm -f $(PASSING_C_TEST_Objects)
+	rm -f $(addsuffix .passed, $(PASSING_C_TEST_Objects))
+	rm -f $(addsuffix .failed, $(PASSING_C_TEST_Objects))
+	rm -f $(C_TEST_OBJECT_REQUIRED_TO_RUN)
+	rm -f $(addsuffix .passed, $(C_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(addsuffix .faild, $(C_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(PASSING_CXX_TEST_Objects)
+	rm -f $(addsuffix .passed, $(PASSING_CXX_TEST_Objects))
+	rm -f $(addsuffix .failed, $(PASSING_CXX_TEST_Objects))
+	rm -f $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
+	rm -f $(addsuffix .passed, $(CXX_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(addsuffix .failed, $(CXX_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(PASSING_OMP_ACC_TEST_CUDA_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
+	rm -f $(PASSING_OMP_ACC_TEST_EXE_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_EXE_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_EXE_Files))
+
 
 EXTRA_DIST = referenceResults
 

@@ -19,6 +19,10 @@ using namespace CodeThorn;
 
 #include "UDAstAttribute.h"
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class DataDependenceVisualizer {
  public:
   DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName);
