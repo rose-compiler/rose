@@ -137,6 +137,8 @@ class UnparseFormat
        // DQ (6/6/2007): Debugging support for hidden list data held in scopes
           void outputHiddenListData ( Unparser* unp,SgScopeStatement* inputScope );
 
+       // DQ (9/30/2013): We need access to the std::ostream* os so that we can support token output without interpretation of line endings.
+         std::ostream* output_stream () { return os; }
    };
 
 #endif
