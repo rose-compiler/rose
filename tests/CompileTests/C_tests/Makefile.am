@@ -505,8 +505,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS)
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 # ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) $(OLD_TESTCODES_REQUIRED_TO_PASS)

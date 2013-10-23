@@ -1,7 +1,5 @@
 
-void foobar();
-
-void foo()
+void foobar();void foo()
    {
      int *i;
      foobar(i);

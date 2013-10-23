@@ -1,22 +1,30 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
+SUBDIRS = roseAtermAPI
+
+# DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
 # The Stratego and A-Term support is outside of ROSE
 # This needs a configure flag so that the location outside 
 # of ROSE can be easily specificed at configure time.
-# TERM_INCLUDE = -I/home/dquinlan/ROSE/Stratego-tux49/include
-# A_TERM_INCLUDE = -I/home/willcock2/sw/include
-A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
+# A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
+A_TERM_INCLUDE = -I$(srcdir)/roseAtermAPI
 
-INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
+# INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
+INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
 
 # DQ (10/27/2004): Removed because it has dependence upon Stratego (which may not be installed)
 # This will be made a option in the future and the location of the Stratego package will
 # have to be specified on the configure command line!
-bin_PROGRAMS = termToStratego strategoToTerm
+bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
 strategoToTerm_SOURCES = strategoToTerm.C atermToAstImpl.C atermTranslation.h
+
+termGraph_SOURCES = termGraph.C
+
+termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C
 
 include_HEADERS = atermTranslation.h
 
@@ -45,6 +53,8 @@ ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 #        -L/usr/apps/gcc/3.3.2/lib /usr/apps/gcc/3.3.2/lib/libgc.a -lc
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
 
+# Permit linking to alternative ROSE ATerm API used to support new non-serialized API for Stratego.
+termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ./roseAtermAPI/libroseAtermAPI.la
 
 TESTCODES_REQUIRED_TO_PASS = test2013_01.C
 
@@ -68,6 +78,17 @@ rose_%: $(srcdir)/% termToStratego
 	cd ../..; $(MAKE) testTranslator
 
 
+
+
+test: termGraph
+	./termGraph atermFile.aterm
+
+
+
+if ROSE_WITH_ATERM
+status:
+	echo "ROSE_WITH_ATERM is defined"
+endif
 
 check-local:
 	@echo "Tests for ATerm examples."

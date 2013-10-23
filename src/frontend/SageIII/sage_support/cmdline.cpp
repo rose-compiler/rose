@@ -745,25 +745,31 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
 #endif
 
+#if 0
+     printf ("In SgProject: before processing option: (get_wave() == %s) \n",get_wave() ? "true" : "false");
+#endif
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
-       // printf ("Option -c found (compile only)! \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Option -rose:wave found! (get_wave() == %s) \n",get_wave() ? "true" : "false");
+
           set_wave(true);
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("   --- after calling set_wave(true) (get_wave() == %s) \n",get_wave() ? "true" : "false");
         }
 
-     // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
+  // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
      set_openmp_linking(false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
          ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
-     {
-       if ( SgProject::get_verbose() >= 1 )
-         printf ("In SgProject: openmp_linking mode ON \n");
-       set_openmp_linking(true);
-     }
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: openmp_linking mode ON \n");
+          set_openmp_linking(true);
+        }
 
-      SageSupport::Cmdline::X10::
-          Process(this, local_commandLineArgumentList);
-
+      SageSupport::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
   // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
