@@ -5,6 +5,11 @@ ltlverifier: ltlverifier.C
 
 check: ltlverifier
 #	./ltlverifier "(false R (! (iB & ! oX) | (! oX U (oZ & ! oX))))" stg.spot
-	./ltlverifier "(G (iB U oZ))" stg2.spot
+	./ltlverifier "(G (iA U oX))" stg2.spot
+	./ltlverifier "(G (oX U oY))" stg2.spot
+	./ltlverifier "(G (oX & !oY))" stg2.spot
+	./ltlverifier "(G (iB & !oY))" stg2.spot
+	./ltlverifier "(G (iB & oY))" stg2.spot
+	./ltlverifier "(G (iB | oY))" stg2.spot
 
 
