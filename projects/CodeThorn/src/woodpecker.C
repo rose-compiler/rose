@@ -665,6 +665,7 @@ EvalValueType evalSgIntVal(SgExpression* node) {
 // global_xxx, global_variableIdMappingPtr
 VariableIdMapping* global_variableIdMappingPtr=0;
 VariableConstInfo* global_variableConstInfo=0;
+bool global_option_multiconstanalysis=false;
 EvalValueType evalSgVarRefExp(SgExpression* node) {
   assert(global_variableIdMappingPtr);
   assert(global_variableConstInfo);
@@ -679,7 +680,7 @@ EvalValueType evalSgVarRefExp(SgExpression* node) {
   }
 }
 
-bool isRelationalOp(SgExpression* node) {
+bool isRelationalOperator(SgExpression* node) {
   switch(node->variantT()) {
   case V_SgEqualityOp:
   case V_SgNotEqualOp:
@@ -714,52 +715,136 @@ EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult) {
   return res;
 }
 
+EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val) {
+  assert(op);
+  assert(var);
+
+  assert(global_variableIdMappingPtr);
+  assert(global_variableConstInfo);
+
+  assert(!(val.isTop()||val.isBot()));
+
+    EvalValueType res=AType::Top(); // default if no more precise result can be determined
+
+  int constVal=val.getIntValue();
+  VariableId varId;
+  bool isVar=determineVariable(var, varId, *global_variableIdMappingPtr);
+
+  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
+  bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
+  if(myIsMultiConst) {
+	bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
+	int myMinConst=global_variableConstInfo->minConst(varId);
+	int myMaxConst=global_variableConstInfo->maxConst(varId);
+	if(detailedOutput) {
+	  cout<<" isMC:"<<myIsMultiConst;
+	  cout<<" isInConstSet:"<<myIsInConstSet;
+	  cout<<" min:"<<myMinConst;
+	  cout<<" max:"<<myMaxConst;
+	}
+	//cout<<endl;
+	
+	// it holds here: val *is* a multi const
+	// handle all cases with 3-valued logic
+	switch(op->variantT()) {
+	case V_SgEqualityOp:
+	  if(!myIsInConstSet) res=EvalValueType(false);
+	  else res=AType::Top();
+	  break;
+	case V_SgNotEqualOp: 
+	  if(!myIsInConstSet) res=EvalValueType(true);
+	  else res=AType::Top();
+	  break;
+	case V_SgGreaterOrEqualOp:
+	  if(myMaxConst>=constVal) res=EvalValueType(true);
+	  else res=EvalValueType(false);
+	  break;
+	case V_SgGreaterThanOp:
+	  if(myMaxConst>constVal) res=EvalValueType(true);
+	  else res=EvalValueType(false);
+	  break;
+	case V_SgLessThanOp:
+	  if(myMinConst<constVal) res=EvalValueType(true);
+	  else res=EvalValueType(false);
+	  break;
+	case V_SgLessOrEqualOp:
+	  if(myMinConst<=constVal) res=EvalValueType(true);
+	  else res=EvalValueType(false);
+	  break;
+	default:
+	  cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
+	  assert(0);
+	}
+  } else {
+	if(detailedOutput) cout<<" not MC.";
+  }
+
+  if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
+  return res;
+}
+
+bool isConstVal(SgExpression* node) {
+  return isSgBoolValExp(node)||isSgIntVal(node);
+}
+
 EvalValueType eval(SgExpression* node) {
   EvalValueType res;
   stringstream watch;
+
   if(dynamic_cast<SgBinaryOp*>(node)) {
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
     assert(lhs);
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
     assert(rhs);
-    watch<<"(";
+
+	if(global_option_multiconstanalysis) {
+	  // refinement for special cases handled by multi-const analysis
+	  if(isRelationalOperator(node)) {
+		EvalValueType res2;
+		if(isSgVarRefExp(lhs) && isConstVal(rhs))
+		  res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
+		if(isConstVal(lhs) && isSgVarRefExp(rhs))
+		  res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
+		if(!res2.isTop()) {
+		  // found a more precise result with multi-const analysis results
+		  return res2;
+		}
+	  }
+	  // otherwise we continue with all other cases
+	}
     EvalValueType lhsResult=eval(lhs);
-    watch<<",";
     EvalValueType rhsResult=eval(rhs);
-    watch<<")";
     switch(node->variantT()) {
-    case V_SgAndOp: watch<<"and";res=evalSgAndOp(lhsResult,rhsResult);break;
-    case V_SgOrOp : watch<<"or" ;res=evalSgOrOp(lhsResult,rhsResult);break;
-      
-    case V_SgEqualityOp: watch<<"==";res=(lhsResult==rhsResult);break;
-    case V_SgNotEqualOp: watch<<"!=";res=(lhsResult!=rhsResult);break;
-    case V_SgGreaterOrEqualOp: watch<<">=";res=(lhsResult>=rhsResult);break;
-    case V_SgGreaterThanOp: watch<<">";res=(lhsResult>rhsResult);break;
-    case V_SgLessThanOp: watch<<"<";res=(lhsResult<rhsResult);break;
-    case V_SgLessOrEqualOp: watch<<"<=";res=(lhsResult<=rhsResult);break;
+    case V_SgAndOp: res=evalSgAndOp(lhsResult,rhsResult);break;
+    case V_SgOrOp : res=evalSgOrOp(lhsResult,rhsResult);break;
+    case V_SgEqualityOp: res=(lhsResult==rhsResult);break;
+    case V_SgNotEqualOp: res=(lhsResult!=rhsResult);break;
+    case V_SgGreaterOrEqualOp: res=(lhsResult>=rhsResult);break;
+    case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
+    case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
+    case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
+
     case V_SgPntrArrRefExp: res=AType::Top();break;
-    default:watch<<"#1:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
-    watch<<"(";
-    EvalValueType childVal=eval(child);
-    watch<<")";
     assert(child);
+    EvalValueType childVal=eval(child);
     switch(node->variantT()) {
-    case V_SgNotOp:watch<<"!";res=!childVal;break;
-    case V_SgCastExp:watch<<"C";res=childVal;break; // requires refinement for different types
-    case V_SgMinusOp:watch<<"-";res=-childVal; break;
-    case V_SgPointerDerefExp: watch<<"*";res=AType::Top();break;
-    default:watch<<"#2:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    case V_SgNotOp: res=!childVal;break;
+    case V_SgCastExp: res=childVal;break; // requires refinement for different types
+    case V_SgMinusOp: res=-childVal; break;
+    case V_SgPointerDerefExp: res=AType::Top();break;
+    default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   } else {
     // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
     switch(node->variantT()) {
-    case V_SgBoolValExp: watch<<"B";res=evalSgBoolValExp(node);break;
-    case V_SgIntVal:watch<<"I";res=evalSgIntVal(node);break;
-    case V_SgVarRefExp:watch<<"V";res=evalSgVarRefExp(node);break;
-    default:watch<<"#3:";watch<<node->class_name();watch<<"#";cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    case V_SgBoolValExp: res=evalSgBoolValExp(node);break;
+    case V_SgIntVal: res=evalSgIntVal(node);break;
+    case V_SgVarRefExp: res=evalSgVarRefExp(node);break;
+    default: cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
   }
   return res;
@@ -943,16 +1028,17 @@ int main(int argc, char* argv[]) {
      "Supported options");
   
   desc.add_options()
-    ("help,h", "produce this help message")
-    ("rose-help", "show help for compiler frontend options")
-    ("version,v", "display the version")
+    ("help,h", "produce this help message.")
+    ("rose-help", "show help for compiler frontend options.")
+    ("version,v", "display the version.")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
     ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
     ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
     ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
-    ("csv-assert",po::value< string >(), "name of csv file with reachability assert results")
+    ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
+	("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
 	;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -993,6 +1079,7 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("eliminate-empty-if",true);
   boolOptions.registerOption("eliminate-dead-code",true);
   boolOptions.registerOption("generate-transformed-code",true);
+  boolOptions.registerOption("enable-multi-const-analysis",false);
   boolOptions.registerOption("verbose",false);
   boolOptions.processOptions();
 
@@ -1011,7 +1098,12 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  
+  global_option_multiconstanalysis=boolOptions["enable-multi-const-analysis"];
+  if(global_option_multiconstanalysis) {
+	cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
+  } else {
+	cout<<"INFO: Using flow-insensitive unique-const-analysis."<<endl;
+  }
 
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* root = frontend(argc,argv);
@@ -1081,7 +1173,7 @@ int main(int argc, char* argv[]) {
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
 
-  printResult(variableIdMapping, varConstSetMap);
+  //printResult(variableIdMapping, varConstSetMap);
 
   if(csvConstResultFileName) {
     writeCvsConstResult(variableIdMapping, varConstSetMap,csvConstResultFileName);
