@@ -48,11 +48,14 @@ public:
      *  function returns SAT_NO.  Otherwise this function returns SAT_UNKNOWN. */
     virtual Satisfiable trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
 
-    /** Determines if the specified expression is satisfiable, unsatisfiable, or unknown. */
-    virtual Satisfiable satisfiable(const InsnSemanticsExpr::TreeNodePtr &expr);
+    /** Determines if the specified expressions are all satisfiable, unsatisfiable, or unknown.
+     * @{ */
+    virtual Satisfiable satisfiable(const InsnSemanticsExpr::TreeNodePtr&);
+    virtual Satisfiable satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
+    virtual Satisfiable satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr>, const InsnSemanticsExpr::TreeNodePtr&);
+    /** @} */
 
-    /** Determines if the specified collection of expressions is satisfiable. */
-    virtual Satisfiable satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
+
 
     /** Evidence of satisfiability for a bitvector variable.  If an expression is satisfiable, this function will return
      *  a value for the specified bitvector variable that satisfies the expression in conjunction with the other evidence. Not

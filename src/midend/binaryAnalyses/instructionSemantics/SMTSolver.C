@@ -182,3 +182,11 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
     exprs.push_back(tn);
     return satisfiable(exprs);
 }
+
+SMTSolver::Satisfiable
+SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const InsnSemanticsExpr::TreeNodePtr &expr)
+{
+    if (expr!=NULL)
+        exprs.push_back(expr);
+    return satisfiable(exprs);
+}
