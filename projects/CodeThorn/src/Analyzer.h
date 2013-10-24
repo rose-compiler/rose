@@ -134,6 +134,7 @@ namespace CodeThorn {
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
+    string generateSpotSTG();
     
     //! requires init
     void runSolver1();

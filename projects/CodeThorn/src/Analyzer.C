@@ -1418,6 +1418,32 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
   return 0;
 }
 
+string Analyzer::generateSpotSTG() {
+  stringstream ss;
+  cout<<"SPOT STG: start state: "<<"S"<<estateSet.estateIdString(transitionGraph.getStartEState())<<endl;
+  for(TransitionGraph::iterator i=transitionGraph.begin();i!=transitionGraph.end();++i) {
+    ss<<"S"<<estateSet.estateIdString((*i).source);
+    ss<<",";
+    ss<<"S"<<estateSet.estateIdString((*i).target);
+    const EState* myTarget=(*i).target;
+    AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+    ss<<",\""; // dquote reqired for condition
+    if(myTarget->io.isStdInIO()) {
+      ss<<"i";
+    } else {
+      if(myTarget->io.isStdOutIO()) {
+        ss<<"o";
+      } else {
+        ss<<"?";
+      }
+    }
+    ss<<myIOVal.toString();
+    ss<<"\""; // dquote reqired for condition
+    ss<<",;"; // no accepting states specified
+    ss<<endl;
+  }
+  return ss.str();
+}
 
 int Analyzer::semanticEliminationOfSelfInInTransitions() {
   //cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;

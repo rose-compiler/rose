@@ -460,8 +460,9 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-	("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
-	("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
+    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
+    ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
+    ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -624,6 +625,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--dot-io-stg"
         || string(argv[i])=="--verify"
         || string(argv[i])=="--csv-ltl"
+        || string(argv[i])=="--spot-stg"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -881,7 +883,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("dot-io-stg")) {
-    string filename=args["dot-io-stg"].as<string>().c_str();
+    string filename=args["dot-io-stg"].as<string>();
     cout << "generating dot IO graph file:"<<filename<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphWithIOToDot();
@@ -889,6 +891,17 @@ int main( int argc, char * argv[] ) {
     write_file(filename, dotFile);
     cout << "=============================================================="<<endl;
   }
+
+  if (args.count("spot-stg")) {
+    string filename=args["spot-stg"].as<string>();
+    cout << "generating spot IO STG file:"<<filename<<endl;
+    string spotSTG=analyzer.generateSpotSTG();
+    write_file(filename, spotSTG);
+    cout << "=============================================================="<<endl;
+  }
+
+
+
 
 #if 0
   {
