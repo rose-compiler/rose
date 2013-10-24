@@ -539,6 +539,11 @@ public:
      *  will be zeroed. */
     static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
+    /** Create a new Boolean, a single-bit integer. */
+    static LeafNodePtr create_boolean(bool b, std::string comment="") {
+        return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
+    }
+
     /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of specified size. */
     static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
