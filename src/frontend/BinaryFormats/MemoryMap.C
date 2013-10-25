@@ -621,7 +621,7 @@ MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
 }
 
 size_t
-MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writable, bool erase_prior)
+MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writable, bool erase_prior, const std::string &sgmtname)
 {
     int o_flags = writable ? O_RDWR : O_RDONLY;
     int m_prot = writable ? (PROT_READ|PROT_WRITE) : PROT_READ;
@@ -639,7 +639,7 @@ MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writabl
 
     Extent extent(va, sb.st_size);
     BufferPtr buf = MmapBuffer::create(sb.st_size, m_prot, m_flags, fd, 0);
-    insert(extent, Segment(buf, 0, s_prot, filename), erase_prior);
+    insert(extent, Segment(buf, 0, s_prot, sgmtname.empty()?filename:sgmtname), erase_prior);
     return sb.st_size;
 }
 
