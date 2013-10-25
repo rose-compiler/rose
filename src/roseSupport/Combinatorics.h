@@ -26,7 +26,8 @@ factorial(T n)
     return retval;
 }
 
-/** Simulate flipping a coin. Randomly returns true or false with equal probability. */
+/** Simulate flipping a coin. Randomly returns true or false with equal probability. See also,
+ *  LinearCongruentialGenerator::flip_coin(). */
 bool flip_coin();
 
 /** Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
