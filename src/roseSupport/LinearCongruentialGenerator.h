@@ -32,13 +32,16 @@ public:
     uint64_t max();
 
     /** Return the next value in the sequence.  If nbits is specified, then only the low-order bits are randomized and the high
-     *  order bits are always cleared.  Fir instance, to get only positive values for casting to a 32-bit signed integer, use
+     *  order bits are always cleared.  For instance, to get only positive values for casting to a 32-bit signed integer, use
      *  nbits=31.  The @p niter indicates the number of values that should be consumed, all of which are exclusive-ORed
      *  together to create the return value.  If @p niter is zero this function returns zero without consume any values.
      * @{ */
     uint64_t next(size_t nbits=64, size_t niter=1);
     uint64_t operator()() { return next(); }
     /** @} */
+
+    /** Return a random boolean value. */
+    bool flip_coin();
 
 protected:
     int seed_;
