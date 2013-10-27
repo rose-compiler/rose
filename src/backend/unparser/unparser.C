@@ -50,6 +50,10 @@ static void HandleUnparserSignal(int sig)
 // DQ (6/25/2011): Forward declaration for new name qualification support.
 void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
+// DQ (10/27/2013): Added forward declaration for new token stream support.
+void buildTokenStreamMapping(SgSourceFile* sourceFile);
+
+
 //-----------------------------------------------------------------------------------
 //  Unparser::Unparser
 //  
@@ -367,6 +371,20 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
+        }
+
+  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:output_tokens is specified.
+  // if (SageInterface::is_C_language() == true)
+     if (SageInterface::is_C_language() == true && file->get_output_tokens() == true)
+        {
+       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+#if 1
+          printf ("Building token stream mapping map! \n");
+#endif
+          buildTokenStreamMapping(file);
+#if 1
+          printf ("DONE: Building token stream mapping map! \n");
+#endif
         }
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
