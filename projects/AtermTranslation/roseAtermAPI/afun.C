@@ -1,3 +1,4 @@
+#if 0
 // This file implementes the Aterm API for use in ROSE, so that Aterm
 // applications can seemlessly use ROSE ASTs as ATerms.   We will see 
 // if this can be made to work...The similar support outlined in the 
@@ -21,7 +22,6 @@
 // a matching implementation in ROSE based on the ROSE AST).
 #include "aterm1.h"
 #include "aterm2.h"
-#include "afun.h"
 
 
 // #include <fstream>
@@ -30,6 +30,15 @@
 #include <assert.h>
 
 #define ROSE_ASSERT(x) assert(x)
+#endif
+
+
+#include "rose.h"
+
+#include "rose_aterm_api.h"
+
+
+#include "afun.h"
 
 
 

@@ -136,12 +136,24 @@ typedef unsigned int header_type;
 #define MIN_TERM_SIZE         TERM_SIZE_APPL(0)
 #define INITIAL_MAX_TERM_SIZE 256
 
-
+#if 1
+// Original ATerm data structure.
 struct __ATerm
 {
   header_type   header;
   union _ATerm *next;
 };
+#else
+struct __ATerm
+   {
+     header_type   header;
+
+  // I think that we can inseert a SgNode* here as part of building a ROSE specific ATerm library.
+     SgNode* rose_IR_node;
+
+     union _ATerm *next;
+   };
+#endif
 
 typedef union _ATerm
 {
