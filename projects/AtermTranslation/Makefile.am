@@ -5,7 +5,7 @@ include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
 
 # DQ (10/23/2013): Disable so that we can try an approach modifiying the original ATerm library to be ROSE specific.
 # DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
-# SUBDIRS = roseAtermAPI
+SUBDIRS = roseAtermAPI
 
 # DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
 # The Stratego and A-Term support is outside of ROSE
