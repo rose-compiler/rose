@@ -23,10 +23,8 @@
 #include <aterm1.h>
 #include <aterm2.h>
 
-
-
-
-
+// DQ (10/27/2013): Added to avoid failing unused header file policy.
+#include "deprecated.h"
 
 #include "rose_aterm1.h"
 #include "rose_aterm2.h"

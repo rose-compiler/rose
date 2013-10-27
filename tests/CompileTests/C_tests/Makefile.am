@@ -664,6 +664,8 @@ clean-local:
 	rm -rf test_directory
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
+	rm -f token_trailing_*.c token_leading_*.c
+
 
 ################################################################################
 #
