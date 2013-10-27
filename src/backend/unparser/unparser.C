@@ -373,6 +373,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           propagateHiddenListData(file);
         }
 
+#if 1
+     printf ("In Unparser::unparseFile(): SageInterface::is_C_language() = %s \n",SageInterface::is_C_language() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): file->get_output_tokens()      = %s \n",file->get_output_tokens() ? "true" : "false");
+#endif
+
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:output_tokens is specified.
   // if (SageInterface::is_C_language() == true)
      if (SageInterface::is_C_language() == true && file->get_output_tokens() == true)
