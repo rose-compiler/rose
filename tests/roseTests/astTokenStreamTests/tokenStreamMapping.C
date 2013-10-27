@@ -44,6 +44,10 @@
 
 #include "rose.h"
 
+#if 0
+// Comment out all but main since this support is not a part of ROSE 
+// implemented in the src/frontend/SageIII/astTokenStream directory.
+
 #include "general_token_defs.h"
 
 
@@ -3051,7 +3055,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 
      outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
    }
-
+#endif
 
 int
 main ( int argc, char* argv[] )
@@ -3062,6 +3066,8 @@ main ( int argc, char* argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
+#if 0
+  // DQ (10/27/2013): Now that the cod has been moved to the unparser, this is redundant.
      SgFile & localFile = project->get_file(0);
 
 #if 0
@@ -3072,6 +3078,9 @@ main ( int argc, char* argv[] )
      ROSE_ASSERT(sourceFile != NULL);
 
      buildTokenStreamMapping(sourceFile);
+#endif
 
-     return 0;
+  // DQ (10/27/2013): We have to call the unparser since only there is this ROSE version of this code is called.
+  // return 0;
+     return backend(project);
    }

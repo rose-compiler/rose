@@ -596,6 +596,11 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 #	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
 	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
 
+test_tokenMapping: 
+#	rm -f test2003_12.c.mapping.passed
+#	@$(MAKE) test2003_12.c.mapping.passed
+	$(testTranslator) -rose:C89 -rose:output_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
