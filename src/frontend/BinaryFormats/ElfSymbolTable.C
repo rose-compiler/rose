@@ -64,13 +64,10 @@ SgAsmElfSymbol::parse_common()
 {
     /* Binding */
     switch (get_elf_binding()) {
-        case STB_LOCAL:   p_binding = SYM_LOCAL;  break;
-        case STB_GLOBAL:  p_binding = SYM_GLOBAL; break;
-        case STB_WEAK:    p_binding = SYM_WEAK;   break;
-        default:
-            fprintf(stderr, "unknown elf symbol binding: %u\n", get_elf_binding());
-            ROSE_ASSERT(0);
-            break;
+        case STB_LOCAL:   p_binding = SYM_LOCAL;      break;
+        case STB_GLOBAL:  p_binding = SYM_GLOBAL;     break;
+        case STB_WEAK:    p_binding = SYM_WEAK;       break;
+        default:          p_binding = SYM_NO_BINDING; break;
     }
 
     /* Type */
@@ -83,10 +80,7 @@ SgAsmElfSymbol::parse_common()
         case STT_COMMON:  p_type = SYM_COMMON;  break;
         case STT_TLS:     p_type = SYM_TLS;     break;
         case STT_IFUNC:   p_type = SYM_IFUNC;   break;
-        default:
-            fprintf(stderr, "unknown elf symbol type: %u\n", get_elf_type());
-            ROSE_ASSERT(0);
-            break;
+        default:          p_type = SYM_NO_TYPE; break;
     }
 
     /* Definition state */
