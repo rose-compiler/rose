@@ -373,7 +373,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           propagateHiddenListData(file);
         }
 
-#if 1
+#if 0
      printf ("In Unparser::unparseFile(): SageInterface::is_C_language() = %s \n",SageInterface::is_C_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): file->get_output_tokens()      = %s \n",file->get_output_tokens() ? "true" : "false");
 #endif
@@ -383,11 +383,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      if (SageInterface::is_C_language() == true && file->get_output_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 1
+#if 0
           printf ("Building token stream mapping map! \n");
 #endif
+       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
+       // and attaches the toke stream to the SgSourceFile IR node.  
+       // *** Next we have to attached the data base ***
           buildTokenStreamMapping(file);
 #if 1
+          printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",file->get_token_list().size());
+#endif
+
+#if 0
           printf ("DONE: Building token stream mapping map! \n");
 #endif
         }
@@ -404,116 +411,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
      if (file->get_output_tokens() == true)
         {
+       // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
+
+       // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
           printf ("In Unparser::unparseFile(): Detected case of file->get_output_tokens() == true \n");
 
-#if 1
+       // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
           unparseFileUsingTokenStream(file);
-#else
-       // Note that these are the SgToken IR nodes and we have generated a toekn stream via the type: LexTokenStreamType.
-          ROSE_ASSERT(file->get_token_list().empty() == true);
-#if 0
-          ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
-          ROSE_ASSERT(currentListOfAttributes != NULL);
-#endif
-          string fileNameForTokenStream = file->getFileName();
 
-          printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
-
-          ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
-          ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
-
-          printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
-
-       // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
-          ROSE_ASSERT(filePreprocInfo->getList().size() > 0);
-
-       // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
-          ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
-#if 0
-          printf ("Evaluate what files are processed in mapFilenameToAttributes (mapFilenameToAttributes.size() = %zu) \n",mapFilenameToAttributes.size());
-          std::map<std::string,ROSEAttributesList* >::iterator map_iterator = mapFilenameToAttributes.begin();
-          while (map_iterator != mapFilenameToAttributes.end())
-             {
-               printf ("   --- map_iterator->first  = %s \n",map_iterator->first.c_str());
-               printf ("   --- map_iterator->second = %p \n",map_iterator->second);
-
-               map_iterator++;
-             }
-#endif
-
-#if 1
-          printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
-          std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
-          while (map_iterator != filePreprocInfo->getList().end())
-             {
-               printf ("   --- map_iterator->first  = %s \n",map_iterator->first.c_str());
-               printf ("   --- map_iterator->second = %p \n",map_iterator->second);
-
-               map_iterator++;
-             }
-          printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
-#endif
-
-       // std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = mapFilenameToAttributes.find(fileNameForTokenStream);
-          std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = filePreprocInfo->getList().find(fileNameForTokenStream);
-       // ROSE_ASSERT(currentFileItr != mapFilenameToAttributes.end());
-          ROSE_ASSERT(currentFileItr != filePreprocInfo->getList().end());
-
-          printf ("Get the ROSEAttributesList from the map iterator \n");
-
-       // If there already exists a list for the current file then get that list.
-          ROSE_ASSERT( currentFileItr->second != NULL);
-
-          ROSEAttributesList* existingListOfAttributes = currentFileItr->second;
-
-          printf ("existingListOfAttributes = %p \n",existingListOfAttributes);
-
-       // LexTokenStreamTypePointer tokenStream = existingListOfAttributes->get_rawTokenStream();
-       // ROSE_ASSERT(tokenStream != NULL);
-
-          LexTokenStreamType & tokenList = *(existingListOfAttributes->get_rawTokenStream());
-
-          printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
-          printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
-#if 1
-       // cur << "ROSE Generated file from token stream \n";
-
-          ROSE_ASSERT(cur.output_stream() != NULL);
-          std::ostream & output_stream = *(cur.output_stream());
-
-          int counter = 0;
-          for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
-             {
-               printf ("   --- token #%d token = %p \n",counter,(*i)->p_tok_elem);
-               if ((*i)->p_tok_elem != NULL)
-                  {
-                    printf ("   --- --- token id = %d token = %s \n",(*i)->p_tok_elem->token_id,(*i)->p_tok_elem->token_lexeme.c_str());
-                  }
-
-            // DQ (9/29/2013): Added support for reference to the PreprocessingInfo object in the token stream.
-               printf ("   --- token #%d p_preprocessingInfo = %p \n",counter,(*i)->p_preprocessingInfo);
-
-               printf ("   --- token #%d beginning_fpi line = %d column = %d \n",counter,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num);
-               printf ("   --- token #%d ending_fpi    line = %d column = %d \n",counter,(*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num);
-
-            // std::ostream* output_stream () { return os; }
-            // cur << (*i)->p_tok_elem->token_lexeme;
-            // cur.output_stream() << (*i)->p_tok_elem->token_lexeme;
-               output_stream << (*i)->p_tok_elem->token_lexeme;
-
-               counter++;
-             }
-
-          output_stream.flush();
-#endif
-#endif
-#if 0
-          printf ("Exiting as a test after unparsing the token stream \n");
-          ROSE_ASSERT(false);
-#endif
-
-       // After generating the output file using the token stream, we return.
-          return;
+       // Now we want to just continue to unparse the file that will be generated from the AST 
+       // (and modify that code to selectively use the token stream).
         }
 
   // SgScopeStatement* globalScope = (SgScopeStatement*) (&(file->root()));
@@ -708,7 +615,9 @@ Unparser::getColumnNumberOfEndOfString( std::string internalString )
 
      int endingColumnNumber   = previousLineLength;
 
+#if 0
      printf ("Unparser::getColumnNumberOfEndOfString(): endingColumnNumber = %d \n",endingColumnNumber);
+#endif
 
 #if 0
   // If this is a one line comment then the ending position is the length of the comment PLUS the starting column position
@@ -728,20 +637,30 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
    {
   // DQ (9/30/2013): Unparse the file using the token stream (stored in the SgFile).
 
-  // Note that these are the SgToken IR nodes and we have generated a toekn stream via the type: LexTokenStreamType.
-     ROSE_ASSERT(file->get_token_list().empty() == true);
+  // DQ (10/27/2013): Now that we have setup the token_list in the SgSourceFile, this should be a valid list (unless this is completly blank file).
+  // The assignment to the token_list in the SgSourceFile is handled in "void buildTokenStreamMapping(SgSourceFile* sourceFile);".
+
+  // Note that these are the SgToken IR nodes and we have generated a token stream via the type: LexTokenStreamType.
+  // ROSE_ASSERT(file->get_token_list().empty() == true);
+     ROSE_ASSERT(file->get_token_list().empty() == false);
+
 #if 0
      ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
      ROSE_ASSERT(currentListOfAttributes != NULL);
 #endif
+
      string fileNameForTokenStream = file->getFileName();
 
+#if 0
      printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+#endif
 
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
+#if 0
      printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+#endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
      ROSE_ASSERT(filePreprocInfo->getList().size() > 0);
@@ -767,7 +686,9 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // ROSE_ASSERT(currentFileItr != mapFilenameToAttributes.end());
      ROSE_ASSERT(currentFileItr != filePreprocInfo->getList().end());
 
+#if 0
      printf ("Get the ROSEAttributesList from the map iterator \n");
+#endif
 
   // If there already exists a list for the current file then get that list.
      ROSE_ASSERT( currentFileItr->second != NULL);
@@ -781,9 +702,10 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
      LexTokenStreamType & tokenList = *(existingListOfAttributes->get_rawTokenStream());
 
+#if 1
      printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
      printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
-
+#endif
 
 #if 0
      int counter = 0;
@@ -808,13 +730,17 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      int current_line_number   = 1;
      int current_column_number = 1;
 
+#if 0
      printf ("Starting: line = %d column = %d \n",current_line_number,current_column_number);
+#endif
 
      int output_token_counter = 0;
      for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
         {
+#if 0
           printf ("TOP OF LOOP: line = %d column = %d \n",current_line_number,current_column_number);
-#if 1
+#endif
+#if 0
           printf ("   --- token #%d token = %p \n",output_token_counter,(*i)->p_tok_elem);
           if ((*i)->p_tok_elem != NULL)
              {
@@ -831,11 +757,11 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
           std::string s = (*i)->p_tok_elem->token_lexeme;
           int lines = getNumberOfLines(s);
           int line_length = getColumnNumberOfEndOfString(s);
-
+#if 0
           printf ("   --- lines = %d \n",lines);
           printf ("   --- line_length = %d \n",line_length);
           printf ("   --- s = -->|%s|<-- \n",s.c_str());
-
+#endif
        // Check starting position
           if ((*i)->beginning_fpi.line_num != current_line_number)
              {
@@ -879,13 +805,31 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
                printf ("error: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
                ROSE_ASSERT(false);
              }
-
+#if 0
           printf ("BASE OF LOOP: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
+#endif
         }
 
   // We could output a banner, but this would make the input and output files different.
   // cur << "/* ROSE Generated file from token stream */ \n";
 
+
+  // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
+     string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();
+
+     printf ("In Unparser::unparseFileUsingTokenStream(): Output tokens stream to file: %s \n",outputFilename.c_str());
+
+     fstream ROSE_RawTokenStream_OutputFile(outputFilename.c_str(),ios::out);
+  // ROSE_OutputFile.open(s_file.c_str());
+
+  // DQ (12/8/2007): Added error checking for opening out output file.
+     if (!ROSE_RawTokenStream_OutputFile)
+        {
+       // throw std::exception("(fstream) error while opening file.");
+          printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
+          ROSE_ASSERT(false);
+        }
+#if 0
      ROSE_ASSERT(cur.output_stream() != NULL);
      std::ostream & output_stream = *(cur.output_stream());
 
@@ -896,6 +840,17 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
         }
 
      output_stream.flush();
+#else
+  // Use a different filename for the output of the raw token stream (which is a file generated for debugging support).
+
+  // Write out the tokens into the output file.
+     for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
+        {
+          ROSE_RawTokenStream_OutputFile << (*i)->p_tok_elem->token_lexeme;
+        }
+
+     ROSE_RawTokenStream_OutputFile.flush();
+#endif
    }
 
 

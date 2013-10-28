@@ -3050,6 +3050,36 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      preferTrailingWhitespaceInOutput = false;
 
      outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
+
+  // DQ (10/27/2013): Build the SgToken IR nodes and the vector of them into the SgSourceFile IR node.
+     SgTokenPtrList & roseTokenList = sourceFile->get_token_list();
+
+  // Setup the current file ID from the name in the source file.
+     ROSE_ASSERT(sourceFile->get_file_info() != NULL);
+     int currentFileId = sourceFile->get_file_info()->get_file_id();
+
+  // This should now include all of the CPP directives and C/C++ style comments as tokens.
+  // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+     for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+        {
+          ROSE_ASSERT((*i)->p_tok_elem != NULL);
+#if 0
+          printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
+               counter,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
+               (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
+#endif
+
+          SgToken* roseToken = new SgToken( (*i)->p_tok_elem->token_lexeme,(*i)->p_tok_elem->token_id);
+          ROSE_ASSERT(roseToken != NULL);
+
+          roseToken->set_startOfConstruct(new Sg_File_Info(currentFileId,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num));
+          roseToken->set_endOfConstruct  (new Sg_File_Info(currentFileId,(*i)->ending_fpi.line_num,   (*i)->ending_fpi.column_num));
+
+          roseTokenList.push_back(roseToken);
+        }
+
+  // Avoid the copy into the list held by SgSourceFile.
+  // sourceFile->set_token_list(tokenList);
    }
 
 
