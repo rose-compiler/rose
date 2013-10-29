@@ -1174,6 +1174,10 @@ main(int argc, char *argv[])
                 project = open_specimen(tx, files, work.specimen_id, argv0);
                 progress.message("");
             }
+            if (!project) {
+                std::cerr <<argv0 <<": problems loading specimen\n";
+                exit(1);
+            }
             
             // Get list of functions and initialize the instruction cache
             std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
@@ -1198,6 +1202,9 @@ main(int argc, char *argv[])
         }
 
         // Find the function to test
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-29]*/
+        std::cerr <<"func_id=" <<work.func_id <<"\n";
+#endif
         IdFunctionMap::iterator func_found = functions.find(work.func_id);
         assert(func_found!=functions.end());
         SgAsmFunction *func = func_found->second;
