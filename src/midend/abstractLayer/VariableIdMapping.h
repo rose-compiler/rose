@@ -4,7 +4,6 @@
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <string>
@@ -17,8 +16,6 @@
 #include "SgNodeHelper.h"
 
 using namespace std;
-
-namespace CodeThorn {
 
   class VariableId;
   typedef string VariableName;
@@ -37,7 +34,7 @@ class VariableIdMapping {
   //typedef boost::unordered_set<VariableId> VariableIdSet;
   typedef set<VariableId> VariableIdSet;
 
-  // the computation of the CodeThorn-defined ROSE-based variable-symbol mapping
+  // the computation of the ROSE-based variable-symbol mapping
   // creates a mapping of variableNames and its computed UniqueVariableSymbol
   void computeVariableSymbolMapping(SgProject* project);
 
@@ -86,7 +83,7 @@ class VariableIdMapping {
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
 
   //private: (soon!)
-  // checks whether the computed CodeThorn-defined ROSE-based variable-symbol mapping is bijective.
+  // checks whether the computed ROSE-based variable-symbol mapping is bijective.
   bool isUniqueVariableSymbolMapping();
   void reportUniqueVariableSymbolMappingViolations();
  private:
@@ -115,7 +112,7 @@ class VariableId {
   friend bool operator<(VariableId id1, VariableId id2);
   friend bool operator==(VariableId id1, VariableId id2);
   friend class ConstraintSetHashFun; // TODO: investigate why getSymbol needs to be public
-  //friend size_t hash_value(const CodeThorn::VariableId&);
+  //friend size_t hash_value(const VariableId&);
  public:
   VariableId();
   string toString() const;
@@ -135,12 +132,10 @@ class VariableId {
   int _id;
 };
 
- size_t hash_value(const CodeThorn::VariableId& vid);
+ size_t hash_value(const VariableId& vid);
 
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
 bool operator!=(VariableId id1, VariableId id2);
-
-} // end of namespace CodeThorn
 
 #endif

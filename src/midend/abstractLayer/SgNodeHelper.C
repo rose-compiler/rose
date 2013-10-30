@@ -11,7 +11,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace CodeThorn;
 
 /*! 
   * \author Markus Schordan

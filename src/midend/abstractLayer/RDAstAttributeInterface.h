@@ -7,8 +7,6 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
-using namespace CodeThorn;
-
 /*! 
   * \author Markus Schordan
   * \date 2013.

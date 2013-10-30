@@ -11,7 +11,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "CommandLineOptions.h"
 #include <set>
 
 using namespace std;

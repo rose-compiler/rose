@@ -1,7 +1,6 @@
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "VariableIdMapping.h"
@@ -9,7 +8,6 @@
 #include <set>
 
 using std::set;
-using namespace CodeThorn;
 
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
   SgSymbol* varSym=getSymbol(varId);
@@ -491,13 +489,13 @@ VariableId::longVariableName() const {
 }
 #endif
 
-bool CodeThorn::operator<(VariableId id1, VariableId id2) {
+bool operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;
 }
-bool CodeThorn::operator==(VariableId id1, VariableId id2) {
+bool operator==(VariableId id1, VariableId id2) {
   return id1._id==id2._id;
 }
-bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
+bool operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
@@ -505,7 +503,7 @@ bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   * \author Markus Schordan
   * \date 2012.
  */
-size_t hash_value(const CodeThorn::VariableId& vid) {
+size_t hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 

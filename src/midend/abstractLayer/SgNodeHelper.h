@@ -4,15 +4,12 @@
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
 #include <string>
 
 using namespace std;
-
-namespace CodeThorn {
 
 namespace SgNodeHelper {
 
@@ -305,7 +302,5 @@ namespace SgNodeHelper {
   } // end of namespace Pattern
 
 } // end of namespace SgNodeHelper
-
-} // end of namespace CodeThorn
 
 #endif
