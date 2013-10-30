@@ -592,6 +592,10 @@ typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrLis
 typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
 
+// DQ (10/28/2013): Forward declaration for new token unparsing support.
+class TokenStreamSequenceToNodeMapping;
+
+
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
  *

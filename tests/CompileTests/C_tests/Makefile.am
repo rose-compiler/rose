@@ -518,6 +518,7 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # to explicitly specify the C89 behavior for make of the C test codes in this directory.
 # ROSE_FLAGS = -rose:C
 ROSE_FLAGS = -rose:C89
+# ROSE_FLAGS = -rose:C89 -rose:output_tokens
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif

@@ -372,6 +372,9 @@ class UnparseLanguageIndependentConstructs
 
        // DQ (4/14/2013): Added to support the mixed use of both overloaded operator names and operator syntax.
           bool isRequiredOperator( SgBinaryOp* binary_op, bool current_function_call_uses_operator_syntax, bool parent_function_call_uses_operator_syntax );
+
+       // DQ (10/29/2013): Adding support to unparse statements using the token stream.
+          int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
    };
 
 #endif
