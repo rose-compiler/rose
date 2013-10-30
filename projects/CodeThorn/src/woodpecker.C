@@ -729,7 +729,7 @@ EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val
   int constVal=val.getIntValue();
   VariableId varId;
   bool isVar=determineVariable(var, varId, *global_variableIdMappingPtr);
-
+  assert(isVar);
   if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
   bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
   if(myIsMultiConst) {
