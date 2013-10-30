@@ -878,14 +878,14 @@ TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
                           # tests = $gnu_time * $TIMEOUT_TOLERANCE
 
 check-performance-timing:
-	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed)
+	@$(MAKE) $(TEST_Sources:.C.passed=.timed)
 
 check-performance-timing-with-threshold:
-	@$(MAKE) $(PASSING_TEST_Objects:.o=.timed_with_threshold)
+	@$(MAKE) $(TEST_Sources:.C.passed=.timed_with_threshold)
 
-$(PASSING_TEST_Objects:.o=.timed):
-	rm -f $(@:.timed=.o) &&                                                        \
-	$(top_srcdir)/scripts/timeout.sh $(TIMEOUT) $(MAKE) $(@:.timed=.o) ||          \
+$(TEST_Sources:.C.passed=.timed):
+	rm -f $(@:.timed=.C.passed) &&                                                 \
+	$(top_srcdir)/scripts/timeout.sh $(TIMEOUT) $(MAKE) $(@:.timed=.C.passed) ||   \
 			(                                                                          \
 				test $$? -eq 124 &&                                                      \
 				echo "[ERROR] '$@' compilation timed out after '$(TIMEOUT)' seconds" &&  \
@@ -897,13 +897,13 @@ $(PASSING_TEST_Objects:.o=.timed):
 #
 # Uses $(TESTCODES_REQUIRED_TO_PASS)
 #
-$(PASSING_TEST_Objects:.o=.timed_with_threshold):
-	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+$(TEST_Sources:.C.passed=.timed_with_threshold):
+	rm -f $(@:.timed_with_threshold=.C.passed) &&                                            \
 	SECONDS=0 &&                                                                             \
-			$(MAKE) TEST_TRANSLATOR=g++ ROSE_FLAGS=  $(@:.timed_with_threshold=.o) &&            \
+			$(MAKE) TEST_TRANSLATOR=g++ ROSE_FLAGS=  $(@:.timed_with_threshold=.C.passed) &&     \
 	gnu_time="$$((($$SECONDS + 1)))" &&                                                      \
 	echo "[INFO] '$@' compiled with GNU in '$$gnu_time' seconds" &&                          \
-	rm -f $(@:.timed_with_threshold=.o) &&                                                   \
+	rm -f $(@:.timed_with_threshold=.C.passed) &&                                            \
 	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                   \
 	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&       \
 	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)

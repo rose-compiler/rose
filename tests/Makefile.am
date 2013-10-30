@@ -84,12 +84,20 @@ testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
 # This tests the ability to generate a compressed binary file representation of the AST.
 # This is a special format of the ROSE AST build for performance File I/O (to address the
 # requirements of large scale applications and their analysis).
+#
+# This executable is tested in tests/roseTests/astFileIO/Makefile.am. I'm not sure why it's tested down there
+# instead of here [RPM 2013-09-27].
 testAstFileIO_SOURCES = testAstFileIO.C
 
 # This tests the ability to read one or more of the binary AST files generated from the AST write.
+#
+# This executable is tested in tests/roseTests/astFileIO/Makefile.am.  I'm not sure why it's tested down there
+# instead of here [RPM 2013-09-27].
 testAstFileRead_SOURCES = testAstFileRead.C
 
 # This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
+#
+# This seems to be similar to the version in tests/roseTests/astFileIO.
 parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
@@ -254,6 +262,8 @@ test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFile
 # ************************************
 # *******  AST File I/O Tests  *******
 # ************************************
+
+# Note: This executable is tested more extensively in tests/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
 testObjectFileFileAstFileIO: testAstFileIO
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
@@ -268,6 +278,8 @@ test_testAstFileIO: testObjectFileFileAstFileIO
 # *************************************
 # *******  AST File Read Tests  *******
 # *************************************
+
+# Note: This executable is tested more extensively in tests/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
 testAstRead: testAstFileRead testAstFileIO
 	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
 	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile

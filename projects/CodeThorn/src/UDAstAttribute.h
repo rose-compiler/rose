@@ -18,6 +18,10 @@ using std::string;
 typedef pair<VariableId,LabelSet> VariableIdLabelSetPair;
 typedef set<VariableIdLabelSetPair> UseDefInfo;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class UDAstAttribute : public AstSgNodeAttribute {
  public:
   UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery);

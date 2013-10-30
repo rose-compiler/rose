@@ -25,20 +25,20 @@ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGEN
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <error_config.h>
-#include <ASTeval.h>
+#include <poet_ASTeval.h>
 
-extern EvaluatePOET* evalPOET;
 extern bool debug_time;
 
 int main(int argc, char** argv)
 {
   int index = initialize(argc, argv);
-  evalPOET = new EvaluatePOET();
-    for ( ; index < argc; ++index) {
-       const char* fname = argv[index];
-          evalPOET->eval_program(process_file(fname));
-    }
-  delete evalPOET;
+  EvaluatePOET::startup();
+  try {
+  for ( ; index < argc; ++index) {
+     const char* fname = argv[index];
+     EvaluatePOET::eval_program(process_file(fname));
+  }
+  }
+  catch (Error err) { return 1;}
   return 0;
 }
