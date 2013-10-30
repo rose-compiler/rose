@@ -9,7 +9,6 @@
 #include "RDLattice.h"
 #include <string>
 
-using namespace CodeThorn;
 using std::string;
 
 class RDAstAttribute : public RDAstAttributeInterface {

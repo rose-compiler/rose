@@ -12,6 +12,7 @@
 #include "AType.h"
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
+#include "Miscellaneous.h"
 
 // it is not necessary to define comparison-ops for Pstate, but
 // the ordering appears to be implementation dependent (but consistent)
