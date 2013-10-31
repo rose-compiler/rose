@@ -360,7 +360,7 @@ TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -rose:C89 -rose:output_tokens
+ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
 
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
@@ -390,7 +390,7 @@ $(TEST_Mapping_Source_passed): %.mapping.passed: tokenStreamMapping $(top_srcdir
 testTokenMapping:
 	rm -f test2003_12.c.mapping.passed
 	@$(MAKE) test2003_12.c.mapping.passed
-	./tokenStreamMapping -rose:C89 -rose:output_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+	./tokenStreamMapping -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
 
 #------------------------------------------------------------------------------------------------------------------------
 

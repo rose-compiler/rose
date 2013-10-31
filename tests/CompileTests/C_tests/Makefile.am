@@ -539,7 +539,7 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # to explicitly specify the C89 behavior for make of the C test codes in this directory.
 # ROSE_FLAGS = -rose:C
 ROSE_FLAGS = -rose:C89
-# ROSE_FLAGS = -rose:C89 -rose:output_tokens
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -621,7 +621,7 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 test_tokenMapping: 
 #	rm -f test2003_12.c.mapping.passed
 #	@$(MAKE) test2003_12.c.mapping.passed
-	$(testTranslator) -rose:C89 -rose:output_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
 
 
 # Liao 11/19/2009

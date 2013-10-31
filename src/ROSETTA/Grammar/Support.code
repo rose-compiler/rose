@@ -13596,7 +13596,7 @@ X aggressive
      p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
 
   // DQ (11/20/2010): Support for token handling.
-     p_output_tokens = false;
+     p_unparse_tokens = false;
 
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
@@ -14198,7 +14198,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
-     printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
+     printf ("     p_unparse_tokens                        = %s \n",(p_unparse_tokens == true) ? "true" : "false");
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 

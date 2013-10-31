@@ -938,8 +938,8 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
 # ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
-# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -rose:output_parser_actions -I$(srcdir)
-# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:unparse_tokens -rose:output_parser_actions -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:unparse_tokens -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
 
 # DQ (9/26/2011): Added optional test for dangling pointers to IR nodes in the AST (level 2 causes assertion if dangling pointers is found).

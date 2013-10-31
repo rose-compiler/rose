@@ -1417,8 +1417,10 @@ SgFile::usage ( int status )
 "                               separately).\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
-"     -rose:output_tokens     call parser with --tokens option (fortran only)\n"
-"                             (not yet supported for C/C++)\n"
+"     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
+"                             Supported for C/C++, and currently only generates token \n"
+"                             stream for fortran (call parser with --tokens option)\n"
+"                             call parser with --tokens option (fortran only)\n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -1760,13 +1762,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // DQ (11/20/2010): Added token handling support.
   // Turn on the output of the tokens from the parser (only applies to Fortran support).
   //
-     set_output_tokens(false);
-     ROSE_ASSERT (get_output_tokens() == false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(output_tokens)",true) == true )
+     set_unparse_tokens(false);
+     ROSE_ASSERT (get_unparse_tokens() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_tokens)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("output tokens mode ON \n");
-          set_output_tokens(true);
+               printf ("unparse tokens mode ON \n");
+          set_unparse_tokens(true);
         }
 
   //
@@ -3021,7 +3023,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
-     optionCount = sla(argv, "-rose:", "($)", "(output_tokens)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
