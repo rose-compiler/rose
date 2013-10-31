@@ -936,7 +936,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // they qualify.  Later we need to connect a test that will detect if a transformation has been done 
        // in the subtree rerpresented by a statement and only qualify the statement on the basis of this 
        // additional test.
-          if (cur_file->get_output_tokens() == true)
+          if (cur_file != NULL && cur_file->get_output_tokens() == true)
              {
             // First we want to restrict this to unparsing the simplest statements, e.g. those 
             // that are expression statements (e.g. containing no nested statements).
