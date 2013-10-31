@@ -52,6 +52,7 @@ execute () {
 
 # Echos the number of processors that should be used
 parallelism () {
+    local maxprocs="${1-0}"
     local nwork=$(wc -l <$worklist)
 
     # Choose number of processors
@@ -62,6 +63,8 @@ parallelism () {
     local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
     [ $nprocs -gt 1 ] && nprocs=$[nprocs-1]
     [ $nprocs -gt $nwork ] && nprocs=$nwork
+    [ $maxprocs -gt 0 -a $nprocs -gt $maxprocs ] && nprocs=$maxprocs
+
     echo "Number of items in work list: $nwork" >&2
     if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
 	read -e -p "How many parallel processes should be used? " -i "$nprocs"
@@ -76,11 +79,11 @@ parallelism () {
 
 # Split a file into parts of equal size based on the parallelism desired.
 split_worklist () {
-    local nprocs="$1"
+    local nprocs="$1" job_multiplier="${2-5}"
     local nwork=$(wc -l <$worklist)
 
     # Choose number of parts to create
-    local nparts=$[5 * nprocs]
+    local nparts=$[job_multiplier * nprocs]
     [ $nprocs -eq 1 ] && nparts=1
     [ $nparts -gt $nwork ] && nparts=$nwork
     if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
@@ -127,6 +130,8 @@ add_functions_flags='$add_functions_flags'
 get_pending_tests_flags='$get_pending_tests_flags'
 
 # Flags for running each test
+run_tests_nprocs='$run_tests_nprocs'
+run_tests_job_multiplier='$run_tests_job_multiplier'
 run_tests_flags='$run_tests_flags'
 
 # Flags for obtaining the list of function pairs for which similarity needs
@@ -259,8 +264,8 @@ nwork=$(wc -l <$worklist)
 if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
-    nprocs=$(parallelism)
-    worklist_parts=$(split_worklist $nprocs)
+    nprocs=$(parallelism $run_tests_nprocs)
+    worklist_parts=$(split_worklist $nprocs $run_tests_job_multiplier)
     nparts=$(count_args $worklist_parts)
     save_settings
 
