@@ -928,7 +928,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // DQ (10/30/2013): We can support the output of the statements using the token stream, it this is done then we don't output the statement as unparsed from the AST.
           bool outputStatementAsTokens = false;
 
-       // Get the file and check if -rose:output_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
+       // Get the file and check if -rose:unparse_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
           SgFile* cur_file = SageInterface::getEnclosingFileNode(stmt);
 
        // DQ (10/30/2013): This command-line option controls the use of the token stream in the unparsing.
@@ -936,7 +936,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // they qualify.  Later we need to connect a test that will detect if a transformation has been done 
        // in the subtree rerpresented by a statement and only qualify the statement on the basis of this 
        // additional test.
-          if (cur_file != NULL && cur_file->get_output_tokens() == true)
+          if (cur_file != NULL && cur_file->get_unparse_tokens() == true)
              {
             // First we want to restrict this to unparsing the simplest statements, e.g. those 
             // that are expression statements (e.g. containing no nested statements).

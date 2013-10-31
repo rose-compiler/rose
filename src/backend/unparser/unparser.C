@@ -375,12 +375,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
      printf ("In Unparser::unparseFile(): SageInterface::is_C_language() = %s \n",SageInterface::is_C_language() ? "true" : "false");
-     printf ("In Unparser::unparseFile(): file->get_output_tokens()      = %s \n",file->get_output_tokens() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): file->get_unparse_tokens()      = %s \n",file->get_unparse_tokens() ? "true" : "false");
 #endif
 
-  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:output_tokens is specified.
+  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
-     if (SageInterface::is_C_language() == true && file->get_output_tokens() == true)
+     if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
@@ -409,12 +409,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           u_exprStmt->markGeneratedFile();
         }
 
-     if (file->get_output_tokens() == true)
+     if (file->get_unparse_tokens() == true)
         {
        // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
 
        // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
-          printf ("In Unparser::unparseFile(): Detected case of file->get_output_tokens() == true \n");
+          printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
 
        // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
           unparseFileUsingTokenStream(file);
