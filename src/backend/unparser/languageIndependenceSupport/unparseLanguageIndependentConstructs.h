@@ -375,6 +375,7 @@ class UnparseLanguageIndependentConstructs
 
        // DQ (10/29/2013): Adding support to unparse statements using the token stream.
           int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
+          bool canBeUnparsedFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
    };
 
 #endif

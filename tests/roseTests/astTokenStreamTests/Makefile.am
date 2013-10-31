@@ -318,6 +318,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_88.c \
      test2013_89.c \
      test2013_90.c \
+     test2013_91.c \
+     test2013_92.c \
+     test2013_93.c \
+     test2013_94.c \
+     test2013_95.c \
      math.c \
      stdio.c \
      test2006_48.c  \

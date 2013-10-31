@@ -343,6 +343,27 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_72.c \
      test2013_73.c \
      test2013_74.c \
+     test2013_75.c \
+     test2013_76.c \
+     test2013_77.c \
+     test2013_78.c \
+     test2013_79.c \
+     test2013_80.c \
+     test2013_81.c \
+     test2013_82.c \
+     test2013_83.c \
+     test2013_84.c \
+     test2013_85.c \
+     test2013_86.c \
+     test2013_87.c \
+     test2013_88.c \
+     test2013_89.c \
+     test2013_90.c \
+     test2013_91.c \
+     test2013_92.c \
+     test2013_93.c \
+     test2013_94.c \
+     test2013_95.c \
      math.c \
      complex_01.c \
      stdio.c \
