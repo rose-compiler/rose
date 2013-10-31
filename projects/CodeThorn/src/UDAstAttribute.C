@@ -8,21 +8,29 @@ UDAstAttribute::UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuer
 {
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 VariableIdSet UDAstAttribute::useVariables(VariableIdMapping& vidm) {
   // labels are associated with statements/exprstatements.
   SgNode* exprNode=_node;
   if(isSgExprStatement(exprNode))
-	exprNode=SgNodeHelper::getExprStmtChild(exprNode);
+    exprNode=SgNodeHelper::getExprStmtChild(exprNode);
   if(SgFunctionCallExp* callExp=isSgFunctionCallExp(exprNode)) {
-	return AnalysisAbstractionLayer::useVariables(callExp->get_args(),vidm);
+    return AnalysisAbstractionLayer::useVariables(callExp->get_args(),vidm);
   }
   if(!isSgExpression(exprNode)&&!isSgInitializedName(exprNode)&&!isSgVariableDeclaration(exprNode)) {
-	//cerr<<"HELLO:"<<exprNode->class_name()<<":"<<exprNode->unparseToString()<<endl;
-	return VariableIdSet();
+    //cerr<<"HELLO:"<<exprNode->class_name()<<":"<<exprNode->unparseToString()<<endl;
+    return VariableIdSet();
   }
   return AnalysisAbstractionLayer::useVariables(exprNode,vidm);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 LabelSet UDAstAttribute::definitionsOfVariable(VariableId var) {
   return _rdAttr->definitionsOfVariableId(var);
 }

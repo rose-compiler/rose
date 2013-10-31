@@ -11,8 +11,8 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
   VariableIdMapping::VariableIdSet globalVarsIdSet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-	VariableId globalVarId=variableIdMapping->variableId(*i);
-	globalVarsIdSet.insert(globalVarId);
+    VariableId globalVarId=variableIdMapping->variableId(*i);
+    globalVarsIdSet.insert(globalVarId);
   }
   return globalVarsIdSet;
 }
@@ -22,17 +22,17 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
   VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-	setOfUsedVars.insert(variableIdMapping->variableId(*i));
+    setOfUsedVars.insert(variableIdMapping->variableId(*i));
   }
   return setOfUsedVars;
 }
 
 // TODO: this function ignores all reported memory access to unnamed memory cells
 void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInfo) {
-	VariableIdInfoMap& vim=varsInfo.first;
-	for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
-	  varIdSet.insert((*i).first);
-	}
+    VariableIdInfoMap& vim=varsInfo.first;
+    for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
+      varIdSet.insert((*i).first);
+    }
 }
 
 VariableIdSet AnalysisAbstractionLayer::useVariables(SgNode* node, VariableIdMapping& vidm) {

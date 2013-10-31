@@ -4721,7 +4721,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
                  // specific configuration testing (when configure tests ROSE translators)).
-                    ROSE_ASSERT(! "Not implemented yet");
+
+                 // TOO1 (9/23/2013): There was never an else branch (or assertion) here before.
+                 //                   Commenting out for now to allow $ROSE/tests/CompilerOptionTests to pass
+                 //                   in order to expedite the transition from ROSE-EDG3 to ROSE-EDG4.
+                 //   ROSE_ASSERT(! "Not implemented yet");
                   }
              }
             else

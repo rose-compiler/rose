@@ -9,6 +9,10 @@
 
 using namespace CodeThorn;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class RDAstAttributeInterface : public DFAstAttribute {
  public:
   typedef pair<Label,VariableId> RDPair;

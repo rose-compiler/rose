@@ -23,30 +23,30 @@ bool RDAstAttribute::isBottomElement() {
 VariableIdSet RDAstAttribute::allVariableIds() {
   VariableIdSet set;
   for(RDAstAttribute::iterator i=begin();i!=end();++i) {
-	set.insert((*i).second);
+    set.insert((*i).second);
   }
   return set;
 }
 LabelSet RDAstAttribute::allLabels() {
   LabelSet ls;
   for(RDAstAttribute::iterator i=begin();i!=end();++i) {
-	ls.insert((*i).first);
+    ls.insert((*i).first);
   }
   return ls;
 }
 LabelSet RDAstAttribute::definitionsOfVariableId(VariableId varId) {
   LabelSet ls;
   for(RDAstAttribute::iterator i=begin();i!=end();++i) {
-	if(varId==(*i).second)
-	  ls.insert((*i).first);
+    if(varId==(*i).second)
+      ls.insert((*i).first);
   }
   return ls;
 }
 VariableIdSet RDAstAttribute::variableIdsOfDefinition(Label def) {
   VariableIdSet vset;
   for(RDAstAttribute::iterator i=begin();i!=end();++i) {
-	if(def==(*i).first)
-	  vset.insert((*i).second);
+    if(def==(*i).first)
+      vset.insert((*i).second);
   }
   return vset;
 }

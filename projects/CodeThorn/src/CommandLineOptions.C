@@ -8,6 +8,8 @@
 boost::program_options::variables_map args;
 BoolOptions boolOptions;
 int option_debug_mode=0;
+ResultsFormat resultsFormat=RF_RERS2012;
+
 /////////////////////////////////////////////////
 
 BoolOptions::BoolOptions():argc(0),argv(0){

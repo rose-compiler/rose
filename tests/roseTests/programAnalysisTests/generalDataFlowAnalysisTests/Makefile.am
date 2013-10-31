@@ -59,7 +59,6 @@ CLEAN_TARGETS += clean-taint-analysis
 .PHONY: clean-taint-analysis
 clean-taint-analysis:
 	rm -f $(TAINT_ANALYSIS_TESTS) $(TAINT_ANALYSIS_TESTS:.passed=.failed)
-	rm -f $(TAINT_ANALYSIS_TESTS:.passed=.out) $(TAINT_ANALYSIS_TESTS:.passed=.err)
 	rm -f detail.html index.html summary.html
 
 
@@ -84,7 +83,6 @@ CLEAN_TARGETS += clean-cxx-constprop-local
 .PHONY: clean-cxx-constprop-local
 clean-cxx-constprop-local:
 	rm -f $(CXX_CONSTPROP_LOCAL_TESTS) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.failed)
-	rm -f $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.out) $(CXX_CONSTPROP_LOCAL_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcpls_%.passed, %*.dot, $(CXX_CONSTPROP_LOCAL_TESTS))
 	rm -f detail.html index.html summary.html
 
@@ -222,7 +220,6 @@ CLEAN_TARGETS += clean-cxx-constprop
 .PHONY: clean-cxx-constprop
 clean-cxx-constprop:
 	rm -f $(CXX_CONSTPROP_TESTS) $(CXX_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(CXX_CONSTPROP_TESTS:.passed=.out) $(CXX_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst cxxcp_%.passed, %*.dot, $(CXX_CONSTPROP_TESTS))
 	rm -f detail.html index.html summary.html
 	rm -f exception_L4R__L5R_cfg.dot exception_L6R__L7R_cfg.dot test2004_40.h_fooAfter___Fb_v_Gb__Fe___L2R_cfg.dot
@@ -277,7 +274,6 @@ CLEAN_TARGETS += clean-c-constprop
 .PHONY: clean-c-constprop
 clean-c-constprop:
 	rm -f $(C_CONSTPROP_TESTS) $(C_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(C_CONSTPROP_TESTS:.passed=.out) $(C_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(C_CONSTPROP_TESTS:.C.passed=.c) $(C_CONSTPROP_TESTS:.C.passed=.c*.dot)
 	rm -f detail.html index.html summary.html
 
@@ -309,7 +305,6 @@ CLEAN_TARGETS += clean-c99-constprop
 .PHONY: clean-c99-constprop
 clean-c99-constprop:
 	rm -f $(C99_CONSTPROP_TESTS) $(C99_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(C99_CONSTPROP_TESTS:.passed=.out) $(C99_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst c99cp_%.passed, %*.dot, $(C99_CONSTPROP_TESTS))
 	rm -f detail.html index.html summary.html
 
@@ -350,7 +345,6 @@ CLEAN_TARGETS += clean-f77-constprop
 .PHONY: clean-f77-constprop
 clean-f77-constprop:
 	rm -f $(F77_CONSTPROP_TESTS) $(F77_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(F77_CONSTPROP_TESTS:.passed=.out) $(F77_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f77cp_%.passed, %*.dot, $(F77_CONSTPROP_TESTS))
 	rm -f detail.html index.html summary.html
 
@@ -400,7 +394,6 @@ CLEAN_TARGETS += clean-f90-constprop
 .PHONY: clean-f90-constprop
 clean-f90-constprop:
 	rm -f $(F90_CONSTPROP_TESTS) $(F90_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(F90_CONSTPROP_TESTS:.passed=.out) $(F90_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f90cp_%.passed, %*.dot, $(F90_CONSTPROP_TESTS))
 	rm -f detail.html index.html summary.html
 
@@ -434,7 +427,6 @@ CLEAN_TARGETS += clean-f03-constprop
 .PHONY: clean-f03-constprop
 clean-f03-constprop:
 	rm -f $(F03_CONSTPROP_TESTS) $(F03_CONSTPROP_TESTS:.passed=.failed)
-	rm -f $(F03_CONSTPROP_TESTS:.passed=.out) $(F03_CONSTPROP_TESTS:.passed=.err)
 	rm -f $(patsubst f03cp_%.passed, %*.dot, $(F03_CONSTPROP_TESTS))
 	rm -f $(patsubst f03cp_%.f03.passed, %*.rmod, $(F03_CONSTPROP_TESTS))
 	rm -f detail.html index.html summary.html
@@ -463,7 +455,6 @@ CLEAN_TARGETS += clean-cxx-liveness
 .PHONY: clean-cxx-liveness
 clean-cxx-liveness:
 	rm -f $(CXX_LIVENESS_TESTS) $(CXX_LIVENESS_TESTS:.passed=.failed)
-	rm -f $(CXX_LIVENESS_TESTS:.passed=.out) $(CXX_LIVENESS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxla_%.passed, %*.dot, $(CXX_LIVENESS_TESTS))
 	rm -f detail.html index.html summary.html
 
@@ -492,7 +483,6 @@ CLEAN_TARGETS += clean-cxx-pointer-alias
 .PHONY: clean-cxx-pointer-alias
 clean-cxx-pointer-alias:
 	rm -f $(CXX_POINTER_ALIAS_TESTS) $(CXX_POINTER_ALIAS_TESTS:.passed=.failed)
-	rm -f $(CXX_POINTER_ALIAS_TESTS:.passed=.out) $(CXX_POINTER_ALIAS_TESTS:.passed=.err)
 	rm -f $(patsubst cxxpa_%.passed, %*.dot, $(CXX_POINTER_ALIAS_TESTS))
 	rm -f detail.html index.html summary.html
 

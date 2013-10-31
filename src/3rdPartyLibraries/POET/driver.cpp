@@ -39,8 +39,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <poetAST.h>
-#include <ASTvisitor.h>
+#include <poet_ASTvisitor.h>
 #include <assert.h>
 
 #ifdef _MSC_VER
@@ -49,9 +48,10 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 extern EvaluatePOET* evalPOET;
 extern POETProgram* curfile;
-typedef enum {DEBUG_NONE, DEBUG_XFORM = 1, DEBUG_PATTERN = 2, DEBUG_TIME = 4, DEBUG_PARSE= 8, DEBUG_LEX = 16}   
+typedef enum {DEBUG_NONE, DEBUG_XFORM = 1, DEBUG_PATTERN = 2, DEBUG_TIME = 4, DEBUG_PARSE= 8, DEBUG_LEX = 16, DEBUG_COND=32}   
     DebugEnum;
 int debug=DEBUG_NONE;
+unsigned cond_count = 0;
 bool debug_time() { return debug & DEBUG_TIME; } 
 bool debug_parse() { return debug & DEBUG_PARSE; }
 bool debug_lex() { return debug & DEBUG_LEX; }
@@ -218,9 +218,9 @@ extern "C" POETCode* make_varRef(POETCode* name, int config)
      return POETProgram::make_localVar(local, name, LVAR_REG);
   }
   case ASSIGN_VAR: {
-     LvarSymbolTable* local = top_scope(); 
      POETCode* res = find_code_or_xform_var(name);
-     if (res != 0) VAR_ASSIGN_ERROR(name->toString());
+     if (res != 0) return res;
+     LvarSymbolTable* local = top_scope(); 
      if (local == 0) {
         res = find_global_var(name);
         if (res != 0) return res;
@@ -302,6 +302,8 @@ extern "C" void insert_source(POETCode* code)
 { curfile->insert_sourceCode(code); }
 extern "C" void insert_eval(POETCode* code)
 { curfile->insert_evalDecl(code,yylineno); }
+extern "C" void insert_cond(POETCode* code)
+{ curfile->insert_condDecl(code,yylineno); }
 extern "C" void insert_trace(LocalVar* code)
 {  curfile->insert_traceDecl(code, yylineno); }
 extern "C" void eval_define(LocalVar* var, POETCode* code)
@@ -467,6 +469,13 @@ extern "C" void* make_inputlist2( POETCode* car, POETCode *cdr)
   return res;
 }
 
+extern "C" void* make_seq( POETCode* first, POETCode *next)
+{
+  if (next == 0) return first;
+  if (first == 0) return next;
+  return make_sourceBop(POET_OP_SEQ,first, next);
+}
+
 extern "C" void* make_xformList( POETCode* car, POETCode *cdr)
 { 
   if (cdr != 0) {
@@ -487,8 +496,7 @@ extern "C" POETCode* make_Iconst1(int val)
 { return ASTFactory::inst()->new_iconst(val); }
 extern "C" POETCode* negate_Iconst(POETIconst* ival)
 {
-   ival->set_val(- ival->get_val());
-   return ival;
+   return ASTFactory::inst()->new_iconst(-ival->get_val());
 }
 extern "C" POETCode* make_Iconst( char* text, int len)
 {
@@ -553,7 +561,7 @@ extern "C" POETCode* make_traceVar(POETCode* name, POETCode* inside)
   LocalVar* var1 = curfile->make_traceVar(name);
   if (inside != 0) {
      LocalVar* var2 = dynamic_cast<LocalVar*>(inside);
-     assert (var1 != 0 && var2 != 0);
+     assert(var2!=0);
      var1->get_entry().set_restr(var2);
   }
   return var1;
@@ -635,6 +643,7 @@ int initialize(int argc, char** argv)
      std::cerr << "options:";
      std::cerr << "\n     -h:      print out help info";
      std::cerr << "\n     -v:      print out version info";
+     std::cerr << "\n     -c<i>:   verify the first i conditions only (exit without evaluating the rest of the program)";
      std::cerr << "\n     -L<dir>: search for POET libraries in the specified directory";
      std::cerr << "\n     -p<name>=<val>: set POET parameter <name> to have value <val>";
      std::cerr << "\n     -dp:     print out debugging info for parsing operations";
@@ -644,35 +653,15 @@ int initialize(int argc, char** argv)
      std::cerr << "\n     -md:     allow global names to be multiply-defined (overwritte)";
      std::cerr << "\n     -dt:     print out timing information for various components of the POET interpreter";
      std::cerr << "\n     -dy:   print out debugging info from yacc parsing";
+     std::cerr << "\n";
      exit(1);
-  }
-  char* env = getenv("POET_LIB");
-  if (env != 0) {
-     for (char* p = env; *p != 0; ++p) { 
-       while (*p == ' ') ++p; 
-       char* p1 = p;
-       while (*p1 != 0 && *p1 != ' ') ++p1;
-       char m = *p1;
-       if (m != 0)
-          *p1 = 0;
-       lib_dir.push_back(std::string(p) + "/");
-       *p1 = m;    
-     }
   }
 #ifdef POET_DEST_DIR
   lib_dir.push_front(POET_DEST_DIR);
 #endif
-
 #ifdef POET_LIB_DIR
-#if !USE_ROSE
-// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct,
-// and that the issue might be the ammount of quoting for the string passed via the -D option list.
-// But since we are only trying to compile ROSE with ROSE (using the new EDG 4.3 front-end as a tests) 
-// we can just skip this case for now.
   lib_dir.push_front(POET_LIB_DIR);
 #endif
-#endif
-
   lib_dir.push_front("./");
   
   int index = 1;
@@ -694,20 +683,13 @@ int initialize(int argc, char** argv)
           debug |= DEBUG_TIME;
      else if (*p == 'd' && *(p+1) == 'y')
           yydebug = 1;
+     else if (*p == 'c') {
+          sscanf(p+1, "%d", &cond_count);
+     }
      else if (*p == 'm' && *(p+1) == 'd')
           redefine_code=true;
      else if (*p == 'v')
-             {
-#if !USE_ROSE
-            // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct,
-            // and that the issue might be the ammount of quoting for the string passed via the -D option list.
-            // But since we are only trying to compile ROSE with ROSE (using the new EDG 4.3 front-end as a tests) 
-            // we can just skip this case for now.
-               std::cerr << "pcg version: " << POET_VERSION << "\n";
-#else
-               std::cerr << "pcg version: " << "1.02.06.10" << "\n";
-#endif
-             }
+          std::cerr << "pcg version: " << POET_VERSION << "\n";
      else if (*p == 'p') {
          std::string parName;
          char* p1 = p+1;
@@ -752,8 +734,6 @@ POETProgram* process_file(const char* fname)
   std::string filetype = (lexState&LEX_INPUT)? "POET input" : 
                           (lexState&LEX_SYNTAX)? "POET syntax" : "POET instructions";
 
-  //POETProgram::make_macroVar(ASTFactory::inst()->new_string("INHERIT"));
-
   std::string name;
   if (fname == 0 || *fname==0)  {
        std::cerr << "Reading " << filetype << " from stdin\n";
@@ -770,7 +750,8 @@ POETProgram* process_file(const char* fname)
      if (yyin == 0) { // && !(lexState&LEX_INPUT) ) {
         for (std::list<std::string>::const_iterator pdir = lib_dir.begin();
              pdir != lib_dir.end(); ++pdir) {
-           std::string fullname = (*pdir) + name;
+           std::string fullname = (*pdir) + "/" + name;
+           //std::cerr << "try opening file " << fullname << "\n";
            yyin = fopen(fullname.c_str(), "r");
            if (yyin != 0)
                 break;

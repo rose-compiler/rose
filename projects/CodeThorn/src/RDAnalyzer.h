@@ -15,6 +15,10 @@
 using namespace std;
 using namespace CodeThorn;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();

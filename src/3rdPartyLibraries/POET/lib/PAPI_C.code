@@ -1,0 +1,46 @@
+include utils.incl
+<***************************** PAPI Instructions ******************************>
+<code PAPIIncl>
+#include "papi.h"
+
+extern long long **__papi_values;
+</code>
+
+<code PAPIDecl>
+int counters[4], ncounters, retval, rank;
+long long values[4];
+</code>
+
+<code PAPIInit>
+if((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT ) {
+   fprintf(stderr, "Error PAPI library init fail");
+   exit(1);
+}
+
+if(PAPI_thread_init(omp_get_thread_num) !=  PAPI_OK) {
+   fprintf(stderr, "PAPI with OpenMP fails");
+   exit(1);
+}
+</code>
+
+<code PAPIStart pars=(counters:NameList)>
+counters[0] = @car(counters)@;
+counters[1] = @car(cdr(counters))@;
+counters[2] = @car(cdr(cdr(counters)))@;
+counters[3] = @car(cdr(cdr(cdr(counters))))@;
+ncounters = @LEN(counters)@;
+PAPI_start_counters(counters, ncounters);
+</code>
+
+<code PAPIFinalize pars=(counters:NameList )>
+
+#pragma omp critical
+{
+PAPI_stop_counters(values, ncounters);
+rank = omp_get_thread_num();
+__papi_values[rank][0] += values[0];
+__papi_values[rank][1] += values[1];
+__papi_values[rank][2] += values[2];
+__papi_values[rank][3] += values[3];
+}
+</code>

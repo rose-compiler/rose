@@ -15,11 +15,6 @@ all: extract_rose_required_ecj_source_files
 extract_rose_required_ecj_source_files: JavaTraversal.class
 #	@echo "In extract_rose_required_ecj_source_files: After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
 #	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
-	@echo "In extract_rose_required_ecj_source_files: output the directory listing (debugging)."
-	@pwd
-	@echo "calling ls -l"
-	ls -l
-	@echo "after ls"
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:

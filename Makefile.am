@@ -290,11 +290,12 @@ FORCE_DOCS_TO_BE_MADE:
 
 # DQ (7/25/2008): Running "make docs" introduces dependences that are inappropriate
 # for a distribution.
+# Liao (9/26/2013) We no longer support haskellport as part of the migration to EDG 4.x based ROSE
+#	   $(MAKE) -Cprojects/haskellport docs && 
 docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   $(MAKE) -Ctutorial docs && \
-	   $(MAKE) -Cprojects/haskellport docs && \
 	   $(MAKE) -Ctests/roseTests/astInterfaceTests check && \
 	   $(MAKE) -Ctests/roseTests/ompLoweringTests check && \
 	   $(MAKE) -Ctests/CompileTests/UPC_tests check && \

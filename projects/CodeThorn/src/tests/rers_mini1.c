@@ -26,6 +26,11 @@ int calculate_output(int input) {
     error_2: assert(0); // reachable
     }
   }
+  if(f==2) {
+	// intentionally empty block to be reduce
+  }
+  if(input==7)
+    return -2;
   return -1;
 }
 

@@ -46,6 +46,7 @@ SUBDIRS = \
 	PowerAwareCompiler \
    taintcheck \
 	ManyCoreRuntime \
+	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
