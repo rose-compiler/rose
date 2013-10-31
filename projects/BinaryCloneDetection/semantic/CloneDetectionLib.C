@@ -892,7 +892,8 @@ open_specimen(const SqlDatabase::TransactionPtr &tx, FilesTable &files, int spec
 {
     bool do_link = 0 < (tx->statement("select count (*) from semantic_specfiles where specimen_id = ?")
                         ->bind(0, specimen_id)->execute_int());
-    open_specimen(files.name(specimen_id), argv0, do_link);
+    if (NULL==open_specimen(files.name(specimen_id), argv0, do_link))
+        return NULL; // no interpretation
     return SageInterface::getProject();
 }
 
