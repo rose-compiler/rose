@@ -886,6 +886,43 @@ MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
 }
 
 void
+MemoryMap::erase_zeros(size_t minsize)
+{
+    ExtentMap to_remove;
+    for (Segments::const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        Extent extent = si->first;
+        const Segment &segment = si->second;
+        if (0==(segment.get_mapperms() & MM_PROT_EXEC) || extent.size() < minsize)
+            continue; // not executable or too small to remove
+        BufferPtr buffer = segment.get_buffer();
+        if (buffer->is_zero()) {
+            to_remove.insert(extent);
+        } else {
+            for (size_t i=0; i<extent.size(); /*void*/) {
+                uint8_t page[8192];
+                size_t nread = read(page, extent.first()+i, sizeof page);
+                if (0==nread)
+                    break;
+                for (size_t j=0; j<nread; /*void*/) {
+                    if (0==page[j]) {
+                        size_t k = 1;
+                        while (j+k<nread && 0==page[j+k]) ++k;
+                        if (k>=minsize)
+                            to_remove.insert(Extent(extent.first()+i+j, k));
+                        j += k;
+                    } else {
+                        ++j;
+                    }
+                }
+                i += nread;
+            }
+        }
+    }
+    for (ExtentMap::iterator ei=to_remove.begin(); ei!=to_remove.end(); ++ei)
+        erase(ei->first);
+}
+
+void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
     std::ostringstream ss;
