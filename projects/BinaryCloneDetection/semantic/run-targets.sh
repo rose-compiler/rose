@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=robb_
+DB_PREFIX=as_
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=yes
@@ -22,15 +22,19 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=1 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
-add_functions_flags='--signature-components=total_for_variant,by_category,apply_log'
+generate_inputs_flags='--ngroups=100 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
 get_pending_tests_flags='--size=20'
 run_tests_nprocs=''
 run_tests_job_multiplier='1'
-run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant,by_category,apply_log'
-func_similarity_worklist_flags=''
-func_similarity_flags=''
+run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
+func_similarity_worklist_flags='--delete'
+func_similarity_flags='--ignore-faults --ogroup=valueset-jaccard --aggregate=average'
 
+#Settings for running api similarity analysis
+
+api_similarity_worklist_flags=''
+api_similarity_flags=''
 
 ###############################################################################################################################
 
@@ -61,6 +65,15 @@ generate_config() {
 	echo "run_tests_flags='$run_tests_flags'"
 	echo "func_similarity_worklist_flags='$func_similarity_worklist_flags'"
 	echo "func_similarity_flags='$func_similarity_flags'"
+    ) >$filename
+}
+
+generate_api_config() {
+    local filename="$1" db_name="$2"
+    (
+	echo "dbname='postgresql:///$db_name'"
+	echo "api_similarity_worklist_flags='$api_similarity_worklist_flags'"
+        echo "api_similarity_flags='$api_similarity_flags'"
     ) >$filename
 }
 
@@ -102,7 +115,7 @@ for TARGET_DIR in $TARGET_DIRS; do
 	    DB_NAME=${DB_PREFIX}${TARGET_NAME}_${OPTIM1}_${OPTIM2}
 	    echo
 	    echo "==============================================================================================="
-	    banner $TARGET_NAME
+	    echo $TARGET_NAME
 	    echo
 	    echo "database  = $DB_NAME"
 	    echo "specimen1 = $SPECIMEN1"
@@ -118,10 +131,14 @@ for TARGET_DIR in $TARGET_DIRS; do
 	    fi
 
 	    # Run the analysis
-	    CONFIG_FILE=$(tempfile)
+	    CONFIG_FILE=$(mktemp)
 	    generate_config $CONFIG_FILE $DB_NAME
-	    $mydir/run-analysis.sh --batch --config=$CONFIG_FILE $SPECIMEN1 $SPECIMEN2 || exit 1
 
+            API_CONFIG_FILE=$(mktemp)
+            generate_api_config $API_CONFIG_FILE $DB_NAME
+
+	    $mydir/run-analysis.sh --batch --config=$CONFIG_FILE $SPECIMEN1 $SPECIMEN2 || exit 1
+            $mydir/run-api-similarity.sh --batch --config=$API_CONFIG_FILE || exit 1
 
 	done
     done
