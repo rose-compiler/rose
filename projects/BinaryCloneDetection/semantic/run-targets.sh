@@ -18,7 +18,7 @@ DROP_DB=yes
 # Create the database ('yes' or 'no')?  If 'no' then the analysis is skipped, which is a convenient way to drop a whole bunch
 # of databases that you no longer want.  If 'yes' and the creation fails, then the analysis is skipped--either the database
 # already exists and we don't need to re-run, or the database could not be created and running would be pointless.
-CREATE_DB=no
+CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
@@ -121,7 +121,7 @@ for TARGET_DIR in $TARGET_DIRS; do
 	    # script. Also, don't delete the file after copying it, or else it will exist in the database but not in the file
 	    # system, which would cause problems when 25-run-tests tries to analyze it.
 	    if [ "$SPECIMEN1" = "$SPECIMEN2" ]; then
-		SPECIMEN2=$(tempfile)
+		SPECIMEN2=$(mktemp)
 		rm -f "$SPECIMEN2"
 		cp "$SPECIMEN1" "$SPECIMEN2"
 	    fi
@@ -137,7 +137,8 @@ for TARGET_DIR in $TARGET_DIRS; do
 	    echo
 
 	    # Only run if we don't already have this database and we can create it
-	    [ "$DROP_DB" = yes ] && dropdb $DB_NAME
+            # Ignore error if the db already exists
+	    [ "$DROP_DB" = yes ] && ( dropdb $DB_NAME )
 	    [ "$CREATE_DB" = yes ] || continue
 	    if ! createdb $DB_NAME >/dev/null; then
 		echo "database '$DB_NAME' exists or could not be created; skipping $TARGET_DIR"
