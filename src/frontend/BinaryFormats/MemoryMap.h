@@ -572,6 +572,9 @@ public:
      *  prohibited bits.   No bits are required if @p required is zero. */
     void prune(unsigned required, unsigned prohibited=MM_PROT_NONE);
 
+    /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
+    void erase_zeros(size_t minsize);
+
     /** List of map segments. */
     const Segments &segments() const { return p_segments; }
 
