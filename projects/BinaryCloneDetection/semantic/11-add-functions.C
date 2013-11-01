@@ -368,6 +368,7 @@ main(int argc, char *argv[])
         stmt1->bind(11, cmd_id);
         stmt1->execute();
 
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
         // Save instructions
        for (size_t i=0; i<insns.size(); ++i) {
             BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
@@ -383,6 +384,7 @@ main(int argc, char *argv[])
             stmt2->execute();
         }
     }
+#endif
 
     // Save specimen information
     if (!functions_to_add.empty()) {
