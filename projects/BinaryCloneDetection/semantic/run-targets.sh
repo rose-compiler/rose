@@ -18,7 +18,7 @@ DROP_DB=yes
 # Create the database ('yes' or 'no')?  If 'no' then the analysis is skipped, which is a convenient way to drop a whole bunch
 # of databases that you no longer want.  If 'yes' and the creation fails, then the analysis is skipped--either the database
 # already exists and we don't need to re-run, or the database could not be created and running would be pointless.
-CREATE_DB=no
+CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
