@@ -890,7 +890,12 @@ DynamicCallGraph::flush(const SqlDatabase::TransactionPtr &tx)
 SgProject *
 open_specimen(const SqlDatabase::TransactionPtr &tx, FilesTable &files, int specimen_id, const std::string &argv0)
 {
-    bool do_link = 0 < (tx->statement("select count (*) from semantic_specfiles where specimen_id = ?")
+    // Perform dynamic linking if we linked with something other than our own builtins.so.
+    bool do_link = 0 < (tx->statement("select count(*)"
+                                      "  from semantic_specfiles as specfile"
+                                      "  join semantic_files as file"
+                                      "    on specfile.file_id=file.id and file.name not like '%/builtins.so'"
+                                      "  where specimen_id = ?")
                         ->bind(0, specimen_id)->execute_int());
     if (NULL==open_specimen(files.name(specimen_id), argv0, do_link))
         return NULL; // no interpretation

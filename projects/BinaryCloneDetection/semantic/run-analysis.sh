@@ -60,7 +60,8 @@ parallelism () {
 	echo $nwork
 	return 0
     fi
-    local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
+    #local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
+    local nprocs=32
     [ $nprocs -gt 1 ] && nprocs=$[nprocs-1]
     [ $nprocs -gt $nwork ] && nprocs=$nwork
     [ $maxprocs -gt 0 -a $nprocs -gt $maxprocs ] && nprocs=$maxprocs

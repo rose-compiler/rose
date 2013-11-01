@@ -18,7 +18,7 @@ DROP_DB=yes
 # Create the database ('yes' or 'no')?  If 'no' then the analysis is skipped, which is a convenient way to drop a whole bunch
 # of databases that you no longer want.  If 'yes' and the creation fails, then the analysis is skipped--either the database
 # already exists and we don't need to re-run, or the database could not be created and running would be pointless.
-CREATE_DB=yes
+CREATE_DB=no
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
@@ -103,7 +103,11 @@ for TARGET_DIR in $TARGET_DIRS; do
 	SPECIMEN1=${DIR1_SPECIMENS[0]}
 
 	for DIR2 in $OPTIM_DIRS; do
-	    [ "$DIR1" = "$DIR2" ] && continue
+
+	    # Don't run if DIR1 is lexicographically greater than DIR2 
+	    cmp=$(perl -e 'print $ARGV[0] cmp $ARGV[1]' $DIR1 $DIR2)
+	    [ "$cmp" -gt 0 ] && continue;
+
 	    OPTIM2=$(basename $DIR2)
 	    DIR2_SPECIMENS=($(find_specimens $DIR2))
 	    if [ "${#DIR2_SPECIMENS[*]}" -ne 1 ]; then
@@ -111,6 +115,16 @@ for TARGET_DIR in $TARGET_DIRS; do
 		continue
 	    fi
 	    SPECIMEN2=${DIR2_SPECIMENS[0]}
+
+	    # If SPECIMEN1==SPECIMEN2 then copy SPECIMEN2 to a new name and use that instead. Don't copy it into the
+	    # same directory it was in or else we violate the one-specimen-per-directory rule described at the top of this
+	    # script. Also, don't delete the file after copying it, or else it will exist in the database but not in the file
+	    # system, which would cause problems when 25-run-tests tries to analyze it.
+	    if [ "$SPECIMEN1" = "$SPECIMEN2" ]; then
+		SPECIMEN2=$(tempfile)
+		rm -f "$SPECIMEN2"
+		cp "$SPECIMEN1" "$SPECIMEN2"
+	    fi
 
 	    DB_NAME=${DB_PREFIX}${TARGET_NAME}_${OPTIM1}_${OPTIM2}
 	    echo
