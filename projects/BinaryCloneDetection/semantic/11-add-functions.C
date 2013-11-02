@@ -31,6 +31,8 @@ usage(int exit_status)
               <<"            Select which, if any, properties should be counted and/or how they should be counted. By default no properties\n"
               <<"            are counted. By default the instructions are counted by operation kind, but you can optionally choose to count\n"
               <<"            by instruction category.\n"
+              <<"    --save-instructions\n"
+              <<"            Save instruction mappping to the database. Only needed for the lsh clone detection.\n" 
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -252,6 +254,8 @@ main(int argc, char *argv[])
     Switches opt;
     int argno = 1;
 
+    bool save_instructions = false;
+
     std::vector<std::string> signature_components;
 
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -269,7 +273,8 @@ main(int argc, char *argv[])
             opt.save_ast = true;
         } else if (!strcmp(argv[argno], "--no-save-ast")) {
             opt.save_ast = false;
-
+        } else if (!strcmp(argv[argno], "--save-instructions")){
+            save_instructions = true;
         } else if (NULL != strstr(argv[argno], "--signature-components")){
 
           std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
@@ -368,23 +373,23 @@ main(int argc, char *argv[])
         stmt1->bind(11, cmd_id);
         stmt1->execute();
 
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
-        // Save instructions
-       for (size_t i=0; i<insns.size(); ++i) {
-            BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
-            int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
-            stmt2->bind(0, insns[i]->get_address());
-            stmt2->bind(1, insns[i]->get_size());
-            stmt2->bind(2, unparseInstruction(insns[i]));
-            stmt2->bind(3, fi->first);
-            stmt2->bind(4, i);
-            stmt2->bind(5, file_id);
-            stmt2->bind(6, srcinfo.line_num);
-            stmt2->bind(7, cmd_id);
-            stmt2->execute();
-        }
-    
-#endif
+	if(save_instructions){
+		// Save instructions
+		for (size_t i=0; i<insns.size(); ++i) {
+			BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
+			int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+			stmt2->bind(0, insns[i]->get_address());
+			stmt2->bind(1, insns[i]->get_size());
+			stmt2->bind(2, unparseInstruction(insns[i]));
+			stmt2->bind(3, fi->first);
+			stmt2->bind(4, i);
+			stmt2->bind(5, file_id);
+			stmt2->bind(6, srcinfo.line_num);
+			stmt2->bind(7, cmd_id);
+			stmt2->execute();
+		}
+	}
+
     }
 
     // Save specimen information
