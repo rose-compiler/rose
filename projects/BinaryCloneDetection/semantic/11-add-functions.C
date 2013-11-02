@@ -383,8 +383,9 @@ main(int argc, char *argv[])
             stmt2->bind(7, cmd_id);
             stmt2->execute();
         }
-    }
+    
 #endif
+    }
 
     // Save specimen information
     if (!functions_to_add.empty()) {
