@@ -548,12 +548,35 @@ namespace StringUtility
          return retval;
      }
      /** @} */
-         
-     };
 
+    /** Helpful way to print singular or plural words.
+     *
+     * @code
+     *  size_t n = ...;
+     *  std::cout <<"received " <<plural(n, "values") <<"\n";
+     * @encode
+     */
+    template<typename T>
+    std::string plural(T n, const std::string &plural_word) {
+        assert(!plural_word.empty());
+        std::string retval = numberToString(n) + " ";
+        if (1==n) {
+            if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
+                // string ends with "ies", as in "parties", so emit "party" instead
+                retval += plural_word.substr(0, plural_word.size()-3) + "y";
+            } else if (plural_word.size()>1 && plural_word[plural_word.size()-1]=='s') {
+                // just drop the final 's'
+                retval += plural_word.substr(0, plural_word.size()-1);
+            } else {
+                // I give up.  Use the plural and risk being grammatically incorrect.
+                retval += plural_word;
+            }
+        } else {
+            retval += plural_word;
+        }
+        return retval;
+    }
+   
+} // namespace
 
-// endif for ROSE_STRING_UTILITY_H
 #endif
-
-
-
