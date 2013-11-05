@@ -10,7 +10,13 @@
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/graph/breadth_first_search.hpp> 
 #include <boost/graph/visitors.hpp> 
-#
+
+#include <boost/foreach.hpp>
+
+#include <vector> 
+
+
+
 static SqlDatabase::TransactionPtr transaction;
 
 using namespace boost;
@@ -19,6 +25,131 @@ using namespace boost;
 typedef boost::adjacency_list< boost::vecS, 
         boost::vecS, 
         boost::directedS > DirectedGraph; 
+
+void
+compute_eqivalence_classes(double similarity_threshold, bool reachability_graph)
+{
+
+  transaction->execute("delete from equivalent_classes");
+  SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into equivalent_classes"
+      // 0        1         2  
+      "(func_id, equivalent_func_id)"
+      " values (?, ?)");
+
+
+  std::string _query_condition(
+      //all function pairs that are semantically similar
+      " select distinct func1_id, func2_id from ("
+      "   select sem.func1_id, sem.func2_id"
+      "   from semantic_funcsim as sem"
+      "   where sem.similarity >= ? and sem.func1_id = ? and sem.func2_id = ?"
+
+      " UNION"
+
+      //all library call pairs that has the same name in the call trace
+      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
+      "   from tmp_library_funcs as sem"
+      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
+      "   join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id"
+      "   join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id"
+
+      " UNION"
+
+      //all library calls that has the same name as a tested function
+      "   select tplt.func_id as func1_id, tlib.func_id as func2_id"
+      "   from tmp_plt_func_names as tplt" 
+      "   join tmp_library_funcs as tlib on tplt.name = tlib.name"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg on tplt.func_id  = scg.callee"
+
+      " UNION "
+
+      //all library call pairs that has the same name in the static cg
+      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
+      "   from tmp_library_funcs as sem" 
+      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee"
+      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee"
+
+      ") as functions_to_normalize"
+      );
+
+
+  //Get all vetexes and find the union 
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
+
+  stmt->bind(0, similarity_threshold);
+
+  if(stmt->begin() == stmt->end())
+    return;
+
+  //Count how many vertices we have for boost graph
+
+  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
+
+  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+  typedef graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
+
+  Graph graph(VERTEX_COUNT);
+
+  std::vector<VertexIndex> rank(num_vertices(graph));
+  std::vector<Vertex> parent(num_vertices(graph));
+
+  typedef VertexIndex* Rank;
+  typedef Vertex* Parent;
+
+
+
+  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
+
+  initialize_incremental_components(graph, ds);
+  incremental_components(graph, ds);
+
+
+
+  graph_traits<Graph>::edge_descriptor edge;
+  bool flag;
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+
+    int func1 = row.get<int>(0);
+    int func2 = row.get<int>(1);
+
+      boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      ds.union_set(func1,func2);
+
+
+  }
+
+
+
+  typedef component_index<VertexIndex> Components;
+
+  Components components(parent.begin(), parent.end());
+
+  // Iterate through the component indices
+  BOOST_FOREACH(VertexIndex current_index, components) {
+
+    int first_value = -1;
+
+    // Iterate through the child vertex indices for [current_index]
+    BOOST_FOREACH(VertexIndex child_index,
+        components[current_index]) {
+
+      if(first_value >= 0){ 
+        insert_stmt->bind(0, child_index);
+        insert_stmt->bind(1, first_value);
+        insert_stmt->execute();
+      }else
+        first_value = child_index;
+
+    }
+
+  }
+
+
+}
 
 
 
@@ -256,6 +387,9 @@ main(int argc, char *argv[])
 
     //create reachability graph
     create_reachable_node_graph();
+
+    //compute equivalence classes
+    compute_eqivalence_classes(0.7, true);
 
     // Create indexes for normalize_func_to_id()
     transaction->execute("drop index if exists semantic_funcsim_similarity");
