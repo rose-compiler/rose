@@ -24,6 +24,8 @@ drop table if exists semantic_outputvalues;
 drop table if exists semantic_inputvalues;
 drop table if exists semantic_input_queues;
 drop table if exists semantic_history;
+drop table if exists equivalent_classes;
+
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
 create table semantic_history (
        hashkey bigint unique primary key,       -- nonsequential ID number to identify the command
@@ -112,6 +114,13 @@ create table semantic_cg (
        callee integer references semantic_functions(id),
        file_id integer references semantic_files(id), -- File from which this call originates (used during update)
        cmd bigint references semantic_history(hashkey) -- Command that created this row
+);
+
+-- Equivalence classes
+create table equivalent_classes (
+      func_id integer references semantic_functions(id),
+      equivalent_func_id integer references semantic_functions(id),
+      cmd bigint references semantic_history(hashkey) -- Command that created this row
 );
 
 -- Function reachability graph

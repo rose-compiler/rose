@@ -6,17 +6,6 @@
 
 #include <cerrno>
 
-
-#include <boost/foreach.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_utility.hpp>
-#include <boost/graph/incremental_components.hpp>
-#include <boost/pending/disjoint_sets.hpp>
-
-#include <boost/graph/breadth_first_search.hpp> 
-#include <boost/graph/visitors.hpp> 
-#include <vector> 
-
 #include <algorithm>
 #include <set>
 #include <iterator>
@@ -99,6 +88,19 @@ load_worklist(const std::string &input_name, FILE *f)
 }
 
 
+void
+computational_equivalent_classes(std::map<int,int>& norm_map)
+{
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+      "select func_id, equivalent_func_id from equivalent_classe"      
+      );
+
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row){
+    norm_map[row.get<int>(0)] = row.get<int>(1);
+  }
+}
 
 
 typedef std::vector<int> CallVec;
@@ -163,142 +165,6 @@ load_function_api_calls_for(int func_id, bool reachability_graph)
 
 using namespace boost;
 
-
-void
-normalize_func_to_id(int func1_id, int func2_id, double similarity_threshold, std::map<int,int>& norm_map, bool reachability_graph)
-{
-  std::string _query_condition(
-      //all function pairs that are semantically similar
-      " select distinct func1_id, func2_id from ("
-      "   select sem.func1_id, sem.func2_id"
-      "   from semantic_funcsim as sem"
-      "   join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id"
-      "   join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id"
-      //                          0                    1                    2
-      "   where sem.similarity >= ? and sem.func1_id = ? and sem.func2_id = ?"
-
-      " UNION"
-
-      //all library call pairs that has the same name in the call trace
-      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
-      "   from tmp_library_funcs as sem"
-      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
-      "   join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id"
-      "   join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id"
-      //                         3                   4                       5                   6
-      "   where (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
-
-      " UNION"
-
-      //all library calls that has the same name as a tested function
-      "   select tplt.func_id as func1_id, tlib.func_id as func2_id"
-      "   from tmp_plt_func_names as tplt" 
-      "   join tmp_library_funcs as tlib on tplt.name = tlib.name"
-      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as scg on tplt.func_id  = scg.callee"
-      //                       7 8
-      "   where scg.caller IN (?,?)"
-
-      " UNION "
-
-      //all library call pairs that has the same name in the static cg
-      "   select sem.func_id as func1_id, sem2.func_id as func2_id"
-      "   from tmp_library_funcs as sem" 
-      "   join tmp_library_funcs sem2 on sem.name = sem2.name"
-      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee"
-      "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee"
-      //                        9 10                     11 12
-      "   where tcf1.caller IN (?,?) AND tcf2.caller IN (?,?)"
-
-      ") as functions_to_normalize"
-      );
-
-
-  //Get all vetexes and find the union 
-
-  SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
-
-  stmt->bind(0, similarity_threshold);
-  stmt->bind(1, std::min(func1_id, func2_id));
-  stmt->bind(2, std::max(func1_id, func2_id));
-  stmt->bind(3, func1_id);
-  stmt->bind(4, func2_id);
-  stmt->bind(5, func1_id);
-  stmt->bind(6, func2_id);
-  stmt->bind(7, func1_id);
-  stmt->bind(8, func2_id);
-  stmt->bind(9, func1_id);
-  stmt->bind(10, func2_id);
-  stmt->bind(11, func1_id);
-  stmt->bind(12, func2_id);
-
-  if(stmt->begin() == stmt->end())
-    return;
-
-  //Count how many vertices we have for boost graph
-
-  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
-
-  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
-  typedef graph_traits<Graph>::vertex_descriptor Vertex;
-  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
-
-  Graph graph(VERTEX_COUNT);
-
-  std::vector<VertexIndex> rank(num_vertices(graph));
-  std::vector<Vertex> parent(num_vertices(graph));
-
-  typedef VertexIndex* Rank;
-  typedef Vertex* Parent;
-
-
-
-  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
-
-  initialize_incremental_components(graph, ds);
-  incremental_components(graph, ds);
-
-
-
-  graph_traits<Graph>::edge_descriptor edge;
-  bool flag;
-
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-
-    int func1 = row.get<int>(0);
-    int func2 = row.get<int>(1);
-
-      boost::tie(edge, flag) = add_edge(func1, func2, graph);
-      ds.union_set(func1,func2);
-
-
-  }
-
-
-
-  typedef component_index<VertexIndex> Components;
-
-  Components components(parent.begin(), parent.end());
-
-  // Iterate through the component indices
-  BOOST_FOREACH(VertexIndex current_index, components) {
-
-    int first_value = -1;
-
-    // Iterate through the child vertex indices for [current_index]
-    BOOST_FOREACH(VertexIndex child_index,
-        components[current_index]) {
-
-      if(first_value >= 0) 
-        norm_map[child_index] = first_value;
-      else
-        first_value = child_index;
-
-    }
-
-  }
-
-
-}
 
 
 /* Remove the functions from the compilation unit that is only available in one of the traces.
@@ -622,7 +488,9 @@ main(int argc, char *argv[])
     CloneDetection::Progress progress(npairs);
     progress.force_output(show_progress);
 
-
+    //load the computational equivalence classes
+    std::map<int,int> norm_map;
+    computational_equivalent_classes( norm_map );
 
     //Creat list of functions and igroups to analyze
 
@@ -654,9 +522,6 @@ main(int argc, char *argv[])
       double ave_api_similarity = 0;
 
 
-
-      std::map<int,int> norm_map;
-      normalize_func_to_id(func1_id, func2_id, semantic_similarity_threshold, norm_map, reachability_graph);
 
 
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
