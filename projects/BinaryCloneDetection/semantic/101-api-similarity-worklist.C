@@ -42,7 +42,7 @@ compute_eqivalence_classes(double similarity_threshold, bool reachability_graph)
       " select distinct func1_id, func2_id from ("
       "   select sem.func1_id, sem.func2_id"
       "   from semantic_funcsim as sem"
-      "   where sem.similarity >= ? and sem.func1_id = ? and sem.func2_id = ?"
+      "   where sem.similarity >= ? "
 
       " UNION"
 

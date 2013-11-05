@@ -312,17 +312,19 @@ main(int argc, char *argv[])
     std::cerr <<argv0 <<": adding " <<functions_to_add.size() <<" function" <<(1==functions_to_add.size()?"":"s")
               <<" to the database\n";
 
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
     // Get source code location info for all instructions and update the FilesTable
     BinaryAnalysis::DwarfLineMapper dlm(binfile);
-    dlm.fix_holes();
-    std::vector<SgAsmInstruction*> all_insns = SageInterface::querySubTree<SgAsmInstruction>(binfile);
-    for (std::vector<SgAsmInstruction*>::iterator ii=all_insns.begin(); ii!=all_insns.end(); ++ii) {
+
+    if(save_instructions){
+      dlm.fix_holes();
+      std::vector<SgAsmInstruction*> all_insns = SageInterface::querySubTree<SgAsmInstruction>(binfile);
+      for (std::vector<SgAsmInstruction*>::iterator ii=all_insns.begin(); ii!=all_insns.end(); ++ii) {
         BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src((*ii)->get_address());
         if (srcinfo.file_id>=0)
-            files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+          files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+      }
     }
-#endif
+
     files.save(tx); // needs to be saved before we write foriegn keys into the semantic_functions table
 
     // Process each function

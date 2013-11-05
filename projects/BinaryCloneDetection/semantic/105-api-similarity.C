@@ -93,7 +93,7 @@ computational_equivalent_classes(std::map<int,int>& norm_map)
 {
 
   SqlDatabase::StatementPtr stmt = transaction->statement(
-      "select func_id, equivalent_func_id from equivalent_classe"      
+      "select func_id, equivalent_func_id from equivalent_classes"      
       );
 
 
