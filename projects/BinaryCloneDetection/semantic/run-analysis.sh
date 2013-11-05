@@ -6,6 +6,60 @@ dir0="${0%$argv0}"
 [ -n "$dir0" ] || dir0="."
 worklist="clone-analysis-$$"
 
+# Parse command-line
+interactive=yes
+configfile=.run-analysis.conf
+save_config=yes
+while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
+    arg="$1"; shift
+    case "$arg" in
+	--)
+	    break
+	    ;;
+	--help|-h)
+	    usage 0
+	    ;;
+	--batch)
+	    interactive=""
+	    ;;
+	--config=*)
+	    configfile=${arg#--config=}
+	    ;;
+	--save)
+	    save_config=yes
+	    ;;
+	--no-save)
+	    save_config=
+	    ;;
+	*)
+	    echo "$argv0: unknown command-line switch: $arg" >&2
+	    echo "$argv0: see --help for more info" >&2
+	    exit 1
+	    ;;
+    esac
+done
+
+if [ -r "$configfile" ]; then
+    echo "$0: reading from config file: $configfile" >&2
+    . "$configfile"
+else
+    echo "$0: creating configuration file: $configfile" >&2
+fi
+
+: ${ROSE_SRC:=$ROSEGIT_SRC}
+: ${ROSE_BLD:=$ROSEGIT_BLD}
+: ${SRCDIR:=$ROSE_SRC/projects/BinaryCloneDetection/semantic}
+: ${BLDDIR:=$ROSE_BLD/projects/BinaryCloneDetection/semantic}
+
+[ -n "$ROSE_SRC" -a -d "$ROSE_SRC/projects" ] || die "ROSE_SRC should be set to the root of the ROSE source directory"
+[ -n "$ROSE_BLD" -a -d "$ROSE_BLD/projects" ] || die "ROSE_BLD should be set to the root of the ROSE build directory"
+[ -n "$SRCDIR" -a -d "$SRCDIR" ]              || die "not a directory: $SRCDIR"
+[ -n "$BLDDIR" -a -d "$BLDDIR" ]              || die "not a directory: $BLDDIR"
+
+###############################################################################################################################
+# Functions
+###############################################################################################################################
+
 usage () {
     local exit_status="${1:-0}"
     echo "usage: $argv0 [SWITCHES] [--] [SPECIMENS...]" >&2
@@ -78,7 +132,7 @@ parallelism () {
 }
 
 # Split a file into parts of equal size based on the parallelism desired.
-split_worklist () {
+split_worklist_1d () {
     local nprocs="$1" job_multiplier="${2-5}"
     local nwork=$(wc -l <$worklist)
 
@@ -106,6 +160,15 @@ split_worklist () {
     echo $worklist-[a-z][a-z]
 }
 
+# Split list of pairs into parts of approx equal size in 2d.  The goal is to partition the space into rectangular reagions
+# that have approximately the same number of points but which minimize the length of the perimeter.
+split_worklist_2d () {
+    local nprocs="$1" njobs="${2-64}"
+    $BLDDIR/31-split-2dworklist $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
+    rm $worklist
+    echo $worklist-[a-z][a-z]
+}
+   
 # Counts the number of arguments
 count_args () {
     echo "$#"
@@ -145,57 +208,8 @@ EOF
 }
 
 ###############################################################################################################################
+# Main program
 ###############################################################################################################################
-
-# Parse command-line
-interactive=yes
-configfile=.run-analysis.conf
-save_config=yes
-while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
-    arg="$1"; shift
-    case "$arg" in
-	--)
-	    break
-	    ;;
-	--help|-h)
-	    usage 0
-	    ;;
-	--batch)
-	    interactive=""
-	    ;;
-	--config=*)
-	    configfile=${arg#--config=}
-	    ;;
-	--save)
-	    save_config=yes
-	    ;;
-	--no-save)
-	    save_config=
-	    ;;
-	*)
-	    echo "$argv0: unknown command-line switch: $arg" >&2
-	    echo "$argv0: see --help for more info" >&2
-	    exit 1
-	    ;;
-    esac
-done
-
-if [ -r "$configfile" ]; then
-    echo "$0: reading from config file: $configfile" >&2
-    . "$configfile"
-else
-    echo "$0: creating configuration file: $configfile" >&2
-fi
-
-: ${ROSE_SRC:=$ROSEGIT_SRC}
-: ${ROSE_BLD:=$ROSEGIT_BLD}
-: ${SRCDIR:=$ROSE_SRC/projects/BinaryCloneDetection/semantic}
-: ${BLDDIR:=$ROSE_BLD/projects/BinaryCloneDetection/semantic}
-
-[ -n "$ROSE_SRC" -a -d "$ROSE_SRC/projects" ] || die "ROSE_SRC should be set to the root of the ROSE source directory"
-[ -n "$ROSE_BLD" -a -d "$ROSE_BLD/projects" ] || die "ROSE_BLD should be set to the root of the ROSE build directory"
-[ -n "$SRCDIR" -a -d "$SRCDIR" ]              || die "not a directory: $SRCDIR"
-[ -n "$BLDDIR" -a -d "$BLDDIR" ]              || die "not a directory: $BLDDIR"
 
 if [ "$interactive" = "yes" ]; then
     echo "=================================================================================================="
@@ -265,7 +279,7 @@ if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
     nprocs=$(parallelism $run_tests_nprocs)
-    worklist_parts=$(split_worklist $nprocs $run_tests_job_multiplier)
+    worklist_parts=$(split_worklist_1d $nprocs $run_tests_job_multiplier)
     nparts=$(count_args $worklist_parts)
     save_settings
 
@@ -312,9 +326,10 @@ if [ "$nwork" -eq 0 ]; then
     echo "No similarities to compute"
 else
     nprocs=$(parallelism)
-    worklist_parts=$(split_worklist $nprocs)
+    worklist_parts=$(split_worklist_2d $nprocs)
     nparts=$(count_args $worklist_parts)
     save_settings
+    $SRCDIR/31-analyze-split $worklist_parts
 
     if [ "$interactive" = "yes" ]; then
 	echo
