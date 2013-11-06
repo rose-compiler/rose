@@ -144,10 +144,16 @@ static struct Switches {
 
 static SqlDatabase::TransactionPtr transaction;
 
+static const int FUNC_EVICT = -2; // func_id to indicate that the we're done with this function
 typedef WorkList< std::pair<int/*func1_id*/, int/*func2_id*/> > FunctionPairs;
 
+typedef std::map<int64_t/*id*/, size_t/*use-count*/> ObjUsage;
+typedef std::set<int64_t/*id*/> IdSet;
+
+// Smallish information about functions
 struct FuncInfo {
     bool returns_value;         // true if the function returns a value; false if the function is void
+    ObjUsage ogroup_usage;      // output groups resulting from testing this function
 };
 
 typedef std::map<int/*func_id*/, FuncInfo> FuncInfos;
@@ -175,30 +181,52 @@ decompress_string_to_array(const std::string& array_from_db)
 
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
 // the similarity() operator, but also can cache any other information that makes computing the similarity faster. The cached
-// info can sometimes be substantially smaller than the output group stored in the database.
-class CachedOutput {
+// info can sometimes be substantially smaller than the output group stored in the database.  Because we need to be able to
+// evict these from the cache on demand, we also reference count them.
+typedef boost::shared_ptr<class CachedOutput> CachedOutputPtr;
+class CachedOutput { // abstract
+protected:
+    int64_t ogroup_id; // from the database
+
 public:
     const boost::scoped_array<uint16_t>* signature_vector;
     int syntactic_ninsns;
- 
-    CachedOutput() : syntactic_ninsns(0) {}
-    virtual ~CachedOutput() {}
+
+protected:
+    CachedOutput(int64_t ogroup_id): ogroup_id(ogroup_id), signature_vector(NULL), syntactic_ninsns(0) {}
+
+public:
+    virtual ~CachedOutput() {
+        delete signature_vector;
+        if (opt.verbose)
+            std::cerr <<argv0 <<": deleted output group " <<ogroup_id <<"\n";
+    }
+    int64_t get_id() const { return ogroup_id; }
     // Similarity of two objects as a value between zero and one (one being identical).
     virtual double similarity(const CachedOutput *other, const FuncInfo &finfo1, const FuncInfo &finfo2) const = 0;
     virtual void print(std::ostream&, const std::string &prefix) const = 0;
 };
 
-typedef std::map<int64_t/*igroup_id or ogroup_id*/, CachedOutput*> CachedOutputs;
+typedef std::map<int64_t/*igroup_id or ogroup_id*/, CachedOutputPtr> CachedOutputs;
 typedef std::map<int/*func_id*/, CachedOutputs> FunctionOutputs;
 
 // Similarity using equality of the CloneDetection::OutputGroup objects.  If the objects are equal return 1.0, otherwise 0.0
+typedef boost::shared_ptr<class FullEquality> FullEqualityPtr;
 class FullEquality: public CachedOutput {
-public:
+private:
     const CloneDetection::OutputGroup *ogroup;
-    FullEquality(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db, int tmp_syntactic_ninsns) {
+protected: // use create() instead
+    FullEquality(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                 const std::string& array_from_db, int tmp_syntactic_ninsns)
+        : CachedOutput(ogroup_id) {
         ogroup = new CloneDetection::OutputGroup(*ogroup); // because caller is about to delete it
         signature_vector = decompress_string_to_array(array_from_db);
         syntactic_ninsns = tmp_syntactic_ninsns;
+    }
+public:
+    static FullEqualityPtr create(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                                  const std::string& array_from_db, int tmp_syntactic_ninsns) {
+        return FullEqualityPtr(new FullEquality(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const FullEquality *other = dynamic_cast<const FullEquality*>(other_);
@@ -210,15 +238,19 @@ public:
 };
 
 // Treat output values and return value as a set and compare them using set equality.
+typedef boost::shared_ptr<class ValuesetEquality> ValuesetEqualityPtr;
 class ValuesetEquality: public CachedOutput {
-public:
+protected:
     typedef std::set<CloneDetection::OutputGroup::value_type> VSet;
     typedef std::pair<VSet::const_iterator, VSet::const_iterator> IterPair;
     VSet values;
     std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
     CloneDetection::AnalysisFault::Fault fault;
 
-    ValuesetEquality(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db, int tmp_syntactic_ninsns) {
+protected: // use create() instead
+    ValuesetEquality(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                     const std::string& array_from_db, int tmp_syntactic_ninsns)
+        : CachedOutput(ogroup_id) {
         std::vector<VSet::value_type> vvec = ogroup->get_values();
         for (size_t i=0; i<vvec.size(); ++i)
             values.insert(vvec[i]);
@@ -227,6 +259,12 @@ public:
         signature_vector = decompress_string_to_array(array_from_db);
         syntactic_ninsns = tmp_syntactic_ninsns;
  
+    }
+
+public:
+    static ValuesetEqualityPtr create(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                                      const std::string& array_from_db, int tmp_syntactic_ninsns) {
+        return ValuesetEqualityPtr(new ValuesetEquality(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
 
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
@@ -253,19 +291,29 @@ public:
 };
 
 // Treat return value and output values as vectors and use the Damerau-Levenshtein edit distance to calculate similarity.
+typedef boost::shared_ptr<class ValuesDamerauLevenshtein> ValuesDamerauLevenshteinPtr;
 class ValuesDamerauLevenshtein: public CachedOutput {
-public:
+private:
     typedef CloneDetection::OutputGroup::value_type VType;
     typedef std::vector<VType> ValVector;
     ValVector values;
     std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
 
-    ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db, int tmp_syntactic_ninsns) {
+protected: // use create() instead
+    ValuesDamerauLevenshtein(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                             const std::string& array_from_db, int tmp_syntactic_ninsns)
+        : CachedOutput(ogroup_id) {
         values = ogroup->get_values();
         retval = ogroup->get_retval();
         signature_vector = decompress_string_to_array(array_from_db);
         syntactic_ninsns = tmp_syntactic_ninsns;
 
+    }
+
+public:
+    static ValuesDamerauLevenshteinPtr create(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                                              const std::string& array_from_db, int tmp_syntactic_ninsns) {
+        return ValuesDamerauLevenshteinPtr(new ValuesDamerauLevenshtein(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
 
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
@@ -299,9 +347,19 @@ public:
 
 // Treat output values and return value as a and use the Jaccard index to measure similarity. Use a penalty for failed
 // tests.  The Jaccard index of two empty sets is 1.
+typedef boost::shared_ptr<class ValuesetJaccard> ValuesetJaccardPtr;
 class ValuesetJaccard: public ValuesetEquality {
+protected: // use create() instead
+    ValuesetJaccard(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                    const std::string& array_from_db, int tmp_syntactic_ninsns)
+        : ValuesetEquality(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns) {}
+
 public:
-    ValuesetJaccard(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db, int tmp_syntactic_ninsns): ValuesetEquality(ogroup, array_from_db, tmp_syntactic_ninsns) {}
+    static ValuesetJaccardPtr create(int64_t ogroup_id, const CloneDetection::OutputGroup *ogroup,
+                                     const std::string& array_from_db, int tmp_syntactic_ninsns) {
+        return ValuesetJaccardPtr(new ValuesetJaccard(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
+    }
+
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const ValuesetJaccard *other = dynamic_cast<const ValuesetJaccard*>(other_);
         VSet vs1, vs2;
@@ -351,7 +409,7 @@ igroup(int igroup_id)
 
 
 // Load output group if it isn't loaded already. Return its pointer in any case.
-static CachedOutput *
+static CachedOutputPtr
 load_output(CachedOutputs &all_outputs, int64_t ogroup_id, const std::string& array_from_db, int syntactic_ninsns)
 {
     CachedOutputs::iterator found = all_outputs.find(ogroup_id);
@@ -359,35 +417,53 @@ load_output(CachedOutputs &all_outputs, int64_t ogroup_id, const std::string& ar
         return found->second;
     CloneDetection::OutputGroups ogs;
     ogs.load(transaction, ogroup_id);
-    CachedOutput *output = NULL;
+    CachedOutputPtr output;
     switch (opt.output_cmp) {
         case OC_FULL_EQUALITY:
-            output = new FullEquality(ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
+            output = FullEquality::create(ogroup_id, ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
             break;
         case OC_VALUESET_EQUALITY:
-            output = new ValuesetEquality(ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
+            output = ValuesetEquality::create(ogroup_id, ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
             break;
         case OC_VALUESET_JACCARD:
-            output = new ValuesetJaccard(ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
+            output = ValuesetJaccard::create(ogroup_id, ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
             break;
         case OC_DAMERAU_LEVENSHTEIN:
-            output = new ValuesDamerauLevenshtein(ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
+            output = ValuesDamerauLevenshtein::create(ogroup_id, ogs.lookup(ogroup_id), array_from_db, syntactic_ninsns);
             break;
     }
-
-
-
+    all_outputs.insert(std::make_pair(ogroup_id, output));
+    if (opt.verbose)
+        std::cerr <<argv0 <<": loaded output group " <<ogroup_id <<" (cache size=" <<all_outputs.size() <<")\n";
     return output;
 }
 
-// Load all the function info from the database.  It's probably faster to load it all than to load only the functions
-// we need, but we can change this later if it proves to be a problem.
+// Load all the function info from the database.  This data is small compared to output groups.
 static void
-load_function_infos()
+load_function_infos(const IdSet &function_ids, ObjUsage &ogroup_usage)
 {
     std::map<int, double> returns_value = CloneDetection::function_returns_value(transaction);
     for (std::map<int, double>::iterator ri=returns_value.begin(); ri!=returns_value.end(); ++ri)
         func_infos[ri->first].returns_value = ri->second >= opt.return_threshold;
+
+    // Figure out how many times each function uses each output group, and the total number of times each output
+    // group is used.  This information will be necessary during cache eviction.
+    transaction->execute("create temporary table load_function_infos (func_id integer)");
+    SqlDatabase::StatementPtr stmt = transaction->statement("insert into load_function_infos (func_id) values (?)");
+    for (IdSet::const_iterator fi=function_ids.begin(); fi!=function_ids.end(); ++fi)
+        stmt->bind(0, *fi)->execute();
+    stmt = transaction->statement("select fio.func_id, fio.ogroup_id"
+                                  " from load_function_infos as need"
+                                  " join semantic_fio as fio on need.func_id=fio.func_id");
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        int func_id = row.get<int>(0);
+        int64_t ogroup_id = row.get<int64_t>(1);
+        func_infos[func_id].ogroup_usage.insert(std::make_pair(ogroup_id, 0));
+        ++func_infos[func_id].ogroup_usage[ogroup_id];
+        ogroup_usage.insert(std::make_pair(ogroup_id, 0));
+        ++ogroup_usage[ogroup_id];
+    }
+    transaction->execute("drop table load_function_infos");
 }
 
 // Load all outputs for the specified function if they're not in memory already
@@ -407,7 +483,7 @@ load_function_outputs(CachedOutputs &all_outputs, FunctionOutputs &function_outp
             int64_t ogroup_id = row.get<int64_t>(1);
             std::string array_from_db = row.get<std::string>(2);
             int syntactic_ninsns = row.get<int>(3);
-            CachedOutput *output = load_output(all_outputs, ogroup_id, array_from_db, syntactic_ninsns);
+            CachedOutputPtr output = load_output(all_outputs, ogroup_id, array_from_db, syntactic_ninsns);
             outputs.insert(std::make_pair(igroup_id, output));
         }
         function_outputs.insert(std::make_pair(func_id, outputs));
@@ -519,71 +595,66 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
 
             // Pairwise compare the selected output groups from the f1_bucket with those selected from the f2_bucket
             for (size_t i=0; i<nsel1; ++i) {
-                const CachedOutput *f1_ogroup = f1_outs.find(f1_bucket[i])->second;
+                const CachedOutputPtr f1_ogroup = f1_outs.find(f1_bucket[i])->second;
 
                 const boost::scoped_array<uint16_t>& f1_signature_vector = *f1_ogroup->signature_vector;
                 const int f1_syntactic_ninsns = f1_ogroup->syntactic_ninsns;
 
                 for (size_t j=0; j<nsel2; ++j) {
-                  const CachedOutput *f2_ogroup = f2_outs.find(f2_bucket[j])->second;
-                  double sim = f1_ogroup->similarity(f2_ogroup, func1_info, func2_info);
-                  total_sim += sim;
-                  max_sim = std::max(max_sim, sim);
-                  min_sim = std::min(min_sim, sim);
+                    // Output group similarity
+                    const CachedOutputPtr f2_ogroup = f2_outs.find(f2_bucket[j])->second;
+                    double sim = f1_ogroup->similarity(f2_ogroup.get(), func1_info, func2_info);
+                    total_sim += sim;
+                    max_sim = std::max(max_sim, sim);
+                    min_sim = std::min(min_sim, sim);
 
 
-                  //compute syntactic similarity
+                    // Syntactic similarity
+                    const int f2_syntactic_ninsns = f2_ogroup->syntactic_ninsns;
+                    const boost::scoped_array<uint16_t>& f2_signature_vector = *f2_ogroup->signature_vector;
+                    int cur_hamming_d            = 0;
+                    double cur_euclidean_d       = 0.0;
+                    double cur_euclidean_d_ratio = 0.0;
+                    int f1_v=0;
+                    int f2_v=0;
+                    int vec_length = x86_last_instruction*4 + 300 + 9 + 3;
+                    for (int i = 0; i < vec_length; i++) {
+                        f1_v = f1_signature_vector[i]; 
+                        f2_v = f2_signature_vector[i];
 
-                  const int f2_syntactic_ninsns = f2_ogroup->syntactic_ninsns;
-                  const boost::scoped_array<uint16_t>& f2_signature_vector = *f2_ogroup->signature_vector;
+                        if (f1_v != f2_v)
+                            cur_hamming_d++;
+                        cur_euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
+                    }
 
-                 
-                  int cur_hamming_d            = 0;
-                  double cur_euclidean_d       = 0.0;
-                  double cur_euclidean_d_ratio = 0.0;
+                    hamming_d     += cur_hamming_d;
+                    max_hamming_d = std::max(max_hamming_d, cur_hamming_d);
+                    min_hamming_d = std::min(min_hamming_d, cur_hamming_d);
 
-                  int f1_v=0;
-                  int f2_v=0;
+                    cur_euclidean_d = sqrt(cur_euclidean_d);
+                    euclidean_d    += cur_euclidean_d;
+                    max_euclidean_d = std::max(max_euclidean_d, cur_euclidean_d);
+                    min_euclidean_d = std::min(min_euclidean_d, cur_euclidean_d);
 
-                  int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
-                  for(int i = 0; i < vec_length; i++){
-                    f1_v = f1_signature_vector[i]; 
-                    f2_v = f2_signature_vector[i];
+                    int difference = std::max(f1_syntactic_ninsns, f2_syntactic_ninsns);
+                    if (difference != 0 ) {
+                        cur_euclidean_d_ratio = 100.0*cur_euclidean_d/difference;
+                        euclidean_d_ratio    += cur_euclidean_d_ratio;
+                        max_euclidean_d_ratio = std::max(cur_euclidean_d_ratio, max_euclidean_d_ratio);
+                        min_euclidean_d_ratio = std::min(cur_euclidean_d_ratio, min_euclidean_d_ratio);
+                    } else {
+                        min_euclidean_d_ratio = 0.0;
+                    }
 
-                    if ( f1_v != f2_v ) cur_hamming_d++;
-                    cur_euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
-
-                  }
-
-                  hamming_d     += cur_hamming_d;
-                  max_hamming_d = std::max(max_hamming_d, cur_hamming_d);
-                  min_hamming_d = std::min(min_hamming_d, cur_hamming_d);
-
-
-                  cur_euclidean_d = sqrt(cur_euclidean_d);
-                  euclidean_d    += cur_euclidean_d;
-                  max_euclidean_d = std::max(max_euclidean_d, cur_euclidean_d);
-                  min_euclidean_d = std::min(min_euclidean_d, cur_euclidean_d);
-
-                  int difference = std::max(f1_syntactic_ninsns, f2_syntactic_ninsns);
-                  if ( difference != 0  ){
-                    cur_euclidean_d_ratio = 100.0*cur_euclidean_d/difference;
-                    euclidean_d_ratio    += cur_euclidean_d_ratio;
-                    max_euclidean_d_ratio = std::max(cur_euclidean_d_ratio, max_euclidean_d_ratio);
-                    min_euclidean_d_ratio = std::min(cur_euclidean_d_ratio, min_euclidean_d_ratio);
-                  }else{
-                    min_euclidean_d_ratio = 0.0;
-                  }
-
-
-                  ++ncompares;
-                  if (opt.verbose) {
-                    std::cerr <<argv0 <<":  ogroup1 = " <<f1_bucket[i] <<":\n";
-                    f1_ogroup->print(std::cerr, "    ");
-                    std::cerr <<argv0 <<":  ogroup2 = " <<f2_bucket[j] <<":\n";
-                    f2_ogroup->print(std::cerr, "    ");
-                    std::cerr <<argv0 <<":  similarity(" <<f1_bucket[i] <<", " <<f2_bucket[j] <<") = " <<sim <<"\n";
-                  }
+                    // Diagnostics
+                    ++ncompares;
+                    if (opt.verbose) {
+                        std::cerr <<argv0 <<":  ogroup1 = " <<f1_ogroup->get_id() <<" (bucket idx=" <<f1_bucket[i] <<"):\n";
+                        f1_ogroup->print(std::cerr, "    ");
+                        std::cerr <<argv0 <<":  ogroup2 = " <<f1_ogroup->get_id() <<" (bucket idx=" <<f2_bucket[j] <<"):\n";
+                        f2_ogroup->print(std::cerr, "    ");
+                        std::cerr <<argv0 <<":  similarity(" <<f1_bucket[i] <<", " <<f2_bucket[j] <<") = " <<sim <<"\n";
+                    }
                 }
             }
         }
@@ -651,51 +722,64 @@ parse_double(const std::string &str, double bad_value=BAD_DOUBLE)
 }
 
 static FunctionPairs
-load_worklist(const std::string &input_name, FILE *f)
+load_worklist(const std::string &input_name, FILE *f, IdSet &function_ids)
 {
     FunctionPairs worklist;
     char *line = NULL;
     size_t line_sz = 0, line_num = 0;
     while (rose_getline(&line, &line_sz, f)>0) {
         ++line_num;
-        if (char *c = strchr(line, '#'))
-            *c = '\0';
-        char *s = line + strspn(line, " \t\r\n"), *rest;
-        if (!*s)
-            continue; // blank line
+        if (!strncmp(line, "##LAST", 6)) {
+            char *rest;
+            errno = 0;
+            int func_id = strtol(line+6, &rest, 0);
+            if (errno!=0 || rest==line+6) {
+                std::cerr <<argv0 <<": " <<input_name <<":" <<line_num
+                          <<": syntax error in '##LAST' directive: " <<line+6 <<"\n";
+                exit(1);
+            }
+            worklist.push(std::make_pair(FUNC_EVICT, func_id));
+            
+        } else {
+            if (char *c = strchr(line, '#'))
+                *c = '\0';
+            char *s = line + strspn(line, " \t\r\n"), *rest;
+            if (!*s)
+                continue; // blank line
 
-        errno = 0;
-        int func1_id = strtol(s, &rest, 0);
-        if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func1_id expected\n";
-            exit(1);
+            errno = 0;
+            int func1_id = strtol(s, &rest, 0);
+            if (errno!=0 || rest==s) {
+                std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func1_id expected\n";
+                exit(1);
+            }
+            s = rest;
+
+            errno = 0;
+            int func2_id = strtol(s, &rest, 0);
+            if (errno!=0 || rest==s) {
+                std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func2_id expected\n";
+                exit(1);
+            }
+            s = rest;
+
+            while (isspace(*s)) ++s;
+            if (*s) {
+                std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after func2_id\n";
+                exit(1);
+            }
+
+            worklist.push(std::make_pair(std::min(func1_id, func2_id), std::max(func1_id, func2_id)));
+            function_ids.insert(func1_id);
+            function_ids.insert(func2_id);
         }
-        s = rest;
-
-        errno = 0;
-        int func2_id = strtol(s, &rest, 0);
-        if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func2_id expected\n";
-            exit(1);
-        }
-        s = rest;
-
-        while (isspace(*s)) ++s;
-        if (*s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after func2_id\n";
-            exit(1);
-        }
-
-        worklist.push(std::make_pair(std::min(func1_id, func2_id), std::max(func1_id, func2_id)));
     }
     return worklist;
 }
 
-
-
-
 void
-read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<VectorEntry>& vectors, std::map<int, VectorEntry*>& id_to_vec)
+read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<VectorEntry>& vectors,
+                 std::map<int, VectorEntry*>& id_to_vec)
 {
     size_t eltCount = 0;
     SqlDatabase::StatementPtr cmd1 = tx->statement("select count(*) from semantic_functions");
@@ -734,9 +818,6 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
     }
 
 }
-
-
-
 
 int
 main(int argc, char *argv[])
@@ -789,8 +870,8 @@ main(int argc, char *argv[])
             }
             opt.collection_ratio.first = parse_double(args[0], -1.0);
             opt.collection_ratio.second = args.size()>=2 ? parse_double(args[1], -1.0) : 1.0;
-            if (opt.collection_ratio.first<0 || opt.collection_ratio.second<0 ||
-                opt.collection_ratio.first>1 || opt.collection_ratio.second>1) {
+            if (opt.collection_ratio.first < 0 || opt.collection_ratio.second < 0 ||
+                opt.collection_ratio.first > 1 || opt.collection_ratio.second > 1) {
                 std::cerr <<argv0 <<": --collection-ratio requires one or two floating point values in [0..1]\n";
                 exit(1);
             }
@@ -842,21 +923,23 @@ main(int argc, char *argv[])
     int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating function similarity");
 
     // Read function pairs from standard input or the file
+    IdSet all_func_ids;
     FunctionPairs worklist;
     if (opt.input_file_name.empty()) {
         std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
-        worklist = load_worklist("stdin", stdin);
+        worklist = load_worklist("stdin", stdin, all_func_ids/*out*/);
     } else {
         FILE *in = fopen(opt.input_file_name.c_str(), "r");
         if (NULL==in) {
             std::cerr <<argv0 <<": " <<strerror(errno) <<": " <<opt.input_file_name <<"\n";
             exit(1);
         }
-        worklist = load_worklist(opt.input_file_name, in);
+        worklist = load_worklist(opt.input_file_name, in, all_func_ids/*out*/);
         fclose(in);
     }
     size_t npairs = worklist.size();
     std::cerr <<argv0 <<": work list has " <<npairs <<" function pair" <<(1==npairs?"":"s") <<"\n";
+
 
     // Process each function pair
     CloneDetection::Progress progress(npairs);
@@ -876,116 +959,139 @@ main(int argc, char *argv[])
                                                             " relation_id, cmd, hamming_d, euclidean_d, euclidean_d_ratio,"
                                                             "path_ave_hamming_d, path_min_hamming_d, path_max_hamming_d,"
                                                             "path_ave_euclidean_d, path_min_euclidean_d, path_max_euclidean_d,"
-                                                            "path_ave_euclidean_d_ratio, path_min_euclidean_d_ratio, path_max_euclidean_d_ratio)"
+                                                            "path_ave_euclidean_d_ratio, path_min_euclidean_d_ratio,"
+                                                            "path_max_euclidean_d_ratio)"
                                                             " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
-    load_function_infos();
+    ObjUsage ogroup_usage; // output group usage by function_outputs
+
+    load_function_infos(all_func_ids, ogroup_usage/*out*/);
     while (!worklist.empty()) {
         ++progress;
         int func1_id, func2_id;
         boost::tie(func1_id, func2_id) = worklist.shift();
-        if (opt.verbose)
-            std::cerr <<argv0 <<": func1_id=" <<func1_id <<" func2_id=" <<func2_id <<"\n";
-        assert(func1_id < func2_id);
-        load_function_outputs(all_outputs, func_outputs, func1_id);
-        load_function_outputs(all_outputs, func_outputs, func2_id);
-        const CachedOutputs &f1_outs = find_outputs(func_outputs, func1_id);
-        const CachedOutputs &f2_outs = find_outputs(func_outputs, func2_id);
-        size_t ncompares, maxcompares;
-        OutputSimilarity output_sim = similarity(func_infos[func1_id], func_infos[func2_id], f1_outs, f2_outs,
-                                ncompares/*out*/, maxcompares/*out*/);
 
-        double sim;
-        // Compute aggreged value for these two functions
-        switch (opt.aggregation) {
-          case AG_AVERAGE:
-            sim = output_sim.ave_semantic_sim; break;
-          case AG_MAXIMUM:
-            sim = output_sim.max_semantic_sim; break;
-          case AG_MINIMUM:
-            sim = output_sim.min_semantic_sim; break;
-          default:
-            assert(!"not handled");
-            abort();
-        }
+        if (FUNC_EVICT==func1_id) {
+            // This function will never be used again, so we can delete all the stuff it uses. However, we need to be careful
+            // about deleting output groups because they can be used by multiple functions.  Therefore, we decrement the output
+            // group use count to account for this function going away, and delete the output groups that have a resulting zero
+            // use count.  Actually, we only remove the output groups from the cache, and boost::smart_ptr will take care of
+            // deleting them eventually.
+            if (opt.verbose)
+                std::cerr <<argv0 <<": evicting function " <<func2_id <<" from cache\n";
 
-        std::map<int, VectorEntry*>::iterator it;
+            FuncInfos::iterator fii = func_infos.find(func2_id);
+            assert(fii!=func_infos.end());
+            const FuncInfo &finfo = fii->second;
+            for (ObjUsage::const_iterator oui=finfo.ogroup_usage.begin(); oui!=finfo.ogroup_usage.end(); ++oui) {
+                int64_t ogroup_id = oui->first;
+                size_t nuses = oui->second;
+                assert(ogroup_usage[ogroup_id] >= nuses);
+                if (0 == (ogroup_usage[ogroup_id] -= nuses)) {
+                    if (opt.verbose)
+                        std::cerr <<argv0 <<": evicting output group " <<ogroup_id <<" from cache\n";
+                    all_outputs.erase(ogroup_id);
+                }
+            }
+            func_outputs.erase(func2_id);
+            func_infos.erase(func2_id);
 
-        it = id_to_vec.find(func1_id);
+        } else {
+            if (opt.verbose)
+                std::cerr <<argv0 <<": func1_id=" <<func1_id <<" func2_id=" <<func2_id <<"\n";
+            assert(func1_id < func2_id);
+            load_function_outputs(all_outputs, func_outputs, func1_id);
+            load_function_outputs(all_outputs, func_outputs, func2_id);
+            const CachedOutputs &f1_outs = find_outputs(func_outputs, func1_id);
+            const CachedOutputs &f2_outs = find_outputs(func_outputs, func2_id);
+            size_t ncompares, maxcompares;
+            OutputSimilarity output_sim = similarity(func_infos[func1_id], func_infos[func2_id], f1_outs, f2_outs,
+                                                     ncompares/*out*/, maxcompares/*out*/);
 
-        if(it == id_to_vec.end()){
-          assert(!"func 1 not found");
-          exit(1);
-        }
+            double sim;
+            // Compute aggreged value for these two functions
+            switch (opt.aggregation) {
+                case AG_AVERAGE:
+                    sim = output_sim.ave_semantic_sim; break;
+                case AG_MAXIMUM:
+                    sim = output_sim.max_semantic_sim; break;
+                case AG_MINIMUM:
+                    sim = output_sim.min_semantic_sim; break;
+                default:
+                    assert(!"not handled");
+                    abort();
+            }
 
-        VectorEntry* f1_compressed = it->second;
+            std::map<int, VectorEntry*>::iterator it;
+            it = id_to_vec.find(func1_id);
+            if(it == id_to_vec.end()){
+                assert(!"func 1 not found");
+                exit(1);
+            }
 
-        it = id_to_vec.find(func2_id);
+            VectorEntry* f1_compressed = it->second;
+            it = id_to_vec.find(func2_id);
+            if(it == id_to_vec.end()){
+                assert(!"func 2 not found");
+                exit(1);
+            }
 
-        if(it == id_to_vec.end()){
-          assert(!"func 2 not found");
-          exit(1);
-        }
+            VectorEntry* f2_compressed = it->second;  
+            int vec_length = SignatureVector::Size;
+            boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
+            decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(),
+                             f1_uncompressed.get());
 
-        VectorEntry* f2_compressed = it->second;  
+            boost::scoped_array<uint16_t> f2_uncompressed(new uint16_t[vec_length]);
+            decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(),
+                             f2_uncompressed.get());
 
- 
-        int vec_length = SignatureVector::Size;
+            int hamming_d            = 0;
+            double euclidean_d       = 0;
+            double euclidean_d_ratio = 0;
+            int f1_v=0;
+            int f2_v=0;
+            for(int i = 0; i < vec_length; i++){
+                f1_v = f1_uncompressed[i]; 
+                f2_v = f2_uncompressed[i];
 
-        boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
-        decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(), f1_uncompressed.get());
+                if ( f1_v != f2_v ) hamming_d++;
+                euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
 
-        boost::scoped_array<uint16_t> f2_uncompressed(new uint16_t[vec_length]);
-        decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(), f2_uncompressed.get());
-
-        int hamming_d            = 0;
-        double euclidean_d       = 0;
-        double euclidean_d_ratio = 0;
-
-        int f1_v=0;
-        int f2_v=0;
-        for(int i = 0; i < vec_length; i++){
-          f1_v = f1_uncompressed[i]; 
-          f2_v = f2_uncompressed[i];
-
-          if ( f1_v != f2_v ) hamming_d++;
-          euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
-
-        }
+            }
       
-        hamming_d = hamming_d;
-        euclidean_d = sqrt(euclidean_d);
+            hamming_d = hamming_d;
+            euclidean_d = sqrt(euclidean_d);
+            int difference = abs(f1_compressed->ninsns-f2_compressed->ninsns);
+            if ( difference != 0  ){
+                euclidean_d_ratio = 100.0*euclidean_d/(abs(f1_compressed->ninsns+f2_compressed->ninsns));
+            }
 
-        int difference = abs(f1_compressed->ninsns-f2_compressed->ninsns);
-        if ( difference != 0  ){
-          euclidean_d_ratio = 100.0*euclidean_d/(abs(f1_compressed->ninsns+f2_compressed->ninsns));
-        }
-      
-
-        if (opt.verbose)
-            std::cerr <<argv0 <<": similarity(func1=" <<func1_id <<", func2=" <<func2_id <<") = " <<sim <<"\n";
-        stmt->bind(0, func1_id);
-        stmt->bind(1, func2_id);
-        stmt->bind(2, sim);
-        stmt->bind(3, ncompares);
-        stmt->bind(4, maxcompares);
-        stmt->bind(5, opt.relation_id);
-        stmt->bind(6, cmd_id);
-        stmt->bind(7, hamming_d);
-        stmt->bind(8, euclidean_d);
-        stmt->bind(9, euclidean_d_ratio);
-        stmt->bind(10, output_sim.ave_hamming_d);
-        stmt->bind(11, output_sim.min_hamming_d);
-        stmt->bind(12, output_sim.max_hamming_d);
-        stmt->bind(13, output_sim.ave_euclidean_d);
-        stmt->bind(14, output_sim.min_euclidean_d);
-        stmt->bind(15, output_sim.max_euclidean_d);
-        stmt->bind(16, output_sim.ave_euclidean_d_ratio);
-        stmt->bind(17, output_sim.min_euclidean_d_ratio);
-        stmt->bind(18, output_sim.max_euclidean_d_ratio);
+            if (opt.verbose)
+                std::cerr <<argv0 <<": similarity(func1=" <<func1_id <<", func2=" <<func2_id <<") = " <<sim <<"\n";
+            stmt->bind(0, func1_id);
+            stmt->bind(1, func2_id);
+            stmt->bind(2, sim);
+            stmt->bind(3, ncompares);
+            stmt->bind(4, maxcompares);
+            stmt->bind(5, opt.relation_id);
+            stmt->bind(6, cmd_id);
+            stmt->bind(7, hamming_d);
+            stmt->bind(8, euclidean_d);
+            stmt->bind(9, euclidean_d_ratio);
+            stmt->bind(10, output_sim.ave_hamming_d);
+            stmt->bind(11, output_sim.min_hamming_d);
+            stmt->bind(12, output_sim.max_hamming_d);
+            stmt->bind(13, output_sim.ave_euclidean_d);
+            stmt->bind(14, output_sim.min_euclidean_d);
+            stmt->bind(15, output_sim.max_euclidean_d);
+            stmt->bind(16, output_sim.ave_euclidean_d_ratio);
+            stmt->bind(17, output_sim.min_euclidean_d_ratio);
+            stmt->bind(18, output_sim.max_euclidean_d_ratio);
         
-        stmt->execute();
+            stmt->execute();
+        }
     }
     
     progress.message("committing changes");

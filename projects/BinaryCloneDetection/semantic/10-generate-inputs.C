@@ -583,8 +583,12 @@ main(int argc, char *argv[])
         exit(1);
     }
     if (opt.queue_modifiers.empty()) {
-        std::cerr <<argv0 <<": no generators specified; all input groups would be empty\n";
-        exit(1);
+        if (opt.ngroups>0) {
+            std::cerr <<argv0 <<": no generators specified; all input groups would be empty\n";
+            exit(1);
+        } else {
+            exit(0);
+        }
     }
 
     // Get the list of queues that are affected.
