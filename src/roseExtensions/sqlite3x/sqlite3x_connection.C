@@ -240,13 +240,5 @@ void sqlite3_connection::load_extension(const std::string &filename)
         throw database_error(*this);
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-09]
-void sqlite3_connection::busy_timeout(int ms)
-{
-    if (!this->db) throw database_error("database is not open");
-    if (sqlite3_busy_timeout(db, ms)!=SQLITE_OK)
-        throw database_error(*this);
-}
-
 } // namespace
 
