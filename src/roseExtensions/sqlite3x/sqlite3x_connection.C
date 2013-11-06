@@ -37,10 +37,8 @@ sqlite3_connection::sqlite3_connection(const wchar_t *db) : db(NULL) { this->ope
 
 sqlite3_connection::~sqlite3_connection() { if(this->db) sqlite3_close(this->db); }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
 /** Load required ROSE extensions. */
-void
-sqlite3_connection::post_open()
+void sqlite3_connection::post_open()
 {
     std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
     std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
@@ -53,22 +51,16 @@ sqlite3_connection::post_open()
     }
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-void
-sqlite3_connection::open(const char *db)
-{
-    if(sqlite3_open(db, &this->db)!=SQLITE_OK)
-        throw database_error("unable to open database");
-    post_open();
+void sqlite3_connection::open(const char *db) {
+        if(sqlite3_open(db, &this->db)!=SQLITE_OK)
+                throw database_error("unable to open database");
+        post_open();
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-void
-sqlite3_connection::open(const wchar_t *db)
-{
-    if(sqlite3_open16(db, &this->db)!=SQLITE_OK)
-        throw database_error("unable to open database");
-    post_open();
+void sqlite3_connection::open(const wchar_t *db) {
+        if(sqlite3_open16(db, &this->db)!=SQLITE_OK)
+                throw database_error("unable to open database");
+        post_open();
 }
 
 void sqlite3_connection::close() {
@@ -231,7 +223,6 @@ std::string sqlite3_connection::executeblob(const std::wstring &sql) {
         return sqlite3_command(*this, sql).executeblob();
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
 void sqlite3_connection::load_extension(const std::string &filename)
 {
     if (!this->db) throw database_error("database is not open");
