@@ -24,9 +24,6 @@
 */
 
 #include <sqlite3.h>
-#include <iostream>
-#include <cerrno>
-
 #include "sqlite3x.h"
 #include "rose_paths.h"
 
@@ -243,26 +240,11 @@ void sqlite3_connection::load_extension(const std::string &filename)
         throw database_error(*this);
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-17]
-static double timeout; // in seconds
-static int busy_handler(void*, int step)
-{
-    std::cerr <<"sqlite3 database is busy (step " <<step <<" of " <<timeout <<"); sleeping 1 second...";
-    timespec req, rem;
-    req.tv_sec = 1;
-    req.tv_nsec = 0;
-    while (nanosleep(&req, &rem)!=0 && EINTR==errno)
-        req = rem;
-    std::cerr <<" awake.\n";
-    return step < timeout ? 1/*again*/ : 0/*impatient*/;
-}
-
 // Altered by ROSE Team [Robb P. Matzke 2013-04-09]
 void sqlite3_connection::busy_timeout(int ms)
 {
     if (!this->db) throw database_error("database is not open");
-    timeout = ms / 1000.0;
-    if (sqlite3_busy_handler(db, busy_handler, NULL)!=SQLITE_OK)
+    if (sqlite3_busy_timeout(db, ms)!=SQLITE_OK)
         throw database_error(*this);
 }
 
