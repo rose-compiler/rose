@@ -21,7 +21,10 @@ drop table if exists fr_specimens;
 drop table if exists fr_settings;
 
 create table fr_settings as
-    select 0.70 as similarity_threshold;
+    select 
+    (select 0.70) as similarity_threshold,
+    (select 0.50) as path_similarity_threshold,
+    (select 0.30) as cg_similarity_threshold;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
@@ -117,8 +120,8 @@ create table fr_clone_pairs as
         from semantic_funcsim sim 
         join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
         where sim.similarity >= (select similarity_threshold from fr_settings) 
-  AND api_sem.min_similarity >= 0.5 
-  AND api_sem.cg_similarity >= 0.3
+  AND api_sem.min_similarity >= (select path_similarity_threshold from fr_settings) 
+  AND api_sem.cg_similarity >=  (select cg_similarity_threshold   from fr_settings)
   --AND sim.path_max_euclidean_d_ratio - sim.path_min_euclidean_d_ratio < 0.5
   --AND sim.path_max_euclidean_d_ratio < 3.0
   ;
