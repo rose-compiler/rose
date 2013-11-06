@@ -23,72 +23,39 @@
                 $Revision: 1.1 $
 */
 
-#include <cassert>
 #include <sqlite3.h>
 #include "sqlite3x.h"
 
 namespace sqlite3x {
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-sqlite3_transaction::sqlite3_transaction(sqlite3_connection &con, LockType lt, DestMode dm)
-    : con(con), intrans(LOCK_NONE), destmode(DEST_ROLLBACK) {
-    begin(lt, dm);
+sqlite3_transaction::sqlite3_transaction(sqlite3_connection &con, bool start) : con(con),intrans(false) {
+        if(start) begin();
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
 sqlite3_transaction::~sqlite3_transaction() {
-    if (intrans!=LOCK_NONE) {
-        try {
-            switch (destmode) {
-                case DEST_ROLLBACK:
-                    rollback();
-                    break;
-                case DEST_COMMIT:
-                    commit();
-                    break;
-            }
-        } catch(...) {
-            return;
+        if(intrans) {
+                try {
+                        rollback();
+                }
+                catch(...) {
+                        return;
+                }
         }
-    }
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-void
-sqlite3_transaction::begin(LockType lt, DestMode dm)
-{
-    assert(intrans==LOCK_NONE);
-    switch (lt) {
-        case LOCK_NONE:
-            break;
-        case LOCK_SHARED:
-            con.executenonquery("begin;");
-            break;
-        case LOCK_IMMEDIATE:
-            con.executenonquery("begin immediate;");
-            break;
-        case LOCK_EXCLUSIVE:
-            con.executenonquery("begin exclusive;");
-            break;
-    }
-    intrans = lt;
-    destmode = dm;
+void sqlite3_transaction::begin() {
+        con.executenonquery("begin;");
+        intrans=true;
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-void
-sqlite3_transaction::commit()
-{
-    con.executenonquery("commit;");
-    intrans = LOCK_NONE;
+void sqlite3_transaction::commit() {
+        con.executenonquery("commit;");
+        intrans=false;
 }
 
-// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
-void
-sqlite3_transaction::rollback()
-{
-    con.executenonquery("rollback;");
-    intrans = LOCK_NONE;
+void sqlite3_transaction::rollback() {
+        con.executenonquery("rollback;");
+        intrans=false;
 }
 
 }
