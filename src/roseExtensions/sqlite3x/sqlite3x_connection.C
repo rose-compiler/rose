@@ -247,17 +247,14 @@ void sqlite3_connection::load_extension(const std::string &filename)
 static double timeout; // in seconds
 static int busy_handler(void*, int step)
 {
-    static const double delay_time = 0.1; // in seconds; must be less than 1
-    const double max_steps = timeout / delay_time;
-
-    std::cerr <<"sqlite3 database is busy (step " <<step <<" of " <<max_steps <<"); sleeping " <<delay_time <<" seconds...";
+    std::cerr <<"sqlite3 database is busy (step " <<step <<" of " <<timeout <<"); sleeping 1 second...";
     timespec req, rem;
-    req.tv_sec = 0;
-    req.tv_nsec = delay_time * 1000000000;
+    req.tv_sec = 1;
+    req.tv_nsec = 0;
     while (nanosleep(&req, &rem)!=0 && EINTR==errno)
         req = rem;
     std::cerr <<" awake.\n";
-    return step < max_steps ? 1/*again*/ : 0/*impatient*/;
+    return step < timeout ? 1/*again*/ : 0/*impatient*/;
 }
 
 // Altered by ROSE Team [Robb P. Matzke 2013-04-09]
