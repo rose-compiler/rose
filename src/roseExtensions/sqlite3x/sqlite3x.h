@@ -94,11 +94,6 @@ namespace sqlite3x {
                 // Altered by ROSE Team [Robb P. Matzke 2013-04-05]
                 /** Load a shared library as an sqlite3 extension. See http://www.sqlite.org/cvstrac/wiki?p=LoadableExtensions. */
                 void load_extension(const std::string &filename);
-
-                // Altered by ROSE Team [Robb P. Matzke 2013-04-09]
-                /** Sets a busy handler that sleeps for a specified amount of time when a table is locked. This is just a wrapper
-                 *  around sqlite3_busy_timeout(). */
-                void busy_timeout(int ms);
         };
 
         class sqlite3_transaction : boost::noncopyable {
