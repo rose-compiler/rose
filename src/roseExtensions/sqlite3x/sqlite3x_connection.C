@@ -238,12 +238,7 @@ std::string sqlite3_connection::executeblob(const std::wstring &sql) {
 void sqlite3_connection::load_extension(const std::string &filename)
 {
     if (!this->db) throw database_error("database is not open");
-#if SQLITE3_VERSION_NUMBER >= 3007003
     sqlite3_enable_load_extension(db, 1);
-#else
-    // FIXME: I'm not sure when sqlite3_enable_load_extension was added, but its present in 3.7.3 [Robb P. Matzke 2013-10-24]
-    std::cerr <<"sqlite3x::sqlite3_connection::load_extension: sqlite3 does not have sqlite3_enable_load_extension()\n";
-#endif
     if (sqlite3_load_extension(db, filename.c_str(), NULL, NULL)!=SQLITE_OK)
         throw database_error(*this);
 }
