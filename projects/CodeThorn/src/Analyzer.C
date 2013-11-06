@@ -1427,17 +1427,30 @@ string Analyzer::generateSpotSTG() {
     ss<<"S"<<estateSet.estateIdString((*i).target);
     const EState* myTarget=(*i).target;
     AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+	assert(myIOVal.isConstInt() 
+		   && (myTarget->io.isStdInIO()||myTarget->io.isStdOutIO())
+		   );
     ss<<",\""; // dquote reqired for condition
-    if(myTarget->io.isStdInIO()) {
-      ss<<"i";
-    } else {
-      if(myTarget->io.isStdOutIO()) {
-        ss<<"o";
-      } else {
-        ss<<"?";
-      }
-    }
-    ss<<myIOVal.toString();
+	// generate transition condition
+	for(int i=1;i<=6;i++) {
+	  if(i!=1)
+		ss<<" & ";
+	  if(myTarget->io.isStdInIO() && myIOVal.getIntValue()==i) {
+		ss<<"  ";
+	  } else {
+		ss<<"! ";
+	  }
+	  ss<<"i"<<(char)(i+'A'-1);
+	}
+	for(int i=21;i<=26;i++) {
+	  ss<<" & ";
+	  if(myTarget->io.isStdOutIO() && myIOVal.getIntValue()==i) {
+		ss<<"  ";
+	  } else {
+		ss<<"! ";
+	  }
+	  ss<<"o"<<(char)(i+'A'-1);
+	}
     ss<<"\""; // dquote reqired for condition
     ss<<",;"; // no accepting states specified
     ss<<endl;

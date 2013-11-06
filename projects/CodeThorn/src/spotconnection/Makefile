@@ -1,7 +1,7 @@
 # set environment variable SPOT_PREFIX
 
 ltlverifier: ltlverifier.C
-	g++ -L$(SPOT_PREFIX)/lib -lspot -lbdd -I. -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include ltlverifier.C -oltlverifier
+	$(ROSE_CXX) -L$(SPOT_PREFIX)/lib -lspot -lbdd -I. -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include -I$(BOOST_HOME)/include ltlverifier.C -oltlverifier
 
 check: ltlverifier
 	./ltlverifier "(false R ! oZ)" stg2.spot # YES
