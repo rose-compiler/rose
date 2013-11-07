@@ -17,14 +17,7 @@ drop table if exists fr_fio;
 drop table if exists fr_functions;
 drop table if exists fr_funcnames;
 drop table if exists fr_specimens;
-drop table if exists fr_settings;
 
-create table fr_settings as
-    select 
-    (select 0.70) as similarity_threshold,
-    (select 0.50) as path_similarity_threshold,
-    (select 0.30) as cg_similarity_threshold
-;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
