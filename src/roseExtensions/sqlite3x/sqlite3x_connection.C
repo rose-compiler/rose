@@ -24,6 +24,7 @@
 */
 
 #include <sqlite3.h>
+#include <iostream>
 #include "sqlite3x.h"
 #include "rose_paths.h"
 
@@ -40,14 +41,16 @@ sqlite3_connection::~sqlite3_connection() { if(this->db) sqlite3_close(this->db)
 /** Load required ROSE extensions. */
 void sqlite3_connection::post_open()
 {
-    std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
-    std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
-    if (0==access(plug1.c_str(), F_OK)) {
-        load_extension(plug1);
-    } else if (0==access(plug2.c_str(), F_OK)) {
-        load_extension(plug2);
-    } else {
-        throw database_error("where is libsqlitefunctions.so?");
+    try {
+        std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
+        std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
+        if (0==access(plug1.c_str(), F_OK)) {
+            load_extension(plug1);
+        } else if (0==access(plug2.c_str(), F_OK)) {
+            load_extension(plug2);
+        }
+    } catch (const database_error &e) {
+        std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
     }
 }
 
