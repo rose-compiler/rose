@@ -226,7 +226,9 @@ std::string sqlite3_connection::executeblob(const std::wstring &sql) {
 void sqlite3_connection::load_extension(const std::string &filename)
 {
     if (!this->db) throw database_error("database is not open");
+#if 0 // not available on some system, even those that advertise they have sqlite3>=3.7.3 [Robb P. Matzke 2013-11-07]
     sqlite3_enable_load_extension(db, 1);
+#endif
     if (sqlite3_load_extension(db, filename.c_str(), NULL, NULL)!=SQLITE_OK)
         throw database_error(*this);
 }
