@@ -137,9 +137,10 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
   t=isStdIOLabel(label) 
-    //    || getLabeler()->isStdErrLabel(label)
+    || getLabeler()->isStdErrLabel(label)
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
+     || isCppLabeledAssertLabel(label)
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -1418,43 +1419,76 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
   return 0;
 }
 
+void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
+  ss<<"S"<<estateSet.estateIdString(t.source);
+  ss<<",";
+  ss<<"S"<<estateSet.estateIdString(t.target);
+  const EState* myTarget=t.target;
+  AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+  ss<<",\""; // dquote reqired for condition
+  // generate transition condition
+  if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
+    //assert(myIOVal.isConstInt());
+  }
+  // myIOVal.isTop(): this only means that any value *may* be read/written. This cannot be modeled here.
+  // if it represents "any of A..F" or any of "U..Z" it could be handled.
+  for(int i=1;i<=6;i++) {
+    if(i!=1)
+      ss<<" & ";
+    if(myTarget->io.isStdInIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+    } else {
+      ss<<"! ";
+    }
+    ss<<"i"<<(char)(i+'A'-1);
+  }
+  for(int i=21;i<=26;i++) {
+    ss<<" & ";
+    if(myTarget->io.isStdOutIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+      } else {
+      ss<<"! ";
+    }
+    ss<<"o"<<(char)(i+'A'-1);
+  }
+  ss<<"\""; // dquote reqired for condition
+  ss<<",;"; // no accepting states specified
+  ss<<endl;
+}
+
 string Analyzer::generateSpotSTG() {
   stringstream ss;
-  cout<<"SPOT STG: start state: "<<"S"<<estateSet.estateIdString(transitionGraph.getStartEState())<<endl;
-  for(TransitionGraph::iterator i=transitionGraph.begin();i!=transitionGraph.end();++i) {
-    ss<<"S"<<estateSet.estateIdString((*i).source);
-    ss<<",";
-    ss<<"S"<<estateSet.estateIdString((*i).target);
-    const EState* myTarget=(*i).target;
-    AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
-	assert(myIOVal.isConstInt() 
-		   && (myTarget->io.isStdInIO()||myTarget->io.isStdOutIO())
-		   );
-    ss<<",\""; // dquote reqired for condition
-	// generate transition condition
-	for(int i=1;i<=6;i++) {
-	  if(i!=1)
-		ss<<" & ";
-	  if(myTarget->io.isStdInIO() && myIOVal.getIntValue()==i) {
-		ss<<"  ";
-	  } else {
-		ss<<"! ";
-	  }
-	  ss<<"i"<<(char)(i+'A'-1);
-	}
-	for(int i=21;i<=26;i++) {
-	  ss<<" & ";
-	  if(myTarget->io.isStdOutIO() && myIOVal.getIntValue()==i) {
-		ss<<"  ";
-	  } else {
-		ss<<"! ";
-	  }
-	  ss<<"o"<<(char)(i+'A'-1);
-	}
-    ss<<"\""; // dquote reqired for condition
-    ss<<",;"; // no accepting states specified
-    ss<<endl;
+  // (1) generate accepting states
+#if 0
+  EStatePtrSet states=transitionGraph.estateSet();
+  cout<<"Generating accepting states."<<endl;
+  ss<<"acc=";
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if(!((*i)->io.isStdErrIO()||(*i)->io.isFailedAssertIO())) {
+      ss<<"S"<<estateSet.estateIdString(*i)<<" ";
+    }
   }
+  ss<<";"<<endl;
+#else
+  cout<<"All states are accepting."<<endl;
+#endif
+  // (2) generate state transition graph
+  // the start state is identified by the first transition. Therefore I generate all transitions of the
+  // start state first, and exclude them from all the others.
+  const EState* startState=transitionGraph.getStartEState();
+  TransitionPtrSet startTransitions=transitionGraph.outEdges(startState);
+  for(TransitionPtrSet::iterator i=startTransitions.begin();i!=startTransitions.end();++i) {
+    generateSpotTransition(ss,**i);
+  }
+  int num=0;
+  for(TransitionGraph::iterator i=transitionGraph.begin();i!=transitionGraph.end();++i) {
+    if((*i).source!=startState)
+      generateSpotTransition(ss,*i);
+    if(num%1000==0 && num>0)
+      cout<<"Generated "<<num<<" of "<<transitionGraph.size()<<" transitions."<<endl;
+    num++;
+  }
+  cout<<"SPOT STG: start state: "<<"S"<<estateSet.estateIdString(startState)<<endl;
   return ss.str();
 }
 

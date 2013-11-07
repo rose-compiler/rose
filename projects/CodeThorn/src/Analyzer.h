@@ -135,7 +135,9 @@ namespace CodeThorn {
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
     string generateSpotSTG();
-    
+  private:
+    void generateSpotTransition(stringstream& ss, const Transition& t);
+  public:
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -185,6 +187,9 @@ namespace CodeThorn {
           labelName=SgNodeHelper::getLabelName((*i).first);
       //assert(labelName.size()>0);
       return labelName;
+    }
+    bool isCppLabeledAssertLabel(Label lab) {
+      return labelNameOfAssertLabel(lab).size()>0;
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;
