@@ -152,6 +152,19 @@ int main(int argc, char *argv[])
       "precision_min, precision_max, precision_mean, precision_variance)"
       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
+  r_transaction->execute("drop table IF EXISTS per_specimen_results");
+  r_transaction->execute("create table per_specimen_results( db_group text, name text, " 
+      " precision double precision, specificity double precision, " 
+      " recall double precision" 
+      " );");
+
+
+  SqlDatabase::StatementPtr per_insert_stmt = r_transaction->statement("insert into per_specimen_results"
+      // 0        1         2           3          4
+      "(db_group, name,  precision, specificity, recall ) "
+      " values (?, ?, ?, ?, ?)");
+
+
 
 
   std::map<std::string, std::set<std::string> >  db_groups = get_database_groups(prefix);
@@ -188,9 +201,21 @@ int main(int argc, char *argv[])
       SqlDatabase::StatementPtr stmt = transaction->statement( "select recall, specificity, precision from fr_results_precision_recall" );
 
       for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        recalls(row.get<double>(0));
-        specificity(row.get<double>(1));
-        precision(row.get<double>(2));
+        double cur_recall   = row.get<double>(0);
+        double cur_specificity = row.get<double>(1);
+        double cur_precision   = row.get<double>(2);
+        recalls(cur_recall);
+        specificity(cur_specificity);
+        precision(cur_precision);
+  
+	per_insert_stmt->bind(0, it->first);
+	per_insert_stmt->bind(1, *m_it); 
+	per_insert_stmt->bind(2, cur_recall);  
+	per_insert_stmt->bind(3, cur_specificity);  
+	per_insert_stmt->bind(4, cur_precision);  
+
+        per_insert_stmt->execute();
+
       }
     }
 
