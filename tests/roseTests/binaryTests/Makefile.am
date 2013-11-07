@@ -806,7 +806,7 @@ $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
 check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
-#FIXME: all of the x86 executables have at least one thing that doesn't disassemble [Robb Matzke 2013-08-30]
+#FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
 #assemble_Specimens = $(filter $(x86_Specimens), $(Executable_Specimens))
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
 TEST_TARGETS += $(assemble_Targets)
