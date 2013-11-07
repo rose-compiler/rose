@@ -61,9 +61,12 @@
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
-#ifdef TRACE
 #include "TraceSemantics2.h"
-#endif
+
+// defaults for command-line switches
+static bool do_trace = false;
+static bool do_test_subst = false;
+static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
@@ -116,9 +119,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
-#ifndef TRACE // usedef AND tracing is a little much for the eyes
-        retval->set_compute_usedef();
-#endif
+        retval->set_compute_usedef(do_usedef);
         TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
                       SymbolicSemantics::RiscOperatorsPtr> tester;
@@ -351,17 +352,18 @@ analyze_interp(SgAsmInterpretation *interp)
         insns.erase(si);
 
 #if SEMANTIC_API == NEW_API
-        typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
         BaseSemantics::Formatter formatter;
         formatter.set_suppress_initial_values();
-#ifdef TRACE
-        TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
-        trace->set_stream(stdout);
-        MyDispatcher dispatcher = DispatcherX86::instance(trace);
-#else
-        MyDispatcher dispatcher = DispatcherX86::instance(operators);
-#endif
+        BaseSemantics::DispatcherPtr dispatcher;
+        if (do_trace) {
+            std::cerr <<"Setting up RISC operator tracing...\n";
+            TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
+            trace->set_stream(stdout);
+            dispatcher = DispatcherX86::instance(trace);
+        } else {
+            dispatcher = DispatcherX86::instance(operators);
+        }
         operators->set_solver(make_solver());
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
@@ -377,12 +379,15 @@ analyze_interp(SgAsmInterpretation *interp)
 #   endif
 #endif
 
-#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
-        // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
-        // in the state, which is printed in the output, and thus changes the answer.
-        BaseSemantics::RegisterStateGeneric::promote(operators->get_state()->get_register_state())->initialize_large();
-        BaseSemantics::SValuePtr orig_esp = operators->readRegister(*regdict->lookup("esp"));
-        std::cout <<"Original state:\n" <<*operators;
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API
+        BaseSemantics::SValuePtr orig_esp;
+        if (do_test_subst) {
+            // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
+            // in the state, which is printed in the output, and thus changes the answer.
+            BaseSemantics::RegisterStateGeneric::promote(operators->get_state()->get_register_state())->initialize_large();
+            orig_esp = operators->readRegister(*regdict->lookup("esp"));
+            std::cout <<"Original state:\n" <<*operators;
+        }
 #endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
@@ -390,7 +395,7 @@ analyze_interp(SgAsmInterpretation *interp)
          * been processed. */
         while (1) {
             /* Analyze current instruction */
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            std::cout <<"\n" <<unparseInstructionWithAddress(insn) <<"\n";
 #if SEMANTIC_API == NEW_API
             try {
                 dispatcher->processInstruction(insn);
@@ -460,14 +465,17 @@ analyze_interp(SgAsmInterpretation *interp)
         }
 
         // Test substitution on the symbolic state.
-#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
-        SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
-        BaseSemantics::SValuePtr newvar = operators->undefined_(32);
-        newvar->set_comment("frame_pointer");
-        SymbolicSemantics::SValuePtr to = SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
-        std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";
-        SymbolicSemantics::RiscOperators::promote(operators)->substitute(from, to);
-        std::cout <<"Substituted state:\n" <<(*operators+formatter);
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API
+        if (do_test_subst) {
+            SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
+            BaseSemantics::SValuePtr newvar = operators->undefined_(32);
+            newvar->set_comment("frame_pointer");
+            SymbolicSemantics::SValuePtr to =
+                SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
+            std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";
+            SymbolicSemantics::RiscOperators::promote(operators)->substitute(from, to);
+            std::cout <<"Substituted state:\n" <<(*operators+formatter);
+        }
 #endif
     }
 }
@@ -493,6 +501,30 @@ public:
 };
 
 int main(int argc, char *argv[]) {
+    std::vector<std::string> args(argv, argv+argc);
+    for (size_t argno=1; argno<args.size(); ++argno) {
+        if (0==args[argno].compare("--trace")) {
+            do_trace = true;
+            args[argno] = "";
+        } else if (0==args[argno].compare("--no-trace")) {
+            do_trace = false;
+            args[argno] = "";
+        } else if (0==args[argno].compare("--test-subst")) {
+            do_test_subst = true;
+            args[argno] = "";
+        } else if (0==args[argno].compare("--no-test-subst")) {
+            do_test_subst = false;
+            args[argno] = "";
+        } else if (0==args[argno].compare("--usedef")) {
+            do_usedef = true;
+            args[argno] = "";
+        } else if (0==args[argno].compare("--no-usedef")) {
+            do_usedef = false;
+            args[argno] = "";
+        }
+    }
+    args.erase(std::remove(args.begin(), args.end(), ""), args.end());
+
     SgProject *project = frontend(argc, argv);
     AnalyzeX86Functions analysis;
     analysis.traverse(project, postorder);

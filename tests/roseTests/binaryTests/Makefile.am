@@ -499,12 +499,12 @@ symbolicSemantics2.passed: semantics.conf symbolicSemantics2
 # Tracing symbolic semantics, no SMT solver, new API
 noinst_PROGRAMS += traceSymbolicSemantics2
 traceSymbolicSemantics2_SOURCES = semantics.C
-traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER -DTRACE
+traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += traceSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
 traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2
-	@$(RTH_RUN) CMD=traceSymbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD="traceSymbolicSemantics2 --trace --test-subst" INPUT=i686-test1.O3.bin $< $@
 
 # Symbolic semantics, Yices executable, old API
 noinst_PROGRAMS += yicesSemanticsExe
