@@ -1,5 +1,4 @@
 -- Computes statistics about false negatives in a database populated with two or more specimens compiled in different ways.
-begin transaction;
 
 drop table if exists fr_results;
 drop table if exists fr_results_precision_recall;
@@ -18,13 +17,7 @@ drop table if exists fr_fio;
 drop table if exists fr_functions;
 drop table if exists fr_funcnames;
 drop table if exists fr_specimens;
-drop table if exists fr_settings;
 
-create table fr_settings as
-    select 
-    (select 0.70) as similarity_threshold,
-    (select 0.50) as path_similarity_threshold,
-    (select 0.30) as cg_similarity_threshold;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
@@ -143,36 +136,6 @@ create table fr_true_negatives as
     select * from fr_negative_pairs except select func1_id, func2_id from fr_clone_pairs;
 
 
-select 'The following table shows the true positives function pairs.
-Both functions of the pair always have the same name.' as "Notice";
-select
-        func1.name as name,
-        sim.func1_id, func1.ninsns, sim.func2_id, func2.ninsns, sim.similarity, api_sem.cg_similarity, api_sem.min_similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d, sim.ncompares,
-        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d, sim.path_max_euclidean_d_ratio
-    from fr_true_positives as falseneg
-    join fr_functions as func1 on falseneg.func1_id = func1.id
-    join fr_functions as func2 on falseneg.func2_id = func2.id
-    join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
-    join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
-    order by func1.name;
-
-
-select 'The following table shows the false positives function pairs.
-Both functions of the pair always have the same name.' as "Notice";
-select
-        func1.name ,
-        sim.func1_id, func1.ninsns, func2.name, sim.func2_id, func2.ninsns, sim.similarity, api_sem.cg_similarity, api_sem.min_similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d, sim.ncompares, 
-        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d, sim.path_max_euclidean_d_ratio
-    from fr_false_positives as falseneg
-    join fr_functions as func1 on falseneg.func1_id = func1.id
-    join fr_functions as func2 on falseneg.func2_id = func2.id
-    join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
-    join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
-    order by func1.name;
-
-
 
 -- False negative rate is the ratio of false negatives to expected positives
 -- False positive rate is the ratio of false positives to expected negatives
@@ -198,91 +161,4 @@ create table fr_results_precision_recall as
         ( (select 100.0*true_negatives from fr_results limit 1) / (0.001+( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) )) as specificity,
         ( (select 100.0*true_positives from fr_results limit 1) / (0.001+( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 )))) as precision
 ;
--------------------------------------------------------------------------------------------------------------------------------
--- Some queries to show the results
 
-select * from fr_results;
-select * from fr_results_precision_recall;
-
-
--- select 'The following table contains all the functions of interest: functions that
--- * appear in all specimens exactly once each
--- * have a certain number of instructions, and
--- * didn''t try to consume too many inputs, and
--- * are defined in a specimen, not a dynamic library' as "Notice";
--- select * from fr_functions order by name, specimen_id;
-
-select 'The following table shows the termination status for all
-tests performed on the functions of interest.' as "Notice";
-select
-        fault.name as status,
-        count(*) as ntests,
-        100.0*count(*)/(select count(*) from fr_fio) as percent
-    from fr_fio as fio
-    join semantic_faults as fault on fio.status = fault.id
-    group by fault.id, fault.name;
-
-select 'The following table shows the false negative function pairs.
-Both functions of the pair always have the same name.' as "Notice";
-select
-        func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d,  sim.ncompares,
-        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
- 
-    from fr_false_negatives as falseneg
-    join fr_functions as func1 on falseneg.func1_id = func1.id
-    join fr_functions as func2 on falseneg.func2_id = func2.id
-    join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
-    order by func1.name;
-
-
-
-
-select 'The following table shows the status breakdown for tests
-that were performed on each function of interest.' as "Notice";
-
-select
-        func.id as func_id,
-        func.name as func_name,
-        func.file_id as file_id,
-        fault.name as status,
-        count(*) as ntests
-    from fr_functions as func
-    join fr_fio as fio on fio.func_id = func.id
-    join semantic_faults as fault on fault.id = fio.status
-    group by func.id, func.name, func.file_id, fault.name
-    order by func.name, func.file_id;
-
-select 'The following table shows a list of function names that are
-false negatives, and the average number of instructions executed by
-tests on this name.' as "Notice";
-select
-        func.name, func.id, func.file_id,
-	count(*) as npass,
-        sum(fio.instructions_executed)/count(*) as ave_insns_exec
-    from fr_fio as fio
-    join fr_functions as func on fio.func_id = func.id
-    join fr_false_negatives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
-    where fio.status = 0
-    group by func.name, func.id, func.file_id
-    order by ave_insns_exec;
-
-
-select 'The following table shows a list of function names that are
-true_positives, and the average number of instructions executed by
-tests on this name.' as "Notice";
-select
-        func.name, func.id, func.file_id,
-	count(*) as npass,
-        sum(fio.instructions_executed)/count(*) as ave_insns_exec
-    from fr_fio as fio
-    join fr_functions as func on fio.func_id = func.id
-    join fr_false_positives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
-    where fio.status = 0
-    group by func.name, func.id, func.file_id
-    order by ave_insns_exec;
-
-
-
-rollback;

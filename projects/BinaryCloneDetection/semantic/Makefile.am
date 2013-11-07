@@ -107,6 +107,16 @@ noinst_PROGRAMS += 105-api-similarity
 105_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 105_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 110-120: run evaluation metrics on pairwise binaries
+noinst_PROGRAMS += 110_compute_aggregate
+110_compute_aggregate_SOURCES = compute-aggregate.C FailureDetectionSchema.C 
+110_compute_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
+110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+EXTRA_DIST += compute-pairwise-precision.sql
+
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
 builtins.so: builtins-string.c builtins-stdio.c
@@ -130,4 +140,15 @@ CloneDetection_SPECIMENS =			\
 	tests/shellsort.C			\
 	tests/simple001.C			\
 	tests/simple002.C
+
+MOSTLYCLEANFILES += FailureDetectionSchema.C
+FailureDetectionSchema.C: compute-pairwise-precision.sql
+	@echo "  GEN     $@"
+	@echo "namespace FailureEvaluation {"  			>$@
+	@echo "const char *failure_schema =" 				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+	@echo "} //namespace" 					>>$@
+
+
 
