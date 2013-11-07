@@ -82,28 +82,29 @@ sorts
   EndForallStmt                       %% R758
   ForallStmt                          %% R759
 
+  BoundsRemappingList BoundsSpecList ForallTripletSpecList
 
 context-free syntax
 
 
 %%R309
-    PowerOp
-  | MultOp
-  | AddOp
-  | ConcatOp
-  | RelOp
-  | NotOp
-  | AndOp
-  | OrOp
-  | EquivOp                     -> IntrinsicOperator     {cons("intrinsic-operator")}
+  PowerOp                       -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  MultOp                        -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  AddOp                         -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  ConcatOp                      -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  RelOp                         -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  NotOp                         -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  AndOp                         -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  OrOp                          -> IntrinsicOperator     {cons("IntrinsicOperator")}
+  EquivOp                       -> IntrinsicOperator     {cons("IntrinsicOperator")}
 
 %%R310
-    DefinedUnaryOp
-  | DefinedBinaryOp
-  | ExtendedIntrinsicOp         -> DefinedOperator       {cons("defined-operator")}
+  DefinedUnaryOp                -> DefinedOperator       {cons("DefinedOperator")}
+  DefinedBinaryOp               -> DefinedOperator       {cons("DefinedOperator")}
+  ExtendedIntrinsicOp           -> DefinedOperator       {cons("DefinedOperator")}
 
 %%R311
-  IntrinsicOperator             -> ExtendedIntrinsicOp   {cons("extended-intrinsic-op")}
+  IntrinsicOperator             -> ExtendedIntrinsicOp   {cons("ExtendedIntrinsicOp")}
 
 %%R701
 %%TODO-AMB
@@ -116,8 +117,8 @@ context-free syntax
 %%TypeParamName                 -> Primary          {reject}                %% > Designator
   '(' Expr ')'                  -> Primary          {cons("Primary_AMB")}
 
-%%TODO-DELETE   Scon                          -> Primary          {cons("primary-scon")}
-%%TODO-DELETE   UnsignedArithmeticConstant    -> Primary          {cons("const-expr")}
+%%TODO-DELETE   Scon                          -> Primary          {cons("PrimaryScon")}
+%%TODO-DELETE   UnsignedArithmeticConstant    -> Primary          {cons("ConstExpr")}
 %%TODO- needed to resolve ambiguity? DataRef
 %%TODO ???????  ArrayConstructor              -> SFPrimary
 
@@ -125,7 +126,7 @@ context-free syntax
   DefinedUnaryOp? Primary                  -> Level1Expr      {cons("Level1Expr")}
 
 %%R703
-  Dop                                      -> DefinedUnaryOp  {cons("defined-unary-op")}
+  Dop                                      -> DefinedUnaryOp  {cons("DefinedUnaryOp")}
 
 %%R704
   Level1Expr (PowerOp MultOperand)?        -> MultOperand     {cons("MultOperand")}
@@ -139,38 +140,38 @@ context-free syntax
   (Level2Expr? AddOp)? AddOperand          -> Level2Expr      {cons("Level2Expr")}
 
 %%R707
-  '**'                                     -> PowerOp         {cons("power-op")}
+  '**'                                     -> PowerOp         {cons("PowerOp")}
 
 %%R708
-  '*'                                      -> MultOp          {cons("mult-op_TIMES")}
-  '/'                                      -> MultOp          {cons("mult-op_DIV")}
+  '*'                                      -> MultOp          {cons("MultOp_TIMES")}
+  '/'                                      -> MultOp          {cons("MultOp_DIV")}
 
 %%R709
-  '+'                                      -> AddOp           {cons("add-op_PLUS")}
-  '-'                                      -> AddOp           {cons("add-op_MINUS")}
+  '+'                                      -> AddOp           {cons("AddOp_PLUS")}
+  '-'                                      -> AddOp           {cons("AddOp_MINUS")}
 
 %%R710
   (Level3Expr ConcatOp)? Level2Expr        -> Level3Expr      {cons("Level3Expr")}
 
 %%R711
-  '//'                                     -> ConcatOp        {cons("concat-op")}
+  '//'                                     -> ConcatOp        {cons("ConcatOp")}
 
 %%R712
   (Level3Expr RelOp)? Level3Expr           -> Level4Expr      {cons("Level4Expr")}
 
 %%R713
-  '.EQ.'                                   -> RelOp           {cons("rel-op_EQ")}
-  '.NE.'                                   -> RelOp           {cons("rel-op_NE")}
-  '.LT.'                                   -> RelOp           {cons("rel-op_LT")}
-  '.LE.'                                   -> RelOp           {cons("rel-op_LE")}
-  '.GT.'                                   -> RelOp           {cons("rel-op_GT")}
-  '.GE.'                                   -> RelOp           {cons("rel-op_GE")}
-  '=='                                     -> RelOp           {cons("rel-op_EQ")}
-  '/='                                     -> RelOp           {cons("rel-op_NE")}
-  '<'                                      -> RelOp           {cons("rel-op_LT")}
-  '<='                                     -> RelOp           {cons("rel-op_LE")}
-  '>'                                      -> RelOp           {cons("rel-op_GT")}
-  '>='                                     -> RelOp           {cons("rel-op_GE")}
+  '.EQ.'                                   -> RelOp           {cons("RelOp_EQ")}
+  '.NE.'                                   -> RelOp           {cons("RelOp_NE")}
+  '.LT.'                                   -> RelOp           {cons("RelOp_LT")}
+  '.LE.'                                   -> RelOp           {cons("RelOp_LE")}
+  '.GT.'                                   -> RelOp           {cons("RelOp_GT")}
+  '.GE.'                                   -> RelOp           {cons("RelOp_GE")}
+  '=='                                     -> RelOp           {cons("RelOp_EQ")}
+  '/='                                     -> RelOp           {cons("RelOp_NE")}
+  '<'                                      -> RelOp           {cons("RelOp_LT")}
+  '<='                                     -> RelOp           {cons("RelOp_LE")}
+  '>'                                      -> RelOp           {cons("RelOp_GT")}
+  '>='                                     -> RelOp           {cons("RelOp_GE")}
 
 %%R714
   NotOp? Level4Expr                        -> AndOperand      {cons("AndOperand")}
@@ -185,42 +186,40 @@ context-free syntax
   (Level5Expr EquivOp)? EquivOperand       -> Level5Expr      {cons("Level5Expr")}
 
 %%R718
-  '.NOT.'                                  -> NotOp           {cons("not-op")}
+  '.NOT.'                                  -> NotOp           {cons("NotOp")}
 
 %%R719
-  '.AND.'                                  -> AndOp           {cons("and-op")}
+  '.AND.'                                  -> AndOp           {cons("AndOp")}
 
 %%R720
-  '.OR.'                                   -> OrOp            {cons("or-op")}
+  '.OR.'                                   -> OrOp            {cons("OrOp")}
 
 %%R721
-  '.EQV.'                                  -> EquivOp         {cons("equiv-op_EQV")}
-  '.NEQV.'                                 -> EquivOp         {cons("equiv-op_NEQV")}
+  '.EQV.'                                  -> EquivOp         {cons("EquivOp_EQV")}
+  '.NEQV.'                                 -> EquivOp         {cons("EquivOp_NEQV")}
 
 %%R722
 %%TODO-short circuit the expr nonsense and make it more sensible
-%%TODO-PUTBACK/FIXME  ( Expr DefinedBinaryOp )? Level5Expr     -> Expr            {cons("expr")}
-%%Primary                                    -> Expr            {cons("Expr")}
-
-
+%%( Expr DefinedBinaryOp )? Level5Expr     -> Expr            {cons("Expr")}
+Primary                                    -> Expr            {cons("Expr")}
 
 %%R723
-  Dop                                      -> DefinedBinaryOp {cons("defined-binary-op")}
+  Dop                                      -> DefinedBinaryOp {cons("DefinedBinaryOp")}
 
 %%TODO - what to do about this
 %%R725-R734 chain rule deleted
 
 %%R724
-  Expr                                     -> LogicalExpr     {cons("logical-expr")}
+  Expr                                     -> LogicalExpr     {cons("LogicalExpr")}
 
 %%R725
-  Expr                                     -> DefaultCharExpr {cons("default-char-expr")}
+  Expr                                     -> DefaultCharExpr {cons("DefaultCharExpr")}
 
 %%R726
   Expr                                     -> IntExpr         {cons("IntExpr")}
 
 %%R727
-  Expr                                     -> NumericExpr     {cons("numeric-expr")}
+  Expr                                     -> NumericExpr     {cons("NumericExpr")}
 
 %%R728
 %%       scalar-int-expr replaced by int-expr
@@ -228,16 +227,16 @@ context-free syntax
   IntExpr                                  -> SpecificationExpr  {cons("SpecificationExpr")}
 
 %%R729
-  Expr                                     -> ConstantExpr    {cons("constant-expr")}
+  Expr                                     -> ConstantExpr    {cons("ConstantExpr")}
 
 %%R730
-  DefaultCharExpr                          -> DefaultCharConstantExpr  {cons("default-char-constant-expr")}
+  DefaultCharExpr                          -> DefaultCharConstantExpr  {cons("DefaultCharConstantExpr")}
 
 %%R731
-  IntExpr                                  -> IntConstantExpr {cons("int-constant-expr")}
+  IntExpr                                  -> IntConstantExpr {cons("IntConstantExpr")}
 
 %%R732
-  LblDef Variable '=' Expr             EOS -> AssignmentStmt  {cons("assignment-stmt")}
+  Label? Variable '=' Expr             EOS -> AssignmentStmt  {cons("AssignmentStmt")}
 
 %% todo: check. Original ISO: assignmentStatement is variable '=' expression
 %%TODO-DELETE   LblDef Name '%' Name '=' Expr EOS                                      -> AssignmentStmt
@@ -251,11 +250,11 @@ context-free syntax
 %%TODO-DELETE   LblDef Name '(' SFExprList ')' SubstringRange '=' Expr EOS             -> AssignmentStmt
 
 %%R733
-  LblDef
-       ( DataPointerObject ( '(' {BoundsSpec      ','}+ ')' )? '=>' DataTarget )
-    |  ( DataPointerObject   '(' {BoundsRemapping ','}+ ')'    '=>' DataTarget )
-    |  ( ProcPointerObject                                     '=>' ProcTarget )
-    EOS -> PointerAssignmentStmt  {cons("pointer-assignment-stmt")}
+  Label? DataPointerObject ( '(' BoundsSpecList ')' )?
+                           '=>' DataTarget       EOS -> PointerAssignmentStmt  {cons("PointerAssignmentStmt")}
+  Label? DataPointerObject   '(' BoundsRemappingList ')'
+                           '=>' DataTarget       EOS -> PointerAssignmentStmt  {cons("PointerAssignmentStmt")}
+  Label? ProcPointerObject '=>' ProcTarget       EOS -> PointerAssignmentStmt  {cons("PointerAssignmentStmt")}
 
 %%TODO-DELETE these
 %%TODO   LblDef Name '%' Name '=>' DataTarget EOS                               -> PointerAssignmentStmt
@@ -268,14 +267,16 @@ context-free syntax
 %%R734
 %%          variable substituted for scalar-variable
 %%
-    ( VariableName                          )
-  | ( Variable '%' DataPointerComponentName )            -> DataPointerObject  {cons("data-pointer-object")}
+  VariableName                                           -> DataPointerObject  {cons("DataPointerObject")}
+  Variable '%' DataPointerComponentName                  -> DataPointerObject  {cons("DataPointerObject")}
 
 %%R735
-  LowerBoundExpr ':'                                     -> BoundsSpec         {cons("bounds-spec")}
+  LowerBoundExpr ':'                                     -> BoundsSpec         {cons("BoundsSpec")}
+  {BoundsSpec ','}+                                      -> BoundsSpecList     {cons("BoundsSpecList")}
 
 %%R736
-  LowerBoundExpr ':' UpperBoundExpr                      -> BoundsRemapping    {cons("bounds-remappig")}
+  LowerBoundExpr ':' UpperBoundExpr                      -> BoundsRemapping    {cons("BoundsRemapping")}
+  {BoundsRemapping ','}+                                 -> BoundsRemappingList{cons("BoundsRemappingList")}
 
 %%R737
 %%       Variable producing DataTarget is Ambiguous
@@ -283,21 +284,21 @@ context-free syntax
   Expr      -> DataTarget
 
 %%R738
-    ProcPointerName
-  | ProcComponentRef                                   -> ProcPointerObject {cons("proc-pointer-object")}
+  ProcPointerName                                      -> ProcPointerObject {cons("ProcPointerObject")}
+  ProcComponentRef                                     -> ProcPointerObject {cons("ProcPointerObject")}
 
 %%R739
 %%          variable substituted for scalar-variable
 %%
-  Variable '%' ProcedureComponentName                  -> ProcComponentRef  {cons("proc-component-ref")}
+  Variable '%' ProcedureComponentName                  -> ProcComponentRef  {cons("ProcComponentRef")}
 
 %%R740
-    Expr
-  | ProcedureName
-  | ProcComponentRef                                   -> ProcTarget        {cons("proc-target")}
+  Expr                                                 -> ProcTarget        {cons("ProcTarget")}
+  ProcedureName                                        -> ProcTarget        {cons("ProcTarget")}
+  ProcComponentRef                                     -> ProcTarget        {cons("ProcTarget")}
 
 %%R741
-  LblDef 'WHERE' '(' MaskExpr ')' WhereAssignmentStmt  -> WhereStmt         {cons("where-stmt")}
+  Label? 'WHERE' '(' MaskExpr ')' WhereAssignmentStmt  -> WhereStmt         {cons("WhereStmt")}
 
 %%R742
 %%TODO-F08-FIXME
@@ -310,96 +311,96 @@ context-free syntax
 %%  ElseWhere AssignmentStmt    -> ElseWhere
 %%TODO-DELETE  WhereConstructStmt AssignmentStmt* 
 %%TODO-DELETE                (ElsewhereStmt AssignmentStmt*)? 
-%%TODO-DELETE  EndWhereStmt                                  -> WhereConstruct  {cons("where-construct")}
+%%TODO-DELETE  EndWhereStmt                                  -> WhereConstruct  {cons("WhereConstruct")}
 
 %%R742
   WhereConstructStmt
     (                    WhereBodyConstruct*)
     (MaskedElsewhereStmt WhereBodyConstruct*)*
     (ElsewhereStmt       WhereBodyConstruct*)? 
-  EndWhereStmt                                  -> WhereConstruct  {cons("where-construct")}
+  EndWhereStmt                                  -> WhereConstruct  {cons("WhereConstruct")}
 
 %%R743
 %%       Ident substituted for where-construct-name
 %%
-  LblDef (Ident ':')? 'WHERE' '(' MaskExpr ')' EOS -> WhereConstructStmt  {cons("where-construct-stmt")}
+  Label? (Ident ':')? 'WHERE' '(' MaskExpr ')' EOS -> WhereConstructStmt  {cons("WhereConstructStmt")}
 
 %%R744
-    WhereAssignmentStmt
-  | WhereStmt
-  | WhereConstruct                                 -> WhereBodyConstruct  {cons("where-body-construct")}
+  WhereAssignmentStmt                              -> WhereBodyConstruct  {cons("WhereBodyConstruct")}
+  WhereStmt                                        -> WhereBodyConstruct  {cons("WhereBodyConstruct")}
+  WhereConstruct                                   -> WhereBodyConstruct  {cons("WhereBodyConstruct")}
 
 %%R745
 %%TODO-F08 - make it so label can't be part of assignment-stmt
 %%
-  AssignmentStmt                                   -> WhereAssignmentStmt {cons("where-assignment-stmt")}
+  AssignmentStmt                                   -> WhereAssignmentStmt {cons("WhereAssignmentStmt")}
 
 %%R746
-  LogicalExpr                                      -> MaskExpr            {cons("mask-expr")}
+  LogicalExpr                                      -> MaskExpr            {cons("MaskExpr")}
 
 %%R747
 %%       Ident substituted for where-construct-name
 %%
-  LblDef 'ELSEWHERE' '(' MaskExpr ')' Ident?   EOS -> MaskedElsewhereStmt {cons("masked-elsewhere-stmt")}
+  Label? 'ELSEWHERE' '(' MaskExpr ')' Ident?   EOS -> MaskedElsewhereStmt {cons("MaskedElsewhereStmt")}
 
 %%R748
 %%       Ident substituted for where-construct-name
 %%
-  LblDef 'ELSEWHERE' Ident?                    EOS -> ElsewhereStmt       {cons("elsewhere-stmt")}
+  Label? 'ELSEWHERE' Ident?                    EOS -> ElsewhereStmt       {cons("ElsewhereStmt")}
 
 %%R749
 %%       Ident substituted for where-construct-name
 %%
-  LblDef 'END' 'WHERE' Ident?                  EOS -> EndWhereStmt        {cons("end-where-stmt")}
+  Label? 'END' 'WHERE' Ident?                  EOS -> EndWhereStmt        {cons("EndWhereStmt")}
 
 %%R750
   ForallConstructStmt
     ForallBodyConstruct*
-  EndForallStmt                                    -> ForallConstruct     {cons("forall-construct")}
+  EndForallStmt                                    -> ForallConstruct     {cons("ForallConstruct")}
 
 %%R751
-  LblDef (ForallConstructName ':')?
-         'FORALL' ForallHeader                 EOS -> ForallConstructStmt  {cons("forall-construct-stmt")}
+  Label? (ForallConstructName ':')?
+         'FORALL' ForallHeader                 EOS -> ForallConstructStmt  {cons("ForallConstructStmt")}
 
 %%752
 %%       mask-expr substituted for scalar-mask-expr
 %%
   '('
-     (TypeSpec '::')? {ForallTripletSpec ','}+
+     (TypeSpec '::')? ForallTripletSpecList
                       (',' MaskExpr)?
-  ')'                                              -> ForallHeader         {cons("forall-header")}
+  ')'                                              -> ForallHeader         {cons("ForallHeader")}
 
 %%753
   IndexName '=' ForallLimit
-            ':' ForallLimit (':' ForallStep)?      -> ForallTripletSpec    {cons("forall-triplet-spec")}
+            ':' ForallLimit (':' ForallStep)?      -> ForallTripletSpec    {cons("ForallTripletSpec")}
+  {ForallTripletSpec ','}+                         -> ForallTripletSpecList{cons("ForallTripletSpecList")}
 
 %%754
 %%        int-expr substituted for scalar-int-expr
 %%
-  IntExpr                                          -> ForallLimit          {cons("forall-limit")}
+  IntExpr                                          -> ForallLimit          {cons("ForallLimit")}
 
 %%755
 %%        int-expr substituted for scalar-int-expr
 %%
-  IntExpr                                          -> ForallStep           {cons("forall-step")}
+  IntExpr                                          -> ForallStep           {cons("ForallStep")}
 
 %%756
-    ForallAssignmentStmt
-  | WhereStmt
-  | WhereConstruct
-  | ForallConstruct
-  | ForallStmt                                     -> ForallBodyConstruct  {cons("forall-body-construct")}
+  ForallAssignmentStmt                             -> ForallBodyConstruct  {cons("ForallBodyConstruct")}
+  WhereStmt                                        -> ForallBodyConstruct  {cons("ForallBodyConstruct")}
+  WhereConstruct                                   -> ForallBodyConstruct  {cons("ForallBodyConstruct")}
+  ForallConstruct                                  -> ForallBodyConstruct  {cons("ForallBodyConstruct")}
+  ForallStmt                                       -> ForallBodyConstruct  {cons("ForallBodyConstruct")}
 
 %%757
-    AssignmentStmt
-  | PointerAssignmentStmt                          -> ForallAssignmentStmt {cons("forall-assignment-stmt")}
+  AssignmentStmt                                   -> ForallAssignmentStmt {cons("ForallAssignmentStmt")}
+  PointerAssignmentStmt                            -> ForallAssignmentStmt {cons("ForallAssignmentStmt")}
 
 %%758
-  LblDef 'END' 'FORALL' ForallConstructName?   EOS -> EndForallStmt        {cons("end-forall-stmt")}
+  Label? 'END' 'FORALL' ForallConstructName?   EOS -> EndForallStmt        {cons("EndForallStmt")}
 
 %%759
-  LblDef 'FORALL' ForallHeader ForallAssignmentStmt  EOS -> ForallStmt     {cons("forall-stmt")}
-
+  Label? 'FORALL' ForallHeader ForallAssignmentStmt-> ForallStmt           {cons("ForallStmt")}
 
 %%TODO - what with the following
 %%
@@ -441,7 +442,9 @@ context-free priorities
 
 %% defined-unary-op has highest priority followed by **
 %%
-  Expr '**' Expr        -> Expr {cons("PowerExpr"), right}
+    DefinedUnaryOp Expr   -> Expr {cons("DefUnaryExpr")}
+  >
+    Expr '**' Expr        -> Expr {cons("PowerExpr"), right}
   >
   { left:
     Expr '*' Expr       -> Expr {cons("MultExpr"), left}
@@ -460,10 +463,20 @@ context-free priorities
   > Expr '//' Expr      -> Expr {cons("ConcatExpr"), left}
   >
   { left:
-    Expr '=='  Expr     -> Expr {cons("EqExpr"),    left}
-    Expr '/='  Expr     -> Expr {cons("NotEqExpr"), left}
+    Expr '.EQ.' Expr    -> Expr {cons("EQ_Expr"), left}
+    Expr '.NE.' Expr    -> Expr {cons("NE_Expr"), left}
+    Expr '.LT.' Expr    -> Expr {cons("LT_Expr"), left}
+    Expr '.LE.' Expr    -> Expr {cons("LE_Expr"), left}
+    Expr '.GT.' Expr    -> Expr {cons("GT_Expr"), left}
+    Expr '.GE.' Expr    -> Expr {cons("GE_Expr"), left}
+    Expr '=='   Expr    -> Expr {cons("EQ_Expr"), left}
+    Expr '/='   Expr    -> Expr {cons("NE_Expr"), left}
+    Expr '<'    Expr    -> Expr {cons("LT_Expr"), left}
+    Expr '<='   Expr    -> Expr {cons("LE_Expr"), left}
+    Expr '>'    Expr    -> Expr {cons("GT_Expr"), left}
+    Expr '>='   Expr    -> Expr {cons("GE_Expr"), left}
   }
-  > Expr '.NOT.' Expr   -> Expr {cons("NotExpr"), left}
+  >      '.NOT.' Expr   -> Expr {cons("NotExpr")}
   > Expr '.AND.' Expr   -> Expr {cons("AndExpr"), left}
   > Expr '.OR.'  Expr   -> Expr {cons("OrExpr"),  left}
   >
@@ -473,4 +486,5 @@ context-free priorities
   }
 %%
 %% defined-binary-op has lowest priority
+  > Expr DefinedBinaryOp Expr -> Expr {cons("DefBinExpr")}
 

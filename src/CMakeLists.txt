@@ -726,6 +726,7 @@ set( libastTokenStream_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/doCompleteMapping.C  
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/linearizeAST.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/unparseMacro.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/tokenStreamMapping.C
    )
 
 

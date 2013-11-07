@@ -3617,7 +3617,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      frontEndCommandLine.push_back("--tokens");
 #endif
 
-     if (get_output_tokens() == true)
+     if (get_unparse_tokens() == true)
         {
        // Note that this will cause all other c_actions to not be executed (resulting in an empty file).
        // So this makes since to run in an analysis mode only, not for generation of code or compiling
