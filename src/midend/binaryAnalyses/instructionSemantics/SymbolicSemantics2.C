@@ -630,8 +630,6 @@ void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_->copy());
-    a->defined_by(cur_insn);
-
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
 }
@@ -674,7 +672,6 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
     SValuePtr value = SValue::promote(value_->copy());
-    value->defined_by(cur_insn);
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     assert(8==nbits || 16==nbits || 32==nbits);
