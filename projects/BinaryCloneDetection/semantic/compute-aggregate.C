@@ -93,6 +93,194 @@ get_database_groups(std::string prefix)
   return db_groups;
 }
 
+void
+compute_percent_similarity_statistics( double bucket_size, double increment, std::string group, std::string name, SqlDatabase::TransactionPtr transaction, SqlDatabase::TransactionPtr r_transaction)
+{
+
+  int num_pairs = transaction->statement("select count(*) from semantic_funcsim")->execute_int();
+
+
+  transaction->execute("drop table IF EXISTS fr_percent_similar");
+  transaction->execute("create table fr_percent_similar(similarity_low double precision, similarity_middle double precision," 
+      " similarity_high double precision, percent double precision);");
+
+  SqlDatabase::StatementPtr pecent_similar_stmt = transaction->statement("insert into fr_percent_similar"
+      // 0        1         2           3          4
+      "(similarity_low, similarity_middle, similarity_high, percent) "
+      " values (?, ?, ?, ?)"
+      );
+
+  for(double cur_bucket = 0.0; cur_bucket <= 1.0+bucket_size ; cur_bucket+=increment )
+  {
+
+    int num_matches = transaction->statement("select count(*) from semantic_funcsim where "
+        "     similarity >= " + boost::lexical_cast<std::string>(cur_bucket - bucket_size) +
+        " AND similarity <  " + boost::lexical_cast<std::string>(cur_bucket + bucket_size) )->execute_int();
+
+    pecent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
+    pecent_similar_stmt->bind(1, cur_bucket);
+    pecent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
+    pecent_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+
+    pecent_similar_stmt->execute();
+
+ 
+    //insert into global db
+    SqlDatabase::StatementPtr global_percent_similar_stmt = r_transaction->statement("insert into fr_percent_similar"
+        // 0        1         2           3          4
+        "(group_name, name, similarity_low, similarity_middle, similarity_high, percent) "
+        " values (?, ?, ?, ?, ?, ?)"
+        );
+
+    global_percent_similar_stmt->bind(0, group);
+    global_percent_similar_stmt->bind(1, name);
+    global_percent_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
+    global_percent_similar_stmt->bind(3, cur_bucket);
+    global_percent_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
+    global_percent_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+
+    global_percent_similar_stmt->execute();
+
+  }
+}
+
+void
+compute_mean_similarity_statistics( double bucket_size, double increment, std::string group, std::string name, SqlDatabase::TransactionPtr transaction, SqlDatabase::TransactionPtr r_transaction)
+{
+  int num_pairs = transaction->statement("select count(*) from semantic_funcsim")->execute_int();
+
+
+  transaction->execute("create table fr_mean_similarity as  select coalesce(sum(sf.similarity)/"+
+      boost::lexical_cast<std::string>(num_pairs)+     
+      " ,0) as similarity,  ttf.id as func_id from semantic_funcsim as sf "+ 
+      " join semantic_functions as ttf on ttf.id = sf.func1_id  OR ttf.id = sf.func2_id GROUP BY ttf.id;"
+      );
+
+
+  transaction->execute("drop table IF EXISTS fr_mean_similar");
+  transaction->execute("create table fr_mean_similar(similarity_low double precision, similarity_middle double precision," 
+      " similarity_high double precision, percent double precision);");
+
+  SqlDatabase::StatementPtr mean_similar_stmt = transaction->statement("insert into fr_mean_similar"
+      // 0        1         2           3          4
+      "(similarity_low, similarity_middle, similarity_high, percent) "
+      " values (?, ?, ?, ?)"
+      );
+
+  for(double cur_bucket = 0.0; cur_bucket <= 1.0+bucket_size ; cur_bucket+=increment )
+  {
+
+    int num_matches = transaction->statement("select count(*) from fr_mean_similarity where "
+        "     similarity >= " + boost::lexical_cast<std::string>(cur_bucket - bucket_size) +
+        " AND similarity <  " + boost::lexical_cast<std::string>(cur_bucket + bucket_size) )->execute_int();
+
+    mean_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
+    mean_similar_stmt->bind(1, cur_bucket);
+    mean_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
+    mean_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+
+    mean_similar_stmt->execute();
+
+
+    //insert into global db
+    SqlDatabase::StatementPtr global_mean_similar_stmt = r_transaction->statement("insert into fr_mean_similar"
+        // 0        1         2           3          4
+        "(group_name, name, similarity_low, similarity_middle, similarity_high, percent) "
+        " values (?, ?, ?, ?, ?, ?)"
+        );
+
+    global_mean_similar_stmt->bind(0, group);
+    global_mean_similar_stmt->bind(1, name);
+    global_mean_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
+    global_mean_similar_stmt->bind(3, cur_bucket);
+    global_mean_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
+    global_mean_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+
+    global_mean_similar_stmt->execute();
+  
+  }
+
+};
+
+void
+compute_aggregate_statistics(double bucket_size, double increment, SqlDatabase::TransactionPtr r_transaction)
+{
+
+  //compute percent similar
+  r_transaction->execute("drop table IF EXISTS aggregate_percent;");
+  r_transaction->execute("create table aggregate_percent( similarity_low double precision,"
+      " similarity_middle double precision, similarity_high double precision, " 
+      " mean double precision, minimum double precision, maximum double precision, variance double precision);");
+
+  SqlDatabase::StatementPtr percent_similar_stmt = r_transaction->statement("insert into aggregate_percent"
+      // 0        1         2           3          4
+      "(similarity_low, similarity_middle, similarity_high, mean, minimum, maximum, variance) "
+      " values (?, ?, ?, ?, ?, ?, ?)"
+      );
+
+
+  for(double cur_bucket = 0.0; cur_bucket <= 1.0+bucket_size ; cur_bucket+=increment )
+  {
+    SqlDatabase::StatementPtr stmt = r_transaction->statement( "select percent from fr_percent_similar where "
+        " similarity_middle < " + boost::lexical_cast<std::string>(cur_bucket + bucket_size) +
+        " AND similarity_middle > " + boost::lexical_cast<std::string>(cur_bucket - bucket_size) );
+
+    accumulator_set<double, features< tag::min, tag::max, tag::mean, tag::variance > > percents;
+
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+      percents(row.get<double>(0));
+    }
+
+    percent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size);
+    percent_similar_stmt->bind(1, cur_bucket);
+    percent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
+    percent_similar_stmt->bind(3, mean(percents));
+    percent_similar_stmt->bind(4, min(percents));
+    percent_similar_stmt->bind(5, max(percents));
+    percent_similar_stmt->bind(6, sqrt(boost::accumulators::variance(percents)));
+
+    percent_similar_stmt->execute();
+  }
+
+  //compute mean similar
+  r_transaction->execute("drop table IF EXISTS aggregate_mean;");
+  r_transaction->execute("create table aggregate_mean( similarity_low double precision,"
+      " similarity_middle double precision, similarity_high double precision, " 
+      " mean double precision, minimum double precision, maximum double precision, variance double precision);");
+
+  SqlDatabase::StatementPtr mean_similar_stmt = r_transaction->statement("insert into aggregate_mean"
+      // 0        1         2           3          4
+      "(similarity_low, similarity_middle, similarity_high, mean, minimum, maximum, variance) "
+      " values (?, ?, ?, ?, ?, ?, ?)"
+      );
+
+  for(double cur_bucket = 0.0; cur_bucket <= 1.0+bucket_size ; cur_bucket+=increment )
+  {
+    SqlDatabase::StatementPtr stmt = r_transaction->statement( "select percent from fr_mean_similar where "
+        " similarity_middle < " + boost::lexical_cast<std::string>(cur_bucket + bucket_size) +
+        " AND similarity_middle > " + boost::lexical_cast<std::string>(cur_bucket - bucket_size) );
+
+    accumulator_set<double, features< tag::min, tag::max, tag::mean, tag::variance > > percents;
+
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+      percents(row.get<double>(0));
+    }
+
+    mean_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size);
+    mean_similar_stmt->bind(1, cur_bucket);
+    mean_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
+    mean_similar_stmt->bind(3, mean(percents));
+    mean_similar_stmt->bind(4, min(percents));
+    mean_similar_stmt->bind(5, max(percents));
+    mean_similar_stmt->bind(6, sqrt(boost::accumulators::variance(percents)));
+
+
+    mean_similar_stmt->execute();
+  }
+
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -103,6 +291,9 @@ int main(int argc, char *argv[])
   double sem_threshold  = 0.7;
   double path_threshold = 0.5;
   double cg_threshold   = 0.5;
+
+  double bucket_size = 0.0250;
+  double increment   = 0.0500;
 
   int argno = 1;
   for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -152,6 +343,24 @@ int main(int argc, char *argv[])
       "precision_min, precision_max, precision_mean, precision_variance)"
       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
+  r_transaction->execute("drop table IF EXISTS per_specimen_results");
+  r_transaction->execute("create table per_specimen_results( db_group text, name text, " 
+      " precision double precision, specificity double precision, " 
+      " recall double precision" 
+      " );");
+
+
+  SqlDatabase::StatementPtr per_insert_stmt = r_transaction->statement("insert into per_specimen_results"
+      // 0        1         2           3          4
+      "(db_group, name,  precision, specificity, recall ) "
+      " values (?, ?, ?, ?, ?)");
+
+
+  r_transaction->execute("drop table IF EXISTS fr_percent_similar; drop table IF EXISTS fr_mean_similar;");
+  r_transaction->execute("create table fr_percent_similar(group_name text, name text, similarity_low double precision, similarity_middle double precision," 
+      " similarity_high double precision, percent double precision);");
+  r_transaction->execute("create table fr_mean_similar(group_name text, name text, similarity_low double precision, similarity_middle double precision," 
+      " similarity_high double precision, percent double precision);");
 
 
   std::map<std::string, std::set<std::string> >  db_groups = get_database_groups(prefix);
@@ -188,10 +397,27 @@ int main(int argc, char *argv[])
       SqlDatabase::StatementPtr stmt = transaction->statement( "select recall, specificity, precision from fr_results_precision_recall" );
 
       for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        recalls(row.get<double>(0));
-        specificity(row.get<double>(1));
-        precision(row.get<double>(2));
+        double cur_recall   = row.get<double>(0);
+        double cur_specificity = row.get<double>(1);
+        double cur_precision   = row.get<double>(2);
+        recalls(cur_recall);
+        specificity(cur_specificity);
+        precision(cur_precision);
+  
+	per_insert_stmt->bind(0, it->first);
+	per_insert_stmt->bind(1, *m_it); 
+	per_insert_stmt->bind(2, cur_recall);  
+	per_insert_stmt->bind(3, cur_specificity);  
+	per_insert_stmt->bind(4, cur_precision);  
+
+        per_insert_stmt->execute();
+
       }
+
+      compute_percent_similarity_statistics(bucket_size, increment, it->first, *m_it, transaction, r_transaction);
+      compute_mean_similarity_statistics(bucket_size,  increment, it->first, *m_it, transaction, r_transaction);
+
+      transaction->commit();
     }
 
     insert_stmt->bind(0, it->first);
@@ -211,6 +437,8 @@ int main(int argc, char *argv[])
     insert_stmt->execute();
 
 
+    compute_aggregate_statistics(bucket_size, increment, r_transaction);
+
 
     std::cout << "\n\n Current db group: " << it->first << std::endl;
     std::cout << "\n\n    recall is      " << mean(recalls)     << "+-" << sqrt(boost::accumulators::variance(recalls))     << " min " << min(recalls)     << " max " << max(recalls) ;
@@ -220,5 +448,6 @@ int main(int argc, char *argv[])
   }
 
   r_transaction->commit();
+
   return 0;
 }

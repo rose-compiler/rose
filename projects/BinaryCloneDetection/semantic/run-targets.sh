@@ -22,7 +22,7 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=100 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+generate_inputs_flags='--ngroups=5 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
 add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
 get_pending_tests_flags='--size=20'
 run_tests_nprocs=''
@@ -138,7 +138,7 @@ for TARGET_DIR in $TARGET_DIRS; do
 
 	    # Only run if we don't already have this database and we can create it
             # Ignore error if the db already exists
-	    [ "$DROP_DB" = yes ] && ( dropdb $DB_NAME )
+	    [ "$DROP_DB" = yes ] && ( psql postgres -c "DROP DATABASE IF EXISTS $DB_NAME" )
 	    [ "$CREATE_DB" = yes ] || continue
 	    if ! createdb $DB_NAME >/dev/null; then
 		echo "database '$DB_NAME' exists or could not be created; skipping $TARGET_DIR"
