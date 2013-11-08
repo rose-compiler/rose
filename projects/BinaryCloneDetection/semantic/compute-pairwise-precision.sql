@@ -113,7 +113,7 @@ create table fr_clone_pairs as
         from semantic_funcsim sim 
         join api_call_similarity api_sem on api_sem.func1_id = sim.func1_id AND api_sem.func2_id = sim.func2_id
         where sim.similarity >= (select similarity_threshold from fr_settings) 
-  AND api_sem.min_similarity >= (select path_similarity_threshold from fr_settings) 
+  AND api_sem.ave_similarity >= (select path_similarity_threshold from fr_settings) 
   AND api_sem.cg_similarity >=  (select cg_similarity_threshold   from fr_settings)
   --AND sim.path_max_euclidean_d_ratio - sim.path_min_euclidean_d_ratio < 0.5
   --AND sim.path_max_euclidean_d_ratio < 3.0

@@ -174,7 +174,7 @@ if [ "$#" -gt 0 ]; then
     fi
     for specimen in "$@"; do
 	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BLDDIR/../semantic"
-	execute $BLDDIR/../semantic/11-add-functions --save-instructions $add_functions_flags "$dbname" "$specimen" || exit 1
+	execute $BLDDIR/../semantic/11-add-functions $add_functions_flags "$dbname" "$specimen" || exit 1
     done
 fi
 

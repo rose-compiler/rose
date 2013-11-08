@@ -313,13 +313,14 @@ main(int argc, char *argv[])
               <<" to the database\n";
 
     // Get source code location info for all instructions and update the FilesTable
-    BinaryAnalysis::DwarfLineMapper dlm(binfile);
+    BinaryAnalysis::DwarfLineMapper* dlm;
 
     if(save_instructions){
-      dlm.fix_holes();
+      dlm = new BinaryAnalysis::DwarfLineMapper(binfile);
+      dlm->fix_holes();
       std::vector<SgAsmInstruction*> all_insns = SageInterface::querySubTree<SgAsmInstruction>(binfile);
       for (std::vector<SgAsmInstruction*>::iterator ii=all_insns.begin(); ii!=all_insns.end(); ++ii) {
-        BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src((*ii)->get_address());
+        BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm->addr2src((*ii)->get_address());
         if (srcinfo.file_id>=0)
           files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
       }
@@ -374,22 +375,29 @@ main(int argc, char *argv[])
         stmt1->bind(11, cmd_id);
         stmt1->execute();
 
-	if(save_instructions){
-		// Save instructions
-		for (size_t i=0; i<insns.size(); ++i) {
-			BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
-			int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
-			stmt2->bind(0, insns[i]->get_address());
-			stmt2->bind(1, insns[i]->get_size());
-			stmt2->bind(2, unparseInstruction(insns[i]));
-			stmt2->bind(3, fi->first);
-			stmt2->bind(4, i);
-			stmt2->bind(5, file_id);
-			stmt2->bind(6, srcinfo.line_num);
-			stmt2->bind(7, cmd_id);
-			stmt2->execute();
+	// Save instructions
+	for (size_t i=0; i<insns.size(); ++i) {
+
+		int file_id  = -1;
+                int line_num = -1; 
+		if(save_instructions){
+			BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm->addr2src(insns[i]->get_address());
+			srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+                        line_num = srcinfo.line_num;
 		}
+
+
+		stmt2->bind(0, insns[i]->get_address());
+		stmt2->bind(1, insns[i]->get_size());
+		stmt2->bind(2, unparseInstruction(insns[i]));
+		stmt2->bind(3, fi->first);
+		stmt2->bind(4, i);
+		stmt2->bind(5, file_id);
+		stmt2->bind(6, line_num);
+		stmt2->bind(7, cmd_id);
+		stmt2->execute();
 	}
+
     }
 
     // Save specimen information
