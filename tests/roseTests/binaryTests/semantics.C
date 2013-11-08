@@ -357,7 +357,6 @@ analyze_interp(SgAsmInterpretation *interp)
         formatter.set_suppress_initial_values();
         BaseSemantics::DispatcherPtr dispatcher;
         if (do_trace) {
-            std::cerr <<"Setting up RISC operator tracing...\n";
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
             trace->set_stream(stdout);
             dispatcher = DispatcherX86::instance(trace);
