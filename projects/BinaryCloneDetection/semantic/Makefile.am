@@ -111,7 +111,7 @@ noinst_PROGRAMS += 105-api-similarity
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 110-120: run evaluation metrics on pairwise binaries
 noinst_PROGRAMS += 110_compute_aggregate
-110_compute_aggregate_SOURCES = compute-aggregate.C FailureDetectionSchema.C 
+110_compute_aggregate_SOURCES = 110-compute-aggregate.C FailureDetectionSchema.C 
 110_compute_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
 110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += compute-pairwise-precision.sql

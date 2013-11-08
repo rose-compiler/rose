@@ -138,7 +138,7 @@ for TARGET_DIR in $TARGET_DIRS; do
 
 	    # Only run if we don't already have this database and we can create it
             # Ignore error if the db already exists
-	    [ "$DROP_DB" = yes ] && ( dropdb $DB_NAME )
+	    [ "$DROP_DB" = yes ] && ( psql postgres -c "DROP DATABASE IF EXISTS $DB_NAME" )
 	    [ "$CREATE_DB" = yes ] || continue
 	    if ! createdb $DB_NAME >/dev/null; then
 		echo "database '$DB_NAME' exists or could not be created; skipping $TARGET_DIR"
