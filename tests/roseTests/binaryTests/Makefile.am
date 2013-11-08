@@ -406,6 +406,16 @@ EXTRA_DIST += testCallDetection.ans
 testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
 
+# Unit tests for use-def (executed created below)
+TEST_TARGETS += usedef.passed
+EXTRA_DIST += usedef.ans usedef.conf
+usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
+	@$(RTH_RUN)										\
+		USE_SUBDIR=yes									\
+		TITLE="use-def unit tests"							\
+		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(BINARY_SAMPLES)/usedef"	\
+		ANS="$(srcdir)/usedef.ans"							\
+		$< $@
 
 ###############################################################################################################################
 # Instruction semantics tests.
@@ -474,7 +484,6 @@ TEST_TARGETS += intervalSemantics2.passed
 EXTRA_DIST += semantics.conf intervalSemantics2.ans
 intervalSemantics2.passed: semantics.conf intervalSemantics2
 	@$(RTH_RUN) CMD=intervalSemantics2 INPUT=i686-test1.O3.bin $< $@
-
 
 # Symbolic semantics, no SMT solver, old API
 noinst_PROGRAMS += symbolicSemantics
