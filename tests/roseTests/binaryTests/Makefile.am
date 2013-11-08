@@ -513,7 +513,7 @@ traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(R
 TEST_TARGETS += traceSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
 traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2
-	@$(RTH_RUN) CMD=traceSymbolicSemantics2 SWITCHES="--trace --test-subst --no-usedef" INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=traceSymbolicSemantics2 SWITCHES="--trace --no-usedef" INPUT=i686-test1.O3.bin $< $@
 
 # Symbolic semantics, Yices executable, old API
 noinst_PROGRAMS += yicesSemanticsExe
