@@ -116,6 +116,13 @@ noinst_PROGRAMS += 110_compute_aggregate
 110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += compute-pairwise-precision.sql
 
+noinst_PROGRAMS += 115_syscall_usage
+115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
+115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
+115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
