@@ -73,10 +73,12 @@ add_syscall_edges(DirectedGraph* G, std::vector<SgAsmFunction*>& all_functions)
 
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
 
-    for(std::vector<SgAsmInstruction*>::iterator inst_it; inst_it != insns.end(); ++inst_it)
+    for(std::vector<SgAsmInstruction*>::iterator inst_it = insns.begin(); inst_it != insns.end(); ++inst_it)
     {
       SgAsmx86Instruction *insn = isSgAsmx86Instruction(*inst_it);
-
+   
+      if(insn == NULL ) continue;
+       
       SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
 
       //On linux system calls are always interrups and all interrupts are system calls
@@ -156,7 +158,7 @@ add_call_edges_within_compilation_unit( DirectedGraph* G,
     int caller_id = funcToId[caller];
     int callee_id = funcToId[callee];
 
-    add_edge(caller_id, callee_id, *G);
+    add_edge(caller_id + ids_reserved_for_syscalls, callee_id + ids_reserved_for_syscalls, *G);
 
   }
 
@@ -195,54 +197,56 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
 
   graph_traits<DirectedGraph>::vertex_iterator i, end;
   for(tie(i, end) = vertices(graph); i != end; ++i) {
+	  if( *i < ids_reserved_for_syscalls ) continue;
 
-    std::set<int> syscalls;
-    std::set<int> func_calls;
+	  std::set<int> syscalls;
 
-    // Iterate through the child vertex indices for [current_index]
+	  // Iterate through the child vertex indices for [current_index]
 
-    std::vector<Vertex> reachable; 
+	  std::vector<Vertex> reachable; 
 
-    boost::breadth_first_search(graph, *i, 
-        boost::visitor( 
-          boost::make_bfs_visitor( 
-            boost::write_property( 
-              boost::identity_property_map(), 
-              std::back_inserter(reachable), 
-              boost::on_discover_vertex())))); 
+	  boost::breadth_first_search(graph, *i, 
+			  boost::visitor( 
+				  boost::make_bfs_visitor( 
+					  boost::write_property( 
+						  boost::identity_property_map(), 
+						  std::back_inserter(reachable), 
+						  boost::on_discover_vertex())))); 
 
-    for(std::vector<Vertex>::iterator it = reachable.begin(); it != reachable.end(); ++it ){
-      if(*it < ids_reserved_for_syscalls)
-        syscalls.insert(*i);
-      else
-        func_calls.insert(*i);
-    }
+	  for(std::vector<Vertex>::iterator it = reachable.begin(); it != reachable.end(); ++it ){
+		  if(*it < ids_reserved_for_syscalls)
+			  syscalls.insert(*it);
+	  }
 
-    if(func_calls.size() > 0 && syscalls.size() > 0 )
-    {
-      for(std::set<int>::iterator fit = func_calls.begin(); fit != func_calls.end(); ++fit)
-      {
-        for(std::set<int>::iterator sit = syscalls.begin(); sit != syscalls.end(); ++sit )
-        {
-          int caller_id = *fit;
-          SgAsmFunction* caller = all_functions[caller_id];
+	  int caller_id = *i - ids_reserved_for_syscalls;
+	  ROSE_ASSERT(caller_id >= 0);
+	  SgAsmFunction* caller = all_functions[caller_id];
+	  ROSE_ASSERT( isSgAsmFunction(caller) != NULL);
 
-          int syscall_callee_id = *sit;
-          extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
+	  std::string func_name = caller->get_name();
 
-          const std::string &syscall_name = linux32_syscalls[syscall_callee_id];
 
-          stmt->bind(0, caller->get_name() /* symbol name for the caller */);
-          stmt->bind(1, syscall_callee_id);
-          stmt->bind(2, syscall_name);
+	  if(syscalls.size() > 0 && func_name.length() > 0)
+	  {
 
-          stmt->execute();
+		  for(std::set<int>::iterator sit = syscalls.begin(); sit != syscalls.end(); ++sit )
+		  {
+			  int syscall_callee_id = *sit;
+			  extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
 
-        }
+			  const std::string &syscall_name = linux32_syscalls[syscall_callee_id];
 
-      }
+			  stmt->bind(0, func_name /* symbol name for the caller */);
+			  stmt->bind(1, syscall_callee_id);
+			  stmt->bind(2, syscall_name);
+			  stmt->execute();
 
-    }
+
+		  }
+
+
+
+	  }
 
   }
 }
