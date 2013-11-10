@@ -179,16 +179,31 @@ create_reachability_graph( std::vector<SgAsmFunction*>& all_functions, SgAsmInte
 void
 add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, std::vector<SgAsmFunction*> all_functions)
 {
+
+  //load the functions in db into memory
+  std::map<std::string, std::set<int> > symbolToId;
+
+  SqlDatabase::StatementPtr cmd3 = tx->statement( "select id, name  from semantic_functions");
+  for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
+     int func_id           = r.get<int64_t>(0);
+     std::string func_name = r.get<std::string>(1);
+
+     if ( func_name.size() == 0  ) continue; 
+
+     std::map<std::string, std::set<int> >::iterator fit = symbolToId.find(func_name);
+     if ( fit == symbolToId.end() ){
+        std::set<int> function_ids;
+        function_ids.insert(func_id);
+        symbolToId[func_name] = function_ids;
+     }else{
+        fit->second.insert(func_id);
+     }
+
+  }
+
+
   DirectedGraph& graph = *G;
-  //Create a helper data structure for locating id in all_functions from a function pointer
-  std::map<SgAsmFunction*, int> funcToId;
-
-  for (unsigned int i = 0; i < all_functions.size(); ++i) {
-    SgAsmFunction *func = all_functions[i];
-    funcToId[func] = i;
-  } 
-
-  SqlDatabase::StatementPtr stmt = tx->statement("insert into syscalls_made(caller_name, syscall_id, syscall_name) values(?,?,?)");
+  SqlDatabase::StatementPtr stmt = tx->statement("insert into syscalls_made(caller, syscall_id, syscall_name) values(?,?,?)");
 
   //Iterate over all components of the reachability graph
 
@@ -224,9 +239,14 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
 	  ROSE_ASSERT( isSgAsmFunction(caller) != NULL);
 
 	  std::string func_name = caller->get_name();
+          if(func_name.length() == 0 ) continue;
+
+          std::map<std::string, std::set<int> >::iterator equivalent_ids = symbolToId.find(func_name);
+          if(equivalent_ids == symbolToId.end())
+              equivalent_ids = symbolToId.find(func_name+"@plt");
 
 
-	  if(syscalls.size() > 0 && func_name.length() > 0)
+	  if(syscalls.size() > 0 && equivalent_ids != symbolToId.end())
 	  {
 
 		  for(std::set<int>::iterator sit = syscalls.begin(); sit != syscalls.end(); ++sit )
@@ -235,11 +255,14 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
 			  extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
 
 			  const std::string &syscall_name = linux32_syscalls[syscall_callee_id];
-
-			  stmt->bind(0, func_name /* symbol name for the caller */);
-			  stmt->bind(1, syscall_callee_id);
-			  stmt->bind(2, syscall_name);
-			  stmt->execute();
+                           
+                          for(std::set<int>::iterator equivalent_id = equivalent_ids->second.begin();
+                              equivalent_id != equivalent_ids->second.end(); ++ equivalent_id){
+			    stmt->bind(0, *equivalent_id);
+			    stmt->bind(1, syscall_callee_id);
+			    stmt->bind(2, syscall_name);
+			    stmt->execute();
+                          }
 
 
 		  }
@@ -249,6 +272,13 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
 	  }
 
   }
+}
+
+void
+compute_percent_syscalls(SqlDatabase::TransactionPtr tx)
+{
+  
+
 }
 
 int
@@ -295,7 +325,7 @@ main(int argc, char *argv[])
     transaction = conn->transaction();
 
     transaction->execute("drop table IF EXISTS syscalls_made;");
-    transaction->execute("create table syscalls_made( caller_name text, syscall_id integer, syscall_name text );");
+    transaction->execute("create table syscalls_made( caller integer references semantic_functions(id), syscall_id integer, syscall_name text );");
 
 
     std::cout << "database name is : " << std::string(argv[argno]) << std::endl;
