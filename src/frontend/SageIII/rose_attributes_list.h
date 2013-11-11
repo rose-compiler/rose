@@ -534,6 +534,9 @@ class ROSEAttributesList
 
        // DQ (12/15/2012): Added access function.
           std::set<int> & get_filenameIdSet();
+
+       // DQ (9/29/2013): Added to support adding processed CPP directives and comments as tokens to token list.
+          PreprocessingInfo* lastElement();
    };
 
 //

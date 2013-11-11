@@ -1,5 +1,4 @@
 
-
 %option noyywrap
 %option prefix="Rose_C_Cxx_"
 %option outfile="lex.yy.c"
@@ -222,6 +221,8 @@ struct stream_element
 
 using namespace std;
 
+#define DEBUG_LEX_PASS 0
+
 // list <stream_element*> ROSE_token_stream;
 // typedef list <stream_element*>:: iterator SE_ITR;
 LexTokenStreamTypePointer ROSE_token_stream_pointer = NULL;
@@ -234,16 +235,17 @@ struct file_pos_info curr_beginning;
 //#ifdef ROSE_TOKEN_IDENTIFIERS_H
 //#define ROSE_TOKEN_IDENTIFIERS_H
 
-//These would be used in the file INFO
-//File info
+#if 0
+// These are now moved to general_token_defs.h.
+
 namespace ROSE_token_ids
-{
-    //whitespace token IDs
-    enum whitespace
-    { 
-        T_NOTKNOWN,
-        //The following are non UNIX whitespace
-    };
+   {
+   // whitespace token IDs
+      enum whitespace
+         {
+           T_NOTKNOWN,
+        // The following are non UNIX whitespace
+         };
 
 #if 0
     //I brazenly copied from the interface of WAVE for these enums
@@ -397,22 +399,25 @@ enum ROSE_C_CXX_alternate_tok
     };
 
 enum ROSE_C_CXX_Additional_Info
-{
-      C_CXX_COMMENTS = 0 + 100000,
-      C_CXX_STRING_LITERALS = 1 + 100000,
-      C_CXX_IDENTIFIER = 2 + 100000,
-      C_CXX_UNIDENTIFIED_TOKEN = 3 + 100000,
-      C_CXX_ERROR = 4 + 100000
+   {
+     C_CXX_COMMENTS           = 0 + 100000,
+     C_CXX_STRING_LITERALS    = 1 + 100000,
+     C_CXX_IDENTIFIER         = 2 + 100000,
+     C_CXX_PREPROCESSING_INFO = 3 + 100000,
+     C_CXX_UNIDENTIFIED_TOKEN = 4 + 100000,
+  // DQ (10/12/2013): Added C_CXX_SYNTAX
+     C_CXX_SYNTAX             = 5 + 100000,
+     C_CXX_WHITESPACE         = 6 + 100000,
+     C_CXX_ERROR              = 7 + 100000
+   };
+
 };
-
-
-
-};
+#endif
 
 using namespace ROSE_token_ids;
 
 token_element ROSE_C_CXX_keyword_map[] = 
-{
+   {
         {"asm",              C_CXX_ASM }, 
         {"auto",             C_CXX_AUTO },
         {"bool",             C_CXX_BOOL },
@@ -477,7 +482,7 @@ token_element ROSE_C_CXX_keyword_map[] =
         {"volatile",         C_CXX_VOLATILE },
         {"wchar_t",          C_CXX_WCHART },
         {"while",            C_CXX_WHILE }
-};
+   };
 
 
 
@@ -488,27 +493,247 @@ token_element ROSE_C_CXX_keyword_map[] =
 //returns -1 if the string is not a keyword
 //otherwise returns the token ID
 int identify_if_C_CXX_keyword(std::string str)
-{
-    //In FORTRAN, the identifiers are case insensitive.
-    //So, variable 'ArEa' is the same as 'aReA'
+   {
+  // In FORTRAN, the identifiers are case insensitive.
+  // So, variable 'ArEa' is the same as 'aReA'
 
-    string lowered_str;
-    for(unsigned int i = 0; i < str.size(); i++)
-    {
-        lowered_str += (unsigned char)tolower(str[i]);
-    }
-
-    //printf("got called with %s. Converted to %s\n", str.c_str(), lowered_str.c_str());
-    for(int i = 0; i < NUM_C_CXX_KEYWORDS; i++)
-    {
-        if(lowered_str == ROSE_C_CXX_keyword_map[i].token_lexeme)
+     string lowered_str;
+     for(unsigned int i = 0; i < str.size(); i++)
         {
-            return (ROSE_C_CXX_keyword_map[i].token_id);
+          lowered_str += (unsigned char)tolower(str[i]);
         }
-    }
-    return -1;
-}
 
+  // DQ (9/29/2013): This loop over keywords is rather inifficent, there should be a better implementation.
+
+  // printf("got called with %s. Converted to %s\n", str.c_str(), lowered_str.c_str());
+     for(int i = 0; i < NUM_C_CXX_KEYWORDS; i++)
+        {
+          if(lowered_str == ROSE_C_CXX_keyword_map[i].token_lexeme)
+             {
+               return (ROSE_C_CXX_keyword_map[i].token_id);
+             }
+        }
+
+     return -1;
+   }
+
+
+int getNumberOfLines( std::string internalString )
+   {
+  // This code is copied from the similar support in rose_attributes_list.C.
+
+     int line = 0;
+     int i    = 0;
+     while (internalString[i] != '\0')
+        {
+          if (internalString[i] == '\n')
+             {
+               line++;
+             }
+          i++;
+        }
+
+     return line;
+   }
+
+int getColumnNumberOfEndOfString( std::string internalString )
+   {
+  // This code is copied from the similar support in rose_attributes_list.C.
+
+     int col = 1;
+     int i   = 0;
+
+  // DQ (10/1/2013): I think we want to have the column number after a '\n' be zero.
+  // DQ (10/27/2006): the last line has a '\n' so we need the length 
+  // of the last line before the '\n" triggers the counter to be reset!
+  // This fix is required because the strings we have include the final '\n"
+     int previousLineLength = col;
+     while (internalString[i] != '\0')
+        {
+          if (internalString[i] == '\n')
+             {
+            // previousLineLength = col;
+               col = 1;
+               previousLineLength = col;
+             }
+            else
+             {
+               col++;
+               previousLineLength = col;
+             }
+          i++;
+        }
+
+     int endingColumnNumber   = previousLineLength;
+
+  // printf ("lexer: getColumnNumberOfEndOfString(): endingColumnNumber = %d \n",endingColumnNumber);
+
+#if 0
+  // If this is a one line comment then the ending position is the length of the comment PLUS the starting column position
+     if (getNumberOfLines(internalString) == 1)
+        {
+       // endingColumnNumber += get_file_info()->get_col() - 1;
+          endingColumnNumber += internalString.length() - 1;
+        }
+#endif
+
+     return endingColumnNumber;
+   }
+
+
+void add_token (std::string str, int preproc_line_num, int & preproc_column_num, int tokenId )
+   {
+  // This function refactors the support to build a token and add it to the
+  // list of tokens. It also increments the preproc_column_num as well.
+
+     token_element *p_tok_elem = new token_element;
+     p_tok_elem->token_lexeme = yytext;
+
+     int is_keyword = identify_if_C_CXX_keyword(str);
+
+#if DEBUG_LEX_PASS
+     printf("%s is either a %s token \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier");
+#endif
+
+  // found a keyword?
+     if(is_keyword != -1)
+        {
+       // printf("%s is a keyword\n", str.c_str());
+          p_tok_elem->token_id = is_keyword;
+        }
+       else
+        {
+       // printf("%s is not a keyword\n", str.c_str());
+          if (tokenId == C_CXX_SYNTAX)
+             {
+               p_tok_elem->token_id = C_CXX_SYNTAX;
+             }
+            else
+             {
+               if (tokenId == C_CXX_WHITESPACE)
+                  {
+                    p_tok_elem->token_id = C_CXX_WHITESPACE;
+                  }
+                 else
+                  {
+                    p_tok_elem->token_id = C_CXX_IDENTIFIER;
+                  }
+             }
+        }
+
+     stream_element *p_se = new stream_element;
+     p_se->p_tok_elem = p_tok_elem;
+
+  // Added a pointer to the processed PreprocessingInfo object.
+     p_se->p_preprocessingInfo = NULL;
+
+  // DQ (9/29/2013): uncommented so that we can
+  // set the source position.
+     p_se->beginning_fpi.line_num = preproc_line_num;
+     p_se->beginning_fpi.column_num = preproc_column_num;
+
+     int number_of_lines = getNumberOfLines(str);
+
+  // p_se->ending_fpi.line_num = preproc_line_num;
+     p_se->ending_fpi.line_num = preproc_line_num + number_of_lines;
+
+     int last_string_length = getColumnNumberOfEndOfString(str);
+
+  // printf ("In add_token(): preproc_column_num = %d last_string_length = %d \n",preproc_column_num,last_string_length);
+
+  // p_se->ending_fpi.column_num = preproc_column_num-1;
+  // p_se->ending_fpi.column_num = (preproc_column_num-1) + (last_string_length - 1);
+     if (number_of_lines == 0)
+        {
+          p_se->ending_fpi.column_num = (preproc_column_num-1) + (last_string_length - 1);
+       // printf ("In add_token(): ending_fpi.column_num set to (preproc_column_num-1) + (last_string_length - 1) \n");
+        }
+       else
+        {
+          p_se->ending_fpi.column_num = (last_string_length - 1);
+       // printf ("In add_token(): ending_fpi.column_num set to (last_string_length - 1) \n");
+        }
+
+  // When using the std::string we need to subtract 1 for the null terminal.
+  // preproc_column_num += strlen(yytext);
+     preproc_column_num += str.length();
+
+  // push the element onto the token stream
+     ROSE_token_stream_pointer->push_back(p_se);
+   }
+
+
+void add_preprocessingInfo_to_token_stream (PreprocessingInfo* preprocessingInfo, int preproc_line_num, int preproc_column_num, int number_of_lines)
+   {
+  // This function is overloaded with the one above and refactors the 
+  // support to build a token and add it to the list of tokens. It 
+  // also increments the preproc_column_num as well.
+
+     token_element *p_tok_elem = new token_element;
+
+  // We don't have to set this since it will be an empty string.
+  // unless it is helpful to set the string to that of the 
+  // PreprocessingInfo.
+     ROSE_ASSERT(preprocessingInfo != NULL);
+     p_tok_elem->token_lexeme = preprocessingInfo->getString();
+
+     p_tok_elem->token_id = C_CXX_PREPROCESSING_INFO;
+
+#if DEBUG_LEX_PASS
+     printf("This is a PreprocessingInfo object processed as a token: preprocessingInfo = %p \n",preprocessingInfo);
+#endif
+
+     stream_element *p_se = new stream_element;
+     p_se->p_tok_elem = p_tok_elem;
+
+  // Added a pointer to the processed PreprocessingInfo object.
+     p_se->p_preprocessingInfo = preprocessingInfo;
+
+  // DQ (9/29/2013): uncommented so that we can
+  // set the source position.
+     p_se->beginning_fpi.line_num   = preproc_line_num;
+     p_se->beginning_fpi.column_num = preproc_column_num;
+
+  // preproc_column_num += p_tok_elem->token_lexeme.length();
+
+  // Adjust the increment in the current line number based on the size of the macro.
+  // Note: we don't want to modify the value of preproc_line_num, since that will have 
+  // been taken care of in the processing of the CPP directive or C/C++ comment.
+  // int numberOfLines = preprocessingInfo->getNumberOfLines();
+  // ROSE_ASSERT(numberOfLines >= 1);
+#if 0
+     printf ("In add_token(PreprocessingInfo*,int,int&): line column number correctly?: numberOfLines = %d \n",numberOfLines);
+#endif
+  // p_se->ending_fpi.line_num   = preproc_line_num + (numberOfLines - 1);
+
+#if 0
+     printf ("In add_token(PreprocessingInfo*,int,int&): line column number correctly?: number_of_lines = %d \n",number_of_lines);
+#endif
+     p_se->ending_fpi.line_num = preproc_line_num + number_of_lines;
+
+  // preproc_column_num = preprocessingInfo->getColumnNumberOfEndOfString();
+
+     int last_string_length = getColumnNumberOfEndOfString(p_tok_elem->token_lexeme);
+
+  // printf ("In add_preprocessingInfo_to_token_stream(): preproc_column_num = %d last_string_length = %d \n",preproc_column_num,last_string_length);
+
+  // p_se->ending_fpi.column_num = preproc_column_num-1;
+  // p_se->ending_fpi.column_num = last_string_length - 1;
+
+     if (number_of_lines == 0)
+        {
+          p_se->ending_fpi.column_num = (preproc_column_num-1) + (last_string_length - 1);
+       // printf ("In add_preprocessingInfo_to_token_stream(): ending_fpi.column_num set to (preproc_column_num-1) + (last_string_length - 1) \n");
+        }
+       else
+        {
+          p_se->ending_fpi.column_num = (last_string_length - 1);
+       // printf ("In add_preprocessingInfo_to_token_stream(): ending_fpi.column_num set to (last_string_length - 1) \n");
+        }
+
+  // push the element onto the token stream
+     ROSE_token_stream_pointer->push_back(p_se);
+   }
 
 
 //#endif
@@ -612,13 +837,16 @@ whitespace              [[:blank:]]+
 I am not sure if the whitespacenl would count the number of newlines in code that has backslashes properly.
 */
 %}
+
 whitespacenl            [[:space:]]+
 whitespace              [[:blank:]]+
 lineprefix              ^{whitespace}*"#"{whitespace}*
 macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
 mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
+languagesyntax         "<" | ">" | "?" | ":"
 %s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO
 %%
+
 %{
 int preproc_line_num = 1;
         /*bad way to initialize*/
@@ -629,39 +857,66 @@ int preproc_start_column_num = preproc_column_num;
 BEGIN NORMAL;
 %}
 <NORMAL>{mlinkagespecification} { 
-                                    preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart, 
-                                            yytext,globalFileName,preproc_line_num,preproc_column_num,0); 
-                                    preproc_line_num+=num_of_newlines(yytext); 
-                                    preproc_column_num+=strlen(yytext); 
+#if DEBUG_LEX_PASS
+     printf("%s is a mlinkagespecification token \n",yytext);
+#endif
+     preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart,yytext,globalFileName,preproc_line_num,preproc_column_num,0); 
+     preproc_line_num+=num_of_newlines(yytext); 
 
-                                    curr_brace_depth++; 
-                                    pushbracestack(curr_brace_depth);
-                                }
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num+=strlen(yytext); 
+
+     curr_brace_depth++; 
+     pushbracestack(curr_brace_depth);
+   }
+
         /*Handle the braces (left and right). Push and Pop the bracestack accordingly*/
 <NORMAL>"{"     { 
-                    if(!isemptystack()) 
-                    { 
-                        /* we only count braces within a linkage specification. */ 
-                        curr_brace_depth++; 
-                    } 
-                    //printf("Ram: found left brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
-                    preproc_column_num++; 
-                }
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n",yytext);
+#endif
+     if (!isemptystack()) 
+        { 
+       /* we only count braces within a linkage specification. */ 
+          curr_brace_depth++; 
+        } 
+  // printf("Ram: found left brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
+
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
 <NORMAL>"}"     { 
-                    if(!isemptystack()) 
-                    { 
-                        if(curr_brace_depth==topcurlybracestack()) 
-                        { 
-                            popbracestack(); 
-                            preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, 
-                                                            yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
-                        }
-                        curr_brace_depth--; 
-                    } 
-                    //printf("Ram: found right brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
-                    preproc_column_num++; 
-                }
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n",yytext);
+#endif
+
+     bool added_link_specification_as_token = false;
+     if (!isemptystack()) 
+        { 
+          if (curr_brace_depth==topcurlybracestack()) 
+             { 
+               popbracestack();
+
+            // The semantics of ROSEAttributesList::addElement() is to use std::vector::push_back();
+               preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
+
+               added_link_specification_as_token = true;
+
+            // This token should maybe be special since it marks the end of a link specification (later).
+               add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_line_num,preproc_column_num,0);
+             }
+
+          curr_brace_depth--; 
+        } 
+  // printf("Ram: found right brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
+
+     if (added_link_specification_as_token == false)
+        {
+          add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+        }
+  // preproc_column_num++; 
+   }
 
 <NORMAL>"("     { 
                     /*if(!isemptystack()) 
@@ -670,8 +925,12 @@ BEGIN NORMAL;
                         curr_brace_depth++; 
                     }
                     */
-                    preproc_column_num++; 
-                }
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
 <NORMAL>")"     { 
                     /*
@@ -686,40 +945,294 @@ BEGIN NORMAL;
                         curr_brace_depth--; 
                     } 
                     */
-                    preproc_column_num++; 
-                }
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
-<NORMAL>[a-zA-Z_][a-zA-Z0-9_]*       {
+     /* DQ (9/29/2013): Added additional syntax to token handling */
+<NORMAL>";"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
-                                          token_element *p_tok_elem = new token_element;
-                                          p_tok_elem->token_lexeme = yytext;
+<NORMAL>","     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
-                                          int is_keyword = identify_if_C_CXX_keyword(yytext);
-                                          //found a keyword?
-                                          if(is_keyword != -1)
-                                          {   
-                                              //printf("%s is a keyword\n", yytext); 
-                                              p_tok_elem->token_id = is_keyword;
-                                          }
-                                          else
-                                          {   
-                                              //printf("%s is not a keyword\n", yytext); 
-                                              p_tok_elem->token_id = C_CXX_IDENTIFIER;
-                                          }
+<NORMAL>":"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
-                                          stream_element *p_se = new stream_element;
-                                          p_se->p_tok_elem = p_tok_elem;
+<NORMAL>"."     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
 
-                                          /*
-                                          p_se->beginning_fpi.line_num = preproc_column_num;
-                                          p_se->beginning_fpi.column_num = preproc_column_num;
-                                          preproc_column_num+=strlen(yytext);
-                                          p_se->ending_fpi.line_num = preproc_line_num;
-                                          p_se->ending_fpi.column_num = preproc_column_num-1;
-                                          //push the element onto the token stream
-                                          */
-                                          ROSE_token_stream_pointer->push_back(p_se);
-                                    }
+<NORMAL>"%"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"^"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"~"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"&"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"?"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"*"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"/"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"!"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num++; 
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"|"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num++; 
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"++"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"--"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"->"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"!="     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"|="     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"<="     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>">="     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+  // preproc_column_num += 2;
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>"="     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"-"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"+"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"["     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"]"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>"#"     {
+#if DEBUG_LEX_PASS
+     printf("%s is a syntax token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+  // preproc_column_num++; 
+   }
+
+<NORMAL>[0-9]*  {
+  // DQ (9/29/2013): This does not accound for 0L to be a single literal (or octal or hexadecimal)
+#if DEBUG_LEX_PASS
+     printf("%s is a numeric literal token \n", yytext);
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num += strlen(yytext);
+   }
+
+<NORMAL>"<" {
+#if DEBUG_LEX_PASS
+     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>">" {
+#if DEBUG_LEX_PASS
+     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
+   }
+
+<NORMAL>{whitespace} { 
+#if DEBUG_LEX_PASS
+     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+#endif
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+   }
+
+<NORMAL>[a-zA-Z_][a-zA-Z0-9_]* {
+#if 1
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+#else
+     token_element *p_tok_elem = new token_element;
+     p_tok_elem->token_lexeme = yytext;
+
+     int is_keyword = identify_if_C_CXX_keyword(yytext);
+
+#if DEBUG_LEX_PASS
+     printf("%s is either a %s token \n",yytext,(is_keyword != -1) ? "keyword" : "identifier");
+#endif
+
+  // found a keyword?
+     if(is_keyword != -1)
+        {   
+       // printf("%s is a keyword\n", yytext); 
+          p_tok_elem->token_id = is_keyword;
+        }
+       else
+        {   
+       // printf("%s is not a keyword\n", yytext); 
+          p_tok_elem->token_id = C_CXX_IDENTIFIER;
+        }
+
+     stream_element *p_se = new stream_element;
+     p_se->p_tok_elem = p_tok_elem;
+
+  // DQ (9/29/2013): uncommented so that we can
+  // set the source position.
+  // p_se->beginning_fpi.line_num = preproc_column_num;
+     p_se->beginning_fpi.line_num = preproc_line_num;
+     p_se->beginning_fpi.column_num = preproc_column_num;
+     preproc_column_num += strlen(yytext);
+     p_se->ending_fpi.line_num = preproc_line_num;
+     p_se->ending_fpi.column_num = preproc_column_num-1;
+
+  // push the element onto the token stream
+     ROSE_token_stream_pointer->push_back(p_se);
+#endif
+   }
+
         /*begin handling the C++ style comments. */
 <NORMAL>"\/\/"  {
                     /*Handle the C comments.*/ 
@@ -730,7 +1243,7 @@ BEGIN NORMAL;
                     BEGIN CXX_COMMENT;
                 }
 
-        /*The normal mode actions. Handle the preprocessor stuff and anyother characters. */
+        /*The normal mode actions. Handle the preprocessor stuff and any other characters. */
         /*Do we need the backslash character?????????????*/
 <NORMAL>"/*"    {
                     preproc_start_line_num=preproc_line_num; 
@@ -741,25 +1254,23 @@ BEGIN NORMAL;
                     commentString = yytext; 
                     BEGIN C_COMMENT; 
                 }
-    /*These are the alternative tokens. Refer to page 12 of C++ std to understand their representation*/
-                  /*<NORMAL>"<%"     {curr_token = ALT_LEFT_CURLY; do_yytext_bookeeping(); }
+
+     /* These are the alternative tokens. Refer to page 12 of C++ std to understand their representation */
+     /*<NORMAL>"<%"     {curr_token = ALT_LEFT_CURLY; do_yytext_bookeeping(); }
 <NORMAL>"<%"     { }
-                       */
+      */
 
 
 
-
+     /* DQ (9/29/2013): I think this should not be here, it can't be matched given that we handle identifiers above. */
+     /*
 <NORMAL>"static_cast"   { 
-                    /*
-                    if(!isemptystack()) 
-                    { 
-                        //we only count braces within a linkage specification. 
-                        curr_brace_depth++; 
-                    
-                        */
+#if DEBUG_LEX_PASS
+                    printf("%s is a static_cast token \n",yytext);
+#endif
                     preproc_column_num++; 
                 }
-
+    */
 
 <NORMAL>{lineprefix}"include"   { macrotype=PreprocessingInfo::CpreprocessorIncludeDeclaration; HANDLEMACROSTART }
 <NORMAL>{lineprefix}"define"    { macrotype=PreprocessingInfo::CpreprocessorDefineDeclaration; HANDLEMACROSTART }
@@ -773,32 +1284,65 @@ BEGIN NORMAL;
 <NORMAL>{lineprefix}"else"      { macrotype=PreprocessingInfo::CpreprocessorElseDeclaration; HANDLEMACROSTART }
 <NORMAL>{lineprefix}"endif"     { macrotype=PreprocessingInfo::CpreprocessorEndifDeclaration; HANDLEMACROSTART }
 <NORMAL>{lineprefix}"warning"   { macrotype=PreprocessingInfo::CpreprocessorWarningDeclaration; HANDLEMACROSTART }
+
+   /* DQ (9/30/2013): Added support to recognize #pragma as a token */
+<NORMAL>{lineprefix}"pragma"    {
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_PRAGMA);
+   }
+
         /*Add code here to attach the whitespace before newlines (and general lineprefix code) */
-<NORMAL>\n                      { preproc_line_num++; preproc_column_num=1; } 
-<NORMAL>"\""                    { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN STRING_LIT;}
-<NORMAL>"'"                     { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}
+<NORMAL>\n                      {
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+     preproc_line_num++;
+     preproc_column_num = 1; 
+   } 
+
+<NORMAL>"\""                    {
+  /* preproc_line_num+=num_of_newlines(yytext); */ 
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num+=strlen(yytext); 
+     BEGIN STRING_LIT;
+   }
+
+<NORMAL>"'"                     {
+   /*preproc_line_num+=num_of_newlines(yytext);*/ 
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num+=strlen(yytext); 
+     BEGIN CHAR_LIT;
+   }
+
 <NORMAL>.                       { preproc_column_num++; }
 
                         /* Actions for character literals. Since the part between single quote can be more than one
                          * character of input (e.g., '\\', '\'', '\n', '\012', etc) we parse them sort of like strings. */
 <CHAR_LIT>\\\r\n                {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>\\\n                  {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
-<CHAR_LIT>\\.                   {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
-<CHAR_LIT>[^'\r\n\\]            {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<CHAR_LIT>\\.                   {/*eat escaped something*/      add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext);*/ }
+<CHAR_LIT>[^'\r\n\\]            {/*eat non-special characters*/ add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext);*/ }
 <CHAR_LIT>\r\n                  {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>\n                    {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
-<CHAR_LIT>"'"                   {/*end of character literal*/   preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
+<CHAR_LIT>"'"                   {
+   /*end of character literal*/   
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num+=strlen(yytext); 
+     BEGIN NORMAL;
+   }
 
 
 
                         /* Actions for string literals. */
-<STRING_LIT>\\\r\n              {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; }
-<STRING_LIT>\\\n                {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
-<STRING_LIT>\\.                 {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\r\n                {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; }
-<STRING_LIT>[^\"\r\n\\]         {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
-<STRING_LIT>"\""                {/*end of string literal*/      preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
+<STRING_LIT>\\\r\n              {/*eat escaped DOS line-term*/  add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>\\\n                {/*eat escaped linefeed*/       add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>\\.                 {/*eat escaped something*/      add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext);*/ }
+<STRING_LIT>\r\n                {/*eat DOS line-term*/          add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>[^\"\r\n\\]         {/*eat non-special characters*/ add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext)*/; }
+<STRING_LIT>\n                  {/*eat linefeed*/               add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>"\""                {
+   /* end of string literal */
+     add_token(yytext,preproc_line_num,preproc_column_num,0);
+  // preproc_column_num+=strlen(yytext); 
+     BEGIN NORMAL; 
+   }
 
         /*Actions for a C++ style comment.*/
 <CXX_COMMENT>[^\\\n]    { /* eat anything that is not a backslash or a newline*/ commentString += yytext;}
@@ -814,21 +1358,30 @@ BEGIN NORMAL;
                             commentString += yytext;
                             preproc_line_num++; 
 }
+
 <CXX_COMMENT>\n         {
                             preproc_line_num++; preproc_column_num=1; 
                             commentString += yytext;
                             preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, 
                                     commentString,globalFileName, preproc_start_line_num, preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 
+                         // This element of the token stream is special since it is from a PreprocessorInfo object.
+                            add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num);
+
                             BEGIN NORMAL; 
                         }
+
     /* negara1 (07/25/2011): Added handling of CXX comments that appear at the last line of a file. */
 <CXX_COMMENT><<EOF>>    {
                             preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, 
                                     commentString,globalFileName, preproc_start_line_num, preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 
+                         // This element of the token stream is special since it is from a PreprocessorInfo object.
+                            add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num);
+
                             yyterminate();
                         }
+
         /*Actions while in a C style comment.*/
 <C_COMMENT>\n           {
                             commentString += yytext;
@@ -838,11 +1391,18 @@ BEGIN NORMAL;
 <C_COMMENT>"*/" {
                             commentString += yytext;
                             preproc_column_num+=strlen(yytext); 
-                            /*printf("hello Ram: The comment string is ####%s#############. It is of %d lines, the current line number is %d\n",
-                                    commentString.c_str(), preproc_line_num-preproc_start_line_num+1, preproc_line_num);
-                                    */
-                            preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num+1); 
+                         /* printf("hello Ram: The comment string is ####%s#############. It is of %d lines, the current line number is %d\n",commentString.c_str(), preproc_line_num-preproc_start_line_num+1, preproc_line_num);
+                          */
+                         // DQ (10/1/2013): This is a bug fix the number of lines should be computed using 
+                         // "preproc_line_num-preproc_start_line_num" not "preproc_line_num-preproc_start_line_num+1"
+                         // preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num+1); 
+                            preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+
+                         // This element of the token stream is special since it is from a PreprocessorInfo object.
+                            add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num);
+
                             BEGIN(NORMAL); 
+
                         }
 <C_COMMENT>.    { 
                     commentString += yytext;
@@ -869,6 +1429,9 @@ BEGIN NORMAL;
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
                                                 preproc_start_line_num, preproc_start_column_num,
                                                 preproc_line_num-preproc_start_line_num);
+
+                 // This element of the token stream is special since it is from a PreprocessorInfo object.
+                    add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num);
                     BEGIN NORMAL; 
                 }
 
@@ -877,6 +1440,10 @@ BEGIN NORMAL;
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
                                                 preproc_start_line_num, preproc_start_column_num,
                                                 preproc_line_num-preproc_start_line_num);
+
+                 // This element of the token stream is special since it is from a PreprocessorInfo object.
+                    add_preprocessingInfo_to_token_stream(preprocessorList.lastElement(),preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num);
+
                     yyterminate();
                 }
 
@@ -939,7 +1506,7 @@ int popbracestack() { return bracestack[--top]; }
 bool isemptystack() { return top==0; }
 
 int num_of_newlines(char* s)
-{
+   {
      int num = 0;
      while(*s != '\0')
         {
@@ -948,7 +1515,7 @@ int num_of_newlines(char* s)
           s++;
         }
      return num;
-}
+   }
 
 // DQ (3/30/2006): Modified to use C++ style string instead of C style char* string
 // ROSEAttributesList *getPreprocessorDirectives( char *fileName)
@@ -980,53 +1547,65 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 
      if ( fileName.empty() == false )
         {
-          std::map<std::string,ROSEAttributesList* >::iterator iItr= 
-                  mapFilenameToAttributes.find(fileName);
-          //std::cout << "Trying to find fileName " << fileName << std::endl;
+          std::map<std::string,ROSEAttributesList* >::iterator iItr = mapFilenameToAttributes.find(fileName);
+       // std::cout << "Trying to find fileName " << fileName << std::endl;
           if ( iItr != mapFilenameToAttributes.end())
              {
-                     //std::cout << "Found requested file: " << fileName << " size: " << iItr->second->size() << std::endl; 
-               for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->getList().begin(); 
-                               jItr != iItr->second->getList().end(); ++jItr){
-                     //std::cout << "Inserting element" <<  (*jItr)->getString() << std::endl;
+            // std::cout << "Found requested file: " << fileName << " size: " << iItr->second->size() << std::endl; 
+               for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->getList().begin(); jItr != iItr->second->getList().end(); ++jItr)
+                  {
+                  // std::cout << "Inserting element" <<  (*jItr)->getString() << std::endl;
                      preprocessorInfoList->insertElement(**jItr);
-
-               }
+                  }
 
              }
-          else{
-            fp = fopen( fileName.c_str(), "r");
-            if (fp)
-            {
-              yyin = fp;
-              yylex();
-
-              // Writes all gathered information to stdout
-              // preprocessorList.display("TEST Collection of Comments and CPP Directives");
-
-              // bugfix (9/29/2001)
-              // The semantics required here is to move the elements accumulated into the
-              // preprocessorList into the preprocessorInfoList and delete them from the
-              // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
-              // when the next file is processed).  We have to be able to process several files using
-              // this getPreprocessorDirectives() function.
-              preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
-
-              // The accumulator list should now be empty
-              assert (preprocessorList.getLength() == 0);
-              fclose(fp);  
-            }
             else
-            {
-              // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
-              printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
-              // ROSE_ASSERT(false);
-            }
-          }
+             {
+               fp = fopen( fileName.c_str(), "r");
+               if (fp)
+                  {
+                    yyin = fp;
+#if DEBUG_LEX_PASS
+                    printf ("In getPreprocessorDirectives(): calling yylex() \n");
+#endif
+                    yylex();
+#if DEBUG_LEX_PASS
+                    printf ("In getPreprocessorDirectives(): DONE: calling yylex() \n");
+#endif
 
+                 // Writes all gathered information to stdout
+                 // preprocessorList.display("TEST Collection of Comments and CPP Directives");
+
+                 // bugfix (9/29/2001)
+                 // The semantics required here is to move the elements accumulated into the
+                 // preprocessorList into the preprocessorInfoList and delete them from the
+                 // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
+                 // when the next file is processed).  We have to be able to process several files using
+                 // this getPreprocessorDirectives() function.
+                    preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
+
+                 // The accumulator list should now be empty
+                    assert (preprocessorList.getLength() == 0);
+                    fclose(fp);  
+                  }
+                 else
+                  {
+                 // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
+                    printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
+                 // ROSE_ASSERT(false);
+                  }
+             }
         }
 
   // printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
+
+  // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
+     ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
+
+#if DEBUG_LEX_PASS
+     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
+     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %zu \n",preprocessorInfoList->get_rawTokenStream()->size());
+#endif
 
      return preprocessorInfoList;
    }

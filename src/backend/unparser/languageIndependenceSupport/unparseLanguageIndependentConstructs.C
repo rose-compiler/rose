@@ -4,6 +4,11 @@
 #include <limits>
 
 #include "OmpAttribute.h" // to support unparsing OpenMP constructs
+
+// DQ (10/29/2013): Adding support for unparsing from the token stream.
+#include "tokenStreamMapping.h"
+
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -511,6 +516,169 @@ UnparseLanguageIndependentConstructs::unparseLineDirectives ( SgStatement* stmt 
    }
 
 
+bool
+UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt)
+   {
+  // This function factors out the details of the conditions under which a statement can be unparsed from the token stream.
+  // Note that it is conditional upon if there is a mapping identified between the token stream and the statement.  These
+  // mapping can be shared across more than one statement, or not exist, depending on the statement and the use of macro 
+  // expansion in the statement (or acorss multiple statements).
+
+  // Note that we might want this function to return a pointer to a TokenStreamSequenceToNodeMapping instead (and NULL if no info is available)
+
+     ROSE_ASSERT(sourceFile != NULL);
+     ROSE_ASSERT(stmt != NULL);
+
+     bool canBeUnparsed = false;
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+
+     if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
+        {
+          TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
+          ROSE_ASSERT(tokenSubsequence != NULL);
+#if 1
+          printf ("In canBeUnparsedFromTokenStream(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("   --- tokenStreamSequenceMap: leading  (start,end) = (%d,%d) \n",tokenSubsequence->leading_whitespace_start, tokenSubsequence->leading_whitespace_end);
+          printf ("   --- tokenStreamSequenceMap: node     (start,end) = (%d,%d) \n",tokenSubsequence->token_subsequence_start,  tokenSubsequence->token_subsequence_end);
+          printf ("   --- tokenStreamSequenceMap: trailing (start,end) = (%d,%d) \n",tokenSubsequence->trailing_whitespace_start,tokenSubsequence->trailing_whitespace_end);
+#endif
+          ROSE_ASSERT(stmt->get_file_info() != NULL);
+          stmt->get_file_info()->display("In unparseStatementFromTokenStream(): debug");
+
+          canBeUnparsed = (tokenSubsequence->token_subsequence_start != -1);
+        }
+       else
+        {
+#if 1
+          printf ("Note: In canBeUnparsedFromTokenStream(): the requested subsequence mapping object was not found: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+        }
+
+     printf ("Leaving canBeUnparsedFromTokenStream(): stmt = %p = %s canBeUnparsed = %s \n",stmt,stmt->class_name().c_str(),canBeUnparsed ? "true" : "false");
+
+     return canBeUnparsed;
+   }
+
+
+int
+UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt)
+   {
+     ROSE_ASSERT(sourceFile != NULL);
+     ROSE_ASSERT(stmt != NULL);
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+
+     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+
+#if 1
+  // This implementation uses the refactored code.
+     bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+  // if (canBeUnparsedFromTokenStream(sourceFile,stmt) == true)
+     if (unparseStatus == true)
+        {
+          TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
+          ROSE_ASSERT(tokenSubsequence != NULL);
+
+          ROSE_ASSERT(tokenSubsequence->token_subsequence_start != -1);
+
+          for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
+             {
+#if 1
+               printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+               curprint(tokenVector[j]->get_lexeme_string());
+             }
+        }
+#else
+  // ROSE_ASSERT(tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end());
+     if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
+        {
+          TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
+          ROSE_ASSERT(tokenSubsequence != NULL);
+
+#error "DEAD CODE!"
+
+          printf ("In unparseStatementFromTokenStream(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("   --- tokenStreamSequenceMap: leading  (start,end) = (%d,%d) \n",tokenSubsequence->leading_whitespace_start, tokenSubsequence->leading_whitespace_end);
+          printf ("   --- tokenStreamSequenceMap: node     (start,end) = (%d,%d) \n",tokenSubsequence->token_subsequence_start,  tokenSubsequence->token_subsequence_end);
+          printf ("   --- tokenStreamSequenceMap: trailing (start,end) = (%d,%d) \n",tokenSubsequence->trailing_whitespace_start,tokenSubsequence->trailing_whitespace_end);
+
+          ROSE_ASSERT(stmt->get_file_info() != NULL);
+          stmt->get_file_info()->display("In unparseStatementFromTokenStream(): debug");
+
+          if (tokenSubsequence->token_subsequence_start != -1)
+             {
+            // Examples demonstrate that we should include the leading and likely trailing whitespace, but we need to be 
+            // careful to avoid duplication.  We could save a set of tokens already output so that we coudl always unparse 
+            // the leading a trailing whitespace and still emilinate any possible redundancy.
+#if 0
+            // Output the leading white space.
+               if (tokenSubsequence->leading_whitespace_start != -1)
+                  {
+                    for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
+                       {
+                         curprint(tokenVector[j]->get_lexeme_string());
+                       }
+                  }
+#endif
+            // Test this function here to be true.
+               ROSE_ASSERT(canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+
+#error "DEAD CODE!"
+
+               for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
+                  {
+#if 1
+                    printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+                    curprint(tokenVector[j]->get_lexeme_string());
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("ERROR: the requested subsequence of the token stream is not defined \n");
+               ROSE_ASSERT(false);
+#endif
+               printf ("Note: In unparseStatementFromTokenStream(): the requested subsequence of the token stream is not defined: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+            // Test this function here to be false.
+               ROSE_ASSERT(canBeUnparsedFromTokenStream(sourceFile,stmt) == false);
+
+#error "DEAD CODE!"
+
+            // Returning a non-zero value will trigger the statement to be unparsed from the AST instead of the token stream.
+               return 1;
+             }
+        }
+       else
+        {
+          printf ("Note: In unparseStatementFromTokenStream(): the requested subsequence mapping object was not found: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+       // Test this function here to be false.
+          ROSE_ASSERT(canBeUnparsedFromTokenStream(sourceFile,stmt) == false);
+
+#error "DEAD CODE!"
+
+       // Returning a non-zero value will trigger the statement to be unparsed from the AST instead of the token stream.
+          return 1;
+        }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // Test this function here to be true.
+  // ROSE_ASSERT(canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+
+  // Return zero to indicate that there was no error in the unparsing from the token stream.
+  // return 0;
+     return (unparseStatus == true) ? 0 : 1;
+   }
+
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_ExprStmt::unparseStatement
@@ -523,22 +691,23 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
    {
      ROSE_ASSERT(stmt != NULL);
 
-  // curprint("/* Top of statement */ \n ");
-
 #if 0
+  // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      int line    = stmt->get_startOfConstruct()->get_raw_line();
      string file = stmt->get_startOfConstruct()->get_filenameString();
      printf ("unparseStatement(): (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+  // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
 
   // DQ (4/17/2007): Added enforcement for endOfConstruct().
      ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
-
 #endif
+
 #if 0
+  // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
                 + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
@@ -602,23 +771,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
 #endif
 
-  // Debugging support
-     if (ROSE_DEBUG > 3)
-        {
-          cout << "In unparseStatement(): getLineNumber(stmt) = "
-               << stmt->get_file_info()->displayString("unparseStatement")
-               << " unp->cur_index = " << unp->cur_index << endl;
-        }
-
 #if 0
   // Debugging support
      printOutComments (stmt);
 #endif
 
-     if (stmt->get_file_info() == NULL)
-        {
-          printf ("Error: stmt->get_file_info() == NULL stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-        }
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
   // FIXME cause conflict in "make check"?
@@ -626,7 +783,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // FMZ : we have ".rmod" file which will not satisfy this condition
   // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
   // if (!statementFromFile(stmt, getFileName()))
-     if (!statementFromFile(stmt, getFileName(), info))
+  // if (!statementFromFile(stmt, getFileName(), info))
+     if (statementFromFile(stmt, getFileName(), info) == false)
         {
 #if 0
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
@@ -634,27 +792,31 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
           stmt->get_file_info()->display("WARNING: Skipping calls to output statements that are not recorded as being in the target file: debug");
 #endif
+
+       // If this is not a statement to be unparsed then exit imediately.
           return;
         }
 
   // saveCompilerGeneratedStatements(stmt,info);
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
-     if ( info.outputCompilerGeneratedStatements() == false && 
-          stmt->get_file_info()->isCompilerGenerated() == true && 
-          isSgGlobal(stmt->get_parent()) != NULL )
+     if ( info.outputCompilerGeneratedStatements() == false && stmt->get_file_info()->isCompilerGenerated() == true && isSgGlobal(stmt->get_parent()) != NULL )
         {
+       // DQ (10/30/2013): This code is executed for C++ code (e.g. for test2004_58.C -- template support).
+
        // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
        // of the next statement are output but before the associated statement to which they are attached.
 
-       // printf ("Save the compiler-generated statement (%s), putting it onto the queue \n",stmt->sage_class_name());
+       // printf ("Save the compiler-generated statement (%s), putting it onto the queue \n",stmt->class_name().c_str());
           unp->compilerGeneratedStatementQueue.push_front(stmt);
 
        // This return prevents this code from being trivially separated out into function.
           return;
         }
 
-     if( unparseLineReplacement(stmt,info) )
+
+     if ( unparseLineReplacement(stmt,info) )
         {
+       // DQ (10/30/2013): Not clear why we want a return here...
           return;
         }
 
@@ -696,6 +858,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
         }
 
+  // This is the other part of the accumulation of the compiler-generated statements into compilerGeneratedStatementQueue
+  // so that they can be unparsed after any CPP directives or comments are unparsed (above). Because there is a return
+  // in the code to accumulate the compiler-generated statements the code (above) could not be refactored as nicely.
      outputCompilerGeneratedStatements(info);
 
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
@@ -735,46 +900,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
-#if 0
-  // DQ (8/7/2012): I don't think we need this.
-  // DQ (5/22/2007): Added to support name qualification and access to the new hidden 
-  // type, declaration and class elaboration lists stored in the scopes.
-     SgScopeStatement* scopeStatement = isSgScopeStatement(stmt);
-     SgScopeStatement* savedScope = NULL;
-     if (scopeStatement != NULL)
-        {
-       // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).
-          savedScope = info.get_current_scope();
-#if 0
-          printf ("Setting the current_scope in info: scopeStatement = %p = %s = %s \n",
-               scopeStatement,scopeStatement->class_name().c_str(),SageInterface::get_name(scopeStatement).c_str());
-
-          if (savedScope != NULL)
-               printf ("Setting the savedScope = %p = %s = %s \n",
-                    savedScope,savedScope->class_name().c_str(),SageInterface::get_name(savedScope).c_str());
-#endif
-          info.set_current_scope(NULL);
-          info.set_current_scope(scopeStatement);
-        }
-       else
-        {
-       // In this case we are only saving the scope to do error checking
-          savedScope = info.get_current_scope();
-        }
-     
-  // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
-     if (info.get_current_scope() == NULL)
-        {
-          printf ("In unparseStatement(): info.get_current_scope() == NULL (likely called from SgNode::unparseToString()) stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-          stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
-#if 0
-       // DQ (8/7/2012): I don't think we need this.
-          ROSE_ASSERT(false);
-#endif
-        }
-  // ROSE_ASSERT(info.get_current_scope() != NULL);
-#endif
-
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
@@ -797,83 +922,132 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
        else
         {
-       // DQ (12/4/2007): Added to ROSE (was removed at some point).
-          unparseLineDirectives(stmt);
+       // Use a static varible to track the previous statement.
+       // static SgStatement* previousStatement = NULL;
 
-       // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
-          unparseStatementNumbers(stmt,info);
-#if 0
-          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-          curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
-#endif
-          switch (stmt->variantT())
+       // DQ (10/30/2013): We can support the output of the statements using the token stream, it this is done then we don't output the statement as unparsed from the AST.
+          bool outputStatementAsTokens = false;
+
+       // Get the file and check if -rose:unparse_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
+          SgFile* cur_file = SageInterface::getEnclosingFileNode(stmt);
+
+       // DQ (10/30/2013): This command-line option controls the use of the token stream in the unparsing.
+       // Currently in it's development, we are always unparsing the statements using the token stream if 
+       // they qualify.  Later we need to connect a test that will detect if a transformation has been done 
+       // in the subtree rerpresented by a statement and only qualify the statement on the basis of this 
+       // additional test.
+          if (cur_file != NULL && cur_file->get_unparse_tokens() == true)
              {
-               case V_SgGlobal:                        unparseGlobalStmt                    (stmt, info); break;
-               case V_SgFunctionTypeTable:             unparseFuncTblStmt                   (stmt, info); break;
-               case V_SgNullStatement:                 unparseNullStatement                 (stmt, info); break;
+            // First we want to restrict this to unparsing the simplest statements, e.g. those 
+            // that are expression statements (e.g. containing no nested statements).
 
-            // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
-               case V_SgIncludeDirectiveStatement:     unparseIncludeDirectiveStatement     (stmt, info); break;
-               case V_SgDefineDirectiveStatement:      unparseDefineDirectiveStatement      (stmt, info); break;
-               case V_SgUndefDirectiveStatement:       unparseUndefDirectiveStatement       (stmt, info); break;
-               case V_SgIfdefDirectiveStatement:       unparseIfdefDirectiveStatement       (stmt, info); break;
-               case V_SgIfndefDirectiveStatement:      unparseIfndefDirectiveStatement      (stmt, info); break;
-               case V_SgDeadIfDirectiveStatement:      unparseDeadIfDirectiveStatement      (stmt, info); break;
-               case V_SgIfDirectiveStatement:          unparseIfDirectiveStatement          (stmt, info); break;
-               case V_SgElseDirectiveStatement:        unparseElseDirectiveStatement        (stmt, info); break;
-               case V_SgElseifDirectiveStatement:      unparseElseifDirectiveStatement      (stmt, info); break;
-               case V_SgEndifDirectiveStatement:       unparseEndifDirectiveStatement       (stmt, info); break;
-               case V_SgLineDirectiveStatement:        unparseLineDirectiveStatement        (stmt, info); break;
-               case V_SgWarningDirectiveStatement:     unparseWarningDirectiveStatement     (stmt, info); break;
-               case V_SgErrorDirectiveStatement:       unparseErrorDirectiveStatement       (stmt, info); break;
-               case V_SgEmptyDirectiveStatement:       unparseEmptyDirectiveStatement       (stmt, info); break;
-               case V_SgIdentDirectiveStatement:       unparseIdentDirectiveStatement       (stmt, info); break;
-               case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement (stmt, info); break;
-               case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
+               SgSourceFile* sourceFile = isSgSourceFile(cur_file);
+               ROSE_ASSERT(sourceFile != NULL);
 
-            // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
-               case V_SgOmpAtomicStatement:
-               case V_SgOmpSectionStatement:
-               case V_SgOmpTaskwaitStatement:
-               case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
-               case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
-               case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
+            // This will be connected to a test to check if the statement has been transformed (might be 
+            // precomputed in a single traversal with results propogated to statements).  Assume no transformations 
+            // in early stags of testing (note command-line option -rose:is also required).
+               bool statementTransformed = false;
 
-            // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
-               case V_SgOmpCriticalStatement:
-               case V_SgOmpMasterStatement:
-               case V_SgOmpOrderedStatement:
-               case V_SgOmpSectionsStatement:
-               case V_SgOmpParallelStatement:
-               case V_SgOmpTargetStatement:
-               case V_SgOmpTargetDataStatement:
-               case V_SgOmpWorkshareStatement:
-               case V_SgOmpSingleStatement:
-               case V_SgOmpTaskStatement:
-               case V_SgOmpSimdStatement:
-                    unparseOmpGenericStatement (stmt, info); 
-                    break;
+            // We will over time increase the number of types of statements allowed to be unparsed via the token stream.
+               bool unparseViaTokenStream = (isSgExprStatement(stmt) != NULL) && (info.inConditional() == false);
 
-               default:
-                 // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
-                 // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
-                 // unparseLanguageSpecificStatement(stmt,info);
-                 // unp->repl->unparseLanguageSpecificStatement(stmt,info);
+            // Only unparse from the token stream if this was not a transformed statement.
+               unparseViaTokenStream = unparseViaTokenStream && (statementTransformed == false);
+
+               if (unparseViaTokenStream == true)
+                  {
+                    int status = unparseStatementFromTokenStream(sourceFile,stmt);
+
+                 // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
+                    outputStatementAsTokens = (status == 0);
+                  }
 #if 0
-                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Calling unparseLanguageSpecificStatement() for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
 #endif
-                    unparseLanguageSpecificStatement(stmt,info);
-                    break;
              }
 
+          if (outputStatementAsTokens == false)
+             {
+            // DQ (12/4/2007): Added to ROSE (was removed at some point).
+               unparseLineDirectives(stmt);
+
+            // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
+               unparseStatementNumbers(stmt,info);
 #if 0
-          curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): DONE Selecting an unparse function for stmt */ \n ");
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
+#endif
+               switch (stmt->variantT())
+                  {
+                    case V_SgGlobal:                        unparseGlobalStmt                    (stmt, info); break;
+                    case V_SgFunctionTypeTable:             unparseFuncTblStmt                   (stmt, info); break;
+                    case V_SgNullStatement:                 unparseNullStatement                 (stmt, info); break;
+
+                 // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
+                    case V_SgIncludeDirectiveStatement:     unparseIncludeDirectiveStatement     (stmt, info); break;
+                    case V_SgDefineDirectiveStatement:      unparseDefineDirectiveStatement      (stmt, info); break;
+                    case V_SgUndefDirectiveStatement:       unparseUndefDirectiveStatement       (stmt, info); break;
+                    case V_SgIfdefDirectiveStatement:       unparseIfdefDirectiveStatement       (stmt, info); break;
+                    case V_SgIfndefDirectiveStatement:      unparseIfndefDirectiveStatement      (stmt, info); break;
+                    case V_SgDeadIfDirectiveStatement:      unparseDeadIfDirectiveStatement      (stmt, info); break;
+                    case V_SgIfDirectiveStatement:          unparseIfDirectiveStatement          (stmt, info); break;
+                    case V_SgElseDirectiveStatement:        unparseElseDirectiveStatement        (stmt, info); break;
+                    case V_SgElseifDirectiveStatement:      unparseElseifDirectiveStatement      (stmt, info); break;
+                    case V_SgEndifDirectiveStatement:       unparseEndifDirectiveStatement       (stmt, info); break;
+                    case V_SgLineDirectiveStatement:        unparseLineDirectiveStatement        (stmt, info); break;
+                    case V_SgWarningDirectiveStatement:     unparseWarningDirectiveStatement     (stmt, info); break;
+                    case V_SgErrorDirectiveStatement:       unparseErrorDirectiveStatement       (stmt, info); break;
+                    case V_SgEmptyDirectiveStatement:       unparseEmptyDirectiveStatement       (stmt, info); break;
+                    case V_SgIdentDirectiveStatement:       unparseIdentDirectiveStatement       (stmt, info); break;
+                    case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement (stmt, info); break;
+                    case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
+
+                 // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
+                    case V_SgOmpAtomicStatement:
+                    case V_SgOmpSectionStatement:
+                    case V_SgOmpTaskwaitStatement:
+                    case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
+                    case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
+                    case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
+
+                 // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
+                    case V_SgOmpCriticalStatement:
+                    case V_SgOmpMasterStatement:
+                    case V_SgOmpOrderedStatement:
+                    case V_SgOmpSectionsStatement:
+                    case V_SgOmpParallelStatement:
+                    case V_SgOmpTargetStatement:
+                    case V_SgOmpTargetDataStatement:
+                    case V_SgOmpWorkshareStatement:
+                    case V_SgOmpSingleStatement:
+                    case V_SgOmpTaskStatement:
+                    case V_SgOmpSimdStatement:
+                         unparseOmpGenericStatement (stmt, info); 
+                         break;
+
+                    default:
+                      // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
+                      // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
+                      // unparseLanguageSpecificStatement(stmt,info);
+                      // unp->repl->unparseLanguageSpecificStatement(stmt,info);
+#if 0
+                         printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Calling unparseLanguageSpecificStatement() for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+                         unparseLanguageSpecificStatement(stmt,info);
+                         break;
+                  }
+
+#if 0
+               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): DONE Selecting an unparse function for stmt */ \n ");
 #endif
 
-       // DQ (5/8/2010): Reset the source code position in the AST.
-          if (unp->get_resetSourcePosition() == true)
-             {
-               unp->resetSourcePosition(stmt);
+            // DQ (5/8/2010): Reset the source code position in the AST.
+               if (unp->get_resetSourcePosition() == true)
+                  {
+                    unp->resetSourcePosition(stmt);
+                  }
              }
         }
 

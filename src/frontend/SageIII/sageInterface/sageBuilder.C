@@ -4750,6 +4750,8 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
        else
         {
           nondefiningDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+          if (scope != NULL)
+            appendStatement(nondefiningDeclaration, scope);
         }
 
   // DQ (8/23/2013): Added assertions.
