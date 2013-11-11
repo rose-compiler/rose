@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=10_
+DB_PREFIX=25
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=yes
@@ -22,7 +22,7 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=10 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+generate_inputs_flags='--ngroups=25 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
 add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
 get_pending_tests_flags='--size=2'
 run_tests_nprocs=''

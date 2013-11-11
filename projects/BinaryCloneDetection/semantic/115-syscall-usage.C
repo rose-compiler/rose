@@ -158,7 +158,7 @@ add_call_edges_within_compilation_unit( DirectedGraph* G,
     int caller_id = funcToId[caller];
     int callee_id = funcToId[callee];
 
-    add_edge(caller_id, callee_id, *G);
+    add_edge(caller_id + ids_reserved_for_syscalls, callee_id + ids_reserved_for_syscalls, *G);
 
   }
 
@@ -179,16 +179,31 @@ create_reachability_graph( std::vector<SgAsmFunction*>& all_functions, SgAsmInte
 void
 add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, std::vector<SgAsmFunction*> all_functions)
 {
+
+  //load the functions in db into memory
+  std::map<std::string, std::set<int> > symbolToId;
+
+  SqlDatabase::StatementPtr cmd3 = tx->statement( "select id, name  from semantic_functions");
+  for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
+     int func_id           = r.get<int64_t>(0);
+     std::string func_name = r.get<std::string>(1);
+
+     if ( func_name.size() == 0  ) continue; 
+
+     std::map<std::string, std::set<int> >::iterator fit = symbolToId.find(func_name);
+     if ( fit == symbolToId.end() ){
+        std::set<int> function_ids;
+        function_ids.insert(func_id);
+        symbolToId[func_name] = function_ids;
+     }else{
+        fit->second.insert(func_id);
+     }
+
+  }
+
+
   DirectedGraph& graph = *G;
-  //Create a helper data structure for locating id in all_functions from a function pointer
-  std::map<SgAsmFunction*, int> funcToId;
-
-  for (unsigned int i = 0; i < all_functions.size(); ++i) {
-    SgAsmFunction *func = all_functions[i];
-    funcToId[func] = i;
-  } 
-
-  SqlDatabase::StatementPtr stmt = tx->statement("insert into syscalls_made(caller_name, syscall_id, syscall_name) values(?,?,?)");
+  SqlDatabase::StatementPtr stmt = tx->statement("insert into syscalls_made(caller, syscall_id, syscall_name) values(?,?,?)");
 
   //Iterate over all components of the reachability graph
 
@@ -197,56 +212,89 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
 
   graph_traits<DirectedGraph>::vertex_iterator i, end;
   for(tie(i, end) = vertices(graph); i != end; ++i) {
+	  if( *i < ids_reserved_for_syscalls ) continue;
 
-    std::set<int> syscalls;
-    std::set<int> func_calls;
+	  std::set<int> syscalls;
 
-    // Iterate through the child vertex indices for [current_index]
+	  // Iterate through the child vertex indices for [current_index]
 
-    std::vector<Vertex> reachable; 
+	  std::vector<Vertex> reachable; 
 
-    boost::breadth_first_search(graph, *i, 
-        boost::visitor( 
-          boost::make_bfs_visitor( 
-            boost::write_property( 
-              boost::identity_property_map(), 
-              std::back_inserter(reachable), 
-              boost::on_discover_vertex())))); 
+	  boost::breadth_first_search(graph, *i, 
+			  boost::visitor( 
+				  boost::make_bfs_visitor( 
+					  boost::write_property( 
+						  boost::identity_property_map(), 
+						  std::back_inserter(reachable), 
+						  boost::on_discover_vertex())))); 
 
-    for(std::vector<Vertex>::iterator it = reachable.begin(); it != reachable.end(); ++it ){
-      if(*it < ids_reserved_for_syscalls)
-        syscalls.insert(*i);
-      else
-        func_calls.insert(*i);
-    }
+	  for(std::vector<Vertex>::iterator it = reachable.begin(); it != reachable.end(); ++it ){
+		  if(*it < ids_reserved_for_syscalls)
+			  syscalls.insert(*it);
+	  }
 
-    if(func_calls.size() > 0 && syscalls.size() > 0 )
-    {
-      for(std::set<int>::iterator fit = func_calls.begin(); fit != func_calls.end(); ++fit)
-      {
-        for(std::set<int>::iterator sit = syscalls.begin(); sit != syscalls.end(); ++sit )
-        {
-          int caller_id = *fit;
-          SgAsmFunction* caller = all_functions[caller_id];
+	  int caller_id = *i - ids_reserved_for_syscalls;
+	  ROSE_ASSERT(caller_id >= 0);
+	  SgAsmFunction* caller = all_functions[caller_id];
+	  ROSE_ASSERT( isSgAsmFunction(caller) != NULL);
 
-          int syscall_callee_id = *sit;
-          extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
+	  std::string func_name = caller->get_name();
+          if(func_name.length() == 0 ) continue;
 
-          const std::string &syscall_name = linux32_syscalls[syscall_callee_id];
+          std::map<std::string, std::set<int> >::iterator equivalent_ids = symbolToId.find(func_name);
+          if(equivalent_ids == symbolToId.end())
+              equivalent_ids = symbolToId.find(func_name+"@plt");
 
-          stmt->bind(0, caller->get_name() /* symbol name for the caller */);
-          stmt->bind(1, syscall_callee_id);
-          stmt->bind(2, syscall_name);
 
-          stmt->execute();
+	  if(syscalls.size() > 0 && equivalent_ids != symbolToId.end())
+	  {
 
-        }
+		  for(std::set<int>::iterator sit = syscalls.begin(); sit != syscalls.end(); ++sit )
+		  {
+			  int syscall_callee_id = *sit;
+			  extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
 
-      }
+			  const std::string &syscall_name = linux32_syscalls[syscall_callee_id];
+                           
+                          for(std::set<int>::iterator equivalent_id = equivalent_ids->second.begin();
+                              equivalent_id != equivalent_ids->second.end(); ++ equivalent_id){
+			    stmt->bind(0, *equivalent_id);
+			    stmt->bind(1, syscall_callee_id);
+			    stmt->bind(2, syscall_name);
+			    stmt->execute();
+                          }
 
-    }
+
+		  }
+
+
+
+	  }
 
   }
+}
+
+void 
+analyze_data(SqlDatabase::TransactionPtr tx)
+{
+
+ //all functions that is not a stub function for a dynamic library call 
+ int num_functions    = tx->statement("select count(*) from semantic_functions where name NOT LIKE '%@plt'")->execute_int(); 
+ int num_cg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_cg as cg on cg.callee = sm.caller; ")->execute_int();
+ int num_rg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_rg as cg on cg.callee = sm.caller; ")->execute_int();
+ int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
+
+ std::cout << "num functions:   "                 << num_functions   << std::endl;
+ std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << ((double) num_cg_syscalls/num_functions) << std::endl;
+ std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << ((double) num_rg_syscalls/num_functions) << std::endl;
+ std::cout << "path calls: "                      << path_calls      << " fraction " << ((double) path_calls/num_functions)      << std::endl; 
+
+ tx->statement("drop table IF EXISTS syscall_statistics;");
+ tx->statement("create table syscall_statistics as  select distinct rg.caller, sm.syscall_id, sm.syscall_name from syscalls_made as sm"
+              " join semantic_rg as rg on rg.callee = sm.caller;"
+              );
+
+
 }
 
 int
@@ -293,7 +341,7 @@ main(int argc, char *argv[])
     transaction = conn->transaction();
 
     transaction->execute("drop table IF EXISTS syscalls_made;");
-    transaction->execute("create table syscalls_made( caller_name text, syscall_id integer, syscall_name text );");
+    transaction->execute("create table syscalls_made( caller integer references semantic_functions(id), syscall_id integer, syscall_name text );");
 
 
     std::cout << "database name is : " << std::string(argv[argno]) << std::endl;
@@ -309,6 +357,8 @@ main(int argc, char *argv[])
     DirectedGraph* G = create_reachability_graph( all_functions, interp );
 
     add_calls_to_syscalls_to_db(transaction, G, all_functions);
+
+    analyze_data(transaction);
 
     transaction->commit();
     return 0;
