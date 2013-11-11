@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 MOSTLYCLEANFILES=
 EXTRA_DIST=
 noinst_PROGRAMS=
+TEST_TARGETS=
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
@@ -112,11 +113,10 @@ noinst_PROGRAMS += 105-api-similarity
 builtins.so: builtins-string.c builtins-stdio.c
 	$(CC) $(CFLAGS32) -Wall -fPIC -shared -o $@ $<
 
-
 #-----------------------------------------------------------------------------------------------------------------------------
 MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: Schema.sql
-	@echo "  GEN     $@"
+	@echo "  GEN    $@"
 	@echo "namespace CloneDetection {" 			>$@
 	@echo "const char *schema =" 				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
@@ -131,3 +131,23 @@ CloneDetection_SPECIMENS =			\
 	tests/simple001.C			\
 	tests/simple002.C
 
+#-----------------------------------------------------------------------------------------------------------------------------
+# A very simple test to ensure that basic things are working
+
+if ROSE_USE_SQLITE_DATABASE
+TEST_TARGETS += basic.passed
+endif
+
+EXTRA_DIST += basic.conf
+
+basic.passed: basic.conf 00-create-schema 10-generate-inputs 11-add-functions 20-get-pending-tests 25-run-tests \
+		31-func-similarity-worklist 32-func-similarity 90-list-function
+	@$(RTH_RUN) $< $@
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
+
+check-local: $(TEST_TARGETS)
+
+clean-local:
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
