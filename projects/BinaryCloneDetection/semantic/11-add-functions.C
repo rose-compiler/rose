@@ -268,7 +268,7 @@ main(int argc, char *argv[])
         usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = start_command(tx, argc, argv, "adding functions");
-    std::string specimen_name = argv[argno++];
+    std::string specimen_name = StringUtility::getAbsolutePathFromRelativePath(argv[argno++], true);
     FilesTable files(tx);
 
     // Parse the binary specimen
