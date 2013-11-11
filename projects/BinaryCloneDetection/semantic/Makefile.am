@@ -108,6 +108,23 @@ noinst_PROGRAMS += 105-api-similarity
 105_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 105_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 110-120: run evaluation metrics on pairwise binaries
+noinst_PROGRAMS += 110_compute_aggregate
+110_compute_aggregate_SOURCES = 110-compute-aggregate.C FailureDetectionSchema.C 
+110_compute_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
+110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+EXTRA_DIST += compute-pairwise-precision.sql
+
+noinst_PROGRAMS += 115_syscall_usage
+115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
+115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
+115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
 builtins.so: builtins-string.c builtins-stdio.c
@@ -119,6 +136,15 @@ CloneDetectionSchema.C: Schema.sql
 	@echo "  GEN    $@"
 	@echo "namespace CloneDetection {" 			>$@
 	@echo "const char *schema =" 				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+	@echo "} //namespace" 					>>$@
+
+MOSTLYCLEANFILES += FailureDetectionSchema.C
+FailureDetectionSchema.C: compute-pairwise-precision.sql
+	@echo "  GEN     $@"
+	@echo "namespace FailureEvaluation {"  			>$@
+	@echo "const char *failure_schema =" 				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
 	@echo ';' 						>>$@
 	@echo "} //namespace" 					>>$@
@@ -151,3 +177,4 @@ check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
+

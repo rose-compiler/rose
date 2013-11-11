@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=25
+DB_PREFIX=lsh_
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=yes
@@ -22,19 +22,9 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=25 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
 add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
-get_pending_tests_flags='--size=2'
-run_tests_nprocs=''
-run_tests_job_multiplier='1'
-run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
-func_similarity_worklist_flags='--delete'
-func_similarity_flags='--ignore-faults --ogroup=valueset-jaccard --aggregate=minimum'
-
-#Settings for running api similarity analysis
-
-api_similarity_worklist_flags=''
-api_similarity_flags=''
+create_vectors_flags='--stride 10 --windowSize 100'
+find_clones_flags='-p 1 -k 1000000000 -l 10 -t 0.9'
 
 ###############################################################################################################################
 
@@ -59,12 +49,9 @@ generate_config() {
     (
 	echo "dbname='postgresql:///$db_name'"
 	echo "recreate=yes"
-	echo "generate_inputs_flags='$generate_inputs_flags'"
 	echo "add_functions_flags='$add_functions_flags'"
-	echo "get_pending_tests_flags='$get_pending_tests_flags'"
-	echo "run_tests_flags='$run_tests_flags'"
-	echo "func_similarity_worklist_flags='$func_similarity_worklist_flags'"
-	echo "func_similarity_flags='$func_similarity_flags'"
+	echo "create_vectors_flags='$create_vectors_flags'"
+	echo "find_clones_flags='$find_clones_flags'"
     ) >$filename
 }
 
@@ -138,7 +125,7 @@ for TARGET_DIR in $TARGET_DIRS; do
 
 	    # Only run if we don't already have this database and we can create it
             # Ignore error if the db already exists
-	    [ "$DROP_DB" = yes ] && ( psql postgres -c "DROP DATABASE IF EXISTS $DB_NAME" )
+	    [ "$DROP_DB" = yes ] && ( dropdb $DB_NAME )
 	    [ "$CREATE_DB" = yes ] || continue
 	    if ! createdb $DB_NAME >/dev/null; then
 		echo "database '$DB_NAME' exists or could not be created; skipping $TARGET_DIR"
@@ -149,23 +136,14 @@ for TARGET_DIR in $TARGET_DIRS; do
 	    CONFIG_FILE=$(mktemp)
 	    generate_config $CONFIG_FILE $DB_NAME
 
-            API_CONFIG_FILE=$(mktemp)
-            generate_api_config $API_CONFIG_FILE $DB_NAME
-
             psql $DB_NAME -c "create table fr_run_targets_timings(target text, execution_time float );"
-
-            SEM_START=$(date +%s.%N)
+ 
+            START=$(date +%s.%N)
 	    $mydir/run-analysis.sh --batch --config=$CONFIG_FILE $SPECIMEN1 $SPECIMEN2 || exit 1
-            SEM_TIME_ELAPSED=$(echo "$(date +%s.%N) - $SEM_START" | bc)
-            psql $DB_NAME -c "insert into fr_run_targets_timings(target, execution_time) values('semantic', $SEM_TIME_ELAPSED);"
-   
-            SYN_START=$(date +%s.%N)
-            $mydir/run-api-similarity.sh --batch --config=$API_CONFIG_FILE || exit 1
-            SYN_TIME_ELAPSED=$(echo "$(date +%s.%N) - $SYN_START" | bc)
-            psql $DB_NAME -c "insert into fr_run_targets_timings(target, execution_time) values('syntactic', $SYN_TIME_ELAPSED);"
-            
-            TOTAL_TIME_ELAPSED=$(echo "$SEM_TIME_ELAPSED + $SYN_TIME_ELAPSED" | bc)
-            psql $DB_NAME -c "insert into fr_run_targets_timings(target, execution_time) values('ip', $TOTAL_TIME_ELAPSED);"
+            END=$(date +%s.%N)
+            TIME_ELAPSED=$(echo "$END - $START" | bc)
+
+            psql $DB_NAME -c "insert into fr_run_targets_timings(target, execution_time) values('lsh', $TIME_ELAPSED);"
 
 	done
     done
