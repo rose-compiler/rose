@@ -274,10 +274,26 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
   }
 }
 
-void
-compute_percent_syscalls(SqlDatabase::TransactionPtr tx)
+void 
+analyze_data(SqlDatabase::TransactionPtr tx)
 {
-  
+
+ //all functions that is not a stub function for a dynamic library call 
+ int num_functions    = tx->statement("select count(*) from semantic_functions where name NOT LIKE '%@plt'")->execute_int(); 
+ int num_cg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_cg as cg on cg.callee = sm.caller; ")->execute_int();
+ int num_rg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_rg as cg on cg.callee = sm.caller; ")->execute_int();
+ int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
+
+ std::cout << "num functions:   "                 << num_functions   << std::endl;
+ std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << ((double) num_cg_syscalls/num_functions) << std::endl;
+ std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << ((double) num_rg_syscalls/num_functions) << std::endl;
+ std::cout << "path calls: "                      << path_calls      << " fraction " << ((double) path_calls/num_functions)      << std::endl; 
+
+ tx->statement("drop table IF EXISTS syscall_statistics;");
+ tx->statement("create table syscall_statistics as  select distinct rg.caller, sm.syscall_id, sm.syscall_name from syscalls_made as sm"
+              " join semantic_rg as rg on rg.callee = sm.caller;"
+              );
+
 
 }
 
@@ -341,6 +357,8 @@ main(int argc, char *argv[])
     DirectedGraph* G = create_reachability_graph( all_functions, interp );
 
     add_calls_to_syscalls_to_db(transaction, G, all_functions);
+
+    analyze_data(transaction);
 
     transaction->commit();
     return 0;
