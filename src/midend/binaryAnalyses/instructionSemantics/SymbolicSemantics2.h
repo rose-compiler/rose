@@ -501,13 +501,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false) {
+        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false) {
+        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -602,7 +602,8 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
 protected:
-    bool compute_usedef;
+    bool compute_usedef;                // if true, add use-def info to each value
+    bool omit_cur_insn;                 // if true, do not include cur_insn as a definer
 
 public:
     /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
@@ -613,6 +614,9 @@ public:
     void clear_compute_usedef() { set_compute_usedef(false); }
     bool get_compute_usedef() const { return compute_usedef; }
     /** @} */
+
+    // Used internally to control whether cur_insn should be omitted from the list of definers.
+    bool getset_omit_cur_insn(bool b) { bool retval = omit_cur_insn; omit_cur_insn=b; return retval; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -732,6 +736,8 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/;
+    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,

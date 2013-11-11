@@ -10,7 +10,7 @@ imports
   %% languages/fortran/syntax/FortranLex
   %% languages/fortran/syntax/Fortran90
   FortranLex
-  Fortran
+  R1100ProgramUnits
 
 exports
 
@@ -69,6 +69,8 @@ sorts
   EndSelectTypeStmt                   %% R849
   ExitStmt                            %% R850
 
+  AssociationList CaseValueRangeList
+
 %% 8.2 Branching
 
   GotoStmt                            %% R851
@@ -97,6 +99,7 @@ sorts
   UnlockStmt                          %% R865
   LockVariable                        %% R866
 
+  LabelList LockStatList SyncStatList
 
 context-free syntax
 
@@ -105,27 +108,28 @@ context-free syntax
 %%
 
 %%R801
-  ExecutionPartConstruct*                               -> Block              {cons("block")}
+  ExecutionPartConstruct*                               -> Block              {cons("Block")}
 
 %%R802
   AssociateStmt
     Block
-  EndAssociateStmt                                      -> AssociateConstruct {cons("associate-construct")}
+  EndAssociateStmt                                      -> AssociateConstruct {cons("AssociateConstruct")}
 
 %%R803
-  LblDef (AssociateConstructName ':')?
-     'ASSOCIATE' '(' {Association ','}+ ')'         EOS -> AssociateStmt      {cons("associate-stmt")}
+  Label? (AssociateConstructName ':')?
+     'ASSOCIATE' '(' AssociationList ')'            EOS -> AssociateStmt      {cons("AssociateStmt")}
 
 %%R804
-  AssociateName '=>' Selector                           -> Association        {cons("associatiation")}
+  AssociateName '=>' Selector                           -> Association        {cons("Association")}
+  {Association ','}+                                    -> AssociationList    {cons("AssociationList")}
 
 %%R805
 %%TODO-F08 is this ambiguous?
-  Expr                                                  -> Selector           {cons("selector_Expr")}
-  Variable                                              -> Selector           {cons("selector_Var")}
+  Expr                                                  -> Selector           {cons("Selector_Expr")}
+  Variable                                              -> Selector           {cons("Selector_Var")}
 
 %%R806
-  LblDef 'END' 'ASSOCIATE' AssociateConstructName?  EOS -> EndAssociateStmt   {cons("end-associate-stmt")}
+  Label? 'END' 'ASSOCIATE' AssociateConstructName?  EOS -> EndAssociateStmt   {cons("EndAssociateStmt")}
 
 %%R807
 %%       The optional specification-part is ambiguous.  The lack of a specification-part
@@ -134,24 +138,24 @@ context-free syntax
   BlockStmt
     SpecificationPart
     Block
-  EndBlockStmt                                          -> BlockConstruct     {cons("block-construct")}
+  EndBlockStmt                                          -> BlockConstruct     {cons("BlockConstruct")}
 
 %%R808
-  LblDef ( BlockConstructName ':' )? 'BLOCK'        EOS -> BlockStmt          {cons("block-stmt")}
+  Label? ( BlockConstructName ':' )? 'BLOCK'        EOS -> BlockStmt          {cons("BlockStmt")}
 
 %%R809
-  LblDef 'END' 'BLOCK' BlockConstructName?          EOS -> EndBlockStmt       {cons("end-block-stmt")}
+  Label? 'END' 'BLOCK' BlockConstructName?          EOS -> EndBlockStmt       {cons("EndBlockStmt")}
 
 %%R810
   CriticalStmt
     Block
-  EndCriticalStmt                                       -> CriticalConstruct  {cons("critical-construct")}
+  EndCriticalStmt                                       -> CriticalConstruct  {cons("CriticalConstruct")}
 
 %%R811
-  LblDef ( CriticalConstructName ':' )? 'CRITICAL'  EOS -> CriticalStmt       {cons("critical-stmt")}
+  Label? ( CriticalConstructName ':' )? 'CRITICAL'  EOS -> CriticalStmt       {cons("CriticalStmt")}
 
 %%R812
-  LblDef 'END' 'CRITICAL' CriticalConstructName?    EOS -> EndCriticalStmt    {cons("end-critical-stmt")}
+  Label? 'END' 'CRITICAL' CriticalConstructName?    EOS -> EndCriticalStmt    {cons("EndCriticalStmt")}
 
 
 %% Block DO constructs cannot be recognized syntactically because there is
@@ -164,50 +168,50 @@ context-free syntax
 %%
 
 %%R813
-%%AMB   BlockDoConstruct
-%%AMB | NonblockDoConstruct                             -> DoConstruct
+%%AMB BlockDoConstruct                                  -> DoConstruct
+%%AMB NonblockDoConstruct                               -> DoConstruct
 
 %%R814
-%%AMB  DoStmt
-%%AMB    DoBlock
-%%AMB  EndDo                                            -> BlockDoConstruct
+%%AMB DoStmt
+%%AMB   DoBlock
+%%AMB EndDo                                             -> BlockDoConstruct
 
 %%R815
-%%AMB    LabelDoStmt
-%%AMB  | NonlableDoStmt                                 -> DoStmt
+%%AMB LabelDoStmt                                       -> DoStmt
+%%AMB NonlableDoStmt                                    -> DoStmt
 
 %%R816
-  LblDef (DoConstructName ':')?
-         'DO' LblRef LoopControl?                   EOS -> LabelDoStmt    {cons("label-do-stmt")}
+  Label? (DoConstructName ':')?
+         'DO' LblRef LoopControl?                   EOS -> LabelDoStmt    {cons("LabelDoStmt")}
 
 %%R817
-  LblDef (DoConstructName ':')?
-         'DO'        LoopControl?                   EOS -> NonlabelDoStmt {cons("nonlabel-do-stmt")}
+  Label? (DoConstructName ':')?
+         'DO'        LoopControl?                   EOS -> NonlabelDoStmt {cons("NonlabelDoStmt")}
 
 %%R818
 %%        expr substituted for scalar-int-expr
 %%        expr substituted for scalar-logical-expr
 %%
-  OptComma DoVariable '=' Expr ',' Expr (',' Expr)?   -> LoopControl      {cons("loop-control_DV")}
-  OptComma 'WHILE' '(' Expr ')'                       -> LoopControl      {cons("loop-control_WHILE")}
-  OptComma 'CONCURRENT' ForallHeader                  -> LoopControl      {cons("loop-control_CONCURRENT")}
+  ','? DoVariable '=' Expr ',' Expr (',' Expr)?         -> LoopControl    {cons("LoopControl_DV")}
+  ','? 'WHILE' '(' Expr ')'                             -> LoopControl    {cons("LoopControl_WHILE")}
+  ','? 'CONCURRENT' ForallHeader                        -> LoopControl    {cons("LoopControl_CONCURRENT")}
 
 %%R819
-  ScalarIntVariableName                                 -> DoVariable     {cons("do-variable")}
+  ScalarIntVariableName                                 -> DoVariable     {cons("DoVariable")}
 
 %%820
 %%AMB  Block                                            -> DoBlock
 
 %%821
-%%AMB   EndDoStmt
-%%AMB | ContinueStmt                                    -> EndDo
+%%AMB EndDoStmt                                         -> EndDo
+%%AMB ContinueStmt                                      -> EndDo
 
 %%R822
-  LblDef 'END' 'DO' DoConstructName?                EOS -> EndDoStmt      {cons("end-do-stmt")}
+  Label? 'END' 'DO' DoConstructName?                EOS -> EndDoStmt      {cons("EndDoStmt")}
 
 %%R823
-%%AMB   ActionTermDoConstruct
-%%AMB | OuterSharedDoConstruct                          -> NonblockDoConstruct
+%%AMB ActionTermDoConstruct                             -> NonblockDoConstruct
+%%AMB OuterSharedDoConstruct                            -> NonblockDoConstruct
 
 %%R824
 %%AMB LabelDoStmt
@@ -226,8 +230,8 @@ context-free syntax
 %%AMB SharedTermDoConstruct                             -> OuterSharedDoConstruct
 
 %%R828
-%%AMB   OuterSharedDoConstruct
-%%AMB | InnerSharedDoConstruct                          -> SharedTermDoConstruct
+%%AMB OuterSharedDoConstruct                            -> SharedTermDoConstruct
+%%AMB InnerSharedDoConstruct                            -> SharedTermDoConstruct
 
 %%R829
 %%AMB LabelDoStmt
@@ -238,171 +242,176 @@ context-free syntax
 %%AMB ActionStmt                                        -> DoTermSharedStmt
 
 %%R831
-  LblDef 'CYCLE' DoConstructName?                   EOS -> CycleStmt      {cons("cycle-stmt")}
+  Label? 'CYCLE' DoConstructName?                   EOS -> CycleStmt      {cons("CycleStmt")}
 
 %%R832
    IfThenStmt Block
   (ElseIfStmt Block)* 
   (ElseStmt   Block)? 
-   EndIfStmt                                            -> IfConstruct    {cons("if-construct")}
+   EndIfStmt                                            -> IfConstruct    {cons("IfConstruct")}
 
 %%R833
 %%       logical-expr substituted for scalar-logical-expr
 %%
-  LblDef (IfConstructName ':')?
-         'IF' '(' LogicalExpr ')' 'THEN'            EOS -> IfThenStmt     {cons("if-then-stmt")}
+  Label? (IfConstructName ':')?
+         'IF' '(' LogicalExpr ')' 'THEN'            EOS -> IfThenStmt     {cons("IfThenStmt")}
 
 %%R834
 %%       logical-expr substituted for scalar-logical-expr
 %%
-  LblDef 'ELSE' 'IF' '(' LogicalExpr ')'
-         'THEN' IfConstructName?                    EOS -> ElseIfStmt     {cons("else-if-stmt")}
+  Label? 'ELSE' 'IF' '(' LogicalExpr ')'
+         'THEN' IfConstructName?                    EOS -> ElseIfStmt     {cons("ElseIfStmt")}
 
 %%R835
-  LblDef 'ELSE' IfConstructName?                    EOS -> ElseStmt       {cons("else-stmt")}
+  Label? 'ELSE' IfConstructName?                    EOS -> ElseStmt       {cons("ElseStmt")}
 
 %%R836
-  LblDef 'END' 'IF' IfConstructName?                EOS -> EndIfStmt      {cons("end-if-stmt")}
+  Label? 'END' 'IF' IfConstructName?                EOS -> EndIfStmt      {cons("EndIfStmt")}
 
 %%R837
 %%       logical-expr substituted for scalar-logical-expr
 %%
-  LblDef 'IF' '(' LogicalExpr ')' ActionStmt            -> IfStmt         {cons("if-stmt")}
+  Label? 'IF' '(' LogicalExpr ')' ActionStmt            -> IfStmt         {cons("IfStmt")}
 
 %%R838
   SelectCaseStmt
     ( CaseStmt Block )*
-  EndSelectStmt                                         -> CaseConstruct  {cons("case-construct")}
+  EndSelectStmt                                         -> CaseConstruct  {cons("CaseConstruct")}
 
 %%R839
-  LblDef ( CaseConstructName ':' )?
-     'SELECT' 'CASE' '(' CaseExpr ')'               EOS -> SelectCaseStmt {cons("select-case-stmt")}
+  Label? ( CaseConstructName ':' )?
+     'SELECT' 'CASE' '(' CaseExpr ')'               EOS -> SelectCaseStmt {cons("SelectCaseStmt")}
 
 %%R840
-  LblDef 'CASE' CaseSelector CaseConstructName?     EOS -> CaseStmt       {cons("case-stmt")}
+  Label? 'CASE' CaseSelector CaseConstructName?     EOS -> CaseStmt       {cons("CaseStmt")}
 
 %%R841
-  LblDef 'END' 'SELECT' CaseConstructName?          EOS -> EndSelectStmt  {cons("end-case-stmt")}
+  Label? 'END' 'SELECT' CaseConstructName?          EOS -> EndSelectStmt  {cons("EndSelectStmt")}
 
 %%R842
 %%       expr substituted for scalar-expr
 %%
-  Expr                                                  -> CaseExpr       {cons("case-expr")}
+  Expr                                                  -> CaseExpr       {cons("CaseExpr")}
 
 %%R843
-  '(' {CaseValueRange ','}+ ')'                         -> CaseSelector   {cons("case-selector_CVRL")}
-  'DEFAULT'                                             -> CaseSelector   {cons("case-selector_DEFAULT")}
+  '(' CaseValueRangeList ')'                            -> CaseSelector   {cons("CaseSelector_CVRL")}
+  'DEFAULT'                                             -> CaseSelector   {cons("CaseSelector_DEFAULT")}
 
 %%R844
-    (     CaseValue               )
-  | (     CaseValue ':'           )
-  | ( ':' CaseValue               )
-  | (     CaseValue ':' CaseValue )                     -> CaseValueRange {cons("case-value-range")}
+      CaseValue                                         -> CaseValueRange     {cons("CaseValueRange")}
+      CaseValue ':'                                     -> CaseValueRange     {cons("CaseValueRange")}
+  ':' CaseValue                                         -> CaseValueRange     {cons("CaseValueRange")}
+      CaseValue ':' CaseValue                           -> CaseValueRange     {cons("CaseValueRange")}
+  {CaseValueRange ','}+                                 -> CaseValueRangeList {cons("CaseValueRangeList")}
 
 %%R845
 %%       constant-expr substituted for scalar-constant-expr
 %%
-  ConstantExpr                                          -> CaseValue      {cons("case-value")}
+  ConstantExpr                                          -> CaseValue      {cons("CaseValue")}
 
 %%R846
   SelectTypeStmt
     (TypeGuardStmt Block)*
-  EndSelectTypeStmt                                     -> SelectTypeConstruct  {cons("select-type-construct")}
+  EndSelectTypeStmt                                     -> SelectTypeConstruct  {cons("SelectTypeConstruct")}
 
 %%R847
   ( SelectConstructName ':')?
   'SELECT' 'TYPE'
-           '(' (AssociateName '=>')? Selector ')'   EOS -> SelectTypeStmt       {cons("select-type-stmt")}
+           '(' (AssociateName '=>')? Selector ')'   EOS -> SelectTypeStmt       {cons("SelectTypeStmt")}
 
 %%848
-  'TYPE'  'IS' '(' TypeSpec        ')' SelectConstructName? EOS -> TypeGuardStmt {cons("type-guard-stmt_TYPE")}
-  'CLASS' 'IS' '(' DerivedTypeSpec ')' SelectConstructName? EOS -> TypeGuardStmt {cons("type-guard-stmt_CLASS")}
-  'CLASS' 'DEFAULT'                    SelectConstructName? EOS -> TypeGuardStmt {cons("type-guard-stmt_CLASS_DEFAULT")}
+  'TYPE'  'IS' '(' TypeSpec        ')' SelectConstructName? EOS -> TypeGuardStmt {cons("TypeGuardStmt_TYPE")}
+  'CLASS' 'IS' '(' DerivedTypeSpec ')' SelectConstructName? EOS -> TypeGuardStmt {cons("TypeGuardStmt_CLASS")}
+  'CLASS' 'DEFAULT'                    SelectConstructName? EOS -> TypeGuardStmt {cons("TypeGuardStmt_CLASS_DEFAULT")}
 
 %%R849
-  'END' 'SELECT' SelectConstructName?               EOS -> EndSelectTypeStmt    {cons("end-select-type-stmt")}
+  'END' 'SELECT' SelectConstructName?               EOS -> EndSelectTypeStmt    {cons("EndSelectTypeStmt")}
 
 %%R850
-  LblDef 'EXIT' ConstructName?                      EOS -> ExitStmt             {cons("exit-stmt")}
+  Label? 'EXIT' ConstructName?                      EOS -> ExitStmt             {cons("ExitStmt")}
 
 
 %% 8.2 Branching
 %%
 
 %%R851
-  LblDef 'GO' 'TO' LblRef                           EOS -> GotoStmt             {cons("goto-stmt")}
+  Label? 'GO' 'TO' LblRef                           EOS -> GotoStmt             {cons("GotoStmt")}
 
 %%R852
 %%       expr substituted for scalar-int-expr
 %%
-  LblDef 'GO' 'TO' '(' {LblRef ','}+ ')' OptComma Expr  EOS -> ComputedGotoStmt {cons("computed-goto-stmt")}
+  Label? 'GO' 'TO' '(' LabelList ')' ','? Expr      EOS -> ComputedGotoStmt {cons("ComputedGotoStmt")}
+
+  {LblRef ','}+                                         -> LabelList        {cons("LabelList")}
 
 %%R853
 %%       expr substituted for scalar-numeric-expr
 %%
-  LblDef 'IF' '(' Expr ')' LblRef ',' LblRef ',' LblRef EOS -> ArithmeticIfStmt {cons("arithmetic-if-stmt")}
+  Label? 'IF' '(' Expr ')' LblRef ',' LblRef ',' LblRef EOS -> ArithmeticIfStmt {cons("ArithmeticIfStmt")}
 
 
 %% 8.3 Continue statement
 %%
 
 %%R854
-  LblDef 'CONTINUE'                                 EOS -> ContinueStmt         {cons("continue-stmt")}
+  Label? 'CONTINUE'                                 EOS -> ContinueStmt         {cons("ContinueStmt")}
 
 
 %% 8.4 Stop and Error Stop statements
 %%
 
 %%R855
-  LblDef         'STOP' StopCode?                   EOS -> StopStmt             {cons("stop-stmt")}
+  Label?         'STOP' StopCode?                   EOS -> StopStmt             {cons("StopStmt")}
 
 %%R856
-  LblDef 'ERROR' 'STOP' StopCode?                   EOS -> ErrorStopStmt        {cons("error-stop-stmt")}
+  Label? 'ERROR' 'STOP' StopCode?                   EOS -> ErrorStopStmt        {cons("ErrorStopStmt")}
 
 %%R857
 %%        Scon substituted for scalar-default-char-constant-expr
 %%        Icon substituted for scalar-int-constant-expr
 %%
-  Scon                                                  -> StopCode             {cons("stop-code_SDCCE")}
-  Icon                                                  -> StopCode             {cons("stop-code_SICE")}
+  Scon                                                  -> StopCode             {cons("StopCode_SDCCE")}
+  Icon                                                  -> StopCode             {cons("StopCode_SICE")}
 
 
 %% 8.5 Image execution control
 %%
 
 %%R858
-  LblDef 'SYNC' 'ALL'
-         ( '(' {SyncStat ','}* ')' )?               EOS -> SyncAllStmt          {cons("sync-all-stmt")}
+  Label? 'SYNC' 'ALL'
+         ( '(' SyncStatList? ')' )?                 EOS -> SyncAllStmt          {cons("SyncAllStmt")}
 
 %%R859
-  'STAT'   '=' StatVariable                             -> SyncStat             {cons("sync-stat_STAT")}
-  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("sync-stat_ERRMSG")}
+  'STAT'   '=' StatVariable                             -> SyncStat             {cons("SyncStat_STAT")}
+  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("SyncStat_ERRMSG")}
+  {SyncStat ','}+                                       -> SyncStatList         {cons("SyncStatList")}
 
 %%R860
-  LblDef 'SYNC' 'IMAGES' '(' ImageSet
-                (',' {SyncStat ','}+ )? ')'         EOS -> SyncImagesStmt       {cons("sync-images-stmt")}
+  Label? 'SYNC' 'IMAGES' '(' ImageSet
+                (',' SyncStatList )? ')'            EOS -> SyncImagesStmt       {cons("SyncImagesStmt")}
 
 %%R861
-  IntExpr                                             -> ImageSet               {cons("image-set_IE")}
-  '*'                                                 -> ImageSet               {cons("image-set_STAR")}
+  IntExpr                                               -> ImageSet             {cons("ImageSet_IE")}
+  '*'                                                   -> ImageSet             {cons("ImageSet_STAR")}
 
 %%R862
-  LblDef 'SYNC' 'MEMORY'
-         ( '(' {SyncStat ','}* ')' )?               EOS -> SyncMemoryStmt       {cons("sync-memory-stmt")}
+  Label? 'SYNC' 'MEMORY'
+         ( '(' SyncStatList? ')' )?                 EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
 
 %%R863
-  LblDef 'LOCK' '(' LockVariable
-                 (',' {SyncStat ','}+ )? ')'        EOS -> LockStmt             {cons("lock-stmt")}
+  Label? 'LOCK' '(' LockVariable
+                 (',' LockStatList )? ')'           EOS -> LockStmt             {cons("LockStmt")}
 
 %%R864
-  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("lock-stat_ACQUIRED_LOCK")}
-  SyncStat                                              -> LockStat             {cons("lock-stat_SS")}
+  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("LockStat_ACQUIRED_LOCK")}
+  SyncStat                                              -> LockStat             {cons("LockStat_SS")}
+  {LockStat ','}+                                       -> LockStatList         {cons("LockStatList")}
 
 %%R865
-  LblDef 'UNLOCK' '(' LockVariable
-                   (',' {SyncStat ','}+ )? ')'      EOS -> UnlockStmt           {cons("unlock-stmt")}
+  Label? 'UNLOCK' '(' LockVariable
+                   (',' SyncStatList )? ')'         EOS -> UnlockStmt           {cons("UnlockStmt")}
 
 %%866
 %%          variable substituted for scalar-variable
 %%
-  Variable                                              -> LockVariable         {cons("lock-variable")}
+  Variable                                              -> LockVariable         {cons("LockVariable")}

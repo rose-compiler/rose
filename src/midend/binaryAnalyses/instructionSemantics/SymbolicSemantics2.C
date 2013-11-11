@@ -6,6 +6,20 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SymbolicSemantics {
 
+// temporarily disables usedef analysis; restores original value on destruction
+class PartialDisableUsedef {
+private:
+    bool saved_value;
+    RiscOperators *ops;
+public:
+    PartialDisableUsedef(RiscOperators *ops): saved_value(false), ops(ops) {
+        saved_value = ops->getset_omit_cur_insn(true);
+    }
+    ~PartialDisableUsedef() {
+        ops->getset_omit_cur_insn(saved_value);
+    }
+};
+
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
@@ -238,7 +252,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_AND,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -252,7 +266,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_OR,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -275,7 +289,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
                                                   a->get_expression(), b->get_expression()));
     }
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
     
@@ -285,7 +299,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_INVERT, a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
     return retval;
 }
 
@@ -299,8 +313,13 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
                                                         LeafNode::create_integer(32, begin_bit),
                                                         LeafNode::create_integer(32, end_bit),
                                                         a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+    if (compute_usedef) {
+        if (retval->get_width()==a->get_width()) {
+            retval->defined_by(NULL, a->get_defining_instructions());
+        } else {
+            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+        }
+    }
     return retval;
 }
 
@@ -312,7 +331,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width()+b->get_width(), InsnSemanticsExpr::OP_CONCAT,
                                                         b->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -322,7 +341,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval = svalue_expr(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
     return retval;
 }
 
@@ -340,7 +359,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     if (sel->is_number()) {
         retval = SValue::promote(sel->get_number() ? a->copy() : b->copy());
         if (compute_usedef)
-            retval->defined_by(cur_insn, sel->get_defining_instructions());
+            retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
         return retval;
     }
     if (solver) {
@@ -352,7 +371,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
             if (compute_usedef)
-                retval->defined_by(cur_insn, sel->get_defining_instructions());
+                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
             return retval;
         }
 
@@ -363,14 +382,14 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
             if (compute_usedef)
-                retval->defined_by(cur_insn, sel->get_defining_instructions());
+                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
             return retval;
         }
     }
     retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ITE, sel->get_expression(),
                                               a->get_expression(), b->get_expression()));
     if (compute_usedef) {
-        retval->defined_by(cur_insn, sel->get_defining_instructions(),
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions(),
                            a->get_defining_instructions(), b->get_defining_instructions());
     }
     return retval;
@@ -382,7 +401,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_LSSB, a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
     return retval;
 }
 
@@ -392,7 +411,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_MSSB, a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
     return retval;
 }
 
@@ -404,7 +423,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
                                                         sa->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
 }
 
@@ -416,7 +435,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
                                                         sa->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
 }
 
@@ -428,7 +447,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
                                                         sa->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
 }
 
@@ -440,7 +459,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
                                                         sa->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
 }
 
@@ -452,7 +471,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ASR,
                                                         sa->get_expression(), a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
 }
 
@@ -463,8 +482,13 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
     SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_UEXTEND,
                                                         LeafNode::create_integer(32, new_width),
                                                         a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+    if (compute_usedef) {
+        if (retval->get_width()==a->get_width()) {
+            retval->defined_by(NULL, a->get_defining_instructions());
+        } else {
+            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+        }
+    }
     return retval;
 }
 
@@ -477,7 +501,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -500,7 +524,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_NEGATE, a->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
     return retval;
 }
 
@@ -512,7 +536,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SDIV,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -524,7 +548,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_SMOD,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -537,7 +561,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_SMUL,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -549,7 +573,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_UDIV,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -561,7 +585,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_UMOD,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -574,7 +598,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_UMUL,
                                                         a->get_expression(), b->get_expression()));
     if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
 
@@ -585,9 +609,29 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_SEXTEND,
                                                         LeafNode::create_integer(32, new_width),
                                                         a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(cur_insn, a->get_defining_instructions());
+    if (compute_usedef) {
+        if (retval->get_width()==a->get_width()) {
+            retval->defined_by(NULL, a->get_defining_instructions());
+        } else {
+            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+        }
+    }
     return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readRegister(const RegisterDescriptor &reg) 
+{
+    PartialDisableUsedef du(this);
+    return BaseSemantics::RiscOperators::readRegister(reg);
+}
+
+void
+RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_)
+{
+    SValuePtr a = SValue::promote(a_->copy());
+    PartialDisableUsedef du(this);
+    BaseSemantics::RiscOperators::writeRegister(reg, a);
 }
 
 BaseSemantics::SValuePtr
@@ -597,6 +641,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           size_t nbits) {
     assert(1==condition->get_width()); // FIXME: condition is not used
     assert(8==nbits || 16==nbits || 32==nbits);
+
+    PartialDisableUsedef du(this);
 
     // Read the bytes in little endian order and concatenate them together. InsnSemanticsExpr will simplify the expression
     // so that reading after writing a multi-byte value will return the original value written rather than a concatenation
@@ -623,8 +669,10 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value,
+                           const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
+    SValuePtr value = SValue::promote(value_->copy());
+    PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     assert(8==nbits || 16==nbits || 32==nbits);
     assert(1==condition->get_width()); // FIXME: condition is not used

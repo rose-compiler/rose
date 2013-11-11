@@ -294,7 +294,6 @@ ConnectionImpl::conn_for_transaction()
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: SQLite3 open spec: %s\n", specs.c_str());
                 dconn.sqlite3_connection = new sqlite3x::sqlite3_connection(specs.c_str());
-                dconn.sqlite3_connection->busy_timeout(15*60*1000); // 15 minutes
             }
             break;
         }
