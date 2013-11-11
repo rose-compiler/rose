@@ -406,6 +406,16 @@ EXTRA_DIST += testCallDetection.ans
 testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
 
+# Unit tests for use-def (executed created below)
+TEST_TARGETS += usedef.passed
+EXTRA_DIST += usedef.ans usedef.conf
+usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
+	@$(RTH_RUN)										\
+		USE_SUBDIR=yes									\
+		TITLE="use-def unit tests"							\
+		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(BINARY_SAMPLES)/usedef"	\
+		ANS="$(srcdir)/usedef.ans"							\
+		$< $@
 
 ###############################################################################################################################
 # Instruction semantics tests.
@@ -475,7 +485,6 @@ EXTRA_DIST += semantics.conf intervalSemantics2.ans
 intervalSemantics2.passed: semantics.conf intervalSemantics2
 	@$(RTH_RUN) CMD=intervalSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-
 # Symbolic semantics, no SMT solver, old API
 noinst_PROGRAMS += symbolicSemantics
 symbolicSemantics_SOURCES = semantics.C
@@ -499,12 +508,12 @@ symbolicSemantics2.passed: semantics.conf symbolicSemantics2
 # Tracing symbolic semantics, no SMT solver, new API
 noinst_PROGRAMS += traceSymbolicSemantics2
 traceSymbolicSemantics2_SOURCES = semantics.C
-traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER -DTRACE
+traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += traceSymbolicSemantics2.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
 traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2
-	@$(RTH_RUN) CMD=traceSymbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=traceSymbolicSemantics2 SWITCHES="--trace --no-usedef" INPUT=i686-test1.O3.bin $< $@
 
 # Symbolic semantics, Yices executable, old API
 noinst_PROGRAMS += yicesSemanticsExe
@@ -806,7 +815,7 @@ $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
 check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
-#FIXME: all of the x86 executables have at least one thing that doesn't disassemble [Robb Matzke 2013-08-30]
+#FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
 #assemble_Specimens = $(filter $(x86_Specimens), $(Executable_Specimens))
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
 TEST_TARGETS += $(assemble_Targets)

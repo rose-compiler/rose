@@ -1,8 +1,9 @@
 
-void foobar();
+#define MACRO(x) ((x)+(x))
 
-void foo()
+void foobar();void foo()
    {
      int *i;
+     int x = MACRO(42);
      foobar(i);
    }

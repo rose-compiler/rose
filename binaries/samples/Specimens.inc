@@ -42,7 +42,8 @@ ELF_x86_Specimens =				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
     libm-2.3.6.so				\
-    memreadwrite
+    memreadwrite				\
+    usedef
 
 PE_ARM_Specimens =				\
     pocketputty.exe				\
