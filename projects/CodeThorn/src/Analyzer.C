@@ -137,7 +137,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
   t=isStdIOLabel(label) 
-    || getLabeler()->isStdErrLabel(label)
+    || (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
      || isCppLabeledAssertLabel(label)
@@ -1288,7 +1288,7 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   return true;
 }
 
-
+#if 0
 void Analyzer::deleteNonRelevantEStates() {
   size_t numEStatesBefore=estateSet.size();
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
@@ -1300,6 +1300,7 @@ void Analyzer::deleteNonRelevantEStates() {
   if(numEStatesBefore!=numEStatesAfter)
     cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
+#endif
 
 void Analyzer::stdIOFoldingOfTransitionGraph() {
   cout << "STATUS: stdio-folding: computing states to fold."<<endl;

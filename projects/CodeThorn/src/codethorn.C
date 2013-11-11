@@ -646,7 +646,7 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["semantic-explosion"]) {
     boolOptions.registerOption("semantic-fold",true);
-    boolOptions.registerOption("semantic-elimination",true);
+    //boolOptions.registerOption("semantic-elimination",true);
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
