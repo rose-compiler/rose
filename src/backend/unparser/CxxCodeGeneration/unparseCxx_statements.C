@@ -2677,6 +2677,21 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           curprint( "\n/* DONE: Calling printSpecifier() */ ");
 #endif
+
+       // DQ (10/21/2013): In cases where this is a function declaration the "extern" keyword may have been in a #if...#endif block and then
+       // the #endif will be placed as "inside" the statement (instead of at the beginning or the end.  In this case we want to unparse
+       // any attached CPP directives (or comments) that are listed as "inside" the declaration after the unparsing of the specifiers (e.g. "extern").
+       // This is a new bug that is a result of having better source position information (required for the token handling support) and 
+       // getting the source position of the function declaration at the start of the specifiers (where this is available).  However,
+       // this then means that the "#end" is between the start and the end fo the statement (thus the "#end is considered "inside" the
+       // function declaration statement.  Previously the source position for the start of a function declaration had been the start of the
+       // function name (and not any specifiers).  Test code test2013_271.C and test2013_272.C demonstrate this problem.  So here well
+       // unparse any attached CPP directives that are marked as inside the declaration.  We can't actually know where the CPP directived
+       // should go relative to the different parts of the declaration, so this is approximate.  But at least we know that the CPP directive
+       // will be unparsed and this avoids unmatched #if...#endif pairings.  A more faithful job can only be done by the token based unparsing
+       // which is still in development.
+          unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::inside);
+
           ninfo.unset_CheckAccess();
 
        // DQ (11/10/2007): Modified from info.set_access_attribute(...) --> ninfo.set_access_attribute(...)
