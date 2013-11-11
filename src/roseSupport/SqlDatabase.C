@@ -403,6 +403,9 @@ Connection::guess_driver(const std::string &open_spec)
     if (0==open_spec.substr(0, 13).compare("postgresql://"))
         return POSTGRESQL;
 
+    if (0==open_spec.substr(0, 10).compare("sqlite3://"))
+        return SQLITE3;
+
     // If it looks like a file name ending with ".db" then it's probably an SQLite3 database.
     bool is_filename = true;
     for (size_t i=0; is_filename && i<open_spec.size(); ++i)
