@@ -137,7 +137,9 @@ namespace sqlite3x {
                 // Robb uses unsigned types almost exclusively
                 void bind(int index, unsigned data) { bind(index, (long long)data); }
                 void bind(int index, unsigned long long data) { bind(index, (long long)data); } // possible overflow to negative
+#if ROSE_SIZEOF_LONG != ROSE_SIZEOF_INT
                 void bind(int index, size_t data) { bind(index, (long long)data); }
+#endif
 
                 sqlite3_reader executereader();
                 void executenonquery();
