@@ -1520,7 +1520,7 @@ Partitioner::mark_func_patterns()
             if (enabled) {
                 rose_addr_t va = args.range.first();
                 while (va<=args.range.last()) {
-                    size_t nbytes = std::min(args.range.last()+1-va, sizeof buf);
+		    size_t nbytes = std::min(args.range.last()+1-va, (rose_addr_t)sizeof buf);
                     size_t nread = args.restrict_map->read(buf, va, nbytes);
                     for (size_t i=0; i<nread; ++i) {
                         // "55 8b ec" is x86 "push ebp; mov ebp, esp"
