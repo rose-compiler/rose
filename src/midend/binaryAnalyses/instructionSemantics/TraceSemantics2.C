@@ -121,7 +121,7 @@ RiscOperators::before(const std::string &operator_name, size_t a)
 void
 RiscOperators::before(const std::string &operator_name, size_t a, uint64_t b)
 {
-    mesg.multipart(operator_name, "%s(%zu, %zu)", operator_name.c_str(), a, b);
+    mesg.multipart(operator_name, "%s(%zu, %"PRIu64")", operator_name.c_str(), a, b);
     check_subdomain();
 }
 

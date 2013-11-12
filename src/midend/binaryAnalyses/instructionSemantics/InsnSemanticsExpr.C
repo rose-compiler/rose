@@ -960,7 +960,7 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
         uint64_t sa = sa_leaf->get_value();
-        sa = std::min(inode->get_nbits(), sa);
+        sa = std::min((uint64_t)inode->get_nbits(), sa);
         uint64_t val = val_leaf->get_value();
         val = IntegerOps::shiftLeft2(val, sa, inode->get_nbits());
         if (newbits)
@@ -989,7 +989,7 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
         uint64_t sa = sa_leaf->get_value();
-        sa = std::min(inode->get_nbits(), sa);
+        sa = std::min((uint64_t)inode->get_nbits(), sa);
         uint64_t val = val_leaf->get_value();
         val = IntegerOps::shiftRightLogical2(val, sa, inode->get_nbits());
         if (newbits)
