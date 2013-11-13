@@ -2161,7 +2161,13 @@ public:
     }
 
     template<size_t nBits>
-    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value, unsigned update_access=HAS_BEEN_WRITTEN) {
+    void writeRegister(const RegisterDescriptor &reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
+        // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
+        // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
+        // order to stay in the concrete domain, we always choose a value of zero when this happens.
+        if (!value.is_known())
+            value = ValueType<nBits>(0);
+
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty())
             stack_frames.top().last_call = NULL; // end of function return value analysis
         switch (nBits) {
