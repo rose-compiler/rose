@@ -259,6 +259,15 @@ class Unparser
        // DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
       //! Reset the Sg_File_Info to reference the unparsed (generated) source code.
           void resetSourcePosition (SgStatement* stmt);
+
+       // DQ (9/30/2013): Unparse the file using the token stream (stored in the SgFile).
+          void unparseFileUsingTokenStream ( SgSourceFile* file );
+
+       // DQ (9/30/2013): Supporting function for evaluating token source position information.
+       // int getNumberOfLines( std::string s ) const;
+       // int getColumnNumberOfEndOfString( std::string s ) const;
+          static int getNumberOfLines( std::string s );
+          static int getColumnNumberOfEndOfString( std::string s );
    };
 
 
