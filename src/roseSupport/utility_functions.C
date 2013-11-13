@@ -51,6 +51,10 @@ const int roseTargetCacheLineSize = 32;
 #define DEBUG_COPY_EDIT false
 
 
+// DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> ROSE::tokenSubsequenceMap;
+
+
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
 std::string edgVersionString()
    {

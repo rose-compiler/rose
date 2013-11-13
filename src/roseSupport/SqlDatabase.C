@@ -294,7 +294,6 @@ ConnectionImpl::conn_for_transaction()
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: SQLite3 open spec: %s\n", specs.c_str());
                 dconn.sqlite3_connection = new sqlite3x::sqlite3_connection(specs.c_str());
-                dconn.sqlite3_connection->busy_timeout(15*60*1000); // 15 minutes
             }
             break;
         }
@@ -403,6 +402,9 @@ Connection::guess_driver(const std::string &open_spec)
     // sslcompression sslcert, sslkey, sslrootcert, sslcrl, requirepeer, krbsrvname, gsslib, service
     if (0==open_spec.substr(0, 13).compare("postgresql://"))
         return POSTGRESQL;
+
+    if (0==open_spec.substr(0, 10).compare("sqlite3://"))
+        return SQLITE3;
 
     // If it looks like a file name ending with ".db" then it's probably an SQLite3 database.
     bool is_filename = true;
