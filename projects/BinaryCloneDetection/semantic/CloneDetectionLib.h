@@ -1884,8 +1884,13 @@ public:
     }
         
     template<size_t nBits>
-    void writeMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<nBits> &data, const ValueType<1> &cond,
+    void writeMemory(X86SegmentRegister sr, ValueType<32> a0, ValueType<nBits> data, const ValueType<1> &cond,
                      unsigned rw_state=HAS_BEEN_WRITTEN) {
+        // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
+        // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
+        // order to stay in the concrete domain, we always choose a value of zero when this happens.
+        if (!data.is_known())
+            data = ValueType<nBits>(0);
 
         // Add the address/value pair to the memory state one byte at a time in little-endian order.
         assert(8==nBits || 16==nBits || 32==nBits);
