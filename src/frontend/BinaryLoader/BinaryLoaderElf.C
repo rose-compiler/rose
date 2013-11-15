@@ -480,14 +480,19 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
     if (NULL == version.get_version_need())
         return get_base_version();
 
+    // Look for a return value that has the correct version.
     std::string neededVersion = version.get_version_need()->get_name()->get_string();
     for (size_t i=0; i<p_versions.size(); ++i) {
-        SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def();
-        if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
-            return p_versions[i];
+        if (SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def()) {
+            const SgAsmElfSymverDefinedAuxPtrList &defaux_list = def->get_entries()->get_entries();
+            assert(!defaux_list.empty() && defaux_list[0]!=NULL);
+            if (0==defaux_list[0]->get_name()->get_string().compare(neededVersion))
+                return p_versions[i];
+        }
     }
-    assert(!"TODO, handle cases where input uses versioning, but definition does not");
-    abort();
+
+    // If the defined symbols don't have versions, then return them instead.
+    return get_base_version();
 }
 
 void
