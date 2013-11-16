@@ -42,4 +42,10 @@ case6:	mov [eax], ebx
 case7:	mov eax, [ebx]
 	je end
 
+	;; XOR of a register with itself is an idiom for clearing the register. The result should not
+	;; depend on the operands
+case8:  mov eax, 1
+	xor eax, eax
+	je end
+
 	hlt

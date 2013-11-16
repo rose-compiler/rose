@@ -3,134 +3,134 @@
 =====================================================================================
 
 0x80480a0:je     0x080480a3<<Insn>>
-Symbolic@0x21909c0 insn@0x080480a0[0]: startInstruction(je     0x080480a3<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480a0[0]: number_(32, 2) = {defs={0x080480a0}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480a0[0]: number_(32, 134512800) = {defs={0x080480a0}, expr=0x080480a0[32]}
-Symbolic@0x21909c0 insn@0x080480a0[0]: add({defs={0x080480a0}, expr=0x080480a0[32]}, {defs={0x080480a0}, expr=2[32]}) = {defs={0x080480a0}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=0x080480a2[32]})
-Symbolic@0x21909c0 insn@0x080480a0[0]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480a0[0]: readRegister(eip) = {defs={0x080480a0}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480a0[0]: number_(32, 134512803) = {defs={0x080480a0}, expr=0x080480a3[32]}
-Symbolic@0x21909c0 insn@0x080480a0[0]: ite(zf_0[1], {defs={0x080480a0}, expr=0x080480a3[32]}, {defs={0x080480a0}, expr=0x080480a2[32]}) = {defs={0x080480a0}, expr=(ite[32] zf_0[1] 0x080480a3[32] 0x080480a2[32])}
-Symbolic@0x21909c0 insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=(ite[32] zf_0[1] 0x080480a3[32] 0x080480a2[32])})
-Symbolic@0x21909c0 insn@0x080480a0[0]: finishInstruction(je     0x080480a3<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480a0[0]: startInstruction(je     0x080480a3<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480a0[0]: number_(32, 2) = {defs={0x080480a0}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: number_(32, 134512800) = {defs={0x080480a0}, expr=0x080480a0[32]}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: add({defs={0x080480a0}, expr=0x080480a0[32]}, {defs={0x080480a0}, expr=2[32]}) = {defs={0x080480a0}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=0x080480a2[32]})
+Symbolic@0x129c8c0 insn@0x080480a0[0]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480a0[0]: readRegister(eip) = {defs={0x080480a0}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: number_(32, 134512803) = {defs={0x080480a0}, expr=0x080480a3[32]}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: ite(zf_0[1], {defs={0x080480a0}, expr=0x080480a3[32]}, {defs={0x080480a0}, expr=0x080480a2[32]}) = {defs={0x080480a0}, expr=(ite[32] zf_0[1] 0x080480a3[32] 0x080480a2[32])}
+Symbolic@0x129c8c0 insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=(ite[32] zf_0[1] 0x080480a3[32] 0x080480a2[32])})
+Symbolic@0x129c8c0 insn@0x080480a0[0]: finishInstruction(je     0x080480a3<<Insn>>)
 registers:
   eip    = {defs={0x080480a0}, expr=(ite[32] zf_0[1] 0x080480a3[32] 0x080480a2[32])}
 memory:
-Symbolic@0x21909c0 insn@0x080480a0[0]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480a0[0]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480a2:hlt    
-Symbolic@0x21909c0 insn@0x080480a2[0]: startInstruction(hlt)
-Symbolic@0x21909c0 insn@0x080480a2[0]: number_(32, 1) = {defs={0x080480a2}, expr=1[32]}
-Symbolic@0x21909c0 insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480a2[0]: add({defs={0x080480a2}, expr=0x080480a2[32]}, {defs={0x080480a2}, expr=1[32]}) = {defs={0x080480a2}, expr=0x080480a3[32]}
-Symbolic@0x21909c0 insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a3[32]})
-Symbolic@0x21909c0 insn@0x080480a2[0]: hlt()
-Symbolic@0x21909c0 insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a2[32]})
-Symbolic@0x21909c0 insn@0x080480a2[0]: finishInstruction(hlt)
+Symbolic@0x129c8c0 insn@0x080480a2[0]: startInstruction(hlt)
+Symbolic@0x129c8c0 insn@0x080480a2[0]: number_(32, 1) = {defs={0x080480a2}, expr=1[32]}
+Symbolic@0x129c8c0 insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480a2[0]: add({defs={0x080480a2}, expr=0x080480a2[32]}, {defs={0x080480a2}, expr=1[32]}) = {defs={0x080480a2}, expr=0x080480a3[32]}
+Symbolic@0x129c8c0 insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a3[32]})
+Symbolic@0x129c8c0 insn@0x080480a2[0]: hlt()
+Symbolic@0x129c8c0 insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a2[32]})
+Symbolic@0x129c8c0 insn@0x080480a2[0]: finishInstruction(hlt)
 registers:
   eip    = {defs={0x080480a2}, expr=0x080480a2[32]}
 memory:
-Symbolic@0x21909c0 insn@0x080480a2[0]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480a2[0]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480a3:mov    eax, ebx
-Symbolic@0x21909c0 insn@0x080480a3[0]: startInstruction(mov    eax, ebx)
-Symbolic@0x21909c0 insn@0x080480a3[0]: number_(32, 2) = {defs={0x080480a3}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480a3[0]: number_(32, 134512803) = {defs={0x080480a3}, expr=0x080480a3[32]}
-Symbolic@0x21909c0 insn@0x080480a3[0]: add({defs={0x080480a3}, expr=0x080480a3[32]}, {defs={0x080480a3}, expr=2[32]}) = {defs={0x080480a3}, expr=0x080480a5[32]}
-Symbolic@0x21909c0 insn@0x080480a3[0]: writeRegister(eip, {defs={0x080480a3}, expr=0x080480a5[32]})
-Symbolic@0x21909c0 insn@0x080480a3[0]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480a3[0]: writeRegister(eax, ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480a3[0]: finishInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480a3[0]: startInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480a3[0]: number_(32, 2) = {defs={0x080480a3}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480a3[0]: number_(32, 134512803) = {defs={0x080480a3}, expr=0x080480a3[32]}
+Symbolic@0x129c8c0 insn@0x080480a3[0]: add({defs={0x080480a3}, expr=0x080480a3[32]}, {defs={0x080480a3}, expr=2[32]}) = {defs={0x080480a3}, expr=0x080480a5[32]}
+Symbolic@0x129c8c0 insn@0x080480a3[0]: writeRegister(eip, {defs={0x080480a3}, expr=0x080480a5[32]})
+Symbolic@0x129c8c0 insn@0x080480a3[0]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480a3[0]: writeRegister(eax, ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480a3[0]: finishInstruction(mov    eax, ebx)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480a3}, expr=0x080480a5[32]}
 memory:
 
 0x80480a5:mov    eax, eax
-Symbolic@0x21909c0 insn@0x080480a5[1]: startInstruction(mov    eax, eax)
-Symbolic@0x21909c0 insn@0x080480a5[1]: number_(32, 2) = {defs={0x080480a5}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480a5[1]: number_(32, 134512805) = {defs={0x080480a5}, expr=0x080480a5[32]}
-Symbolic@0x21909c0 insn@0x080480a5[1]: add({defs={0x080480a5}, expr=0x080480a5[32]}, {defs={0x080480a5}, expr=2[32]}) = {defs={0x080480a5}, expr=0x080480a7[32]}
-Symbolic@0x21909c0 insn@0x080480a5[1]: writeRegister(eip, {defs={0x080480a5}, expr=0x080480a7[32]})
-Symbolic@0x21909c0 insn@0x080480a5[1]: readRegister(eax) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480a5[1]: writeRegister(eax, ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480a5[1]: finishInstruction(mov    eax, eax)
+Symbolic@0x129c8c0 insn@0x080480a5[1]: startInstruction(mov    eax, eax)
+Symbolic@0x129c8c0 insn@0x080480a5[1]: number_(32, 2) = {defs={0x080480a5}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480a5[1]: number_(32, 134512805) = {defs={0x080480a5}, expr=0x080480a5[32]}
+Symbolic@0x129c8c0 insn@0x080480a5[1]: add({defs={0x080480a5}, expr=0x080480a5[32]}, {defs={0x080480a5}, expr=2[32]}) = {defs={0x080480a5}, expr=0x080480a7[32]}
+Symbolic@0x129c8c0 insn@0x080480a5[1]: writeRegister(eip, {defs={0x080480a5}, expr=0x080480a7[32]})
+Symbolic@0x129c8c0 insn@0x080480a5[1]: readRegister(eax) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480a5[1]: writeRegister(eax, ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480a5[1]: finishInstruction(mov    eax, eax)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480a5}, expr=0x080480a7[32]}
 memory:
 
 0x80480a7:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480a7[2]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480a7[2]: number_(32, 2) = {defs={0x080480a7}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480a7[2]: number_(32, 134512807) = {defs={0x080480a7}, expr=0x080480a7[32]}
-Symbolic@0x21909c0 insn@0x080480a7[2]: add({defs={0x080480a7}, expr=0x080480a7[32]}, {defs={0x080480a7}, expr=2[32]}) = {defs={0x080480a7}, expr=0x080480a9[32]}
-Symbolic@0x21909c0 insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=0x080480a9[32]})
-Symbolic@0x21909c0 insn@0x080480a7[2]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480a7[2]: readRegister(eip) = {defs={0x080480a7}, expr=0x080480a9[32]}
-Symbolic@0x21909c0 insn@0x080480a7[2]: number_(32, 134512802) = {defs={0x080480a7}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480a7[2]: ite(zf_0[1], {defs={0x080480a7}, expr=0x080480a2[32]}, {defs={0x080480a7}, expr=0x080480a9[32]}) = {defs={0x080480a7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480a9[32])}
-Symbolic@0x21909c0 insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480a9[32])})
-Symbolic@0x21909c0 insn@0x080480a7[2]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480a7[2]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480a7[2]: number_(32, 2) = {defs={0x080480a7}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: number_(32, 134512807) = {defs={0x080480a7}, expr=0x080480a7[32]}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: add({defs={0x080480a7}, expr=0x080480a7[32]}, {defs={0x080480a7}, expr=2[32]}) = {defs={0x080480a7}, expr=0x080480a9[32]}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=0x080480a9[32]})
+Symbolic@0x129c8c0 insn@0x080480a7[2]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480a7[2]: readRegister(eip) = {defs={0x080480a7}, expr=0x080480a9[32]}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: number_(32, 134512802) = {defs={0x080480a7}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: ite(zf_0[1], {defs={0x080480a7}, expr=0x080480a2[32]}, {defs={0x080480a7}, expr=0x080480a9[32]}) = {defs={0x080480a7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480a9[32])}
+Symbolic@0x129c8c0 insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480a9[32])})
+Symbolic@0x129c8c0 insn@0x080480a7[2]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480a7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480a9[32])}
 memory:
-Symbolic@0x21909c0 insn@0x080480a7[2]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480a7[2]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480a9:add    eax, eax
-Symbolic@0x21909c0 insn@0x080480a9[0]: startInstruction(add    eax, eax)
-Symbolic@0x21909c0 insn@0x080480a9[0]: number_(32, 2) = {defs={0x080480a9}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480a9[0]: number_(32, 134512809) = {defs={0x080480a9}, expr=0x080480a9[32]}
-Symbolic@0x21909c0 insn@0x080480a9[0]: add({defs={0x080480a9}, expr=0x080480a9[32]}, {defs={0x080480a9}, expr=2[32]}) = {defs={0x080480a9}, expr=0x080480ab[32]}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(eip, {defs={0x080480a9}, expr=0x080480ab[32]})
-Symbolic@0x21909c0 insn@0x080480a9[0]: boolean_(0) = {defs={0x080480a9}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480a9[0]: readRegister(eax) = eax_0[32]
-Symbolic@0x21909c0 insn@0x080480a9[0]: readRegister(eax) = eax_0[32]
-Symbolic@0x21909c0 insn@0x080480a9[0]: addWithCarries(eax_0[32], eax_0[32], {defs={0x080480a9}, expr=0[1]}) = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
-Symbolic@0x21909c0 insn@0x080480a9[0]: also returns: {defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, 0, 8) = {defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 1, 2) = {defs={0x080480a9}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 0, 1) = {defs={0x080480a9}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 3, 4) = {defs={0x080480a9}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 2, 3) = {defs={0x080480a9}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 5, 6) = {defs={0x080480a9}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 4, 5) = {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 7, 8) = {defs={0x080480a9}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 6, 7) = {defs={0x080480a9}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: invert({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(pf, {defs={0x080480a9}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, 31, 32) = {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(sf, {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32]))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: equalToZero({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}) = {defs={0x080480a9}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32]))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(zf, {defs={0x080480a9}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32]))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 31, 32) = {defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 30, 31) = {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 3, 4) = {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(af, {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(cf, {defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(of, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))))})
-Symbolic@0x21909c0 insn@0x080480a9[0]: writeRegister(eax, {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])})
-Symbolic@0x21909c0 insn@0x080480a9[0]: finishInstruction(add    eax, eax)
+Symbolic@0x129c8c0 insn@0x080480a9[0]: startInstruction(add    eax, eax)
+Symbolic@0x129c8c0 insn@0x080480a9[0]: number_(32, 2) = {defs={0x080480a9}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: number_(32, 134512809) = {defs={0x080480a9}, expr=0x080480a9[32]}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: add({defs={0x080480a9}, expr=0x080480a9[32]}, {defs={0x080480a9}, expr=2[32]}) = {defs={0x080480a9}, expr=0x080480ab[32]}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(eip, {defs={0x080480a9}, expr=0x080480ab[32]})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: boolean_(0) = {defs={0x080480a9}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: readRegister(eax) = eax_0[32]
+Symbolic@0x129c8c0 insn@0x080480a9[0]: readRegister(eax) = eax_0[32]
+Symbolic@0x129c8c0 insn@0x080480a9[0]: addWithCarries(eax_0[32], eax_0[32], {defs={0x080480a9}, expr=0[1]}) = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: also returns: {defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, 0, 8) = {defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 1, 2) = {defs={0x080480a9}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 0, 1) = {defs={0x080480a9}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 3, 4) = {defs={0x080480a9}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 2, 3) = {defs={0x080480a9}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 5, 6) = {defs={0x080480a9}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 4, 5) = {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 7, 8) = {defs={0x080480a9}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32]))}, 6, 7) = {defs={0x080480a9}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32]))}, {defs={0x080480a9}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])))}, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: invert({defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32])))}) = {defs={0x080480a9}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(pf, {defs={0x080480a9}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, 31, 32) = {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(sf, {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: equalToZero({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}) = {defs={0x080480a9}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(zf, {defs={0x080480a9}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 31, 32) = {defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 30, 31) = {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: extract({defs={0x080480a9}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, 3, 4) = {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(af, {defs={0x080480a9}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(cf, {defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: xor_({defs={0x080480a9}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}, {defs={0x080480a9}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32]))))}) = {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(of, {defs={0x080480a9}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] eax_0[32]) (uextend[33] 33[32] eax_0[32])))))})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: writeRegister(eax, {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])})
+Symbolic@0x129c8c0 insn@0x080480a9[0]: finishInstruction(add    eax, eax)
 registers:
   eax    = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
   eip    = {defs={0x080480a9}, expr=0x080480ab[32]}
@@ -143,47 +143,47 @@ registers:
 memory:
 
 0x80480ab:add    ebx, ebx
-Symbolic@0x21909c0 insn@0x080480ab[1]: startInstruction(add    ebx, ebx)
-Symbolic@0x21909c0 insn@0x080480ab[1]: number_(32, 2) = {defs={0x080480ab}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480ab[1]: number_(32, 134512811) = {defs={0x080480ab}, expr=0x080480ab[32]}
-Symbolic@0x21909c0 insn@0x080480ab[1]: add({defs={0x080480ab}, expr=0x080480ab[32]}, {defs={0x080480ab}, expr=2[32]}) = {defs={0x080480ab}, expr=0x080480ad[32]}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(eip, {defs={0x080480ab}, expr=0x080480ad[32]})
-Symbolic@0x21909c0 insn@0x080480ab[1]: boolean_(0) = {defs={0x080480ab}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480ab[1]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480ab[1]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480ab[1]: addWithCarries(ebx_0[32], ebx_0[32], {defs={0x080480ab}, expr=0[1]}) = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
-Symbolic@0x21909c0 insn@0x080480ab[1]: also returns: {defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, 0, 8) = {defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 1, 2) = {defs={0x080480ab}, expr=(extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 0, 1) = {defs={0x080480ab}, expr=(extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 3, 4) = {defs={0x080480ab}, expr=(extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 2, 3) = {defs={0x080480ab}, expr=(extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 5, 6) = {defs={0x080480ab}, expr=(extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 4, 5) = {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 7, 8) = {defs={0x080480ab}, expr=(extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 6, 7) = {defs={0x080480ab}, expr=(extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: invert({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(pf, {defs={0x080480ab}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, 31, 32) = {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(sf, {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (add[32] ebx_0[32] ebx_0[32]))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: equalToZero({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}) = {defs={0x080480ab}, expr=(zerop[1] (add[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(zf, {defs={0x080480ab}, expr=(zerop[1] (add[32] ebx_0[32] ebx_0[32]))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 31, 32) = {defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 30, 31) = {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 3, 4) = {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(af, {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(cf, {defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(of, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))))})
-Symbolic@0x21909c0 insn@0x080480ab[1]: writeRegister(ebx, {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])})
-Symbolic@0x21909c0 insn@0x080480ab[1]: finishInstruction(add    ebx, ebx)
+Symbolic@0x129c8c0 insn@0x080480ab[1]: startInstruction(add    ebx, ebx)
+Symbolic@0x129c8c0 insn@0x080480ab[1]: number_(32, 2) = {defs={0x080480ab}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: number_(32, 134512811) = {defs={0x080480ab}, expr=0x080480ab[32]}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: add({defs={0x080480ab}, expr=0x080480ab[32]}, {defs={0x080480ab}, expr=2[32]}) = {defs={0x080480ab}, expr=0x080480ad[32]}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(eip, {defs={0x080480ab}, expr=0x080480ad[32]})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: boolean_(0) = {defs={0x080480ab}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480ab[1]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480ab[1]: addWithCarries(ebx_0[32], ebx_0[32], {defs={0x080480ab}, expr=0[1]}) = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: also returns: {defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, 0, 8) = {defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 1, 2) = {defs={0x080480ab}, expr=(extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 0, 1) = {defs={0x080480ab}, expr=(extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 3, 4) = {defs={0x080480ab}, expr=(extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 2, 3) = {defs={0x080480ab}, expr=(extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 5, 6) = {defs={0x080480ab}, expr=(extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 4, 5) = {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 7, 8) = {defs={0x080480ab}, expr=(extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[8] 0[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}, 6, 7) = {defs={0x080480ab}, expr=(extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480ab}, expr=(extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: invert({defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480ab}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(pf, {defs={0x080480ab}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] ebx_0[32] ebx_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, 31, 32) = {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(sf, {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (add[32] ebx_0[32] ebx_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: equalToZero({defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}) = {defs={0x080480ab}, expr=(zerop[1] (add[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(zf, {defs={0x080480ab}, expr=(zerop[1] (add[32] ebx_0[32] ebx_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 31, 32) = {defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 30, 31) = {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: extract({defs={0x080480ab}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, 3, 4) = {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(af, {defs={0x080480ab}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(cf, {defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: xor_({defs={0x080480ab}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}, {defs={0x080480ab}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32]))))}) = {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(of, {defs={0x080480ab}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))) (extract[1] 31[32] 32[32] (bv-xor[33] (add[33] (uextend[33] 33[32] ebx_0[32]) (uextend[33] 33[32] ebx_0[32])))))})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: writeRegister(ebx, {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])})
+Symbolic@0x129c8c0 insn@0x080480ab[1]: finishInstruction(add    ebx, ebx)
 registers:
   eax    = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
   ebx    = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
@@ -197,47 +197,47 @@ registers:
 memory:
 
 0x80480ad:add    eax, ebx
-Symbolic@0x21909c0 insn@0x080480ad[2]: startInstruction(add    eax, ebx)
-Symbolic@0x21909c0 insn@0x080480ad[2]: number_(32, 2) = {defs={0x080480ad}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480ad[2]: number_(32, 134512813) = {defs={0x080480ad}, expr=0x080480ad[32]}
-Symbolic@0x21909c0 insn@0x080480ad[2]: add({defs={0x080480ad}, expr=0x080480ad[32]}, {defs={0x080480ad}, expr=2[32]}) = {defs={0x080480ad}, expr=0x080480af[32]}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(eip, {defs={0x080480ad}, expr=0x080480af[32]})
-Symbolic@0x21909c0 insn@0x080480ad[2]: boolean_(0) = {defs={0x080480ad}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480ad[2]: readRegister(ebx) = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
-Symbolic@0x21909c0 insn@0x080480ad[2]: readRegister(eax) = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
-Symbolic@0x21909c0 insn@0x080480ad[2]: addWithCarries({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, {defs={0x080480ad}, expr=0[1]}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}
-Symbolic@0x21909c0 insn@0x080480ad[2]: also returns: {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}, 0, 8) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 1, 2) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 0, 1) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 3, 4) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 2, 3) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 5, 6) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 4, 5) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 7, 8) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 6, 7) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: invert({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(pf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}, 31, 32) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(sf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: equalToZero({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(zf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 31, 32) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 30, 31) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 3, 4) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(af, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(cf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))))}
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(of, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))))})
-Symbolic@0x21909c0 insn@0x080480ad[2]: writeRegister(eax, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])})
-Symbolic@0x21909c0 insn@0x080480ad[2]: finishInstruction(add    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480ad[2]: startInstruction(add    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480ad[2]: number_(32, 2) = {defs={0x080480ad}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: number_(32, 134512813) = {defs={0x080480ad}, expr=0x080480ad[32]}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: add({defs={0x080480ad}, expr=0x080480ad[32]}, {defs={0x080480ad}, expr=2[32]}) = {defs={0x080480ad}, expr=0x080480af[32]}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(eip, {defs={0x080480ad}, expr=0x080480af[32]})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: boolean_(0) = {defs={0x080480ad}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: readRegister(ebx) = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: readRegister(eax) = {defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: addWithCarries({defs={0x080480a9}, expr=(add[32] eax_0[32] eax_0[32])}, {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}, {defs={0x080480ad}, expr=0[1]}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: also returns: {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}, 0, 8) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 1, 2) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 0, 1) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 3, 4) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 2, 3) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 5, 6) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 4, 5) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 7, 8) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[8] 0[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, 6, 7) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: invert({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(pf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 1[32] 2[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 2[32] 3[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 3[32] 4[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 4[32] 5[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 5[32] 6[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 6[32] 7[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) (extract[1] 7[32] 8[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}, 31, 32) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(sf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: equalToZero({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(zf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 31, 32) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 30, 31) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: extract({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, 3, 4) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(af, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(cf, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: xor_({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))))}
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(of, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))))})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: writeRegister(eax, {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])})
+Symbolic@0x129c8c0 insn@0x080480ad[2]: finishInstruction(add    eax, ebx)
 registers:
   eax    = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}
   ebx    = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
@@ -251,17 +251,17 @@ registers:
 memory:
 
 0x80480af:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480af[3]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480af[3]: number_(32, 2) = {defs={0x080480af}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480af[3]: number_(32, 134512815) = {defs={0x080480af}, expr=0x080480af[32]}
-Symbolic@0x21909c0 insn@0x080480af[3]: add({defs={0x080480af}, expr=0x080480af[32]}, {defs={0x080480af}, expr=2[32]}) = {defs={0x080480af}, expr=0x080480b1[32]}
-Symbolic@0x21909c0 insn@0x080480af[3]: writeRegister(eip, {defs={0x080480af}, expr=0x080480b1[32]})
-Symbolic@0x21909c0 insn@0x080480af[3]: readRegister(zf) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
-Symbolic@0x21909c0 insn@0x080480af[3]: readRegister(eip) = {defs={0x080480af}, expr=0x080480b1[32]}
-Symbolic@0x21909c0 insn@0x080480af[3]: number_(32, 134512802) = {defs={0x080480af}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480af[3]: ite({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480af}, expr=0x080480a2[32]}, {defs={0x080480af}, expr=0x080480b1[32]}) = {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[32] (zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) 0x080480a2[32] 0x080480b1[32])}
-Symbolic@0x21909c0 insn@0x080480af[3]: writeRegister(eip, {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[32] (zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) 0x080480a2[32] 0x080480b1[32])})
-Symbolic@0x21909c0 insn@0x080480af[3]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480af[3]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480af[3]: number_(32, 2) = {defs={0x080480af}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480af[3]: number_(32, 134512815) = {defs={0x080480af}, expr=0x080480af[32]}
+Symbolic@0x129c8c0 insn@0x080480af[3]: add({defs={0x080480af}, expr=0x080480af[32]}, {defs={0x080480af}, expr=2[32]}) = {defs={0x080480af}, expr=0x080480b1[32]}
+Symbolic@0x129c8c0 insn@0x080480af[3]: writeRegister(eip, {defs={0x080480af}, expr=0x080480b1[32]})
+Symbolic@0x129c8c0 insn@0x080480af[3]: readRegister(zf) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}
+Symbolic@0x129c8c0 insn@0x080480af[3]: readRegister(eip) = {defs={0x080480af}, expr=0x080480b1[32]}
+Symbolic@0x129c8c0 insn@0x080480af[3]: number_(32, 134512802) = {defs={0x080480af}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480af[3]: ite({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32]))}, {defs={0x080480af}, expr=0x080480a2[32]}, {defs={0x080480af}, expr=0x080480b1[32]}) = {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[32] (zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) 0x080480a2[32] 0x080480b1[32])}
+Symbolic@0x129c8c0 insn@0x080480af[3]: writeRegister(eip, {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[32] (zerop[1] (add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])) 0x080480a2[32] 0x080480b1[32])})
+Symbolic@0x129c8c0 insn@0x080480af[3]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eax    = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[32] eax_0[32] eax_0[32] ebx_0[32] ebx_0[32])}
   ebx    = {defs={0x080480ab}, expr=(add[32] ebx_0[32] ebx_0[32])}
@@ -273,69 +273,69 @@ registers:
   cf     = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])))))}
   of     = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32])) (add[33] (uextend[33] 33[32] (add[32] eax_0[32] eax_0[32])) (uextend[33] 33[32] (add[32] ebx_0[32] ebx_0[32]))))))}
 memory:
-Symbolic@0x21909c0 insn@0x080480af[3]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480af[3]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480b1:mov    eax, 0x00000001
-Symbolic@0x21909c0 insn@0x080480b1[0]: startInstruction(mov    eax, 0x00000001)
-Symbolic@0x21909c0 insn@0x080480b1[0]: number_(32, 5) = {defs={0x080480b1}, expr=5[32]}
-Symbolic@0x21909c0 insn@0x080480b1[0]: number_(32, 134512817) = {defs={0x080480b1}, expr=0x080480b1[32]}
-Symbolic@0x21909c0 insn@0x080480b1[0]: add({defs={0x080480b1}, expr=0x080480b1[32]}, {defs={0x080480b1}, expr=5[32]}) = {defs={0x080480b1}, expr=0x080480b6[32]}
-Symbolic@0x21909c0 insn@0x080480b1[0]: writeRegister(eip, {defs={0x080480b1}, expr=0x080480b6[32]})
-Symbolic@0x21909c0 insn@0x080480b1[0]: number_(32, 1) = {defs={0x080480b1}, expr=1[32]}
-Symbolic@0x21909c0 insn@0x080480b1[0]: writeRegister(eax, {defs={0x080480b1}, expr=1[32]})
-Symbolic@0x21909c0 insn@0x080480b1[0]: finishInstruction(mov    eax, 0x00000001)
+Symbolic@0x129c8c0 insn@0x080480b1[0]: startInstruction(mov    eax, 0x00000001)
+Symbolic@0x129c8c0 insn@0x080480b1[0]: number_(32, 5) = {defs={0x080480b1}, expr=5[32]}
+Symbolic@0x129c8c0 insn@0x080480b1[0]: number_(32, 134512817) = {defs={0x080480b1}, expr=0x080480b1[32]}
+Symbolic@0x129c8c0 insn@0x080480b1[0]: add({defs={0x080480b1}, expr=0x080480b1[32]}, {defs={0x080480b1}, expr=5[32]}) = {defs={0x080480b1}, expr=0x080480b6[32]}
+Symbolic@0x129c8c0 insn@0x080480b1[0]: writeRegister(eip, {defs={0x080480b1}, expr=0x080480b6[32]})
+Symbolic@0x129c8c0 insn@0x080480b1[0]: number_(32, 1) = {defs={0x080480b1}, expr=1[32]}
+Symbolic@0x129c8c0 insn@0x080480b1[0]: writeRegister(eax, {defs={0x080480b1}, expr=1[32]})
+Symbolic@0x129c8c0 insn@0x080480b1[0]: finishInstruction(mov    eax, 0x00000001)
 registers:
   eax    = {defs={0x080480b1}, expr=1[32]}
   eip    = {defs={0x080480b1}, expr=0x080480b6[32]}
 memory:
 
 0x80480b6:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480b6[1]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480b6[1]: number_(32, 2) = {defs={0x080480b6}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480b6[1]: number_(32, 134512822) = {defs={0x080480b6}, expr=0x080480b6[32]}
-Symbolic@0x21909c0 insn@0x080480b6[1]: add({defs={0x080480b6}, expr=0x080480b6[32]}, {defs={0x080480b6}, expr=2[32]}) = {defs={0x080480b6}, expr=0x080480b8[32]}
-Symbolic@0x21909c0 insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=0x080480b8[32]})
-Symbolic@0x21909c0 insn@0x080480b6[1]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480b6[1]: readRegister(eip) = {defs={0x080480b6}, expr=0x080480b8[32]}
-Symbolic@0x21909c0 insn@0x080480b6[1]: number_(32, 134512802) = {defs={0x080480b6}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480b6[1]: ite(zf_0[1], {defs={0x080480b6}, expr=0x080480a2[32]}, {defs={0x080480b6}, expr=0x080480b8[32]}) = {defs={0x080480b6}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480b8[32])}
-Symbolic@0x21909c0 insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480b8[32])})
-Symbolic@0x21909c0 insn@0x080480b6[1]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480b6[1]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480b6[1]: number_(32, 2) = {defs={0x080480b6}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: number_(32, 134512822) = {defs={0x080480b6}, expr=0x080480b6[32]}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: add({defs={0x080480b6}, expr=0x080480b6[32]}, {defs={0x080480b6}, expr=2[32]}) = {defs={0x080480b6}, expr=0x080480b8[32]}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=0x080480b8[32]})
+Symbolic@0x129c8c0 insn@0x080480b6[1]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480b6[1]: readRegister(eip) = {defs={0x080480b6}, expr=0x080480b8[32]}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: number_(32, 134512802) = {defs={0x080480b6}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: ite(zf_0[1], {defs={0x080480b6}, expr=0x080480a2[32]}, {defs={0x080480b6}, expr=0x080480b8[32]}) = {defs={0x080480b6}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480b8[32])}
+Symbolic@0x129c8c0 insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480b8[32])})
+Symbolic@0x129c8c0 insn@0x080480b6[1]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eax    = {defs={0x080480b1}, expr=1[32]}
   eip    = {defs={0x080480b6}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480b8[32])}
 memory:
-Symbolic@0x21909c0 insn@0x080480b6[1]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480b6[1]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480b8:mov    eax, 0x00000003
-Symbolic@0x21909c0 insn@0x080480b8[0]: startInstruction(mov    eax, 0x00000003)
-Symbolic@0x21909c0 insn@0x080480b8[0]: number_(32, 5) = {defs={0x080480b8}, expr=5[32]}
-Symbolic@0x21909c0 insn@0x080480b8[0]: number_(32, 134512824) = {defs={0x080480b8}, expr=0x080480b8[32]}
-Symbolic@0x21909c0 insn@0x080480b8[0]: add({defs={0x080480b8}, expr=0x080480b8[32]}, {defs={0x080480b8}, expr=5[32]}) = {defs={0x080480b8}, expr=0x080480bd[32]}
-Symbolic@0x21909c0 insn@0x080480b8[0]: writeRegister(eip, {defs={0x080480b8}, expr=0x080480bd[32]})
-Symbolic@0x21909c0 insn@0x080480b8[0]: number_(32, 3) = {defs={0x080480b8}, expr=3[32]}
-Symbolic@0x21909c0 insn@0x080480b8[0]: writeRegister(eax, {defs={0x080480b8}, expr=3[32]})
-Symbolic@0x21909c0 insn@0x080480b8[0]: finishInstruction(mov    eax, 0x00000003)
+Symbolic@0x129c8c0 insn@0x080480b8[0]: startInstruction(mov    eax, 0x00000003)
+Symbolic@0x129c8c0 insn@0x080480b8[0]: number_(32, 5) = {defs={0x080480b8}, expr=5[32]}
+Symbolic@0x129c8c0 insn@0x080480b8[0]: number_(32, 134512824) = {defs={0x080480b8}, expr=0x080480b8[32]}
+Symbolic@0x129c8c0 insn@0x080480b8[0]: add({defs={0x080480b8}, expr=0x080480b8[32]}, {defs={0x080480b8}, expr=5[32]}) = {defs={0x080480b8}, expr=0x080480bd[32]}
+Symbolic@0x129c8c0 insn@0x080480b8[0]: writeRegister(eip, {defs={0x080480b8}, expr=0x080480bd[32]})
+Symbolic@0x129c8c0 insn@0x080480b8[0]: number_(32, 3) = {defs={0x080480b8}, expr=3[32]}
+Symbolic@0x129c8c0 insn@0x080480b8[0]: writeRegister(eax, {defs={0x080480b8}, expr=3[32]})
+Symbolic@0x129c8c0 insn@0x080480b8[0]: finishInstruction(mov    eax, 0x00000003)
 registers:
   eax    = {defs={0x080480b8}, expr=3[32]}
   eip    = {defs={0x080480b8}, expr=0x080480bd[32]}
 memory:
 
 0x80480bd:mov    ebx, 0x00000004
-Symbolic@0x21909c0 insn@0x080480bd[1]: startInstruction(mov    ebx, 0x00000004)
-Symbolic@0x21909c0 insn@0x080480bd[1]: number_(32, 5) = {defs={0x080480bd}, expr=5[32]}
-Symbolic@0x21909c0 insn@0x080480bd[1]: number_(32, 134512829) = {defs={0x080480bd}, expr=0x080480bd[32]}
-Symbolic@0x21909c0 insn@0x080480bd[1]: add({defs={0x080480bd}, expr=0x080480bd[32]}, {defs={0x080480bd}, expr=5[32]}) = {defs={0x080480bd}, expr=0x080480c2[32]}
-Symbolic@0x21909c0 insn@0x080480bd[1]: writeRegister(eip, {defs={0x080480bd}, expr=0x080480c2[32]})
-Symbolic@0x21909c0 insn@0x080480bd[1]: number_(32, 4) = {defs={0x080480bd}, expr=4[32]}
-Symbolic@0x21909c0 insn@0x080480bd[1]: writeRegister(ebx, {defs={0x080480bd}, expr=4[32]})
-Symbolic@0x21909c0 insn@0x080480bd[1]: finishInstruction(mov    ebx, 0x00000004)
+Symbolic@0x129c8c0 insn@0x080480bd[1]: startInstruction(mov    ebx, 0x00000004)
+Symbolic@0x129c8c0 insn@0x080480bd[1]: number_(32, 5) = {defs={0x080480bd}, expr=5[32]}
+Symbolic@0x129c8c0 insn@0x080480bd[1]: number_(32, 134512829) = {defs={0x080480bd}, expr=0x080480bd[32]}
+Symbolic@0x129c8c0 insn@0x080480bd[1]: add({defs={0x080480bd}, expr=0x080480bd[32]}, {defs={0x080480bd}, expr=5[32]}) = {defs={0x080480bd}, expr=0x080480c2[32]}
+Symbolic@0x129c8c0 insn@0x080480bd[1]: writeRegister(eip, {defs={0x080480bd}, expr=0x080480c2[32]})
+Symbolic@0x129c8c0 insn@0x080480bd[1]: number_(32, 4) = {defs={0x080480bd}, expr=4[32]}
+Symbolic@0x129c8c0 insn@0x080480bd[1]: writeRegister(ebx, {defs={0x080480bd}, expr=4[32]})
+Symbolic@0x129c8c0 insn@0x080480bd[1]: finishInstruction(mov    ebx, 0x00000004)
 registers:
   eax    = {defs={0x080480b8}, expr=3[32]}
   ebx    = {defs={0x080480bd}, expr=4[32]}
@@ -343,47 +343,47 @@ registers:
 memory:
 
 0x80480c2:add    eax, ebx
-Symbolic@0x21909c0 insn@0x080480c2[2]: startInstruction(add    eax, ebx)
-Symbolic@0x21909c0 insn@0x080480c2[2]: number_(32, 2) = {defs={0x080480c2}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: number_(32, 134512834) = {defs={0x080480c2}, expr=0x080480c2[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: add({defs={0x080480c2}, expr=0x080480c2[32]}, {defs={0x080480c2}, expr=2[32]}) = {defs={0x080480c2}, expr=0x080480c4[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(eip, {defs={0x080480c2}, expr=0x080480c4[32]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: boolean_(0) = {defs={0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: readRegister(ebx) = {defs={0x080480bd}, expr=4[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: readRegister(eax) = {defs={0x080480b8}, expr=3[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: addWithCarries({defs={0x080480b8}, expr=3[32]}, {defs={0x080480bd}, expr=4[32]}, {defs={0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: also returns: {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}, 0, 8) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 1, 2) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 0, 1) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 3, 4) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 2, 3) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 5, 6) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 4, 5) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 7, 8) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 6, 7) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: invert({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(pf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}, 31, 32) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(sf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: equalToZero({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(zf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 31, 32) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 30, 31) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 3, 4) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(af, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(cf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(of, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: writeRegister(eax, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]})
-Symbolic@0x21909c0 insn@0x080480c2[2]: finishInstruction(add    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480c2[2]: startInstruction(add    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480c2[2]: number_(32, 2) = {defs={0x080480c2}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: number_(32, 134512834) = {defs={0x080480c2}, expr=0x080480c2[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: add({defs={0x080480c2}, expr=0x080480c2[32]}, {defs={0x080480c2}, expr=2[32]}) = {defs={0x080480c2}, expr=0x080480c4[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(eip, {defs={0x080480c2}, expr=0x080480c4[32]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: boolean_(0) = {defs={0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: readRegister(ebx) = {defs={0x080480bd}, expr=4[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: readRegister(eax) = {defs={0x080480b8}, expr=3[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: addWithCarries({defs={0x080480b8}, expr=3[32]}, {defs={0x080480bd}, expr=4[32]}, {defs={0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: also returns: {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}, 0, 8) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 1, 2) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 0, 1) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 3, 4) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 2, 3) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 5, 6) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 4, 5) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 7, 8) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[8]}, 6, 7) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: invert({defs={0x080480b8,0x080480bd,0x080480c2}, expr=1[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(pf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}, 31, 32) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(sf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: equalToZero({defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(zf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 31, 32) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 30, 31) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: extract({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[32]}, 3, 4) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(af, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(cf, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: xor_({defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}) = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(of, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: writeRegister(eax, {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]})
+Symbolic@0x129c8c0 insn@0x080480c2[2]: finishInstruction(add    eax, ebx)
 registers:
   eax    = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}
   ebx    = {defs={0x080480bd}, expr=4[32]}
@@ -397,51 +397,51 @@ registers:
 memory:
 
 0x80480c4:neg    ecx
-Symbolic@0x21909c0 insn@0x080480c4[3]: startInstruction(neg    ecx)
-Symbolic@0x21909c0 insn@0x080480c4[3]: number_(32, 2) = {defs={0x080480c4}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: number_(32, 134512836) = {defs={0x080480c4}, expr=0x080480c4[32]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: add({defs={0x080480c4}, expr=0x080480c4[32]}, {defs={0x080480c4}, expr=2[32]}) = {defs={0x080480c4}, expr=0x080480c6[32]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(eip, {defs={0x080480c4}, expr=0x080480c6[32]})
-Symbolic@0x21909c0 insn@0x080480c4[3]: boolean_(0) = {defs={0x080480c4}, expr=0[1]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: readRegister(ecx) = ecx_0[32]
-Symbolic@0x21909c0 insn@0x080480c4[3]: invert(ecx_0[32]) = {defs={0x080480c4}, expr=(invert[32] ecx_0[32])}
-Symbolic@0x21909c0 insn@0x080480c4[3]: number_(32, 0) = {defs={0x080480c4}, expr=0[32]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=0[1]}) = {defs={0x080480c4}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480c4[3]: addWithCarries({defs={0x080480c4}, expr=0[32]}, {defs={0x080480c4}, expr=(invert[32] ecx_0[32])}, {defs={0x080480c4}, expr=1[1]}) = {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}
-Symbolic@0x21909c0 insn@0x080480c4[3]: also returns: {defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}, 0, 8) = {defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 1, 2) = {defs={0x080480c4}, expr=(extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 0, 1) = {defs={0x080480c4}, expr=(extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 3, 4) = {defs={0x080480c4}, expr=(extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 2, 3) = {defs={0x080480c4}, expr=(extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 5, 6) = {defs={0x080480c4}, expr=(extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 4, 5) = {defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 7, 8) = {defs={0x080480c4}, expr=(extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 6, 7) = {defs={0x080480c4}, expr=(extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(pf, {defs={0x080480c4}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}, 31, 32) = {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(sf, {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (add[32] (invert[32] ecx_0[32]) 1[32]))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: equalToZero({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}) = {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(zf, {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 31, 32) = {defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 30, 31) = {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 3, 4) = {defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(invert[1] (extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(af, {defs={0x080480c4}, expr=(invert[1] (extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(cf, {defs={0x080480c4}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(of, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
-Symbolic@0x21909c0 insn@0x080480c4[3]: writeRegister(ecx, {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])})
-Symbolic@0x21909c0 insn@0x080480c4[3]: finishInstruction(neg    ecx)
+Symbolic@0x129c8c0 insn@0x080480c4[3]: startInstruction(neg    ecx)
+Symbolic@0x129c8c0 insn@0x080480c4[3]: number_(32, 2) = {defs={0x080480c4}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: number_(32, 134512836) = {defs={0x080480c4}, expr=0x080480c4[32]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: add({defs={0x080480c4}, expr=0x080480c4[32]}, {defs={0x080480c4}, expr=2[32]}) = {defs={0x080480c4}, expr=0x080480c6[32]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(eip, {defs={0x080480c4}, expr=0x080480c6[32]})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: boolean_(0) = {defs={0x080480c4}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: readRegister(ecx) = ecx_0[32]
+Symbolic@0x129c8c0 insn@0x080480c4[3]: invert(ecx_0[32]) = {defs={0x080480c4}, expr=(invert[32] ecx_0[32])}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: number_(32, 0) = {defs={0x080480c4}, expr=0[32]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=0[1]}) = {defs={0x080480c4}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: addWithCarries({defs={0x080480c4}, expr=0[32]}, {defs={0x080480c4}, expr=(invert[32] ecx_0[32])}, {defs={0x080480c4}, expr=1[1]}) = {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: also returns: {defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}, 0, 8) = {defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 1, 2) = {defs={0x080480c4}, expr=(extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 0, 1) = {defs={0x080480c4}, expr=(extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 3, 4) = {defs={0x080480c4}, expr=(extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 2, 3) = {defs={0x080480c4}, expr=(extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 5, 6) = {defs={0x080480c4}, expr=(extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 4, 5) = {defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 7, 8) = {defs={0x080480c4}, expr=(extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[8] 0[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, 6, 7) = {defs={0x080480c4}, expr=(extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c4}, expr=(extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32])))}) = {defs={0x080480c4}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(pf, {defs={0x080480c4}, expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 1[32] 2[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 2[32] 3[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 3[32] 4[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 4[32] 5[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 5[32] 6[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 6[32] 7[32] (add[32] (invert[32] ecx_0[32]) 1[32])) (extract[1] 7[32] 8[32] (add[32] (invert[32] ecx_0[32]) 1[32]))))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}, 31, 32) = {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(sf, {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (add[32] (invert[32] ecx_0[32]) 1[32]))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: equalToZero({defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}) = {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(zf, {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 31, 32) = {defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 30, 31) = {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: extract({defs={0x080480c4}, expr=(extract[32] 1[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, 3, 4) = {defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(invert[1] (extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(af, {defs={0x080480c4}, expr=(invert[1] (extract[1] 4[32] 5[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: invert({defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(cf, {defs={0x080480c4}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: xor_({defs={0x080480c4}, expr=(extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}, {defs={0x080480c4}, expr=(extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33]))}) = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(of, {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: writeRegister(ecx, {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])})
+Symbolic@0x129c8c0 insn@0x080480c4[3]: finishInstruction(neg    ecx)
 registers:
   eax    = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}
   ecx    = {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}
@@ -456,17 +456,17 @@ registers:
 memory:
 
 0x80480c6:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480c6[4]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480c6[4]: number_(32, 2) = {defs={0x080480c6}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480c6[4]: number_(32, 134512838) = {defs={0x080480c6}, expr=0x080480c6[32]}
-Symbolic@0x21909c0 insn@0x080480c6[4]: add({defs={0x080480c6}, expr=0x080480c6[32]}, {defs={0x080480c6}, expr=2[32]}) = {defs={0x080480c6}, expr=0x080480c8[32]}
-Symbolic@0x21909c0 insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c6}, expr=0x080480c8[32]})
-Symbolic@0x21909c0 insn@0x080480c6[4]: readRegister(zf) = {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}
-Symbolic@0x21909c0 insn@0x080480c6[4]: readRegister(eip) = {defs={0x080480c6}, expr=0x080480c8[32]}
-Symbolic@0x21909c0 insn@0x080480c6[4]: number_(32, 134512802) = {defs={0x080480c6}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480c6[4]: ite({defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c6}, expr=0x080480a2[32]}, {defs={0x080480c6}, expr=0x080480c8[32]}) = {defs={0x080480c4,0x080480c6}, expr=(ite[32] (zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32])) 0x080480a2[32] 0x080480c8[32])}
-Symbolic@0x21909c0 insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c4,0x080480c6}, expr=(ite[32] (zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32])) 0x080480a2[32] 0x080480c8[32])})
-Symbolic@0x21909c0 insn@0x080480c6[4]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480c6[4]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480c6[4]: number_(32, 2) = {defs={0x080480c6}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: number_(32, 134512838) = {defs={0x080480c6}, expr=0x080480c6[32]}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: add({defs={0x080480c6}, expr=0x080480c6[32]}, {defs={0x080480c6}, expr=2[32]}) = {defs={0x080480c6}, expr=0x080480c8[32]}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c6}, expr=0x080480c8[32]})
+Symbolic@0x129c8c0 insn@0x080480c6[4]: readRegister(zf) = {defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: readRegister(eip) = {defs={0x080480c6}, expr=0x080480c8[32]}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: number_(32, 134512802) = {defs={0x080480c6}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: ite({defs={0x080480c4}, expr=(zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32]))}, {defs={0x080480c6}, expr=0x080480a2[32]}, {defs={0x080480c6}, expr=0x080480c8[32]}) = {defs={0x080480c4,0x080480c6}, expr=(ite[32] (zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32])) 0x080480a2[32] 0x080480c8[32])}
+Symbolic@0x129c8c0 insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c4,0x080480c6}, expr=(ite[32] (zerop[1] (add[32] (invert[32] ecx_0[32]) 1[32])) 0x080480a2[32] 0x080480c8[32])})
+Symbolic@0x129c8c0 insn@0x080480c6[4]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eax    = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=7[32]}
   ecx    = {defs={0x080480c4}, expr=(add[32] (invert[32] ecx_0[32]) 1[32])}
@@ -479,34 +479,34 @@ registers:
   cf     = {defs={0x080480c4}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
   of     = {defs={0x080480c4}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) (add[33] (uextend[33] 33[32] (invert[32] ecx_0[32])) 1[33]) 0[33])))}
 memory:
-Symbolic@0x21909c0 insn@0x080480c6[4]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480c6[4]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480c8:mov    eax, ebx
-Symbolic@0x21909c0 insn@0x080480c8[0]: startInstruction(mov    eax, ebx)
-Symbolic@0x21909c0 insn@0x080480c8[0]: number_(32, 2) = {defs={0x080480c8}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480c8[0]: number_(32, 134512840) = {defs={0x080480c8}, expr=0x080480c8[32]}
-Symbolic@0x21909c0 insn@0x080480c8[0]: add({defs={0x080480c8}, expr=0x080480c8[32]}, {defs={0x080480c8}, expr=2[32]}) = {defs={0x080480c8}, expr=0x080480ca[32]}
-Symbolic@0x21909c0 insn@0x080480c8[0]: writeRegister(eip, {defs={0x080480c8}, expr=0x080480ca[32]})
-Symbolic@0x21909c0 insn@0x080480c8[0]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480c8[0]: writeRegister(eax, ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480c8[0]: finishInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480c8[0]: startInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480c8[0]: number_(32, 2) = {defs={0x080480c8}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480c8[0]: number_(32, 134512840) = {defs={0x080480c8}, expr=0x080480c8[32]}
+Symbolic@0x129c8c0 insn@0x080480c8[0]: add({defs={0x080480c8}, expr=0x080480c8[32]}, {defs={0x080480c8}, expr=2[32]}) = {defs={0x080480c8}, expr=0x080480ca[32]}
+Symbolic@0x129c8c0 insn@0x080480c8[0]: writeRegister(eip, {defs={0x080480c8}, expr=0x080480ca[32]})
+Symbolic@0x129c8c0 insn@0x080480c8[0]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480c8[0]: writeRegister(eax, ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480c8[0]: finishInstruction(mov    eax, ebx)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480c8}, expr=0x080480ca[32]}
 memory:
 
 0x80480ca:mov    ah, bh
-Symbolic@0x21909c0 insn@0x080480ca[1]: startInstruction(mov    ah, bh)
-Symbolic@0x21909c0 insn@0x080480ca[1]: number_(32, 2) = {defs={0x080480ca}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480ca[1]: number_(32, 134512842) = {defs={0x080480ca}, expr=0x080480ca[32]}
-Symbolic@0x21909c0 insn@0x080480ca[1]: add({defs={0x080480ca}, expr=0x080480ca[32]}, {defs={0x080480ca}, expr=2[32]}) = {defs={0x080480ca}, expr=0x080480cc[32]}
-Symbolic@0x21909c0 insn@0x080480ca[1]: writeRegister(eip, {defs={0x080480ca}, expr=0x080480cc[32]})
-Symbolic@0x21909c0 insn@0x080480ca[1]: readRegister(bh) = (extract[8] 8[32] 16[32] ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480ca[1]: writeRegister(ah, (extract[8] 8[32] 16[32] ebx_0[32]))
-Symbolic@0x21909c0 insn@0x080480ca[1]: finishInstruction(mov    ah, bh)
+Symbolic@0x129c8c0 insn@0x080480ca[1]: startInstruction(mov    ah, bh)
+Symbolic@0x129c8c0 insn@0x080480ca[1]: number_(32, 2) = {defs={0x080480ca}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480ca[1]: number_(32, 134512842) = {defs={0x080480ca}, expr=0x080480ca[32]}
+Symbolic@0x129c8c0 insn@0x080480ca[1]: add({defs={0x080480ca}, expr=0x080480ca[32]}, {defs={0x080480ca}, expr=2[32]}) = {defs={0x080480ca}, expr=0x080480cc[32]}
+Symbolic@0x129c8c0 insn@0x080480ca[1]: writeRegister(eip, {defs={0x080480ca}, expr=0x080480cc[32]})
+Symbolic@0x129c8c0 insn@0x080480ca[1]: readRegister(bh) = (extract[8] 8[32] 16[32] ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480ca[1]: writeRegister(ah, (extract[8] 8[32] 16[32] ebx_0[32]))
+Symbolic@0x129c8c0 insn@0x080480ca[1]: finishInstruction(mov    ah, bh)
 registers:
   al        = (extract[8] 0[32] 8[32] ebx_0[32])
   REG0.0@16 = (extract[16] 16[32] 32[32] ebx_0[32])
@@ -515,14 +515,14 @@ registers:
 memory:
 
 0x80480cc:mov    ah, bl
-Symbolic@0x21909c0 insn@0x080480cc[2]: startInstruction(mov    ah, bl)
-Symbolic@0x21909c0 insn@0x080480cc[2]: number_(32, 2) = {defs={0x080480cc}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480cc[2]: number_(32, 134512844) = {defs={0x080480cc}, expr=0x080480cc[32]}
-Symbolic@0x21909c0 insn@0x080480cc[2]: add({defs={0x080480cc}, expr=0x080480cc[32]}, {defs={0x080480cc}, expr=2[32]}) = {defs={0x080480cc}, expr=0x080480ce[32]}
-Symbolic@0x21909c0 insn@0x080480cc[2]: writeRegister(eip, {defs={0x080480cc}, expr=0x080480ce[32]})
-Symbolic@0x21909c0 insn@0x080480cc[2]: readRegister(bl) = (extract[8] 0[32] 8[32] ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480cc[2]: writeRegister(ah, (extract[8] 0[32] 8[32] ebx_0[32]))
-Symbolic@0x21909c0 insn@0x080480cc[2]: finishInstruction(mov    ah, bl)
+Symbolic@0x129c8c0 insn@0x080480cc[2]: startInstruction(mov    ah, bl)
+Symbolic@0x129c8c0 insn@0x080480cc[2]: number_(32, 2) = {defs={0x080480cc}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480cc[2]: number_(32, 134512844) = {defs={0x080480cc}, expr=0x080480cc[32]}
+Symbolic@0x129c8c0 insn@0x080480cc[2]: add({defs={0x080480cc}, expr=0x080480cc[32]}, {defs={0x080480cc}, expr=2[32]}) = {defs={0x080480cc}, expr=0x080480ce[32]}
+Symbolic@0x129c8c0 insn@0x080480cc[2]: writeRegister(eip, {defs={0x080480cc}, expr=0x080480ce[32]})
+Symbolic@0x129c8c0 insn@0x080480cc[2]: readRegister(bl) = (extract[8] 0[32] 8[32] ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480cc[2]: writeRegister(ah, (extract[8] 0[32] 8[32] ebx_0[32]))
+Symbolic@0x129c8c0 insn@0x080480cc[2]: finishInstruction(mov    ah, bl)
 registers:
   al        = (extract[8] 0[32] 8[32] ebx_0[32])
   REG0.0@16 = (extract[16] 16[32] 32[32] ebx_0[32])
@@ -531,14 +531,14 @@ registers:
 memory:
 
 0x80480ce:mov    ax, cx
-Symbolic@0x21909c0 insn@0x080480ce[3]: startInstruction(mov    ax, cx)
-Symbolic@0x21909c0 insn@0x080480ce[3]: number_(32, 3) = {defs={0x080480ce}, expr=3[32]}
-Symbolic@0x21909c0 insn@0x080480ce[3]: number_(32, 134512846) = {defs={0x080480ce}, expr=0x080480ce[32]}
-Symbolic@0x21909c0 insn@0x080480ce[3]: add({defs={0x080480ce}, expr=0x080480ce[32]}, {defs={0x080480ce}, expr=3[32]}) = {defs={0x080480ce}, expr=0x080480d1[32]}
-Symbolic@0x21909c0 insn@0x080480ce[3]: writeRegister(eip, {defs={0x080480ce}, expr=0x080480d1[32]})
-Symbolic@0x21909c0 insn@0x080480ce[3]: readRegister(cx) = cx_0[16]
-Symbolic@0x21909c0 insn@0x080480ce[3]: writeRegister(ax, cx_0[16])
-Symbolic@0x21909c0 insn@0x080480ce[3]: finishInstruction(mov    ax, cx)
+Symbolic@0x129c8c0 insn@0x080480ce[3]: startInstruction(mov    ax, cx)
+Symbolic@0x129c8c0 insn@0x080480ce[3]: number_(32, 3) = {defs={0x080480ce}, expr=3[32]}
+Symbolic@0x129c8c0 insn@0x080480ce[3]: number_(32, 134512846) = {defs={0x080480ce}, expr=0x080480ce[32]}
+Symbolic@0x129c8c0 insn@0x080480ce[3]: add({defs={0x080480ce}, expr=0x080480ce[32]}, {defs={0x080480ce}, expr=3[32]}) = {defs={0x080480ce}, expr=0x080480d1[32]}
+Symbolic@0x129c8c0 insn@0x080480ce[3]: writeRegister(eip, {defs={0x080480ce}, expr=0x080480d1[32]})
+Symbolic@0x129c8c0 insn@0x080480ce[3]: readRegister(cx) = cx_0[16]
+Symbolic@0x129c8c0 insn@0x080480ce[3]: writeRegister(ax, cx_0[16])
+Symbolic@0x129c8c0 insn@0x080480ce[3]: finishInstruction(mov    ax, cx)
 registers:
   REG0.0@16 = (extract[16] 16[32] 32[32] ebx_0[32])
   ax        = cx_0[16]
@@ -546,51 +546,51 @@ registers:
 memory:
 
 0x80480d1:mov    eax, ebx
-Symbolic@0x21909c0 insn@0x080480d1[4]: startInstruction(mov    eax, ebx)
-Symbolic@0x21909c0 insn@0x080480d1[4]: number_(32, 2) = {defs={0x080480d1}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480d1[4]: number_(32, 134512849) = {defs={0x080480d1}, expr=0x080480d1[32]}
-Symbolic@0x21909c0 insn@0x080480d1[4]: add({defs={0x080480d1}, expr=0x080480d1[32]}, {defs={0x080480d1}, expr=2[32]}) = {defs={0x080480d1}, expr=0x080480d3[32]}
-Symbolic@0x21909c0 insn@0x080480d1[4]: writeRegister(eip, {defs={0x080480d1}, expr=0x080480d3[32]})
-Symbolic@0x21909c0 insn@0x080480d1[4]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480d1[4]: writeRegister(eax, ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480d1[4]: finishInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480d1[4]: startInstruction(mov    eax, ebx)
+Symbolic@0x129c8c0 insn@0x080480d1[4]: number_(32, 2) = {defs={0x080480d1}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480d1[4]: number_(32, 134512849) = {defs={0x080480d1}, expr=0x080480d1[32]}
+Symbolic@0x129c8c0 insn@0x080480d1[4]: add({defs={0x080480d1}, expr=0x080480d1[32]}, {defs={0x080480d1}, expr=2[32]}) = {defs={0x080480d1}, expr=0x080480d3[32]}
+Symbolic@0x129c8c0 insn@0x080480d1[4]: writeRegister(eip, {defs={0x080480d1}, expr=0x080480d3[32]})
+Symbolic@0x129c8c0 insn@0x080480d1[4]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480d1[4]: writeRegister(eax, ebx_0[32])
+Symbolic@0x129c8c0 insn@0x080480d1[4]: finishInstruction(mov    eax, ebx)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480d1}, expr=0x080480d3[32]}
 memory:
 
 0x80480d3:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480d3[5]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480d3[5]: number_(32, 2) = {defs={0x080480d3}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480d3[5]: number_(32, 134512851) = {defs={0x080480d3}, expr=0x080480d3[32]}
-Symbolic@0x21909c0 insn@0x080480d3[5]: add({defs={0x080480d3}, expr=0x080480d3[32]}, {defs={0x080480d3}, expr=2[32]}) = {defs={0x080480d3}, expr=0x080480d5[32]}
-Symbolic@0x21909c0 insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=0x080480d5[32]})
-Symbolic@0x21909c0 insn@0x080480d3[5]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480d3[5]: readRegister(eip) = {defs={0x080480d3}, expr=0x080480d5[32]}
-Symbolic@0x21909c0 insn@0x080480d3[5]: number_(32, 134512802) = {defs={0x080480d3}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480d3[5]: ite(zf_0[1], {defs={0x080480d3}, expr=0x080480a2[32]}, {defs={0x080480d3}, expr=0x080480d5[32]}) = {defs={0x080480d3}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d5[32])}
-Symbolic@0x21909c0 insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d5[32])})
-Symbolic@0x21909c0 insn@0x080480d3[5]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480d3[5]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480d3[5]: number_(32, 2) = {defs={0x080480d3}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: number_(32, 134512851) = {defs={0x080480d3}, expr=0x080480d3[32]}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: add({defs={0x080480d3}, expr=0x080480d3[32]}, {defs={0x080480d3}, expr=2[32]}) = {defs={0x080480d3}, expr=0x080480d5[32]}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=0x080480d5[32]})
+Symbolic@0x129c8c0 insn@0x080480d3[5]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480d3[5]: readRegister(eip) = {defs={0x080480d3}, expr=0x080480d5[32]}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: number_(32, 134512802) = {defs={0x080480d3}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: ite(zf_0[1], {defs={0x080480d3}, expr=0x080480a2[32]}, {defs={0x080480d3}, expr=0x080480d5[32]}) = {defs={0x080480d3}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d5[32])}
+Symbolic@0x129c8c0 insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d5[32])})
+Symbolic@0x129c8c0 insn@0x080480d3[5]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eax    = ebx_0[32]
   eip    = {defs={0x080480d3}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d5[32])}
 memory:
-Symbolic@0x21909c0 insn@0x080480d3[5]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480d3[5]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480d5:mov    DWORD PTR ds:[eax], ebx
-Symbolic@0x21909c0 insn@0x080480d5[0]: startInstruction(mov    DWORD PTR ds:[eax], ebx)
-Symbolic@0x21909c0 insn@0x080480d5[0]: number_(32, 2) = {defs={0x080480d5}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480d5[0]: number_(32, 134512853) = {defs={0x080480d5}, expr=0x080480d5[32]}
-Symbolic@0x21909c0 insn@0x080480d5[0]: add({defs={0x080480d5}, expr=0x080480d5[32]}, {defs={0x080480d5}, expr=2[32]}) = {defs={0x080480d5}, expr=0x080480d7[32]}
-Symbolic@0x21909c0 insn@0x080480d5[0]: writeRegister(eip, {defs={0x080480d5}, expr=0x080480d7[32]})
-Symbolic@0x21909c0 insn@0x080480d5[0]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480d5[0]: readRegister(eax) = eax_0[32]
-Symbolic@0x21909c0 insn@0x080480d5[0]: boolean_(1) = {defs={0x080480d5}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480d5[0]: writeMemory(ds, eax_0[32], ebx_0[32], {defs={0x080480d5}, expr=1[1]})
-Symbolic@0x21909c0 insn@0x080480d5[0]: finishInstruction(mov    DWORD PTR ds:[eax], ebx)
+Symbolic@0x129c8c0 insn@0x080480d5[0]: startInstruction(mov    DWORD PTR ds:[eax], ebx)
+Symbolic@0x129c8c0 insn@0x080480d5[0]: number_(32, 2) = {defs={0x080480d5}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480d5[0]: number_(32, 134512853) = {defs={0x080480d5}, expr=0x080480d5[32]}
+Symbolic@0x129c8c0 insn@0x080480d5[0]: add({defs={0x080480d5}, expr=0x080480d5[32]}, {defs={0x080480d5}, expr=2[32]}) = {defs={0x080480d5}, expr=0x080480d7[32]}
+Symbolic@0x129c8c0 insn@0x080480d5[0]: writeRegister(eip, {defs={0x080480d5}, expr=0x080480d7[32]})
+Symbolic@0x129c8c0 insn@0x080480d5[0]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480d5[0]: readRegister(eax) = eax_0[32]
+Symbolic@0x129c8c0 insn@0x080480d5[0]: boolean_(1) = {defs={0x080480d5}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480d5[0]: writeMemory(ds, eax_0[32], ebx_0[32], {defs={0x080480d5}, expr=1[1]})
+Symbolic@0x129c8c0 insn@0x080480d5[0]: finishInstruction(mov    DWORD PTR ds:[eax], ebx)
 registers:
   eip    = {defs={0x080480d5}, expr=0x080480d7[32]}
 memory:
@@ -600,17 +600,17 @@ memory:
   addr=eax_0[32] value=(extract[8] 0[32] 8[32] ebx_0[32])
 
 0x80480d7:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480d7[1]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480d7[1]: number_(32, 2) = {defs={0x080480d7}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480d7[1]: number_(32, 134512855) = {defs={0x080480d7}, expr=0x080480d7[32]}
-Symbolic@0x21909c0 insn@0x080480d7[1]: add({defs={0x080480d7}, expr=0x080480d7[32]}, {defs={0x080480d7}, expr=2[32]}) = {defs={0x080480d7}, expr=0x080480d9[32]}
-Symbolic@0x21909c0 insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=0x080480d9[32]})
-Symbolic@0x21909c0 insn@0x080480d7[1]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480d7[1]: readRegister(eip) = {defs={0x080480d7}, expr=0x080480d9[32]}
-Symbolic@0x21909c0 insn@0x080480d7[1]: number_(32, 134512802) = {defs={0x080480d7}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480d7[1]: ite(zf_0[1], {defs={0x080480d7}, expr=0x080480a2[32]}, {defs={0x080480d7}, expr=0x080480d9[32]}) = {defs={0x080480d7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d9[32])}
-Symbolic@0x21909c0 insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d9[32])})
-Symbolic@0x21909c0 insn@0x080480d7[1]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480d7[1]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480d7[1]: number_(32, 2) = {defs={0x080480d7}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: number_(32, 134512855) = {defs={0x080480d7}, expr=0x080480d7[32]}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: add({defs={0x080480d7}, expr=0x080480d7[32]}, {defs={0x080480d7}, expr=2[32]}) = {defs={0x080480d7}, expr=0x080480d9[32]}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=0x080480d9[32]})
+Symbolic@0x129c8c0 insn@0x080480d7[1]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480d7[1]: readRegister(eip) = {defs={0x080480d7}, expr=0x080480d9[32]}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: number_(32, 134512802) = {defs={0x080480d7}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: ite(zf_0[1], {defs={0x080480d7}, expr=0x080480a2[32]}, {defs={0x080480d7}, expr=0x080480d9[32]}) = {defs={0x080480d7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d9[32])}
+Symbolic@0x129c8c0 insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d9[32])})
+Symbolic@0x129c8c0 insn@0x080480d7[1]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
   eip    = {defs={0x080480d7}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480d9[32])}
 memory:
@@ -618,68 +618,141 @@ memory:
   addr=(add[32] eax_0[32] 2[32]) value=(extract[8] 16[32] 24[32] ebx_0[32])
   addr=(add[32] eax_0[32] 1[32]) value=(extract[8] 8[32] 16[32] ebx_0[32])
   addr=eax_0[32] value=(extract[8] 0[32] 8[32] ebx_0[32])
-Symbolic@0x21909c0 insn@0x080480d7[1]: operators destroyed
+Symbolic@0x129c8c0 insn@0x080480d7[1]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80480d9:mov    eax, DWORD PTR ds:[ebx]
-Symbolic@0x21909c0 insn@0x080480d9[0]: startInstruction(mov    eax, DWORD PTR ds:[ebx])
-Symbolic@0x21909c0 insn@0x080480d9[0]: number_(32, 2) = {defs={0x080480d9}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480d9[0]: number_(32, 134512857) = {defs={0x080480d9}, expr=0x080480d9[32]}
-Symbolic@0x21909c0 insn@0x080480d9[0]: add({defs={0x080480d9}, expr=0x080480d9[32]}, {defs={0x080480d9}, expr=2[32]}) = {defs={0x080480d9}, expr=0x080480db[32]}
-Symbolic@0x21909c0 insn@0x080480d9[0]: writeRegister(eip, {defs={0x080480d9}, expr=0x080480db[32]})
-Symbolic@0x21909c0 insn@0x080480d9[0]: readRegister(ebx) = ebx_0[32]
-Symbolic@0x21909c0 insn@0x080480d9[0]: boolean_(1) = {defs={0x080480d9}, expr=1[1]}
-Symbolic@0x21909c0 insn@0x080480d9[0]: readMemory(ds, ebx_0[32], {defs={0x080480d9}, expr=1[1]}, 32) = v4411[32]
-Symbolic@0x21909c0 insn@0x080480d9[0]: writeRegister(eax, v4411[32])
-Symbolic@0x21909c0 insn@0x080480d9[0]: finishInstruction(mov    eax, DWORD PTR ds:[ebx])
+Symbolic@0x129c8c0 insn@0x080480d9[0]: startInstruction(mov    eax, DWORD PTR ds:[ebx])
+Symbolic@0x129c8c0 insn@0x080480d9[0]: number_(32, 2) = {defs={0x080480d9}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480d9[0]: number_(32, 134512857) = {defs={0x080480d9}, expr=0x080480d9[32]}
+Symbolic@0x129c8c0 insn@0x080480d9[0]: add({defs={0x080480d9}, expr=0x080480d9[32]}, {defs={0x080480d9}, expr=2[32]}) = {defs={0x080480d9}, expr=0x080480db[32]}
+Symbolic@0x129c8c0 insn@0x080480d9[0]: writeRegister(eip, {defs={0x080480d9}, expr=0x080480db[32]})
+Symbolic@0x129c8c0 insn@0x080480d9[0]: readRegister(ebx) = ebx_0[32]
+Symbolic@0x129c8c0 insn@0x080480d9[0]: boolean_(1) = {defs={0x080480d9}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480d9[0]: readMemory(ds, ebx_0[32], {defs={0x080480d9}, expr=1[1]}, 32) = v4386[32]
+Symbolic@0x129c8c0 insn@0x080480d9[0]: writeRegister(eax, v4386[32])
+Symbolic@0x129c8c0 insn@0x080480d9[0]: finishInstruction(mov    eax, DWORD PTR ds:[ebx])
 registers:
-  eax    = v4411[32]
+  eax    = v4386[32]
   eip    = {defs={0x080480d9}, expr=0x080480db[32]}
 memory:
-  addr=(add[32] ebx_0[32] 3[32]) value=(extract[8] 24[32] 32[32] v4411[32])
-  addr=(add[32] ebx_0[32] 2[32]) value=(extract[8] 16[32] 24[32] v4411[32])
-  addr=(add[32] ebx_0[32] 1[32]) value=(extract[8] 8[32] 16[32] v4411[32])
-  addr=ebx_0[32] value=(extract[8] 0[32] 8[32] v4411[32])
+  addr=(add[32] ebx_0[32] 3[32]) value=(extract[8] 24[32] 32[32] v4386[32])
+  addr=(add[32] ebx_0[32] 2[32]) value=(extract[8] 16[32] 24[32] v4386[32])
+  addr=(add[32] ebx_0[32] 1[32]) value=(extract[8] 8[32] 16[32] v4386[32])
+  addr=ebx_0[32] value=(extract[8] 0[32] 8[32] v4386[32])
 
 0x80480db:je     0x080480a2<<Insn>>
-Symbolic@0x21909c0 insn@0x080480db[1]: startInstruction(je     0x080480a2<<Insn>>)
-Symbolic@0x21909c0 insn@0x080480db[1]: number_(32, 2) = {defs={0x080480db}, expr=2[32]}
-Symbolic@0x21909c0 insn@0x080480db[1]: number_(32, 134512859) = {defs={0x080480db}, expr=0x080480db[32]}
-Symbolic@0x21909c0 insn@0x080480db[1]: add({defs={0x080480db}, expr=0x080480db[32]}, {defs={0x080480db}, expr=2[32]}) = {defs={0x080480db}, expr=0x080480dd[32]}
-Symbolic@0x21909c0 insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=0x080480dd[32]})
-Symbolic@0x21909c0 insn@0x080480db[1]: readRegister(zf) = zf_0[1]
-Symbolic@0x21909c0 insn@0x080480db[1]: readRegister(eip) = {defs={0x080480db}, expr=0x080480dd[32]}
-Symbolic@0x21909c0 insn@0x080480db[1]: number_(32, 134512802) = {defs={0x080480db}, expr=0x080480a2[32]}
-Symbolic@0x21909c0 insn@0x080480db[1]: ite(zf_0[1], {defs={0x080480db}, expr=0x080480a2[32]}, {defs={0x080480db}, expr=0x080480dd[32]}) = {defs={0x080480db}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480dd[32])}
-Symbolic@0x21909c0 insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480dd[32])})
-Symbolic@0x21909c0 insn@0x080480db[1]: finishInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480db[1]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480db[1]: number_(32, 2) = {defs={0x080480db}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480db[1]: number_(32, 134512859) = {defs={0x080480db}, expr=0x080480db[32]}
+Symbolic@0x129c8c0 insn@0x080480db[1]: add({defs={0x080480db}, expr=0x080480db[32]}, {defs={0x080480db}, expr=2[32]}) = {defs={0x080480db}, expr=0x080480dd[32]}
+Symbolic@0x129c8c0 insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=0x080480dd[32]})
+Symbolic@0x129c8c0 insn@0x080480db[1]: readRegister(zf) = zf_0[1]
+Symbolic@0x129c8c0 insn@0x080480db[1]: readRegister(eip) = {defs={0x080480db}, expr=0x080480dd[32]}
+Symbolic@0x129c8c0 insn@0x080480db[1]: number_(32, 134512802) = {defs={0x080480db}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480db[1]: ite(zf_0[1], {defs={0x080480db}, expr=0x080480a2[32]}, {defs={0x080480db}, expr=0x080480dd[32]}) = {defs={0x080480db}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480dd[32])}
+Symbolic@0x129c8c0 insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480dd[32])})
+Symbolic@0x129c8c0 insn@0x080480db[1]: finishInstruction(je     0x080480a2<<Insn>>)
 registers:
-  eax    = v4411[32]
+  eax    = v4386[32]
   eip    = {defs={0x080480db}, expr=(ite[32] zf_0[1] 0x080480a2[32] 0x080480dd[32])}
 memory:
-  addr=(add[32] ebx_0[32] 3[32]) value=(extract[8] 24[32] 32[32] v4411[32])
-  addr=(add[32] ebx_0[32] 2[32]) value=(extract[8] 16[32] 24[32] v4411[32])
-  addr=(add[32] ebx_0[32] 1[32]) value=(extract[8] 8[32] 16[32] v4411[32])
-  addr=ebx_0[32] value=(extract[8] 0[32] 8[32] v4411[32])
-Symbolic@0x21909c0 insn@0x080480db[1]: operators destroyed
+  addr=(add[32] ebx_0[32] 3[32]) value=(extract[8] 24[32] 32[32] v4386[32])
+  addr=(add[32] ebx_0[32] 2[32]) value=(extract[8] 16[32] 24[32] v4386[32])
+  addr=(add[32] ebx_0[32] 1[32]) value=(extract[8] 8[32] 16[32] v4386[32])
+  addr=ebx_0[32] value=(extract[8] 0[32] 8[32] v4386[32])
+Symbolic@0x129c8c0 insn@0x080480db[1]: operators destroyed
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80480dd:hlt    
-Symbolic@0x21909c0 insn@0x080480dd[0]: startInstruction(hlt)
-Symbolic@0x21909c0 insn@0x080480dd[0]: number_(32, 1) = {defs={0x080480dd}, expr=1[32]}
-Symbolic@0x21909c0 insn@0x080480dd[0]: number_(32, 134512861) = {defs={0x080480dd}, expr=0x080480dd[32]}
-Symbolic@0x21909c0 insn@0x080480dd[0]: add({defs={0x080480dd}, expr=0x080480dd[32]}, {defs={0x080480dd}, expr=1[32]}) = {defs={0x080480dd}, expr=0x080480de[32]}
-Symbolic@0x21909c0 insn@0x080480dd[0]: writeRegister(eip, {defs={0x080480dd}, expr=0x080480de[32]})
-Symbolic@0x21909c0 insn@0x080480dd[0]: hlt()
-Symbolic@0x21909c0 insn@0x080480dd[0]: number_(32, 134512861) = {defs={0x080480dd}, expr=0x080480dd[32]}
-Symbolic@0x21909c0 insn@0x080480dd[0]: writeRegister(eip, {defs={0x080480dd}, expr=0x080480dd[32]})
-Symbolic@0x21909c0 insn@0x080480dd[0]: finishInstruction(hlt)
+0x80480dd:mov    eax, 0x00000001
+Symbolic@0x129c8c0 insn@0x080480dd[0]: startInstruction(mov    eax, 0x00000001)
+Symbolic@0x129c8c0 insn@0x080480dd[0]: number_(32, 5) = {defs={0x080480dd}, expr=5[32]}
+Symbolic@0x129c8c0 insn@0x080480dd[0]: number_(32, 134512861) = {defs={0x080480dd}, expr=0x080480dd[32]}
+Symbolic@0x129c8c0 insn@0x080480dd[0]: add({defs={0x080480dd}, expr=0x080480dd[32]}, {defs={0x080480dd}, expr=5[32]}) = {defs={0x080480dd}, expr=0x080480e2[32]}
+Symbolic@0x129c8c0 insn@0x080480dd[0]: writeRegister(eip, {defs={0x080480dd}, expr=0x080480e2[32]})
+Symbolic@0x129c8c0 insn@0x080480dd[0]: number_(32, 1) = {defs={0x080480dd}, expr=1[32]}
+Symbolic@0x129c8c0 insn@0x080480dd[0]: writeRegister(eax, {defs={0x080480dd}, expr=1[32]})
+Symbolic@0x129c8c0 insn@0x080480dd[0]: finishInstruction(mov    eax, 0x00000001)
 registers:
-  eip    = {defs={0x080480dd}, expr=0x080480dd[32]}
+  eax    = {defs={0x080480dd}, expr=1[32]}
+  eip    = {defs={0x080480dd}, expr=0x080480e2[32]}
 memory:
-Symbolic@0x21909c0 insn@0x080480dd[0]: operators destroyed
+
+0x80480e2:xor    eax, eax
+Symbolic@0x129c8c0 insn@0x080480e2[1]: startInstruction(xor    eax, eax)
+Symbolic@0x129c8c0 insn@0x080480e2[1]: number_(32, 2) = {defs={0x080480e2}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: number_(32, 134512866) = {defs={0x080480e2}, expr=0x080480e2[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: add({defs={0x080480e2}, expr=0x080480e2[32]}, {defs={0x080480e2}, expr=2[32]}) = {defs={0x080480e2}, expr=0x080480e4[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(eip, {defs={0x080480e2}, expr=0x080480e4[32]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: readRegister(eax) = {defs={0x080480dd}, expr=1[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: readRegister(eax) = {defs={0x080480dd}, expr=1[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd}, expr=1[32]}, {defs={0x080480dd}, expr=1[32]}) = {defs={0x080480dd,0x080480e2}, expr=0[32]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[32]}, 0, 8) = {defs={0x080480dd,0x080480e2}, expr=0[8]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 1, 2) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 0, 1) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 3, 4) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 2, 3) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 5, 6) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 4, 5) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 7, 8) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[8]}, 6, 7) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: xor_({defs={0x080480dd,0x080480e2}, expr=0[1]}, {defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: invert({defs={0x080480dd,0x080480e2}, expr=0[1]}) = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(pf, {defs={0x080480dd,0x080480e2}, expr=1[1]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: extract({defs={0x080480dd,0x080480e2}, expr=0[32]}, 31, 32) = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(sf, {defs={0x080480dd,0x080480e2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: equalToZero({defs={0x080480dd,0x080480e2}, expr=0[32]}) = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(zf, {defs={0x080480dd,0x080480e2}, expr=1[1]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(eax, {defs={0x080480dd,0x080480e2}, expr=0[32]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: boolean_(0) = {defs={0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(of, {defs={0x080480e2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: undefined_(1) = v4435[1]
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(af, v4435[1])
+Symbolic@0x129c8c0 insn@0x080480e2[1]: boolean_(0) = {defs={0x080480e2}, expr=0[1]}
+Symbolic@0x129c8c0 insn@0x080480e2[1]: writeRegister(cf, {defs={0x080480e2}, expr=0[1]})
+Symbolic@0x129c8c0 insn@0x080480e2[1]: finishInstruction(xor    eax, eax)
+registers:
+  eax    = {defs={0x080480dd,0x080480e2}, expr=0[32]}
+  eip    = {defs={0x080480e2}, expr=0x080480e4[32]}
+  pf     = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+  sf     = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+  zf     = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+  of     = {defs={0x080480e2}, expr=0[1]}
+  af     = v4435[1]
+  cf     = {defs={0x080480e2}, expr=0[1]}
+memory:
+
+0x80480e4:je     0x080480a2<<Insn>>
+Symbolic@0x129c8c0 insn@0x080480e4[2]: startInstruction(je     0x080480a2<<Insn>>)
+Symbolic@0x129c8c0 insn@0x080480e4[2]: number_(32, 2) = {defs={0x080480e4}, expr=2[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: number_(32, 134512868) = {defs={0x080480e4}, expr=0x080480e4[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: add({defs={0x080480e4}, expr=0x080480e4[32]}, {defs={0x080480e4}, expr=2[32]}) = {defs={0x080480e4}, expr=0x080480e6[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: writeRegister(eip, {defs={0x080480e4}, expr=0x080480e6[32]})
+Symbolic@0x129c8c0 insn@0x080480e4[2]: readRegister(zf) = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: readRegister(eip) = {defs={0x080480e4}, expr=0x080480e6[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: number_(32, 134512802) = {defs={0x080480e4}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: ite({defs={0x080480dd,0x080480e2}, expr=1[1]}, {defs={0x080480e4}, expr=0x080480a2[32]}, {defs={0x080480e4}, expr=0x080480e6[32]}) = {defs={0x080480dd,0x080480e2,0x080480e4}, expr=0x080480a2[32]}
+Symbolic@0x129c8c0 insn@0x080480e4[2]: writeRegister(eip, {defs={0x080480dd,0x080480e2,0x080480e4}, expr=0x080480a2[32]})
+Symbolic@0x129c8c0 insn@0x080480e4[2]: finishInstruction(je     0x080480a2<<Insn>>)
+registers:
+  eax    = {defs={0x080480dd,0x080480e2}, expr=0[32]}
+  eip    = {defs={0x080480dd,0x080480e2,0x080480e4}, expr=0x080480a2[32]}
+  pf     = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+  sf     = {defs={0x080480dd,0x080480e2}, expr=0[1]}
+  zf     = {defs={0x080480dd,0x080480e2}, expr=1[1]}
+  of     = {defs={0x080480e2}, expr=0[1]}
+  af     = v4435[1]
+  cf     = {defs={0x080480e2}, expr=0[1]}
+memory:
+Symbolic@0x129c8c0 insn@0x080480e4[2]: operators destroyed
 analyzed headers: 1
