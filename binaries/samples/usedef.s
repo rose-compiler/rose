@@ -1,7 +1,8 @@
 ;;; These are various unit tests for the simple use-def analysis in BinaryAnalysis::InstructionSemantics2::SymbolicSemantics.
 ;;; Compile this on an intel machine with "nasm -f elf32 usedef.s && gcc -m32 -nostdlib -o usedef usedef.o"
 
-_start:	
+_start:	je case1
+end:	hlt
 	
 	;; Moving one register to another does not modify the definers for the value that was moved
 case1:  mov eax, ebx
@@ -41,4 +42,4 @@ case6:	mov [eax], ebx
 case7:	mov eax, [ebx]
 	je end
 
-end:	hlt
+	hlt
