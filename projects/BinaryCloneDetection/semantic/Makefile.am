@@ -108,6 +108,13 @@ noinst_PROGRAMS += 105-api-similarity
 105_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 105_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 109_drop_indexes
+109_drop_indexes_SOURCES = 109-drop-indexes.C
+109_drop_indexes_CPPFLAGS = $(ROSE_INCLUDES)
+109_drop_indexes_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+EXTRA_DIST += compute-pairwise-precision.sql
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 110-120: run evaluation metrics on pairwise binaries
@@ -116,6 +123,7 @@ noinst_PROGRAMS += 110_compute_aggregate
 110_compute_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
 110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += compute-pairwise-precision.sql
+
 
 noinst_PROGRAMS += 115_syscall_usage
 115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
