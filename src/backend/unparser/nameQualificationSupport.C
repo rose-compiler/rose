@@ -654,7 +654,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      bool typeElaborationIsRequired = false;
   // bool globalQualifierIsRequired = false;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 4)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("##### Inside of NameQualificationTraversal::nameQualificationDepth() ##### \n");
 
   // The use of SageInterface::generateUniqueName() can cause the unparser to be called and triggers the name 
@@ -805,9 +805,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
             // We have to check the kind of declaration against the kind of symbol found. A local variable (for example) 
             // could hide the same name used for the declaration.  This if we find symbol inconsistant with the declaration 
             // then we need some form of qualification (sometimes just type elaboration).
-               printf ("Targeting a declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-               printf ("     declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
-               printf ("     declaration->get_definingDeclaration()         = %p \n",declaration->get_definingDeclaration());
+               printf ("### Targeting a declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+               printf ("   --- declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
+               printf ("   --- declaration->get_definingDeclaration()         = %p \n",declaration->get_definingDeclaration());
 #endif
                switch (declaration->variantT())
                   {
@@ -1091,15 +1091,23 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+                 // DQ (11/16/2013): I think we do need this case and test2013_273.C demonstrates this.
                  // DQ (6/1/2011): Not clear if we need a special case for the case of SgTemplateInstantiationMemberFunctionDecl.
                  // I think we need to call: evaluateNameQualificationForTemplateArgumentList()
                  // to evaluate template arguments for both SgTemplateInstantiationFunctionDecl and SgTemplateInstantiationMemberFunctionDecl.
-
                     case V_SgTemplateInstantiationFunctionDecl:
                        {
                          SgTemplateInstantiationFunctionDecl* templateFunction = isSgTemplateInstantiationFunctionDecl(declaration);
                          ROSE_ASSERT(templateFunction != NULL);
-
+#if 0
+                         printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateInstantiationFunctionDecl: templateFunction = %p = %s \n",templateFunction,templateFunction->class_name().c_str());
+                         printf ("   --- templateFunction->get_name()         = %s \n",templateFunction->get_name().str());
+                         printf ("   --- templateFunction->get_templateName() = %s \n",templateFunction->get_templateName().str());
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
                          SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
                          if (templateSymbol == NULL)
                             {
@@ -1161,6 +1169,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                             }
 #if 0
+                      // DQ (10/31/2013): I think this should be active code since test2013_273.C demonstrates a case where this is required.
+                         printf ("&&&&&&&&&&&& Calling evaluateNameQualificationForTemplateArgumentList() templateFunction = %p = %s \n",templateFunction,templateFunction->class_name().c_str());
+
                       // Evaluate all template arguments.
                          evaluateNameQualificationForTemplateArgumentList (templateFunction->get_templateArguments(),currentScope,positionStatement);
 #endif
@@ -3547,6 +3558,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                       else
                        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("currentScope = %p functionDeclaration->get_scope() = %p \n",currentScope,functionDeclaration->get_scope());
+#endif
                       // Case of non-member functions (more logical name qualification rules).
                          if (currentScope != functionDeclaration->get_scope())
                             {
@@ -3573,6 +3587,36 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                       }
                                  }
                             }
+#if 1
+                           else
+                            {
+                           // DQ (10/31/2013): Added to support name qualification on template parameters (see test2013_273.C).
+                           // However, this just leads to over qualification (use of global qualification which is not required).
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("@@@@@@@@@@@@@ Calling nameQualificationDepth(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+                              SgTemplateInstantiationFunctionDecl* templateFunction = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+                              if (templateFunction != NULL)
+                                 {
+                                   printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): for case of SgTemplateInstantiationFunctionDecl: templateFunction = %p = %s \n",templateFunction,templateFunction->class_name().c_str());
+                                   printf ("   --- templateFunction->get_name()         = %s \n",templateFunction->get_name().str());
+                                   printf ("   --- templateFunction->get_templateName() = %s \n",templateFunction->get_templateName().str());
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+#endif
+
+                           // DQ (11/16/2013): The point is that we need to handle the name qualification on any associated template arguments not 
+                           // on the function itself. So we just want to call nameQualificationDepth(), to get the anem qualification on the template 
+                           // arguments, but we can safely ignore the return result since it need not be used to drive name qualification of the
+                           // function.  Either that or we handle the template arguments explicitly.
+                           // int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                              nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                           // setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                            }
+#endif
                        }
                   }
              }
