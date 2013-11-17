@@ -494,8 +494,8 @@ int main(int argc, char *argv[])
 
 
   double sem_threshold  = 0.7;
-  double path_threshold = 0.5;
-  double cg_threshold   = 0.5;
+  double path_threshold = 0.0;
+  double cg_threshold   = 0.0;
 
   double bucket_size = 0.0250;
   double increment   = 0.0500;
