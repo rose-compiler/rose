@@ -50,7 +50,10 @@ struct ResilienceToOptimization {
 
 };
 
-
+/*********************************************************************************************************
+  * Create table that shows recall, precision, and specificity for pairs of optimization levels for the
+  * same specimen.
+  */
 void
 create_resilience_graph( std::string db_name ) 
 {
@@ -92,9 +95,9 @@ create_resilience_graph( std::string db_name )
       );
 
 
-  double recall_min,      recall_max,      recall_mean,      recall_standard_deviation;
-  double specificity_min, specificity_max, specificity_mean, specificity_standard_deviation;
-  double precision_min,   precision_max,   precision_mean,   precision_standard_deviation;
+  double recall_min = 0.0,      recall_max = 0.0,      recall_mean = 0.0,      recall_standard_deviation = 0.0;
+  double specificity_min = 0.0, specificity_max = 0.0, specificity_mean = 0.0, specificity_standard_deviation = 0.0;
+  double precision_min = 0.0,   precision_max = 0.0,   precision_mean = 0.0,   precision_standard_deviation = 0.0;
 
   for (SqlDatabase::Statement::iterator row=overall_rate_stmt->begin(); row!= overall_rate_stmt->end(); ++row){
 
@@ -187,7 +190,64 @@ create_resilience_graph( std::string db_name )
   ofile.close();
 }
 
+struct PercentSimilar {
+  double similarity_middle;
+  double percent;
 
+};
+
+/*************************************************************************************
+  * Plot of simliarity vs how many percent of the functions has the similarity
+  */
+
+void 
+plot_similarity_vs_frequency()
+{
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+      "select similarity_middle, percent from aggregate_percent"
+      " ORDER BY similarity_middle"
+      );
+
+  std::vector<PercentSimilar> percent_similars;
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row){
+
+    PercentSimilar ps;
+    ps.similarity_middle = row.get<double>(0)*100;
+    ps.percent           = row.get<double>(1);
+
+    percent_similars.push_back(ps);
+
+  }
+
+  std::ofstream ofile;
+  ofile.open("similarity_vs_frequency.tex");
+
+  ofile << std::fixed << std::setprecision(2);
+  ofile << "\\begin{tikzpicture}" << std::endl;
+  ofile << "   \\begin{axis}["    << std::endl;
+  ofile << "      height=9cm,"    << std::endl;
+  ofile << "      width=9cm,"     << std::endl;
+  ofile << "      grid=major,"    << std::endl;
+  ofile << "   ]"                 << std::endl;
+
+
+  ofile << "   \\addplot coordinates {"        << std::endl;
+ 
+  for( std::vector<PercentSimilar>::iterator it = percent_similars.begin(); 
+      it != percent_similars.end(); ++it)
+  {
+    ofile << "            ( " << it->similarity_middle << "," << it->percent << ")" << std::endl;
+  }
+
+  ofile << "   };"                             << std::endl;
+
+  //ofile << "   \\addlegendentry{estimate}"     << std::endl;
+  ofile << "   \\end{axis}"                    << std::endl;
+  ofile << "\\end{tikzpicture}"                << std::endl;
+
+  ofile.close();
+};
 
 
 int
@@ -230,6 +290,8 @@ main(int argc, char *argv[])
     std::cout << "creating resilience graph" << std::endl;
 
     create_resilience_graph(db_name);
+
+    plot_similarity_vs_frequency();
 
     std::cout << "done creating resilience graph" << std::endl;
 
