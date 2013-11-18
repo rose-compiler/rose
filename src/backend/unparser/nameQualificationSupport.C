@@ -1666,8 +1666,23 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               ROSE_ASSERT(associatedFunctionDeclarationFromSymbol != NULL);
 
                               ROSE_ASSERT(functionDeclaration != NULL);
+
+                           // DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing.
+                              ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+
                               SgDeclarationStatement* declarationFromSymbol = functionDeclaration->get_declaration_associated_with_symbol();
+#if 0
+                           // DQ (11/18/2013): Try to reset this...
+                              if (declarationFromSymbol == NULL)
+                                 {
+#if 0
+                                   printf ("In name qualification support: declarationFromSymbol == NULL: retry using functionDeclaration->get_firstNondefiningDeclaration() \n");
+#endif
+                                   declarationFromSymbol = functionDeclaration->get_firstNondefiningDeclaration()->get_declaration_associated_with_symbol();
+                                 }
+#endif
                               ROSE_ASSERT(declarationFromSymbol != NULL);
+
                               SgFunctionDeclaration* functionDeclarationFromSymbol = isSgFunctionDeclaration(declarationFromSymbol);
                               ROSE_ASSERT(functionDeclarationFromSymbol != NULL);
 
@@ -3593,9 +3608,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            // DQ (10/31/2013): Added to support name qualification on template parameters (see test2013_273.C).
                            // However, this just leads to over qualification (use of global qualification which is not required).
 
+                              SgTemplateInstantiationFunctionDecl* templateFunction = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("@@@@@@@@@@@@@ Calling nameQualificationDepth(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
-                              SgTemplateInstantiationFunctionDecl* templateFunction = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
                               if (templateFunction != NULL)
                                  {
                                    printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): for case of SgTemplateInstantiationFunctionDecl: templateFunction = %p = %s \n",templateFunction,templateFunction->class_name().c_str());
@@ -3613,7 +3629,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            // arguments, but we can safely ignore the return result since it need not be used to drive name qualification of the
                            // function.  Either that or we handle the template arguments explicitly.
                            // int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
-                              nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+#if 0
+                              printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): non-member declaration: functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                              printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): non-member declaration: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                           // DQ (11/18/2013): Restrict this to template instantiations, else failing some astInterface tests (deepcopy.C).
+                           // nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                              if (templateFunction != NULL)
+                                 {
+                                   nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                                 }
+                              
                            // setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
                             }
 #endif
