@@ -284,10 +284,11 @@ analyze_data(SqlDatabase::TransactionPtr tx)
  int num_rg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_rg as cg on cg.callee = sm.caller; ")->execute_int();
  int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
 
+ std::cout << std::fixed << std::setprecision(2);
  std::cout << "num functions:   "                 << num_functions   << std::endl;
- std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << ((double) num_cg_syscalls/num_functions) << std::endl;
- std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << ((double) num_rg_syscalls/num_functions) << std::endl;
- std::cout << "path calls: "                      << path_calls      << " fraction " << ((double) path_calls/num_functions)      << std::endl; 
+ std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
+ std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
+ std::cout << "path calls: "                      << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
 
  tx->statement("drop table IF EXISTS syscall_statistics;");
  tx->statement("create table syscall_statistics as  select distinct rg.caller, sm.syscall_id, sm.syscall_name from syscalls_made as sm"
