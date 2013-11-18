@@ -137,7 +137,7 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
     pecent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     pecent_similar_stmt->bind(1, cur_bucket);
     pecent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    pecent_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+    pecent_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
 
     pecent_similar_stmt->execute();
 
@@ -154,7 +154,7 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
     global_percent_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     global_percent_similar_stmt->bind(3, cur_bucket);
     global_percent_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
-    global_percent_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+    global_percent_similar_stmt->bind(5, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
     global_percent_similar_stmt->bind(6, num_matches);
 
     global_percent_similar_stmt->execute();
@@ -205,7 +205,7 @@ compute_mean_similarity_statistics( double bucket_size, double increment, std::s
     mean_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     mean_similar_stmt->bind(1, cur_bucket);
     mean_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    mean_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+    mean_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0 );
 
     mean_similar_stmt->execute();
 
@@ -222,7 +222,7 @@ compute_mean_similarity_statistics( double bucket_size, double increment, std::s
     global_mean_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     global_mean_similar_stmt->bind(3, cur_bucket);
     global_mean_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
-    global_mean_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+    global_mean_similar_stmt->bind(5, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
 
     global_mean_similar_stmt->execute();
   
@@ -265,7 +265,7 @@ compute_aggregate_statistics(double bucket_size, double increment, SqlDatabase::
     percent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size);
     percent_similar_stmt->bind(1, cur_bucket);
     percent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    percent_similar_stmt->bind(3, ((double) num_matches * 100.0)/num_pairs);
+    percent_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches * 100.0)/num_pairs : 0 );
     percent_similar_stmt->bind(4, num_matches);
 
     percent_similar_stmt->execute();
