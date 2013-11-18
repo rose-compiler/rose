@@ -1522,11 +1522,14 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
    {
      SgUnparse_Info newinfo(info);
      newinfo.set_operator_name(op);
-#if 1
+
+#if 0
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
+
      unparseBinaryExpr(expr, newinfo);
-#if 1
+
+#if 0
      curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
    }
