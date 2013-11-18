@@ -317,6 +317,33 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn)
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::undefined_(size_t nbits)
+{
+    SValuePtr retval = svalue_empty(nbits);
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->undefined_(nbits));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::number_(size_t nbits, uint64_t value)
+{
+    SValuePtr retval = svalue_empty(nbits);
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->number_(nbits, value));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::boolean_(bool value)
+{
+    SValuePtr retval = svalue_empty(1);
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->boolean_(value));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a)
 {
     SValuePtr retval = svalue_empty(a->get_width());
