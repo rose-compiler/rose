@@ -37,7 +37,7 @@ VirtualFunctionTable::VirtualFunctionTable ( SgProject* project, SgAsmElfSection
 
   // Get the architecture specifici information required to the raw data in the section.
      SgAsmGenericHeader *hdr = virtualFunctionTable->get_header();
-     SgAsmGenericFormat::ByteOrder sex = hdr->get_sex();
+     ByteOrder::Endianness sex = hdr->get_sex();
      size_t wordsize = hdr->get_word_size();
      size_t virtualTableSize = (size-offset) / wordsize;
      printf ("size = %zu offset = %zu wordsize = %zu virtualTableSize = %zu \n",size,offset,wordsize,virtualTableSize);
@@ -54,7 +54,7 @@ VirtualFunctionTable::VirtualFunctionTable ( SgProject* project, SgAsmElfSection
                  // virtualFunctionTable->read_content_local(offset+i*wordsize, &ptr_disk, sizeof ptr_disk);
                  // virtualFunctionTable->read_content_local(i*wordsize, &ptr_disk, sizeof ptr_disk);
                     virtualFunctionTable->read_content_local(offset+i*wordsize, &ptr_disk, sizeof ptr_disk);
-                    functionPointer = SgAsmExecutableFileFormat::disk_to_host(sex, ptr_disk);
+                    functionPointer = ByteOrder::disk_to_host(sex, ptr_disk);
                     break;
                   }
 
@@ -64,7 +64,7 @@ VirtualFunctionTable::VirtualFunctionTable ( SgProject* project, SgAsmElfSection
                  // virtualFunctionTable->read_content_local(offset+i*wordsize, &ptr_disk, sizeof ptr_disk);
                  // virtualFunctionTable->read_content_local(i*wordsize, &ptr_disk, sizeof ptr_disk);
                     virtualFunctionTable->read_content_local(offset+i*wordsize, &ptr_disk, sizeof ptr_disk);
-                    functionPointer = SgAsmExecutableFileFormat::disk_to_host(sex, ptr_disk);
+                    functionPointer = ByteOrder::disk_to_host(sex, ptr_disk);
                     break;
                   }
 

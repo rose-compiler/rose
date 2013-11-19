@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NOTE: This project-specific implementation of PowerPC instruction semantics based on API1 of x86 instruction semantics
+//       served as a basis for the API2 PowerPC semantics.  The implementation here should be considered deprecated, even
+//       though it's used only by this project. It was apparently cut-n-pasted from the assemblyToSourceAst project
+//       anyway. [Robb P. Matzke 2013-05-24]
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 #define ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 

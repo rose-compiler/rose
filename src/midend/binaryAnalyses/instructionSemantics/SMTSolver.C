@@ -40,9 +40,24 @@ SMTSolver::reset_class_stats()
 }
 
 SMTSolver::Satisfiable
+SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs_)
+{
+    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
+    for (size_t i=0; i<exprs.size(); ++i) {
+        if (exprs[i]->is_known()) {
+            assert(1==exprs[i]->get_nbits());
+            if (0==exprs[i]->get_value())
+                return SAT_NO;
+            std::swap(exprs[i], exprs.back()); // order of exprs is not important
+            exprs.resize(exprs.size()-1);
+        }
+    }
+    return exprs.empty() ? SAT_YES : SAT_UNKNOWN;
+}
+
+SMTSolver::Satisfiable
 SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 {
-    Satisfiable retval = SAT_UNKNOWN;
     bool got_satunsat_line = false;
 
 #ifdef _MSC_VER
@@ -51,6 +66,12 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 #else
 
     clear_evidence();
+
+    Satisfiable retval = trivially_satisfiable(exprs);
+    if (retval!=SAT_UNKNOWN)
+        return retval;
+
+    // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
     RTS_MUTEX(class_stats_mutex) {
         ++class_stats.ncalls;
@@ -58,21 +79,31 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     output_text = "";
 
     /* Generate the input file for the solver. */
-    char config_name[L_tmpnam];
-    while (1) {
-        tmpnam(config_name);
-        int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
-        if (fd>=0) {
-            close(fd);
-            break;
+    struct TempFile {
+        std::ofstream file;
+        char name[L_tmpnam];
+        TempFile() {
+            while (1) {
+                tmpnam(name);
+                int fd = open(name, O_RDWR|O_EXCL|O_CREAT, 0666);
+                if (fd>=0) {
+                    close(fd);
+                    break;
+                }
+            }
+            std::ofstream config(name);
+            file.open(name);
         }
-    }
-    std::ofstream config(config_name);
+        ~TempFile() {
+            unlink(name);
+        }
+    } tmpfile;
+
     Definitions defns;
-    generate_file(config, exprs, &defns);
-    config.close();
+    generate_file(tmpfile.file, exprs, &defns);
+    tmpfile.file.close();
     struct stat sb;
-    int status = stat(config_name, &sb);
+    int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     assert(status>=0);
     stats.input_size += sb.st_size;
     RTS_MUTEX(class_stats_mutex) {
@@ -81,9 +112,9 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     /* Show solver input */
     if (debug) {
-        fprintf(debug, "SMT Solver input in %s:\n", config_name);
+        fprintf(debug, "SMT Solver input in %s:\n", tmpfile.name);
         size_t n=0;
-        std::ifstream f(config_name);
+        std::ifstream f(tmpfile.name);
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
@@ -94,7 +125,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
-        std::string cmd = get_command(config_name);
+        std::string cmd = get_command(tmpfile.name);
         FILE *output = popen(cmd.c_str(), "r");
         assert(output!=NULL);
         char *line = NULL;
@@ -128,8 +159,6 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
             fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(output_text, "     ").c_str());
         }
     }
-
-    unlink(config_name);
 
     if (SAT_YES==retval)
         parse_evidence();

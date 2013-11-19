@@ -177,7 +177,7 @@ public:
     FILE *get_debug() const { return debug; }
 
 
-
+    
     /*========================================================================================================================
      * Searching for shared objects
      *======================================================================================================================== */
@@ -197,9 +197,18 @@ public:
 
     /** Adds a directory to the list of directories searched for libraries.  This is similar to the LD_LIBRARY_PATH
      *  environment variable of the ld-linux.so dynamic loader (see the ld.so man page). ROSE searches for libraries in
-     *  directories in the order that directories were added. */
+     *  directories in the order that directories were added.
+     *
+     *  See also, StringUtility::splitStringIntoStrings(). */
     void add_directory(const std::string &dirname) {
         directories.push_back(dirname);
+    }
+
+    /** Adds directories to the list of directories searched for libraries. This is similar to the LD_LIBRARY_PATH
+     *  environment variable of the ld-linux.so dynamic loader (see the ld.so man page). ROSE searches for libraries in
+     *  directories in the order that directories were added. */
+    void add_directories(const std::vector<std::string> &dirnames) {
+        directories.insert(directories.end(), dirnames.begin(), dirnames.end());
     }
 
     /** Returns the list of shared object search directories. */
@@ -265,9 +274,12 @@ public:
      *  This method throws a BinaryLoader::Exception if an error occurs. */
     virtual void remap(SgAsmInterpretation *interp);
 
-    /** Performs relocation fixups on the specified interpretation. This should be called after sections are mapped into
-     *  memory by remap(). Throws a BinaryLoader::Exception if an error occurs. */
-    virtual void fixup(SgAsmInterpretation *interp);
+    typedef std::vector<Exception> FixupErrors;
+
+    /** Performs relocation fixups on the specified interpretation. This should be called after sections are mapped into memory
+     *  by remap().  If an error occurs, then this function either throws the error (BinaryLoader::Exception) or appends it to
+     *  the @p errors container (if @p errors is non-null). */
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL);
 
     /*========================================================================================================================
      * Supporting types and functions

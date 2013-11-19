@@ -6121,7 +6121,7 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                  << " " << stack[i] << "; parent=" << stack[i]->get_parent()
                  << "\n";
 
-       // DQ (9/21/2013): Avide redundant output of debug info.
+       // DQ (9/21/2013): Avoid redundant output of debug info.
        // printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
           if (stack[i]->get_parent() != NULL)
              {
@@ -6132,7 +6132,6 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
              }
         }
-
      output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()

@@ -42,3 +42,53 @@ SgAsmInterpretation::set_registers(const RegisterDictionary *regs)
     p_registers = regs;
 }
 
+/** Populate a map of instructions indexed by their virtual addresses. */
+void
+SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
+{
+    struct T: AstSimpleProcessing {
+        InstructionMap &imap;
+        T(InstructionMap &imap): imap(imap) {}
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                imap[insn->get_address()] = insn;
+        }
+    } t(imap);
+    t.traverse(this, preorder);
+}
+
+/** Remove some instructions from an instruction map. */
+void
+SgAsmInterpretation::erase_instructions(InstructionMap &imap/*in,out*/)
+{
+    struct T: AstSimpleProcessing {
+        InstructionMap &imap;
+        T(InstructionMap &imap): imap(imap) {}
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                imap.erase(insn->get_address());
+        }
+    } t(imap);
+    t.traverse(this, preorder);
+}
+
+/** Returns the InstructionMap associated with an interpretation. The instruction map is recomputed if the currently cached map
+ * is empty or if the @p recompute argument is true. Otherwise this just returns the existing map. No attempt is made to make
+ * sure that the map is up-to-date with respect to the current state of the AST. */
+InstructionMap &
+SgAsmInterpretation::get_instruction_map(bool recompute)
+{
+    if (recompute || instruction_map.empty()) {
+        instruction_map.clear();
+        insert_instructions(instruction_map);
+    }
+    return instruction_map;
+}
+
+/** Caches the specified instruction map in this interpretation.  The contents of the supplied map are copied into the
+ *  interpretation. */
+void
+SgAsmInterpretation::set_instruction_map(const InstructionMap &imap)
+{
+    instruction_map = imap;
+}

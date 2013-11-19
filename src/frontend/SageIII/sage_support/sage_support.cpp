@@ -7,6 +7,9 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage_support.h"
+#include "dwarfSupport.h"
+
 // TOO1 (05/14/2013): Signal handling for -rose:keep_going
 #include <setjmp.h>
 #include <signal.h>
@@ -4344,7 +4347,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 #endif
 
   // Make sure this node is correctly parented
-     SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = SageInterface::getEnclosingNode<SgProject>(this);
      ROSE_ASSERT(project != NULL);
 #else
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "

@@ -72,5 +72,6 @@ Partitioner::IPDParser::unparse(std::ostream &output, SgNode *ast)
         }
     };
 
-    T1(output).traverse(ast);
+    if (ast)
+        T1(output).traverse(ast);
 }

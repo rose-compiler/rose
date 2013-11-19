@@ -31,6 +31,9 @@ using namespace std;
 // This is controled by using the --with-dwarf configure command line option.
 #if USE_ROSE_DWARF_SUPPORT
 
+#include "dwarf.h"
+#include "libdwarf.h"
+
 #define DIE_STACK_SIZE 300
 static Dwarf_Die die_stack[DIE_STACK_SIZE];
 
@@ -1853,7 +1856,9 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
                     printf ("Error: Sorry not implemented (child support on IR nodes %s \n",parentDwarfConstruct->class_name().c_str());
                   }
 #endif
-               astDwarfConstruct->set_parent(parentDwarfConstruct);
+               // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
+               // [Robb P. Matzke 2013-04-15]
+               astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
              }
 
        // printf ("Process children \n");
@@ -2181,7 +2186,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
 /* process each compilation unit in .debug_info */
 void
-build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
+build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
    {
      Dwarf_Unsigned cu_header_length = 0;
      Dwarf_Unsigned abbrev_offset = 0;
@@ -2194,25 +2199,11 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
 
   // printf("\n.debug_info\n");
 
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() == NULL);
+     ROSE_ASSERT(file->get_dwarf_info() == NULL);
 
-#if 0
-     SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = new SgAsmDwarfCompilationUnit();
-
-     asmInterpretation->set_dwarf_info(asmDwarfCompilationUnit);
-     asmDwarfCompilationUnit->set_parent(asmInterpretation);
-
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() != NULL);
-#endif
-
-#if 1
      SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
-
-     asmInterpretation->set_dwarf_info(asmDwarfCompilationUnitList);
-     asmDwarfCompilationUnitList->set_parent(asmInterpretation);
-
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() != NULL);
-#endif
+     file->set_dwarf_info(asmDwarfCompilationUnitList);
+     asmDwarfCompilationUnitList->set_parent(file);
 
   // This permits restricting number of CU's read so that we can have a 
   // manageable problem to debug the Dwarf represnetation in ROSE.
@@ -2818,11 +2809,9 @@ readDwarf ( SgAsmGenericFile* asmFile )
        // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
        // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
 
-       // Dwarf information will be attached to the main SgAsmInterpretation for the binary file.
-          SgAsmInterpretation* asmInterpretation = SageInterface::getMainInterpretation(asmFile);     
-
-       // Main function to read dwarf information
-          build_dwarf_IR_nodes(rose_dwarf_dbg,asmInterpretation);
+       // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an
+       // interpretation since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
+          build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
 
        // printf ("\n\nFinishing Dwarf handling... \n\n");
           int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
@@ -2840,7 +2829,7 @@ readDwarf ( SgAsmGenericFile* asmFile )
   // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.
   // This make the DOT files easier to manage since there can be thousands of symbols.  This also
   // makes it easer to debug the ROSE dwarf AST.
-     SgBinaryComposite* binary = isSgBinaryComposite(asmFile->get_parent());
+     SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(asmFile);
      ROSE_ASSERT (binary != NULL);
 
   // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
