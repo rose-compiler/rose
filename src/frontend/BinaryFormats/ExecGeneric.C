@@ -382,18 +382,6 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
   return buf;
 }
 
-std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ByteOrder sex)
-{
-  switch (sex) {
-    case ORDER_UNSPECIFIED:     return "unspecified";   
-    case ORDER_LSB:             return "little-endian"; 
-    case ORDER_MSB:             return "big-endian";    
-  };
-  char buf[64];
-  snprintf(buf,sizeof(buf),"unknown byte order (%zu)",size_t(sex)) ;
-  return buf;
-}
-
 std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecFamily family)
 {
   switch(family){
