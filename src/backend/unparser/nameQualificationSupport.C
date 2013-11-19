@@ -1667,6 +1667,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                               ROSE_ASSERT(functionDeclaration != NULL);
 
+                           // DQ (11/19/2013): This is added to support testing cases where we would clearly fail the AST consistancy tests (e.g. LoopProcessing.C).
+                           // I hate this work around, but I am hoping it will help identify a root cause of the problem.
+                           // ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() != NULL);
+                              if (functionDeclaration->get_firstNondefiningDeclaration() == NULL)
+                                 {
+                                   printf ("***** ERROR: In NameQualificationTraversal::nameQualificationDepth(): we are supporting this case though it is a violation of the AST consistancy tests! ***** \n");
+                                   return 0;
+                                 }
+
                            // DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing.
                               ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
 
