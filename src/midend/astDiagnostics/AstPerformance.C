@@ -14,6 +14,7 @@
 #include <sys/resource.h>
 #else
 #include <windows.h>            // getpagesize()
+#include "timing.h"             // gettimeofday()
 #endif
 #endif
 
