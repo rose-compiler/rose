@@ -115,7 +115,7 @@ main(int argc, char *argv[])
     // Get the list of functions that should appear in the worklist.
     std::cerr <<argv0 <<": obtaining function list\n";
     std::string stmt1 = "create temporary table tmp_tested_funcs as"
-                        " select distinct fio.func_id"
+                        " select distinct fio.func_id as func_id"
                         " from semantic_fio as fio";
     if (!opt.exclude_functions_table.empty()) {
         std::vector<std::string> parts = StringUtility::split('.', opt.exclude_functions_table, 2, true);

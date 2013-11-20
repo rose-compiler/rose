@@ -6,142 +6,6 @@ dir0="${0%$argv0}"
 [ -n "$dir0" ] || dir0="."
 worklist="clone-analysis-$$"
 
-usage () {
-    local exit_status="${1:-0}"
-    echo "usage: $argv0 [SWITCHES] [--] [SPECIMENS...]" >&2
-    echo "    This command runs the semantic analysis steps interactively.  The following" >&2
-    echo "    switches are understood:" >&2
-    echo "        --batch" >&2
-    echo "            Instead of being interactive, use only the default values stored in" >&2
-    echo "            the configuration file.  Beware of the \$recreate value, which might" >&2
-    echo "            cause the database to be recreated from scratch each run rather than" >&2
-    echo "            building it incrementally, or vice versa." >&2
-    echo "        --config=FILE" >&2
-    echo "            Use the specified file for reading and/or storing configuration info." >&2
-    echo "            the default file is '.run-analysis.conf'." >&2
-    echo "        --[no-]save" >&2
-    echo "            The --save switch (the default) saves configuration information into the" >&2
-    echo "            configuration file specified with the --config switch (or a default)." >&2
-    exit $exit_status
-}
-
-# Show an error message and exit
-die () {
-    echo "$argv0: $*" >&2
-    exit 1
-}
-
-# For affirmative answers, echo "yes" and return success; otherwise silently return failure
-yes_or_no () {
-    local prompt="$1" dflt="$2" ans
-    read -e -p "$prompt " -i "$dflt" ans
-    [ "$ans" = "" ] && ans="$dflt"
-    if [ "${ans:0:1}" = "y" -o "${ans:0:1}" = "Y" ]; then
-	echo "yes"
-	return 0
-    fi
-    return 1;
-}
-
-# Execute the command, and show users what it is
-execute () {
-    echo "+" "$@" >&2
-    "$@"
-    return $?
-}
-
-# Echos the number of processors that should be used
-parallelism () {
-    local nwork=$(wc -l <$worklist)
-
-    # Choose number of processors
-    if [ $nwork -le 1 ]; then
-	echo $nwork
-	return 0
-    fi
-    local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
-    [ $nprocs -gt 1 ] && nprocs=$[nprocs-1]
-    [ $nprocs -gt $nwork ] && nprocs=$nwork
-    echo "Number of items in work list: $nwork" >&2
-    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
-	read -e -p "How many parallel processes should be used? " -i "$nprocs"
-	if [ -n "$REPLY" ]; then
-	    nprocs="$REPLY"
-	    [ $nprocs -gt $nwork ] && nprocs=$nwork
-	fi
-    fi
-
-    echo $nprocs
-}
-
-# Split a file into parts of equal size based on the parallelism desired.
-split_worklist () {
-    local nprocs="$1"
-    local nwork=$(wc -l <$worklist)
-
-    # Choose number of parts to create
-    local nparts=$[5 * nprocs]
-    [ $nprocs -eq 1 ] && nparts=1
-    [ $nparts -gt $nwork ] && nparts=$nwork
-    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
-	read -e -p "How many units of work for $nprocs processors? " -i "$nparts"
-	if [ -n "$REPLY" ]; then
-	    nparts="$REPLY"
-	    [ $nparts -gt $nwork ] && nparts=$nwork;
-	fi
-    fi
-    [ $nparts -gt 676 ] && nparts=676 # 26*26
-
-    # Create parts
-    if [ $nparts -gt 1 ]; then
-	local work_per_part=$[(nwork + nparts - 1) / nparts]
-	split --lines=$work_per_part $worklist $worklist-
-	rm $worklist
-    else
-	mv $worklist $worklist-aa
-    fi
-    echo $worklist-[a-z][a-z]
-}
-
-# Counts the number of arguments
-count_args () {
-    echo "$#"
-}
-
-save_settings () {
-    if [ "$save_config" = "yes" ]; then
-	cat >$configfile <<EOF
-# Name or URL of the database
-dbname='$dbname'
-
-# Should the database tables be dropped and recreated?
-recreate='$recreate'
-
-# Flags for generating inputs
-generate_inputs_flags='$generate_inputs_flags'
-
-# Flags for adding functions
-add_functions_flags='$add_functions_flags'
-
-# Flags for obtaining the list of functions to test
-get_pending_tests_flags='$get_pending_tests_flags'
-
-# Flags for running each test
-run_tests_flags='$run_tests_flags'
-
-# Flags for obtaining the list of function pairs for which similarity needs
-# to be calculated
-func_similarity_worklist_flags='$func_similarity_worklist_flags'
-
-# Flags for determining similarity of pairs of functions based on their output
-func_similarity_flags='$func_similarity_flags'
-EOF
-    fi
-}
-
-###############################################################################################################################
-###############################################################################################################################
-
 # Parse command-line
 interactive=yes
 configfile=.run-analysis.conf
@@ -191,6 +55,161 @@ fi
 [ -n "$ROSE_BLD" -a -d "$ROSE_BLD/projects" ] || die "ROSE_BLD should be set to the root of the ROSE build directory"
 [ -n "$SRCDIR" -a -d "$SRCDIR" ]              || die "not a directory: $SRCDIR"
 [ -n "$BLDDIR" -a -d "$BLDDIR" ]              || die "not a directory: $BLDDIR"
+
+###############################################################################################################################
+# Functions
+###############################################################################################################################
+
+usage () {
+    local exit_status="${1:-0}"
+    echo "usage: $argv0 [SWITCHES] [--] [SPECIMENS...]" >&2
+    echo "    This command runs the semantic analysis steps interactively.  The following" >&2
+    echo "    switches are understood:" >&2
+    echo "        --batch" >&2
+    echo "            Instead of being interactive, use only the default values stored in" >&2
+    echo "            the configuration file.  Beware of the \$recreate value, which might" >&2
+    echo "            cause the database to be recreated from scratch each run rather than" >&2
+    echo "            building it incrementally, or vice versa." >&2
+    echo "        --config=FILE" >&2
+    echo "            Use the specified file for reading and/or storing configuration info." >&2
+    echo "            the default file is '.run-analysis.conf'." >&2
+    echo "        --[no-]save" >&2
+    echo "            The --save switch (the default) saves configuration information into the" >&2
+    echo "            configuration file specified with the --config switch (or a default)." >&2
+    exit $exit_status
+}
+
+# Show an error message and exit
+die () {
+    echo "$argv0: $*" >&2
+    exit 1
+}
+
+# For affirmative answers, echo "yes" and return success; otherwise silently return failure
+yes_or_no () {
+    local prompt="$1" dflt="$2" ans
+    read -e -p "$prompt " -i "$dflt" ans
+    [ "$ans" = "" ] && ans="$dflt"
+    if [ "${ans:0:1}" = "y" -o "${ans:0:1}" = "Y" ]; then
+	echo "yes"
+	return 0
+    fi
+    return 1;
+}
+
+# Execute the command, and show users what it is
+execute () {
+    echo "+" "$@" >&2
+    "$@"
+    return $?
+}
+
+# Echos the number of processors that should be used
+parallelism () {
+    local maxprocs="${1-0}"
+    local nwork=$(wc -l <$worklist)
+
+    # Choose number of processors
+    if [ $nwork -le 1 ]; then
+	echo $nwork
+	return 0
+    fi
+    local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
+    [ $nprocs -gt 1 ] && nprocs=$[nprocs-1]
+    [ $nprocs -gt $nwork ] && nprocs=$nwork
+    [ $maxprocs -gt 0 -a $nprocs -gt $maxprocs ] && nprocs=$maxprocs
+
+    echo "Number of items in work list: $nwork" >&2
+    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
+	read -e -p "How many parallel processes should be used? " -i "$nprocs"
+	if [ -n "$REPLY" ]; then
+	    nprocs="$REPLY"
+	    [ $nprocs -gt $nwork ] && nprocs=$nwork
+	fi
+    fi
+
+    echo $nprocs
+}
+
+# Split a file into parts of equal size based on the parallelism desired.
+split_worklist_1d () {
+    local nprocs="$1" job_multiplier="${2-5}"
+    local nwork=$(wc -l <$worklist)
+
+    # Choose number of parts to create
+    local nparts=$[job_multiplier * nprocs]
+    [ $nprocs -eq 1 ] && nparts=1
+    [ $nparts -gt $nwork ] && nparts=$nwork
+    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
+	read -e -p "How many units of work for $nprocs processors? " -i "$nparts"
+	if [ -n "$REPLY" ]; then
+	    nparts="$REPLY"
+	    [ $nparts -gt $nwork ] && nparts=$nwork;
+	fi
+    fi
+    [ $nparts -gt 676 ] && nparts=676 # 26*26
+
+    # Create parts
+    if [ $nparts -gt 1 ]; then
+	local work_per_part=$[(nwork + nparts - 1) / nparts]
+	split --lines=$work_per_part $worklist $worklist-
+	rm $worklist
+    else
+	mv $worklist $worklist-aa
+    fi
+    echo $worklist-[a-z][a-z]
+}
+
+# Split list of pairs into parts of approx equal size in 2d.  The goal is to partition the space into rectangular reagions
+# that have approximately the same number of points but which minimize the length of the perimeter.
+split_worklist_2d () {
+    local nprocs="$1" njobs="${2-64}"
+    $BLDDIR/31-split-2dworklist $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
+    rm $worklist
+    echo $worklist-[a-z][a-z]
+}
+   
+# Counts the number of arguments
+count_args () {
+    echo "$#"
+}
+
+save_settings () {
+    if [ "$save_config" = "yes" ]; then
+	cat >$configfile <<EOF
+# Name or URL of the database
+dbname='$dbname'
+
+# Should the database tables be dropped and recreated?
+recreate='$recreate'
+
+# Flags for generating inputs
+generate_inputs_flags='$generate_inputs_flags'
+
+# Flags for adding functions
+add_functions_flags='$add_functions_flags'
+
+# Flags for obtaining the list of functions to test
+get_pending_tests_flags='$get_pending_tests_flags'
+
+# Flags for running each test
+run_tests_nprocs='$run_tests_nprocs'
+run_tests_job_multiplier='$run_tests_job_multiplier'
+run_tests_flags='$run_tests_flags'
+
+# Flags for obtaining the list of function pairs for which similarity needs
+# to be calculated
+func_similarity_worklist_flags='$func_similarity_worklist_flags'
+
+# Flags for determining similarity of pairs of functions based on their output
+func_similarity_flags='$func_similarity_flags'
+EOF
+    fi
+}
+
+###############################################################################################################################
+# Main program
+###############################################################################################################################
 
 if [ "$interactive" = "yes" ]; then
     echo "=================================================================================================="
@@ -259,8 +278,8 @@ nwork=$(wc -l <$worklist)
 if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
-    nprocs=$(parallelism)
-    worklist_parts=$(split_worklist $nprocs)
+    nprocs=$(parallelism $run_tests_nprocs)
+    worklist_parts=$(split_worklist_1d $nprocs $run_tests_job_multiplier)
     nparts=$(count_args $worklist_parts)
     save_settings
 
@@ -307,9 +326,10 @@ if [ "$nwork" -eq 0 ]; then
     echo "No similarities to compute"
 else
     nprocs=$(parallelism)
-    worklist_parts=$(split_worklist $nprocs)
+    worklist_parts=$(split_worklist_2d $nprocs)
     nparts=$(count_args $worklist_parts)
     save_settings
+    $SRCDIR/31-analyze-split $worklist_parts
 
     if [ "$interactive" = "yes" ]; then
 	echo

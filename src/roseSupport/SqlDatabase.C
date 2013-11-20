@@ -7,6 +7,7 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <sys/time.h>
 
 #ifdef ROSE_HAVE_SQLITE3
 #include "sqlite3x.h"
@@ -401,6 +402,9 @@ Connection::guess_driver(const std::string &open_spec)
     // sslcompression sslcert, sslkey, sslrootcert, sslcrl, requirepeer, krbsrvname, gsslib, service
     if (0==open_spec.substr(0, 13).compare("postgresql://"))
         return POSTGRESQL;
+
+    if (0==open_spec.substr(0, 10).compare("sqlite3://"))
+        return SQLITE3;
 
     // If it looks like a file name ending with ".db" then it's probably an SQLite3 database.
     bool is_filename = true;
@@ -958,11 +962,13 @@ StatementImpl::begin(const StatementPtr &stmt)
     sql_expanded = expand();
     execution_seq += 1;
     row_num = 0;
+    struct timeval start_time;
     if (debug) {
         std::ostringstream ss;
+        gettimeofday(&start_time, NULL);
         ss <<"connection: " <<*tranx->impl->conn <<"\ntransaction: " <<*tranx <<"\n";
         print(ss);
-        fprintf(debug, "SqlDatabase: executing\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
+        fprintf(debug, "SqlDatabase: executing\n%s", StringUtility::prefixLines(ss.str(), "    ").c_str());
     }
 
     switch (driver()) {
@@ -1007,6 +1013,13 @@ StatementImpl::begin(const StatementPtr &stmt)
         default:
             assert(!"database driver not supported");
             abort();
+    }
+
+    if (debug) {
+        struct timeval end_time;
+        gettimeofday(&end_time, NULL);
+        double elapsed = (double)(end_time.tv_sec-start_time.tv_sec) + ((double)end_time.tv_usec-start_time.tv_usec)*1e-9;
+        fprintf(debug, "    elapsed time: %g seconds\n\n", elapsed);
     }
 
     return execution_seq;

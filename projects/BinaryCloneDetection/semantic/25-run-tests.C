@@ -1174,6 +1174,10 @@ main(int argc, char *argv[])
                 project = open_specimen(tx, files, work.specimen_id, argv0);
                 progress.message("");
             }
+            if (!project) {
+                std::cerr <<argv0 <<": problems loading specimen\n";
+                exit(1);
+            }
             
             // Get list of functions and initialize the instruction cache
             std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);

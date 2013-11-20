@@ -268,15 +268,12 @@ main(int argc, char *argv[])
         usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = start_command(tx, argc, argv, "adding functions");
-    std::string specimen_name = argv[argno++];
+    std::string specimen_name = StringUtility::getAbsolutePathFromRelativePath(argv[argno++], true);
     FilesTable files(tx);
 
     // Parse the binary specimen
     int specimen_id = files.insert(specimen_name);
     SgAsmInterpretation *interp = open_specimen(specimen_name, argv0, opt.link);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-10]*/
-    backend(SageInterface::getProject());
-#endif
     SgBinaryComposite *binfile = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
     assert(interp!=NULL && binfile!=NULL);
 
@@ -287,6 +284,7 @@ main(int argc, char *argv[])
     std::cerr <<argv0 <<": adding " <<functions_to_add.size() <<" function" <<(1==functions_to_add.size()?"":"s")
               <<" to the database\n";
 
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
     // Get source code location info for all instructions and update the FilesTable
     BinaryAnalysis::DwarfLineMapper dlm(binfile);
     dlm.fix_holes();
@@ -296,6 +294,7 @@ main(int argc, char *argv[])
         if (srcinfo.file_id>=0)
             files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
     }
+#endif
     files.save(tx); // needs to be saved before we write foriegn keys into the semantic_functions table
 
     // Process each function
@@ -333,6 +332,7 @@ main(int argc, char *argv[])
         stmt1->bind(10, cmd_id);
         stmt1->execute();
 
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
         // Save instructions
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
         for (size_t i=0; i<insns.size(); ++i) {
@@ -348,6 +348,7 @@ main(int argc, char *argv[])
             stmt2->bind(7, cmd_id);
             stmt2->execute();
         }
+#endif
     }
 
     // Save specimen information
