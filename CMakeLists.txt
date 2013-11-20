@@ -240,7 +240,7 @@ if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
-set(BOOST_FILESYSTEM_VERSION 2)
+add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
 
 
 
@@ -342,6 +342,7 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
   set(have_EDG_source TRUE)
 else()
   set(have_EDG_source FALSE)
+  set(edg_lib "")
   set(BINARY_EDG 1)
   if (NOT WIN32)
   # no need to display this message after the file has been downloaded
@@ -353,6 +354,7 @@ else()
       "for the GCC compiler.\n" )
   endif()
   include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+  set(edg_lib EDG)
   endif()
 endif()
 

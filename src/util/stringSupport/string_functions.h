@@ -448,7 +448,7 @@ namespace StringUtility
         *  into the LF (line-feed) termination used by Multics, Unix and Unix-like systems (GNU/Linux, Mac OS X, FreeBSD, AIX,
         *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
         *  left-to-right matching) is replaced by a single LF character. */
-       std::string fixLineTermination(const std::string &input);
+       ROSE_UTIL_API std::string fixLineTermination(const std::string &input);
 
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
