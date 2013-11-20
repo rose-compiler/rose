@@ -981,14 +981,28 @@ cout.flush();
     ::currentSourceFile -> set_package(package_statement);
 
     ROSE_ASSERT(! ::currentSourceFile -> get_import_list());
-    SgJavaImportStatementList *import_list = new SgJavaImportStatementList();
-    // import_list -> set_parent(::currentSourceFile);
-    ::currentSourceFile -> set_import_list(import_list);
+#if 0
+    ::currentSourceFile -> set_import_list(new SgJavaImportStatementList());
+#else
+ // DQ (11/20/2013): Fixed to include source position information (and parent, etc.)
+ // Actually, there are derived from SgSupport instead of SgLocatedNode, so they don't have a source position, but they do have a parent.
+    SgJavaImportStatementList* import_statement_list = new SgJavaImportStatementList();
+    import_statement_list -> set_parent(package_definition);
+ // setJavaSourcePosition(import_statement_list, env, jToken);
+    ::currentSourceFile -> set_import_list(import_statement_list);
+#endif
 
     ROSE_ASSERT(! ::currentSourceFile -> get_class_list());
-    SgJavaClassDeclarationList *class_declaration_list = new SgJavaClassDeclarationList();
-    // class_declaration_list -> set_parent(::currentSourceFile);
+#if 0
+    ::currentSourceFile -> set_class_list(new SgJavaClassDeclarationList());
+#else
+ // DQ (11/20/2013): Fixed to include source position information (and parent, etc.)
+ // Actually, there are derived from SgSupport instead of SgLocatedNode, so they don't have a source position, but they do have a parent.
+    SgJavaClassDeclarationList* class_declaration_list = new SgJavaClassDeclarationList();
+    class_declaration_list -> set_parent(package_definition);
+ // setJavaSourcePosition(class_declaration_list, env, jToken);
     ::currentSourceFile -> set_class_list(class_declaration_list);
+#endif
 
     //
     // Tag the package so that the unparser can process its containing user-defined types.
