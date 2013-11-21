@@ -321,52 +321,64 @@ InternalNode::nonassociative() const
     return shared_from_this()->isInternalNode();
 }
 
-// sort order for operands of commutative operators:
-//   internal nodes by operator
-//   leaf nodes that are memory ordered by memory ID
-//   leaf nodes that are variables ordered by variable ID
-//   leaf nodes that are constants
-static bool
-commutative_order(const TreeNodePtr &a, const TreeNodePtr &b)
+// compare expressions for sorting operands of commutative operators. Returns -1, 0, 1
+static int
+expr_cmp(const TreeNodePtr &a, const TreeNodePtr &b)
 {
+    assert(a!=NULL && b!=NULL);
     InternalNodePtr ai = a->isInternalNode();
     InternalNodePtr bi = b->isInternalNode();
     LeafNodePtr al = a->isLeafNode();
     LeafNodePtr bl = b->isLeafNode();
-    assert(ai!=NULL || al!=NULL);
-    assert(bi!=NULL || bl!=NULL);
+    assert((ai!=NULL) xor (al!=NULL));
+    assert((bi!=NULL) xor (bl!=NULL));
 
     if ((ai==NULL) != (bi==NULL)) {
-        // internal nodes go before leaf nodes
-        return ai!=NULL;
-    } else if (ai!=NULL) {
-        // both are internal nodes; sort by operator
-        assert(bi!=NULL);
-        if (ai->get_operator()!=bi->get_operator())
-            return ai->get_operator() < bi->get_operator();
-        return ai.get() < bi.get(); // make this a strict ordering
-    } else if (al->is_memory() != bl->is_memory()) {
-        // memory nodes go before other leaf nodes
-        return al->is_memory();
-    } else if (al->is_memory()) {
-        // both are memory nodes; sort by name
-        assert(bl->is_memory());
-        if (al->get_name()!=bl->get_name())
-            return al->get_name() < bl->get_name();
-        return ai.get() < bi.get(); // make this a strict ordering
-    } else if (al->is_variable() != bl->is_variable()) {
-        // variable nodes go before constants
-        return al->is_variable();
-    } else if (al->is_variable()) {
-        // both are variables; sort by name
-        assert(bl->is_variable());
-        if (al->get_name()!=bl->get_name())
-            return al->get_name() < bl->get_name();
-        return ai.get() < bi.get(); // make this a strict ordering
+        // internal nodes are less than leaf nodes
+        return ai!=NULL ? -1 : 1;
+    } else if (al!=NULL) {
+        // both are leaf nodes
+        assert(bl!=NULL);
+        if (al->is_known() != bl->is_known()) {
+            // constants are greater than variables
+            return al->is_known() ? 1 : -1;
+        } else if (al->is_known()) {
+            // both are constants, sort by unsigned value
+            assert(bl->is_known());
+            if (al->get_value() != bl->get_value())
+                return al->get_value() < bl->get_value() ? -1 : 1;
+            return 0;
+        } else if (al->is_variable() != bl->is_variable()) {
+            // variables are less than memory
+            return al->is_variable() ? -1 : 1;
+        } else {
+            // both are variables or both are memory; sort by variable name
+            assert((al->is_variable() && bl->is_variable()) || (al->is_memory() && bl->is_memory()));
+            if (al->get_name() != bl->get_name())
+                return al->get_name() < bl->get_name() ? -1 : 1;
+            return 0;
+        }
     } else {
-        // both are constants; no order
-        return ai.get() < bi.get(); // make this a strict ordering
+        // both are internal nodes
+        assert(ai!=NULL && bi!=NULL);
+        if (ai->get_operator() != bi->get_operator())
+            return ai->get_operator() < bi->get_operator() ? -1 : 1;
+        for (size_t i=0; i<std::min(ai->nchildren(), bi->nchildren()); ++i) {
+            if (int cmp = expr_cmp(ai->child(i), bi->child(i)))
+                return cmp;
+        }
+        if (ai->nchildren() != bi->nchildren())
+            return ai->nchildren() < bi->nchildren() ? -1 : 1;
+        return 0;
     }
+}
+
+static bool
+commutative_order(const TreeNodePtr &a, const TreeNodePtr &b)
+{
+    if (int cmp = expr_cmp(a, b))
+        return cmp<0;
+    return a.get() < b.get(); // make it a strict ordering
 }
 
 InternalNodePtr
@@ -396,6 +408,25 @@ InternalNode::involutary() const
         }
     }
     return shared_from_this();
+}
+
+// simplifies things like:
+//   (shift a (shift b x)) ==> (shift (add a b) x)
+TreeNodePtr
+InternalNode::additive_nesting() const
+{
+    InternalNodePtr nested = child(1)->isInternalNode();
+    if (nested!=NULL && nested->get_operator()==get_operator()) {
+        assert(nested->nchildren()==nchildren());
+        assert(nested->get_nbits()==get_nbits());
+        size_t additive_nbits = std::max(child(0)->get_nbits(), nested->child(0)->get_nbits());
+        // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
+        InternalNode *inode = new InternalNode(get_nbits(), get_operator(),
+                                               InternalNode::create(additive_nbits, OP_ADD, child(0), nested->child(0)),
+                                               nested->child(1), get_comment());
+        return InternalNodePtr(inode);
+    }
+    return shared_from_this()->isInternalNode();
 }
 
 TreeNodePtr
@@ -526,6 +557,7 @@ AddSimplifier::rewrite(const InternalNode *inode) const
                     return true;
                 }
             }
+            return false;
         }
     };
 
@@ -798,19 +830,6 @@ AsrSimplifier::rewrite(const InternalNode *inode) const
         val = IntegerOps::shiftRightArithmetic2(val, sa, inode->get_nbits());
         return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
     }
-
-    // (asr A (asr B X)) ==> (asr (add A B) X)
-    InternalNodePtr operand_inode = inode->child(1)->isInternalNode();
-    if (operand_inode!=NULL && operand_inode->get_operator()==OP_ASR) {
-        assert(2==operand_inode->nchildren());
-        assert(inode->get_nbits()==operand_inode->get_nbits());
-        size_t shift_nbits = std::max(inode->child(0)->get_nbits(), operand_inode->child(0)->get_nbits());
-        return InternalNode::create(inode->get_nbits(), OP_ASR,
-                                    InternalNode::create(shift_nbits, OP_ADD, inode->child(0), operand_inode->child(0)),
-                                    operand_inode->child(1),
-                                    inode->get_comment());
-    }
-
     return TreeNodePtr();
 }
 
@@ -1304,7 +1323,9 @@ InternalNode::simplifyTop() const
                     newnode = inode->rewrite(AndSimplifier());
                 break;
             case OP_ASR:
-                newnode = inode->rewrite(AsrSimplifier());
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(AsrSimplifier());
                 break;
             case OP_BV_XOR:
                 newnode = inode->nonassociative()->commutative()->constant_folding(XorSimplifier());
@@ -1377,16 +1398,24 @@ InternalNode::simplifyTop() const
                 newnode = inode->rewrite(SgtSimplifier());
                 break;
             case OP_SHL0:
-                newnode = inode->rewrite(ShlSimplifier(false));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShlSimplifier(false));
                 break;
             case OP_SHL1:
-                newnode = inode->rewrite(ShlSimplifier(true));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShlSimplifier(true));
                 break;
             case OP_SHR0:
-                newnode = inode->rewrite(ShrSimplifier(false));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShrSimplifier(false));
                 break;
             case OP_SHR1:
-                newnode = inode->rewrite(ShrSimplifier(true));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShrSimplifier(true));
                 break;
             case OP_SLE:
                 newnode = inode->rewrite(SleSimplifier());

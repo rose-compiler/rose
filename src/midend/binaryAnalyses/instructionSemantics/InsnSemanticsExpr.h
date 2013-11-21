@@ -491,6 +491,9 @@ public:
      *  either a new expression that is simplified, or the original expression. */
     TreeNodePtr involutary() const;
 
+    /** Simplifies nested shift-like operators. Simplifies (shift AMT1 (shift AMT2 X)) to (shift (add AMT1 AMT2) X). */
+    TreeNodePtr additive_nesting() const;
+
     /** Removes identity arguments. Returns either a new expression or the original expression. */
     TreeNodePtr identity(uint64_t ident) const;
 
