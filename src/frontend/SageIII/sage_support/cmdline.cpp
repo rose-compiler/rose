@@ -10,6 +10,8 @@
 #include "cmdline.h"
 #include "keep_going.h"
 
+#include <boost/foreach.hpp>
+
 /*-----------------------------------------------------------------------------
  *  namespace SageSupport::Cmdline {
  *  namespace Cmdline {
@@ -516,7 +518,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
   // the modification of the command line by SLA (to save the original command line)
-     vector<string> local_commandLineArgumentList = input_argv;
+  vector<string> local_commandLineArgumentList = input_argv;
+  { // Perform normalization on CLI before processing and storing
+
+      // Turn "-I <path>" into "-I<path>" for subsequent processing
+      local_commandLineArgumentList =
+          SageSupport::Cmdline::NormalizeIncludePathOptions(
+              local_commandLineArgumentList);
+  }
 
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
@@ -1116,13 +1125,25 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
 
        // look only for -I include directories (directories where #include<filename> will be found)
-          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // AS Changed source code to support absolute paths
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-               p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
-             }
+          if ((length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I'))
+          {
+              std::string include_path = argv[i].substr(2);
+              {
+                  include_path =
+                      StringUtility::getAbsolutePathFromRelativePath(include_path);
+              }
+
+              p_includeDirectorySpecifierList.push_back("-I" + include_path);
+
+              bool is_directory = boost::filesystem::is_directory(include_path);
+              if (false == is_directory)
+              {
+                  std::cout  << "[WARN] "
+                          << "Invalid argument to -I; path does not exist: "
+                          << "'" << include_path << "'"
+                          << std::endl;
+              }
+          }
 
        // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
        // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
@@ -1202,6 +1223,70 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 //------------------------------------------------------------------------------
 //                                 Cmdline
 //------------------------------------------------------------------------------
+std::vector<std::string>
+SageSupport::Cmdline::
+NormalizeIncludePathOptions (std::vector<std::string>& argv)
+{
+  std::vector<std::string> r_argv;
+
+  bool looking_for_include_path_arg = false;
+  BOOST_FOREACH(std::string arg, argv)
+  {
+      // Must be first since there could be, for example, "-I -I",
+      // in which case, the else if branch checking for -I would
+      // be entered.
+      if (looking_for_include_path_arg)
+      {
+          r_argv.push_back("-I" + arg);
+          looking_for_include_path_arg = false; // reset for next iteration
+
+          // Sanity check
+          bool is_directory = boost::filesystem::is_directory(arg);
+          if (false == is_directory)
+          {
+              std::cout  << "[WARN] "
+                        << "Invalid argument to -I; path does not exist: "
+                        << "'" << arg << "'"
+                        << std::endl;
+          }
+      }
+      else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
+      {
+          // -I <path>: There is a space between the option and the argument...
+          //   ^
+          //
+          // ...meaning this current argument is exactly "-I".
+          //
+          if (arg.size() == 2)
+          {
+              looking_for_include_path_arg = true;
+              continue; // next iteration should be the path argument
+          }
+          else
+          {
+              // no normalization required for -I<path>
+              r_argv.push_back(arg);
+          }
+      }
+      else // not an include path option
+      {
+          r_argv.push_back(arg);
+      }
+  }//argv.each
+
+  // Found -I option but no accompanying <path> argument
+  if (looking_for_include_path_arg == true)
+  {
+      std::cout  << "[FATAL] "
+                << "Missing required argument to -I; expecting '-I<path>'"
+                << std::endl;
+      exit(1);
+  }
+  else
+  {
+      return r_argv;
+  }
+}//NormalizeIncludePathOptions (std::vector<std::string>& argv)
 
 void
 SageSupport::Cmdline::

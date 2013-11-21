@@ -4870,7 +4870,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     if (this->get_unparsedFileFailedCompilation())
                        {
                          this->set_backendCompilerErrorCode(-1);
-                         throw std::runtime_error("Original input file is invalid");
+                         // TOO1 (11/16/2013): TODO: Allow user to catch InvalidOriginalInputFileException?
+                         //throw std::runtime_error("Original input file is invalid");
+                         std::cout  << "[FATAL] "
+                                    << "Original input file is invalid: "
+                                    << "'" << this->getFileName() << "'"
+                                    << std::endl;
+                         exit(1);
                        }
                       else
                        {
