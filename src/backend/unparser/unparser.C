@@ -2519,7 +2519,9 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
   for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
   {
-      SgSourceFile *file = isSgSourceFile(fileList->get_listOfFiles()[i]);
+      // SgFileList holds subclasses of SgFile, not all of which are SgSourceFile. During binary analysis, the list may also
+      // contain SgBinaryComposite nodes.
+      SgFile *file = fileList->get_listOfFiles()[i];
 
       if ( SgProject::get_verbose() > 1 )
            printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
@@ -2546,9 +2548,20 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 #else
 if (0) {}
 #endif
-      else
+      else if (!isSgSourceFile(file) || isSgSourceFile(file) -> get_frontendErrorCode() == 0)
       {
           unparseFile(file, unparseFormatHelp, unparseDelegate);
+      }
+      else
+      {
+          if (SgProject::verbose() > 1)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Skipping unparsing of file "
+                  << file->getFileName()
+                  << std::endl;
+          }
       }
   }
 }
