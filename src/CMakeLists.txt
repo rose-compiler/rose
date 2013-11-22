@@ -156,6 +156,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/manglingSupport.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/sage_support.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/cmdline.cpp
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/keep_going.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_scopes.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_symbols.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 

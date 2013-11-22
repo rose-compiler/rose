@@ -8,12 +8,9 @@
 // #include "propagateHiddenListData.h"
 // #include "HiddenList.h"
 
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-#include <setjmp.h>
-#include <signal.h>
-
 // include "array_class_interface.h"
 #include "unparser.h"
+#include "keep_going.h"
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -36,16 +33,6 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-
-#ifndef _MSC_VER
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-static sigjmp_buf rose__sgproject_unparse_mark;
-static void HandleUnparserSignal(int sig)
-{
-  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__sgproject_unparse_mark, -1);
-}
-#endif
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -2486,41 +2473,39 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
 {
-     ROSE_ASSERT(fileList != NULL);
-  // for (int i=0; i < fileList->numberOfFiles(); ++i)
+  ROSE_ASSERT(fileList != NULL);
+
+  int status_of_function = 0;
+
   for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
   {
       SgFile* file = fileList->get_listOfFiles()[i];
-
-      if ( SgProject::get_verbose() > 1 )
-           printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
-
-#ifndef _MSC_VER
-      // TOO1 (05/14/2013): Signal handling for -rose:keep_going
-      if (file->get_project()->get_keep_going())
       {
-          struct sigaction act;
-          act.sa_handler = HandleUnparserSignal;
-          sigemptyset(&act.sa_mask);
-          act.sa_flags = 0;
-          sigaction(SIGSEGV, &act, 0);
-      }
+          ROSE_ASSERT(file != NULL);
 
-      if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
-      {
-          std::cout
-              << "[WARN] Ignoring unparser failure "
-              << " as directed by -rose:keep_going"
-              << std::endl;
-          file->set_unparserErrorCode(-1);
-      }
-#else
-if (0) {}
-#endif
-      else
-      {
-          unparseFile(file, unparseFormatHelp, unparseDelegate);
-      }
-  }
+          if (SgProject::get_verbose() > 1)
+          {
+               printf("Unparsing file = %p = %s \n",
+                      file,
+                      file->class_name().c_str());
+          }
+
+          if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Configured to keep going after catching a "
+                  << "signal in Unparser::unparseFile()"
+                  << std::endl;
+
+              file->set_unparserErrorCode(-1);
+              status_of_function =
+                  max(1, status_of_function);
+          }
+          else
+          {
+              unparseFile(file, unparseFormatHelp, unparseDelegate);
+          }
+      }//each file
+  }//for
 }
-
