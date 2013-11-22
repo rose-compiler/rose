@@ -19,8 +19,6 @@
 #define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 
-#include "sage_support.h"
-
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
 // We have not identified why this is required.  This fixes the problem of
