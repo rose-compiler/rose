@@ -8,6 +8,7 @@
  *  Dependencies
  *---------------------------------------------------------------------------*/
 #include "cmdline.h"
+#include "keep_going.h"
 
 /*-----------------------------------------------------------------------------
  *  namespace SageSupport::Cmdline {
@@ -238,6 +239,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
           argument == "-include" ||                         // Used for preinclude file list (to include some header files before all others, common requirement for compiler)
           argument == "-isystem" ||                         // Used for preinclude directory list (to specify include paths to be search before all others, common requirement for compiler)
+
+          // Darwin options
+          argument == "-dylib_file" ||                      // -dylib_file <something>:<something>
+
+          // ROSE options
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
@@ -1060,6 +1066,36 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                     //ROSE_ASSERT(false);
                   }
              }
+
+        // TOO1 (11/23/2013):
+        // (Darwin linker) -dylib_file <library_name.dylib>:<library_name.dylib>
+        if (argv[i].compare("-dylib_file") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -dylib_file"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -dylib_file");
+            }
+            else
+            {
+                // TODO: Save library argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -dylib_file: argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
 
        // look only for -l library files (library files)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'l') )
