@@ -497,14 +497,14 @@ namespace StringUtility
       *  If @p trim_white_space is true then white space is removed from the beginning and end of each part. Empty parts are
       *  never removed from the returned vector since the C++ library already has functions for that. The first few arguments
       *  are in the same order as for Perl's "split" operator. */
-     std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
+     ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
                                     bool trim_white_space=false);
-     std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
+     ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
                                     bool trim_white_space=false);
 
      /** Trims white space from the beginning and end of a string. Caller may specify the characters to strip and whether the
       * stripping occurs at the begining, the end, or both. */
-     std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
+     ROSE_UTIL_API std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
 
      /** Expand horizontal tab characters. */
      std::string untab(const std::string &str, size_t tabstops=8, size_t firstcol=0);

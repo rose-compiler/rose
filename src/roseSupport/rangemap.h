@@ -229,7 +229,9 @@ public:
             return *this;
         if (!overlaps(other))
             return Range();
-        return Range::inin(std::max(first(), other.first()), std::min(last(), other.last()));
+        return Range::inin(
+        std::max(first(), other.first()),
+        std::min(last(), other.last()));
     }
     
     /** Returns true if this range is empty.  Note that many of the range comparison methods have special cases for empty
@@ -995,14 +997,12 @@ public:
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
-    #undef min
     typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
-    #undef max
     typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
