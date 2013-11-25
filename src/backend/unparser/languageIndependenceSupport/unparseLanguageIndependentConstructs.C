@@ -936,6 +936,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // they qualify.  Later we need to connect a test that will detect if a transformation has been done 
        // in the subtree rerpresented by a statement and only qualify the statement on the basis of this 
        // additional test.
+       // Note that loopProcessing tests use a generated statement which are not processed for tokens and 
+       // in this case the (cur_file == NULL).
           if (cur_file != NULL && cur_file->get_unparse_tokens() == true)
              {
             // First we want to restrict this to unparsing the simplest statements, e.g. those 
@@ -2200,7 +2202,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
 void
 UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
-#if 1
+#if 0
       curprint ( string("\n /* Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
       printf ("\n @@@@@ In unparseBinaryExpr() expr = %p %s \n",expr,expr->class_name().c_str());
 #endif

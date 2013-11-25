@@ -2998,6 +2998,16 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 void
 buildTokenStreamMapping(SgSourceFile* sourceFile)
    {
+#if 1
+     printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+     frontierDetectionForTokenStreamMapping(sourceFile);
+
+#if 1
+     printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
 #if 0
      LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
      ROSE_ASSERT(tokenStream != NULL);

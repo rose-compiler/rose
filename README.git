@@ -888,3 +888,9 @@ Versions of boost can be found in:
 and there associated versions of compilers in:
     /nfs/casc/overture/ROSE/opt/rhel5/x86_64/boost/1_45_0/gcc/*
 
+Clone a new repository:
+   git clone rose-dev@rosecompiler1.llnl.gov:rose/edg4x/rose.git git-edg4x-xxx-rc
+
+Checkout someone else's branch:
+   git checkout origin/charles4/charles4-java-rc -b charles4-java-rc
+
