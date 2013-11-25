@@ -40,6 +40,7 @@ class JavaTraversal implements Callable<Boolean> {
     static int verboseLevel = 0;
 
     static HashSet<String> processedFiles = new HashSet<String>();
+    static JavaParserSupport java_parser_support = null;
 
     // -------------------------------------------------------------------------------------------
     /* tps: Invoke C Code , the int nr represents a unique nr for a node which is used for DOT representation*/
@@ -311,36 +312,36 @@ class JavaTraversal implements Callable<Boolean> {
      * This method was copied from Compiler.java as it is not directly accessible there.
      */
     static protected synchronized void addCompilationUnit(Compiler compiler,
-			ICompilationUnit sourceUnit,
-			CompilationUnitDeclaration parsedUnit) {
+            ICompilationUnit sourceUnit,
+            CompilationUnitDeclaration parsedUnit) {
 
-			if (compiler.unitsToProcess == null)
-				return; // not collecting units
+            if (compiler.unitsToProcess == null)
+                return; // not collecting units
 
-			// append the unit to the list of ones to process later on
-			int size = compiler.unitsToProcess.length;
-			if (compiler.totalUnits == size)
-				// when growing reposition units starting at position 0
-				System.arraycopy(
-					compiler.unitsToProcess,
-					0,
-					(compiler.unitsToProcess = new CompilationUnitDeclaration[size * 2]),
-					0,
-					compiler.totalUnits);
-			compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
-		}
+            // append the unit to the list of ones to process later on
+            int size = compiler.unitsToProcess.length;
+            if (compiler.totalUnits == size)
+                // when growing reposition units starting at position 0
+                System.arraycopy(
+                    compiler.unitsToProcess,
+                    0,
+                    (compiler.unitsToProcess = new CompilationUnitDeclaration[size * 2]),
+                    0,
+                    compiler.totalUnits);
+            compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
+        }
 
     /** 
      * This method was copied from Compiler.java as it is not directly accessible there.
      */
-	static protected void internalBeginToCompile(Compiler compiler, ICompilationUnit[] sourceUnits, int maxUnits) {
-		if (! compiler.useSingleThread && maxUnits >= ReadManager.THRESHOLD)
-			compiler.parser.readManager = new ReadManager(sourceUnits, maxUnits);
+    static protected void internalBeginToCompile(Compiler compiler, ICompilationUnit[] sourceUnits, int maxUnits) {
+        if (! compiler.useSingleThread && maxUnits >= ReadManager.THRESHOLD)
+            compiler.parser.readManager = new ReadManager(sourceUnits, maxUnits);
 
-		// Switch the current policy and compilation result for this unit to the requested one.
-		for (int i = 0; i < maxUnits; i++) {
-			try {
-				/*
+        // Switch the current policy and compilation result for this unit to the requested one.
+        for (int i = 0; i < maxUnits; i++) {
+            try {
+                /*
                 if (compiler.options.verbose) {
                     compiler.out.println(
                         Messages.bind(Messages.compilation_request,
@@ -453,12 +454,12 @@ static int totalUnits = 0;
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
-    	
-    	if (processedFiles.contains(args[args.length -1])) { // this should not occur as we catch this condition inside Rose.
+
+        if (processedFiles.contains(args[args.length -1])) { // this should not occur as we catch this condition inside Rose.
 // TODO: Remove this !
 //System.out.println("I already processed file " + args[args.length -1]);
             return;
-    	}
+        }
 
         // Filter out ROSE specific options.
         args = filterCommandline(args);
@@ -510,7 +511,7 @@ static int totalUnits = 0;
             ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
 // TODO: Remove this !
-//System.out.println("At index " + i + ", the total number of units is "+ batchCompiler.totalUnits);                	
+//System.out.println("At index " + i + ", the total number of units is "+ batchCompiler.totalUnits);
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert(unit != null);
 
@@ -525,7 +526,7 @@ static int totalUnits = 0;
 //else System.out.println("Not a Source File: " + filename);
                 if (! processedFiles.contains(filename) && JavaParser.cactionIsSpecifiedSourceFile(filename)) {
 // TODO: Remove this !
-// System.out.println("Preprocessing " + filename);            	
+// System.out.println("Preprocessing " + filename);
                     batchCompiler.process(unit, i);
                     processedFiles.add(filename);
                     units.add(unit);
@@ -558,7 +559,7 @@ System.out.println("   " + new String(unit.getFileName()));
             //
             //
             try {
-                JavaParserSupport java_parser_support = new JavaParserSupport(classpath, verboseLevel);
+                java_parser_support = new JavaParserSupport(classpath, verboseLevel);
                 java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
             }
             catch (Exception e) {
@@ -625,5 +626,9 @@ System.out.println("   " + new String(unit.getFileName()));
     // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
     public static boolean getError() {
         return hasErrorOccurred;
+    }
+
+    public static boolean hasConflicts(String file_name, String package_name, String class_simple_name) {
+        return java_parser_support.hasConflicts(file_name, package_name, class_simple_name);
     }
 }
