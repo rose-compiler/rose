@@ -61,6 +61,13 @@ cout.flush();
         return;
     }
 
+// TODO: Remove this !
+/*
+cout << "*** @ unparseJavaFile " << sourcefile -> getFileName()
+<< endl;
+cout.flush();
+*/
+
     SgJavaPackageStatement *package_statement = sourcefile -> get_package();
     vector<SgJavaImportStatement *> &import_list = sourcefile -> get_import_list() -> get_java_import_list();
     vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
