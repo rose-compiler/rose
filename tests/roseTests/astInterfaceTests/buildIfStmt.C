@@ -29,14 +29,20 @@ int main (int argc, char *argv[])
   appendArg(paraList, arg2);
 
   // build defining function declaration
-  SgFunctionDeclaration * func_def = buildDefiningFunctionDeclaration \
-    ("check_var",buildVoidType(),paraList);
+  SgFunctionDeclaration * func_def = buildDefiningFunctionDeclaration ("check_var",buildVoidType(),paraList);
 
-   // Build a corresponding prototype
+// DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing (when called from namequalification support).
+  ROSE_ASSERT(func_def->get_firstNondefiningDeclaration() != NULL);
+  ROSE_ASSERT(func_def->get_firstNondefiningDeclaration() == func_def->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration());
+
+  // Build a corresponding prototype
   // Must not share a parameter list for different function declarations!
-    SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
-  SgFunctionDeclaration * func_decl = buildNondefiningFunctionDeclaration 
-  (SgName("check_var"),buildVoidType(),paraList2); 
+  SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
+  SgFunctionDeclaration * func_decl = buildNondefiningFunctionDeclaration (SgName("check_var"),buildVoidType(),paraList2); 
+
+// DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing (when called from namequalification support).
+  ROSE_ASSERT(func_decl->get_firstNondefiningDeclaration() != NULL);
+  ROSE_ASSERT(func_decl->get_firstNondefiningDeclaration() == func_decl->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration());
 
   // build a statement inside the function body
   SgBasicBlock *func_body = func_def->get_definition ()->get_body ();
@@ -51,9 +57,23 @@ int main (int argc, char *argv[])
   appendStatement (ifstmt);
 
   popScopeStack ();
+
+// DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing (when called from namequalification support).
+  ROSE_ASSERT(func_def->get_firstNondefiningDeclaration() == func_def->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+  ROSE_ASSERT(func_decl->get_firstNondefiningDeclaration() == func_decl->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+
   // insert the defining and declaring function
   appendStatement (func_def);
+
+// DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing (when called from namequalification support).
+  ROSE_ASSERT(func_def->get_firstNondefiningDeclaration() == func_def->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+  ROSE_ASSERT(func_decl->get_firstNondefiningDeclaration() == func_decl->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+
   prependStatement (func_decl);
+
+// DQ (11/18/2013): This is an assertion inside of get_declaration_associated_with_symbol() which we are now failing (when called from namequalification support).
+  ROSE_ASSERT(func_def->get_firstNondefiningDeclaration() == func_def->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
+  ROSE_ASSERT(func_decl->get_firstNondefiningDeclaration() == func_decl->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
 
   popScopeStack ();
   AstTests::runAllTests(project);

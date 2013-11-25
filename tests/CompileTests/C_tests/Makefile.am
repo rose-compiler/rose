@@ -343,6 +343,27 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_72.c \
      test2013_73.c \
      test2013_74.c \
+     test2013_75.c \
+     test2013_76.c \
+     test2013_77.c \
+     test2013_78.c \
+     test2013_79.c \
+     test2013_80.c \
+     test2013_81.c \
+     test2013_82.c \
+     test2013_83.c \
+     test2013_84.c \
+     test2013_85.c \
+     test2013_86.c \
+     test2013_87.c \
+     test2013_88.c \
+     test2013_89.c \
+     test2013_90.c \
+     test2013_91.c \
+     test2013_92.c \
+     test2013_93.c \
+     test2013_94.c \
+     test2013_95.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -505,8 +526,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS)
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 # ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) $(OLD_TESTCODES_REQUIRED_TO_PASS)
@@ -519,6 +539,7 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # to explicitly specify the C89 behavior for make of the C test codes in this directory.
 # ROSE_FLAGS = -rose:C
 ROSE_FLAGS = -rose:C89
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -597,6 +618,11 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 #	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
 	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
 
+test_tokenMapping: 
+#	rm -f test2003_12.c.mapping.passed
+#	@$(MAKE) test2003_12.c.mapping.passed
+	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -665,6 +691,8 @@ clean-local:
 	rm -rf test_directory
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
+	rm -f token_trailing_*.c token_leading_*.c
+
 
 ################################################################################
 #

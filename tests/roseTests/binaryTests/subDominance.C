@@ -54,7 +54,7 @@ static struct MyVisitor: AstSimpleProcessing {
         SgAsmFunction *func = isSgAsmFunction(node);
         if (func && 0==func->get_name().compare("simple06")) {
             ++nvisits;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             DG_RelMap dgmap1 = BinaryAnalysis::Dominance().build_postdom_relation_from_cfg(cfg, start);

@@ -39,6 +39,9 @@ namespace sqlite3x {
 
                 struct sqlite3 *db;
 
+                /** Loads ROSE-specific extensions whenever the database is opened. */
+                void post_open();
+
         public:
                 sqlite3_connection();
                 sqlite3_connection(const char *db);
@@ -86,6 +89,9 @@ namespace sqlite3x {
                 std::string executeblob(const wchar_t *sql);
                 std::string executeblob(const std::string &sql);
                 std::string executeblob(const std::wstring &sql);
+
+                /** Load a shared library as an sqlite3 extension. See http://www.sqlite.org/cvstrac/wiki?p=LoadableExtensions. */
+                void load_extension(const std::string &filename);
         };
 
         class sqlite3_transaction : boost::noncopyable {
@@ -118,6 +124,7 @@ namespace sqlite3x {
                 sqlite3_command(sqlite3_connection &con, const std::wstring &sql);
                 ~sqlite3_command();
 
+                // WARNING: 'index' is 1-origin!!                               [Robb P. Matzke 2013-03-18]
                 void bind(int index);
                 void bind(int index, int data);
                 void bind(int index, long long data);
@@ -127,6 +134,12 @@ namespace sqlite3x {
                 void bind(int index, const void *data, int datalen);
                 void bind(int index, const std::string &data);
                 void bind(int index, const std::wstring &data);
+                // Robb uses unsigned types almost exclusively
+                void bind(int index, unsigned data) { bind(index, (long long)data); }
+                void bind(int index, unsigned long long data) { bind(index, (long long)data); } // possible overflow to negative
+#if ROSE_SIZEOF_LONG != ROSE_SIZEOF_INT
+                void bind(int index, size_t data) { bind(index, (long long)data); }
+#endif
 
                 sqlite3_reader executereader();
                 void executenonquery();

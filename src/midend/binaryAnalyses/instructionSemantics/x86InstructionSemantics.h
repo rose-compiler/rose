@@ -117,9 +117,8 @@ struct X86InstructionSemantics {
     /** Return the value of the memory pointed to by the SI register. */
     template<size_t N>
     WordType<8*N> stringop_load_si(SgAsmx86Instruction *insn, WordType<1> cond) {
-        return readMemory<8*N>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()),
-                               readRegister<32>(REG_ESI),
-                               cond);
+        X86SegmentRegister segreg = insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride();
+        return readMemory<8*N>(segreg, readRegister<32>(REG_ESI), cond);
     }
 
     /** Return the value of memory pointed to by the DI register. */

@@ -935,7 +935,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Setting break points...\n");
 #if 1 /*DEBUGGING: Set breakpoint at all addresses. [RPM 2010-08-20]*/
     {
-        int status = dbg.setbp(0, 0xffffffff);
+        int status __attribute__((unused)) = dbg.setbp(0, 0xffffffff);
         assert(status>=0);
     }
 #else

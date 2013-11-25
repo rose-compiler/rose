@@ -7,6 +7,9 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage_support.h"
+#include "dwarfSupport.h"
+
 // TOO1 (05/14/2013): Signal handling for -rose:keep_going
 #include <setjmp.h>
 #include <signal.h>
@@ -3614,7 +3617,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      frontEndCommandLine.push_back("--tokens");
 #endif
 
-     if (get_output_tokens() == true)
+     if (get_unparse_tokens() == true)
         {
        // Note that this will cause all other c_actions to not be executed (resulting in an empty file).
        // So this makes since to run in an analysis mode only, not for generation of code or compiling
@@ -4351,7 +4354,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 #endif
 
   // Make sure this node is correctly parented
-     SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = SageInterface::getEnclosingNode<SgProject>(this);
      ROSE_ASSERT(project != NULL);
 #else
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "

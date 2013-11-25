@@ -2,7 +2,7 @@
 #define ROSE_BinaryPointerDetection_H
 
 #include "SymbolicSemantics.h"
-#include "WorkList.h"
+#include "WorkLists.h"
 #include "YicesSolver.h"
 
 // documented elsewhere
@@ -37,7 +37,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const ValueType<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.address().get_expression()->equal_to(address.get_expression(), solver);
+            return elmt.address().get_expression()->must_equal(address.get_expression(), solver);
         }
     };
 
@@ -101,7 +101,7 @@ public:
     // change is made).  Returns 1 if the merge operation changes the first argument, zero if no change is made.
     template<size_t nBits>
     size_t merge_value(ValueType<nBits> &inout, const ValueType<nBits> &other, SMTSolver *smt_solver) {
-        if (inout.get_expression()->equal_to(other.get_expression(), smt_solver))
+        if (inout.get_expression()->must_equal(other.get_expression(), smt_solver))
             return 0;
         InsnSemanticsExpr::LeafNodePtr inout_leaf = inout.get_expression()->isLeafNode();
         if (inout_leaf && inout_leaf->is_variable())
@@ -204,7 +204,7 @@ protected:
             SMTSolver *solver;
             Comparator(const ValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
             bool operator()(const Pointer &elmt) {
-                return elmt.address.get_expression()->equal_to(addr.get_expression(), solver);
+                return elmt.address.get_expression()->must_equal(addr.get_expression(), solver);
             }
         };
 
@@ -360,7 +360,7 @@ protected:
         // writes to the EIP register that are indicative of dereferencing a code pointer.
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
-            if (0==info->pass && !value.is_known() && reg.equal(this->findRegister("eip", 32))) {
+            if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
                 InsnSemanticsExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
                 if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                     inode->child(1)->is_known() && inode->child(2)->is_known()) {
@@ -429,7 +429,7 @@ public:
         bool retval = false;
         SMTSolver *solver = YicesSolver::available_linkage() ? new YicesSolver : NULL;
         for (typename Pointers::const_iterator pi=info.pointers.begin(); pi!=info.pointers.end() && !retval; ++pi)
-            retval = va.get_expression()->equal_to(pi->address.get_expression(), solver);
+            retval = va.get_expression()->must_equal(pi->address.get_expression(), solver);
         delete solver;
         return retval;
     }

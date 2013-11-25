@@ -5223,15 +5223,15 @@ HEADER_APPLICATION_FILE_END
 HEADER_APPLICATION_SOURCE_FILE_START
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
      public:
-		// King84 (2010.09.22): Added support for getting the preprocessed token stream and the raw token stream.
-		typedef boost::wave::cpplexer::lex_token<>  token_type;
-		typedef std::list<token_type>             LexTokenList;
-	protected:
-		LexTokenList rawTokenStream;
-	public:
-		LexTokenList& get_rawTokenStream() {	return rawTokenStream;	}
+       // King84 (2010.09.22): Added support for getting the preprocessed token stream and the raw token stream.
+          typedef boost::wave::cpplexer::lex_token<>  token_type;
+          typedef std::list<token_type>             LexTokenList;
+     protected:
+          LexTokenList rawTokenStream;
+     public:
+          LexTokenList& get_rawTokenStream() { return rawTokenStream; }
 #else
-	public:
+     public:
 #endif
 
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
@@ -5282,6 +5282,11 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (10/28/2013): Abstract access to the new token subsequence map (currently for statements).
+       // map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenStreamSequenceMap;
+          void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & get_tokenSubsequenceMap();
 
 #if 0
        // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
@@ -13592,7 +13597,7 @@ X aggressive
      p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
 
   // DQ (11/20/2010): Support for token handling.
-     p_output_tokens = false;
+     p_unparse_tokens = false;
 
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
@@ -14194,7 +14199,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
-     printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
+     printf ("     p_unparse_tokens                        = %s \n",(p_unparse_tokens == true) ? "true" : "false");
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
@@ -14318,6 +14323,22 @@ SgSourceFile::SgSourceFile ()
      assert(p_root->get_endOfConstruct() != NULL);
    }
 #endif
+
+void 
+SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap)
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+  // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
+     ROSE::tokenSubsequenceMap = tokenStreamSequenceMap;
+   }
+
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
+SgSourceFile::get_tokenSubsequenceMap()
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+     return ROSE::tokenSubsequenceMap;
+   }
+
 
 SOURCE_APPLICATION_SOURCE_FILE_END
 

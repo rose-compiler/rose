@@ -37,6 +37,11 @@ public:
 
     virtual ~SMTSolver() {}
 
+    /** Determines if expressions are trivially satisfiable or unsatisfiable.  If all expressions are known 1-bit values that
+     *  are true, then this function returns SAT_YES.  If any expression is a known 1-bit value that is false, then this
+     *  function returns SAT_NO.  Otherwise this function returns SAT_UNKNOWN. */
+    virtual Satisfiable trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs);
+
     /** Determines if the specified expression is satisfiable, unsatisfiable, or unknown. */
     virtual Satisfiable satisfiable(const InsnSemanticsExpr::TreeNodePtr &expr);
 
