@@ -1224,8 +1224,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/20/2010): Process only tokens.
-     File.setDataPrototype ("bool", "output_tokens", "= false",
+  // DQ (11/20/2010): Unparse using tokens were possible instead of from the AST.  This is possible
+  // where transformations have not been done (i.e. where the AST has not be modified).  Where this
+  // is possible the generated code is fundamentally more portable and can be diff'ed against to 
+  // generate patches (useful on large scale projects to design new tools).
+     File.setDataPrototype ("bool", "unparse_tokens", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1

@@ -220,7 +220,7 @@ string get_type_name(SgType* t)
                    {
 #if 0
                   // DQ (4/22/2013): Debugging test2013_125.C.
-                     printf ("WARNING: In get_type_name(SgType* t): edecl->get_qualified_name() == "": so we have to use the enum_type->get_name() = %s \n",enum_type->get_name().str());
+                     printf ("WARNING: In get_type_name(SgType* t): edecl->get_qualified_name() == \"\": so we have to use the enum_type->get_name() = %s \n",enum_type->get_name().str());
 #endif
                      return string(enum_type->get_name().str());
                    }

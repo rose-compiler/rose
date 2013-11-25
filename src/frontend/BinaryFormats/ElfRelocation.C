@@ -14,7 +14,7 @@ SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
 
 /* Parsers */
 void
-SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelaEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf32RelaEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = disk_to_host(sex, disk->r_addend);
@@ -23,7 +23,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelaEntry_disk *disk)
     p_type = (RelocType)(info & 0xff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelaEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf64RelaEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = disk_to_host(sex, disk->r_addend);
@@ -32,7 +32,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelaEntry_disk *disk)
     p_type = (RelocType)(info & 0xffffffff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf32RelEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = 0;
@@ -41,7 +41,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelEntry_disk *disk)
     p_type = (RelocType)(info & 0xff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf64RelEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = 0;
@@ -52,7 +52,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk)
 
 /* Encode a native entry back into disk format */
 void *
-SgAsmElfRelocEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf32RelaEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     host_to_disk(sex, p_r_addend, &(disk->r_addend));
@@ -61,7 +61,7 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk) const
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf64RelaEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     host_to_disk(sex, p_r_addend, &(disk->r_addend));
@@ -70,7 +70,7 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk) const
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder sex, Elf32RelEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf32RelEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     ROSE_ASSERT(0==p_r_addend);
@@ -79,7 +79,7 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf32RelEntry_disk *disk) const
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf64RelEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     ROSE_ASSERT(0==p_r_addend);
@@ -262,7 +262,7 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);

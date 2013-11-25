@@ -184,18 +184,17 @@ AC_SUBST(GCC_MINOR_VERSION)
 # *******************************************************
 # ROSE/projects directory compilation & testing
 # *******************************************************
-AC_MSG_CHECKING([if we should build & test the ROSE/projects directory])
-AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Disable compilation and testing of the ROSE/projects directory]),[],[enableval=yes])
-support_projects_directory=yes
-if test "x$enableval" = "xyes"; then
-   support_projects_directory=yes
-   AC_MSG_RESULT(enabled)
+ROSE_ARG_ENABLE(
+  [projects-directory],
+  [if we should enable the ROSE/projects directory],
+  [Toggle compilation and testing of the the ROSE/projects directory (disabled by default)],
+  [no])
+
+if test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
-else
-   support_projects_directory=no
-   AC_MSG_RESULT(disabled)
 fi
-AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
+
 # ****************************************************
 # ROSE/tests directory compilation & testing 
 # ****************************************************
@@ -290,8 +289,8 @@ AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental frotran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental frotran frontend])
+  AC_MSG_WARN([Using this mode enable experimental fortran front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
 # DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
@@ -1595,6 +1594,10 @@ AC_CHECK_TYPE(user_desc,
               [],
 	      [#include <asm/ldt.h>])
 
+# Check whether PostgreSQL is supported
+AC_CHECK_HEADERS([pqxx/version.hxx])
+AC_CHECK_LIB(pqxx, PQconnectdb)
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -1803,11 +1806,14 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
+projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryCloneDetection/semantic/Makefile
+projects/BinaryCloneDetection/syntactic/Makefile
+projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile

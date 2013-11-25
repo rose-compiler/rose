@@ -173,7 +173,10 @@ namespace ROSE
           SgStatement* getPreviousStatement ( SgStatement *targetStatement );
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
+       // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
+          extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
    };
+
 
 // endif for ifndef SWIG
 #endif
