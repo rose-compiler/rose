@@ -9,8 +9,10 @@
 #include <jni.h>
 
 // Support functions declaration of function defined in this file.
+#include "ecj.h"
 #include "java_support.h"
 #include "jni_token.h"
+#include "Utf8.h"
 
 SgProject *project = NULL;
 SgGlobal *globalScope = NULL;
@@ -19,7 +21,10 @@ SgClassType *ObjectClassType = NULL;
 SgClassType *StringClassType = NULL;
 SgClassType *ClassClassType = NULL;
 SgClassDefinition *ObjectClassDefinition = NULL;
+extern SgName java_lang = "java.lang";
 
+// TODO: Remove this !!!
+/*
 //
 //
 //
@@ -28,13 +33,16 @@ string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string
     replace(package_name.begin(), package_name.end(), '.', '_');
     return package_name;
 }
+*/
 
 
 //
 // TODO: DO this right at some point !!!  In particular, this should produce a wstring ...
 //
+// TODO: Remove this !!!
+/*
 string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string) {
-    std::string value;
+    std::string value = "";
 
     const jchar *raw = env -> GetStringChars(java_string, NULL);
     if (raw != NULL) {
@@ -50,20 +58,41 @@ string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string) {
                 value += ' ';
             }
             else value += *temp;
+// TODO: Remove this !!!
+//if (*temp > 127) {
+//cout << "Uh Oh! found a Unicode character: " << Utf8::getPrintableUnicodeCharacter(*temp) << " with value " <<  ((int) *temp) << endl;
+//}
         }
         env -> ReleaseStringChars(java_string, raw);
     }
 
-// TODO: Remove this !!!
-/*
-    const char *str = env -> GetStringUTFChars(java_string, NULL);
-    value =  str;
-cout << "The converted string is: \"";
-for (int i = 0; i < value.size(); i++)
-cout << str[i];
-cout << "\"" << endl;
-*/
+//    const char *str = env -> GetStringUTFChars(java_string, NULL);
+//    value =  str;
+//cout << "The converted string is: \"";
+//for (int i = 0; i < value.size(); i++)
+//cout << str[i];
+//cout << "\"" << endl;
+
     return normalize(value);
+}
+*/
+
+//
+// This function converts a Java string into its Utf8 representation.
+//
+string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string) {
+    std::string value = "";
+
+    const jchar *raw = env -> GetStringChars(java_string, NULL);
+    if (raw != NULL) {
+        jsize len = env -> GetStringLength(java_string);
+        for (const jchar *temp = raw; len > 0; len--,temp++) {
+            value += Utf8::getUtf8String(*temp);
+        }
+        env -> ReleaseStringChars(java_string, raw);
+    }
+
+    return value;
 }
 
 
@@ -86,13 +115,18 @@ cout << "ROSE bug: The type named "
      << (isSgClassDefinition(scope) ? isSgClassDefinition(scope) -> get_qualified_name().getString() : scope -> class_name())
 << endl;
 cout.flush();
-class_symbol = NULL; // Ignore this error !!!
+class_symbol = NULL; // Ignore this error !!!?
 }
 }
+
+    ROSE_ASSERT(class_symbol == NULL || class_symbol -> get_declaration() -> get_scope() == scope);
+
     return class_symbol;
 }
 
 
+// TODO: Remove this !!!
+/*
 //
 // Initially, found_atype is set to true if a file with the name in question is visible locally.
 //
@@ -149,6 +183,7 @@ bool isConflictingType(string simple_name, SgClassType *found_type) {
 
     return false;
 }
+*/
 
 
 bool isImportedType(SgClassType *class_type) {
@@ -403,23 +438,28 @@ string getWildcardTypeName(SgJavaWildcardType *wild_type) {
 //
 //
 string getFullyQualifiedName(SgClassDefinition *definition) {
-    if (definition -> attributeExists("original_package_name")) {
-        AstRegExAttribute *attribute = (AstRegExAttribute *) definition -> getAttribute("original_package_name");
-        return attribute -> expression;
-    }
-
+// TODO: Remove this !!!
+/*
     string name = definition -> get_declaration() -> get_name();
     if (isSgClassDefinition(definition -> get_scope())) {
         string prefix = getFullyQualifiedName((SgClassDefinition *) definition -> get_scope());
         return (prefix.size() > 0 ? (prefix + ".") : "") + name;
     }
-    else if (isSgFunctionDefinition(definition -> get_scope()) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
+    else if (isSgGlobal(definition -> get_scope()) || isSgFunctionDefinition(definition -> get_scope()) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
         return name;
     }
 
-    ROSE_ASSERT(false /* && definition -> get_scope() -> class_name() */);
+    ROSE_ASSERT(false /* && definition -> get_scope() -> class_name() *//*);
 
     return "";
+*/
+
+    SgScopeStatement *scope = definition -> get_scope();
+    if (isSgGlobal(scope) || isSgFunctionDefinition(scope) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
+        return definition -> get_declaration() -> get_name();
+    }
+
+    return definition -> get_qualified_name().getString();
 }
 
 //
@@ -467,25 +507,46 @@ string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
 
 string getTypeName(SgClassType *class_type) {
     SgName type_name = class_type -> get_name();
-    SgClassSymbol *locally_accessible_class_symbol = lookupTypeSymbol(type_name); // do a local lookup of the type.
-    if (isConflictingType(type_name.getString(), (locally_accessible_class_symbol ? isSgClassType(locally_accessible_class_symbol -> get_type()) : NULL))) { // a that is in conflict based on the imported packages and types?
-// TODO: Remove this !!!
-//cout << "Type " << class_type -> get_qualified_name() << " has conflicts" << endl;
-//cout.flush();
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration());
+    ROSE_ASSERT(class_declaration);
+    SgScopeStatement *scope = class_declaration -> get_definingDeclaration() -> get_scope();
+    ROSE_ASSERT(scope);
+    string package_name = scope -> get_qualified_name().getString(),
+           class_simple_name = type_name.getString();
+
+    //
+    // Check whether or not there is a class with this name that belongs to 2 or more separate packages.
+    // This test is calculated by calling the Java function JavaTraversal with two arguments: the source
+    // filename and the class name.
+    //
+    ROSE_ASSERT(::currentEnvironment);
+    ROSE_ASSERT(::currentJavaTraversalClass);
+    ROSE_ASSERT(::classHasConflictsMethod);
+    if (::currentSourceFile == NULL || ::currentEnvironment -> CallBooleanMethod(::currentJavaTraversalClass,
+                                                                                 ::classHasConflictsMethod,
+                                                                                 jserver_getJavaString(::currentSourceFile -> getFileName().c_str()),
+                                                                                 jserver_getJavaString(package_name.c_str()),
+                                                                                 jserver_getJavaString(class_simple_name.c_str()))) {
         return getFullyQualifiedTypeName(class_type);
     }
+
+    //
+    //
+    //
     if (class_type -> attributeExists("is_parameter_type")) { // a parameter
 // TODO: Remove this !!!
-//cout << "Type " << type_name.getString() << " is a parameter" << endl;
+//cout << "Type " << class_simple_name << " is a parameter" << endl;
 //cout.flush();
-        return type_name.getString();
+        return class_simple_name;
     }
     if (isImportedType(class_type)) { // an imported type?
 // TODO: Remove this !!!
-//cout << "Type " << type_name.getString() << " is imported" << endl;
+//cout << "Type " << class_simple_name << " is imported" << endl;
 //cout.flush();
-        return type_name.getString();
+        return class_simple_name;
     }
+
+    SgClassSymbol *locally_accessible_class_symbol = lookupTypeSymbol(type_name); // do a local lookup of the type.
     if (locally_accessible_class_symbol && locally_accessible_class_symbol -> get_type() == class_type) { // the type is visible
 // TODO: Remove this !!!
 //cout << "Type " << class_type -> get_qualified_name().getString() << " is visible" << endl;
@@ -497,21 +558,18 @@ string getTypeName(SgClassType *class_type) {
 //cout << "The type found is " << isSgClassType(locally_accessible_class_symbol -> get_type()) -> get_qualified_name().getString() << " and it's in package " << package_definition -> get_qualified_name().getString() << endl;
 //cout.flush();
 
-        return type_name.getString();
+        return class_simple_name;
     }
 
 
-    string result = type_name.getString(),
+    string result = class_simple_name,
            last_classname = result;
 
-    SgScopeStatement *scope;
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration());
-    ROSE_ASSERT(class_declaration);
     for (scope = class_declaration -> get_definingDeclaration() -> get_scope(); scope != ::globalScope; scope = class_declaration -> get_scope()) {
         SgClassDefinition *class_definition = isSgClassDefinition(scope);
         if ((! class_definition) || class_definition == astJavaScopeStack.top()) {
 // TODO: Remove this !!!
-//cout << "Type " << type_name.getString() << " found on the stack" << endl;
+//cout << "Type " << class_simple_name << " found on the stack" << endl;
 //cout.flush();
             break;
         }
@@ -523,13 +581,6 @@ string getTypeName(SgClassType *class_type) {
 //cout << "Bumped into package " << package_declaration -> get_qualified_name().getString() << endl;
 //cout.flush();
             continue;
-// TODO: Remove this !!!
- /*
-            SgClassDefinition *package_definition = package_declaration -> get_definition();
-            AstRegExAttribute *attribute = (AstRegExAttribute *) package_definition -> getAttribute("original_package_name");
-            ROSE_ASSERT(attribute);
-            last_classname = attribute -> expression;
-*/
         }
         else last_classname = class_declaration -> get_name().getString();
         result = last_classname + "." + result;
@@ -537,7 +588,7 @@ string getTypeName(SgClassType *class_type) {
         if (/*(! package_declaration) && */ isImportedType(class_declaration -> get_type())) {
 // TODO: Remove this !!!
 //if (!package_declaration){
-//cout << "Type " << type_name.getString() << " was imported" << endl;
+//cout << "Type " << class_simple_name << " was imported" << endl;
 //cout.flush();
 //}
             break;
@@ -546,7 +597,7 @@ string getTypeName(SgClassType *class_type) {
 
 // TODO: Remove this !!!
 //if (scope != ::globalScope){
-//cout << "Type " << type_name.getString() << " was found before we reached the global scope" << endl;
+//cout << "Type " << class_simple_name << " was found before we reached the global scope" << endl;
 //cout.flush();
 //}
 
@@ -811,7 +862,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
 // Note that a package declaration does NOT belong to any one file. Thus, it is assigned no particular location
 // when it is constructed.
 //
-SgJavaPackageDeclaration *buildPackageDeclaration(SgName package_name, SgScopeStatement *scope, JNIEnv *env, jobject loc) {
+SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *scope, const SgName &package_name, JNIEnv *env, jobject loc) {
     ROSE_ASSERT(lookupClassSymbolInScope(scope, package_name) == NULL);
 
     SgJavaPackageDeclaration *nondefining_package_declaration = new SgJavaPackageDeclaration(package_name, SgClassDeclaration::e_class, NULL, NULL);
@@ -871,10 +922,12 @@ SgJavaPackageDeclaration *buildPackageDeclaration(SgName package_name, SgScopeSt
 
 
 SgClassDeclaration *buildDefiningClassDeclaration(SgName class_name, SgScopeStatement *scope) {
+    ROSE_ASSERT(scope);
     SgClassSymbol *class_symbol = lookupClassSymbolInScope(scope, class_name);
 //
 // TODO: Remove this !!!
 //
+/*
 if (class_symbol != NULL) {
 cout << "Class symbol "
      << class_name.getString()
@@ -890,6 +943,7 @@ cout << "The qualified type name for class symbol "
      << endl;
 }
 }
+*/
     ROSE_ASSERT(class_symbol == NULL);
 
     SgClassDeclaration* nonDefiningDecl              = NULL;
@@ -901,20 +955,32 @@ cout << "The qualified type name for class symbol "
     class_declaration -> set_parent(scope);
     class_declaration -> set_scope(scope);
 
+    ROSE_ASSERT(class_declaration -> get_scope() == scope); // There use to be a bug in the builder...
+
     return class_declaration;
 }
 
 
-SgClassDefinition *findOrInsertPackage(const SgName &original_package_name, const SgName &converted_package_name, JNIEnv *env, jobject loc) {
-    SgClassSymbol *package_symbol = lookupClassSymbolInScope(::globalScope, converted_package_name);
+SgClassDefinition *findOrInsertPackage(SgScopeStatement *scope, const SgName &package_name, JNIEnv *env, jobject loc) {
+    SgClassSymbol *package_symbol = lookupClassSymbolInScope(scope, package_name);
     SgJavaPackageDeclaration *package_declaration;
     SgClassDefinition *package_definition;
     if (package_symbol == NULL) {
-        package_declaration = buildPackageDeclaration(converted_package_name, ::globalScope, env, loc); // SageBuilder::buildDefiningClassDeclaration(converted_package_name, ::globalScope);
+        package_declaration = buildPackageDeclaration(scope, package_name, env, loc);
         package_definition = package_declaration -> get_definition();
+// TODO: Remove this !!!
+cout << "*** Inserting package "
+<< package_definition -> get_qualified_name().getString()
+<< endl;
+cout.flush();
         ROSE_ASSERT(package_definition);
-        package_definition -> setAttribute("original_package_name", new AstRegExAttribute(original_package_name));
-        ::globalScope -> append_declaration(package_declaration);
+        SgClassDefinition *class_scope = isSgClassDefinition(scope);
+        SgGlobal *global_scope = isSgGlobal(scope);
+        if (class_scope)
+             class_scope -> append_member(package_declaration);
+        else if (global_scope)
+             global_scope -> append_declaration(package_declaration);
+        else ROSE_ASSERT(false);
     }
     else {
         package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
@@ -924,6 +990,35 @@ SgClassDefinition *findOrInsertPackage(const SgName &original_package_name, cons
     }
 
     return package_definition;
+}
+
+
+SgClassDefinition *findOrInsertPackage(SgName &package_name, JNIEnv *env, jobject loc) {
+    list<SgName> name_list = generateQualifierList(package_name);
+    SgScopeStatement *scope = ::globalScope;
+    SgClassDefinition *package_definition = NULL;
+    for (list<SgName>::iterator name = name_list.begin(); name != name_list.end(); name++) {
+        package_definition = findOrInsertPackage(scope, *name, env, loc);
+        scope = package_definition;
+    }
+    ROSE_ASSERT(package_definition);
+    return package_definition;
+}
+
+
+SgJavaPackageDeclaration *findPackageDeclaration(SgName &package_name) {
+    list<SgName> name_list = generateQualifierList(package_name);
+    SgScopeStatement *scope = ::globalScope;
+    SgJavaPackageDeclaration *package_declaration = NULL;
+    for (list<SgName>::iterator name = name_list.begin(); name != name_list.end(); name++) {
+        SgClassSymbol *package_symbol = lookupClassSymbolInScope(scope, *name);
+        if (! package_symbol)
+            return NULL;
+        package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(package_declaration -> get_scope() == scope);
+        scope = package_declaration -> get_definition();
+    }
+    return package_declaration;
 }
 
 
@@ -1000,7 +1095,7 @@ cout.flush();
     ROSE_ASSERT(parameterlist != NULL);
 
     //
-    // PC: This needs to be reviewed.  Is it still needed?
+    // PC: This needs to be reviewed.  Is it needed? 04-03-13
     //
     // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
     // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
@@ -1024,7 +1119,6 @@ cout.flush();
             func_symbol_found = false;
         }
     }
-
 // TODO: remove this !!!
 /*
 if (name.getString().compare(inputName.getString()) != 0) { // PC - 04-03-13 - added this check because I don't understand the reason for the code above.
@@ -1509,9 +1603,7 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
             // At this point, the type_symbol in qustion must be a class_symbol.
             //
             if (class_symbol == NULL) {
-                SgClassSymbol *package_symbol = lookupClassSymbolInScope(::globalScope, "java_lang");
-                ROSE_ASSERT(package_symbol);
-                SgJavaPackageDeclaration *package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
+                SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(::java_lang);
                 ROSE_ASSERT(package_declaration);
                 SgClassDefinition *package = package_declaration -> get_definition();
                 ROSE_ASSERT(package);
@@ -1520,16 +1612,13 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         }
     }
     else {
-      SgClassSymbol *package_symbol = lookupClassSymbolInScope(::globalScope, package_name);
+        SgJavaPackageDeclaration *declaration = findPackageDeclaration(package_name);
 // TODO: Remove this!!!
-if (! package_symbol){
+if (! declaration){
 cout << "The package : " << package_name << " does not exist in the global scope."
      << endl;
 cout.flush();
-}
-
-        ROSE_ASSERT(package_symbol);
-        SgClassDeclaration *declaration = (SgClassDeclaration *) package_symbol -> get_declaration() -> get_definingDeclaration();
+}        
         SgClassDefinition *package = declaration -> get_definition();
         ROSE_ASSERT(package);
         class_symbol = lookupClassSymbolInScope(package, *name);

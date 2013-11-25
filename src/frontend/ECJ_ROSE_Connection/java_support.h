@@ -10,6 +10,7 @@ extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
 extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
+extern SgName java_lang;
 
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile *OpenFortranParser_globalFilePointer;
@@ -22,8 +23,9 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
-extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-extern string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string);
+// TODO: Remove this !!!
+//extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
@@ -493,9 +495,11 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
 
-SgJavaPackageDeclaration *buildPackageDeclaration(SgName, SgScopeStatement *, JNIEnv *, jobject);
+SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
 SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
-SgClassDefinition *findOrInsertPackage(const SgName &, const SgName &, JNIEnv *env, jobject loc);
+SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
+SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
+SgJavaPackageDeclaration *findPackageDeclaration(SgName &);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
