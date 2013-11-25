@@ -109,6 +109,7 @@ class JavaParserSupport {
     // Create a table to map each unit into its basic information that contains a given user-specified type declaration.
     //
     static public HashMap<CompilationUnitDeclaration, UnitInfo> unitInfoTable = new HashMap<CompilationUnitDeclaration, UnitInfo>();
+    static public HashMap<String, UnitInfo> unitOf = new HashMap<String, UnitInfo>();
     
 // TODO: Remove this !
 /*    
@@ -1414,17 +1415,35 @@ System.exit(1);
     }
 
 
-// TODO: Remove this !!!
-/*
-    boolean hasConflicts(String simple_name) {
-        if (this.importClass.get(this.currentUnitInfo.fileName) != null) {
-            Class found = (this.currentUnitInfo.packageName.length() == 0 ? null : loadClass(this.currentUnitInfo.packageName + "." + simple_name));
-
-            for (int i = 0, max = this.currentUnitInfo.unit.scope.imports.length; i < max; i++) {
-                ImportBinding import_binding = this.currentUnitInfo.unit.scope.imports[i];
-                Class cls = this.importClass.get(this.currentUnitInfo.fileName).get(import_binding.reference);
+    //
+    // Does the class represented by this simple_name require qualification?
+    //
+    boolean hasConflicts(String file_name, String package_name, String class_simple_name) {
+        UnitInfo unit_info = unitOf.get(file_name);
+        if (unit_info != null && this.importClass.get(unit_info.fileName) != null) {
+            //
+            // If we are looking for a class in a different package, make sure it does not 
+            // clash with a class of the the same name in the current package.
+            //
+            if (! package_name.equals(unit_info.packageName)) {
+                CompilationUnitDeclaration unit = unit_info.unit;
+                for (TypeDeclaration node : unit.types) {
+                    if (new String(node.name).equals(class_simple_name)) {
+                        return true;
+                    }
+                }
+            }
+            
+            //
+            // To start with, look to see if there is a class with the given name in the current package.
+            // Next, check to see if there is a conflict with an imported class.
+            //
+            Class found = (unit_info.packageName.length() == 0 ? null : loadClass(unit_info.packageName + "." + class_simple_name));
+            for (int i = 0, max = unit_info.unit.scope.imports.length; i < max; i++) {
+                ImportBinding import_binding = unit_info.unit.scope.imports[i];
+                Class cls = this.importClass.get(unit_info.fileName).get(import_binding.reference);
                 if (cls != null) { // an imported type ?
-                    if (cls.getSimpleName().equals(simple_name)) {
+                    if (cls.getSimpleName().equals(class_simple_name)) {
                         if (found != null) { // a second hit?
                             return true;
                         }
@@ -1432,7 +1451,7 @@ System.exit(1);
                     }
                 }
                 if (import_binding.onDemand) { // an imported package or type on-demand?
-                    String class_name = new String(CharOperation.concatWith(import_binding.compoundName, '.')) + "." + simple_name;
+                    String class_name = new String(CharOperation.concatWith(import_binding.compoundName, '.')) + "." + class_simple_name;
                     cls = loadClass(class_name);
                     if (cls != null) { // a hit? 
                         if (found != null) { // a second hit?
@@ -1446,7 +1465,7 @@ System.exit(1);
 
         return false;
     }
-*/
+
 
     /**
      * 
@@ -2276,6 +2295,7 @@ System.out.println();
                                         new String(unit.getFileName()),
                                         new JavaSourcePositionInformationFactory(unit));
             unitInfoTable.put(unit, unitInfos[i]);
+            unitOf.put(unitInfos[i].fileName, unitInfos[i]); // map the source file name into its unit info
 
             //
             // create a map from type declaration into its containing unit. 
@@ -2298,7 +2318,6 @@ System.out.println();
             JavaParser.cactionSetupStringAndClassTypes();
         }
 
-        
         for (int i = 0; i < units.size(); i++) {
             resetUnitInfo(unitInfos[i]);
 
