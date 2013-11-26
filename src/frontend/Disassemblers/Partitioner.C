@@ -1339,7 +1339,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
                 symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                 symbol->get_value()!=0) {
-                rose_addr_t value = symbol->get_value();
+                rose_addr_t value = fhdr->get_base_va() + symbol->get_value();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
 

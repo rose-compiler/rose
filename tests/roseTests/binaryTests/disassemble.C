@@ -20,6 +20,10 @@ Description:\n\
     switch is applicable only when the input file is a container such as ELF or\n\
     PE.  The default is to not generate an AST dot file.\n\
 \n\
+  --base-va=ADDRESS\n\
+    Use the specified address as the base virtual address rather than the address\n\
+    indicated in the file header.\n\
+\n\
   --cfg-dot\n\
   --no-cfg-dot\n\
     Generate (or don't generate) a GraphViz dot file containing the control flow\n\
@@ -811,6 +815,9 @@ main(int argc, char *argv[])
     bool do_link = false;
     std::string do_generate_ipd;
     std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
+    rose_addr_t rebase_va = 0;                  /* alternative base virtual address */
+    bool do_rebase = false;
+    
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -848,6 +855,14 @@ main(int argc, char *argv[])
             do_ast_dot = true;
         } else if (!strcmp(argv[i], "--no-ast-dot")) {
             do_ast_dot = false;
+        } else if (!strncmp(argv[i], "--base-va=", 10)) {
+            char *rest;
+            rebase_va = strtoull(argv[i]+10, &rest, 0);
+            if (rest && *rest) {
+                fprintf(stderr, "%s: invalid value for --base-va switch: %s\n", arg0, argv[i]+10);
+                exit(1);
+            }
+            do_rebase = true;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--no-cfg-dot")) {
@@ -1098,6 +1113,13 @@ main(int argc, char *argv[])
          * mapping here because we may want to see debugging output, etc. */
         if (interp->get_map()!=NULL)
             interp->get_map()->clear();
+
+        /* Adjust the base VA for the primary file header if requested. */
+        if (do_rebase) {
+            const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+            assert(1==hdrs.size());
+            hdrs[0]->set_base_va(rebase_va);
+        }
 
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
         if (do_debug_loader)
