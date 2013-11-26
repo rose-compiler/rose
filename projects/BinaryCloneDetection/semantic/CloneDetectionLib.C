@@ -848,6 +848,16 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
     SgAsmInterpretation *interp = interps.back();
     SgAsmGenericHeader *spec_header = interp->get_headers()->get_headers().back();
 
+    // If the specimen is a shared library then the .text section (and most of the others) are mapped starting at virtual
+    // address zero.  This will interfere with tests where the specimen reads from a memory address that was randomly
+    // generated--because the randomly generated address will be a low number. When the test tries to read from that low
+    // address it will read an instruction rather than a value from an input queue. The way we avoid this is to rebase the
+    // entire ELF file to a higher address. Unfortunately, the ELF format wasn't made to do this (e.g., PLT entries will have
+    // JMP instructions to the old location of the GOT), but it seems to mostly work. [Robb P. Matzke 2013-11-26]
+    SgAsmGenericSection *text = spec_header->get_section_by_name(".text");
+    if (text!=NULL && text->is_mapped() && text->get_mapped_preferred_rva()<0x4000)
+        spec_header->set_base_va(0x00300000); // something we'll recognize as unusual
+
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
     // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
     // disassembler.
