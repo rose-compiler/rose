@@ -3,6 +3,7 @@
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
 drop table if exists semantic_funcsim;
+drop table if exists semantic_aggprops;
 drop table if exists semantic_funcpartials;
 drop table if exists semantic_fio_calls;
 drop table if exists semantic_fio_coverage;
@@ -188,12 +189,12 @@ create table semantic_fio_trace (
 
 -- Input values actually consumed by each test.
 create table semantic_fio_inputs (
-       func_id integer,				-- references semantic_functions(id) [commented out for speed]
-       igroup_id integer,			-- references semantic_inputvalues(id) [commented out for speed]
+       func_id integer,                         -- references semantic_functions(id) [commented out for speed]
+       igroup_id integer,                       -- references semantic_inputvalues(id) [commented out for speed]
        request_queue_id integer references semantic_input_queues(id), -- queue whose value was requested
        actual_queue_id integer references semantic_input_queues(id),  -- queue whose value was consumed after redirecting
-       pos integer,				-- sequence number indicates the order that input values were consumed
-       val bigint				-- the actual input value
+       pos integer,                             -- sequence number indicates the order that input values were consumed
+       val bigint                               -- the actual input value
 );
 
 -- Information about instructions that were executed for each test.  This table is only populated when coverage capability is
@@ -228,6 +229,13 @@ create table semantic_funcpartials (
        nretused integer,                        -- Number of ncalls where a return value was used in the caller
        ntests integer,                          -- Number of times this function was tested
        nvoids integer                           -- Number of ntests where the function did not write to EAX
+);
+
+-- Function properties aggregated over multiples tests. This table holds per-function properties whose values are computed
+-- from multiple runs (rows of semantics_fio), usually depending on rows from semantic_funcpartials.
+create table semantic_aggprops (
+       func_id integer references semantic_functions(id),
+       retprob double precision                 -- probability that this function returns a value
 );
 
 -- Function similarity--how similar are pairs of functions.  The relation_id allows us to store multiple function similarity
