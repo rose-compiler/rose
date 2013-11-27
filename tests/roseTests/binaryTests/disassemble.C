@@ -136,6 +136,11 @@ Description:\n\
     intended mostly to check the consistency of the disassembler with the\n\
     assembler.  The default is to not reassemble.\n\
 \n\
+  --reserve=ADDRESS,SIZE\n\
+    Reserve the indicated virtual address range before attempting to load the\n\
+    specimen.  The memory is mapped with no access rights. This switch may appear\n\
+    multiple times to reserve discontiguous regions.\n\
+\n\
   --show-bad\n\
   --no-show-bad\n\
     Show (or not) details about why instructions at certain addresses could not\n\
@@ -817,6 +822,7 @@ main(int argc, char *argv[])
     std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
     rose_addr_t rebase_va = 0;                  /* alternative base virtual address */
     bool do_rebase = false;
+    ExtentMap reserved;                         /* addresses to be reserved */
     
 
     Disassembler::AddressSet raw_entries;
@@ -966,6 +972,32 @@ main(int argc, char *argv[])
                 while (isspace(*rest)) rest++;
                 s = rest;
             }
+        } else if (!strncmp(argv[i], "--reserve=", 10)) {
+            char *rest;
+            errno = 0;
+            rose_addr_t va = strtoull(argv[i]+10, &rest, 0);
+            if (errno || rest==argv[i]+10) {
+                fprintf(stderr, "%s: expected an address for the --reserve switch\n", arg0);
+                exit(1);
+            }
+            char *s = rest;
+            while (isspace(*s)) ++s;
+            if (','!=*s++) {
+                fprintf(stderr, "%s: comma expected between address and size for --reserve switch\n", arg0);
+                exit(1);
+            }
+            errno = 0;
+            rose_addr_t size = strtoull(s, &rest, 0);
+            if (errno || rest==s) {
+                fprintf(stderr, "%s: expected a size after the address for --reserve switch\n", arg0);
+                exit(1);
+            }
+            while (isspace(*rest)) ++rest;
+            if (*rest) {
+                fprintf(stderr, "%s: extra text after --reserve size\n", arg0);
+                exit(1);
+            }
+            reserved.insert(Extent(va, size));
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_loader = true;
@@ -1091,6 +1123,10 @@ main(int argc, char *argv[])
         fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
         exit(1);
     }
+    if (do_rebase && !raw_entries.empty())
+        fprintf(stderr, "%s: warning: --base-va ignored in raw buffer mode\n", arg0);
+    if (!reserved.empty() && !raw_entries.empty())
+        fprintf(stderr, "%s: warning: --reserve ignored in raw buffer mode\n", arg0);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse, link, remap, relocate
@@ -1111,8 +1147,12 @@ main(int argc, char *argv[])
 
         /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
          * mapping here because we may want to see debugging output, etc. */
-        if (interp->get_map()!=NULL)
-            interp->get_map()->clear();
+        MemoryMap *map = interp->get_map();
+        if (map!=NULL) {
+            map->clear();
+        } else {
+            interp->set_map(map = new MemoryMap);
+        }
 
         /* Adjust the base VA for the primary file header if requested. */
         if (do_rebase) {
@@ -1121,6 +1161,13 @@ main(int argc, char *argv[])
             hdrs[0]->set_base_va(rebase_va);
         }
 
+        /* Reserve parts of the address space. */
+        for (ExtentMap::iterator ri=reserved.begin(); ri!=reserved.end(); ++ri) {
+            map->insert(ri->first, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(ri->first.size()),
+                                                      0, MemoryMap::MM_PROT_NONE, "reserved area"));
+        }
+
+        /* Run the loader */
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
         if (do_debug_loader)
             loader->set_debug(stderr);
@@ -1131,7 +1178,7 @@ main(int argc, char *argv[])
                 loader->link(interp);
             }
             loader->remap(interp);
-            if (do_link) {
+            if (do_link || !reserved.empty()) {
                 BinaryLoader::FixupErrors errors;
                 loader->fixup(interp, &errors);
                 if (!errors.empty()) {
@@ -1144,7 +1191,6 @@ main(int argc, char *argv[])
             exit(1);
         }
     }
-
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Choose a disassembler
