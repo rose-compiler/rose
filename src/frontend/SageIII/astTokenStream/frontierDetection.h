@@ -20,7 +20,11 @@ class FrontierDetectionForTokenStreamMapping_InheritedAttribute
        // Detect when to stop processing deeper into the AST.
           bool processChildNodes;
 
-          bool containsFrontier;
+          bool isFrontier;
+
+          bool unparseUsingTokenStream;
+          bool unparseFromTheAST;
+          bool containsNodesToBeUnparsedFromTheAST;
 
        // Specific constructors are required
           FrontierDetectionForTokenStreamMapping_InheritedAttribute();
@@ -30,19 +34,42 @@ class FrontierDetectionForTokenStreamMapping_InheritedAttribute
    };
 
 
+class FrontierNode
+   {
+  // These objects represent the frontier in the AST of where we have to unparse using either the token stream or the AST.
+     public:
+          SgStatement* node;
+
+          bool unparseUsingTokenStream;
+          bool unparseFromTheAST;
+
+       // FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST) : node(node), unparseUsingTokenStream(unparseUsingTokenStream), unparseFromTheAST(unparseFromTheAST)
+          FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST);
+
+         std::string display();
+   };
+   
+
 class FrontierDetectionForTokenStreamMapping_SynthesizedAttribute
    {
      public:
-          SgNode* node;
+          SgStatement* node;
 
-          bool containsFrontier;
+          bool isFrontier;
+
+          bool unparseUsingTokenStream;
+          bool unparseFromTheAST;
+          bool containsNodesToBeUnparsedFromTheAST;
+          bool containsNodesToBeUnparsedFromTheTokenStream;
+
+       // std::vector<SgStatement*> frontierNodes;
+          std::vector<FrontierNode*> frontierNodes;
 
           FrontierDetectionForTokenStreamMapping_SynthesizedAttribute();
           FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(SgNode* n);
 
           FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(const FrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X);
    };
-
 
 
 class FrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpProcessing<FrontierDetectionForTokenStreamMapping_InheritedAttribute,FrontierDetectionForTokenStreamMapping_SynthesizedAttribute>
