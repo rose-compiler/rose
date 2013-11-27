@@ -135,382 +135,8 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
   return num;
 }
 
-bool isEmptyBlock(SgNode* node) {
-  if(node==0)
-    return true;
-  //cout<<"isEmptyBasicBlock:"<<node->class_name()<<endl;
-  if(SgBasicBlock* block=isSgBasicBlock(node)) {
-    const SgStatementPtrList& stmtList=block->get_statements(); 
-    return stmtList.size()==0;
-  }
-  return false;
-}
-
-bool isEmptyIfStmt(SgIfStmt* ifStmt) {
-  SgStatement* trueBody=ifStmt->get_true_body();
-  SgStatement* falseBody=ifStmt->get_false_body();
-  return isEmptyBlock(trueBody) && isEmptyBlock(falseBody);
-}
-
-size_t eliminateEmptyIfStmts(SgNode* node) {
-  size_t numElim=0;
-  list<SgIfStmt*> ifstmts;
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
-    if(SgIfStmt* ifStmt=isSgIfStmt(*i)) {
-      if(isEmptyIfStmt(ifStmt)) {
-        //cout<<"-- Found empty if statement"<<endl;
-        ifstmts.push_back(ifStmt);
-      }
-    }
-  }
-  for(list<SgIfStmt*>::iterator i=ifstmts.begin();i!=ifstmts.end();i++) {
-    SageInterface::removeStatement (*i, false);
-    numElim++;
-  }
-  cout<<"STATUS: Number of if-statements eliminated: "<<numElim<<endl;
-  return numElim;
-}
-
-// analysis
-
-typedef map<VariableId, set<CppCapsuleConstIntLattice> > VarConstSetMap;
-
-ConstIntLattice analyzeAssignRhs(SgNode* rhs) {
-  assert(isSgExpression(rhs));
-
-  ConstIntLattice rhsIntVal=AType::Top();
-
-  // TODO: -1 is OK, but not -(-1); yet.
-  if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
-    if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
-      // found integer on rhs
-      rhsIntVal=ConstIntLattice(-((int)intValNode->get_value()));
-    }
-  }
-  // extracted info: isRhsIntVal:rhsIntVal 
-  if(SgIntVal* intValNode=isSgIntVal(rhs)) {
-    // found integer on rhs
-    rhsIntVal=ConstIntLattice((int)intValNode->get_value());
-  }
-  return rhsIntVal;
-}
-
-bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping) {
-  assert(node);
-  if(SgVarRefExp* varref=isSgVarRefExp(node)) {
-    // found variable
-    //assert(_variableIdMapping);
-#if 1
-    SgSymbol* sym=varref->get_symbol();
-    assert(sym);
-    varId=_variableIdMapping.variableId(sym);
-#else
-    // MS: to investigate: even with the new var-sym-only case this does not work
-    // MS: investigage getSymbolOfVariable
-    varId=_variableIdMapping.variableId(varref);
-#endif
-    return true;
-  } else {
-    VariableId defaultVarId;
-    varId=defaultVarId;
-    return false;
-  }
-}
-
-class VariableValuePair {
-public:
-  VariableValuePair(){}
-  VariableValuePair(VariableId varId, ConstIntLattice varValue):varId(varId),varValue(varValue){}
-  VariableId varId;
-  ConstIntLattice varValue;
-  string toString(VariableIdMapping& varIdMapping) {
-    string varNameString=varIdMapping.uniqueShortVariableName(varId);
-    string varValueString=varValue.toString();
-    return varNameString+"="+varValueString;
-  }
-};
-
-bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
-  const VariableId varId;
-  const ConstIntLattice varValue;
-  SgNode* lhs=SgNodeHelper::getLhs(assignOp);
-  SgNode* rhs=SgNodeHelper::getRhs(assignOp);
-  ConstIntLattice rhsResult=analyzeAssignRhs(rhs);
-  VariableId lhsVarId;
-  bool isVariableLhs=determineVariable(lhs,lhsVarId,varIdMapping);
-  if(isVariableLhs) {
-    VariableValuePair p(lhsVarId,rhsResult);
-    *result=p;
-    return true;
-  }
-  return false;
-}
-
-VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping) {
-  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-  if(initName0) {
-    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-      SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-      assert(initDeclVar);
-      VariableId initDeclVarId=varIdMapping.variableId(initDeclVar);
-      SgInitializer* initializer=initName->get_initializer();
-      SgAssignInitializer* assignInitializer=0;
-      if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        //cout << "initializer found:"<<endl;
-        SgExpression* rhs=assignInitializer->get_operand_i();
-        assert(rhs);
-        return VariableValuePair(initDeclVarId,analyzeAssignRhs(rhs));
-      } else {
-        //cout << "no initializer (OK)."<<endl;
-        return VariableValuePair(initDeclVarId,AType::Top());
-      }
-    } else {
-      cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
-      exit(1);
-    }
-  } else {
-    cerr << "Error: in declaration: no variable found ... bailing out."<<endl;
-    exit(1);
-  }
-}
-
-void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map) {
-  // TODO: // traverse the AST now and collect information
-  RoseAst ast(node);
-  cout<< "STATUS: Collecting information."<<endl;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
-      if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
-      //update map
-    }
-    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-      VariableValuePair res;
-      bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
-      if(hasLhsVar) {
-        //cout<<"analyzing variable assignment  :"<<res.toString(varIdMapping)<<endl;
-        map[res.varId].insert(res.varValue);
-      } else {
-        // not handled yet (the new def-use sets allow to handle this better)
-        cerr<<"Warning: ignoring assignment."<<endl;
-      }
-    }
-    // ignore everything else (as of now)
-  }
-}
-
-// does not support -inf, +inf yet
-class VariableValueRangeInfo {
-public:
-  VariableValueRangeInfo(ConstIntLattice min, ConstIntLattice max);
-  VariableValueRangeInfo(ConstIntLattice value);
-  bool isTop() const { return _width.isTop(); }
-  bool isBot() const { return _width.isBot(); }
-  bool isEmpty() const { return (_width==0).isTrue(); }
-  ConstIntLattice minValue() const { return _min; }
-  ConstIntLattice maxValue() const { return _max; }
-  int minIntValue() const { assert(_min.isConstInt()); return _min.getIntValue(); }
-  int maxIntValue() const { assert(_max.isConstInt()); return _max.getIntValue(); }
-  ConstIntLattice width() const { return _width; }
-  string toString() const {
-    if(isBot())
-      return "bot";
-    if(isTop())
-      return "top";
-    return string("[")+_min.toString()+","+_max.toString()+"]";
-  }
-  void setArraySize(int asize);
-  int arraySize();
-private:
-  ConstIntLattice _width;
-  ConstIntLattice _min;
-  ConstIntLattice _max;
-  int _asize;
-};
-
-void
-VariableValueRangeInfo::setArraySize(int asize) {
-  _asize=asize;
-}
-
-int
-VariableValueRangeInfo::arraySize() {
-  return _asize;
-}
-
-VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLattice max0) {
-  assert(min0.isConstInt() && max0.isConstInt());
-  _width=max0-min0;
-  _min=min0;
-  _max=max0;
-  if((_width<0).isTrue())
-    _width=ConstIntLattice(0);
-  ConstIntLattice one=AType::ConstIntLattice(1);
-  _width=(VariableValueRangeInfo::_width+one);
-  _asize=1;
-}
-
-VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
-  _min=value;
-  _max=value;
-  if(value.isTop()) {
-    _width=ConstIntLattice(Top());
-	return;
-  }
-  if(value.isBot()) {
-    _width=ConstIntLattice(Bot());
-	return;
-  }
-  _width=1;
-}
-
-VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
-  set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
-  AType::ConstIntLattice minVal;
-  AType::ConstIntLattice maxVal;
-  // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
-  if(cppCapsuleSet.size()==0)
-	return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
-  for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
-    AType::ConstIntLattice aint=(*i).getValue();
-    if(aint.isTop()) {
-      return VariableValueRangeInfo(AType::ConstIntLattice(AType::Top()));
-    }
- 
-    if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
-    if((aint<minVal).isTrue())
-      minVal=aint;
-    if((aint>maxVal).isTrue())
-      maxVal=aint;
-  }
-  if(minVal.isBot()||maxVal.isBot())
-    return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
-  return VariableValueRangeInfo(minVal,maxVal);
-}
-
-// returns true if is in set
-// returns false if not in set
-// returns top if set contains top
-ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet) {
-  if(valSet.find(CppCapsuleConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
-    return ConstIntLattice(AType::Top());
-  }
-  if(valSet.find(CppCapsuleConstIntLattice(val))!=valSet.end()) {  
-    return ConstIntLattice(true);
-  }
-  return ConstIntLattice(false);
-}
-
-class VariableConstInfo {
-public:
-  VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map);
-  bool isAny(VariableId);
-  bool isUniqueConst(VariableId);
-  bool isMultiConst(VariableId);
-  size_t width(VariableId);
-  bool isInConstSet(VariableId varId, int varVal);
-  int uniqueConst(VariableId);
-  int minConst(VariableId);
-  int maxConst(VariableId);
-  int arraySize(VariableId);
-private:
-  VariableIdMapping* _variableIdMapping;
-  VarConstSetMap* _map;
-};
-
-VariableConstInfo::VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map):_variableIdMapping(variableIdMapping),_map(map) {
-}
-
-int VariableConstInfo::arraySize(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return vri.arraySize();
-}
-
-bool VariableConstInfo::isAny(VariableId varId) {
-  return createVariableValueRangeInfo(varId,*_map).isTop();
-}
-bool VariableConstInfo::isUniqueConst(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
-}
-bool VariableConstInfo::isMultiConst(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
-}
-size_t VariableConstInfo::width(VariableId varId) {
-  ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
-  if(!width.isConstInt())
-    return ((size_t)INT_MAX)-INT_MIN;
-  else
-	return width.getIntValue();
-}
-int VariableConstInfo::minConst(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  assert(!(vri.isTop()||vri.isBot()));
-  return vri.minIntValue();
-}
-int VariableConstInfo::maxConst(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  assert(!(vri.isTop()||vri.isBot()));
-  return vri.maxIntValue();
-}
-bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return isConstInSet(ConstIntLattice(varVal),(*_map)[varId]).isTrue();
-}
-int VariableConstInfo::uniqueConst(VariableId varId) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  assert(!vri.isTop() && !vri.isBot() && vri.minIntValue()==vri.maxIntValue());
-  return vri.minIntValue();
-}
-
-// intra-procedural; ignores function calls
-VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping) {
-  VarConstSetMap varConstIntMap;  
-
-  VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
-
-  // initialize map such that it is resized to number of variables of interest
-
-  for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
-    set<CppCapsuleConstIntLattice> emptySet;
-    varConstIntMap[*i]=emptySet;
-  }
-  cout<<"STATUS: Initialized const map for "<<varConstIntMap.size()<< " variables."<<endl;
-
-  cout << "STATUS: Number of global variables: ";
-  list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-  cout << globalVars.size()<<endl;
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
-  cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-  int filteredVars=0;
-  set<CppCapsuleConstIntLattice> emptySet;
-  for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-    VariableId globalVarId=variableIdMapping.variableId(*i);
-    if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
-      VariableValuePair p=analyzeVariableDeclaration(*i,variableIdMapping);
-      ConstIntLattice varValue=p.varValue;
-      varConstIntMap[p.varId]=emptySet; // create mapping
-      varConstIntMap[p.varId].insert(CppCapsuleConstIntLattice(varValue));
-	  variablesOfInterest.insert(p.varId);
-      //set<CppCapsuleConstIntLattice>& myset=varConstIntMap[p.varId];
-    } else {
-      filteredVars++;
-    }
-  }
-  cout << "STATUS: Number of filtered variables for initial state: "<<filteredVars<<endl;
-
-  // traverse the AST now and collect information
-
-  if(boolOptions["inline"]) {
-	determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
-  } else {
-	// compute value-sets for entire program (need to cover all functions without inlining)
-	determineVarConstValueSet(project,variableIdMapping,varConstIntMap);
-  }
-  return varConstIntMap;
-}
+#include "FIConstAnalysis.C"
+#include "DeadCodeEliminationOperators.C"
 
 // returns the number of eliminated expressions
 int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
@@ -528,69 +154,69 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   list<SgAssignOp*> toDeleteAssignments;
   list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
   for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
-	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-	  VariableId declVarId=variableIdMapping->variableId(varDecl);
-	  if(isVariableOfInterest(declVarId) && vci.isUniqueConst(declVarId)) {
-		toDeleteVarDecls.push_back(varDecl);
-	  }
-	}
-	if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-	  VariableValuePair varValPair;
-	  bool found=analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
-	  if(found) {
-		VariableId varId=varValPair.varId;
-		if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
-		  toDeleteAssignments.push_back(assignOp);
-		}
-	  }
-	}
-	if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-	  VariableId varId;
-	  bool found=determineVariable(varRef, varId, *variableIdMapping);
-	  if(found) {
-		if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
-		  SgIntVal* newSgIntValExpr=SageBuilder::buildIntVal(vci.uniqueConst(varId));
-		  toReplaceExpressions.push_back(make_pair(varRef,newSgIntValExpr));
-		}
-	  }
-	}
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      VariableId declVarId=variableIdMapping->variableId(varDecl);
+      if(isVariableOfInterest(declVarId) && vci.isUniqueConst(declVarId)) {
+        toDeleteVarDecls.push_back(varDecl);
+      }
+    }
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      VariableValuePair varValPair;
+      bool found=analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
+      if(found) {
+        VariableId varId=varValPair.varId;
+        if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
+          toDeleteAssignments.push_back(assignOp);
+        }
+      }
+    }
+    if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+      VariableId varId;
+      bool found=determineVariable(varRef, varId, *variableIdMapping);
+      if(found) {
+        if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
+          SgIntVal* newSgIntValExpr=SageBuilder::buildIntVal(vci.uniqueConst(varId));
+          toReplaceExpressions.push_back(make_pair(varRef,newSgIntValExpr));
+        }
+      }
+    }
   }
-
+  
   cout<<"STATUS: eliminating declarations."<<endl;
   int elimVar=0;
   for(list<SgVariableDeclaration*>::iterator i=toDeleteVarDecls.begin();
-	  i!=toDeleteVarDecls.end();
-	  ++i) {
-	elimVar++;
-	if(detailedOutput) cout<<"Eliminating dead variable's declaration: "<<(*i)->unparseToString()<<endl;
-	SageInterface::removeStatement(*i, false);
+      i!=toDeleteVarDecls.end();
+      ++i) {
+    elimVar++;
+    if(detailedOutput) cout<<"Eliminating dead variable's declaration: "<<(*i)->unparseToString()<<endl;
+    SageInterface::removeStatement(*i, false);
   }
   cout<<"STATUS: eliminating assignments."<<endl;
   int elimAssignment=0;
   for(list<SgAssignOp*>::iterator i=toDeleteAssignments.begin();
-	  i!=toDeleteAssignments.end();
-	  ++i) {
-	SgExprStatement* exprStatAssign=isSgExprStatement(SgNodeHelper::getParent(*i));
-	if(!exprStatAssign) {
-	  cerr<<"Error: assignments inside expressions are not supported yet.";
-	  cerr<<"Problematic assignment: "<<(*i)->unparseToString()<<endl;
-	  exit(1);
-	}
-	elimAssignment++;
-	if(detailedOutput) cout<<"Eliminating dead variable assignment: "<<(*i)->unparseToString()<<endl;
-	SageInterface::removeStatement(exprStatAssign, false);
+      i!=toDeleteAssignments.end();
+      ++i) {
+    SgExprStatement* exprStatAssign=isSgExprStatement(SgNodeHelper::getParent(*i));
+    if(!exprStatAssign) {
+      cerr<<"Error: assignments inside expressions are not supported yet.";
+      cerr<<"Problematic assignment: "<<(*i)->unparseToString()<<endl;
+      exit(1);
+    }
+    elimAssignment++;
+    if(detailedOutput) cout<<"Eliminating dead variable assignment: "<<(*i)->unparseToString()<<endl;
+    SageInterface::removeStatement(exprStatAssign, false);
   }
-
+  
   cout<<"STATUS: eliminating expressions."<<endl;
   int elimVarUses=0;
   for(list<pair<SgExpression*,SgExpression*> >::iterator i=toReplaceExpressions.begin();
-	  i!=toReplaceExpressions.end();
-	  ++i) {
-	elimVarUses++;
-	if(detailedOutput) cout<<"Replacing use of variable with constant: "<<(*i).first->unparseToString()<<" replaced by "<<(*i).second->unparseToString()<<endl;
-	SageInterface::replaceExpression((*i).first, (*i).second);
+      i!=toReplaceExpressions.end();
+      ++i) {
+    elimVarUses++;
+    if(detailedOutput) cout<<"Replacing use of variable with constant: "<<(*i).first->unparseToString()<<" replaced by "<<(*i).second->unparseToString()<<endl;
+    SageInterface::replaceExpression((*i).first, (*i).second);
   }
-
+  
   cout<<"STATUS: Eliminated "<<elimVar<<" variable declarations."<<endl;
   cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
   cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variables with constant."<<endl;
@@ -603,30 +229,30 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
 //  error_0 is a valid label number (therefore -1 is returned if no label is found)
 int isIfWithLabeledAssert(SgNode* node) {
   if(isSgIfStmt(node)) {
-	node=SgNodeHelper::getTrueBranch(node);
-	RoseAst block(node);
-	for(RoseAst::iterator i=block.begin();i!=block.end();++i) {
-	  SgNode* node2=*i;
-	  if(SgExprStatement* exp=isSgExprStatement(node2))
-		node2=SgNodeHelper::getExprStmtChild(exp);
-	  if(isSgLabelStatement(node2)) {
-		RoseAst::iterator next=i;
-		next++;
-		if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
-		  //		  cout<<"ASSERT FOUND with Label found:"<<endl;
-		  SgLabelStatement* labStmt=isSgLabelStatement(*i);
-		  assert(labStmt);
-		  string name=SgNodeHelper::getLabelName(labStmt);
-		  if(name=="globalError")
+    node=SgNodeHelper::getTrueBranch(node);
+    RoseAst block(node);
+    for(RoseAst::iterator i=block.begin();i!=block.end();++i) {
+      SgNode* node2=*i;
+      if(SgExprStatement* exp=isSgExprStatement(node2))
+        node2=SgNodeHelper::getExprStmtChild(exp);
+      if(isSgLabelStatement(node2)) {
+        RoseAst::iterator next=i;
+        next++;
+        if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
+          //		  cout<<"ASSERT FOUND with Label found:"<<endl;
+          SgLabelStatement* labStmt=isSgLabelStatement(*i);
+          assert(labStmt);
+          string name=SgNodeHelper::getLabelName(labStmt);
+          if(name=="globalError")
 			name="error_60";
-		  name=name.substr(6,name.size()-6);
-		  std::istringstream ss(name);
-		  int num;
-		  ss>>num;
-		  return num;
-		}
-	  }
-	}
+          name=name.substr(6,name.size()-6);
+          std::istringstream ss(name);
+          int num;
+          ss>>num;
+          return num;
+        }
+      }
+    }
   }
   return -1;
 }
@@ -1007,6 +633,23 @@ void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& m
   myfile.close();
 }
 
+void printCodeStatistics(SgNode* root) {
+  SgProject* project=isSgProject(root);
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(project);
+  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  cout<<"----------------------------------------------------------------------"<<endl;
+  cout<<"Statistics:"<<endl;
+  cout<<"Number of empty if-statements: "<<listOfEmptyIfStmts(root).size()<<endl;
+  cout<<"Number of functions          : "<<SgNodeHelper::listOfFunctionDefinitions(project).size()<<endl;
+  cout<<"Number of global variables   : "<<SgNodeHelper::listOfGlobalVars(project).size()<<endl;
+  cout<<"Number of used variables     : "<<setOfUsedVars.size()<<endl;
+  cout<<"----------------------------------------------------------------------"<<endl;
+  cout<<"VariableIdMapping-size       : "<<variableIdMapping.getVariableIdSet().size()<<endl;
+  cout<<"----------------------------------------------------------------------"<<endl;
+}
+
+
 int main(int argc, char* argv[]) {
   try {
 	if(argc==1) {
@@ -1031,6 +674,7 @@ int main(int argc, char* argv[]) {
     ("help,h", "produce this help message.")
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
+    ("stats", "display code statistics.")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
@@ -1099,27 +743,35 @@ int main(int argc, char* argv[]) {
   }
 
   global_option_multiconstanalysis=boolOptions["enable-multi-const-analysis"];
+#if 0
   if(global_option_multiconstanalysis) {
 	cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
   } else {
 	cout<<"INFO: Using flow-insensitive unique-const-analysis."<<endl;
   }
+#endif
 
   cout << "INIT: Parsing and creating AST."<<endl;
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
 
-  std::string funtofind="main";
-  RoseAst completeast(root);
-  SgFunctionDefinition* mainFunctionRoot=completeast.findFunctionByName(funtofind);
-  if(!mainFunctionRoot) {
-    cerr<<"Error: No main function available. "<<endl;
-    exit(1);
-  } else {
-    cout << "STATUS: Found main function."<<endl;
+  if(args.count("stats")) {
+    printCodeStatistics(root);
+    exit(0);
   }
+
+  SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
+    std::string funtofind="main";
+    RoseAst completeast(root);
+    mainFunctionRoot=completeast.findFunctionByName(funtofind);
+    if(!mainFunctionRoot) {
+      cerr<<"Error: No main function available. "<<endl;
+      exit(1);
+    } else {
+      cout << "STATUS: Found main function."<<endl;
+    }
     list<SgFunctionCallExp*> funCallList=trivialFunctionCalls(root);
     cout<<"STATUS: Inlining: Number of trivial function calls (with existing function bodies): "<<funCallList.size()<<endl;
     list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
@@ -1134,18 +786,6 @@ int main(int argc, char* argv[]) {
   } else {
     cout<<"INFO: Inlining: turned off."<<endl;
   }
-  
-  if(boolOptions["eliminate-empty-if"]) {
-    cout<<"STATUS: Eliminating empty if-statements in main function."<<endl;
-    size_t num=0;
-    size_t numTotal=num;
-    do {
-      num=eliminateEmptyIfStmts(mainFunctionRoot);
-      numTotal+=num;
-    } while(num>0);
-    cout<<"STATUS: Total number of empty if-statements in main function eliminated: "<<numTotal<<endl;
-  }
-  
   //TODO: create ICFG and compute non reachable functions (from main function)
   if(boolOptions["inline"]) {
     cout<<"STATUS: deleting inlined functions."<<endl;
@@ -1162,13 +802,24 @@ int main(int argc, char* argv[]) {
     }
   }
   
+  if(boolOptions["eliminate-empty-if"]) {
+     cout<<"STATUS: Eliminating empty if-statements."<<endl;
+    size_t num=0;
+    size_t numTotal=num;
+    do {
+      num=eliminateEmptyIfStmts(root);
+      cout<<"INFO: Number of if-statements eliminated: "<<num<<endl;
+      numTotal+=num;
+    } while(num>0);
+    cout<<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
+  }
+  
   cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
 
   VarConstSetMap varConstSetMap;
   varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
-  
 
   if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
   VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
