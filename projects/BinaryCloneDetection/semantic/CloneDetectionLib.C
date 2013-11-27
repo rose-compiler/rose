@@ -1066,30 +1066,35 @@ finish_command(const SqlDatabase::TransactionPtr &tx, int64_t hashkey, const std
     }
 }
 
-// Return the name of a file containing the specified function.
+// Return the name of a file for the specified header (or AST descendant thereof)
 std::string
-filename_for_function(SgAsmFunction *function, bool basename)
+filename_for_header(SgAsmGenericHeader *hdr, bool basename)
 {
     std::string retval;
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-        size_t nmatch;
-        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
-        if (nmatch>0) {
-            SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(*hi);
-            if (file!=NULL && !file->get_name().empty()) {
-                retval = file->get_name();
-                break;
-            }
-        }
-    }
+    SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(hdr);
+    if (file!=NULL && !file->get_name().empty())
+        retval = file->get_name();
     if (basename) {
         size_t slash = retval.rfind('/');
         if (slash!=std::string::npos)
             retval = retval.substr(slash+1);
     }
     return retval;
+}
+
+// Return the name of a file containing the specified function.
+std::string
+filename_for_function(SgAsmFunction *function, bool basename)
+{
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        size_t nmatch;
+        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
+        if (nmatch>0)
+            return filename_for_header(*hi, basename);
+    }
+    return "";
 }
 
 // Return a list of functions that are not already in the database, and appropriate ID numbers.  The functions are not
