@@ -929,6 +929,25 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
     SgAsmInterpretation *interp = interps.back();
     SgAsmGenericHeader *spec_header = interp->get_headers()->get_headers().back();
 
+    // If the specimen is a shared library then the .text section (and most of the others) are mapped starting at virtual
+    // address zero.  This will interfere with tests where the specimen reads from a memory address that was randomly
+    // generated--because the randomly generated address will be a low number. When the test tries to read from that low
+    // address it will read an instruction rather than a value from an input queue. The way we avoid this is to pre-map the low
+    // addresses to force BinaryLoader::remap() to move the specimen to a higher address. [Robb P. Matzke 2013-11-26]
+    Extent exclusion_area(0, 0x03000000); // size is arbitrary, but something recognizable
+    SgAsmGenericSection *text = spec_header->get_section_by_name(".text");
+    bool added_exclusion_area = false;
+    if (text!=NULL && text->is_mapped() && text->get_mapped_preferred_extent().overlaps(exclusion_area)) {
+        std::cerr <<argv0 <<": specimen is a shared object; remapping it to a higher virtual address\n";
+        MemoryMap *map = interp->get_map();
+        if (!map)
+            interp->set_map(map = new MemoryMap);
+        map->insert(exclusion_area,
+                    MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(exclusion_area.size()),
+                                       0, MemoryMap::MM_PROT_NONE, "temporary exclusion area"));
+        added_exclusion_area = true;
+    }
+
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
     // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
     // disassembler.
@@ -988,6 +1007,8 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         return NULL;
     }
     assert(interp->get_map()!=NULL);
+    if (added_exclusion_area)
+        interp->get_map()->erase(exclusion_area);
     MemoryMap map = *interp->get_map();
     link_builtins(spec_header, builtin_header, &map);
 
@@ -1126,30 +1147,35 @@ finish_command(const SqlDatabase::TransactionPtr &tx, int64_t hashkey, const std
     }
 }
 
-// Return the name of a file containing the specified function.
+// Return the name of a file for the specified header (or AST descendant thereof)
 std::string
-filename_for_function(SgAsmFunction *function, bool basename)
+filename_for_header(SgAsmGenericHeader *hdr, bool basename)
 {
     std::string retval;
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-        size_t nmatch;
-        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
-        if (nmatch>0) {
-            SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(*hi);
-            if (file!=NULL && !file->get_name().empty()) {
-                retval = file->get_name();
-                break;
-            }
-        }
-    }
+    SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(hdr);
+    if (file!=NULL && !file->get_name().empty())
+        retval = file->get_name();
     if (basename) {
         size_t slash = retval.rfind('/');
         if (slash!=std::string::npos)
             retval = retval.substr(slash+1);
     }
     return retval;
+}
+
+// Return the name of a file containing the specified function.
+std::string
+filename_for_function(SgAsmFunction *function, bool basename)
+{
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        size_t nmatch;
+        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
+        if (nmatch>0)
+            return filename_for_header(*hi, basename);
+    }
+    return "";
 }
 
 // Return a list of functions that are not already in the database, and appropriate ID numbers.  The functions are not

@@ -503,6 +503,7 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype ( "SgInitializedName::asm_register_name_enum", "register_name_code", "= SgInitializedName::e_invalid_register",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // This is python specific support (added by Michael Driscoll 2011-08-04).
      InitializedName.setDataPrototype ( "SgInitializedName::excess_specifier_enum", "excess_specifier", "= SgInitializedName::e_excess_specifier_none",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -581,7 +582,13 @@ Grammar::setUpNodes ()
   // DQ (5/12/2011): Added information required for new name qualification support.
      InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+#if 0
+  // DQ (11/18/2013): Added final to support Java (which can use it to represent const function parameters in function declarations).
+  // This support is represented as a declaration modifier (but that is not sufficient for use in function parameters).
+  // As supported in declaration modifiers, this use is semantically different than its use in function parameters.
+     InitializedName.setDataPrototype("bool","isFinal","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // ***********************************************************************
   // ***********************************************************************

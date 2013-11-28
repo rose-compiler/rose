@@ -1202,7 +1202,15 @@ Partitioner::mark_ipd_configuration()
 void
 Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
 {
+    assert(fhdr!=NULL);
     SgRVAList entries = fhdr->get_entry_rvas();
+
+    // Libraries don't have entry addresses
+    if ((entries.empty() || (1==entries.size() && 0==entries[0].get_rva())) &&
+        SgAsmExecutableFileFormat::PURPOSE_LIBRARY==fhdr->get_exec_format()->get_purpose()) {
+        return;
+    }
+
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
         if (find_instruction(entry_va))
@@ -1339,13 +1347,21 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
                 symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                 symbol->get_value()!=0) {
-                rose_addr_t value = symbol->get_value();
-                if (find_instruction(value))
-                    add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
-
-                /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
-                 * the value is used directly (the above code handled that case). */
+                rose_addr_t value = fhdr->get_base_va() + symbol->get_value();
                 SgAsmGenericSection *section = symbol->get_bound();
+
+                // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
+                // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                rose_addr_t va_1 = value;
+                if (section!=NULL && section->is_mapped() &&
+                    section->get_mapped_preferred_va()!=section->get_mapped_actual_va()) {
+                    va_1 += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                }
+                if (find_instruction(va_1))
+                    add_function(va_1, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+
+                // Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
+                // the value is used directly (the above code handled that case). */
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
