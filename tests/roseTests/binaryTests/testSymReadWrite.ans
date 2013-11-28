@@ -22,10 +22,10 @@ registers:
   cf     = {defs={0x08048060}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])))}
   of     = {defs={0x08048060}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])))}
 memory:
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
 
 0x8048069:mov    ecx, DWORD PTR ss:[esp]
 registers:
@@ -40,10 +40,10 @@ registers:
   cf     = {defs={0x08048060}, expr=(invert[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])))}
   of     = {defs={0x08048060}, expr=(bv-xor[1] (extract[1] 32[32] 33[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])) (extract[1] 31[32] 32[32] (bv-xor[33] (uextend[33] 33[32] esp_0[32]) (add[33] (uextend[33] 33[32] esp_0[32]) 4294967288[33]) 4294967287[33])))}
 memory:
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
 
 0x804806c:mov    eax, DWORD PTR ss:[esp + 0xfc<-0x04>]
 registers:
@@ -62,10 +62,10 @@ memory:
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -10[32])} value=(extract[8] 16[32] 24[32] v2809[32])
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -11[32])} value=(extract[8] 8[32] 16[32] v2809[32])
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -12[32])} value=(extract[8] 0[32] 8[32] v2809[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
 
 0x8048070:mov    eax, 0x00000001
 registers:
@@ -84,10 +84,10 @@ memory:
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -10[32])} value=(extract[8] 16[32] 24[32] v2809[32])
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -11[32])} value=(extract[8] 8[32] 16[32] v2809[32])
   addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] -12[32])} value=(extract[8] 0[32] 8[32] v2809[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
-  addr={defs={0x08048060,0x08048066}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -5[32])} value=(extract[8] 24[32] 32[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -6[32])} value=(extract[8] 16[32] 24[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -7[32])} value=(extract[8] 8[32] 16[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[32] esp_0[32] -8[32])} value=(extract[8] 0[32] 8[32] eax_0[32])
 
 0x8048075:int    0x80
 registers:

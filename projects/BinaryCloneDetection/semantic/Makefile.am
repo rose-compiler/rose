@@ -50,6 +50,11 @@ noinst_PROGRAMS += 25-run-tests
 25_run_tests_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 27-update-aggprops
+27_update_aggprops_SOURCES = 27-update-aggprops.C
+27_update_aggprops_CPPFLAGS = $(ROSE_INCLUDES)
+27_update_aggprops_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 30-39: analysing test results
 noinst_PROGRAMS += 31-func-similarity-worklist
