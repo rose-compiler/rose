@@ -220,8 +220,8 @@ select file.id, file.name, file.digest, count(*) as nfunctions
 
 -- Some false negatives
 select func1.name,
-       func1.file_id as file1_id, func1.id as func1_id,
-       func2.file_id as file2_id, func2.id as func2_id,
+       func1.specimen_id as specimen1_id, func1.file_id as file1_id, func1.id as func1_id,
+       func2.specimen_id as specimen2_id, func2.file_id as file2_id, func2.id as func2_id,
        debug_ep.similarity
     from debug_ep
     join debug_functions as func1 on debug_ep.func1_id = func1.id
@@ -231,9 +231,8 @@ select func1.name,
     limit 20;
 
 -- Some false positives
-select func1.name,
-       func1.file_id as file1_id, func1.id as func1_id,
-       func2.file_id as file2_id, func2.id as func2_id,
+select func1.name, func1.specimen_id, func1.file_id as file1_id, func1.id as func1_id,
+       func2.name, func2.specimen_id, func2.file_id as file2_id, func2.id as func2_id,
        debug_en.similarity
     from debug_en
     join debug_functions as func1 on debug_en.func1_id = func1.id
