@@ -1645,6 +1645,36 @@ public:
         return word.known_value();
     }
 
+    // Returns true if the instruction is of the form "jmp [ebx+OFFSET]"
+    bool is_thunk_ebx(SgAsmx86Instruction *insn, rose_addr_t *offset_ptr/*out*/) {
+        const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+        if (x86_jmp!=insn->get_kind() || 1!=args.size())
+            return false;
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+        if (!mre)
+            return false;
+        SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
+        if (!add)
+            return false;
+        SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(add->get_lhs());
+        if (!reg || reg->get_descriptor()!=RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32))
+            return false;
+        SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(add->get_rhs());
+        if (!offset)
+            return false;
+        if (offset_ptr)
+            *offset_ptr = offset->get_absolute_value();
+        return true;
+    }
+
+    SgAsmGenericHeader *header_for_va(rose_addr_t va) {
+        const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+        for (size_t i=0; i<hdrs.size(); ++i) {
+            if (hdrs[i]->get_best_section_by_va(va, false))
+                return hdrs[i];
+        }
+    }
+        
     // Called by instruction semantics before each instruction is executed
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (ninsns++ >= params.timeout)
@@ -1711,6 +1741,24 @@ public:
                         stack_frame.follow_calls = true;
                     }
                     break;
+            }
+        }
+
+        // Special handling for thunks that use the form "jmp [ebx+OFFSET]". The ebx register needs to be loaded with the
+        // address of the .got.plt before executing this function.
+        rose_addr_t got_offset = 0;
+        if (is_thunk_ebx(insn, &got_offset) &&
+            0==(state.register_rw_state.gpr[x86_gpr_bx].state & (HAS_BEEN_WRITTEN|HAS_BEEN_READ))) {
+            SgAsmGenericHeader *fhdr = header_for_va(insn->get_address());
+            SgAsmGenericSection *gotplt = fhdr ? fhdr->get_section_by_name(".got.plt") : NULL;
+            if (gotplt && gotplt->is_mapped() && got_offset+4<=gotplt->get_size()) {
+                state.registers.gpr[x86_gpr_bx] = ValueType<32>(gotplt->get_mapped_actual_va());
+                state.register_rw_state.gpr[x86_gpr_bx].state |= HAS_BEEN_INITIALIZED;
+                if (params.verbosity>=EFFUSIVE) {
+                    std::cerr <<"CloneDetection: special handling for thunk"
+                              <<" at " <<StringUtility::addrToString(insn->get_address())
+                              <<": set EBX = " <<StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
+                }
             }
         }
         
@@ -2378,6 +2426,10 @@ int64_t start_command(const SqlDatabase::TransactionPtr&, int argc, char *argv[]
 /** Called just before a command's final commit. The @p hashkey should be the value returned by start_command().
  *  The description can be updated if desired. */
 void finish_command(const SqlDatabase::TransactionPtr&, int64_t hashkey, const std::string &desc="");
+
+/** Return the name of the file that contains the specified header.  If basename is true then return only the base name, not
+ *  any directory components. */
+std::string filename_for_header(SgAsmGenericHeader*, bool basename=false);
 
 /** Return the name of the file that contains the specified function.  If basename is true then return only the base name, not
  *  any directory components. */
