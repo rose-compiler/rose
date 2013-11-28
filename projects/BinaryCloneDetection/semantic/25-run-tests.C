@@ -1228,9 +1228,6 @@ main(int argc, char *argv[])
         }
 
         // Find the function to test
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-29]*/
-        std::cerr <<"func_id=" <<work.func_id <<"\r";
-#endif
         IdFunctionMap::iterator func_found = functions.find(work.func_id);
         assert(func_found!=functions.end());
         SgAsmFunction *func = func_found->second;

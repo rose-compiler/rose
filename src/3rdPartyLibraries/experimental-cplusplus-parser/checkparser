@@ -1,0 +1,195 @@
+#/bin/bash
+
+# Testscript
+# Author: Markus Schordan, 2013.
+
+# defaults
+PARSER=sglr
+TESTPATH=../../../tests/CompileTests/Cxx_tests
+WITH_CPP="yes"
+
+if [[ ($# -eq 0) || ($# -ge 4) || $1 == "-h" || $1 == "--help" ]]
+then
+  echo "usage: checkparser <PARSER> [--without-cpp] [TESTPATH]"
+  echo "notes: for sglri the flag '--heuristic-filters on' is set automatically."
+  echo "       TESTPATH defaults to Cxx_tests in the ROSE distribution."
+  exit 0
+fi
+
+PARSER=$1
+
+# check if parser exists
+command -v $PARSER >/dev/null 2>&1 || { echo "Error: $PARSER is specified as parser-generator but it is not installed. Aborting." >&2; exit 1; }
+
+if [[ $# -eq 2 ]]
+then
+  if [[ $2 == "--without-cpp" ]]
+  then
+    WITH_CPP="no"
+  else
+    TESTPATH=$2
+  fi
+fi
+
+if [[ $# -eq 3 ]]
+then
+  if [[ $2 == "--without-cpp" ]]
+  then
+    WITH_CPP="no";
+  else
+    echo "Error: wrong options."
+    exit 1;
+  fi
+  TESTPATH=$3
+fi
+
+# check if test path does not exist
+if [ ! -d "$TESTPATH" ]
+then
+  echo "Error: test path $TESTPATH does not exist. Aborting."
+  exit 1;
+fi
+
+# automatic selection of options
+PARSEROPT=
+if [[ $PARSER == "sglri" ]]
+then
+  PARSEROPT='--heuristic-filters on'
+fi
+
+echo    "Parser        : $PARSER"
+echo    "Parser-options: $PARSEROPT"
+echo    "Preprocessing : $WITH_CPP"
+echo    "Test path     : $TESTPATH"
+
+TESTPATH_INCLUDES=$TESTPATH
+
+# 60min*6 = 6 minutes kill time
+KILLTIME=360
+
+TIMEOUT=./timeout.sh
+
+PREPROCESSOR=cpp
+
+# ensure that up-to-date CPP.tbl is available
+rm -f CPP.def
+rm -f CPP.tbl
+pack-sdf -i Main.sdf -o CPP.def
+sdf2table -t -i CPP.def -o CPP.tbl
+
+MIN_LOC=0
+MAX_LOC=150000
+
+columns=$(tput cols)
+txtred=$(tput setaf 1) # Red
+txtgrn=$(tput setaf 2) # Green
+txtbrn=$(tput setaf 3) # Brown
+txtblu=$(tput setaf 4) # Blue
+txtpur=$(tput setaf 5) # Purple
+txtcyn=$(tput setaf 6) # Cyan
+txtgry=$(tput setaf 7) # Grey
+txtrst=$(tput sgr0) # Text reset.
+
+colFAIL="${txtred}FAIL${txtrst}"
+colPASS="${txtgrn}PASS${txtrst}"
+colSKIP="${txtgrn}SKIP${txtrst}"
+
+NUM_TESTS_FOUND=0
+NUM_TESTS=0
+CURRENT_TEST_NR=0
+NUM_SUCCESS=0
+NUM_FAIL=0
+NUM_IGNORED=0
+NUM_XFAIL=0
+NUM_ROSE_FAIL=0
+
+if [[ $WITH_CPP == "no" ]];
+then
+  # this also filters old-style pragmas
+  TESTPATH_SEL=`grep "#" $TESTPATH/*.C -L | tr "\n" " "`
+  NUM_TESTS_FOUND=`grep "#" $TESTPATH/*.C -L | wc -l`
+else
+  TESTPATH_SEL=`ls $TESTPATH/*.C -1 | tr "\n" " "`
+  NUM_TESTS_FOUND=`ls $TESTPATH/*.C -1 | wc -l`
+fi
+
+#####################################################################################
+
+# test2013_233.C contains a syntax error that g++ does find because it is inside an
+# non-instantiated template code (missing ';' in line 81897)
+# test2004_15.C, test2012_259.C: contain a pragmas at random locations (the grammar allows for locations as used with omp etc.)
+
+EXCLUDEDFILES="test2013_233.C test2004_15.C test2012_259.C"
+
+for EXCLUDE in $EXCLUDEDFILES
+do
+    TESTPATH_SEL=`echo $TESTPATH_SEL | sed "s/\b$EXCLUDE\b//g"`
+    echo "EXCLUDED FILE: $EXCLUDE"
+    NUM_XFAIL=$(($NUM_XFAIL+1))
+    NUM_TESTS_FOUND=$(($NUM_TESTS_FOUND-1))
+done
+
+#####################################################################################
+
+FAIL_LOG_FILE="error-log.txt"
+rm -f $FAIL_LOG_FILE
+touch $FAIL_LOG_FILE
+
+# iterate through all *.cpp files in dir
+
+for FILE in $TESTPATH_SEL; do
+if [ -f $FILE ];
+then
+  FILEINFO="$txtgry$FILE$txtrst"
+  FILEINFO_NOCOLOR="$FILE"
+  # redirect both stdout and stderr to /dev/null
+  CURRENT_TEST_NR=$(($CURRENT_TEST_NR+1))
+  g++ -I$TESTPATH_INCLUDES -c $FILE > /dev/null 2>&1
+  if [ $? -eq 0 ];
+  then
+    #echo "FILE: $FILE : G++ parser: OK"
+    NUM_TESTS=$(($NUM_TESTS+1))
+
+      $PREPROCESSOR -I$TESTPATH_INCLUDES -P $FILE checkfile.cpp &>/dev/null
+      loc=`wc -l checkfile.cpp | cut -d" " -f1`
+	  printf "%4s of %4s: LOC=%6s: " $CURRENT_TEST_NR $NUM_TESTS_FOUND $loc
+      if [[ ($loc -ge $MIN_LOC) && ($loc -le $MAX_LOC) ]];
+      then 
+        $TIMEOUT $KILLTIME $PARSER -p CPP.tbl -i checkfile.cpp -o tmp.pt $PARSEROPT > /dev/null 2>&1
+        if [ $? -eq 0 ];
+        then
+          NUM_SUCCESS=$(($NUM_SUCCESS+1))
+	  echo "$colPASS: $FILEINFO"
+        else
+          NUM_FAIL=$(($NUM_FAIL+1))
+	  echo "$colFAIL: $FILEINFO"
+	  echo "$FILEINFO_NOCOLOR" >> $FAIL_LOG_FILE
+        fi
+      else
+        NUM_IGNORED=$(($NUM_IGNORED+1))
+		echo -n "MAXLOCIGNORED: $FILEINFO"
+      fi
+      rm -f tmp.pt
+  else # harvesting
+    NOLOC="------"
+    printf "%4s of %4s: LOC=%-6s: " $CURRENT_TEST_NR $NUM_TESTS_FOUND $NOLOC
+    echo "$colSKIP: $txtgry$FILE$txtrst"
+  fi
+  FILEBASENAME=`basename $FILE .C`
+  rm -f $FILEBASENAME.o
+fi # file exists
+done
+
+#clean up of temporary files
+rm -f tmp.pt
+
+NUM_TESTS=$(($NUM_TESTS-$NUM_IGNORED))
+
+echo "-----------------------------------------------------------------------------"
+echo "SUCCESS: $NUM_SUCCESS, FAIL: $NUM_FAIL, IGNORED: $NUM_IGNORED, XFAIL: $NUM_XFAIL, TOTAL: $NUM_TESTS (excluding SKIPPED)"
+if [ $NUM_TESTS -ge 0 ];
+then
+percentage=`echo "scale=4; $NUM_SUCCESS/$NUM_TESTS*100"|bc -q`
+echo "SUCCESS RATE: ${percentage:0:5}%"  # remove last 2 chars
+fi
+echo "-----------------------------------------------------------------------------"

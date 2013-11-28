@@ -377,14 +377,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                if ( attachCommentOrDirective == true )
                   {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d \n",
+                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
                          currentPreprocessingInfoPtr->getString().c_str(),
                          currentPreprocessingInfoPtr->getLineNumber(),
                          (locatedNode->get_file_info()->isCompilerGenerated() == true) ? "compiler-generated" : "non-compiler-generated",
                          locatedNode,
                          locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str(),
                       // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
-                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line());
+                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(),
+                         PreprocessingInfo::relativePositionName(location).c_str());
                  // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
 #endif
                  // Mark this PreprocessingInfo object as having been placed into the AST
@@ -846,6 +847,45 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // DQ (12/15/2012): Generate the list of file ids to be considered equivalent to the input source file's filename.
      returnListOfAttributes->generateFileIdListFromLineDirectives();
 
+  // DQ (9/29/2013): Check the generated returnListOfAttributes for tokens.
+     if (returnListOfAttributes->get_rawTokenStream() != NULL)
+        {
+#if 0
+          printf ("Found the raw token stream in ROSE! returnListOfAttributes->get_rawTokenStream() = %p \n",returnListOfAttributes->get_rawTokenStream());
+#endif
+#if 0
+          LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
+#endif
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of CPP directives and comments = %d): \n",returnListOfAttributes->size());
+          printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of tokens = %zu): \n",tokenList.size());
+#endif
+#if 0
+       // Debugging output for token handling.
+          int counter = 0;
+          for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
+             {
+               printf ("   --- token #%d token = %p \n",counter,(*i)->p_tok_elem);
+               if ((*i)->p_tok_elem != NULL)
+                  {
+                    printf ("   --- --- token id = %d token = %s \n",(*i)->p_tok_elem->token_id,(*i)->p_tok_elem->token_lexeme.c_str());
+                  }
+
+            // DQ (9/29/2013): Added support for reference to the PreprocessingInfo object in the token stream.
+               printf ("   --- token #%d p_preprocessingInfo = %p \n",counter,(*i)->p_preprocessingInfo);
+
+               printf ("   --- token #%d beginning_fpi line = %d column = %d \n",counter,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num);
+               printf ("   --- token #%d ending_fpi    line = %d column = %d \n",counter,(*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num);
+
+               counter++;
+             }
+#endif
+#if 0
+          printf ("Exiting as a test in evaluation of token list in ROSE! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
      return returnListOfAttributes;
    }
 
@@ -1040,7 +1080,44 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // This will cause the CPP directives and comments list to be generated for the source file.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
           ROSE_ASSERT(currentListOfAttributes != NULL);
-         };
+
+
+       // *************************************************
+       // ** Save the ROSEAttributesList into the SgFile **
+       // *************************************************
+
+       // We need to extract the token list and save that in the current source file (currentFilePtr).
+       // SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
+       // ROSE_ASSERT(sourceFile != NULL);
+
+       // DQ (10/21/2013): This was reported as an error for test2008_01.F (fortran tests).
+       // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+          ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
+          if (filePreprocInfo != NULL)
+             {
+               ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+#if 0
+               printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
+#endif
+            // Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map)
+               filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+#if 0
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+#endif
+             }
+            else
+             {
+            // DQ (10/21/2013): I am not clear if this shuld be a warning, but I disabled the assertion above (required for 
+            // Fortran or perhaps masking another issue).  After more investigation, I think this is OK to comment out.
+#if 0
+               printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
+#endif
+             }
+#if 0
+          printf ("Exiting as a test so that we can get the token information attached to the SgSourceFile \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
         // Move attributes from the list of attributes into the collection of the current AST nodes,
        // we only consider statements for the moment, but this needs to be refined further on.
@@ -1399,6 +1476,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 #if 0
                printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentListOfAttributes = %p \n",currentListOfAttributes);
+#endif
+#if 0
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): This ROSEAttributesList should also be saved into the SgFile ROSEAttributesListContainer \n");
 #endif
             // ROSE_ASSERT(currentListOfAttributes != NULL);
                if (currentListOfAttributes == NULL)

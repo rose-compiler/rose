@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 MOSTLYCLEANFILES=
 EXTRA_DIST=
 noinst_PROGRAMS=
+TEST_TARGETS=
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
@@ -107,6 +108,13 @@ noinst_PROGRAMS += 105-api-similarity
 105_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 105_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 109_drop_indexes
+109_drop_indexes_SOURCES = 109-drop-indexes.C
+109_drop_indexes_CPPFLAGS = $(ROSE_INCLUDES)
+109_drop_indexes_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+EXTRA_DIST += compute-pairwise-precision.sql
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 110-120: run evaluation metrics on pairwise binaries
@@ -116,10 +124,16 @@ noinst_PROGRAMS += 110_compute_aggregate
 110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += compute-pairwise-precision.sql
 
+
 noinst_PROGRAMS += 115_syscall_usage
 115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
 115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
 115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += 119_create_graphs
+119_create_graphs_SOURCES = 119-create-graphs.C   
+119_create_graphs_CPPFLAGS = $(ROSE_INCLUDES)
+119_create_graphs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 
@@ -129,13 +143,21 @@ noinst_PROGRAMS += 115_syscall_usage
 builtins.so: builtins-string.c builtins-stdio.c
 	$(CC) $(CFLAGS32) -Wall -fPIC -shared -o $@ $<
 
-
 #-----------------------------------------------------------------------------------------------------------------------------
 MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: Schema.sql
-	@echo "  GEN     $@"
+	@echo "  GEN    $@"
 	@echo "namespace CloneDetection {" 			>$@
 	@echo "const char *schema =" 				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+	@echo "} //namespace" 					>>$@
+
+MOSTLYCLEANFILES += FailureDetectionSchema.C
+FailureDetectionSchema.C: compute-pairwise-precision.sql
+	@echo "  GEN     $@"
+	@echo "namespace FailureEvaluation {"  			>$@
+	@echo "const char *failure_schema =" 				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
 	@echo ';' 						>>$@
 	@echo "} //namespace" 					>>$@
@@ -148,14 +170,24 @@ CloneDetection_SPECIMENS =			\
 	tests/simple001.C			\
 	tests/simple002.C
 
-MOSTLYCLEANFILES += FailureDetectionSchema.C
-FailureDetectionSchema.C: compute-pairwise-precision.sql
-	@echo "  GEN     $@"
-	@echo "namespace FailureEvaluation {"  			>$@
-	@echo "const char *failure_schema =" 				>>$@
-	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
-	@echo ';' 						>>$@
-	@echo "} //namespace" 					>>$@
+#-----------------------------------------------------------------------------------------------------------------------------
+# A very simple test to ensure that basic things are working
 
+if ROSE_USE_SQLITE_DATABASE
+TEST_TARGETS += basic.passed
+endif
 
+EXTRA_DIST += basic.conf
+
+basic.passed: basic.conf 00-create-schema 10-generate-inputs 11-add-functions 20-get-pending-tests 25-run-tests \
+		31-func-similarity-worklist 32-func-similarity 90-list-function
+	@$(RTH_RUN) $< $@
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
+
+check-local: $(TEST_TARGETS)
+
+clean-local:
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 

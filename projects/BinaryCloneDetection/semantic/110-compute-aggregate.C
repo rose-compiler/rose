@@ -137,7 +137,7 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
     pecent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     pecent_similar_stmt->bind(1, cur_bucket);
     pecent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    pecent_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+    pecent_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
 
     pecent_similar_stmt->execute();
 
@@ -154,7 +154,7 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
     global_percent_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     global_percent_similar_stmt->bind(3, cur_bucket);
     global_percent_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
-    global_percent_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+    global_percent_similar_stmt->bind(5, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
     global_percent_similar_stmt->bind(6, num_matches);
 
     global_percent_similar_stmt->execute();
@@ -205,7 +205,7 @@ compute_mean_similarity_statistics( double bucket_size, double increment, std::s
     mean_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     mean_similar_stmt->bind(1, cur_bucket);
     mean_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    mean_similar_stmt->bind(3, ((double) num_matches*100.0)/num_pairs);
+    mean_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0 );
 
     mean_similar_stmt->execute();
 
@@ -222,7 +222,7 @@ compute_mean_similarity_statistics( double bucket_size, double increment, std::s
     global_mean_similar_stmt->bind(2, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size );
     global_mean_similar_stmt->bind(3, cur_bucket);
     global_mean_similar_stmt->bind(4, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size);
-    global_mean_similar_stmt->bind(5, ((double) num_matches*100.0)/num_pairs);
+    global_mean_similar_stmt->bind(5, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
 
     global_mean_similar_stmt->execute();
   
@@ -265,7 +265,7 @@ compute_aggregate_statistics(double bucket_size, double increment, SqlDatabase::
     percent_similar_stmt->bind(0, cur_bucket - bucket_size < 0 ? 0 : cur_bucket - bucket_size);
     percent_similar_stmt->bind(1, cur_bucket);
     percent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
-    percent_similar_stmt->bind(3, ((double) num_matches * 100.0)/num_pairs);
+    percent_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches * 100.0)/num_pairs : 0 );
     percent_similar_stmt->bind(4, num_matches);
 
     percent_similar_stmt->execute();
@@ -405,35 +405,38 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
   r_transaction->execute("drop table IF EXISTS resilience_to_optimization_rate ");
   r_transaction->execute("create table resilience_to_optimization_rate( " 
       " recall_min double precision, recall_max double precision, " 
-      " recall_mean double precision, recall_variance double precision, " 
+      " recall_mean double precision, recall_standard_deviation double precision, " 
       " specificity_min double precision, specificity_max double precision, "
-      " specificity_mean double precision, specificity_variance double precision, "
+      " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
-      " precision_mean double precision, precision_variance double precision "
+      " precision_mean double precision, precision_standard_deviation double precision "
       " );");
 
 
   SqlDatabase::StatementPtr insert_overall_rates_stmt = r_transaction->statement("insert into resilience_to_optimization_rate"
-      // 0        1         2           3          4
-      "(recall_min, recall_max, recall_mean, recall_variance, "
-      "specificity_min, specificity_max, specificity_mean, specificity_variance, "
-      "precision_min, precision_max, precision_mean, precision_variance)"
-      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      // 0           1           2            3          
+      "(recall_min, recall_max, recall_mean, recall_standard_deviation, "
+      // 4              5                 6                 7
+      "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
+      // 8              9                 10          11
+      "precision_min, precision_max, precision_mean, precision_standard_deviation)"
+      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 
 
-  insert_overall_rates_stmt->bind(1, min(recalls));
-  insert_overall_rates_stmt->bind(2, max(recalls));
-  insert_overall_rates_stmt->bind(3, mean(recalls));
-  insert_overall_rates_stmt->bind(4, sqrt(boost::accumulators::variance(recalls)));
-  insert_overall_rates_stmt->bind(5, min(specificity));
-  insert_overall_rates_stmt->bind(6, max(specificity));
-  insert_overall_rates_stmt->bind(7, mean(specificity));
-  insert_overall_rates_stmt->bind(8, sqrt(boost::accumulators::variance(specificity)));
-  insert_overall_rates_stmt->bind(9, min(precision));
-  insert_overall_rates_stmt->bind(10, max(precision));
-  insert_overall_rates_stmt->bind(11, mean(precision));
-  insert_overall_rates_stmt->bind(12, sqrt(boost::accumulators::variance(precision)));
+  insert_overall_rates_stmt->bind(0, min(recalls));
+  insert_overall_rates_stmt->bind(1, max(recalls));
+  insert_overall_rates_stmt->bind(2, mean(recalls));
+  insert_overall_rates_stmt->bind(3, sqrt(boost::accumulators::variance(recalls)));
+  insert_overall_rates_stmt->bind(4, min(specificity));
+  insert_overall_rates_stmt->bind(5, max(specificity));
+  insert_overall_rates_stmt->bind(6, mean(specificity));
+  insert_overall_rates_stmt->bind(7, sqrt(boost::accumulators::variance(specificity)));
+  insert_overall_rates_stmt->bind(8, min(precision));
+  insert_overall_rates_stmt->bind(9, max(precision));
+  insert_overall_rates_stmt->bind(10, mean(precision));
+  insert_overall_rates_stmt->bind(11, sqrt(boost::accumulators::variance(precision)));
+  insert_overall_rates_stmt->execute();
 
   std::cout << "\n\n Overall for all optimization levels for this db group: " << std::endl;
   std::cout << "\n\n    recall is      " << mean(recalls)     << "+-" << sqrt(boost::accumulators::variance(recalls))     << " min " << min(recalls)     << " max " << max(recalls) ;
@@ -491,8 +494,8 @@ int main(int argc, char *argv[])
 
 
   double sem_threshold  = 0.7;
-  double path_threshold = 0.5;
-  double cg_threshold   = 0.5;
+  double path_threshold = 0.0;
+  double cg_threshold   = 0.0;
 
   double bucket_size = 0.0250;
   double increment   = 0.0500;
@@ -535,19 +538,19 @@ int main(int argc, char *argv[])
   r_transaction->execute("drop table IF EXISTS specimen_results");
   r_transaction->execute("create table specimen_results( name text, " 
       " recall_min double precision, recall_max double precision, " 
-      " recall_mean double precision, recall_variance double precision, " 
+      " recall_mean double precision, recall_standard_deviation double precision, " 
       " specificity_min double precision, specificity_max double precision, "
-      " specificity_mean double precision, specificity_variance double precision, "
+      " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
-      " precision_mean double precision, precision_variance double precision "
+      " precision_mean double precision, precision_standard_deviation double precision "
       " );");
 
 
   SqlDatabase::StatementPtr insert_stmt = r_transaction->statement("insert into specimen_results"
       // 0        1         2           3          4
-      "(name, recall_min, recall_max, recall_mean, recall_variance, "
-      "specificity_min, specificity_max, specificity_mean, specificity_variance, "
-      "precision_min, precision_max, precision_mean, precision_variance)"
+      "(name, recall_min, recall_max, recall_mean, recall_standard_deviation, "
+      "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
+      "precision_min, precision_max, precision_mean, precision_standard_deviation)"
       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
   r_transaction->execute("drop table IF EXISTS per_specimen_results");
@@ -615,9 +618,9 @@ int main(int argc, char *argv[])
   
 	per_insert_stmt->bind(0, it->first);
 	per_insert_stmt->bind(1, *m_it); 
-	per_insert_stmt->bind(2, cur_recall);  
+	per_insert_stmt->bind(2, cur_precision);  
 	per_insert_stmt->bind(3, cur_specificity);  
-	per_insert_stmt->bind(4, cur_precision);  
+	per_insert_stmt->bind(4, cur_recall);  
 
         per_insert_stmt->execute();
 
