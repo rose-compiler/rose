@@ -119,12 +119,12 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
 
   transaction->execute("drop table IF EXISTS fr_percent_similar");
   transaction->execute("create table fr_percent_similar(similarity_low double precision, similarity_middle double precision," 
-      " similarity_high double precision, percent double precision);");
+      " similarity_high double precision, percent double precision, num_matches integer);");
 
   SqlDatabase::StatementPtr pecent_similar_stmt = transaction->statement("insert into fr_percent_similar"
       // 0        1         2           3          4
-      "(similarity_low, similarity_middle, similarity_high, percent) "
-      " values (?, ?, ?, ?)"
+      "(similarity_low, similarity_middle, similarity_high, percent, num_matches) "
+      " values (?, ?, ?, ?, ?)"
       );
 
   for(double cur_bucket = 0.0; cur_bucket <= 1.0+bucket_size ; cur_bucket+=increment )
@@ -138,6 +138,7 @@ compute_percent_similarity_statistics( double bucket_size, double increment, std
     pecent_similar_stmt->bind(1, cur_bucket);
     pecent_similar_stmt->bind(2, cur_bucket + bucket_size >= 1.0 ? 1.0 : cur_bucket + bucket_size );
     pecent_similar_stmt->bind(3, num_pairs > 0 ? ((double) num_matches*100.0)/num_pairs : 0);
+    pecent_similar_stmt->bind(4, num_matches);
 
     pecent_similar_stmt->execute();
 
