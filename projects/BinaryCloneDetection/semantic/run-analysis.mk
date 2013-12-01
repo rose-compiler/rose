@@ -61,3 +61,17 @@ $(as_targets): %.as.out: %
 	fi
 	@mv $@.tmp $@
 	@echo "api-similarities for $< completed"       
+
+###############################################################################################################################
+ca_targets=$(INPUTS)
+
+ca-computation: $(ca_targets)
+
+$(ca_targets):  
+	@echo "+ $(BINDIR)/110_compute_aggregate $(RUN_FLAGS) -- postgresql:///$@" 
+	$(BINDIR)/110_compute_aggregate $(RUN_FLAGS) -- postgresql:///$@;		
+	@echo "ca-computation for $@ completed"       
+
+
+
+
