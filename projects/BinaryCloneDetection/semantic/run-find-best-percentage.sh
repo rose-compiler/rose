@@ -122,7 +122,8 @@ execute psql  $threshold_db_name -c "create table search_for_best_precision( \
           specificity_min double precision, specificity_max double precision, \
           specificity_mean double precision, specificity_standard_deviation double precision, \
           precision_min double precision, precision_max double precision, \
-          precision_mean double precision, precision_standard_deviation double precision);"
+          precision_mean double precision, precision_standard_deviation double precision, \
+          fscore double precision );"
 
 for sem_threshold in $(seq 0.000 0.100 1.00); 
 do 
@@ -154,10 +155,11 @@ do
       execute psql $threshold_db_name -c "insert into search_for_best_precision(sem_threshold, cg_threshold, path_threshold, \
         recall_min, recall_max, recall_mean, recall_standard_deviation, \
         specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, \
-        precision_min, precision_max, precision_mean, precision_standard_deviation) \
+        precision_min, precision_max, precision_mean, precision_standard_deviation, fscore) \
         values ($sem_threshold, $cg_threshold, $path_threshold, $recall_min, $recall_max, $recall_mean, $recall_standard_deviation, \
             $specificity_min, $specificity_max, $specificity_mean, $specificity_standard_deviation, \
-            $precision_min, $precision_max, $precision_mean, $precision_standard_deviation)"
+            $precision_min, $precision_max, $precision_mean, $precision_standard_deviation, \
+            2*$precision_mean*$recall_mean/($precision_mean+$recall_mean) )"
 
     done                                                 
  done

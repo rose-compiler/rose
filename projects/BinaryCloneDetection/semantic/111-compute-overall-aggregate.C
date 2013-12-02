@@ -304,12 +304,12 @@ void
 compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
 {
   r_transaction->execute("drop table IF EXISTS resilience_to_optimization");
-  r_transaction->execute("create table resilience_to_optimization(db_group text, recall double precision, specificity double precision, precision double precision );");
+  r_transaction->execute("create table resilience_to_optimization(db_group text, recall double precision, specificity double precision, precision double precision, fscore double precision );");
    
   SqlDatabase::StatementPtr insert_stmt = r_transaction->statement("insert into resilience_to_optimization"
      // 0     1         2               3               4               5
-     " (db_group, recall, specificity, precision)"
-     " values (?, ?,?,?) ");
+     " (db_group, recall, specificity, precision, fscore)"
+     " values (?, ?, ?, ?, ?) ");
 
   accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > recalls;
   accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > specificity;
@@ -343,6 +343,8 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
 			  insert_stmt->bind(1, cur_recall);
 			  insert_stmt->bind(2, cur_specificity);
 			  insert_stmt->bind(3, cur_precision);
+                          insert_stmt->bind(4, 2*( ( cur_precision*cur_recall ) / ( cur_precision+cur_recall )  ) );
+
 			  insert_stmt->execute();     
 		  } 
 	  }
@@ -355,7 +357,8 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       " specificity_min double precision, specificity_max double precision, "
       " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
-      " precision_mean double precision, precision_standard_deviation double precision "
+      " precision_mean double precision, precision_standard_deviation double precision, "
+      " fscore double precision "
       " );");
 
 
@@ -365,8 +368,8 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       // 4              5                 6                 7
       "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
       // 8              9                 10          11
-      "precision_min, precision_max, precision_mean, precision_standard_deviation)"
-      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      "precision_min, precision_max, precision_mean, precision_standard_deviation, fscore)"
+      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 
 
@@ -382,6 +385,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
   insert_overall_rates_stmt->bind(9, max(precision));
   insert_overall_rates_stmt->bind(10, mean(precision));
   insert_overall_rates_stmt->bind(11, sqrt(boost::accumulators::variance(precision)));
+  insert_overall_rates_stmt->bind(12,2*( ( mean(precision) * mean(recalls)  ) / ( mean(precision) + mean(recalls)  )  ) );
   insert_overall_rates_stmt->execute();
 
   std::cout << "\n\n Overall for all optimization levels for this db group: " << std::endl;
@@ -402,12 +406,12 @@ void
 compute_overall_rates(SqlDatabase::TransactionPtr r_transaction)
 {
   r_transaction->execute("drop table IF EXISTS overall_rates");
-  r_transaction->execute("create table overall_rates(recall double precision, specificity double precision, precision double precision );");
+  r_transaction->execute("create table overall_rates(recall double precision, specificity double precision, precision double precision, fscore double precision );");
 
   SqlDatabase::StatementPtr insert_stmt = r_transaction->statement("insert into overall_rates"
      // 0     1         2               3               4               5
-     " (recall, specificity, precision)"
-     " values (?,?,?) ");
+     " (recall, specificity, precision, fscore)"
+     " values (?,?,?,?) ");
 
   SqlDatabase::StatementPtr stmt = r_transaction->statement("select sum(true_positives) as true_positives, sum(true_negatives) as true_negative,"
        " sum(false_positives) as false_positives, sum(false_negatives) as false_negatives from analysis_results");
@@ -426,6 +430,7 @@ compute_overall_rates(SqlDatabase::TransactionPtr r_transaction)
      insert_stmt->bind(0, recall);
      insert_stmt->bind(1, specificity);
      insert_stmt->bind(2, precision);
+     insert_stmt->bind(3, 2*(recall*precision/(recall+precision)));
      insert_stmt->execute();     
   } 
 
@@ -488,7 +493,8 @@ int main(int argc, char *argv[])
       " specificity_min double precision, specificity_max double precision, "
       " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
-      " precision_mean double precision, precision_standard_deviation double precision "
+      " precision_mean double precision, precision_standard_deviation double precision, "
+      " fscore double precision "
       " );");
 
 
@@ -496,20 +502,21 @@ int main(int argc, char *argv[])
       // 0        1         2           3          4
       "(name, recall_min, recall_max, recall_mean, recall_standard_deviation, "
       "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
-      "precision_min, precision_max, precision_mean, precision_standard_deviation)"
-      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      "precision_min, precision_max, precision_mean, precision_standard_deviation,"
+      "fscore)"
+      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
   r_transaction->execute("drop table IF EXISTS per_specimen_results");
   r_transaction->execute("create table per_specimen_results( db_group text, name text, " 
       " precision double precision, specificity double precision, " 
-      " recall double precision" 
+      " recall double precision, fscore double precision" 
       " );");
 
 
   SqlDatabase::StatementPtr per_insert_stmt = r_transaction->statement("insert into per_specimen_results"
       // 0        1         2           3          4
-      "(db_group, name,  precision, specificity, recall ) "
-      " values (?, ?, ?, ?, ?)");
+      "(db_group, name,  precision, specificity, recall, fscore ) "
+      " values (?, ?, ?, ?, ?, ?)");
 
 
   r_transaction->execute("drop table IF EXISTS fr_percent_similar; drop table IF EXISTS fr_mean_similar;");
@@ -555,6 +562,7 @@ int main(int argc, char *argv[])
 	per_insert_stmt->bind(2, cur_precision);  
 	per_insert_stmt->bind(3, cur_specificity);  
 	per_insert_stmt->bind(4, cur_recall);  
+        per_insert_stmt->bind(5, 2*(cur_precision*cur_recall/(cur_precision+cur_recall))); 
 
         per_insert_stmt->execute();
 
@@ -579,7 +587,8 @@ int main(int argc, char *argv[])
     insert_stmt->bind(10, max(precision));
     insert_stmt->bind(11, mean(precision));
     insert_stmt->bind(12, sqrt(boost::accumulators::variance(precision)));
- 
+    insert_stmt->bind(13,2*( ( mean(precision) * mean(recalls)  ) / ( mean(precision) + mean(recalls)  )  ) );
+
     insert_stmt->execute();
 
 
