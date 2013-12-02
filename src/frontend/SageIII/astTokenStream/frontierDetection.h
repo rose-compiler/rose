@@ -1,3 +1,13 @@
+
+#ifndef FRONTIER_DETECTION_HEADER
+#define FRONTIER_DETECTION_HEADER
+
+// DQ (12/1/2013): Added switch to control testing mode for token unparsing.
+// Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+// variable so that all regression tests can be processed to mix the unparsing of 
+// the token stream with unparsing from the AST.
+extern bool ROSE_tokenUnparsingTestingMode;
+
 // The support for unparsing from the token stream is a feature in 
 // ROSE to provide a new level of portability for the generated code.
 
@@ -14,7 +24,7 @@
 class FrontierDetectionForTokenStreamMapping_InheritedAttribute
    {
      public:
-       // Same a reference to the associated source file so that we can get the filename to compare against.
+       // Save a reference to the associated source file so that we can get the filename to compare against.
           SgSourceFile* sourceFile;
 
        // Detect when to stop processing deeper into the AST.
@@ -25,6 +35,12 @@ class FrontierDetectionForTokenStreamMapping_InheritedAttribute
           bool unparseUsingTokenStream;
           bool unparseFromTheAST;
           bool containsNodesToBeUnparsedFromTheAST;
+
+       // DQ (12/1/2013): Support specific restrictions in where frontiers can be placed.
+       // For now: avoid class declarations in typedefs using a mixture of unparsing from tokens and unparsing from the AST.
+       // bool isPartOfTypedefDeclaration;
+       // For now: avoid unparing the SgIfStmt from the AST and the conditional expression/statement from the token stream.
+       // bool isPartOfConditionalStatement;
 
        // Specific constructors are required
           FrontierDetectionForTokenStreamMapping_InheritedAttribute();
@@ -42,6 +58,8 @@ class FrontierNode
 
           bool unparseUsingTokenStream;
           bool unparseFromTheAST;
+
+          bool redundant_token_subsequence;
 
        // FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST) : node(node), unparseUsingTokenStream(unparseUsingTokenStream), unparseFromTheAST(unparseFromTheAST)
           FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST);
@@ -75,6 +93,8 @@ class FrontierDetectionForTokenStreamMapping_SynthesizedAttribute
 class FrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpProcessing<FrontierDetectionForTokenStreamMapping_InheritedAttribute,FrontierDetectionForTokenStreamMapping_SynthesizedAttribute>
    {
      public:
+          int numberOfNodes;
+
           FrontierDetectionForTokenStreamMapping( SgSourceFile* sourceFile);
 
        // virtual function must be defined
@@ -85,6 +105,8 @@ class FrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpProcessin
                FrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute, 
                SubTreeSynthesizedAttributes synthesizedAttributeList );
 
+       // This is used to test the random association of AST node to either token unparsing or AST unparsing.
+          int numberOfNodesInSubtree(SgSourceFile* sourceFile);
    };
 
 
@@ -117,3 +139,5 @@ class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
        // derived from AstAttribute, else just the base class AstAttribute will be copied).
           virtual AstAttribute* copy();
    };
+
+#endif
