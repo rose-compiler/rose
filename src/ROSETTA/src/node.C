@@ -156,6 +156,9 @@ Grammar::setUpNodes ()
      NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | UntypedFunctionCallStatement | UntypedBlockStatement | UntypedOtherStatement ,
          "UntypedStatement", "UntypedStatementTag", false);
 
+  // Additional IR nodes that we expect to require for located nodes:
+  //    UntypedInitializedName
+
      NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement,
          "UntypedNode", "UntypedNodeTag", false);
 

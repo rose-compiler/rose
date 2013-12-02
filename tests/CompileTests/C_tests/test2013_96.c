@@ -1,3 +1,5 @@
+#define VAR 42
+
 void foo1()
    {
      int x;
@@ -12,13 +14,13 @@ void foo2()
      int a;
      int b;
      int c;
-     int d;
-     int e;
-     x = 1;
-     a = x;
-     b = x;
-     c = x;
-     d = x;
+     int d = VAR;
+     int e = VAR;
+     x = VAR;
+     a = VAR;
+     b = VAR;
+     c = VAR;
+     d = VAR;
      e = x;
    }
 

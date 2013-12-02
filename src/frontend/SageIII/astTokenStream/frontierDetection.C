@@ -2,45 +2,73 @@
 
 // #include "general_token_defs.h"
 
+// DQ (11/29/2013): Added to support marking of redundant mappings of statements to token streams.
+#include "tokenStreamMapping.h"
+
 #include "frontierDetection.h"
 
 #include "previousAndNextNode.h"
 
+// DQ (11/29/2013): Added to support marking of redundant mappings of statements to token streams.
+// #include "tokenStreamMapping.h"
+
+
 using namespace std;
 
+// DQ (12/1/2013): Added switch to control testing mode for token unparsing.
+// Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+// variable so that all regression tests can be processed to mix the unparsing of 
+// the token stream with unparsing from the AST.
+bool ROSE_tokenUnparsingTestingMode = false;
 
 FrontierDetectionForTokenStreamMapping_InheritedAttribute::
 FrontierDetectionForTokenStreamMapping_InheritedAttribute()
    {
+     sourceFile        = NULL;
+     processChildNodes = false;
+
      isFrontier = false;
 
      unparseUsingTokenStream             = false;
      unparseFromTheAST                   = false;
      containsNodesToBeUnparsedFromTheAST = false;
+
+  // isPartOfTypedefDeclaration   = false;
+  // isPartOfConditionalStatement = false;
    }
 
 FrontierDetectionForTokenStreamMapping_InheritedAttribute::
 FrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile, int start, int end, bool processed)
    {
+     sourceFile        = input_sourceFile;
+     processChildNodes = processed;
+
      isFrontier = false;
 
      unparseUsingTokenStream             = false;
      unparseFromTheAST                   = false;
      containsNodesToBeUnparsedFromTheAST = false;
+
+  // isPartOfTypedefDeclaration   = false;
+  // isPartOfConditionalStatement = false;
    }
 
 
 FrontierDetectionForTokenStreamMapping_InheritedAttribute::
 FrontierDetectionForTokenStreamMapping_InheritedAttribute ( const FrontierDetectionForTokenStreamMapping_InheritedAttribute & X )
    {
+     sourceFile        = X.sourceFile;
+     processChildNodes = X.processChildNodes;
+
      isFrontier = X.isFrontier;
 
      unparseUsingTokenStream             = X.unparseUsingTokenStream;
      unparseFromTheAST                   = X.unparseFromTheAST;
      containsNodesToBeUnparsedFromTheAST = X.containsNodesToBeUnparsedFromTheAST;
+
+  // isPartOfTypedefDeclaration   = X.isPartOfTypedefDeclaration;
+  // isPartOfConditionalStatement = X.isPartOfConditionalStatement;
    }
-
-
 
 
 FrontierDetectionForTokenStreamMapping_SynthesizedAttribute::
@@ -88,6 +116,9 @@ FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(const FrontierDetect
 FrontierDetectionForTokenStreamMapping::
 FrontierDetectionForTokenStreamMapping( SgSourceFile* sourceFile)
    {
+  // This is the number of IR nodes in the current file and helpful in randomly 
+  // marking IR nodes for testing to be either from the AST or from the token stream.
+     numberOfNodes = numberOfNodesInSubtree(sourceFile);
    }
 
 
@@ -115,56 +146,156 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
      static int random_counter = 0;
 
 #if 0
-     printf ("*** In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     printf ("*** In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
 #endif
 
-#if 1
+     SgStatement* statement = isSgStatement(n);
+
   // Ignore IR nodes that are front-end specific (declarations of builtin functions, etc.).
-     if (n->get_file_info()->isFrontendSpecific() == false)
+  // if (n->get_file_info()->isFrontendSpecific() == false)
+     if (n->get_file_info()->isFrontendSpecific() == false && statement != NULL)
         {
        // Count the IR nodes traversed so that we can make a subset transformations.
           random_counter++;
         }
-#endif
 
      FrontierDetectionForTokenStreamMapping_InheritedAttribute returnAttribute;
 
-     SgStatement* statement = isSgStatement(n);
   // if (statement != NULL && random_counter > 30 && random_counter < 40)
      if (statement != NULL)
         {
 #if 0
-          printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement = %p = %s \n",statement,statement->class_name().c_str());
+          printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d statement = %p = %s \n",random_counter,statement,statement->class_name().c_str());
 #endif
           string name    = "token_frontier";
           string options = "color=\"blue\"";
 
        // This will later just check if this is a statement marked as a transformation or that it has been modified (checking the SgNode->isModified member flag).
-          if (random_counter > 30 && random_counter < 40)
+       // if (random_counter > 30 && random_counter < 40)
+       // int numberOfnode = numberOfNodes;
+
+       // Mark the middle 50% of IR nodes to come from the AST, instead of the token stream.
+       // int lowerbound = numberOfNodes / 4;
+       // int upperbound = 3 * (numberOfNodes / 4);
+          int lowerbound = -1;
+          int upperbound = -1;
+#if 0
+#if 0
+       // Unparse wholely from the token stream.
+          bool forceUnparseFromTokenStream = true;
+          bool forceUnparseFromAST         = false; // (forceUnparseFromTokenStream == false);
+#else
+       // Unparse wholely from the AST.
+          bool forceUnparseFromTokenStream = false;
+          bool forceUnparseFromAST         = true;
+#endif
+#else
+       // Unparse the middle of the AST from the AST and the outer 25% from the token stream.
+          bool forceUnparseFromTokenStream = false;
+          bool forceUnparseFromAST         = false;
+#endif
+
+       // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
+       // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+       // variable so that all regression tests can be processed to mix the unparsing of 
+       // the token stream with unparsing from the AST.
+          if (ROSE_tokenUnparsingTestingMode == true)
              {
-               printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",random_counter,statement,statement->class_name().c_str());
 
-               options = "color=\"red\"";
-
-               if (returnAttribute.unparseFromTheAST == false)
+               if (forceUnparseFromTokenStream == true || forceUnparseFromAST == true)
                   {
-                 // Mark this as the frontier only if this is the first time (while decending into the AST) 
-                 // that we will unparse this subtree from the AST.
-                    returnAttribute.isFrontier = true;
+                 // We need to set this to a sufficently high number so that the conditional below will always be false.
+                    static int max_numberOfNodes = 10000000; // (int)SgNode::numberOfNodes();
+
+                    if (forceUnparseFromAST == true)
+                       {
+                         ROSE_ASSERT(forceUnparseFromTokenStream == false);
+                         lowerbound = -1;
+                         upperbound = max_numberOfNodes;
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(forceUnparseFromTokenStream == true);
+
+                         lowerbound = max_numberOfNodes;
+                         upperbound = -1;
+#if 0
+                         printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): max_numberOfNodes = %d \n",max_numberOfNodes);
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // DQ (12/1/2013): This is the testing mode for all regression tests.
+                    ROSE_ASSERT(forceUnparseFromAST == false);
+                    ROSE_ASSERT(forceUnparseFromTokenStream == false);
+
+                    lowerbound = numberOfNodes / 4;
+                    upperbound = 3 * (numberOfNodes / 4);
                   }
 
-               returnAttribute.unparseFromTheAST       = true;
-               returnAttribute.unparseUsingTokenStream = false;
+            // bool skipMarkingAsToBeUnparsedFromAST  = false;
+            // if ( (random_counter > lowerbound && random_counter < upperbound) || forceFromTokenStream == true)
+               if ( random_counter >= lowerbound && random_counter <= upperbound )
+                  {
+#if 0
+                    printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",random_counter,statement,statement->class_name().c_str());
+#endif
+                    options = "color=\"red\"";
+
+                    if (returnAttribute.unparseFromTheAST == false)
+                       {
+                      // Mark this as the frontier only if this is the first time (while decending into the AST) 
+                      // that we will unparse this subtree from the AST.
+                         returnAttribute.isFrontier = true;
+                       }
+
+                    returnAttribute.unparseFromTheAST       = true;
+                    returnAttribute.unparseUsingTokenStream = false;
+                  }
+                 else
+                  {
+                    returnAttribute.unparseUsingTokenStream = true;
+                  }
              }
             else
              {
-               returnAttribute.unparseUsingTokenStream = true;
+            // DQ (12/1/2013): The default is to unparse using the token stream, unless transformations are detected.
+            // We may at some point introduce a mechanism to disable transformations where macros have 
+            // been expanded so that we can define a SAFE system.  This has not been done yet.
+
+            // returnAttribute.unparseUsingTokenStream = true;
+               if (statement->get_file_info()->isTransformation() == true)
+                  {
+#if 0
+                    printf ("Found an AST transformation: statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+                 // returnAttribute.isFrontier = true;
+                    if (returnAttribute.unparseFromTheAST == false)
+                       {
+                      // Mark this as the frontier only if this is the first time (while decending into the AST) 
+                      // that we will unparse this subtree from the AST.
+                         returnAttribute.isFrontier = true;
+                       }
+
+                    returnAttribute.unparseFromTheAST       = true;
+                    returnAttribute.unparseUsingTokenStream = false;
+                  }
+                 else
+                  {
+                    returnAttribute.unparseUsingTokenStream = true;
+                  }
              }
 
+       // DQ (11/30/2013): Allow us to ignore class defintions in typedefs.
        // Mark the whole subtree as being unparsed from the AST so that synthizized attributes can be more esily computed.
+       // if (inheritedAttribute.unparseFromTheAST == true)
+       // if (inheritedAttribute.unparseFromTheAST == true && skipMarkingAsToBeUnparsedFromAST == false)
           if (inheritedAttribute.unparseFromTheAST == true)
              {
+#if 0
                printf ("   --- Where inheritedAttribute.unparseFromTheAST == true: set returnAttribute.unparseFromTheAST == true and returnAttribute.unparseUsingTokenStream = false \n");
+#endif
                returnAttribute.unparseFromTheAST = true;
                returnAttribute.unparseUsingTokenStream = false;
              }
@@ -199,7 +330,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
 
           if (inheritedAttribute.unparseFromTheAST == true)
              {
+#if 0
                printf ("   --- Where inheritedAttribute.unparseFromTheAST == true: set returnAttribute.unparseFromTheAST == true and returnAttribute.unparseUsingTokenStream = false \n");
+#endif
                returnAttribute.unparseFromTheAST = true;
                returnAttribute.unparseUsingTokenStream = false;
              }
@@ -264,37 +397,6 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
           printf ("In FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute(): SgStatement or SgSourceFile = %p = %s \n",n,n->class_name().c_str());
 #endif
 
-#if 0
-          if (inheritedAttribute.isFrontier == true)
-             {
-#if 0
-               printf ("Marking isFrontier = true (based on inheritedAttribute) at node = %p = %s \n",n,n->class_name().c_str());
-#endif
-            // returnAttribute.isFrontier = inheritedAttribute.isFrontier;
-               returnAttribute.isFrontier = true;
-
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
-             }
-
-          if (inheritedAttribute.unparseUsingTokenStream == true)
-             {
-#if 1
-               printf ("Marking unparseUsingTokenStream = true (based on inheritedAttribute) at node = %p = %s \n",n,n->class_name().c_str());
-#endif
-               returnAttribute.unparseUsingTokenStream = true;
-             }
-
-          if (inheritedAttribute.unparseFromTheAST == true)
-             {
-#if 1
-               printf ("Marking unparseFromTheAST = true (based on inheritedAttribute) at node = %p = %s \n",n,n->class_name().c_str());
-#endif
-               returnAttribute.unparseFromTheAST = true;
-             }
-#else
        // Mark these directly.
           returnAttribute.isFrontier              = inheritedAttribute.isFrontier;
           returnAttribute.unparseUsingTokenStream = inheritedAttribute.unparseUsingTokenStream;
@@ -330,7 +432,6 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
        // ROSE_ASSERT(returnAttribute.unparseUsingTokenStream == false && returnAttribute.unparseFromTheAST == true);
           ROSE_ASSERT( (returnAttribute.unparseUsingTokenStream == true  && returnAttribute.unparseFromTheAST == false) || 
                        (returnAttribute.unparseUsingTokenStream == false && returnAttribute.unparseFromTheAST == true) );
-#endif
 
 #if 0
           printf ("After using info from the inheritedAttribute: \n");
@@ -390,7 +491,7 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
 #endif
                     continue;
                   }
-               
+
             // if (synthesizedAttributeList[i].isFrontier == true)
             // if (synthesizedAttributeList[i].isFrontier == true || synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == true)
             // if ( (synthesizedAttributeList[i].isFrontier == true && synthesizedAttributeList[i].unparseFromTheAST == true) || synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == true)
@@ -436,19 +537,17 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
                          ROSE_ASSERT(synthesizedAttributeList[i].unparseUsingTokenStream == false);
 
                       // returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true;
-#if 1
+
                          if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream == true)
                             {
                               returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true;
                             }
-#endif
-#if 1
+
                          if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == true)
                             {
                               returnAttribute.containsNodesToBeUnparsedFromTheAST = true;
                             }
-#endif
-#if 1
+
                       // Lack of AST usage in the subtree implies that there are nodes unparsed from the token stream.
                          if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
                             {
@@ -458,7 +557,6 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
                            // returnAttribute.unparseUsingTokenStream = true;
                               returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true;
                             }
-#endif
 #if 0
                       // Lack of token stream usage in the subtree implies that there are nodes unparsed from the AST.
                          if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream == false)
@@ -478,7 +576,7 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
                          if (synthesizedAttributeList[i].unparseUsingTokenStream == true)
                             {
 #if 0
-                              printf ("Set returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true \n");
+                              printf ("   --- Set returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true \n");
 #endif
                               returnAttribute.containsNodesToBeUnparsedFromTheTokenStream = true;
                             }
@@ -486,7 +584,9 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
                             {
                               if (synthesizedAttributeList[i].unparseFromTheAST == true)
                                  {
-                                   printf ("Set returnAttribute.containsNodesToBeUnparsedFromTheAST = true \n");
+#if 0
+                                   printf ("   --- Set returnAttribute.containsNodesToBeUnparsedFromTheAST = true \n");
+#endif
                                    returnAttribute.containsNodesToBeUnparsedFromTheAST = true;
                                  }
                                 else
@@ -529,13 +629,30 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
           if (returnAttribute.containsNodesToBeUnparsedFromTheAST == true)
              {
                string name    = "token_frontier";
-
                string options = "color=\"green\"";
-
                FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
 
                if (statement != NULL)
                   {
+                    statement->setAttribute(name,attribute);
+                  }
+             }
+            else
+             {
+            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unarpsed from the token stream.
+               SgGlobal* globalScope = isSgGlobal(n);
+               if (globalScope != NULL)
+                  {
+                 // If this is the global scope and no attributes have triggered generation from the AST, then unparse from the token stream and build an appropriate frontier node.
+
+                    printf ("If this is the global scope and no attributes have triggered generation from the AST, then unparse from the token stream and build an appropriate frontier node. \n");
+
+                    returnAttribute.isFrontier = true;
+
+                    string name    = "token_frontier";
+                    string options = "color=\"blue\"";
+                    FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -559,82 +676,222 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
 #if 0
                printf ("   --- Saving the list of relevant frontier nodes! \n");
 #endif
-               for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
+            // DQ (12/1/2013): This implements a restriction no conditional statements so they will not be unparsed using a mixture of tokens and AST unparsing.
+               SgIfStmt* ifStatement = isSgIfStmt(statement);
+
+            // bool specialCaseNode = (ifStatement != NULL);
+               bool specialCaseNode = false;
+          
+            // if (ifStatement != NULL)
+            // if (specialCaseNode == true)
+               if (ifStatement != NULL)
                   {
-                    SgStatement* synthesized_attribute_statement = synthesizedAttributeList[i].node;
+                 // There are special cases where we don't (at least presently) want to mix the two types on unparsing.
+                 // This is how those special cases are handled.
 #if 0
-                    printf ("   --- synthesized_attribute_statement = %p = %s \n",synthesized_attribute_statement,synthesized_attribute_statement != NULL ? synthesized_attribute_statement->class_name().c_str() : "null");
-                    printf ("   ---   --- synthesizedAttributeList[i=%zu].isFrontier                                  = %s \n",i,synthesizedAttributeList[i].isFrontier ? "true" : "false");
-                    printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseUsingTokenStream                     = %s \n",i,synthesizedAttributeList[i].unparseUsingTokenStream ? "true" : "false");
-                    printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseFromTheAST                           = %s \n",i,synthesizedAttributeList[i].unparseFromTheAST ? "true" : "false");
-                    printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST         = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
-                    printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheTokenStream = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true" : "false");
+                    printf ("Synthesized attribute evaluation is part of a conditional statment (containing a conditional expression/statement): statment = %p = %s \n",statement,statement->class_name().c_str());
 #endif
-                    if (synthesized_attribute_statement != NULL)
+#if 0
+                    for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
                        {
-                         FrontierNode* frontierNode = new FrontierNode(synthesized_attribute_statement,synthesizedAttributeList[i].unparseUsingTokenStream,synthesizedAttributeList[i].unparseFromTheAST);
-                         if (synthesizedAttributeList[i].unparseUsingTokenStream == true)
+                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                              i,synthesizedAttributeList[i].node,
+                              synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
+                              synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
+                              synthesizedAttributeList[i].unparseUsingTokenStream                     ? "true " : "false",
+                              synthesizedAttributeList[i].unparseFromTheAST                           ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
+
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                       }
+#endif
+                    if (synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheAST != synthesizedAttributeList[1].containsNodesToBeUnparsedFromTheAST)
+                       {
+#if 0
+                         printf ("This node has children that mix the two different types of unparsing! \n");
+#endif
+                         specialCaseNode = true;
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(statement);
+               if (typedefDeclaration != NULL)
+                  {
+#if 0
+                    for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
+                       {
+                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                              i,synthesizedAttributeList[i].node,
+                              synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
+                              synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
+                              synthesizedAttributeList[i].unparseUsingTokenStream                     ? "true " : "false",
+                              synthesizedAttributeList[i].unparseFromTheAST                           ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
+
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                       }
+#endif
+                    if (synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheAST == true && synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheTokenStream == true)
+                       {
+#if 0
+                         printf ("This SgTypedefDeclaration node has children that mix the two different types of unparsing! \n");
+#endif
+                         specialCaseNode = true;
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+            // DQ (12/1/2013): This handles the details of the SgForStatement (which has 3 relevant children (excluding the body).
+               SgForStatement* forStatement = isSgForStatement(statement);
+               if (forStatement != NULL)
+                  {
+                 // There are special cases where we don't (at least presently) want to mix the two types on unparsing.
+                 // This is how those special cases are handled.
+#if 0
+                    printf ("Synthesized attribute evaluation is part of a SgForStatement (containing a conditional expression/statement): statment = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+#if 0
+                    for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
+                       {
+                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                              i,synthesizedAttributeList[i].node,
+                              synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
+                              synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
+                              synthesizedAttributeList[i].unparseUsingTokenStream                     ? "true " : "false",
+                              synthesizedAttributeList[i].unparseFromTheAST                           ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
+                              synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
+
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                       }
+#endif
+                 // I don't know why unparseUsingTokenStream are different, but the containsNodesToBeUnparsedFromTheAST are the same.
+                 // if (synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheAST != synthesizedAttributeList[1].containsNodesToBeUnparsedFromTheAST)
+                    if ( (synthesizedAttributeList[0].unparseUsingTokenStream != synthesizedAttributeList[1].unparseUsingTokenStream) ||
+                         (synthesizedAttributeList[0].unparseUsingTokenStream != synthesizedAttributeList[2].unparseUsingTokenStream) )
+                       {
+#if 0
+                         printf ("This node (SgForStatement) has children that mix the two different types of unparsing! \n");
+#endif
+                         specialCaseNode = true;
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               if (specialCaseNode == true)
+                  {
+                 // Mark the current node to be a frontier, instead of the child nodes.  Mark as to be unparse from the AST (no choice since subtrees must be unparsed from the AST).
+#if 0
+                    printf ("Handling synthesized attribute as a special case: statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+                    returnAttribute.isFrontier   = true;
+
+                    bool unparseUsingTokenStream = false;
+                    bool unparseFromTheAST       = true;
+
+                    FrontierNode* frontierNode = new FrontierNode(statement,unparseUsingTokenStream,unparseFromTheAST);
+                    ROSE_ASSERT(frontierNode != NULL);
+                    returnAttribute.frontierNodes.push_back(frontierNode);
+
+                    string name    = "token_frontier";
+                    string options = "color=\"red\"";
+                    FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+                    statement->setAttribute(name,attribute);
+                  }
+                 else
+                  {
+                 // This is the non-special case.
+                    for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
+                       {
+                         SgStatement* synthesized_attribute_statement = synthesizedAttributeList[i].node;
+#if 0
+                         printf ("   --- synthesized_attribute_statement = %p = %s \n",synthesized_attribute_statement,synthesized_attribute_statement != NULL ? synthesized_attribute_statement->class_name().c_str() : "null");
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].isFrontier                                  = %s \n",i,synthesizedAttributeList[i].isFrontier ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseUsingTokenStream                     = %s \n",i,synthesizedAttributeList[i].unparseUsingTokenStream ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseFromTheAST                           = %s \n",i,synthesizedAttributeList[i].unparseFromTheAST ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST         = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheTokenStream = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true" : "false");
+#endif
+                         if (synthesized_attribute_statement != NULL)
                             {
-                              returnAttribute.frontierNodes.push_back(frontierNode);
-                            }
-                           else
-                            {
-                              if (synthesizedAttributeList[i].unparseFromTheAST == true)
+                              FrontierNode* frontierNode = new FrontierNode(synthesized_attribute_statement,synthesizedAttributeList[i].unparseUsingTokenStream,synthesizedAttributeList[i].unparseFromTheAST);
+                              ROSE_ASSERT(frontierNode != NULL);
+
+                              if (synthesizedAttributeList[i].unparseUsingTokenStream == true)
                                  {
                                    returnAttribute.frontierNodes.push_back(frontierNode);
                                  }
                                 else
                                  {
-#if 0
-                                   printf ("Current node = %p = %s not added to frontier node list (add any lists from synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu) \n",n,n->class_name().c_str(),i,synthesizedAttributeList[i].frontierNodes.size());
-#endif
-                                // We don't record nodes that are just containing subtrees to be unparsed from the AST.
-                                // if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
+                                   if (synthesizedAttributeList[i].unparseFromTheAST == true)
                                       {
-                                        for (size_t j = 0; j < synthesizedAttributeList[i].frontierNodes.size(); j++)
-                                           {
-                                             FrontierNode* frontierNode = synthesizedAttributeList[i].frontierNodes[j];
-                                             ROSE_ASSERT(frontierNode != NULL);
-
-                                             returnAttribute.frontierNodes.push_back(frontierNode);
+                                        returnAttribute.frontierNodes.push_back(frontierNode);
+                                      }
+                                     else
+                                      {
 #if 0
-                                             printf ("Include synthesized_attribute frontierNodes into frontierNodes (%p = %s) \n",frontierNode,frontierNode->display().c_str());
+                                        printf ("Current node = %p = %s not added to frontier node list (add any lists from synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu) \n",n,n->class_name().c_str(),i,synthesizedAttributeList[i].frontierNodes.size());
 #endif
+                                     // We don't record nodes that are just containing subtrees to be unparsed from the AST.
+                                     // if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
+                                           {
+                                             for (size_t j = 0; j < synthesizedAttributeList[i].frontierNodes.size(); j++)
+                                                {
+                                                  FrontierNode* frontierNode = synthesizedAttributeList[i].frontierNodes[j];
+                                                  ROSE_ASSERT(frontierNode != NULL);
+
+                                                  returnAttribute.frontierNodes.push_back(frontierNode);
+#if 0
+                                                  printf ("Include synthesized_attribute frontierNodes into frontierNodes (%p = %s) \n",frontierNode,frontierNode->display().c_str());
+#endif
+                                                }
                                            }
                                       }
                                  }
                             }
-                       }
-                      else
-                       {
-#if 0
-                         printf ("WARNING: synthesized_attribute_statement == NULL \n");
-#endif
-                       }
-#if 0
-                 // ROSE_ASSERT(synthesized_attribute_statement != NULL);
-                    if (synthesized_attribute_statement != NULL)
-                       {
-                         printf ("   ---   --- Include synthesized_attribute_statement into frontierNodes (%p = %s) \n",synthesized_attribute_statement,synthesized_attribute_statement->class_name().c_str());
-                         returnAttribute.frontierNodes.push_back(synthesized_attribute_statement);
-
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
-
-                      // We don't record nodes that are just containing subtrees to be unparsed from the AST.
-                         if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
+                           else
                             {
-                              for (size_t j = 0; j < synthesizedAttributeList[i].frontierNodes.size(); j++)
+#if 0
+                              printf ("WARNING: synthesized_attribute_statement == NULL \n");
+#endif
+                            }
+#if 0
+                      // ROSE_ASSERT(synthesized_attribute_statement != NULL);
+                         if (synthesized_attribute_statement != NULL)
+                            {
+                              printf ("   ---   --- Include synthesized_attribute_statement into frontierNodes (%p = %s) \n",synthesized_attribute_statement,synthesized_attribute_statement->class_name().c_str());
+                              returnAttribute.frontierNodes.push_back(synthesized_attribute_statement);
+
+                              printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
+
+                           // We don't record nodes that are just containing subtrees to be unparsed from the AST.
+                              if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
                                  {
-                                   SgStatement* statement = synthesizedAttributeList[i].frontierNodes[j];
-                                   ROSE_ASSERT(statement != NULL);
+                                   for (size_t j = 0; j < synthesizedAttributeList[i].frontierNodes.size(); j++)
+                                      {
+                                        SgStatement* statement = synthesizedAttributeList[i].frontierNodes[j];
+                                        ROSE_ASSERT(statement != NULL);
 
-                                   returnAttribute.frontierNodes.push_back(statement);
+                                        returnAttribute.frontierNodes.push_back(statement);
 
-                                   printf ("Include synthesized_attribute frontierNodes into frontierNodes (%p = %s) \n",statement,statement->class_name().c_str());
+                                        printf ("Include synthesized_attribute frontierNodes into frontierNodes (%p = %s) \n",statement,statement->class_name().c_str());
+                                      }
                                  }
                             }
-                       }
 #endif
+                       }
                   }
              }
             else
@@ -749,14 +1006,50 @@ FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::
    }
 
 
+int
+FrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFile* sourceFile)
+   {
+     int value = 0;
+
+     class CountTraversal : public SgSimpleProcessing
+        {
+          public:
+              int count;
+              CountTraversal() : count(0) {}
+
+           // We only want to count statements since we only test the token/AST unparsing at the statement level.
+           // void visit ( SgNode* n ) { count++; }
+              void visit ( SgNode* n ) { if (isSgStatement(n) != NULL) count++; }
+        };
+
+     CountTraversal counter;
+  // SgNode* thisNode = const_cast<SgNode*>(this);
+     counter.traverseWithinFile(sourceFile,preorder);
+     value = counter.count;
+
+     return value;
+   }
+
 void
 frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
    {
+  // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
+
      FrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute;
      FrontierDetectionForTokenStreamMapping fdTraversal(sourceFile);
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+  // Debugging (this set in the constructor).
+     printf ("numberOfNodes = %d \n",fdTraversal.numberOfNodes);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
   // fdTraversal.traverse(sourceFile,inheritedAttribute);
@@ -773,8 +1066,19 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     map<SgStatement*,FrontierNode*> token_unparse_frontier_map;
+
+#if 0
      printf ("Final Frontier (topAttribute.frontierNodes.size() = %zu) (n = %p = %s): ",topAttribute.frontierNodes.size(),sourceFile,sourceFile->class_name().c_str());
 #endif
+
+  // DQ (11/29/2013): Used to mark statements that are redundantly mapped to a single token sequence.
+  // int lastTokenIndex = 0;
+
      for (size_t j = 0; j < topAttribute.frontierNodes.size(); j++)
         {
        // SgStatement* statement = topAttribute.frontierNodes[j];
@@ -785,7 +1089,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
           ROSE_ASSERT(statement != NULL);
 
 #if 0
-          printf (" (%p = %s) ",statement,statement->class_name().c_str());
+          printf (" (%p = %s) \n",statement,statement->class_name().c_str());
 #endif
           string name    = "token_frontier";
        // string options = "fillcolor=\"greenyellow\",style=filled";
@@ -802,10 +1106,57 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( statement, name, options);
 
           statement->setAttribute(name,attribute);
+
+#if 0
+       // DQ (11/29/2013): Get the token mapping to the AST.
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+
+          printf ("In frontierDetectionForTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu lastTokenIndex = %d \n",tokenStreamSequenceMap.size(),lastTokenIndex);
+
+          ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+
+          if (tokenStreamSequenceMap.find(statement) != tokenStreamSequenceMap.end())
+             {
+               printf ("In frontierDetectionForTokenStreamMapping(): Found associated tokenStreamSequence for statement = %p = %s \n",statement,statement->class_name().c_str());
+
+               TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[statement];
+               ROSE_ASSERT(tokenSubsequence != NULL);
+
+               ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+
+               if (lastTokenIndex == tokenSubsequence->token_subsequence_end)
+                  {
+                 // Mark this as a frontier that is redundantly mapped to a token sequence.
+                    printf ("Mark this as a frontier that is redundantly mapped to a token sequence \n");
+                    ROSE_ASSERT(false);
+
+                 // tokenSubsequence->redundant_token_subsequence = true;
+                  }
+                 else
+                  {
+                 // This is the typical case.
+                  }
+
+               lastTokenIndex = tokenSubsequence->token_subsequence_end;
+             }
+            else
+             {
+            // DQ (11/29/2013): Not certain this should be an error or a warning.
+               printf ("WARNING: There is no token sequence mapping for this statement = %p = %s \n",statement,statement->class_name().c_str());
+#if 0
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
+
+       // Setup the map of SgStatement pointers to FrontierNode pointers.
+          token_unparse_frontier_map[statement] = frontierNode;
         }
 #if 0
      printf (" Frontier End \n");
 #endif
+
+     sourceFile->set_token_unparse_frontier(token_unparse_frontier_map);
 
   // Output an optional graph of the AST (just the tree, so we can identify the frontier)
      SgFileList* fileList = isSgFileList(sourceFile->get_parent());
@@ -817,7 +1168,12 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier defined \n");
 #endif
 
-     generateDOT ( *project, "_token_unparsing_frontier" );
+#if 1
+     if ( SgProject::get_verbose() > 1 )
+        {
+          generateDOT ( *project, "_token_unparsing_frontier" );
+        }
+#endif
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): DONE: Generate the graph of the AST with the frontier defined \n");
@@ -838,6 +1194,10 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
   // std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap = previousAndNextNodeTraversal(sourceFile);
      std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap = computePreviousAndNextNodes(sourceFile->get_globalScope(),topAttribute.frontierNodes);
+
+     sourceFile->set_token_unparse_frontier_adjacency(previousAndNextNodeMap);
+
+  // sourceFile->set_token_unparse_frontier(topAttribute.frontierNodes);
 
 #if 0
      printf ("Output previousAndNextNodeMap for frontier: \n");
@@ -881,7 +1241,12 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier AND edges defined \n");
 #endif
 
-     generateDOT(*project,"_token_unparsing_frontier_with_next_previous_edges");
+#if 1
+     if ( SgProject::get_verbose() > 1 )
+        {
+          generateDOT(*project,"_token_unparsing_frontier_with_next_previous_edges");
+        }
+#endif
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): DONE: Generate the graph of the AST with the frontier AND edges defined \n");
@@ -1009,12 +1374,14 @@ FrontierDetectionForTokenStreamMappingAttribute::get_containsNodesToBeUnparsedFr
 FrontierNode::FrontierNode(SgStatement* node, bool unparseUsingTokenStream, bool unparseFromTheAST)
    : node(node), 
      unparseUsingTokenStream(unparseUsingTokenStream), 
-     unparseFromTheAST(unparseFromTheAST)
+     unparseFromTheAST(unparseFromTheAST),
+     redundant_token_subsequence(false)
    {
   // Enforce specific constraints.
      ROSE_ASSERT(node != NULL);
   // ROSE_ASSERT( (unparseUsingTokenStream == true && unparseFromTheAST == false) || (unparseUsingTokenStream == false && unparseFromTheAST == true) );
      ROSE_ASSERT( (unparseUsingTokenStream == true && unparseFromTheAST == false) || (unparseUsingTokenStream == false && unparseFromTheAST == true) || (unparseUsingTokenStream == false && unparseFromTheAST == false));
+     ROSE_ASSERT(redundant_token_subsequence == false);
    }
 
 
