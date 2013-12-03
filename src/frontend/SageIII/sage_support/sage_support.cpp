@@ -4750,7 +4750,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
              {
                boost::filesystem::path original_file = outputFilename;
                boost::filesystem::path unparsed_file = get_unparse_output_filename();
-               ROSE_ASSERT(original_file.string() != unparsed_file.string());
+
                if (SgProject::get_verbose() >= 2)
                   {
                     std::cout
