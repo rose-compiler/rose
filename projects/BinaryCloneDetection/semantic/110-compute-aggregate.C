@@ -165,6 +165,8 @@ int main(int argc, char *argv[])
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
+  bool compute_semantic_distribution = false;
+
   int argno = 1;
   for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
     if (!strcmp(argv[argno], "--")){
@@ -178,6 +180,8 @@ int main(int argc, char *argv[])
       path_threshold = boost::lexical_cast<double>(argv[argno]+17);
     } else if (!strncmp(argv[argno], "--cg-threshold=",15)) {
       cg_threshold = boost::lexical_cast<double>(argv[argno]+15);
+    } else if (!strncmp(argv[argno], "--semantic-distribution",23)) {
+      compute_semantic_distribution = true;
     } else {
       std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
         <<argv0 <<": see --help for more info\n";
@@ -206,9 +210,10 @@ int main(int argc, char *argv[])
   transaction->execute(set_thresholds);
   transaction->execute(FailureEvaluation::failure_schema); // could take a long time if the database is large
 
-  compute_percent_similarity_statistics(bucket_size, increment, transaction);
-  compute_mean_similarity_statistics(bucket_size,  increment, transaction);
-
+  if(compute_semantic_distribution){
+    compute_percent_similarity_statistics(bucket_size, increment, transaction);
+    compute_mean_similarity_statistics(bucket_size,  increment, transaction);
+  }
   transaction->commit();
 
 

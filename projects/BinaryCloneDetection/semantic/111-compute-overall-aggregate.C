@@ -22,6 +22,15 @@ using namespace boost::accumulators;
 
 std::string argv0;
 
+double
+compute_fscore(double precision, double recall)
+{
+ if ( precision+recall > 0 )
+  return 2*( ( precision*recall ) / ( precision+recall )  );
+ else
+  return 0;
+}
+
 
 static void
 usage(int exit_status)
@@ -30,6 +39,9 @@ usage(int exit_status)
               <<"This command computes the API Call similarity.\n"
               <<"\n"
               <<"  These switches control how api call traces are compared:\n"
+              <<"    --semantic-distribution\n"
+              <<"            Compute mean and percent distribution of semantic\n"
+              <<"            similarity over all function pairs\n" 
               <<"    --prefix=STRING\n"
               <<"            Prefix for databases.\n"
               <<"\n";
@@ -343,7 +355,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
 			  insert_stmt->bind(1, cur_recall);
 			  insert_stmt->bind(2, cur_specificity);
 			  insert_stmt->bind(3, cur_precision);
-                          insert_stmt->bind(4, 2*( ( cur_precision*cur_recall ) / ( cur_precision+cur_recall )  ) );
+                          insert_stmt->bind(4, compute_fscore(cur_recall, cur_precision));
 
 			  insert_stmt->execute();     
 		  } 
@@ -385,7 +397,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
   insert_overall_rates_stmt->bind(9, max(precision));
   insert_overall_rates_stmt->bind(10, mean(precision));
   insert_overall_rates_stmt->bind(11, sqrt(boost::accumulators::variance(precision)));
-  insert_overall_rates_stmt->bind(12,2*( ( mean(precision) * mean(recalls)  ) / ( mean(precision) + mean(recalls)  )  ) );
+  insert_overall_rates_stmt->bind(12, compute_fscore(mean(precision), mean(recalls)));
   insert_overall_rates_stmt->execute();
 
   std::cout << "\n\n Overall for all optimization levels for this db group: " << std::endl;
@@ -430,7 +442,7 @@ compute_overall_rates(SqlDatabase::TransactionPtr r_transaction)
      insert_stmt->bind(0, recall);
      insert_stmt->bind(1, specificity);
      insert_stmt->bind(2, precision);
-     insert_stmt->bind(3, 2*(recall*precision/(recall+precision)));
+     insert_stmt->bind(3, compute_fscore(precision, recall));
      insert_stmt->execute();     
   } 
 
@@ -451,6 +463,8 @@ int main(int argc, char *argv[])
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
+  bool compute_semantic_distribution = false;
+
   int argno = 1;
   for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
     if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
@@ -463,6 +477,8 @@ int main(int argc, char *argv[])
       cg_threshold = boost::lexical_cast<double>(argv[argno]+15);
     } else if (!strncmp(argv[argno], "--prefix=",9)) {
       prefix = boost::lexical_cast<std::string>(argv[argno]+9);
+    } else if (!strncmp(argv[argno], "--semantic-distribution",23)) {
+      compute_semantic_distribution = true;
     } else {
       std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
         <<argv0 <<": see --help for more info\n";
@@ -562,14 +578,16 @@ int main(int argc, char *argv[])
 	per_insert_stmt->bind(2, cur_precision);  
 	per_insert_stmt->bind(3, cur_specificity);  
 	per_insert_stmt->bind(4, cur_recall);  
-        per_insert_stmt->bind(5, 2*(cur_precision*cur_recall/(cur_precision+cur_recall))); 
+        per_insert_stmt->bind(5, compute_fscore(cur_precision, cur_recall)); 
 
         per_insert_stmt->execute();
 
       }
 
-      compute_percent_similarity_statistics(bucket_size, increment, it->first, *m_it, transaction, r_transaction);
-      compute_mean_similarity_statistics(bucket_size,  increment, it->first, *m_it, transaction, r_transaction);
+      if(compute_semantic_distribution == true){
+        compute_percent_similarity_statistics(bucket_size, increment, it->first, *m_it, transaction, r_transaction);
+        compute_mean_similarity_statistics(bucket_size,  increment, it->first, *m_it, transaction, r_transaction);
+      }
 
       transaction->commit();
     }
@@ -587,7 +605,7 @@ int main(int argc, char *argv[])
     insert_stmt->bind(10, max(precision));
     insert_stmt->bind(11, mean(precision));
     insert_stmt->bind(12, sqrt(boost::accumulators::variance(precision)));
-    insert_stmt->bind(13,2*( ( mean(precision) * mean(recalls)  ) / ( mean(precision) + mean(recalls)  )  ) );
+    insert_stmt->bind(13,compute_fscore(mean(precision), mean(recalls)  ) );
 
     insert_stmt->execute();
 
@@ -599,8 +617,9 @@ int main(int argc, char *argv[])
     std::cout << "\n\n    precision is   " << mean(precision)   << "+-" << sqrt(boost::accumulators::variance(precision))   << " min " << min(precision)   << " max " << max(precision) ;
     std::cout << "\n\n";
 
-    compute_aggregate_statistics(bucket_size, increment, r_transaction);
-
+    if(compute_semantic_distribution == true){
+      compute_aggregate_statistics(bucket_size, increment, r_transaction);
+    }
 
   }
 
