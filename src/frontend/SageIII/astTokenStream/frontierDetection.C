@@ -118,7 +118,7 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
 
 
 FrontierDetectionForTokenStreamMapping_SynthesizedAttribute 
-FrontierDetectionForTokenStreamMapping::FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n, 
+FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n, 
      FrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute, 
      SubTreeSynthesizedAttributes synthesizedAttributeList )
    {
