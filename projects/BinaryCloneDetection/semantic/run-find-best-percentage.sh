@@ -134,24 +134,24 @@ execute psql  $threshold_db_name -c "create table total_rates( \
 
 
 
-for sem_threshold in 0.700 1.000 0.000; 
+for sem_threshold in 0.750 1.000 0.000 0.250 0.500; 
 do 
   for cg_threshold in $(seq 0.000 0.100 1.00); 
   do
      for path_threshold in $(seq 0.000 0.100 1.00); 
      do
         
-       execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
-                                                --sem-threshold=$sem_threshold \
-                                                --cg-threshold=$cg_threshold \
-                                                --path-threshold=$path_threshold || exit 1
+      execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
+                                               --sem-threshold=$sem_threshold \
+                                               --cg-threshold=$cg_threshold \
+                                               --path-threshold=$path_threshold || exit 1
 
       #compute recall, precision etc total over all dbs
       recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `
       precision=`psql $results_db_name -t -c "select precision from overall_rates limit 1" | tr "\\n"  " " `
-      specicificy=`psql $results_db_name -t -c "select specificity from overall_rates limit 1" | tr "\\n"  " " `
+      specificity=`psql $results_db_name -t -c "select specificity from overall_rates limit 1" | tr "\\n"  " " `
       
-      if [ $precision = 0 && $recall = 0  ];
+      if [ $precision = 0 -a  $recall = 0  ];
       then
         fscore="0"
       else 
@@ -159,8 +159,8 @@ do
       fi
 
       execute psql $threshold_db_name -c "insert into total_rates(sem_threshold, cg_threshold, path_threshold, \
-        recal, precision, specificity, fscore) \
-        values ($sem_threshold, $cg_threshold, $path_threshold, $recall, $precision, $specificity, $fscore)"
+        recall, precision, specificity, fscore) \
+        values ($sem_threshold, $cg_threshold, $path_threshold, $recall, $precision, $specificity, $fscore)" || exit 1
 
 
       #compute recall, precision, etc over separate computations for Ox vs Oy
@@ -179,21 +179,21 @@ do
       precision_mean=`psql $results_db_name -t -c "select precision_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
       precision_standard_deviation=`psql $results_db_name -t -c "select precision_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
 
-      if [ $precision_mean = 0 && $recall_mean = 0  ];
+      if [ $precision_mean = 0 -a $recall_mean = 0  ];
       then
         fscore_mean="0"
       else 
         fscore_mean="2*$precision_mean*$recall_mean/($precision_mean+$recall_mean)"
       fi
 
-      if [ $precision_min = 0 && $recall_min = 0  ];
+      if [ $precision_min = 0 -a $recall_min = 0  ];
       then
         fscore_min="0"
       else 
         fscore_min="2*$precision_min*$recall_min/($precision_min+$recall_min)"
       fi
 
-      if [ $precision_max = 0 && $recall_max = 0  ];
+      if [ $precision_max = 0 -a $recall_max = 0  ];
       then
         fscore_max="0"
       else 
@@ -211,7 +211,7 @@ do
         values ($sem_threshold, $cg_threshold, $path_threshold, $recall_min, $recall_max, $recall_mean, $recall_standard_deviation, \
             $specificity_min, $specificity_max, $specificity_mean, $specificity_standard_deviation, \
             $precision_min, $precision_max, $precision_mean, $precision_standard_deviation, \
-            $fscore_mean, $fscore_min, $fscore_max )"
+            $fscore_mean, $fscore_min, $fscore_max )" || exit 1
 
     done                                                 
  done
