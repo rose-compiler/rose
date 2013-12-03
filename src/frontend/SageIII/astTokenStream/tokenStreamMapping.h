@@ -86,3 +86,5 @@ class TokenStreamSequenceToNodeMapping
           void display(std::string label) const;
    };
 
+#include "frontierDetection.h"
+
