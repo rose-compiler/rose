@@ -591,10 +591,10 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Bad
 
                 for (size_t i=0; i<d->get_wordsize(); i++) {
                     switch (d->get_sex()) {
-                        case SgAsmExecutableFileFormat::ORDER_LSB:
+                        case ByteOrder::ORDER_LSB:
                             constant |= buf[i] << (8*i);
                             break;
-                        case SgAsmExecutableFileFormat::ORDER_MSB:
+                        case ByteOrder::ORDER_MSB:
                             constant |= buf[i] << (8*(d->get_wordsize()-(i+1)));
                             break;
                         default:
@@ -899,10 +899,10 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
      * make other assumptions, which is why this code is not in SgAsmx86Instruction::get_successors(). [RPM 2010-05-09] */
-    rose_addr_t target;
+    rose_addr_t target, return_va;
     SgAsmInstruction *last_insn = block.back();
-    if (last_insn->is_function_call(block, &target))
-        successors.insert(last_insn->get_address() + last_insn->get_size());
+    if (last_insn->is_function_call(block, &target, &return_va))
+        successors.insert(return_va);
 
     return successors;
 }

@@ -40,6 +40,10 @@ bin_PROGRAMS = \
    testTokenGeneration \
    KeepGoingTranslator 
 
+if ROSE_WITH_ATERM
+   bin_PROGRAMS += testAtermGraphGeneration
+endif
+
 # DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    bin_PROGRAMS += testAstFileIO 
@@ -103,6 +107,11 @@ testGraphGeneration_SOURCES = testGraphGeneration.C
 # generation of patches to define transformations of large scale applications.
 testTokenGeneration_SOURCES = testTokenGeneration.C
 
+if ROSE_WITH_ATERM
+# DQ (9/28/2013): Added support for Aterm graph generation.
+testAtermGraphGeneration_SOURCES = testAtermGraphGeneration.C
+endif
+
 # Ignores internal ROSE failures, see `rose --help` for info on `-rose:keep_going`
 KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 
@@ -110,9 +119,19 @@ KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 # Program to output predefined relevant macros.
 # predefinedMacros_SOURCES = predefinedMacros.C
 
+if ROSE_WITH_ATERM
+# The Stratego and A-Term support is outside of ROSE
+# This needs a configure flag so that the location outside 
+# of ROSE can be easily specificed at configure time.
+ATERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
+ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+endif
+
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 
@@ -124,7 +143,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
 	cp $(srcdir)/inputFile.C inputObjectFileAnalysis.C
 #	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
-	./testAnalysis $(INCLUDES) -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+#	./testAnalysis $(INCLUDES) -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+	./testAnalysis -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -132,14 +152,16 @@ endif
 testLinkFileAnalysis: testObjectFileAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testAnalysis $(INCLUDES) alt_inputFile.o -o alt_inputFile
-	./testAnalysis $(INCLUDES) alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+#	./testAnalysis $(INCLUDES) alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+	./testAnalysis alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testCppFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-	./testAnalysis -E $(INCLUDES) $(srcdir)/inputFile.C
+#	./testAnalysis -E $(INCLUDES) $(srcdir)/inputFile.C
+	./testAnalysis -E $(srcdir)/inputFile.C
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -147,7 +169,8 @@ endif
 testExecutableFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileAnalysis.C
-	./testAnalysis $(INCLUDES) inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+#	./testAnalysis $(INCLUDES) inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+	./testAnalysis inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -163,7 +186,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
 	cp $(srcdir)/inputFile.C inputObjectFileCodeGeneration.C
 #	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
-	./testCodeGeneration $(INCLUDES) -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+#	./testCodeGeneration $(INCLUDES) -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+	./testCodeGeneration -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -177,7 +201,8 @@ endif
 
 testCppFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-	./testCodeGeneration -E $(INCLUDES) $(srcdir)/inputFile.C
+#	./testCodeGeneration -E $(INCLUDES) $(srcdir)/inputFile.C
+	./testCodeGeneration -E $(srcdir)/inputFile.C
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -185,7 +210,8 @@ endif
 testExecutableFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileCodeGeneration.C
-	./testCodeGeneration $(INCLUDES) inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+#	./testCodeGeneration $(INCLUDES) inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+	./testCodeGeneration inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -201,14 +227,16 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
 	cp $(srcdir)/inputFile.C inputObjectFileTranslator.C
 #	./testTranslator $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
-	./testTranslator $(INCLUDES) -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+#	./testTranslator $(INCLUDES) -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+	./testTranslator -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testLinkFileTranslator: testObjectFileTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-	./testTranslator $(INCLUDES) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+#	./testTranslator $(INCLUDES) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+	./testTranslator alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -223,7 +251,8 @@ endif
 testExecutableFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileTranslator.C
-	./testTranslator $(INCLUDES) inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+#	./testTranslator $(INCLUDES) inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+	./testTranslator inputFileTranslator.C -o testExecutableFileTranslatorExecutable
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -238,7 +267,8 @@ test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFile
 testObjectFileFileAstFileIO: testAstFileIO
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
-	./testAstFileIO $(INCLUDES) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
+#	./testAstFileIO $(INCLUDES) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
+	./testAstFileIO -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -274,7 +304,8 @@ testObjectFileTokenGeneration: testTokenGeneration
 #	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
 	cp $(srcdir)/inputFile.C alt_ObjectFileTokenGeneration_inputFile.C
 #	./testTokenGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
-	./testTokenGeneration $(INCLUDES) -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+#	./testTokenGeneration $(INCLUDES) -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+	./testTokenGeneration -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 test_testTokenGeneration: testObjectFileTokenGeneration

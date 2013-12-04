@@ -1,0 +1,12 @@
+#!/bin/bash
+
+TESTPATH1=../../../tests/CompileTests/Cxx_tests
+TESTPATH2=../../../tests/CompileTests/Cxx11_tests
+PARSER1=sglr
+PARSER2=sglri
+
+./checkparser $PARSER1 $TESTPATH1
+./checkparser $PARSER1 $TESTPATH2
+./checkparser $PARSER2 $TESTPATH1
+./checkparser $PARSER2 $TESTPATH2
+

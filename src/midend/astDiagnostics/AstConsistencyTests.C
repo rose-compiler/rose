@@ -2454,6 +2454,11 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
 #if 0
+       // DQ (10/16/2013): Now that we have the token stream support computed correctly, 
+       // we have to disable this check to support the C++ tests (e.g. test2004_77.C).
+
+       // DQ (10/14/2013): Turn this on as part of testing the token stream mapping!
+
        // DQ (10/19/2012): This fails for a collection of C++ codes only:
        // test2011_121.C
        // test2011_141.C
@@ -6116,7 +6121,7 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                  << " " << stack[i] << "; parent=" << stack[i]->get_parent()
                  << "\n";
 
-       // DQ (9/21/2013): Avide redundant output of debug info.
+       // DQ (9/21/2013): Avoid redundant output of debug info.
        // printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
           if (stack[i]->get_parent() != NULL)
              {
@@ -6127,7 +6132,6 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
              }
         }
-
      output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()

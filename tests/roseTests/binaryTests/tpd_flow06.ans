@@ -47,5 +47,5 @@ Anlyzing pointers in this function:
 0x080485ec: Successor blocks: unknown
 
 Not using Yices SMT solver
-data pointer at defs={0x080485aa,0x080485ab,0x080485d4} expr=(add[32] (add[32] v2525[32] -4[32]) 16[32])
-data pointer at defs={0x080485aa,0x080485ab,0x080485ca} expr=(add[32] (add[32] v2525[32] -4[32]) 12[32])
+data pointer at defs={0x080485aa,0x080485ab,0x080485d4} expr=(add[32] v5[32] 12[32])
+data pointer at defs={0x080485aa,0x080485ab,0x080485ca} expr=(add[32] v5[32] 8[32])

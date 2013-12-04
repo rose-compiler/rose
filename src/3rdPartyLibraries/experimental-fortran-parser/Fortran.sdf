@@ -44,6 +44,6 @@ context-free syntax
 %% original: ExecutableProgram ProgramUnit -> ExecutableProgram
 
 %%R201
-  StartCommentBlock? ProgramUnit+              -> Program          {cons("program")}
+  StartCommentBlock? ProgramUnit+              -> Program          {cons("Program")}
 
 %%TODO - Figure out what Fortran.sdf really does

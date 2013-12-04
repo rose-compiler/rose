@@ -1,15 +1,79 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
-std::ostream& operator<<(std::ostream &o, const RegisterDictionary &dict) {
+std::ostream&
+operator<<(std::ostream &o, const RegisterDictionary &dict)
+{
     dict.print(o);
     return o;
 }
 
-std::ostream& operator<<(std::ostream &o, const RegisterDescriptor &reg) {
+std::ostream&
+operator<<(std::ostream &o, const RegisterDescriptor &reg)
+{
     reg.print(o);
     return o;
 }
+
+
+/*******************************************************************************************************************************
+ *                                      RegisterDescriptor
+ *******************************************************************************************************************************/
+
+bool
+RegisterDescriptor::operator==(const RegisterDescriptor &other) const 
+{
+    return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
+}
+
+bool
+RegisterDescriptor::operator!=(const RegisterDescriptor &other) const
+{
+    return !(*this==other);
+}
+
+bool
+RegisterDescriptor::operator<(const RegisterDescriptor &other) const
+{
+    if (majr!=other.majr)
+        return majr < other.majr;
+    if (minr!=other.minr)
+        return minr < other.minr;
+    if (offset!=other.offset)
+        return offset < other.offset;
+    return nbits < other.nbits;
+}
+
+
+/*******************************************************************************************************************************
+ *                                      RegisterNames
+ *******************************************************************************************************************************/
+
+std::string
+RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
+{
+    const RegisterDictionary *dict = dict_ ? dict_ : dflt_dict;
+    if (dict) {
+        std::string name = dict->lookup(rdesc);
+        if (!name.empty())
+            return name;
+    }
+
+    std::ostringstream ss;
+    ss <<prefix <<rdesc.get_major() <<"." <<rdesc.get_minor();
+    if (show_offset>0 || (show_offset<0 && rdesc.get_offset()!=0))
+        ss <<offset_prefix <<rdesc.get_offset() <<offset_suffix;
+    if (show_size)
+        ss <<size_prefix <<rdesc.get_nbits() <<size_suffix;
+    ss <<suffix;
+    return ss.str();
+}
+
+
+/*******************************************************************************************************************************
+ *                                      RegisterDictionary
+ *******************************************************************************************************************************/
+
 
 /* class method */
 uint64_t
@@ -73,11 +137,11 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
             const std::string &name = ri->second[i-1];
             Entries::const_iterator fi = forward.find(name);
             ROSE_ASSERT(fi!=forward.end());
-            if (fi->second.equal(rdesc))
+            if (fi->second==rdesc)
                 return name;
         }
     }
-    
+
     static const std::string empty;
     return empty;
 }
@@ -99,6 +163,31 @@ RegisterDictionary::get_registers() const {
 RegisterDictionary::Entries &
 RegisterDictionary::get_registers() {
     return forward;
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_descriptors() const
+{
+    const Entries &entries = get_registers();
+    RegisterDescriptors retval;
+    retval.reserve(entries.size());
+    for (Entries::const_iterator ei=entries.begin(); ei!=entries.end(); ++ei)
+        retval.push_back(ei->second);
+    return retval;
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_largest_registers() const
+{
+    SortBySize order(SortBySize::ASCENDING);
+    return filter_nonoverlapping(get_descriptors(), order, true);
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_smallest_registers() const
+{
+    SortBySize order(SortBySize::DESCENDING);
+    return filter_nonoverlapping(get_descriptors(), order, true);
 }
 
 void
@@ -125,7 +214,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         case EFF::ISA_IA32_Family:
             switch (isa) {
                 case EFF::ISA_IA32_286:         return dictionary_i286();
-                case EFF::ISA_IA32_386:         return dictionary_i386();
+                case EFF::ISA_IA32_386:         return dictionary_i386_387(); // assume '387 coprocessor is present
                 case EFF::ISA_IA32_486:         return dictionary_i486();
                 case EFF::ISA_IA32_Pentium:     return dictionary_pentium();
                 case EFF::ISA_IA32_Pentium4:    return dictionary_pentium4();
@@ -149,6 +238,14 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         default:
             return NULL;
     }
+}
+
+// class method
+const RegisterDictionary *
+RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp)
+{
+    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+    return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
 }
 
 /** Intel 8086 registers.
@@ -305,20 +402,14 @@ RegisterDictionary::dictionary_i386()
     return regs;
 }
 
-/** Intel 80486 registers.
- *
- *  The 80486 has the same registers as the 80386 but adds a new flag to the "eflags" register and adds floating-point registers
- *  previously in the 8087, 80287, and 80387 math coprocessors. */
+/** Intel 80386 with 80387 math co-processor. */
 const RegisterDictionary *
-RegisterDictionary::dictionary_i486()
+RegisterDictionary::dictionary_i386_387()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
-        regs = new RegisterDictionary("i486");
+        regs = new RegisterDictionary("i386 w/387");
         regs->insert(dictionary_i386());
-
-        /* Additional flags */
-        regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
 
         /* The floating point registers names are relative to the current top-of-stack that changes dynamically. The
          * definitions we're creating here are static.  When a floating-point instruction is simulated (e.g., by the
@@ -332,6 +423,22 @@ RegisterDictionary::dictionary_i486()
         regs->insert("st(5)", x86_regclass_st, 5, 0, 80);
         regs->insert("st(6)", x86_regclass_st, 6, 0, 80);
         regs->insert("st(7)", x86_regclass_st, 7, 0, 80);
+    }
+    return regs;
+}
+        
+
+/** Intel 80486 registers.
+ *
+ *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
+const RegisterDictionary *
+RegisterDictionary::dictionary_i486()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("i486");
+        regs->insert(dictionary_i386_387());
+        regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
     }
     return regs;
 }
@@ -370,7 +477,7 @@ RegisterDictionary::dictionary_pentium()
 
 /** Intel Pentium 4 registers.
  *
- *  The Pentium 4 has the same register set as the Pentium but adds the MMX0 through MMX7 registers for the SSE instruction
+ *  The Pentium 4 has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE instruction
  *  set. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium4()
@@ -379,14 +486,14 @@ RegisterDictionary::dictionary_pentium4()
     if (!regs) {
         regs = new RegisterDictionary("pentium4");
         regs->insert(dictionary_pentium());
-        regs->insert("mmx0", x86_regclass_xmm, 0, 0, 128);
-        regs->insert("mmx1", x86_regclass_xmm, 1, 0, 128);
-        regs->insert("mmx2", x86_regclass_xmm, 2, 0, 128);
-        regs->insert("mmx3", x86_regclass_xmm, 3, 0, 128);
-        regs->insert("mmx4", x86_regclass_xmm, 4, 0, 128);
-        regs->insert("mmx5", x86_regclass_xmm, 5, 0, 128);
-        regs->insert("mmx6", x86_regclass_xmm, 6, 0, 128);
-        regs->insert("mmx7", x86_regclass_xmm, 7, 0, 128);
+        regs->insert("xmm0", x86_regclass_xmm, 0, 0, 128);
+        regs->insert("xmm1", x86_regclass_xmm, 1, 0, 128);
+        regs->insert("xmm2", x86_regclass_xmm, 2, 0, 128);
+        regs->insert("xmm3", x86_regclass_xmm, 3, 0, 128);
+        regs->insert("xmm4", x86_regclass_xmm, 4, 0, 128);
+        regs->insert("xmm5", x86_regclass_xmm, 5, 0, 128);
+        regs->insert("xmm6", x86_regclass_xmm, 6, 0, 128);
+        regs->insert("xmm7", x86_regclass_xmm, 7, 0, 128);
     }
     return regs;
 }
@@ -430,8 +537,8 @@ RegisterDictionary::dictionary_amd64()
             regs->insert(name+"w", x86_regclass_gpr, i, 0, 16);
             regs->insert(name+"d", x86_regclass_gpr, i, 0, 32);
 
-            /* New media MMX registers */
-            regs->insert(std::string("mmx")+StringUtility::numberToString(i),
+            /* New media XMM registers */
+            regs->insert(std::string("xmm")+StringUtility::numberToString(i),
                          x86_regclass_xmm, i, 0, 128);
         }
 

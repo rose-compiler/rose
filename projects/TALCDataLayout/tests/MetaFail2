@@ -1,0 +1,10 @@
+View elem1
+{
+	Field { arr1:i }
+}
+
+View elem2
+{
+	Field { arr2:i } 
+}
+

@@ -330,6 +330,10 @@ protected:
         /** Emit function property values. This is mostly for debugging.  If the file handle is null then nothing happens. */
         void show_properties(FILE*) const;
 
+        /** Return the pointer to the basic block at the entry address. Returns null if there is no basic block assigned
+         *  to this function at that address. */
+        BasicBlock *entry_basic_block() const;
+
     public:
         /* If you add more data members, also update detach_thunk() and/or init_properties() */
         unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
@@ -1457,6 +1461,7 @@ public:
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /* Assign names to ELF PLT functions */
     virtual void name_import_entries(SgAsmGenericHeader*);      /* Assign names to PE import functions */
+    virtual void find_pe_iat_extents(SgAsmGenericHeader*);      /* Find addresses for all PE Import Address Tables */
 
     /** Adds extents for all defined functions.  Scans across all known functions and adds their extents to the specified
      *  RangeMap argument. Returns the sum of the return values from the single-function function_extent() method. */
@@ -1503,10 +1508,12 @@ public:
      *  @code
      *     jmp DWORD PTR ds:[0x80496b0]        -> (x86)   returns 80496b0
      *     jmp QWORD PTR ds:[rip+0x200b52]     -> (amd64) returns 200b52 + address following instruction
+     *     jmp DWORD PTR ds:[ANY_GPR+0x18]     -> (x86)   returns offset+0x18
+     *     // anything else return zero
      *  @endcode
      *
      * We only handle instructions that appear as the first instruction in an ELF .plt entry. */
-    static rose_addr_t get_indirection_addr(SgAsmInstruction*);
+    static rose_addr_t get_indirection_addr(SgAsmInstruction*, rose_addr_t offset);
 
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
@@ -1528,6 +1535,20 @@ public:
      *  to the jumped-to function, and splits them into two functions. */
     virtual bool detach_thunk(Function*);
 
+    /** Returns true if the basic block is a PE dynamic linking thunk. If the argument is a basic block, then the only
+     *  requirement is that the basic block contains a single instruction, which in the case of x86, is an indirect JMP through
+     *  an Import Address Table. If the argument is a function, then the function must contain a single basic block which is a
+     *  dynamic linking thunk. The addresses of the IATs must have been previously initialized by pre_cfg() or other.
+     * @{ */
+    bool is_pe_dynlink_thunk(Instruction*);
+    bool is_pe_dynlink_thunk(BasicBlock*);
+    bool is_pe_dynlink_thunk(Function*);
+    /** @} */
+
+    /** Gives names to PE dynamic linking thunks if possible. The names come from the PE Import Table if an interpretation
+     *  is supplied as an argument. This also marks such functions as being thunks. */
+    void name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/);
+    
     /** Adjusts ownership of padding data blocks.  Each padding data block should be owned by the prior function in the address
      *  space.  This is normally the case, but when functions are moved around, split, etc., the padding data blocks can get
      *  mixed up.  This method puts them all back where they belong. */
@@ -1804,6 +1825,7 @@ public:
     InstructionMap insns;                               /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
     MemoryMap ro_map;                                   /**< The read-only parts of 'map', used for insn semantics mem reads. */
+    ExtentMap pe_iat_extents;                           /**< Virtual addresses for all PE Import Address Tables. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
     BasicBlocks basic_blocks;                           /**< All known basic blocks. */

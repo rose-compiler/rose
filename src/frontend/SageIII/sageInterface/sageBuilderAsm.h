@@ -21,6 +21,12 @@ namespace SageBuilderAsm
      SgAsmOperandList* buildSgAsmOperandList( SgAsmExpression* operand );
      SgAsmOperandList* buildSgAsmOperandList( SgAsmExpression* lhs = NULL, SgAsmExpression* rhs = NULL );
 
+     SgAsmx86RegisterReferenceExpression* buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor&);
+     SgAsmArmRegisterReferenceExpression* buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor&);
+     SgAsmMipsRegisterReferenceExpression* buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor&);
+     SgAsmPowerpcRegisterReferenceExpression *buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor&);
+
+
 template <class T> T* buildAsmUnaryExpression(SgAsmExpression* operand = NULL);
 
 // SgAsmUnaryMinus * buildAsmUnaryMinus(SgAsmExpression* op = NULL);

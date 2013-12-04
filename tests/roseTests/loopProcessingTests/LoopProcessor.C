@@ -8,6 +8,8 @@
 #include <AstInterface_ROSE.h>
 #include <AutoTuningInterface.h>
 
+#include "AstDiagnostics.h"
+
 using namespace std;
 extern bool DebugAnnot();
 
@@ -71,30 +73,60 @@ main ( int argc,  char * argv[] )
   SgProject *sageProject = new SgProject ( argvList);
   FixFileInfo(sageProject);
 
+  // DQ (11/19/2013): Added AST consistency tests.
+     AstTests::runAllTests(sageProject);
+
   int filenum = sageProject->numberOfFiles();
   for (int i = 0; i < filenum; ++i) {
+
+  // DQ (11/19/2013): Added AST consistency tests.
+     AstTests::runAllTests(sageProject);
+
     SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
     ROSE_ASSERT(sageFile != NULL);
+
     std::string fname = sageFile->get_file_info()->get_raw_filename();
     fname=fname.substr(fname.find_last_of('/')+1);
+
     AutoTuningInterface tuning(fname);
+
     LoopTransformInterface::set_tuningInterface(&tuning);
     SgGlobal *root = sageFile->get_globalScope();
     ROSE_ASSERT(root != NULL);
 
     SgDeclarationStatementPtrList declList = root->get_declarations ();
 
-    for (SgDeclarationStatementPtrList::iterator p = declList.begin(); 
-         p != declList.end(); ++p) {
+ // DQ (11/19/2013): Added AST consistency tests.
+    AstTests::runAllTests(sageProject);
+
+    for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
+    {
       SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
       if (func == 0) continue;
       SgFunctionDefinition *defn = func->get_definition();
       if (defn == 0) continue;
       SgBasicBlock *stmts = defn->get_body();  
       AstInterfaceImpl scope(stmts);
+
+   // DQ (11/19/2013): Added AST consistency tests.
+      AstTests::runAllTests(sageProject);
+
+   // DQ (11/19/2013): Added AST consistency tests.
+      AstTests::runAllTests(sageProject);
+
       LoopTransformInterface::TransformTraverse(scope,AstNodePtrImpl(stmts));
+
+#if 0
+   // DQ (11/19/2013): Added AST consistency tests (this fails).
+      AstTests::runAllTests(sageProject);
+#endif
     }
     tuning.GenOutput();
+
+#if 0
+  // DQ (11/19/2013): Added AST consistency tests (this fails).
+     AstTests::runAllTests(sageProject);
+#endif
   }
 
 //   if (CmdOptions::GetInstance()->HasOption("-fd")) {
@@ -103,6 +135,11 @@ main ( int argc,  char * argv[] )
 //   if (CmdOptions::GetInstance()->HasOption("-pre")) {
 //       partialRedundancyElimination(sageProject);
 //   }
+
+#if 0
+  // DQ (11/19/2013): Added AST consistency tests (this fails).
+     AstTests::runAllTests(sageProject);
+#endif
 
      unparseProject(sageProject);
    //backend(sageProject);

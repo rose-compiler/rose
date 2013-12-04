@@ -78,6 +78,13 @@ namespace RSIM_Semantics {
             Halt(rose_addr_t ip): ip(ip) {}
         };
 
+        /** Exception thrown by INT instruction if the interrupt is not handled by the simulator. */
+        struct Interrupt {
+            rose_addr_t ip;     // address of INT instruction
+            int inum;           // interrupt number
+            Interrupt(rose_addr_t ip, int inum): ip(ip), inum(inum) {}
+        };
+        
         InnerPolicy()
             : thread(NULL), regdict(NULL) {
             // must call ctor() before using this object
