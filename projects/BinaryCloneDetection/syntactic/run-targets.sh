@@ -47,6 +47,10 @@ usage () {
     echo "        --window-size=1..INT_MAX" >&2
     echo "            Number of instructions that comprise a window. If a function does not have enough" >&2
     echo "            instructions to fill a window then no vectors are generated for the function." >&2
+    echo "        --norm=1,2" >&2
+    echo "            Use LSH 1 norm (hamming distance) or LSH 2 norm (Euclidean distance)." >&2
+    echo "        --prefix=*" >&2
+    echo "            Prefix for the database name." >&2
     exit $exit_status
 }
 
@@ -78,7 +82,7 @@ generate_api_config() {
 threshold=""
 stride=""
 window_size=""
-
+norm=""
 
 while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
     arg="$1"; shift
@@ -98,7 +102,14 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
 	--window-size=*)
 	    window_size=${arg#--window-size=}
 	    ;;
-	*)
+	--norm=*)
+	    norm=${arg#--norm=}
+	    ;;
+ 	--prefix=*)
+	    DB_PREFIX=${arg#--prefix=}
+	    ;;
+   
+        *)
 	    echo "$argv0: unknown command-line switch: $arg" >&2
 	    echo "$argv0: see --help for more info" >&2
 	    exit 1
@@ -123,10 +134,23 @@ if [ "12$window_size" = "12" ]; then
     usage 0
 fi
 
+
+if [ "12$DB_PREFIX" = "12" ]; then
+    echo "Please provide a prefix" 
+    usage 0
+fi
+
+
+if [ "12$norm" = "12" ]; then
+    echo "Please provide a norm" 
+    usage 0
+fi
+
+
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
 add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
 create_vectors_flags="--stride $stride --windowSize $window_size"
-find_clones_flags="-p 1 -k 1000000000 -l 10 -t $threshold"
+find_clones_flags="-p $norm -k 1000000000 -l 10 -t $threshold"
 
 
 
@@ -134,6 +158,7 @@ find_clones_flags="-p 1 -k 1000000000 -l 10 -t $threshold"
 # Find the names of the directories containing target directories. Target directories are O0, O1, O2, or O3
 if [ "$#" -gt 0 ]; then
   SEARCH_DIR="$@"
+  echo "Target dir is: $SEARCH_DIR"
   TARGET_DIRS=$(find "$SEARCH_DIR" -type d -name 'O[0123]' |perl -p -e 's((.*)/O[0123]$)($1)' |sort |uniq)
   [ -n "$TARGET_DIRS" ] || die "no target directories found in $SEARCH_DIR"
 

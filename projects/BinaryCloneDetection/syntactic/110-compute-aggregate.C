@@ -33,12 +33,6 @@ usage(int exit_status)
               <<"This command computes the API Call similarity.\n"
               <<"\n"
               <<"  These switches control how api call traces are compared:\n"
-              <<"    --sem-threshold=0.0|..|1.0\n"
-              <<"            Similarity measure for semantic similarity between 0 and 1.\n"
-              <<"    --path-threshold=0.0|..|1.0\n"
-              <<"            Path sensitive similarity threshold between 0 and 1.\n"
-              <<"    --cg-threshold=0.0|..|1.0\n"
-              <<"            Call graph similarity threshold between 0 and 1.\n"
               <<"    --prefix=STRING\n"
               <<"            Prefix for databases.\n"
               <<"\n";
@@ -492,10 +486,6 @@ int main(int argc, char *argv[])
   std::string prefix = "as_";
 
 
-  double sem_threshold  = 0.7;
-  double path_threshold = 0.0;
-  double cg_threshold   = 0.0;
-
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
@@ -503,12 +493,6 @@ int main(int argc, char *argv[])
   for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
     if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
       usage(0);
-    } else if (!strncmp(argv[argno], "--sem-threshold=",16)) {
-      sem_threshold = boost::lexical_cast<double>(argv[argno]+16);
-    } else if (!strncmp(argv[argno], "--path-threshold=",17)) {
-      path_threshold = boost::lexical_cast<double>(argv[argno]+17);
-    } else if (!strncmp(argv[argno], "--cg-threshold=",15)) {
-      cg_threshold = boost::lexical_cast<double>(argv[argno]+15);
     } else if (!strncmp(argv[argno], "--prefix=",9)) {
       prefix = boost::lexical_cast<std::string>(argv[argno]+9);
     } else {
@@ -592,15 +576,6 @@ int main(int argc, char *argv[])
       transaction->execute("SET client_min_messages TO WARNING;");
       //create the schema
 
-      std::string set_thresholds =
-        "drop table IF EXISTS fr_settings; "
-        "create table fr_settings as"
-        " select "
-        "   (select " + boost::lexical_cast<std::string>(sem_threshold) +  " ) as similarity_threshold,"
-        "   (select " + boost::lexical_cast<std::string>(path_threshold) + " ) as path_similarity_threshold,"
-        "   (select " + boost::lexical_cast<std::string>(cg_threshold) +   " ) as cg_similarity_threshold;";
-
-      transaction->execute(set_thresholds);
       transaction->execute(FailureEvaluation::failure_schema); // could take a long time if the database is large
 
       get_failure_rates_insert_into_global( *m_it, transaction, r_transaction );
