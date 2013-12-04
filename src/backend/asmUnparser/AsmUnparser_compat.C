@@ -113,15 +113,15 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
 
     // Build a control flow graph, but exclude all the basic blocks that are marked as disassembly leftovers.
     struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
-        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *blk) {
-            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(blk);
+        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } vertex_filter;
     BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&vertex_filter);
     BinaryAnalysis::ControlFlow::Graph cfg;
-    cfg_analyzer.build_cfg_from_ast(interp, cfg/*out*/);
+    cfg_analyzer.build_block_cfg_from_ast(interp, cfg/*out*/);
 
     // We will try to disassemble static data blocks (i.e., disassembling data as instructions), but we need to choose an
     // appropriate disassembler.  We don't have available the disassembler that was originally used, so we'll obtain a default
