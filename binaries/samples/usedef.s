@@ -46,6 +46,13 @@ case7:	mov eax, [ebx]
 	;; depend on the operands
 case8:  mov eax, 1
 	xor eax, eax
+	neg ecx			;only here so next branch is unknown
+	je end
+
+	;; Pushing constants onto the stack
+case9:	push 3
+	mov eax, 7
+	push eax
 	je end
 
 	hlt
