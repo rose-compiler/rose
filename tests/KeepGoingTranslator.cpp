@@ -1,6 +1,10 @@
+#include "rose.h"
+
 #include <assert.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <sys/types.h> //getpid()
+#include <unistd.h>    //getpid()
 
 #include <fstream>
 #include <iostream>
@@ -13,8 +17,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-
-#include "rose.h"
+#include <boost/interprocess/sync/file_lock.hpp>
 
 static void
 ShowUsage(std::string program_name);
@@ -262,7 +265,7 @@ main(int argc, char * argv[])
       if (verbose)
       {
           std::cout
-              << "[ERROR] "
+              << "[INFO] "
               << "ROSE successfully compiled this file: "
               << "'" << filename << "'"
               << std::endl;
@@ -360,11 +363,82 @@ GetTimestamp(const std::string& format)
   return ss.str();
 }
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <utime.h>
+
+#include <iostream>
+#include <string>
+
+#include <cstdlib>
+
+// http://chris-sharpe.blogspot.com/2013/05/better-than-systemtouch.html
+void touch(const std::string& pathname)
+{
+    int fd = open(pathname.c_str(),
+                  O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK,
+                  0666);
+    if (fd<0) // Couldn't open that path.
+    {
+        std::cerr
+            << __PRETTY_FUNCTION__
+            << ": Couldn't open() path \""
+            << pathname
+            << "\"\n";
+        return;
+    }
+
+    int rc = utime(pathname.c_str(), 0);
+
+    if (rc)
+    {
+        std::cerr
+            << __PRETTY_FUNCTION__
+            << ": Couldn't utime() path \""
+            << pathname
+            << "\"\n";
+        return;
+    }
+    std::clog
+        << __PRETTY_FUNCTION__
+        << ": Completed touch() on path \""
+        << pathname
+        << "\"\n";
+}
+
 
 void
 AppendToFile(const std::string& filename, const std::string& msg)
 {
+  touch(filename);
+
+  boost::interprocess::file_lock flock;
+  try
+  {
+      boost::interprocess::file_lock* flock_tmp =
+          new boost::interprocess::file_lock(filename.c_str());
+      flock.swap(*flock_tmp);
+      delete flock_tmp;
+      flock.lock();
+  }
+  catch (boost::interprocess::interprocess_exception &ex)
+  {
+      std::cout << ex.what() << std::endl;
+
+      std::cerr
+          << "[FATAL] "
+          << "Couldn't lock "
+          << "'" << filename << "'"
+          << std::endl;
+
+      abort();
+  }
+
   std::ofstream fout(filename.c_str(), std::ios::app);
+
   if(!fout.is_open())
   {
       std::cerr
@@ -372,15 +446,18 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "Couldn't open "
           << "'" << filename << "'"
           << std::endl;
+      flock.unlock();
       abort();
   }
 
   fout
-      //<< "[" << GetTimestamp() << "] "
+      << GetTimestamp()  << " "
+      << getpid() << " "
       << msg
       << std::endl;
 
   fout.close();
+  flock.unlock();
 }
 
 std::map<std::string, std::string>
