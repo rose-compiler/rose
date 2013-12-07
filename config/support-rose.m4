@@ -2082,6 +2082,7 @@ tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
