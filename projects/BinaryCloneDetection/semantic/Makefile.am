@@ -134,6 +134,11 @@ noinst_PROGRAMS += 111-compute-overall-aggregate
 111_compute_overall_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
 111_compute_overall_aggregate_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 114_random_function_pick
+114_random_function_pick_SOURCES = 114-random-function-pick.C
+114_random_function_pick_CPPFLAGS = $(ROSE_INCLUDES)
+114_random_function_pick_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 noinst_PROGRAMS += 115_syscall_usage
 115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
 115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
