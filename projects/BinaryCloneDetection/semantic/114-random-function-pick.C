@@ -51,6 +51,7 @@ create_tables_and_indexes(std::string regex_of_targets, int ninsns, double path_
   transaction->execute("drop table IF EXISTS tmp_called_functions");
   transaction->execute("drop table IF EXISTS tmp_random_function_stats");
   transaction->execute("drop table IF EXISTS tmp_clone_pairs");
+  transaction->execute("drop table IF EXISTS tmp_duplicate_funcs");
 
   //table of tested functions. Criteria is that it needs to pass at least one test.
   //Looking for functions that are:
@@ -58,11 +59,16 @@ create_tables_and_indexes(std::string regex_of_targets, int ninsns, double path_
   //  2) is not a dynamic linking stub function
   //  3) has more instructions that ninsns
   //  4) 
+   transaction->execute("create table tmp_duplicate_funcs as select name from semantic_functions GROUP BY name HAVING count(*) > 1");
+ 
   transaction->execute("create table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
   transaction->execute("create table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt')");
-  transaction->execute("create table tmp_interesting_funcs as ( select ttf.func_id from tmp_tested_funcs ttf join semantic_functions sf on sf.id = ttf.func_id "
+  transaction->execute("create table tmp_interesting_funcs as ( select ttf.func_id from tmp_tested_funcs ttf join semantic_functions as sf on sf.id = ttf.func_id "
       " join semantic_files as sem_file on sem_file.id = sf.file_id "
-      " where sem_file.name LIKE '%"+ regex_of_targets  + "%' AND sf.ninsns >= "+ boost::lexical_cast<std::string>(ninsns) +  " EXCEPT select func_id from tmp_library_funcs ) ");
+      " join tmp_duplicate_funcs as tdf on tdf.name = sf.name "
+      " where sem_file.name LIKE '%"+ regex_of_targets  + "%' AND sf.ninsns >= "+ boost::lexical_cast<std::string>(ninsns) +  
+      " AND COALESCE(sf.name,'') != ''  AND  sf.name NOT LIKE '\\_%' "
+      " EXCEPT select func_id from tmp_library_funcs ) ");
 
 
  transaction->execute("create table tmp_clone_pairs as "
@@ -81,10 +87,8 @@ create_tables_and_indexes(std::string regex_of_targets, int ninsns, double path_
 
 
 void 
-evaluate_random_function()
+evaluate_random_function(int random_fid)
 {
-  int random_fid = transaction->statement("SELECT func_id FROM tmp_interesting_funcs ORDER BY RANDOM() LIMIT 1;")->execute_int();
-
   int total_matches = transaction->statement("SELECT count(*) from tmp_clone_pairs where func1_id = " + boost::lexical_cast<std::string>(random_fid) +
       " OR func2_id = " + boost::lexical_cast<std::string>(random_fid) )->execute_int();
 
@@ -167,8 +171,13 @@ main(int argc, char *argv[])
 
     create_tables_and_indexes(file_regex, ninsns, path_threshold, cg_threshold, sem_threshold);
 
-    for(int i = 0; i < num_funcs; ++i){
-      evaluate_random_function();
+
+    SqlDatabase::StatementPtr stmt2 = transaction->statement("SELECT func_id FROM tmp_interesting_funcs ORDER BY RANDOM() LIMIT ?;");
+    stmt2->bind(0, num_funcs);
+
+    for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row){
+      int random_fid = row.get<int>(0);
+      evaluate_random_function(random_fid);
     }
 
     transaction->commit();
