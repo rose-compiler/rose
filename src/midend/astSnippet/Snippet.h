@@ -185,7 +185,7 @@ class Snippet {
     friend class SnippetFile;                           // for protected constructor
 
 private:
-    typedef Map<SgSymbol*, SgNode*> ArgumentBindings;
+    typedef Map<SgSymbol*, SgNode*> ArgumentBindings;   // bindings from snippet formals to actual vars and/or expressions
     std::string name;                                   // name of snippet
     SnippetFilePtr file;                                // file containing the snippet definition
     SgFunctionDefinition *ast;                          // snippet definition
@@ -241,6 +241,10 @@ protected:
     /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
      *  aren't already inserted. */
     void insertGlobalStuff(SgStatement *insertionPoint);
+
+    /** Rename snippet local variables so they don't interfere with names visible at the insertion point. Only local variables
+     * whose names begin with "tmp" are renamed. */
+    void renameTemporaries(SgNode *ast);
 };
 
 } // namespace
