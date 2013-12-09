@@ -1,4 +1,5 @@
 #include "Snippet.h"
+#include "LinearCongruentialGenerator.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -283,6 +284,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgTreeCopy deep;
     SgStatement *toInsert = isSgStatement(ast->get_body()->copy(deep));
     assert(toInsert!=NULL);
+    renameTemporaries(toInsert);
     causeUnparsing(toInsert);
     replaceArguments(toInsert, bindings);
     SageInterface::insertStatementBefore(insertionPoint, toInsert);
@@ -299,6 +301,27 @@ Snippet::causeUnparsing(SgNode *ast)
         void visit(SgNode *node) {
             if (SgLocatedNode *loc = isSgLocatedNode(node))
                 loc->get_file_info()->setOutputInCodeGeneration();
+        }
+    } t1;
+    t1.traverse(ast, preorder);
+}
+
+void
+Snippet::renameTemporaries(SgNode *ast)
+{
+    struct T1: AstSimpleProcessing {
+        void visit(SgNode *node) {
+            static const char *letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            static LinearCongruentialGenerator random(2013120911ul);
+            assert(strlen(letters)==2*26);
+            if (SgInitializedName *vdecl = isSgInitializedName(node)) {
+                if (0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
+                    std::string newName = "T_";
+                    for (size_t i=0; i<6; ++i)
+                        newName += letters[random()%(2*26)];
+                    vdecl->set_name(newName);
+                }
+            }
         }
     } t1;
     t1.traverse(ast, preorder);

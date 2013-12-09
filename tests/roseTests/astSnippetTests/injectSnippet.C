@@ -6,14 +6,28 @@ using namespace rose;
 // Holds information about where to insert something
 struct InsertionPoint {
     SgFunctionDefinition *function;
-    SgStatement *last_stmt;
+    SgStatement *last_stmt, *insert_here;
     std::vector<SgInitializedName*> localvars;
 
     InsertionPoint(SgProject *project, const std::string &function_name)
-        : function(NULL) {
+        : function(NULL), last_stmt(NULL), insert_here(NULL) {
         if ((function = SnippetTests::findFunctionDefinition(project, function_name))) {
             last_stmt = SnippetTests::findLastStatement(function);
             localvars = SnippetTests::findFunctionVariables(function);
+
+            struct T1: AstSimpleProcessing {
+                void visit(SgNode *node) {
+                    if (SgVarRefExp *vref = isSgVarRefExp(node)) {
+                        if (vref->get_symbol()->get_name() == "INSERT_HERE")
+                            throw SageInterface::getEnclosingNode<SgStatement>(vref);
+                    }
+                }
+            } t1;
+            try {
+                t1.traverse(function, preorder);
+            } catch (SgStatement *stmt) {
+                insert_here = stmt;
+            }
         }
     }
 
@@ -88,7 +102,7 @@ main(int argc, char *argv[])
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
     size_t nargs = snippet->numberOfArguments();
     std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
-    SgStatement *ipoint = insertionPoint.last_stmt;
+    SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
     snippet->insert(ipoint, args);
 
     // Unparse the modified source code
