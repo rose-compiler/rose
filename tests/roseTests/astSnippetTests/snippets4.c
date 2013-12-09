@@ -4,8 +4,8 @@
 void assert(int);
 void free(void*);
 void* malloc(unsigned);
-void* memcpy(char*, const char*, unsigned);
-void* memset(char*, unsigned, unsigned);
+void* memcpy(void*, const void*, unsigned);
+void* memset(void*, unsigned, unsigned);
 unsigned strlen(const char*);
 
 // Snippet support declarations should be in a header file which is not injected
@@ -15,9 +15,17 @@ void snippet_inject(const char*, ...);
 // The rest of the file is snippets
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void checkMalloc(const char *ptr)
+void notNull(const void *x) 
 {
-    assert(ptr!=(void*)0);
+    assert(x != (const void*)0);
+}
+
+void checkedCopy(void *dst, void *src, unsigned nbytes)
+{
+    notNull(dst);
+    notNull(src);
+    if (dst != src)
+        memcpy(dst, src, nbytes);
 }
 
 void storeHeapString(const char *from)
@@ -27,8 +35,7 @@ void storeHeapString(const char *from)
 
     nbytes = strlen(from) + 1;
     storage = malloc(nbytes);
-    checkMalloc(storage);    // recursive snippet injection
-    memcpy(storage, from, nbytes);
+    checkedCopy(storage, from, nbytes);
 }
 
 void loadHeapString(char *to, char *from)
@@ -36,7 +43,7 @@ void loadHeapString(char *to, char *from)
     unsigned nbytes;
 
     nbytes = strlen(from) + 1;
-    memcpy(to, from, nbytes);
+    checkedCopy(to, from, nbytes);
     free(from);
 }
 

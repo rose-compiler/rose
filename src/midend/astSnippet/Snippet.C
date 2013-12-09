@@ -348,6 +348,20 @@ Snippet::replaceArguments(SgNode *toInsert, const ArgumentBindings &bindings)
                         assert(!"replacement is something weird");
                     }
                 }
+            } else if (SgTypedefDeclaration *tdef = isSgTypedefDeclaration(node)) {
+                std::string tdef_name = tdef->get_name().getString();
+                for (ArgumentBindings::const_iterator bi=bindings.begin(); bi!=bindings.end(); ++bi) {
+                    if (0==tdef_name.compare("typeof_" + bi->first->get_name().getString())) {
+                        std::cerr <<"ROBB: found typedef for " <<bi->first->get_name() <<"\n";
+                        if (SgInitializedName *actual = isSgInitializedName(bi->second)) {
+                            tdef->set_base_type(actual->get_type());
+                        } else if (SgExpression *actual = isSgExpression(bi->second)) {
+                            tdef->set_base_type(actual->get_type());
+                        } else {
+                            assert(!"actual is something weird");
+                        }
+                    }
+                }
             }
         }
     } t1(bindings);
