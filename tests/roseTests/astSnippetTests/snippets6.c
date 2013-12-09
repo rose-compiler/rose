@@ -1,6 +1,9 @@
 // Tests for variable renaming. Any variable whose name begins with "tmp" is renamed
 // so it doesn't conflict with other variables that might be visible at the insertion point.
 int random_boolean(void);
+void *malloc(unsigned);
+unsigned strlen(const char*);
+void* memcpy(void*, const void*, unsigned);
 
 void randomOffByOne(int arg1)
 {
@@ -17,23 +20,20 @@ void addWithError(int addend1, int addend2, int result)
     result = addend1 + addend2;
 }
 
-
-void add(int a, int b, int c) 
+void copy_string10(char *dst, const char *src)
 {
-    int tmp1;
-    a = b + c;
+    unsigned tmp_size = strlen(src);
+    tmp_size = tmp_size > 10 ? 10 : tmp_size;
+    memcpy(dst, src, tmp_size);
+    dst[tmp_size] = '\0';
 }
 
-void mult(int a, int b, int d)
+void allocate_string(const char *s) 
 {
-    int tmp4;
-    a = b + d;
-}
-
-void dot(int a, int b1, int b2, int c1, int c2)
-{
-    int tmp1, tmp2, tmp3;
-    mult(tmp1, b1, c2);
-    mult(tmp2, b2, c1);
-    add(tmp3, tmp1, tmp2);
+    unsigned tmp_i;
+    unsigned tmp_size = strlen(s) + 1;
+    char *heap_storage = malloc(tmp_size);
+    copy_string10(heap_storage, s);
+    for (tmp_i=10+1;  tmp_i<tmp_size; ++tmp_i)
+        heap_storage[tmp_i] = random_boolean() ? ' ' : '\t';
 }
