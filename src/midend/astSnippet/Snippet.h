@@ -180,6 +180,27 @@ protected:
  *      copyTo(storage, s, s_size);
  *  }
  * @endcode
+ *
+ *  In order to avoid conflicts between the names of local variables in the snippet code and variables that are visible at the
+ *  point of insertion, any snippet local variable whose name begins with "tmp" will be renamed to "T_xxxxxx" where "xxxxxx" is
+ *  a randomly generated string of letters.  For example, when inserting allocate_string which also inserts copy_string10 from
+ *  the snippet below, the two tmp_size variables are given two different names, but the heap_storage variable is not
+ *  renamed--presumably because the user is interested in that specific variable.
+ *
+ * @code
+ *  void copy_string10(char *dst, const char *src) {
+ *      unsigned tmp_size = strlen(src);
+ *      tmp_size = tmp_size > 10 ? 10 : tmp_size;
+ *      memcpy(dst, src, tmp_size);
+ *      dst[tmp_size] = '\0';
+ *  }
+ * 
+ *  void allocate_string(const char *s) {
+ *      unsigned tmp_size = strlen(s) + 1;
+ *      char *heap_storage = malloc(tmp_size);
+ *      copy_string10(heap_storage, s);
+ *  }
+ * @endcode
  */
 class Snippet {
     friend class SnippetFile;                           // for protected constructor

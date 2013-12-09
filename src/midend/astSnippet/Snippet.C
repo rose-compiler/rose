@@ -1,12 +1,12 @@
 #include "Snippet.h"
 #include "LinearCongruentialGenerator.h"
+#include "rose_getline.h"
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 
 namespace rose {
-
 
 /*******************************************************************************************************************************
  *                                      SnippetFile
@@ -311,14 +311,48 @@ Snippet::renameTemporaries(SgNode *ast)
 {
     struct T1: AstSimpleProcessing {
         void visit(SgNode *node) {
-            static const char *letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
             static LinearCongruentialGenerator random(2013120911ul);
-            assert(strlen(letters)==2*26);
             if (SgInitializedName *vdecl = isSgInitializedName(node)) {
                 if (0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
                     std::string newName = "T_";
+#if 0   // This method generates random names that are less likely to conflict with existing names
+                    static const char *letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    assert(strlen(letters)==2*26);
                     for (size_t i=0; i<6; ++i)
                         newName += letters[random()%(2*26)];
+#else   // This method generates names that are more human friendly
+                    static std::vector<std::string> words;
+                    if (words.empty()) {
+                        // Read variable names from a file
+                        if (FILE *dict = fopen("/usr/share/dict/words", "r")) {
+                            char *line = NULL;
+                            size_t linesz = 0;
+                            while (rose_getline(&line, &linesz, dict)>0) {
+                                std::string word = StringUtility::trim(line);
+                                if (!word.empty()) {
+                                    if (!isalpha(word[0]) && '_'!=word[0])
+                                        word[0] = '_';
+                                    for (size_t i=0; i<word.size(); ++i) {
+                                        if (!isalnum(word[i]) && '_'!=word[i]) {
+                                            word[i] = '_';
+                                        } else if (isupper(word[i])) {
+                                            word[i] = tolower(word[i]);
+                                        }
+                                    }
+                                    words.push_back(word);
+                                }
+                            }
+                            free(line);
+                            fclose(dict);
+                        }
+                        assert(!words.empty());
+                    }
+                    static size_t ncalls = 0;
+                    newName = words[random() % words.size()] + StringUtility::numberToString(++ncalls);
+#endif
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-09]*/
+                    std::cerr <<"ROBB: renaming temporary variable " <<vdecl->get_name() <<" to \"" <<newName <<"\"\n";
+#endif
                     vdecl->set_name(newName);
                 }
             }
