@@ -112,11 +112,11 @@ protected:
  *  SnippetPtr banana = Snippet::instanceFromFile("banana", "fruit.c");
  * @endcode
  *
- * A snippet is injected along with its global prerequisites via its insert() method.  The first argument is a SgStatement
- * cursor to indicate where the insertion is to take place (the snippet is inserted after before the cursor). The remaining
- * arguments are either variable declarations (SgInitializedName) or expressions (SgExpression) that are bound to the formal
- * arguments of the snippet and thereby expanded into the specimen during the injection. They should be variables or
- * expressions that are valid at the point where the snippet is injected.
+ *  A snippet is injected along with its global prerequisites via its insert() method.  The first argument is a SgStatement
+ *  cursor to indicate where the insertion is to take place (the snippet is inserted after before the cursor). The remaining
+ *  arguments are either variable declarations (SgInitializedName) or expressions (SgExpression) that are bound to the formal
+ *  arguments of the snippet and thereby expanded into the specimen during the injection. They should be variables or
+ *  expressions that are valid at the point where the snippet is injected.
  *
  * @code
  *  SgStatement *cursor = ...;
@@ -128,17 +128,56 @@ protected:
  *  bannana->insert(cursor, var_a, expr_1, var_b);
  * @endcode
  *
- * Snippet insertion is recursive.  If one snippet's expansion results in calls to other snippets, then the other snippets are
- * injected at the point of their call. Only direct calls (not function pointers) at the statement level (not in
- * subexpressions) are recognized. [FIXME: Currently only snippets in the same SnippetFile are expanded.]
- *
- * Example snippet that swaps two integer variables:
+ *  Sometimes a snippet needs to know the type of an actual argument, and this is accomplished with a function-local typedef
+ *  that has a special name.  If the snippet has a formal argument named "a" then a typedef for "typeof_a" will be modified so
+ *  its base type is the same type as the actual value bound to "a". This only works when the type of the actaul value is
+ *  consistent with the default value provided in the typedef.  For instance, here's the implementation of a snippet that swaps
+ *  the value of two variables regardless of the type of the variables (this works as long as 'char' can be replaced with the
+ *  actual type and still be syntactically correct):
  *
  * @code
+ *  // This snippet operates only on integers
  *  void swap_ints(int a, int b) {
  *      int tmp = a;
  *      a = b;
  *      b = tmp;
+ *  }
+ *
+ *  // This snippet operates on any type. The type "int" here is
+ *  // only a place holder so the snippet can be parsed.
+ *  void swap(int a, int b) {
+ *      typedef int typeof_a;
+ *      typeof_a tmp = a;
+ *      a = b;
+ *      b = tmp;
+ *  }
+ * @endcode
+ *
+ *  Snippet insertion is recursive.  If one snippet's expansion results in calls to other snippets, then the other snippets are
+ *  injected at the point of their call. Only direct calls (not function pointers) at the statement level (not in
+ *  subexpressions) are recognized. Here's an example: [FIXME: Currently only snippets in the same SnippetFile are expanded.]
+ *
+ * @code
+ *  void assert(int);
+ *  void *malloc(unsigned);
+ *  void *memcpy(void*, const void*, unsigned);
+ *  unsigned strlen(const char *);
+ *
+ *  void notNull(const void *x) {
+ *      assert(x != (const void*)0);
+ *  }
+ *
+ *  void copyTo(void *dst, const void *src, unsigned nbytes) {
+ *      notNull(dst);
+ *      notNull(src);
+ *      memcpy(dst, src, nbytes);
+ *  }
+ *          
+ *  void storeStringInHeap(const char *s) {
+ *      unsigned s_size = strlen(s) + 1;
+ *      char *storage = malloc(s_size);
+ *      checkAllocation(storage);
+ *      copyTo(storage, s, s_size);
  *  }
  * @endcode
  */
