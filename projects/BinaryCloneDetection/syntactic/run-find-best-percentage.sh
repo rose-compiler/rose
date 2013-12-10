@@ -110,7 +110,7 @@ redirect="yes"
 echo "$dbs_to_compute_for"
 
 results_db_name="results_db_$prefix"
-threshold_db_name="syntactic_thresholds_$prefix"
+threshold_db_name="syntactic_thresholds_norm_1$prefix"
 
 execute dropdb   $results_db_name
 execute createdb $results_db_name
@@ -150,10 +150,10 @@ stride=10
 
 for window_size in 100 50 20;
 do
-  for norm in 1 2;
+  for norm in 2;
   do
 
-    for threshold in $(seq 1.000 -0.050 0.000); 
+    for threshold in 0.990 0.970 $(seq 1.000 -0.050 0.000); 
     do
         
       execute $SRCDIR/run-targets.sh --prefix=$prefix \
@@ -162,7 +162,8 @@ do
                                      --window-size=$window_size \
                                      --stride=$stride -- $SEARCH_DIR || exit 1
 
-      execute $BLDDIR/110_compute_aggregate --prefix=$prefix || exit 1
+      execute $BLDDIR/110_compute_aggregate --threshold=$threshold \ 
+                                            --prefix=$prefix || exit 1
 
       #compute recall, precision etc total over all dbs
       recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `

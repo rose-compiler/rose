@@ -33,6 +33,8 @@ usage(int exit_status)
               <<"This command computes the API Call similarity.\n"
               <<"\n"
               <<"  These switches control how api call traces are compared:\n"
+              <<"    --threshold=0.0|..|1.0\n"
+              <<"            Similarity measure for syntactic similarity between 0 and 1.\n"
               <<"    --prefix=STRING\n"
               <<"            Prefix for databases.\n"
               <<"\n";
@@ -489,12 +491,16 @@ int main(int argc, char *argv[])
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
+  double threshold   = 0.0000;
+
   int argno = 1;
   for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
     if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
       usage(0);
     } else if (!strncmp(argv[argno], "--prefix=",9)) {
       prefix = boost::lexical_cast<std::string>(argv[argno]+9);
+    } else if (!strncmp(argv[argno], "--threshold=",12)) {
+      threshold = boost::lexical_cast<double>(argv[argno]+12);
     } else {
       std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
         <<argv0 <<": see --help for more info\n";
@@ -574,7 +580,15 @@ int main(int argc, char *argv[])
       SqlDatabase::TransactionPtr transaction = conn->transaction();
 
       transaction->execute("SET client_min_messages TO WARNING;");
+
       //create the schema
+      std::string set_thresholds =
+	      "drop table IF EXISTS fr_settings; "
+	      "create table fr_settings as"
+	      " select "
+	      "   (select " + boost::lexical_cast<std::string>(threshold) +   " ) as threshold;";
+
+      transaction->execute(set_thresholds);
 
       transaction->execute(FailureEvaluation::failure_schema); // could take a long time if the database is large
 

@@ -102,7 +102,10 @@ create table fr_negative_pairs as
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
     select distinct function_id_1 as func1_id, function_id_2 as func2_id
-        from fr_cluster_pairs;
+    from fr_cluster_pairs
+    where ratio_1 >= (select threshold from fr_settings) and
+          ratio_2 >= (select threshold from fr_settings);
+
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
