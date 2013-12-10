@@ -1,3 +1,10 @@
+/*!
+ * 
+ * \file DLX/OpenACC/language.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __DLX_OPENACC_LANGUAGE_HPP__
 #define __DLX_OPENACC_LANGUAGE_HPP__
@@ -6,6 +13,9 @@
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/frontend.hpp"
 #include "DLX/Core/parser.hpp"
+#include "DLX/Core/compiler.hpp"
+
+#include "transformation-handler.hpp"
 
 #include <vector>
 #include <map>
@@ -19,6 +29,10 @@ namespace DLX {
 
 namespace OpenACC {
 
+/*!
+ * \ingroup grp_dlx_openacc_language
+ *
+*/
 struct language_t {
   static std::string language_label;
 
@@ -86,6 +100,11 @@ struct language_t {
 }
 
 namespace Directives {
+
+/**
+ * \addtogroup grp_dlx_openacc_directives
+ * @{
+ */
 
 template <>
 generic_construct_t<OpenACC::language_t> * buildConstruct<OpenACC::language_t>(OpenACC::language_t::construct_kinds_e kind);
@@ -295,7 +314,30 @@ template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_device> {
   // empty
 };
+ /** @} */
+}
 
+namespace Compiler {
+
+/*!
+ * \addtogroup grp_dlx_openacc_compiler
+ * @{
+ */
+
+template <>
+Compiler<OpenACC::language_t, Handles::TransformationHandler>::Compiler(
+  Handles::TransformationHandler & transformation_handler,
+  OpenACC::language_t::compiler_module_handlers_t & module_handlers
+);
+
+template <>
+bool Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::compile(
+  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & directives,
+  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_entry,
+  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_final
+);
+
+/** @} */
 }
 
 }

@@ -1,3 +1,10 @@
+/*!
+ *
+ * \file DLX/Core/parser.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __DLX_FRONTEND_PARSER_HPP__
 #define __DLX_FRONTEND_PARSER_HPP__
@@ -15,6 +22,11 @@
 namespace DLX {
 
 namespace Frontend {
+
+/*!
+ * \addtogroup grp_dlx_core_frontend
+ * @{
+ */
 
 // Basic string manip
 
@@ -105,9 +117,10 @@ bool Parser::parse_list(std::vector<A> & vect, char start, char stop, char sep) 
 
   skip_whitespace();
   do {
-    if (!parse<A>(a))
+    if (!parse<A>(a)) {
       if (sep == '\0') break;
       else return false;
+    }
     vect.push_back(a);
     skip_whitespace();
   } while (consume(sep));
@@ -116,6 +129,8 @@ bool Parser::parse_list(std::vector<A> & vect, char start, char stop, char sep) 
 
   return true;
 }
+
+/** @} */
 
 }
 

@@ -1,3 +1,10 @@
+/*!
+ * 
+ * \file lib/openacc/constructs.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/constructs.hpp"
 #include "DLX/Core/frontend.hpp"
@@ -10,6 +17,11 @@ class SgLocatedNode;
 namespace DLX {
 
 namespace Directives {
+
+/*!
+ * \addtogroup grp_dlx_openacc_directives
+ * @{
+ */
 
 template <>
 generic_construct_t<OpenACC::language_t> * buildConstruct<OpenACC::language_t>(OpenACC::language_t::construct_kinds_e kind) {
@@ -84,6 +96,8 @@ bool findAssociatedNodes<OpenACC::language_t>(SgLocatedNode * directive_node, ge
      assert(false);
   }
 }
+
+/** @} */
 
 }
 

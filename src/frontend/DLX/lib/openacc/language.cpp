@@ -1,3 +1,10 @@
+/*!
+ * 
+ * \file lib/openacc/language.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/directives.hpp"
 #include "DLX/Core/constructs.hpp"
@@ -9,6 +16,11 @@
 namespace DLX {
 
 namespace OpenACC {
+
+/*!
+ * \addtogroup grp_dlx_openacc_language
+ * @{
+ */
 
 std::string language_t::language_label;
 language_t::construct_label_map_t language_t::s_construct_labels;
@@ -96,6 +108,8 @@ void language_t::init() {
   Directives::addClauseLabel<language_t>(e_acc_clause_device, "device");
 
 }
+
+/** @} */
 
 }
 

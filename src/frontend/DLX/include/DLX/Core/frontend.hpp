@@ -1,3 +1,10 @@
+/*!
+ *
+ * \file DLX/Core/frontend.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __DLX_FRONTEND_HPP__
 #define __DLX_FRONTEND_HPP__
@@ -15,7 +22,11 @@ namespace DLX {
 
 namespace Frontend {
 
-/// \brief DLX Frontend
+/*!
+ * \addtogroup grp_dlx_core_frontend
+ * @{
+ */
+
 template <class language_tpl>
 class Frontend {
   public:
@@ -37,7 +48,10 @@ class Frontend {
     static generic_clause_t    * parseClause(std::string & directive_str);
     static directive_t         * parse(std::string & directive_str, SgLocatedNode * directive_node);
 
-    // DLX specific
+/*!
+ * \addtogroup grp_dlx_core_specific
+ * @{
+ */
 
     template <typename language_t::construct_kinds_e kind>
     static bool findAssociatedNodes(SgLocatedNode * directive_node, Directives::construct_t<language_t, kind> * construct);
@@ -46,6 +60,8 @@ class Frontend {
     static bool parseClauseParameters(std::string & directive_str, SgLocatedNode * directive_node, Directives::clause_t<language_t, kind> * clause);
 
     bool build_graph();
+
+/*! @} */
 
   public:
     bool parseDirectives(SgNode *);
@@ -130,9 +146,10 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
   return true;
 }
 
+/** @} */
+
 }
 
 }
 
 #endif /* __DLX_FRONTEND_HPP__ */
-

@@ -1,3 +1,10 @@
+/*!
+ * 
+ * \file lib/openacc/frontend.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/frontend.hpp"
 #include "DLX/Core/directives.hpp"
@@ -15,8 +22,13 @@ namespace DLX {
 
 namespace Frontend {
 
-template <> 
-template <> 
+/*!
+ * \addtogroup grp_dlx_openacc_frontend
+ * @{
+ */
+
+template <>
+template <>
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_data>(
   SgLocatedNode * directive_node,
   Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> * construct
@@ -455,6 +467,8 @@ bool Frontend<OpenACC::language_t>::build_graph() {
   // TODO Frontend<OpenACC::language_t>::build_graph()
   return false;
 }
+
+/** @} */
 
 }
 

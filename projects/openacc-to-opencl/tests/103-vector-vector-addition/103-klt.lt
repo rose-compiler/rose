@@ -1,0 +1,11 @@
+params(n)
+data(a, float, shape1d(0, n), openacc(copyin))
+data(b, float, shape1d(0, n), openacc(copyin))
+data(c, float, shape1d(0, n), openacc(copyout))
+region(
+  openacc(nbr_gang,nbr_worker,nbr_vector),
+  loop(
+    i, 0, n, openacc(gang,worker,vector),
+    stmt(c[i] = a[i] + b[i];)
+  )
+)

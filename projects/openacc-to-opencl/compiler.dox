@@ -1,0 +1,49 @@
+/*!
+ * \addtogroup grp_rose ROSE
+ * @{
+ *   \defgroup grp_rose_acc2ocl OpenACC to OpenCL Compiler
+ *   @{
+ *   @}
+ * @}
+ */
+
+/*!
+ * \defgroup grp_rose_acc2ocl OpenACC to OpenCL Compiler
+ * @{
+ *
+ * The compiler itself is composed of multiple independent modules.
+ *
+ * \section mfb_compiler_short Multiple File Builder (MFB)
+ *
+ * It abstracts AST into MFB::API and provides associated file mangement
+ *     - it loads files and associate an MFB::API
+ *     - it provides interface to distribute an API and its implementation accross different files.
+ *
+ * \section mdcg_compiler_short Model Driven Code Generator (MDCG)
+ *
+ * It abstracts MFB::API into (object oriented) MDCG::Model and provides help to go from a MDCG::Model to an API
+ *     - it loads MFB::API and build a MDCG::Model
+ *     - it generates MFB::API from MDCG::Model
+ *
+ * \section klt_compiler_short Kernel from Loop Tree (KLT)
+ *
+ * It generates OpenCL C kernels from the description of a loop nest
+ *     - it produces an API for MFB
+ *     - can be applied to CUDA
+ *
+ * \section dlx_compiler_short Directive-based Language eXtension (DLX)
+ *
+ * It is used to extract and translate directives.
+ * DLX::Directives contains templates based on a language description (see DLX::OpenACC).
+ * DLX::Frontend produces a Directive Graph, which presents parsed directives in relation with each other. It is specialized by template extensions and language specific specialisations.
+ *     -# parsing the string into "language construct [clause[(args)][, ...]]" where 'args' can include complex C/C++. It could be generated from description.
+ *     -# directives are positioned in relation to the AST. It looks "localy" in the AST.
+ *     -# directives are put in relation with each other. It forms the Directives Graph, specific to the language.
+ *
+ * DLX::Compiler consumes the Directives Graph and transforms the input code accordingly to the language
+ *     - the OpenACC DLX::Compiler uses MDCG and KLT to transform/produce code
+ *
+ * @}
+ *
+ */
+

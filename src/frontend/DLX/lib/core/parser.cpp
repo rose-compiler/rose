@@ -1,10 +1,22 @@
+/*!
+ * 
+ * \file lib/core/parser.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/parser.hpp"
 
 namespace DLX {
 
 namespace Frontend {
- 
+
+/*!
+ * \addtogroup grp_dlx_core_frontend
+ * @{
+ */
+
 inline bool whitespace(const char & c) {
   return (c == ' ');
 }
@@ -161,6 +173,8 @@ bool Parser::parse<section_t>(section_t & section) const {
 
   return true;
 }
+
+/** @} */
 
 }
 

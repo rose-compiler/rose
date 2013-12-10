@@ -1,3 +1,10 @@
+/*!
+ * 
+ * \file lib/openacc/clauses.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/frontend.hpp"
@@ -10,6 +17,11 @@ class SgLocatedNode;
 namespace DLX {
 
 namespace Directives {
+
+/*!
+ * \addtogroup grp_dlx_openacc_directives
+ * @{
+ */
 
 template <>
 generic_clause_t<OpenACC::language_t> * buildClause<OpenACC::language_t>(OpenACC::language_t::clause_kinds_e kind) {
@@ -202,6 +214,8 @@ bool parseClauseParameters<OpenACC::language_t>(
       assert(false);
   }
 }
+
+/** @} */
 
 }
 

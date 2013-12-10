@@ -1,3 +1,9 @@
+/*!
+ * \file DLX/Core/directives.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __DLX_DIRECTIVES_HPP__
 #define __DLX_DIRECTIVES_HPP__
@@ -8,6 +14,11 @@
 namespace DLX {
 
 namespace Directives {
+
+/*!
+ * \addtogroup grp_dlx_core_directives
+ * @{
+ */
 
 template <class language_tpl> struct generic_construct_t;
 template <class language_tpl> struct generic_clause_t;
@@ -35,6 +46,8 @@ struct directive_t {
   predecessor_list_t predecessor_list;
   successor_list_t successor_list;
 };
+
+/** @} */
 
 }
 

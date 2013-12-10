@@ -1,3 +1,12 @@
+/*!
+ * \addtogroup grp_rose_acc2ocl
+ * @{
+ * 
+ * \file openacc-to-opencl.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "DLX/Core/frontend.hpp"
 #include "DLX/Core/compiler.hpp"
@@ -29,4 +38,6 @@ int main(int argc, char ** argv) {
 
   return backend(project);
 }
+
+/** @} */
 

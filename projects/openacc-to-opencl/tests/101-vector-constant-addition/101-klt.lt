@@ -1,0 +1,10 @@
+params(n)
+scalar(offset)
+data(a, float, shape1d(0, n), openacc(copy))
+region(
+  openacc(nbr_gang,nbr_worker,nbr_vector),
+  loop(
+    i, 0, n, openacc(gang,worker,vector),
+    stmt(a[i]+=offset;)
+  )
+)
