@@ -1,11 +1,16 @@
 /* Specimen for testing snippet injection */
+#include <assert.h>
+int INSERT_HERE;
 
-const char * ipoint1()
+int main()
 {
-    const char *s;
+    const char *s, *t;
+    int digest = 0;
 
     s = "Hello, world!";
-    return s;
-}
+    INSERT_HERE;
 
-    
+    for (t=s; *t; ++t)
+        digest += *t;
+    return digest % 128;
+}

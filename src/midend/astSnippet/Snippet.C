@@ -303,6 +303,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     assert(insertionPoint!=NULL);
     assert(ast!=NULL);
 
+    SgFunctionDefinition *targetFunction = SageInterface::getEnclosingNode<SgFunctionDefinition>(insertionPoint);
+    assert(targetFunction!=NULL);
+    SgScopeStatement *targetFunctionScope = targetFunction->get_body();
+    assert(targetFunctionScope!=NULL);
+
     // Build a map binding formal argument symbols to their actual values
     ArgumentBindings bindings;
     SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
@@ -324,14 +329,59 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         bindings[symbol] = actuals[i];
     }
 
+    // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
+    // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
+    // the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file and
+    // insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original scope
+    // in the snippet file.
+    struct T1: AstSimpleProcessing {
+        Sg_File_Info *target, *snippet;
+        T1(Sg_File_Info *target, Sg_File_Info *snippet): target(target), snippet(snippet) {}
+        void fixInfo(Sg_File_Info *info) {
+            if (info && info->get_file_id()==snippet->get_file_id()) {
+                info->set_file_id(target->get_file_id());
+                info->set_line(1);
+            }
+        }
+        void visit(SgNode *node) {
+            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                fixInfo(loc->get_file_info());
+                fixInfo(loc->get_startOfConstruct());
+                fixInfo(loc->get_endOfConstruct());
+            } else if (SgFile *loc = isSgFile(node)) {
+                // SgFile is not a subclass of SgLocatedNode, but it still has these Sg_File_Info methods
+                fixInfo(loc->get_file_info());
+                fixInfo(loc->get_startOfConstruct());
+                fixInfo(loc->get_endOfConstruct());
+            }
+        }
+    } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
+    t1.traverse(file->getAst(), preorder);
+
     // Insert the snippet body after the insertion point
     SgTreeCopy deep;
-    SgStatement *toInsert = isSgStatement(ast->get_body()->copy(deep));
+    SgScopeStatement *toInsert = isSgScopeStatement(ast->get_body()->copy(deep));
     assert(toInsert!=NULL);
     renameTemporaries(toInsert);
-    causeUnparsing(toInsert);
+    causeUnparsing(toInsert, insertionPoint->get_file_info());
     replaceArguments(toInsert, bindings);
+#if 0
+    // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
+    // one snippet can't be used in a later snippet injected into the same function.
     SageInterface::insertStatementBefore(insertionPoint, toInsert);
+#else
+    // Insert one statement at a time.  Snippet declarations are placed at the top of the injection point's function, which
+    // means that snippet variables cannot always be inialized in their declarations because the initialization expression
+    // might be something that's only well defined at the point of insertion.
+    const SgStatementPtrList &stmts = toInsert->getStatementList();
+    for (size_t i=0; i<stmts.size(); ++i) {
+        if (isSgDeclarationStatement(stmts[i])) {
+            SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+        } else {
+            SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+        }
+    }
+#endif
 
     insertGlobalStuff(insertionPoint);
     file->expandSnippets(toInsert);
@@ -339,14 +389,22 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 
 // class method
 void
-Snippet::causeUnparsing(SgNode *ast)
+Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
 {
-    struct: AstSimpleProcessing {
+    // Make sure that the specified AST is actually unparsed into the place it was inserted. This seems more complicated
+    // than it should be.
+    struct T1: AstSimpleProcessing {
+        Sg_File_Info *target;
+        T1(Sg_File_Info *target): target(target) {}
         void visit(SgNode *node) {
-            if (SgLocatedNode *loc = isSgLocatedNode(node))
+            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                loc->set_file_info(new Sg_File_Info(*target));
+                loc->set_startOfConstruct(new Sg_File_Info(*target));
+                loc->set_endOfConstruct(new Sg_File_Info(*target));
                 loc->get_file_info()->setOutputInCodeGeneration();
+            }
         }
-    } t1;
+    } t1(target);
     t1.traverse(ast, preorder);
 }
 
@@ -480,8 +538,11 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 // Insert non-extern variable declaration
                 SgTreeCopy deep;
                 SgStatement *stmt = isSgStatement(stmts[i]->copy(deep));
-                causeUnparsing(stmt);
+                causeUnparsing(stmt, dst_cursor->get_file_info());
                 SageInterface::insertStatementBefore(dst_cursor, stmt);
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-10]*/
+                std::cerr <<"ROBB: inserted variable declaration\n";
+#endif
                 continue;
             }
         }
@@ -490,19 +551,33 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
             if (cdecl->get_definition()!=NULL) {
                 SgTreeCopy deep;
                 SgStatement *stmt = isSgClassDeclaration(cdecl);
-                causeUnparsing(stmt);
+                causeUnparsing(stmt, dst_cursor->get_file_info());
                 SageInterface::insertStatementBefore(dst_cursor, stmt);
                 continue;
             }
         }
 
-        if (isSgFunctionDeclaration(stmts[i]) && isSgFunctionDeclaration(stmts[i])->get_definition()==ast) {
-            // Do not insert the snippet itself (this happens separately)
-            continue;
+        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(stmts[i])) {
+            if (fdecl->get_definition()==ast) {
+                // Do not insert the snippet itself (this happens separately)
+                continue;
+            }
+            if (fdecl->get_definition()==NULL) {
+                // Insert function declaration.
+                SgTreeCopy deep;
+                SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
+                causeUnparsing(fdecl_copy, dst_cursor->get_file_info());
+                SageInterface::insertStatementBefore(dst_cursor, fdecl_copy);
+                continue;
+            }
         }
+
 
 #if 1 /*DEBUGGING [Robb P. Matzke 2013-12-05]*/
         std::cerr <<"ROBB: insertGlobalStuff: skipped " <<stmts[i]->class_name() <<"\n";
+        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(stmts[i])) {
+            std::cerr <<"        name = " <<fdecl->get_name() <<"\n";
+        }
 #endif
     }
 }

@@ -71,6 +71,24 @@ findLastStatement(SgFunctionDefinition *fdef)
     return t1.last_stmt;
 }
 
+SgStatement *
+findInsertHere(SgFunctionDefinition *fdef)
+{
+    struct T1: AstSimpleProcessing {
+        void visit(SgNode *node) {
+            if (SgVarRefExp *vref = isSgVarRefExp(node)) {
+                if (vref->get_symbol()->get_name() == "INSERT_HERE")
+                    throw SageInterface::getEnclosingNode<SgStatement>(vref);
+            }
+        }
+    } t1;
+    try {
+        t1.traverse(fdef, preorder);
+    } catch (SgStatement *stmt) {
+        return stmt;
+    }
+    return NULL;
+}
 
 SgInitializedName *
 findVariableDeclaration(SgNode *ast, const std::string &var_name)

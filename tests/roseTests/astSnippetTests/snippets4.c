@@ -1,15 +1,11 @@
 // #include directives don't work yet, so declare the stuff we need. None of
 // this stuff needs to be injected (because we'd inject the #include directvies
 // instead if that actually worked).
-void assert(int);
 void free(void*);
 void* malloc(unsigned long);
 void* memcpy(void*, const void*, unsigned long);
 void* memset(void*, unsigned, unsigned long);
 unsigned long strlen(const char*);
-
-// Snippet support declarations should be in a header file which is not injected
-void snippet_inject(const char*, ...);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The rest of the file is snippets
@@ -20,7 +16,7 @@ void notNull(const void *x)
     assert(x != (const void*)0);
 }
 
-void checkedCopy(void *dst, void *src, unsigned nbytes)
+void checkedCopy(void *dst, const void *src, unsigned nbytes)
 {
     notNull(dst);
     notNull(src);
@@ -31,19 +27,19 @@ void checkedCopy(void *dst, void *src, unsigned nbytes)
 void storeHeapString(const char *from)
 {
     char *storage;
-    unsigned nbytes;
+    unsigned tmp_nbytes;
 
-    nbytes = strlen(from) + 1;
-    storage = malloc(nbytes);
-    checkedCopy(storage, from, nbytes);
+    tmp_nbytes = strlen(from) + 1;
+    storage = malloc(tmp_nbytes);
+    checkedCopy(storage, from, tmp_nbytes);
 }
 
 void loadHeapString(char *to, char *from)
 {
-    unsigned nbytes;
+    unsigned tmp_nbytes;
 
-    nbytes = strlen(from) + 1;
-    checkedCopy(to, from, nbytes);
+    tmp_nbytes = strlen(from) + 1;
+    checkedCopy(to, from, tmp_nbytes);
     free(from);
 }
 

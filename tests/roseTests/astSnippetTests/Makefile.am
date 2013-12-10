@@ -23,7 +23,8 @@ storeLoad_LDADD = $(ROSE_LIBS)
 # Tests
 ###############################################################################################################################
 INJECTION_TEST = $(srcdir)/injectSnippet.conf
-EXTRA_DIST += $(INJECTION_TEST)
+STORELOAD_TEST = $(srcdir)/storeLoad.conf
+EXTRA_DIST += $(INJECTION_TEST) $(STORELOAD_TEST)
 
 TEST_TARGETS += test1a.passed test1b.passed test1c.passed
 test1a.passed: injectSnippet snippets1.c specimen1.c $(INJECTION_TEST)
@@ -111,6 +112,21 @@ test6a.passed: injectSnippet snippets6.c specimen1.c $(INJECTION_TEST)
 		SPECIMEN=specimen1.c \
 		IPOINT=ipoint2 \
 		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test7a.passed test7b.passed
+test7a.passed: storeLoad snippets4.c specimen2.c $(STORELOAD_TEST)
+	@$(RTH_RUN) \
+		TITLE="store/load heap string [$@]" \
+		METHOD=HeapString \
+		SPECIMEN=specimen2.c \
+		$(STORELOAD_TEST) $@
+
+test7b.passed: storeLoad snippets4.c specimen2.c $(STORELOAD_TEST)
+	@$(RTH_RUN) \
+		TITLE="store/load struct string [$@]" \
+		METHOD=StructString \
+		SPECIMEN=specimen2.c \
+		$(STORELOAD_TEST) $@
 
 ###############################################################################################################################
 # Automake boilerplate

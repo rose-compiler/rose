@@ -14,20 +14,7 @@ struct InsertionPoint {
         if ((function = SnippetTests::findFunctionDefinition(project, function_name))) {
             last_stmt = SnippetTests::findLastStatement(function);
             localvars = SnippetTests::findFunctionVariables(function);
-
-            struct T1: AstSimpleProcessing {
-                void visit(SgNode *node) {
-                    if (SgVarRefExp *vref = isSgVarRefExp(node)) {
-                        if (vref->get_symbol()->get_name() == "INSERT_HERE")
-                            throw SageInterface::getEnclosingNode<SgStatement>(vref);
-                    }
-                }
-            } t1;
-            try {
-                t1.traverse(function, preorder);
-            } catch (SgStatement *stmt) {
-                insert_here = stmt;
-            }
+            insert_here = SnippetTests::findInsertHere(function);
         }
     }
 

@@ -7,8 +7,8 @@ void* memcpy(void*, const void*, unsigned long);
 
 void randomOffByOne(int arg1)
 {
-    int offset = random() % 3 - 1;
-    arg1 += offset;
+    int tmp_offset = random() % 3 - 1;
+    arg1 += tmp_offset;
 }
 
 void addWithError(int addend1, int addend2, int result)

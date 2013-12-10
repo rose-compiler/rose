@@ -19,6 +19,9 @@ SgStatement *findLastAppendableStatement(SgFunctionDefinition*);
 /** Find the last statement in a function definition. */
 SgStatement *findLastStatement(SgFunctionDefinition *fdef);
 
+/** Find the first statement that references the INSERT_HERE variable. */
+SgStatement *findInsertHere(SgFunctionDefinition*);
+
 /** Find a variable declaration. */
 SgInitializedName *findVariableDeclaration(SgNode *ast, const std::string &varName);
 
