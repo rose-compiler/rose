@@ -4,11 +4,13 @@ AC_DEFUN([ROSE_SUPPORT_UPR],
 
 
 # Declaration of ARG_WITH...
-AC_ARG_WITH(cuda-inc,   [  --with-cuda-inc=DIR    For CUDA runtime library])
-AC_ARG_WITH(cuda-lib,   [  --with-cuda-lib=DIR    For CUDA runtime examples (need --with-cuda-inc=DIR)])
+AC_ARG_WITH(cuda-inc,   [  --with-cuda-inc=DIR    For CUDA Headers (API)])
+AC_ARG_WITH(cuda-lib,   [  --with-cuda-lib=DIR    For CUDA Library (Runtime) (need --with-cuda-inc=DIR)])
 
-AC_ARG_WITH(opencl-inc, [  --with-opencl-inc=DIR  For OpenCL runtime library])
-AC_ARG_WITH(opencl-lib, [  --with-opencl-lib=DIR  For OpenCL runtime examples (need --with-opencl-inc=DIR)])
+AC_ARG_WITH(opencl-inc, [  --with-opencl-inc=DIR  For OpenCL Headers (API)])
+AC_ARG_WITH(opencl-lib, [  --with-opencl-lib=DIR  For OpenCL Library (Runtime) (need --with-opencl-inc=DIR)])
+
+AC_ARG_WITH(openacc-inc, [  --with-openacc-inc=DIR  For OpenACC Headers (API)])
 
 # CUDA header files
 if test "$with_cuda_inc" != ""
@@ -51,6 +53,13 @@ AM_CONDITIONAL(ROSE_HAVE_XOMP_INC, [false])
 
 # Xomp library
 AM_CONDITIONAL(ROSE_HAVE_XOMP_LIB, [false])
+
+# OpenACC header files
+if test "$with_openacc_inc" != ""
+then
+        AC_SUBST(OPENACC_INC_DIR, [$with_openacc_inc])
+fi
+AM_CONDITIONAL(ROSE_HAVE_OPENACC_INC, [test "$with_openacc_inc" != ""])
 
 ])
 

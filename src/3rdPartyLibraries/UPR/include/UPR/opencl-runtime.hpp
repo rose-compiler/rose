@@ -8,7 +8,7 @@
 
 #include "UPR/runtime.hpp"
 
-#include <OpenCL/cl.h>
+#include <CL/cl.h>
 
 #include <map>
 

@@ -46,6 +46,7 @@ SUBDIRS = \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+        openacc-to-opencl \
 	$(OPTIONAL_PROJECTS)
 
 
