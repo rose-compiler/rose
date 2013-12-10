@@ -45,6 +45,8 @@ private:
     typedef Map<std::string/*fileName*/, SnippetFilePtr> Registry;
     static Registry registry;
 
+    static std::vector<std::string> varNameList; // list of variable names to use when renaming things
+
 protected:
     /** Use instance() instead. */
     explicit SnippetFile(const std::string &fileName): fileName(fileName), ast(NULL) {}
@@ -82,6 +84,14 @@ public:
      *  This method records the fact that global entities from this SnippetFile have been injected into the specified global
      *  scope, and returns a boolean to indicate whether they had already been injected (true if injected, false if not). */
     bool globallyInjected(SgGlobal *destination_scope);
+
+    /** Load variable names from a file. The file should have one name per line. Returns the number of variable names added to
+     *  the list. */
+    static size_t loadVariableNames(const std::string &fileName);
+
+    /** Return a random variable name. */
+    static std::string randomVariableName();
+
 
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
