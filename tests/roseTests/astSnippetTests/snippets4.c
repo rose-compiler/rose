@@ -3,10 +3,10 @@
 // instead if that actually worked).
 void assert(int);
 void free(void*);
-void* malloc(unsigned);
-void* memcpy(void*, const void*, unsigned);
-void* memset(void*, unsigned, unsigned);
-unsigned strlen(const char*);
+void* malloc(unsigned long);
+void* memcpy(void*, const void*, unsigned long);
+void* memset(void*, unsigned, unsigned long);
+unsigned long strlen(const char*);
 
 // Snippet support declarations should be in a header file which is not injected
 void snippet_inject(const char*, ...);

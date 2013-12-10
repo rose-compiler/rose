@@ -1,14 +1,13 @@
 // Tests for variable renaming. Any variable whose name begins with "tmp" is renamed
 // so it doesn't conflict with other variables that might be visible at the insertion point.
-int random_boolean(void);
-void *malloc(unsigned);
-unsigned strlen(const char*);
-void* memcpy(void*, const void*, unsigned);
+long int random(void);
+void *malloc(unsigned long);
+unsigned long strlen(const char*);
+void* memcpy(void*, const void*, unsigned long);
 
 void randomOffByOne(int arg1)
 {
-    typedef int typeof_arg1;
-    typeof_arg1 offset = random() % 3 - 1;
+    int offset = random() % 3 - 1;
     arg1 += offset;
 }
 
@@ -35,5 +34,5 @@ void allocate_string(const char *s)
     char *heap_storage = malloc(tmp_size);
     copy_string10(heap_storage, s);
     for (tmp_i=10+1;  tmp_i<tmp_size; ++tmp_i)
-        heap_storage[tmp_i] = random_boolean() ? ' ' : '\t';
+        heap_storage[tmp_i] = random() % 2 ? ' ' : '\t';
 }

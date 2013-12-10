@@ -1,15 +1,122 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
+EXTRA_DIST =
+TEST_TARGETS =
 
 INCLUDES = $(ROSE_INCLUDES)
 
 
+###############################################################################################################################
+# Executables
+###############################################################################################################################
 
 noinst_PROGRAMS += injectSnippet
 injectSnippet_SOURCES = injectSnippet.C snippetTests.C
 injectSnippet_LDADD = $(ROSE_LIBS)
 
-
 noinst_PROGRAMS += storeLoad
 storeLoad_SOURCES = storeLoad.C snippetTests.C
 storeLoad_LDADD = $(ROSE_LIBS)
+
+
+###############################################################################################################################
+# Tests
+###############################################################################################################################
+INJECTION_TEST = $(srcdir)/injectSnippet.conf
+EXTRA_DIST += $(INJECTION_TEST)
+
+TEST_TARGETS += test1a.passed test1b.passed test1c.passed
+test1a.passed: injectSnippet snippets1.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="basic insertion [$@]" \
+		SNIPPET=snippets1.basic \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+test1b.passed: injectSnippet snippets1.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="basic insertion [$@]" \
+		SNIPPET=snippets1.decrement \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+test1c.passed: injectSnippet snippets1.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="basic insertion [$@]" \
+		SNIPPET=snippets1.swap \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test2a.passed
+test2a.passed: injectSnippet snippets2.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="global entities [$@]" \
+		SNIPPET=snippets2.count \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test3a.passed
+test3a.passed: injectSnippet snippets3.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		DISABLED="Disabled due to some kind of bug in finding #include directives" \
+		TITLE="include files [$@]" \
+		SNIPPET=snippets3.print \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test4a.passed test4b.passed
+test4a.passed: injectSnippet snippets5.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="parameterized types [$@]" \
+		SNIPPET=snippets5.swap \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint2 \
+		$(INJECTION_TEST) $@
+
+test4b.passed: injectSnippet snippets5.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="parameterized types [$@]" \
+		SNIPPET=snippets5.swap \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint3 \
+		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test5a.passed test5b.passed
+test5a.passed: injectSnippet snippets6.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="recursive invocation [$@]" \
+		SNIPPET=snippets6.addWithError \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint1 \
+		$(INJECTION_TEST) $@
+
+test5b.passed: injectSnippet snippets6.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="recursive invocation [$@]" \
+		SNIPPET=snippets6.addWithError \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint3 \
+		$(INJECTION_TEST) $@
+
+TEST_TARGETS += test6a.passed
+test6a.passed: injectSnippet snippets6.c specimen1.c $(INJECTION_TEST)
+	@$(RTH_RUN) \
+		TITLE="variable renaming [$@]" \
+		SNIPPET=snippets6.allocate_string \
+		SPECIMEN=specimen1.c \
+		IPOINT=ipoint2 \
+		$(INJECTION_TEST) $@
+
+###############################################################################################################################
+# Automake boilerplate
+###############################################################################################################################
+
+check-local: $(TEST_TARGETS)
+
+clean-local:
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)

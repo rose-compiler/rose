@@ -80,6 +80,9 @@ main(int argc, char *argv[])
         exit(1);
     }
 
+    // Load replacement variable names (optional). If this isn't present then variables will have random names.
+    SnippetFile::loadVariableNames("/usr/share/dict/words");
+
     // Parse the source code into which the snippet will be inserted and find a place to insert.
     SgProject *project = frontend(frontend_args);
     assert(project!=NULL);
