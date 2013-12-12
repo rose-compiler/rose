@@ -31,8 +31,8 @@ check-load: load-test
 	./load-test foo-bar
 
 check-local: build-test load-test
-	$(MAKE) check-build
-	$(MAKE) check-load
+#	$(MAKE) check-build
+#	$(MAKE) check-load
 
 clean-local:
 	rm -f *.hpp *.cpp

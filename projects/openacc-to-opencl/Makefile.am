@@ -1,6 +1,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS=tests modules
+
 bin_PROGRAMS=openacc-to-opencl
 
 openacc_to_opencl_SOURCES= \
@@ -18,5 +20,4 @@ openacc_to_opencl_LDADD = \
   $(ROSE_LIBS)
 
 check-local: openacc-to-opencl
-	./openacc-to-opencl $(srcdir)/matmul-acc.cpp
 
