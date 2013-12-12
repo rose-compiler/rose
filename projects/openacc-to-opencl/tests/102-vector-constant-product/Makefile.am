@@ -1,0 +1,11 @@
+
+TEST_ID=102
+
+NBR_GANG=8
+NBR_WORKER=64
+NBR_VECTOR=1
+
+TEST_PARAMS=1048576
+
+include ../100-rules.mk
+

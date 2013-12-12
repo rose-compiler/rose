@@ -18,8 +18,8 @@
 # error "Need generated kernels directory."
 #endif
 
-#ifndef ACC_RUNTIME_OPENCL
-# define ACC_RUNTIME_OPENCL "lib/opencl/libopenacc.cl"
+#ifndef ACC_RUNTIME_OPENCL_FILE
+# define ACC_RUNTIME_OPENCL_FILE "lib/opencl/libopenacc.cl"
 #endif
 
 struct acc_kernel_version_t_ kernel_0x00_default = {
@@ -67,9 +67,9 @@ struct acc_region_desc_t_ region_0x00_desc = {
 acc_region_desc_t regions[1] = { &region_0x00_desc };
 
 acc_compiler_data_t compiler_data = {
-  (const char * ) ACC_RUNTIME_ABS_DIR, /* Absolute directory for OpenACC runtime (needed to compile OpenCL C codes) */
-  (const char * ) ACC_RUNTIME_OPENCL,  /* Name of the OpenCL C runtime file */
-  (const char * ) ACC_KERNELS_ABS_DIR, /* Absolute directory where the OpenCL C kernels have been stored. */
+  (const char * ) ACC_RUNTIME_ABS_DIR,     /* Absolute directory for OpenACC runtime (needed to compile OpenCL C codes) */
+  (const char * ) ACC_RUNTIME_OPENCL_FILE, /* Name of the OpenCL C runtime file */
+  (const char * ) ACC_KERNELS_ABS_DIR,     /* Absolute directory where the OpenCL C kernels have been stored. */
   1, regions
 };
 

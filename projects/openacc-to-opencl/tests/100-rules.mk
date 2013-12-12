@@ -1,5 +1,5 @@
 
-OPENACC_DIR?=$(TEST_SRCDIR)/../../../../../libopenacc
+OPENACC_DIR=$(top_srcdir)/../libopenacc
 
 include ../environment.mk
 
@@ -16,28 +16,28 @@ $(TEST_ID)-libopenacc: $(TEST_ID)-libopenacc.o $(TEST_ID)-host-data.o $(DEPS)
 	$(LD) $(LDFLAGS) $(LIBS) $(TEST_ID)-libopenacc.o $(LIBS) $(TEST_ID)-host-data.o -o $(TEST_ID)-libopenacc
 
 $(TEST_ID)-libopenacc.o: \
-            $(TEST_SRCDIR)/../100-main.c $(TEST_SRCDIR)/$(TEST_ID)-kernel-libopenacc.c $(TEST_SRCDIR)/$(TEST_ID)-init.c \
+            $(srcdir)/../100-main.c $(srcdir)/$(TEST_ID)-kernel-libopenacc.c $(srcdir)/$(TEST_ID)-init.c \
             $(ACC_PUBLIC_DEPS) $(ACC_PRIVATE_DEPS)
 	$(CXX) $(CFLAGS) $(INCLUDES) \
 	  -DOPENACC -DOPENACC_TIMER \
-	  -DKERNEL_FILE=\"$(TEST_SRCDIR)/$(TEST_ID)-kernel-libopenacc.c\" \
-	  -DINIT_FILE=\"$(TEST_SRCDIR)/$(TEST_ID)-init.c\" \
-	  -c $(TEST_SRCDIR)/../100-main.c -o $(TEST_ID)-libopenacc.o
+	  -DKERNEL_FILE=\"$(abs_srcdir)/$(TEST_ID)-kernel-libopenacc.c\" \
+	  -DINIT_FILE=\"$(abs_srcdir)/$(TEST_ID)-init.c\" \
+	  -c $(srcdir)/../100-main.c -o $(TEST_ID)-libopenacc.o
 
-$(TEST_ID)-host-data.o: $(TEST_SRCDIR)/$(TEST_ID)-host-data.c $(ACC_INTERNAL_DEPS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(HOST_ENV_MACRO) -c $(TEST_SRCDIR)/$(TEST_ID)-host-data.c -o $(TEST_ID)-host-data.o
+$(TEST_ID)-host-data.o: $(srcdir)/$(TEST_ID)-host-data.c $(ACC_INTERNAL_DEPS)
+	$(CC) $(CFLAGS) $(INCLUDES) $(HOST_ENV_MACRO) -c $(srcdir)/$(TEST_ID)-host-data.c -o $(TEST_ID)-host-data.o
 
 $(TEST_ID)-reference: $(TEST_ID)-reference.o $(OPENACC_LIB_DIR)/utils/timer.o
 	$(LD) $(LDFLAGS) -lrt $(OPENACC_LIB_DIR)/utils/timer.o $(TEST_ID)-reference.o -o $(TEST_ID)-reference
 
 $(TEST_ID)-reference.o: \
-            $(TEST_SRCDIR)/../100-main.c $(TEST_SRCDIR)/$(TEST_ID)-kernel-openacc.c $(TEST_SRCDIR)/$(TEST_ID)-init.c \
+            $(srcdir)/../100-main.c $(srcdir)/$(TEST_ID)-kernel-openacc.c $(srcdir)/$(TEST_ID)-init.c \
             $(ACC_PUBLIC_DEPS) $(ACC_PRIVATE_DEPS)
 	$(CXX) $(CFLAGS) $(INCLUDES) \
 	  -DOPENACC_TIMER \
-	  -DKERNEL_FILE=\"$(TEST_SRCDIR)/$(TEST_ID)-kernel-openacc.c\" \
-	  -DINIT_FILE=\"$(TEST_SRCDIR)/$(TEST_ID)-init.c\" \
-	  -c $(TEST_SRCDIR)/../100-main.c -o $(TEST_ID)-reference.o
+	  -DKERNEL_FILE=\"$(abs_srcdir)/$(TEST_ID)-kernel-openacc.c\" \
+	  -DINIT_FILE=\"$(abs_srcdir)/$(TEST_ID)-init.c\" \
+	  -c $(srcdir)/../100-main.c -o $(TEST_ID)-reference.o
 
 # LibOpenACC dependency
 

@@ -2019,6 +2019,15 @@ projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
 projects/openacc-to-opencl/Makefile
+projects/openacc-to-opencl/tests/Makefile
+projects/openacc-to-opencl/tests/001-iteration/Makefile
+projects/openacc-to-opencl/tests/101-vector-constant-addition/Makefile
+projects/openacc-to-opencl/tests/102-vector-constant-product/Makefile
+projects/openacc-to-opencl/tests/103-vector-vector-addition/Makefile
+projects/openacc-to-opencl/modules/Makefile
+projects/openacc-to-opencl/modules/dlx/Makefile
+projects/openacc-to-opencl/modules/klt/Makefile
+projects/openacc-to-opencl/modules/mdcg/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
