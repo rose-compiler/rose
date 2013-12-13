@@ -7,6 +7,7 @@
 #include "SqlDatabase.h"
 #include "LinearCongruentialGenerator.h"
 #include "Combinatorics.h"
+#include "Map.h"
 
 #include <stdint.h>
 #include <vector>
@@ -23,7 +24,7 @@ typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef std::map<int, SgAsmFunction*> IdFunctionMap;
 typedef std::map<rose_addr_t, int> AddressIdMap;
-typedef std::map<std::string, rose_addr_t> NameAddress;
+typedef Map<std::string, rose_addr_t> NameAddress;
 typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
@@ -1655,6 +1656,7 @@ public:
             if (hdrs[i]->get_best_section_by_va(va, false))
                 return hdrs[i];
         }
+        return NULL;
     }
         
     // Called by instruction semantics before each instruction is executed
