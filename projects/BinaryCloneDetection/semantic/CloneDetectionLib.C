@@ -2,7 +2,7 @@
 #include "AST_FILE_IO.h"
 #include "CloneDetectionLib.h"
 #include "Combinatorics.h"
-#include "BinaryLoader.h"
+#include "BinaryLoaderElf.h"
 #include "Partitioner.h"
 
 #include <algorithm>
@@ -973,13 +973,11 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
 void
 link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, MemoryMap *map)
 {
+    using namespace StringUtility;
+
     // Find the addresses for the exported functions
     struct Exports: AstSimpleProcessing {
         NameAddress address;
-        Exports(SgAsmGenericHeader *hdr) {
-            if (hdr)
-                traverse(hdr, preorder);
-        }
         void visit(SgNode *node) {
             if (SgAsmElfSymbol *sym = isSgAsmElfSymbol(node)) {
                 if (sym->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
@@ -988,52 +986,85 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
                     sym->get_bound()!=NULL &&
                     sym->get_bound()->get_name()->get_string().compare(".text")==0) {
                     std::string name = sym->get_name()->get_string();
-                    rose_addr_t va = sym->get_bound()->get_mapped_actual_va() + sym->get_value();
+                    SgAsmGenericSection *section = sym->get_bound();
+                    assert(section->is_mapped());
+                    rose_addr_t section_delta = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                    rose_addr_t va = sym->get_value() + section_delta;
                     address[name] = va;
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"ROBB: exported symbol \"" <<name <<"\""
+                              <<" = " <<addrToString(sym->get_value()) <<"\n"
+                              <<"        bound to " <<section->get_name()->get_string(true) <<"\n"
+                              <<"           preferred = " <<addrToString(section->get_mapped_preferred_va()) <<"\n"
+                              <<"           actual    = " <<addrToString(section->get_mapped_actual_va()) <<"\n"
+                              <<"           delta     = " <<addrToString(section->get_mapped_actual_va() -
+                                                                         section->get_mapped_preferred_va()) <<"\n"
+                              <<"           final     = " <<addrToString(va) <<"\n";
+#endif
                 }
             }
         }
-        rose_addr_t get_address(const std::string &name) const {
-            std::map<std::string, rose_addr_t>::const_iterator found = address.find(name);
-            return found==address.end() ? 0 : found->second;
-        }
-    } exports(exports_header);
+    } exports;
+    exports.traverse(exports_header, preorder);
 
-    // Link the exports into the importer.  For ELF, this means processing R_386_JMP_SLOT relocations.
+
+    // Link the exports into the import table.  For ELF, this means processing R_386_JMP_SLOT relocations.
     struct Fixup: AstSimpleProcessing {
+        SgAsmGenericHeader *imports_header;
         SgAsmElfSymbolPtrList imports;
         const Exports &exports;
         MemoryMap *map;
+        BinaryLoaderElf loader;
+        SgAsmElfSymbolSection *symsec;
         Fixup(SgAsmGenericHeader *imports_header, const Exports &exports, MemoryMap *map)
-            : exports(exports), map(map) {
-            if (SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym"))) {
+            : imports_header(imports_header), exports(exports), map(map) {
+            if ((symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym")))) {
                 imports = symsec->get_symbols()->get_symbols();
-                traverse(imports_header, preorder);
             }
         }
         void visit(SgNode *node) {
             if (SgAsmElfRelocEntry *reloc = isSgAsmElfRelocEntry(node)) {
                 if (reloc->get_type()==SgAsmElfRelocEntry::R_386_JMP_SLOT && reloc->get_sym()<imports.size()) {
+                    assert(reloc->get_sym() < imports.size());
                     SgAsmElfSymbol *import_symbol = imports[reloc->get_sym()];
                     std::string name = import_symbol->get_name()->get_string();
-                    rose_addr_t import_addr = reloc->get_r_offset();
-                    if (rose_addr_t export_addr = exports.get_address(name)) {
-                        uint32_t export_addr_le;
-                        ByteOrder::host_to_le(export_addr, &export_addr_le);
-                        map->write(&export_addr_le, import_addr, 4);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-10]*/
-                        std::cerr <<"ROBB: fixup"
-                                  <<" offset=" <<StringUtility::addrToString(reloc->get_r_offset())
-                                  <<" addend=" <<StringUtility::addrToString(reloc->get_r_addend())
-                                  <<" sym=" <<reloc->get_sym() <<" " <<name
-                                  <<" addr=" <<StringUtility::addrToString(exports.get_address(name))
-                                  <<"\n";
+
+                    // The value to be written. This is the address of the loaded exported function.
+                    rose_addr_t export_va = exports.address.get_value_or(name, 0);
+                    if (export_va==0)
+                        return;
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"ROBB: fixup for \"" <<name <<"\""
+                              <<" (symbol #" <<reloc->get_sym() <<" in \"" <<symsec->get_name()->get_string(true) <<"\")\n"
+                              <<"        value to write: " <<addrToString(export_va) <<" (exported function)\n";
 #endif
+                        
+
+                    // The memory address to which we'll eventually write the address of the exported function.  For elf, we'll
+                    // probably be writing the value into the .got.plt section.  Take into account that the section into which
+                    // we're writing may have been moved to a different place in virtual memory than where it expected to be.
+                    rose_addr_t write_va = reloc->get_r_offset();
+                    SgAsmGenericSection *write_sec = loader.find_section_by_preferred_va(imports_header, write_va);
+                    write_va += write_sec->get_mapped_actual_va() - write_sec->get_mapped_preferred_va();
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"        where to write: \n"
+                              <<"           reloc offset = " <<addrToString(reloc->get_r_offset()) <<"\n"
+                              <<"           section = \"" <<write_sec->get_name()->get_string(true) <<"\"\n"
+                              <<"           write va = " <<addrToString(write_va) <<"\n";
+#endif
+
+                    uint32_t export_va_le;
+                    ByteOrder::host_to_le(export_va, &export_va_le);
+                    size_t nwrite = map->write(&export_va_le, write_va, 4);
+                    if (nwrite!=4) {
+                        std::cerr <<"        write failed into memory map:\n";
+                        map->dump(std::cerr, "          ");
                     }
                 }
             }
         }
     } fixer_upper(imports_header, exports, map);
+    fixer_upper.traverse(imports_header, preorder);
 }
 
 int64_t
