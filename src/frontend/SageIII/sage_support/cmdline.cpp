@@ -3480,6 +3480,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
@@ -3487,6 +3488,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
   // DQ (7/3/2013): define this so that the rose_edg_required_macros_and_functions.h header file can make

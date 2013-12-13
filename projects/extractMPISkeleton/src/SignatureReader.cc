@@ -17,6 +17,10 @@
 
 #include "rose.h"
 
+#ifdef _MSC_VER
+#define __PRETTY_FUNCTION__ __FUNCTION__
+#endif
+
 bool ArgMapsTo::operator==(const ArgMapsTo & other) const
 {
   return other.calledFun == this->calledFun &&
@@ -344,8 +348,14 @@ Signatures transitiveCalls( const Signatures & sigs )
    // If we pass std::vector we are forced to pass it by value
    // so instead we pass the address of the underlying array (data()).
    // It's ugly but we don't have a lot of options.
-   transitive_closure(g.graph(), gt, vertmap.data(), get(vertex_index,g));
+   #ifdef _MSC_VER
+      transitive_closure(g.graph(), gt, vertmap, get(vertex_index,g));
+   #else
+      transitive_closure(g.graph(), gt, vertmap.data(), get(vertex_index,g));
+   #endif
 
+
+#ifndef _MSC_VER
    // Emperically vertmap is always the identity map, what gives?
    // We'll be accessing both of these a lot, so lift them out of the loop
    {  // Create a new scope so that g_graph and vertmap_p are local to the
@@ -358,6 +368,7 @@ Signatures transitiveCalls( const Signatures & sigs )
          gt[vertmap_p[i]] = g_graph[i];
       }
    }
+#endif
 
    Signatures sig_tc;
    // go over all the adjacency information in gt and put in the labels from g
@@ -441,8 +452,13 @@ Signatures transitiveParameters( const Signatures & sigs )
    // If we pass std::vector we are forced to pass it by value
    // so instead we pass the address of the underlying array (data()).
    // It's ugly but we don't have a lot of options.
-   transitive_closure(g.graph(), gt, vertmap.data(), get(vertex_index,g));
+   #ifdef _MSC_VER
+      transitive_closure(g.graph(), gt, vertmap, get(vertex_index,g));
+   #else
+      transitive_closure(g.graph(), gt, vertmap.data(), get(vertex_index,g));
+   #endif
 
+#ifndef _MSC_VER
    // Emperically vertmap is always the identity map, what gives?
    // We'll be accessing both of these a lot, so lift them out of the loop
    {  // Create a new scope so that g_graph and vertmap_p are local to the
@@ -455,6 +471,7 @@ Signatures transitiveParameters( const Signatures & sigs )
          gt[vertmap_p[i]] = g_graph[i];
       }
    }
+#endif
 
    Signatures sig_tc;
    // go over all the adjacency information in gt and put in the labels from g

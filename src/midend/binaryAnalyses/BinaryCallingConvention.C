@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "threadSupport.h"  // for __attribute__ on Visual Studio
 #include "BinaryCallingConvention.h"
 #include "BinaryControlFlow.h"
 #include "FindRegisterDefs.h"

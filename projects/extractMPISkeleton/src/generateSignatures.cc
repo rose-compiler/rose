@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     foreach(SgFunctionDeclaration * const funDecl, funDecls){
        SgFunctionDefinition * const funDef = funDecl->get_definition();
        if( funDef == NULL ) continue; // Must be a forward decl, nothing to see here.
-       if(debug) std::cout << funDecl->get_name() << " calls: ";
+       if(debug) std::cout << funDecl->get_name().getString() << " calls: ";
        Signature sig;
        sig.argCount = funDecl->get_args().size();
        const std::vector<SgCallExpression*> callExprs(SageInterface::querySubTree<SgCallExpression>(funDef));
