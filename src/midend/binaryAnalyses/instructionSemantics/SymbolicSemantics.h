@@ -419,6 +419,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 void disable_read_pruning() { read_pruning = false; }
                 /** @} */
 
+                /** Clear all memory */
+                void clear() { cell_list.clear(); }
+
                 /** Write a value to memory. Returns the list of cells that were added. The number of cells added is the same
                  *  as the number of bytes in the value being written. */
                 template<size_t nBits>

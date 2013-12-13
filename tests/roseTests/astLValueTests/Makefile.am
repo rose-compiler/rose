@@ -18,7 +18,7 @@ EXTRA_DIST += test_astLValues.C
 testLValues_1.passed: test_astLValues.C testLValues
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/testLValues $<" \
+		CMD="$$(pwd)/testLValues $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
