@@ -35,7 +35,7 @@ typedef boost::shared_ptr<class Snippet> SnippetPtr;
 class SnippetFile: public boost::enable_shared_from_this<SnippetFile> {
 private:
     std::string fileName;                       // non-canonical source file name
-    SgFile *ast;                                // AST corresponding to the file; null after parse errors
+    SgSourceFile *ast;                          // AST corresponding to the file; null after parse errors
 
     typedef Map<std::string/*functionName*/, SgFunctionDefinition*> FunctionDefinitionMap;
     FunctionDefinitionMap functions;            // cache the functions so we don't have to do a traversal every lookup

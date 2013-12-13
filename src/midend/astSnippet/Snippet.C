@@ -49,7 +49,10 @@ SnippetFile::parse()
     std::string outputName = "/SNIPPET_SHOULD_NOT_BE_UNPARSED/x";
 
     // Try to load the snippet by parsing its source file
-    ast = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    SgFile *file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    ast = isSgSourceFile(file);
+    assert(ast!=NULL);
+    attachPreprocessingInfo(ast);
     ast->set_skip_unparse(true);
 
     // Find all snippet functions (they are the top-level function definitions)
