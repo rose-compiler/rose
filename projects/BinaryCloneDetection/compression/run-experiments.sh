@@ -70,7 +70,7 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
     esac
 done
 
-OVERALL_DB="ncd_overall_function_uniformly_2"
+OVERALL_DB="ncd_overall_function"
 
 dropdb $OVERALL_DB
 createdb $OVERALL_DB
@@ -214,9 +214,15 @@ if [ "$#" -gt 0 ]; then
          REUSE_D_DISTANCE="1.0-(1.0*$REUSE_D_ENUMERATOR)/$REUSE_D_DENOMINATOR"
        fi
      
-       distance=`ncd $SPECIMEN_1 $SPECIMEN_2 |  awk '{print $NF}'`
-       
-       echo "insert into specimen_comparison(gzip_1_size, gzip_2_size, gzip_combined_size, bsdiff_enumerator, bsdiff_denominator, base_name_1, opt_level_1, program_name_1, specimen_1, base_name_2, opt_level_2, program_name_2, specimen_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance) values($GZIPPED_1_SIZE, $GZIPPED_2_SIZE, $GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR, $REUSE_D_DENOMINATOR, '$BASE_NAME_1', '$OPT_LEVEL_1', '$PROGRAM_NAME_1', '$SPECIMEN_1' , '$BASE_NAME_2', '$OPT_LEVEL_2', '$PROGRAM_NAME_2', '$SPECIMEN_2', $distance, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE );" >> $INSERT_FILE
+       if [ $GZIPPED_1_SIZE -eq 0 -a $GZIPPED_2_SIZE -eq 0 ]; then
+          NCD_DISTANCE="0.0"
+       else
+          NCD_ENUMERATOR="$GZIPPED_COMBINED_SIZE-MINUMUM($GZIPPED_1_SIZE, $GZIPPED_2_SIZE)"
+          NCD_DENOMINATOR="MAXIMUM($GZIPPED_1_SIZE, $GZIPPED_2_SIZE)"
+          NCD_DISTANCE="(1.0*($NCD_ENUMERATOR))/$NCD_DENOMINATOR"
+       fi
+
+       echo "insert into specimen_comparison(gzip_1_size, gzip_2_size, gzip_combined_size, bsdiff_enumerator, bsdiff_denominator, base_name_1, opt_level_1, program_name_1, specimen_1, base_name_2, opt_level_2, program_name_2, specimen_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance) values($GZIPPED_1_SIZE, $GZIPPED_2_SIZE, $GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR, $REUSE_D_DENOMINATOR, '$BASE_NAME_1', '$OPT_LEVEL_1', '$PROGRAM_NAME_1', '$SPECIMEN_1' , '$BASE_NAME_2', '$OPT_LEVEL_2', '$PROGRAM_NAME_2', '$SPECIMEN_2', $NCD_DISTANCE, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE );" >> $INSERT_FILE
 
 
 
