@@ -75,19 +75,13 @@ OVERALL_DB="ncd_overall_function"
 dropdb $OVERALL_DB
 createdb $OVERALL_DB
 
-psql $OVERALL_DB -c 'create table file_information(base_name text, opt_level text, program_name text, specimen text)'
-psql $OVERALL_DB -c 'create table specimen_comparison(gzip_1_size integer, gzip_2_size integer, gzip_combined_size integer, bsdiff_enumerator integer, bsdiff_denominator integer, base_name_1 text, opt_level_1 text, program_name_1 text, specimen_1 text, base_name_2 text, opt_level_2 text, program_name_2 text, specimen_2 text, ncd_distance double precision, reuse_c_distance_1 double precision, reuse_c_distance_2 double precision, reuse_d_distance double precision)'
+psql $OVERALL_DB -c 'create table function_information(id SERIAL NOT NULL, base_name text, opt_level text, program_name text, specimen text, gzipped_size integer, bsdiff_epsilon_size integer)'
+psql $OVERALL_DB -c 'create table specimen_comparison(id SERIAL NOT NULL, gzip_combined_size integer, bsdiff_enumerator integer, bsdiff_denominator integer, func_name_1 integer, func_name_2 integer, ncd_distance double precision, reuse_c_distance_1 double precision, reuse_c_distance_2 double precision, reuse_d_distance_1 double precision, reuse_d_distance_2 double precision)'
+
+
 
 
 BETA=1000;
-
-if [ "12$REUSE_D_DENOMINATOR" = "12" ]; then
-#They are exactly the same but of zero length
-REUSE_D_DISTANCE=0.0;
-else
-REUSE_D_DISTANCE="1.0-(1.0*$REUSE_D_ENUMERATOR)/$REUSE_D_DENOMINATOR"
-fi
-
 
 # Find the names of the directories containing target directories. Target directories are O0, O1, O2, or O3
 if [ "$#" -gt 0 ]; then
@@ -97,9 +91,19 @@ if [ "$#" -gt 0 ]; then
 
   INSERT_FILE=`tempfile`
 
+
+
   for TARGET_DIR in $SEARCH_DIR; do
      for DIR in $TARGET_DIR/*/; do
-            
+        NAME="$TARGET_DIR/specimen_1"
+
+
+        EPSILON_FILE_NAME="$TARGET_DIR/epsilon_file"
+
+        touch $EPSILON_FILE_NAME
+        D_PATCH="$TARGET_DIR/d_patch"
+
+         
         SPECIMENS=$(find "$DIR" -type f)
 
         for SPECIMEN in $SPECIMENS; do
@@ -107,7 +111,13 @@ if [ "$#" -gt 0 ]; then
            OPT_LEVEL=$(basename $(dirname $SPECIMEN))
            PROGRAM_NAME=$(dirname $(dirname $SPECIMEN))
 
-           echo "insert into file_information(base_name, opt_level, program_name, specimen ) values('$BASE_NAME', '$OPT_LEVEL', '$PROGRAM_NAME', '$SPECIMEN');" >> $INSERT_FILE
+           GZIPPED=`gzip -c "$SPECIMEN" > "$NAME"`
+           GZIPPED_SIZE=$(stat -c%s "$NAME")
+
+           bsdiff $EPSILON_FILE_NAME $SPECIMEN  $D_PATCH
+           BSDIFF_EPSILON_SIZE=$(stat -c%s "$D_PATCH")
+
+           echo "insert into function_information(base_name, opt_level, program_name, specimen, gzipped_size, bsdiff_epsilon_size ) values('$BASE_NAME', '$OPT_LEVEL', '$PROGRAM_NAME', '$SPECIMEN', $GZIPPED_SIZE, $BSDIFF_EPSILON_SIZE);" >> $INSERT_FILE
         done
 
       done
@@ -121,7 +131,7 @@ if [ "$#" -gt 0 ]; then
         --set AUTOCOMMIT=off \
         --set ON_ERROR_STOP=on 
 
-  psql $OVERALL_DB -c 'create table distinct_functions as select distinct base_name, program_name from file_information  GROUP BY base_name, program_name HAVING COUNT(*) > 1'
+  psql $OVERALL_DB -c 'create table distinct_functions as select distinct base_name, program_name from function_information'
 
   PROGRAMS=`psql $OVERALL_DB -t -c 'select distinct program_name from distinct_functions;'`
 
@@ -130,12 +140,7 @@ if [ "$#" -gt 0 ]; then
  
   for PROGRAM_NAME in $PROGRAMS; do
      echo "Starting analysis of $PROGRAM_NAME"
-
-     psql $OVERALL_DB -t -c "drop table IF EXISTS random_functions; create table random_functions as select * from distinct_functions where program_name='$PROGRAM_NAME' ORDER BY RANDOM() limit $NUM_FUNCTIONS;"
-     psql $OVERALL_DB -c "drop table IF EXISTS functions_to_analyze; create table functions_to_analyze as select fi.* from file_information as fi join random_functions as rf on rf.program_name=fi.program_name AND rf.base_name=fi.base_name;"
-
-     FUNCTIONS=`psql $OVERALL_DB -t -c "select distinct specimen from functions_to_analyze;"`
-
+     TARGET_DIR=`pwd`
      NAME_1="$TARGET_DIR/specimen_1"
      NAME_2="$TARGET_DIR/specimen_2"
      COMBINED_NAME="$TARGET_DIR/combined"
@@ -149,52 +154,44 @@ if [ "$#" -gt 0 ]; then
 
      OUTPUT_FILE="output_file.txt"
 
-     psql $OVERALL_DB -t -A -F"," -c  'select fta1.specimen, fta2.specimen from functions_to_analyze as fta1 join functions_to_analyze as fta2 on fta1.specimen <= fta2.specimen ORDER BY fta1.specimen, fta2.specimen;' > $OUTPUT_FILE
+     psql $OVERALL_DB -t -A -F"," -c  'select fta1.id, fta1.specimen, fta1.gzipped_size, fta1.bsdiff_epsilon_size, fta2.id, fta2.specimen, fta2.gzipped_size, fta2.bsdiff_epsilon_size  from function_information as fta1 join function_information as fta2 on fta1.specimen <= fta2.specimen ORDER BY fta1.specimen, fta2.specimen;' > $OUTPUT_FILE
 
      LENGTH=`cat $OUTPUT_FILE | wc -l`
 
      INSERT_FILE=`tempfile`
-
-
-     while IFS=, read col1 col2
+ 
+     while IFS=, read col1 col2 col3 col4 col5 col6 col7 col8
      do
        
 
-       SPECIMEN_1="$col1"
-       SPECIMEN_2="$col2"
+       FUNC_NAME_1="$col1"
+       SPECIMEN_1="$col2"
+       GZIPPED_SIZE_1="$col3"
+       BSDIFF_EPSILON_SIZE_1="$col4"
+      
+       FUNC_NAME_2="$col5"
+       SPECIMEN_2="$col6"
+       GZIPPED_SIZE_2="$col7"
+       BSDIFF_EPSILON_SIZE_2="$col8"
 
-       echo "$i of $LENGTH $SPECIMEN_1 $SPECIMEN_2: Starting analysis"
+       if [ `echo "$i%100" | bc` -eq 0  ]; then
+         PERCENT_DONE=`echo "100.0*$i/$LENGTH" | bc `
+         echo "$PERCENT_DONE% DONE: $i of $LENGTH "
+       fi
 
        let i++
-
-       BASE_NAME_1=$(basename $SPECIMEN_1)
-       OPT_LEVEL_1=$(basename $(dirname $SPECIMEN_1))
-       PROGRAM_NAME_1=$(dirname $(dirname $SPECIMEN_1))
-
-
-       GZIPPED_1=`gzip -c "$SPECIMEN_1" > "$NAME_1"`
-       GZIPPED_1_SIZE=$(stat -c%s "$NAME_1")
-
-
-       BASE_NAME_2=$(basename $SPECIMEN_2)
-       OPT_LEVEL_2=$(basename $(dirname $SPECIMEN_2))
-       PROGRAM_NAME_2=$(dirname $(dirname $SPECIMEN_2))
-
-
-       GZIPPED_2=`gzip -c "$SPECIMEN_2" > "$NAME_2"`
-       GZIPPED_2_SIZE=$(stat -c%s "$NAME_2")
 
        GZIPPED_COMBINED=`gzip -c $SPECIMEN_1 $SPECIMEN_2 > $COMBINED_NAME`
        GZIPPED_COMBINED_SIZE=$(stat -c%s "$COMBINED_NAME")
 
-       REUSE_C_ENUMERATOR="$GZIPPED_1_SIZE+$GZIPPED_2_SIZE-$GZIPPED_COMBINED_SIZE-$BETA"
-       REUSE_C_DISTANCE_1="(1.0*($REUSE_C_ENUMERATOR))/$GZIPPED_1_SIZE"
-       REUSE_C_DISTANCE_2="(1.0*($REUSE_C_ENUMERATOR))/$GZIPPED_2_SIZE"
+       REUSE_C_ENUMERATOR="$GZIPPED_SIZE_1+$GZIPPED_SIZE_2-$GZIPPED_COMBINED_SIZE-$BETA"
+       REUSE_C_DISTANCE_1="(1.0*($REUSE_C_ENUMERATOR))/$GZIPPED_SIZE_1"
+       REUSE_C_DISTANCE_2="(1.0*($REUSE_C_ENUMERATOR))/$GZIPPED_SIZE_2"
 
-       if [ $GZIPPED_1_SIZE -eq 0 ]; then
+       if [ $GZIPPED_SIZE_1 -eq 0 ]; then
          REUSE_C_DISTANCE_1="0"
        fi
-       if [ $GZIPPED_2_SIZE -eq 0 ]; then
+       if [ $GZIPPED_SIZE_2 -eq 0 ]; then
          REUSE_C_DISTANCE_2="0"
        fi
 
@@ -203,26 +200,31 @@ if [ "$#" -gt 0 ]; then
        bsdiff $SPECIMEN_1 $SPECIMEN_2  $D_PATCH
        REUSE_D_ENUMERATOR=$(stat -c%s "$D_PATCH")
 
-       bsdiff $EPSILON_FILE_NAME $SPECIMEN_2  $D_PATCH
-       REUSE_D_DENOMINATOR=$(stat -c%s "$D_PATCH")
-
-
-       if [ $REUSE_D_DENOMINATOR -eq 0 ]; then
+       if [ $BSDIFF_EPSILON_SIZE_1 -eq 0 ]; then
          #They are exactly the same but of zero length
-         REUSE_D_DISTANCE=0.0;
+         REUSE_D_DISTANCE_1=0.0;
        else
-         REUSE_D_DISTANCE="1.0-(1.0*$REUSE_D_ENUMERATOR)/$REUSE_D_DENOMINATOR"
+         REUSE_D_DISTANCE_1="1.0-(1.0*$REUSE_D_ENUMERATOR)/$BSDIFF_EPSILON_SIZE_1"
        fi
+
+       if [ $BSDIFF_EPSILON_SIZE_2 -eq 0 ]; then
+         #They are exactly the same but of zero length
+         REUSE_D_DISTANCE_2=0.0;
+       else
+         REUSE_D_DISTANCE_2="1.0-(1.0*$REUSE_D_ENUMERATOR)/$BSDIFF_EPSILON_SIZE_2"
+       fi
+
+
      
-       if [ $GZIPPED_1_SIZE -eq 0 -a $GZIPPED_2_SIZE -eq 0 ]; then
+       if [ $GZIPPED_SIZE_1 -eq 0 -a $GZIPPED_SIZE_2 -eq 0 ]; then
           NCD_DISTANCE="0.0"
        else
-          NCD_ENUMERATOR="$GZIPPED_COMBINED_SIZE-MINUMUM($GZIPPED_1_SIZE, $GZIPPED_2_SIZE)"
-          NCD_DENOMINATOR="MAXIMUM($GZIPPED_1_SIZE, $GZIPPED_2_SIZE)"
+          NCD_ENUMERATOR="$GZIPPED_COMBINED_SIZE-LEAST($GZIPPED_SIZE_1, $GZIPPED_SIZE_2)"
+          NCD_DENOMINATOR="GREATEST($GZIPPED_SIZE_1, $GZIPPED_SIZE_2)"
           NCD_DISTANCE="(1.0*($NCD_ENUMERATOR))/$NCD_DENOMINATOR"
        fi
 
-       echo "insert into specimen_comparison(gzip_1_size, gzip_2_size, gzip_combined_size, bsdiff_enumerator, bsdiff_denominator, base_name_1, opt_level_1, program_name_1, specimen_1, base_name_2, opt_level_2, program_name_2, specimen_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance) values($GZIPPED_1_SIZE, $GZIPPED_2_SIZE, $GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR, $REUSE_D_DENOMINATOR, '$BASE_NAME_1', '$OPT_LEVEL_1', '$PROGRAM_NAME_1', '$SPECIMEN_1' , '$BASE_NAME_2', '$OPT_LEVEL_2', '$PROGRAM_NAME_2', '$SPECIMEN_2', $NCD_DISTANCE, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE );" >> $INSERT_FILE
+       echo "insert into specimen_comparison(gzip_combined_size, bsdiff_enumerator, bsdiff_denominator, func_name_1, func_name_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance_1, reuse_d_distance_2) values($GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR, $REUSE_D_DENOMINATOR,  '$FUNC_NAME_1', '$FUNC_NAME_2', $NCD_DISTANCE, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE_1, $REUSE_D_DISTANCE_2 );" >> $INSERT_FILE
 
 
 
