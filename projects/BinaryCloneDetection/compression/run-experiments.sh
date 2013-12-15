@@ -76,7 +76,7 @@ dropdb $OVERALL_DB
 createdb $OVERALL_DB
 
 psql $OVERALL_DB -c 'create table function_information(id SERIAL NOT NULL, base_name text, opt_level text, program_name text, specimen text, gzipped_size integer, bsdiff_epsilon_size integer)'
-psql $OVERALL_DB -c 'create table specimen_comparison(id SERIAL NOT NULL, gzip_combined_size integer, bsdiff_enumerator integer, bsdiff_denominator integer, func_name_1 integer, func_name_2 integer, ncd_distance double precision, reuse_c_distance_1 double precision, reuse_c_distance_2 double precision, reuse_d_distance_1 double precision, reuse_d_distance_2 double precision)'
+psql $OVERALL_DB -c 'create table specimen_comparison(id SERIAL NOT NULL, gzip_combined_size integer, bsdiff_enumerator integer, func_name_1 integer, func_name_2 integer, ncd_distance double precision, reuse_c_distance_1 double precision, reuse_c_distance_2 double precision, reuse_d_distance_1 double precision, reuse_d_distance_2 double precision)'
 
 
 
@@ -154,7 +154,7 @@ if [ "$#" -gt 0 ]; then
 
      OUTPUT_FILE="output_file.txt"
 
-     psql $OVERALL_DB -t -A -F"," -c  'select fta1.id, fta1.specimen, fta1.gzipped_size, fta1.bsdiff_epsilon_size, fta2.id, fta2.specimen, fta2.gzipped_size, fta2.bsdiff_epsilon_size  from function_information as fta1 join function_information as fta2 on fta1.specimen <= fta2.specimen ORDER BY fta1.specimen, fta2.specimen;' > $OUTPUT_FILE
+     psql $OVERALL_DB -t -A -F"," -c  "select fta1.id, fta1.specimen, fta1.gzipped_size, fta1.bsdiff_epsilon_size, fta2.id, fta2.specimen, fta2.gzipped_size, fta2.bsdiff_epsilon_size  from function_information as fta1 join function_information as fta2 on fta1.specimen <= fta2.specimen where fta1.program_name='$PROGRAM_NAME' AND fta2.program_name='$PROGRAM_NAME';" > $OUTPUT_FILE
 
      LENGTH=`cat $OUTPUT_FILE | wc -l`
 
@@ -224,7 +224,7 @@ if [ "$#" -gt 0 ]; then
           NCD_DISTANCE="(1.0*($NCD_ENUMERATOR))/$NCD_DENOMINATOR"
        fi
 
-       echo "insert into specimen_comparison(gzip_combined_size, bsdiff_enumerator, bsdiff_denominator, func_name_1, func_name_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance_1, reuse_d_distance_2) values($GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR, $REUSE_D_DENOMINATOR,  '$FUNC_NAME_1', '$FUNC_NAME_2', $NCD_DISTANCE, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE_1, $REUSE_D_DISTANCE_2 );" >> $INSERT_FILE
+       echo "insert into specimen_comparison(gzip_combined_size, bsdiff_enumerator, func_name_1, func_name_2, ncd_distance, reuse_c_distance_1, reuse_c_distance_2, reuse_d_distance_1, reuse_d_distance_2) values($GZIPPED_COMBINED_SIZE, $REUSE_D_ENUMERATOR,  $FUNC_NAME_1, $FUNC_NAME_2, $NCD_DISTANCE, $REUSE_C_DISTANCE_1, $REUSE_C_DISTANCE_2, $REUSE_D_DISTANCE_1, $REUSE_D_DISTANCE_2 );" >> $INSERT_FILE
 
 
 
