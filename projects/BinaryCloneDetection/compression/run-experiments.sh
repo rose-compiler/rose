@@ -125,11 +125,7 @@ if [ "$#" -gt 0 ]; then
   done
  
   echo "Appending to database"
-  psql "$OVERALL_DB" -f "$INSERT_FILE" \
-        --echo-all \
-        --single-transaction \
-        --set AUTOCOMMIT=off \
-        --set ON_ERROR_STOP=on 
+  psql "$OVERALL_DB" -f "$INSERT_FILE" --quiet --single-transaction --set AUTOCOMMIT=off --set ON_ERROR_STOP=on 
 
   psql $OVERALL_DB -c 'create table distinct_functions as select distinct base_name, program_name from function_information'
 
@@ -139,7 +135,7 @@ if [ "$#" -gt 0 ]; then
   typeset -i i END
  
   for PROGRAM_NAME in $PROGRAMS; do
-     echo "Starting analysis of $PROGRAM_NAME"
+     echo -e "\n\nStarting analysis of $PROGRAM_NAME\n"
      TARGET_DIR=`pwd`
      NAME_1="$TARGET_DIR/specimen_1"
      NAME_2="$TARGET_DIR/specimen_2"
@@ -154,7 +150,7 @@ if [ "$#" -gt 0 ]; then
 
      OUTPUT_FILE="output_file.txt"
 
-     psql $OVERALL_DB -t -A -F"," -c  "select fta1.id, fta1.specimen, fta1.gzipped_size, fta1.bsdiff_epsilon_size, fta2.id, fta2.specimen, fta2.gzipped_size, fta2.bsdiff_epsilon_size  from function_information as fta1 join function_information as fta2 on fta1.specimen <= fta2.specimen where fta1.program_name='$PROGRAM_NAME' AND fta2.program_name='$PROGRAM_NAME';" > $OUTPUT_FILE
+     psql $OVERALL_DB -t -A -F"," -c  "select fta1.id, fta1.specimen, fta1.gzipped_size, fta1.bsdiff_epsilon_size, fta2.id, fta2.specimen, fta2.gzipped_size, fta2.bsdiff_epsilon_size  from function_information as fta1 join function_information as fta2 on fta1.id <= fta2.id where fta1.program_name='$PROGRAM_NAME' AND fta2.program_name='$PROGRAM_NAME';" > $OUTPUT_FILE
 
      LENGTH=`cat $OUTPUT_FILE | wc -l`
 
@@ -174,9 +170,9 @@ if [ "$#" -gt 0 ]; then
        GZIPPED_SIZE_2="$col7"
        BSDIFF_EPSILON_SIZE_2="$col8"
 
-       if [ `echo "$i%100" | bc` -eq 0  ]; then
+       if [ `echo "$i%1000" | bc` -eq 0  ]; then
          PERCENT_DONE=`echo "100.0*$i/$LENGTH" | bc `
-         echo "$PERCENT_DONE% DONE: $i of $LENGTH "
+         echo -en "\r$PERCENT_DONE% DONE: $i of $LENGTH "
        fi
 
        let i++
