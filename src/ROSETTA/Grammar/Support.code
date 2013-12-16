@@ -5288,6 +5288,24 @@ HEADER_APPLICATION_SOURCE_FILE_START
           void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & get_tokenSubsequenceMap();
 
+       // DQ (11/27/2013): Added support for definition of the token unparsing frontier in the AST.
+       // void set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap);
+       // std::vector<FrontierNode*> & get_token_unparse_frontier();
+          void set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & tokenStreamSequenceMap);
+          std::map<SgStatement*,FrontierNode*> & get_token_unparse_frontier();
+
+       // DQ (11/27/2013): Added support for adjacency of nodes in the unparsing frontier in the AST.
+          void set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndNextNodeData*> & tokenStreamSequenceMap);
+          std::map<SgNode*,PreviousAndNextNodeData*> & get_token_unparse_frontier_adjacency();
+
+       // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+          void set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,SgStatement*> & X);
+          std::multimap<int,SgStatement*> & get_redundantlyMappedTokensToStatementMultimap();
+
+       // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+          std::set<int> & get_redundantTokenEndingsSet();
+          void set_redundantTokenEndingsSet(std::set<int> & X);
+
 #if 0
        // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
        // typedef std::vector<SgNode*> NumberToStatementType;
@@ -14337,6 +14355,71 @@ SgSourceFile::get_tokenSubsequenceMap()
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
      return ROSE::tokenSubsequenceMap;
    }
+
+// void SgSourceFile::set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap)
+void 
+SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & tokenStreamSequenceMap)
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+  // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
+     ROSE::frontierNodes = tokenStreamSequenceMap;
+   }
+
+// std::vector<FrontierNode*> & SgSourceFile::get_token_unparse_frontier()
+std::map<SgStatement*,FrontierNode*> &
+SgSourceFile::get_token_unparse_frontier()
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+     return ROSE::frontierNodes;
+   }
+
+void 
+SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndNextNodeData*> & tokenStreamSequenceMap)
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+  // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
+     ROSE::previousAndNextNodeMap = tokenStreamSequenceMap;
+   }
+
+std::map<SgNode*,PreviousAndNextNodeData*> &
+SgSourceFile::get_token_unparse_frontier_adjacency()
+   {
+  // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+     return ROSE::previousAndNextNodeMap;
+   }
+
+
+// DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+void
+SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,SgStatement*> & X)
+   {
+     ROSE::redundantlyMappedTokensToStatementMultimap = X;
+   }
+
+// DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+std::multimap<int,SgStatement*> &
+SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
+   {
+     return ROSE::redundantlyMappedTokensToStatementMultimap;
+   }
+
+
+// DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+void
+SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
+   {
+     ROSE::redundantTokenEndingsSet = X;
+   }
+
+// DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+std::set<int> &
+SgSourceFile::get_redundantTokenEndingsSet()
+   {
+     return ROSE::redundantTokenEndingsSet;
+   }
+
+
+
 
 
 SOURCE_APPLICATION_SOURCE_FILE_END

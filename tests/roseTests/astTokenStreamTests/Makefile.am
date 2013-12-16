@@ -360,7 +360,9 @@ TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
+# DQ (12/1/2013): Use verbose level to set force additional token specific files to be generated (tested below).
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
+ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 1
 
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
@@ -374,9 +376,14 @@ $(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test
 
 #------------------------------------------------------------------------------------------------------------------------
 # Token Stream Mapping
-bin_PROGRAMS += tokenStreamMapping
+bin_PROGRAMS += tokenStreamMapping testUnparsingUsingTokenStream
+
 tokenStreamMapping_SOURCES = tokenStreamMapping.C  
 tokenStreamMapping_LDADD = $(ROSE_LIBS)
+
+testUnparsingUsingTokenStream_SOURCES = testUnparsingUsingTokenStream.C
+testUnparsingUsingTokenStream_LDADD = $(ROSE_LIBS)
+
 
 PASSING_TEST_Mapping_Source_passed = ${TESTCODES:.c=.c.mapping.passed}
 TEST_Mapping_Source_passed = ${ALL_TESTCODES:.c=.c.mapping.passed}
@@ -391,6 +398,10 @@ testTokenMapping:
 	rm -f test2003_12.c.mapping.passed
 	@$(MAKE) test2003_12.c.mapping.passed
 	./tokenStreamMapping -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+
+# Test code using -rose:verbose 2 to trigger output of evaluation files (*.c and *.dot files).
+test_unparsingUsingTokens : testUnparsingUsingTokenStream
+	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 2 -c $(srcdir)/input_testUnparsingUsingTokenStream.c 
 
 #------------------------------------------------------------------------------------------------------------------------
 
@@ -408,6 +419,7 @@ test_binary_after_token_unparsing:
 # check-local: $(LIN_TEST_TARGETS)
 check-local:
 	@$(MAKE) $(PASSING_TEST_Mapping_Source_passed)
+	@$(MAKE) test_unparsingUsingTokens
 #	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) $(LIN_TEST_TARGETS)
 	@echo "******************************************************************************************************"
