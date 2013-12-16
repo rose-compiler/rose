@@ -8,6 +8,7 @@
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/optional.hpp>
 
 // Documented elsewhere
 namespace BinaryAnalysis {
@@ -1341,6 +1342,7 @@ class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 protected:
     SValuePtr address;                          /**< Address of memory cell. */
     SValuePtr value;                            /**< Value stored at that address. */
+    boost::optional<rose_addr_t> latest_writer;   /**< Optional address for most recent writer of this cell's value. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1415,6 +1417,14 @@ public:
     }
     /** @}*/
 
+    /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
+     *  describe the most recent instruction that wrote to this memory location.
+     * @{ */
+    virtual boost::optional<rose_addr_t> get_latest_writer() const { return latest_writer; }
+    virtual void set_latest_writer(rose_addr_t writer_va) { latest_writer = writer_va; }
+    virtual void clear_latest_writer() { latest_writer = boost::optional<rose_addr_t>(); }
+    /** @} */
+
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
      *  may be equal; multi-byte cells will need to check ranges of addresses. */
@@ -1483,6 +1493,7 @@ protected:
     MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
     CellList cells;                             // list of cells in reverse chronological order
     bool byte_restricted;                       // are cell values all exactly one byte wide?
+    MemoryCellPtr latest_written_cell;          // the cell whose value was most recently written to, if any
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1554,6 +1565,7 @@ public:
 public:
     virtual void clear() /*override*/ {
         cells.clear();
+        latest_written_cell.reset();
     }
 
     /** Read a value from memory.
@@ -1611,6 +1623,12 @@ public:
     virtual const CellList& get_cells() const { return cells; }
     virtual       CellList& get_cells()       { return cells; }
     /** @} */
+
+    /** Returns the cell most recently written. */
+    virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
+
+    /** Returns the union of writer virtual addresses for cells that may alias the given address. */
+    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops);
 };
 
 /******************************************************************************************************************

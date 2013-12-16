@@ -434,14 +434,16 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                     } else {
                         stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname;
                         oflags.restore();
-                        std::set<rose_addr_t> writers = get_latest_writers(rvi->desc);
-                        if (writers.size()==1) {
-                            stream <<" [writer=" <<StringUtility::addrToString(*writers.begin()) <<"]";
-                        } else if (!writers.empty()) {
-                            stream <<" [writers={";
-                            for (std::set<rose_addr_t>::iterator wi=writers.begin(); wi!=writers.end(); ++wi)
-                                stream <<(wi==writers.begin()?"":", ") <<StringUtility::addrToString(*wi);
-                            stream <<"}]";
+                        if (fmt.get_show_latest_writers()) {
+                            std::set<rose_addr_t> writers = get_latest_writers(rvi->desc);
+                            if (writers.size()==1) {
+                                stream <<" [writer=" <<StringUtility::addrToString(*writers.begin()) <<"]";
+                            } else if (!writers.empty()) {
+                                stream <<" [writers={";
+                                for (std::set<rose_addr_t>::iterator wi=writers.begin(); wi!=writers.end(); ++wi)
+                                    stream <<(wi==writers.begin()?"":", ") <<StringUtility::addrToString(*wi);
+                                stream <<"}]";
+                            }
                         }
                         stream <<" = ";
                         rvi->value->print(stream, fmt);
@@ -817,7 +819,10 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
 void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
-    stream <<"addr=" <<(*address+fmt) <<" value=" <<(*value+fmt);
+    stream <<"addr=" <<(*address+fmt);
+    if (fmt.get_show_latest_writers() && latest_writer)
+        stream <<" writer=" <<StringUtility::addrToString(*latest_writer);
+    stream <<" value=" <<(*value+fmt);
 }
 
 SValuePtr
@@ -845,12 +850,28 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
     return retval;
 }
 
+std::set<rose_addr_t>
+MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops)
+{
+    assert(addr!=NULL);
+    std::set<rose_addr_t> retval;
+    bool short_circuited;
+    CellList found = scan(addr, nbits, ops, short_circuited/*out*/);
+    for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
+        MemoryCellPtr cell = *fi;
+        if (cell->get_latest_writer())
+            retval.insert(cell->get_latest_writer().get());
+    }
+    return retval;
+}
+
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops)
 {
     assert(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
     cells.push_front(cell);
+    latest_written_cell = cell;
 }
 
 void
