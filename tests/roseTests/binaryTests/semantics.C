@@ -355,6 +355,7 @@ analyze_interp(SgAsmInterpretation *interp)
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
         BaseSemantics::Formatter formatter;
         formatter.set_suppress_initial_values();
+        formatter.set_show_latest_writers(do_usedef);
         BaseSemantics::DispatcherPtr dispatcher;
         if (do_trace) {
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);

@@ -632,6 +632,14 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     SValuePtr a = SValue::promote(a_->copy());
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
+
+    // Update latest writer when appropriate and able to do so.
+    if (SgAsmInstruction *insn = get_insn()) {
+        BaseSemantics::RegisterStatePtr regs = get_state()->get_register_state();
+        BaseSemantics::RegisterStateGenericPtr gregs = boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(regs);
+        if (gregs!=NULL)
+            gregs->set_latest_writer(reg, insn->get_address());
+    }
 }
 
 BaseSemantics::SValuePtr
