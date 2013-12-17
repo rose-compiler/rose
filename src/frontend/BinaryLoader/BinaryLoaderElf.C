@@ -54,19 +54,28 @@ BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
 rose_addr_t
 BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
+    static const size_t maximum_alignment = 8192;
 
-    /* Find the minimum address desired by the sections to be mapped */
+    // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
         min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
-    /* Minimum address at which to map */
-    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), 4096);
+    // Minimum address at which to map
+    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), maximum_alignment);
 
-    /* If the minimum preferred virtual address is less than the floor of the mapping area then we should add the difference
-     * to the base virtual address, effectively moving the preferred mapping of all the sections up by that difference. */
-    return min_preferred_va<map_base_va ? map_base_va-min_preferred_va : header->get_base_va();
+    // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
+    // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
+    if (min_preferred_va < map_base_va) {
+        size_t min_preferred_page = min_preferred_va / maximum_alignment;
+        if (map_base_va < min_preferred_page * maximum_alignment)
+            return 0;
+        return map_base_va - min_preferred_page*maximum_alignment;
+    }
+
+    // No need to rebase
+    return header->get_base_va();
 }
 
 BinaryLoader::MappingContribution
