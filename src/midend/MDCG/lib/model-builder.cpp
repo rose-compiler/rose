@@ -1,8 +1,19 @@
+/** 
+ * \file MDCG/lib/model-builder.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MDCG/model-builder.hpp"
-//#include "MFB/api-builder.hpp"
+#include "MFB/Sage/api.hpp"
 
 namespace MDCG {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 ModelBuilder::ModelBuilder(MFB::ApiBuilder & api_builder) :
   p_api_builder(api_builder),
@@ -29,6 +40,7 @@ const Model::Model & ModelBuilder::get(const Model::model_id_t model_id) const {
   /// \todo
 }
 
+/** @} */
 
 }
 

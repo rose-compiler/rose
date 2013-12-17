@@ -1,3 +1,9 @@
+/** 
+ * \file MDCG/include/MDCG/model.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MDCG_MODEL_HPP__
 #define __MDCG_MODEL_HPP__
@@ -13,6 +19,11 @@
 namespace MDCG {
 
 namespace Model {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 typedef unsigned model_id_t;
 
@@ -41,6 +52,8 @@ class Model {
 
     const model_t & getModel() const;
 };
+
+/** @} */
 
 }
 

@@ -1,5 +1,5 @@
 /** 
- * \file MFB/include/MFB.hpp
+ * \file MFB/include/MFB/api.hpp
  *
  * \author Tristan Vanderbruggen
  *
@@ -15,7 +15,7 @@ namespace MFB {
  * @{
 */
 
-struct API {
+struct api_t {
   std::set<SgNamespaceSymbol *>      namespace_symbols;
   std::set<SgFunctionSymbol *>       function_symbols;
   std::set<SgClassSymbol *>          class_symbols;
@@ -23,9 +23,9 @@ struct API {
   std::set<SgMemberFunctionSymbol *> member_function_symbols;
 };
 
-void dump_api(const API * api);
+void dump_api(const api_t * api);
 
-void merge_api(API * base_api, const API * api);
+void merge_api(api_t * base_api, const api_t * api);
 
 /** @} */
 

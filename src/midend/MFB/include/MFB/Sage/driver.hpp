@@ -109,8 +109,8 @@ class Driver<Sage> {
 
     void addExternalHeader(unsigned long file_id, std::string header_name, bool is_system_header = true);
 
-    API * getAPI(unsigned long file_id) const;
-    API * getAPI(const std::set<unsigned long> & file_ids) const;
+    api_t * getAPI(unsigned long file_id) const;
+    api_t * getAPI(const std::set<unsigned long> & file_ids) const;
 
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false);

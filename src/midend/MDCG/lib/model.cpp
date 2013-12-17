@@ -1,9 +1,20 @@
+/** 
+ * \file MDCG/lib/model.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MDCG/model.hpp"
 
 namespace MDCG {
 
 namespace Model {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 model_t::model_t() :
   variables(),
@@ -44,6 +55,8 @@ Model::~Model() {}
 const model_t & Model::getModel() const {
   return model;
 }
+
+/** @} */
 
 }
 

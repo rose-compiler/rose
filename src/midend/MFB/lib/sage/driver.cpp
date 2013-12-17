@@ -202,8 +202,8 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceF
     SageInterface::prependStatement(decl_to_add, global_scope);
 }
 
-API * Driver<Sage>::getAPI(unsigned long file_id) const {
-  API * api = new API();
+api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
+  api_t * api = new api_t();
 
   std::map<SgSymbol *, unsigned long>::const_iterator it_sym_decl_file_id;
 
@@ -255,16 +255,16 @@ API * Driver<Sage>::getAPI(unsigned long file_id) const {
   return api;
 }
 
-API * Driver<Sage>::getAPI(const std::set<unsigned long> & file_ids) const {
+api_t * Driver<Sage>::getAPI(const std::set<unsigned long> & file_ids) const {
   assert(file_ids.size() > 0);
 
   std::set<unsigned long>::const_iterator it = file_ids.begin();
 
-  API * api = getAPI(*it);
+  api_t * api = getAPI(*it);
   it++;
 
   while (it != file_ids.begin()) {
-    API * tmp = getAPI(*it);
+    api_t * tmp = getAPI(*it);
     merge_api(api, tmp);
     delete tmp;
   }

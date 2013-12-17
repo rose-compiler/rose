@@ -1,3 +1,9 @@
+/** 
+ * \file MDCG/include/MDCG/model-base.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MDCG_MODEL_BASE_HPP__
 #define __MDCG_MODEL_BASE_HPP__
@@ -15,6 +21,11 @@ class SgNamespaceSymbol;
 namespace MDCG {
 
 namespace Model {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 /// Different kind of elements in the model
 enum model_elements_e {
@@ -78,6 +89,8 @@ typedef SgClassSymbol class_symbol_t;
 typedef SgVariableSymbol field_symbol_t;
 typedef SgMemberFunctionSymbol method_symbol_t;
 typedef SgNamespaceSymbol namespace_symbol_t;
+
+/** @} */
 
 }
 

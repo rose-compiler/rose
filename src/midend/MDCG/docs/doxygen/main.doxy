@@ -1,7 +1,8 @@
 
-/*! \mainpage KLT - Kernels from Loop Trees
+/*! \mainpage MDCG - Model Driven Code Generator
  *
- * Generate a set of Kenerls from a list of Loop Trees.
+ * MDCG creates an additional level of abstraction over the notion of API (introduced by MFB).
+ * It enables to manipulate an object-oriented model of existing code or to generate code from a model.
  *
  */
 

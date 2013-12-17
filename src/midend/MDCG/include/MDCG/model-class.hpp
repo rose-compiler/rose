@@ -1,3 +1,9 @@
+/** 
+ * \file MDCG/include/MDCG/model-class.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MDCG_MODEL__HPP__
 #define __MDCG_MODEL__HPP__
@@ -7,6 +13,11 @@
 namespace MDCG {
 
 namespace Model {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 /*! 
  * 
@@ -42,6 +53,8 @@ struct scope_t<e_model_class> {
   std::vector<method_t *>    method_children;
   std::vector<namespace_t *> namespace_children;
 };
+
+/** @} */
 
 }
 

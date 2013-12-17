@@ -1,3 +1,9 @@
+/** 
+ * \file MDCG/include/MDCG/handle-builder.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MDCG_HANDLE_BUILDER_HPP__
 #define __MDCG_HANDLE_BUILDER_HPP__
@@ -11,6 +17,11 @@
 #include <string>
 
 namespace MDCG {
+
+/*!
+ * \addtogroup grp_mdcg_handles
+ * @{
+*/
 
 struct build_model_t {
   enum opcode_e {
@@ -38,9 +49,16 @@ struct get_model_t {
 
 class ModelBuilder;
 
+/** @} */
+
 }
 
 namespace Handles {
+
+/*!
+ * \addtogroup grp_mdcg_handles
+ * @{
+*/
 
 template <>
 const unsigned long handle_hook_t<MDCG::ModelBuilder, MDCG::build_model_t>::submit(handle_t *);
@@ -53,6 +71,8 @@ const unsigned long handle_hook_t<MDCG::ModelBuilder, MDCG::get_model_t>::submit
 
 template <>
 handle_hook_t<MDCG::ModelBuilder, MDCG::get_model_t>::return_handle_t * handle_hook_t<MDCG::ModelBuilder, MDCG::get_model_t>::get_result(const unsigned long);
+
+/** @} */
 
 }
 

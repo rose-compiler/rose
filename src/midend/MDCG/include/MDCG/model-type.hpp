@@ -1,12 +1,23 @@
+/** 
+ * \file MDCG/include/MDCG/model-type.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
-#ifndef __MDCG_MODEL__HPP__
-#define __MDCG_MODEL__HPP__
+#ifndef __MDCG_MODEL_BASE_HPP__
+#define __MDCG_MODEL_BASE_HPP__
 
 #include "MDCG/model-base.hpp"
 
 namespace MDCG {
 
 namespace Model {
+
+/*!
+ * \addtogroup grp_mdcg_model
+ * @{
+*/
 
 template <>
 struct node_t<e_model_type> {
@@ -34,6 +45,8 @@ template <>
 struct scope_t<e_model_type> {
   namespace_t * parent;
 };
+
+/** @} */
 
 }
 
