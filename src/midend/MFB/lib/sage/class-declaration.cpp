@@ -1,3 +1,9 @@
+/** 
+ * \file lib/sage/class-declaration.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -8,7 +14,12 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_classdecl
+ * @{
+*/
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -216,4 +227,7 @@ void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDecl
   SageInterface::prependStatement(class_decl, insert_scope);
 }
 
+/** @} */
+
 }
+

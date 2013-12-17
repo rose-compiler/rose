@@ -1,10 +1,21 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MFB_SAGE_MEMBER_FUNCTION_DECLARATION_HPP__
 #define __MFB_SAGE_MEMBER_FUNCTION_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_mfuncdecl
+ * @{
+*/
 
 template <>
 class Sage<SgMemberFunctionDeclaration> {
@@ -57,6 +68,8 @@ Sage<SgMemberFunctionDeclaration>::build_result_t Driver<Sage>::build<SgMemberFu
 
 template <>
 Sage<SgMemberFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgMemberFunctionDeclaration>(const Sage<SgMemberFunctionDeclaration>::object_desc_t & desc);
+
+/** @} */
 
 }
 

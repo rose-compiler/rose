@@ -1,10 +1,20 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
-#ifndef __MFB_SAGE_FUNCTION_DECLARATION_HPP__
 #define __MFB_SAGE_FUNCTION_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_funcdecl
+ * @{
+*/
 
 template <>
 class Sage<SgFunctionDeclaration> {
@@ -54,6 +64,8 @@ Sage<SgFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgFunct
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFunctionDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+
+/** @} */
 
 }
 

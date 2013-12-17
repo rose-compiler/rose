@@ -1,8 +1,14 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MFB_SAGE_DRIVER_HPP__
 #define __MFB_SAGE_DRIVER_HPP__
 
-#include "MFB/multi-file-builder.hpp"
+#include "MFB/mfb.hpp"
 
 #include <string>
 #include <utility>
@@ -30,10 +36,17 @@ class  SgVariableSymbol;
 class SgInitializer;
 class SgInitializedName;
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_driver
+ * @{
+*/
 
 template <typename Object>
 class Sage {};
+
+class API;
 
 template <>
 class Driver<Sage> {
@@ -94,6 +107,11 @@ class Driver<Sage> {
     unsigned long addPairOfFiles(SgSourceFile * header_file, SgSourceFile * source_file);
     unsigned long addStandaloneSourceFile(SgSourceFile * source_file);
 
+    void addExternalHeader(unsigned long file_id, std::string header_name, bool is_system_header = true);
+
+    API * getAPI(unsigned long file_id) const;
+    API * getAPI(const std::set<unsigned long> & file_ids) const;
+
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false);
 
@@ -105,8 +123,6 @@ class Driver<Sage> {
 
     template <typename Object>
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
-
-    void addExternalHeader(unsigned long file_id, std::string header_name, bool is_system_header = true);
 
   protected:
     template <typename Object>
@@ -121,6 +137,8 @@ class Driver<Sage> {
 
 // SgTypedefDeclaration
 
+/** @} */
+
 }
 
 #ifndef NO_TEMPLATE_DEFINITION
@@ -128,3 +146,4 @@ class Driver<Sage> {
 #endif
 
 #endif /* __MFB_SAGE_DRIVER_HPP__ */
+

@@ -1,14 +1,7 @@
-/**
- * Multi-Files Builder
+/** 
+ * \file MFB/include/MFB.hpp
  *
- * A template for AST builder over multiple compilation units.
- * Functionnalities identified:
- *   - building an AST node
- *   - scope management:
- *       + Which file?
- *       + Where in this file?
- *   - Headers management
- *   - 
+ * \author Tristan Vanderbruggen
  *
  */
 
@@ -25,7 +18,12 @@ class SgScopeStatement;
 class SgSourceFile;
 class SgProject;
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_driver
+ * @{
+*/
 
 template <template <typename T> class Model>
 class Driver {
@@ -52,6 +50,8 @@ class Driver {
     template <typename Object>
     typename Model<Object>::build_scopes_t getBuildScopes(const typename Model<Object>::object_desc_t & desc);
 };
+
+/** @} */
 
 }
 

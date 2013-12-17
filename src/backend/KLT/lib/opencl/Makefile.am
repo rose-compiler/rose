@@ -14,7 +14,7 @@ libKLT_opencl_la_SOURCES= \
 libKLT_opencl_la_CXXFLAGS= \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
-  -I$(top_srcdir)/src/backend/MFB/include \
+  -I$(top_srcdir)/src/midend/MFB/include \
   $(ROSE_INCLUDES)
 libKLT_opencl_la_includedir=$(prefix)/include/KLT
 libKLT_opencl_la_include_HEADERS= \

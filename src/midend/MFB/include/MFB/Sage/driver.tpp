@@ -1,12 +1,22 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifdef NO_TEMPLATE_DEFINITION
 #error "This is a template definition file and NO_TEMPLATE_DEFINITION is define..."
 #endif
 
-
 #include "sage3basic.h"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_driver
+ * @{
+*/
 
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only) {
@@ -79,6 +89,8 @@ template <typename Object>
 void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, SgSourceFile * target_file) {
   assert(false);
 }
+
+/** @} */
 
 }
 

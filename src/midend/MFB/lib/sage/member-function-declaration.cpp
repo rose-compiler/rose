@@ -1,3 +1,9 @@
+/** 
+ * \file lib/sage/member-function-declaration.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MFB/Sage/member-function-declaration.hpp"
 #include "MFB/Sage/class-declaration.hpp"
@@ -9,7 +15,12 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_mfuncdecl
+ * @{
+*/
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -214,4 +225,7 @@ Sage<SgMemberFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<S
   return result;
 }
 
+/** @} */
+
 }
+

@@ -1,10 +1,21 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MFB_SAGE_NAMESPACE_DECLARATION_HPP__
 #define __MFB_SAGE_NAMESPACE_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_nscpdecl
+ * @{
+*/
 
 template <>
 class Sage<SgNamespaceDeclarationStatement> {
@@ -48,6 +59,8 @@ Sage<SgNamespaceDeclarationStatement>::build_result_t Driver<Sage>::build<SgName
 
 template <>
 Sage<SgNamespaceDeclarationStatement>::build_scopes_t Driver<Sage>::getBuildScopes<SgNamespaceDeclarationStatement>(const Sage<SgNamespaceDeclarationStatement>::object_desc_t & desc);
+
+/** @} */
 
 }
 

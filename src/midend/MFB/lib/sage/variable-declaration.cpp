@@ -1,3 +1,9 @@
+/** 
+ * \file lib/sage/variable-declaration.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MFB/Sage/variable-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -8,7 +14,12 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_vardecl
+ * @{
+*/
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -179,4 +190,7 @@ void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariab
   assert(false);
 }
 
+/** @} */
+
 }
+

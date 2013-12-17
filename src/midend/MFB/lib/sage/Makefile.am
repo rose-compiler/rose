@@ -15,7 +15,7 @@ libMFB_sage_la_CXXFLAGS= \
   $(ROSE_INCLUDES)
 libMFB_sage_la_includedir=$(prefix)/include/KLT
 libMFB_sage_la_include_HEADERS= \
-  $(srcdir)/../../include/MFB/multi-file-builder.hpp \
+  $(srcdir)/../../include/MFB/mfb.hpp \
   $(srcdir)/../../include/MFB/Sage/driver.hpp \
   $(srcdir)/../../include/MFB/Sage/driver.tpp \
   $(srcdir)/../../include/MFB/Sage/function-declaration.hpp \

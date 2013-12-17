@@ -1,10 +1,21 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MFB_SAGE_VARIABLE_DECLARATION_HPP__
 #define __MFB_SAGE_VARIABLE_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_vardecl
+ * @{
+*/
 
 template <>
 class Sage<SgVariableDeclaration> {
@@ -51,6 +62,8 @@ Sage<SgVariableDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgVaria
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariableDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+
+/** @} */
 
 }
 

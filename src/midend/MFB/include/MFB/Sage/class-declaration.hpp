@@ -1,10 +1,21 @@
+/** 
+ * \file MFB/include/MFB.hpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #ifndef __MFB_SAGE_CLASS_DECLARATION_HPP__
 #define __MFB_SAGE_CLASS_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_classdecl
+ * @{
+*/
 
 template <>
 class Sage<SgClassDeclaration> {
@@ -48,6 +59,8 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+
+/** @} */
 
 }
 

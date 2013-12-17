@@ -1,0 +1,52 @@
+/*!
+ * \defgroup grp_rose ROSE
+ * @{
+ *   \defgroup grp_mfb MFB
+ *   @{
+ *     \defgroup grp_mfb_driver Driver
+ *     @{
+ *     @}
+ *     \defgroup grp_mfb_sage Sage Specialization
+ *     @{
+ *       \defgroup grp_mfb_sage_driver Sage's Driver
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_api Sage's API
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_nscpdecl Namespace Declaration 
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_vardecl Variable Declaration
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_funcdecl Function Declaration
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_classdecl Classes Declaration
+ *       @{
+ *       @}
+ *       \defgroup grp_mfb_sage_mfuncdecl Member Function Declaration
+ *       @{
+ *       @}
+ *     @}
+ *   @}
+ * @}
+ */
+
+/*!
+ * \addtogroup grp_mfb
+ * @{
+ *
+ * \section sec_mfb_intro Introduction
+ *
+ * Provide an interface to maintain a consistant AST while building declarations over multiple translation units.
+ *
+ * It generates all necessary declarations to use any of the built declaration. Either by placing include directives or forward declarations.
+ *
+ * It is based on templates (2 levels). It provides the "Sage" version: it is the default version. It should be used as underlaying builder whenever possible.
+ * Other specializations introduces more complex "Object", as Kernel exported by KLT for its last of generation.
+ *
+ * @}
+ */
+

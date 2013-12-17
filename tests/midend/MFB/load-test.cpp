@@ -19,7 +19,7 @@ int main(int argc, char ** argv) {
     arglist.push_back("-c");
   project->set_originalCommandLineArgumentList (arglist);
 
-  MultiFileBuilder::Driver<MultiFileBuilder::Sage> driver(project);
+  MFB::Driver<MFB::Sage> driver(project);
 
   // Load a pair header and source files
   unsigned long loaded_file_id = driver.loadPairOfFiles(argv[1], "", "");
@@ -88,13 +88,13 @@ namespace C {
 
   // Create namespace C
 
-  MultiFileBuilder::Sage<SgNamespaceDeclarationStatement>::object_desc_t C_desc("C", NULL, build_file_id);
+  MFB::Sage<SgNamespaceDeclarationStatement>::object_desc_t C_desc("C", NULL, build_file_id);
 
   SgNamespaceSymbol * C_sym = driver.build<SgNamespaceDeclarationStatement>(C_desc);
 
   // Create function C::test
 
-  MultiFileBuilder::Sage<SgFunctionDeclaration>::object_desc_t test_desc(
+  MFB::Sage<SgFunctionDeclaration>::object_desc_t test_desc(
     "test",
     SageBuilder::buildVoidType(),
     SageBuilder::buildFunctionParameterList(),
@@ -102,7 +102,7 @@ namespace C {
     build_file_id
   );
 
-  MultiFileBuilder::Sage<SgFunctionDeclaration>::build_result_t test_result = driver.build<SgFunctionDeclaration>(test_desc);
+  MFB::Sage<SgFunctionDeclaration>::build_result_t test_result = driver.build<SgFunctionDeclaration>(test_desc);
 
   // Get the C::test body
 

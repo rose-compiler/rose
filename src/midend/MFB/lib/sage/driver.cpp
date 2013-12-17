@@ -1,5 +1,12 @@
+/** 
+ * \file lib/sage/driver.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MFB/Sage/driver.hpp"
+#include "MFB/Sage/api.hpp"
 
 #include "sage3basic.h"
 
@@ -9,7 +16,12 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_driver
+ * @{
+*/
 
 bool ignore(const std::string & name) {
   return name.find("__builtin") == 0;
@@ -189,6 +201,78 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceF
   if (find(declaration_list.begin(), declaration_list.end(), decl_to_add) == declaration_list.end())
     SageInterface::prependStatement(decl_to_add, global_scope);
 }
+
+API * Driver<Sage>::getAPI(unsigned long file_id) const {
+  API * api = new API();
+
+  std::map<SgSymbol *, unsigned long>::const_iterator it_sym_decl_file_id;
+
+  std::set<SgNamespaceSymbol *>::const_iterator it_namespace_symbol;
+  for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_namespace_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second)
+      api->namespace_symbols.insert(*it_namespace_symbol);
+  }
+
+  std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
+  for (it_function_symbol = p_function_symbols.begin(); it_function_symbol != p_function_symbols.end(); it_function_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_function_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second)
+      api->function_symbols.insert(*it_function_symbol);
+  }
+
+  std::set<SgClassSymbol *>::const_iterator it_class_symbol;
+  for (it_class_symbol = p_class_symbols.begin(); it_class_symbol != p_class_symbols.end(); it_class_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second)
+      api->class_symbols.insert(*it_class_symbol);
+  }
+
+  std::set<SgVariableSymbol *>::const_iterator it_variable_symbol;
+  for (it_variable_symbol = p_variable_symbols.begin(); it_variable_symbol != p_variable_symbols.end(); it_variable_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_variable_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second)
+      api->variable_symbols.insert(*it_variable_symbol);
+  }
+
+  std::set<SgMemberFunctionSymbol *>::const_iterator it_member_function_symbol;
+  for (it_member_function_symbol = p_member_function_symbols.begin(); it_member_function_symbol != p_member_function_symbols.end(); it_member_function_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_member_function_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second)
+      api->member_function_symbols.insert(*it_member_function_symbol);
+  }
+
+  return api;
+}
+
+API * Driver<Sage>::getAPI(const std::set<unsigned long> & file_ids) const {
+  assert(file_ids.size() > 0);
+
+  std::set<unsigned long>::const_iterator it = file_ids.begin();
+
+  API * api = getAPI(*it);
+  it++;
+
+  while (it != file_ids.begin()) {
+    API * tmp = getAPI(*it);
+    merge_api(api, tmp);
+    delete tmp;
+  }
+
+  return api;
+}
+
+/** @} */
 
 }
 

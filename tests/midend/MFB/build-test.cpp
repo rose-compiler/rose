@@ -17,7 +17,7 @@ int main(int argc, char ** argv) {
     arglist.push_back("-c");
   project->set_originalCommandLineArgumentList (arglist);
 
-  MultiFileBuilder::Driver<MultiFileBuilder::Sage> driver(project);
+  MFB::Driver<MFB::Sage> driver(project);
 
 // Create class A in files A.hpp and A.cpp
   unsigned long lib_A_file_id = driver.createPairOfFiles("A");
@@ -26,31 +26,31 @@ int main(int argc, char ** argv) {
   SgMemberFunctionSymbol * A_member_function_bar_symbol = NULL;
   {
   // Class A
-    MultiFileBuilder::Sage<SgClassDeclaration>::object_desc_t desc("A", (unsigned long)SgClassDeclaration::e_class, NULL, lib_A_file_id, true);
+    MFB::Sage<SgClassDeclaration>::object_desc_t desc("A", (unsigned long)SgClassDeclaration::e_class, NULL, lib_A_file_id, true);
 
-    // MultiFileBuilder::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
+    // MFB::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
     class_A_symbol = driver.build<SgClassDeclaration>(desc).symbol;
 
   // Method A::foo()
-    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_foo(
+    MFB::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_foo(
       "foo",
       SageBuilder::buildVoidType(),
       SageBuilder::buildFunctionParameterList(),
       class_A_symbol
     );
 
-    // MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_foo);
+    // MFB::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_foo);
     A_member_function_foo_symbol = driver.build<SgMemberFunctionDeclaration>(desc_foo).symbol;
 
   // Method A::bar()
-    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_bar(
+    MFB::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_bar(
       "bar",
       SageBuilder::buildVoidType(),
       SageBuilder::buildFunctionParameterList(),
       class_A_symbol
     );
 
-    // MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_bar);
+    // MFB::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_bar);
     A_member_function_bar_symbol = driver.build<SgMemberFunctionDeclaration>(desc_bar).symbol;
   }
 
@@ -60,21 +60,21 @@ int main(int argc, char ** argv) {
   SgMemberFunctionSymbol * B_ctor_symbol = NULL;
   {
   // Class B
-    MultiFileBuilder::Sage<SgClassDeclaration>::object_desc_t desc("B", (unsigned long)SgClassDeclaration::e_class, NULL, lib_B_file_id, true);
+    MFB::Sage<SgClassDeclaration>::object_desc_t desc("B", (unsigned long)SgClassDeclaration::e_class, NULL, lib_B_file_id, true);
 
-    // MultiFileBuilder::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
+    // MFB::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
     class_B_symbol = driver.build<SgClassDeclaration>(desc).symbol;
 
   // Reference type to class A in file B...
     SgType * class_A_ref_type = SageBuilder::buildReferenceType(driver.useSymbol<SgClassDeclaration>(class_A_symbol, lib_B_file_id, true, true)->get_type());
 
   // Field: A & B::a
-    MultiFileBuilder::Sage<SgVariableDeclaration>::object_desc_t desc_var("a", class_A_ref_type, NULL, class_B_symbol, lib_B_file_id);
-    MultiFileBuilder::Sage<SgVariableDeclaration>::build_result_t result_var = driver.build<SgVariableDeclaration>(desc_var);
+    MFB::Sage<SgVariableDeclaration>::object_desc_t desc_var("a", class_A_ref_type, NULL, class_B_symbol, lib_B_file_id);
+    MFB::Sage<SgVariableDeclaration>::build_result_t result_var = driver.build<SgVariableDeclaration>(desc_var);
 
   // Constructor B::B(A & a_)
     SgInitializedName * param_init_name = SageBuilder::buildInitializedName("a_", class_A_ref_type);
-    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_ctor(
+    MFB::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_ctor(
       "B",
       SageBuilder::buildVoidType(),
       SageBuilder::buildFunctionParameterList(param_init_name),
@@ -87,7 +87,7 @@ int main(int argc, char ** argv) {
       true
     );
 
-    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_ctor);
+    MFB::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc_ctor);
     B_ctor_symbol = result.symbol;
 
     SgBasicBlock * ctor_body = result.definition->get_body();
@@ -116,7 +116,7 @@ int main(int argc, char ** argv) {
   unsigned long main_file_id = driver.createStandaloneSourceFile("main");
   SgFunctionSymbol * main_symbol = NULL;
   {
-    MultiFileBuilder::Sage<SgFunctionDeclaration>::object_desc_t desc(
+    MFB::Sage<SgFunctionDeclaration>::object_desc_t desc(
       "main",
       SageBuilder::buildIntType(),
       SageBuilder::buildFunctionParameterList(),
@@ -124,7 +124,7 @@ int main(int argc, char ** argv) {
       main_file_id
     );
 
-    MultiFileBuilder::Sage<SgFunctionDeclaration>::build_result_t result = driver.build<SgFunctionDeclaration>(desc);
+    MFB::Sage<SgFunctionDeclaration>::build_result_t result = driver.build<SgFunctionDeclaration>(desc);
 
     main_symbol = result.symbol;
 

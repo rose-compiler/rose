@@ -1,3 +1,9 @@
+/** 
+ * \file lib/sage/namespace-declaration.cpp
+ *
+ * \author Tristan Vanderbruggen
+ *
+ */
 
 #include "MFB/Sage/namespace-declaration.hpp"
 
@@ -7,7 +13,12 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_mfb_sage_nscpdecl
+ * @{
+*/
 
 bool ignore(const std::string & name);
 
@@ -241,4 +252,7 @@ void Sage<SgNamespaceDeclarationStatement>::init() {
 }
 */
 
+/** @} */
+
 }
+
