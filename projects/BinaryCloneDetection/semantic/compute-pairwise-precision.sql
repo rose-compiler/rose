@@ -25,7 +25,7 @@ create table fr_specimens as
     from semantic_functions;
 
 -- Function names that are present exactly once in each specimen
--- And which contain a certain number of instructions                                           !!FIXME: should be a parameter
+-- And which contain a certain number of instructions                                       
 -- And for which no test tried to consume too many inputs (status<>911000007)
 -- And which come from the specimen, not from a dynamic library
 create table fr_funcnames as
@@ -34,7 +34,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 100                                          -- !!FIXME
+        where func2.id is null and func1.ninsns >= ( select min_insns from fr_settings )                             
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
 --     except (
@@ -74,7 +74,7 @@ create table fr_function_pairs as
         -- at least one of the same input groups
         join fr_fio as test1 on f1.id = test1.func_id
         join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
-        where test1.status = 0 and test2.status = 0 AND f1.ninsns >= 100 AND f2.ninsns >= 100
+        where test1.status = 0 and test2.status = 0 AND f1.ninsns >= ( select min_insns from fr_settings ) AND f2.ninsns >= ( select min_insns from fr_settings )
 
         -- Uncomment the following lines to consider only those pairs of functions where all tests were successful
 --      except

@@ -40,6 +40,8 @@ usage(int exit_status)
               <<"            Path sensitive similarity threshold between 0 and 1.\n"
               <<"    --cg-threshold=0.0|..|1.0\n"
               <<"            Call graph similarity threshold between 0 and 1.\n"
+              <<"    --min-insns=0|..|MAX_INT\n"
+              <<"            Minimum number of instructions in candidate functions.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -165,6 +167,8 @@ int main(int argc, char *argv[])
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
+  int min_insns = 0;
+
   bool compute_semantic_distribution = false;
 
   int argno = 1;
@@ -182,6 +186,8 @@ int main(int argc, char *argv[])
       cg_threshold = boost::lexical_cast<double>(argv[argno]+15);
     } else if (!strncmp(argv[argno], "--semantic-distribution",23)) {
       compute_semantic_distribution = true;
+    } else if (!strncmp(argv[argno], "--min-insns=",12)) {
+      min_insns= boost::lexical_cast<int>(argv[argno]+12);
     } else {
       std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
         <<argv0 <<": see --help for more info\n";
@@ -203,6 +209,7 @@ int main(int argc, char *argv[])
     "drop table IF EXISTS fr_settings; "
     "create table fr_settings as"
     " select "
+    "   (select " + boost::lexical_cast<std::string>(min_insns)     +  " ) as min_insns,"
     "   (select " + boost::lexical_cast<std::string>(sem_threshold) +  " ) as similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(path_threshold) + " ) as path_similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(cg_threshold) +   " ) as cg_similarity_threshold;";
