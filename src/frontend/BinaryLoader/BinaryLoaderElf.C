@@ -509,10 +509,14 @@ BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol)
 {
 #ifndef _MSC_VER
     if (vsymbol.is_base_definition()) {
-        /* There can be only one "base" version. */
-        ROSE_ASSERT(p_versions.empty() || false == get_vsymbol().is_base_definition());
-        p_versions.push_back(p_versions.front()); /* swap the front to the back */
-        p_versions[0] = vsymbol;
+        // There can be only one "base" version, so if one already exists, move it to the end of the list (vector) and insert
+        // our new base version at the beginning.
+        if (!p_versions.empty()) {
+            p_versions.push_back(p_versions.front());
+            p_versions[0] = vsymbol;
+        } else {
+            p_versions.push_back(vsymbol);
+        }
     } else {
         p_versions.push_back(vsymbol);
     }
