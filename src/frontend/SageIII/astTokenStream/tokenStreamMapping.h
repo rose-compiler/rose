@@ -1,4 +1,7 @@
 
+#ifndef TOKEN_STREAM_SEQUENCE_MAPPING_HEADER
+#define TOKEN_STREAM_SEQUENCE_MAPPING_HEADER
+
 class TokenStreamSequenceToNodeMapping_key
    {
   // The purpose of this class is to support when to share the TokenStreamSequenceToNodeMapping
@@ -86,5 +89,8 @@ class TokenStreamSequenceToNodeMapping
           void display(std::string label) const;
    };
 
+#endif
+
 #include "frontierDetection.h"
+
 

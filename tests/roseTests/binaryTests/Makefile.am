@@ -410,11 +410,11 @@ testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
 usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
-	@$(RTH_RUN)										\
-		USE_SUBDIR=yes									\
-		TITLE="use-def unit tests"							\
-		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(BINARY_SAMPLES)/usedef"	\
-		ANS="$(srcdir)/usedef.ans"							\
+	@$(RTH_RUN)											\
+		USE_SUBDIR=yes										\
+		TITLE="use-def unit tests"								\
+		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(abspath $(BINARY_SAMPLES)/usedef)"	\
+		ANS="$(srcdir)/usedef.ans"								\
 		$< $@
 
 ###############################################################################################################################
@@ -785,7 +785,7 @@ parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 TEST_TARGETS += $(parse_Targets)
 
 $(parse_Targets): parse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --skip-disassemble" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --skip-disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_parse_container
 check_parse_container: $(parse_Targets)
@@ -797,7 +797,7 @@ disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemb
 TEST_TARGETS += $(disassemble_Targets)
 
 $(disassemble_Targets): disassemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_disassemble
 check_disassemble: $(disassemble_Targets)
@@ -809,7 +809,7 @@ unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens
 TEST_TARGETS += $(unparse_Targets)
 
 $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_unparse
 check_unparse: $(unparse_Targets)
@@ -821,7 +821,7 @@ assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specim
 TEST_TARGETS += $(assemble_Targets)
 
 $(assemble_Targets): assemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet --reassemble --show-bad" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet --reassemble --show-bad" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_assemble
 check_assemble: $(assemble_Targets)
@@ -833,7 +833,7 @@ astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 TEST_TARGETS += $(astio_Targets)
 
 $(astio_Targets): astio_%.passed: $(BINARY_SAMPLES)/% testAstIO
-	@$(RTH_RUN) CMD="`pwd`/testAstIO -rose:binary" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/testAstIO -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_astio
 check_astio: $(astio_Targets)
