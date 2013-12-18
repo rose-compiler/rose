@@ -4441,6 +4441,9 @@ HEADER_INITIALIZED_NAME_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (12/16/2013): Added support for name qualification on SgInitializedName for use in preinitialization lists.
+          SgName get_qualified_name_prefix() const;
+
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
           SgName get_qualified_name_prefix_for_type() const;
@@ -10301,6 +10304,31 @@ SgInitializedName::get_qualified_name() const
      return returnName;
    }
 
+
+SgName
+SgInitializedName::get_qualified_name_prefix() const
+   {
+  // DQ (12/16/2013): Added support for name qualification on SgInitializedName for use in preinitialization lists.
+
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgInitializedName*>(this));
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+#if 0
+          printf ("In SgInitializedName::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+        }
+
+#if 0
+     printf ("In SgInitializedName::get_qualified_name_prefix(): nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#endif
+
+     return nameQualifier;
+   }
+
+ 
 SgName
 SgInitializedName::get_qualified_name_prefix_for_type() const
    {

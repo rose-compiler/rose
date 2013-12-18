@@ -3699,7 +3699,26 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                     ROSE_ASSERT ((*p) != NULL);
                     unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-                    curprint (  (*p)->get_name().str());
+
+                 // DQ (12/16/2013): Here is where we need support for name qualification of SgInitializedName 
+                 // objects in the preinitialization list.
+#if 0
+                    curprint("/* output any required name qualification for preinitialization list */ ");
+#endif
+                 // DQ (12/16/2013): Not clear if this should be calling "get_qualified_name()" (error: get_qualified_name() is the incorrect function to call).
+                 // test2013_286.C demonstrates where we need the output of name qualification for elements of the preinitialization list.
+                 // SgName nameQualifier = (*p)->get_qualified_name_prefix();
+                 // SgName nameQualifier = (*p)->get_qualified_name();
+                    SgName nameQualifier = (*p)->get_qualified_name_prefix();
+#if 1
+                    printf ("In unparseMFuncDeclStmt(): preinitialization list element name = %s nameQualifier = %s \n",(*p)->get_name().str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
+                    if (nameQualifier.is_null() == false)
+                       {
+                         curprint ( nameQualifier.str());
+                       }
+
+                    curprint((*p)->get_name().str());
 
                  // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
                  // DQ (8/2/2005): Added "()" to constructor initialization list (better here than for all SgAssignInitializer's expressions)
@@ -5234,7 +5253,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  else
                   {
                  // add qualifier of current types to the name
-                    SgName nm= cdefn->get_declaration()->get_qualified_name();
+                    SgName nm = cdefn->get_declaration()->get_qualified_name();
                     if ( !nm.is_null() )
                        {
                          curprint ( string(nm.str()) + "::" + enum_stmt->get_name().str() + " ");
