@@ -2166,6 +2166,7 @@ tests/backend/Makefile
 tests/backend/KLT/Makefile
 tests/midend/Makefile
 tests/midend/MFB/Makefile
+tests/midend/MDCG/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/roseHPCT/Makefile
