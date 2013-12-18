@@ -44,9 +44,18 @@
 
 #include "rose.h"
 
+// DQ (12/1/2013): Added switch to control testing mode for token unparsing.
+// Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+// variable so that all regression tests can be processed to mix the unparsing of 
+// the token stream with unparsing from the AST.
+extern bool ROSE_tokenUnparsingTestingMode;
+
 int
 main ( int argc, char* argv[] )
    {
+  // DQ (12/1/2013): Set the ROSE token unparsing testing mode...
+     ROSE_tokenUnparsingTestingMode = true;
+
      SgProject* project = frontend(argc,argv);
      ROSE_ASSERT (project != NULL);
 
