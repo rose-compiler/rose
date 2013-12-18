@@ -8,6 +8,14 @@
 #ifndef _MFB_API_HPP_
 #define _MFB_API_HPP_
 
+#include <set>
+
+class SgNamespaceSymbol;
+class SgFunctionSymbol;
+class SgClassSymbol;
+class SgVariableSymbol;
+class SgMemberFunctionSymbol;
+
 namespace MFB {
 
 /*!

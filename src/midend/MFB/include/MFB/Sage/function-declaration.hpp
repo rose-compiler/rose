@@ -5,6 +5,7 @@
  *
  */
 
+#ifndef __MFB_SAGE_FUNCTION_DECLARATION_HPP__
 #define __MFB_SAGE_FUNCTION_DECLARATION_HPP__
 
 #include "MFB/Sage/driver.hpp"
@@ -70,3 +71,4 @@ void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFuncti
 }
 
 #endif /* __MFB_SAGE_FUNCTION_DECLARATION_HPP__ */
+

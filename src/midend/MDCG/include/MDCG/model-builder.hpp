@@ -13,7 +13,10 @@
 #include <map>
 
 namespace MFB {
-  class ApiBuilder;
+  template <class Model> class Driver;
+
+  class Sage;
+
   struct api_t;
 };
 

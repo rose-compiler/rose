@@ -9,6 +9,7 @@ libMDCG_la_SOURCES= \
 libMDCG_la_CXXFLAGS= \
   -g \
   -I$(srcdir)/../include \
+  -I$(top_srcdir)/src/midend/MFB/include \
   -I$(top_srcdir)/src/util/Handles \
   $(ROSE_INCLUDES)
 libMDCG_la_includedir=$(prefix)/include/MDCG

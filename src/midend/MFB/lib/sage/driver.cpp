@@ -205,23 +205,19 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceF
 api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
   api_t * api = new api_t();
 
-  std::map<SgSymbol *, unsigned long>::const_iterator it_sym_decl_file_id;
-
+  // Namespaces are not local to a file. If a namespace have been detected in any file, it will in the API
   std::set<SgNamespaceSymbol *>::const_iterator it_namespace_symbol;
-  for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++) {
-    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_namespace_symbol);
-    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+  for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++)
+    api->namespace_symbols.insert(*it_namespace_symbol);
 
-    if (it_sym_decl_file_id->second)
-      api->namespace_symbols.insert(*it_namespace_symbol);
-  }
+  std::map<SgSymbol *, unsigned long>::const_iterator it_sym_decl_file_id;
 
   std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
   for (it_function_symbol = p_function_symbols.begin(); it_function_symbol != p_function_symbols.end(); it_function_symbol++) {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_function_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second)
+    if (it_sym_decl_file_id->second == file_id)
       api->function_symbols.insert(*it_function_symbol);
   }
 
@@ -230,7 +226,7 @@ api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second)
+    if (it_sym_decl_file_id->second == file_id)
       api->class_symbols.insert(*it_class_symbol);
   }
 
@@ -239,7 +235,7 @@ api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_variable_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second)
+    if (it_sym_decl_file_id->second == file_id)
       api->variable_symbols.insert(*it_variable_symbol);
   }
 
@@ -248,7 +244,7 @@ api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_member_function_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second)
+    if (it_sym_decl_file_id->second == file_id)
       api->member_function_symbols.insert(*it_member_function_symbol);
   }
 

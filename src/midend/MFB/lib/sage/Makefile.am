@@ -9,7 +9,8 @@ libMFB_sage_la_SOURCES= \
   member-function-declaration.cpp \
   class-declaration.cpp \
   variable-declaration.cpp \
-  namespace-declaration.cpp
+  namespace-declaration.cpp \
+  api.cpp
 libMFB_sage_la_CXXFLAGS= \
   -g -I$(srcdir)/../../include \
   $(ROSE_INCLUDES)

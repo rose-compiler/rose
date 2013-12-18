@@ -15,8 +15,8 @@ namespace MDCG {
  * @{
 */
 
-ModelBuilder::ModelBuilder(MFB::ApiBuilder & api_builder) :
-  p_api_builder(api_builder),
+ModelBuilder::ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver) :
+  p_mfb_driver(mfb_driver),
   p_models()
 {}
 

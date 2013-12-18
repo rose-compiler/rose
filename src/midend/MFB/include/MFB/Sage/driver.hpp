@@ -46,7 +46,7 @@ namespace MFB {
 template <typename Object>
 class Sage {};
 
-class API;
+class api_t;
 
 template <>
 class Driver<Sage> {
