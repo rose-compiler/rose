@@ -113,7 +113,7 @@ int main(int argc, char ** argv) {
   }
 
 // Create Main in main.cpp
-  unsigned long main_file_id = driver.createStandaloneSourceFile("main");
+  unsigned long main_file_id = driver.createStandaloneSourceFile("main", ".", "cpp");
   SgFunctionSymbol * main_symbol = NULL;
   {
     MFB::Sage<SgFunctionDeclaration>::object_desc_t desc(

@@ -5,34 +5,32 @@ bin_PROGRAMS = build-model
 $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la:
 	$(MAKE) -C $(top_builddir)/src/backend/MFB/lib/sage libMFB-sage.la
 
-build_test_SOURCES = build-test.cpp
-build_test_CXXFLAGS = \
+$(top_builddir)/src/backend/MDCG/lib/libMDCG.la:
+	$(MAKE) -C $(top_builddir)/src/backend/MDCG/lib libMDCG.la
+
+build_model_SOURCES = build-model.cpp
+build_model_CXXFLAGS = \
   -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
   -g \
   $(ROSE_INCLUDES)
-build_test_LDADD= \
+build_model_LDADD= \
   $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la \
+  $(top_builddir)/src/midend/MDCG/lib/libMDCG.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-load_test_SOURCES = load-test.cpp
-load_test_CXXFLAGS = \
-  -I$(top_srcdir)/src/midend/MFB/include \
-  -g \
-  $(ROSE_INCLUDES)
-load_test_LDADD= \
-  $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+check-model: build-model
+	echo "one bar $(srcdir) h" > test.dat
+	./build-model test.dat
+	echo "pair foo $(srcdir) $(srcdir) h c" > test.dat
+	./build-model test.dat
+	echo "one bar $(srcdir) h" > test.dat
+	echo "pair foo $(srcdir) $(srcdir) h c" >> test.dat
+	echo "one test $(srcdir) c" >> test.dat
+	./build-model test.dat
 
-check-build: build-test
-	./build-test
-
-check-load: load-test
-	cp $(srcdir)/foo-bar.* .
-	./load-test foo-bar
-
-check-local: build-test load-test
-	$(MAKE) check-load
-	$(MAKE) check-build
+check-local: build-model
+	$(MAKE) check-model
 
 clean-local:
 	rm -f *.hpp *.cpp

@@ -88,6 +88,9 @@ class Driver<Sage> {
     void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, SgSourceFile * target_file);
 
     template <typename Object>
+    void loadSymbols(unsigned long file_id, SgSourceFile * file);
+
+    template <typename Object>
     void loadSymbolsFromPair(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file);
 
     template <typename Symbol>
@@ -101,8 +104,8 @@ class Driver<Sage> {
     unsigned long createPairOfFiles(const std::string & name);
     unsigned long   loadPairOfFiles(const std::string & name, const std::string & header_path, const std::string & source_path);
 
-    unsigned long createStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
-//  unsigned long   loadStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
+    unsigned long createStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");
+    unsigned long   loadStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");
 
     unsigned long addPairOfFiles(SgSourceFile * header_file, SgSourceFile * source_file);
     unsigned long addStandaloneSourceFile(SgSourceFile * source_file);

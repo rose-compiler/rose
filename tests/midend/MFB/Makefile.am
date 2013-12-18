@@ -33,14 +33,16 @@ load_test_LDADD= \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 check-build: build-test
+	rm -f *.hpp *.cpp
 	./build-test
 
 check-load: load-test
+	rm -f *.hpp *.cpp
 	cp $(srcdir)/foo-bar.* .
-	rm -f test.cpp
 	./load-test foo-bar
 
 check-api: api-extractor
+	rm -f *.hpp *.cpp
 	cp $(srcdir)/foo-bar.* .
 	./api-extractor foo-bar
 

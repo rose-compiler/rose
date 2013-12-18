@@ -50,6 +50,32 @@ bool Driver<Sage>::resolveValidParent<SgMemberFunctionSymbol>(SgMemberFunctionSy
 }
 
 template <>
+void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(unsigned long file_id, SgSourceFile * file) {
+  std::vector<SgMemberFunctionDeclaration *> member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(file);
+
+  std::set<SgMemberFunctionSymbol *> member_function_symbols;
+  std::vector<SgMemberFunctionDeclaration *>::const_iterator it_member_function_decl;
+  for (it_member_function_decl = member_function_decl.begin(); it_member_function_decl != member_function_decl.end(); it_member_function_decl++) {
+    SgMemberFunctionDeclaration * member_function_decl = *it_member_function_decl;
+
+    if (ignore(member_function_decl->get_scope())) continue;
+    if (ignore(member_function_decl->get_name().getString())) continue;
+
+    SgMemberFunctionSymbol * member_function_sym = (SgMemberFunctionSymbol *)SageInterface::lookupFunctionSymbolInParentScopes(member_function_decl->get_name(), member_function_decl->get_scope());
+    assert(member_function_sym != NULL);
+
+    member_function_symbols.insert(member_function_sym);
+  }
+
+  std::set<SgMemberFunctionSymbol *>::iterator it;
+  for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
+    if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << "   Method Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
+template <>
 void  Driver<Sage>::loadSymbolsFromPair<SgMemberFunctionDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
   std::vector<SgMemberFunctionDeclaration *> header_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(header_file);
   std::vector<SgMemberFunctionDeclaration *> source_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(source_file);

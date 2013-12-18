@@ -25,8 +25,6 @@ namespace Model {
  * @{
 */
 
-typedef unsigned model_id_t;
-
 struct model_t {
   std::vector<variable_t> variables;
   std::vector<function_t> functions;
@@ -35,22 +33,6 @@ struct model_t {
   std::vector<field_t> fields;
   std::vector<method_t> methods;
   std::vector<namespace_t> namespaces;
-
-  model_t();
-  model_t(const model_t & model);
-};
-
-class Model {
-  private:
-    model_t model;
-
-  public:
-    Model();
-    Model(const model_t & model);
-    Model(const Model & model);
-    ~Model();
-
-    const model_t & getModel() const;
 };
 
 /** @} */

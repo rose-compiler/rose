@@ -49,6 +49,32 @@ bool Driver<Sage>::resolveValidParent<SgFunctionSymbol>(SgFunctionSymbol * symbo
 }
 
 template <>
+void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(unsigned long file_id, SgSourceFile * file) {
+  std::vector<SgFunctionDeclaration *> function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(file);
+
+  std::set<SgFunctionSymbol *> function_symbols;
+  std::vector<SgFunctionDeclaration *>::const_iterator it_function_decl;
+  for (it_function_decl = function_decl.begin(); it_function_decl != function_decl.end(); it_function_decl++) {
+    SgFunctionDeclaration * function_decl = *it_function_decl;
+
+    if (ignore(function_decl->get_scope())) continue;
+    if (ignore(function_decl->get_name().getString())) continue;
+
+    SgFunctionSymbol * function_sym = SageInterface::lookupFunctionSymbolInParentScopes(function_decl->get_name(), function_decl->get_scope());
+    assert(function_sym != NULL);
+
+    function_symbols.insert(function_sym);
+  }
+
+  std::set<SgFunctionSymbol *>::iterator it;
+  for (it = function_symbols.begin(); it != function_symbols.end(); it++)
+    if (resolveValidParent<SgFunctionSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << " Function Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
+template <>
 void  Driver<Sage>::loadSymbolsFromPair<SgFunctionDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
   std::vector<SgFunctionDeclaration *> header_function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(header_file);
   std::vector<SgFunctionDeclaration *> source_function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(source_file);

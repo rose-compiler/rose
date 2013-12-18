@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
   // Load a pair header and source files
   unsigned long loaded_file_id = driver.loadPairOfFiles(argv[1], "", "");
   // Create a source file
-  unsigned long  build_file_id = driver.createStandaloneSourceFile("test");
+  unsigned long  build_file_id = driver.createStandaloneSourceFile("test", ".", "cpp");
 
   // Get the global scope accross files
   SgGlobal * global_scope_across_files = project->get_globalScopeAcrossFiles();

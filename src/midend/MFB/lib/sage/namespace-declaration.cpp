@@ -47,6 +47,30 @@ bool Driver<Sage>::resolveValidParent<SgNamespaceSymbol>(SgNamespaceSymbol * sym
 }
 
 template <>
+void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned long file_id, SgSourceFile * file) {
+  std::vector<SgNamespaceDeclarationStatement *> namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(file);
+
+  std::set<SgNamespaceSymbol *> namespace_symbols;
+  std::vector<SgNamespaceDeclarationStatement *>::const_iterator it_namespace_decl;
+  for (it_namespace_decl = namespace_decl.begin(); it_namespace_decl != namespace_decl.end(); it_namespace_decl++) {
+    SgNamespaceDeclarationStatement * namespace_decl = *it_namespace_decl;
+
+    if (ignore(namespace_decl->get_name().getString())) continue;
+
+    SgNamespaceSymbol * namespace_sym = SageInterface::lookupNamespaceSymbolInParentScopes(namespace_decl->get_name(), namespace_decl->get_scope());
+    assert(namespace_sym != NULL);
+
+    namespace_symbols.insert(namespace_sym);
+  }
+
+  std::set<SgNamespaceSymbol *>::iterator it;
+  for (it = namespace_symbols.begin(); it != namespace_symbols.end(); it++)
+    if (resolveValidParent<SgNamespaceSymbol>(*it)) {
+//    std::cout << "Namespace Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
+template <>
 void Driver<Sage>::loadSymbolsFromPair<SgNamespaceDeclarationStatement>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
   std::vector<SgNamespaceDeclarationStatement *> header_namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(header_file);
   std::vector<SgNamespaceDeclarationStatement *> source_namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(source_file);
@@ -79,19 +103,6 @@ void Driver<Sage>::loadSymbolsFromPair<SgNamespaceDeclarationStatement>(unsigned
     if (resolveValidParent<SgNamespaceSymbol>(*it)) {
 //    std::cout << "Namespace Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
     }
-
-/* TODO keep track of namespaces declaration/definition across multiple files
-  assert(scopes.header_scope == NULL || header_sym != NULL);
-  assert(scopes.source_scope == NULL || source_sym != NULL);
-  assert(header_sym != NULL || source_sym != NULL);
-  assert((header_sym == NULL || source_sym == NULL) || header_sym == source_sym);
-
-  if (header_sym != NULL) result = header_sym;
-  else result = source_sym;
-
-  if (scopes.header_scope != NULL) Sage<SgNamespaceDeclarationStatement>::setDefinition(result, scopes.header_file, namespace_header_decl);
-  if (scopes.source_scope != NULL) Sage<SgNamespaceDeclarationStatement>::setDefinition(result, scopes.source_file, namespace_source_decl);
-*/
 }
 
 Sage<SgNamespaceDeclarationStatement>::object_desc_t::object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned long file_id_) :

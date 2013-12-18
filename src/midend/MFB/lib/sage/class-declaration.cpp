@@ -59,6 +59,32 @@ bool Driver<Sage>::resolveValidParent<SgClassSymbol>(SgClassSymbol * symbol) {
 }
 
 template <>
+void  Driver<Sage>::loadSymbols<SgClassDeclaration>(unsigned long file_id, SgSourceFile * file) {
+  std::vector<SgClassDeclaration *> class_decl = SageInterface::querySubTree<SgClassDeclaration>(file);
+
+  std::set<SgClassSymbol *> class_symbols;
+  std::vector<SgClassDeclaration *>::const_iterator it_class_decl;
+  for (it_class_decl = class_decl.begin(); it_class_decl != class_decl.end(); it_class_decl++) {
+    SgClassDeclaration * class_decl = *it_class_decl;
+
+    if (ignore(class_decl->get_scope())) continue;
+    if (ignore(class_decl->get_name().getString())) continue;
+
+    SgClassSymbol * class_sym = SageInterface::lookupClassSymbolInParentScopes(class_decl->get_name(), class_decl->get_scope());
+    assert(class_sym != NULL);
+
+    class_symbols.insert(class_sym);
+  }
+
+  std::set<SgClassSymbol *>::iterator it;
+  for (it = class_symbols.begin(); it != class_symbols.end(); it++)
+    if (resolveValidParent<SgClassSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << "    Class Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
+template <>
 void  Driver<Sage>::loadSymbolsFromPair<SgClassDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
   std::vector<SgClassDeclaration *> header_class_decl = SageInterface::querySubTree<SgClassDeclaration>(header_file);
   std::vector<SgClassDeclaration *> source_class_decl = SageInterface::querySubTree<SgClassDeclaration>(source_file);

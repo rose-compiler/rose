@@ -59,6 +59,36 @@ bool Driver<Sage>::resolveValidParent<SgVariableSymbol>(SgVariableSymbol * symbo
 }
 
 template <>
+void  Driver<Sage>::loadSymbols<SgVariableDeclaration>(unsigned long file_id, SgSourceFile * file) {
+  std::vector<SgVariableDeclaration *> variable_decl = SageInterface::querySubTree<SgVariableDeclaration>(file);
+
+  std::set<SgVariableSymbol *> variable_symbols;
+  std::vector<SgVariableDeclaration *>::const_iterator it_variable_decl;
+  for (it_variable_decl = variable_decl.begin(); it_variable_decl != variable_decl.end(); it_variable_decl++) {
+    SgVariableDeclaration * variable_decl = *it_variable_decl;
+    assert(variable_decl->get_variables().size() == 1);
+
+    if (ignore(variable_decl->get_scope())) continue;
+
+    SgInitializedName * init_name = variable_decl->get_variables()[0];
+
+    if (ignore(init_name->get_name().getString())) continue;
+
+    SgVariableSymbol * variable_sym = SageInterface::lookupVariableSymbolInParentScopes(init_name->get_name(), variable_decl->get_scope());
+    assert(variable_sym != NULL);
+
+    variable_symbols.insert(variable_sym);
+  }
+
+  std::set<SgVariableSymbol *>::iterator it;
+  for (it = variable_symbols.begin(); it != variable_symbols.end(); it++)
+    if (resolveValidParent<SgVariableSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << " Variable Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
+template <>
 void  Driver<Sage>::loadSymbolsFromPair<SgVariableDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
   std::vector<SgVariableDeclaration *> header_variable_decl = SageInterface::querySubTree<SgVariableDeclaration>(header_file);
   std::vector<SgVariableDeclaration *> source_variable_decl = SageInterface::querySubTree<SgVariableDeclaration>(source_file);
