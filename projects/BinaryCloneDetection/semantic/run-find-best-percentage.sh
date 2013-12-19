@@ -118,6 +118,7 @@ execute createdb $threshold_db_name
 #create table to hold precision,recall etc for separate computations for Ox vs Oy
 execute psql  $threshold_db_name -c "create table rates_over_Ox_Oy_pairs( \
           sem_threshold double precision, cg_threshold double precision, path_threshold double precision, \
+          min_insns integer, max_cluster_size integer, \
           recall_min double precision, recall_max double precision, \
           recall_mean double precision, recall_standard_deviation double precision, \
           specificity_min double precision, specificity_max double precision, \
@@ -129,6 +130,7 @@ execute psql  $threshold_db_name -c "create table rates_over_Ox_Oy_pairs( \
 #create table to hold precision, recall etc computing a unified value over all dbs
 execute psql  $threshold_db_name -c "create table total_rates( \
           sem_threshold double precision, cg_threshold double precision, path_threshold double precision, \
+          min_insns integer, max_cluster_size integer, \
           recall double precision, specificity double precision, precision double precision, \
           fscore double precision );"
 
@@ -140,79 +142,89 @@ do
   do
      for path_threshold in $(seq 0.000 0.100 1.00); 
      do
-        
-      execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
+
+      for min_insns in 100 50 20;
+      do
+
+        for max_cluster_size in $(seq 1 1 100)
+        do
+          execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
+                                               --min-insns=$min_insns \
+                                               --max-cluster-size=$max_cluster_size \
                                                --sem-threshold=$sem_threshold \
                                                --cg-threshold=$cg_threshold \
                                                --path-threshold=$path_threshold || exit 1
 
-      #compute recall, precision etc total over all dbs
-      recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `
-      precision=`psql $results_db_name -t -c "select precision from overall_rates limit 1" | tr "\\n"  " " `
-      specificity=`psql $results_db_name -t -c "select specificity from overall_rates limit 1" | tr "\\n"  " " `
+          #compute recall, precision etc total over all dbs
+          recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `
+          precision=`psql $results_db_name -t -c "select precision from overall_rates limit 1" | tr "\\n"  " " `
+          specificity=`psql $results_db_name -t -c "select specificity from overall_rates limit 1" | tr "\\n"  " " `
       
-      if [ $precision = 0 -a  $recall = 0  ];
-      then
-        fscore="0"
-      else 
-        fscore="2*$precision*$recall/($precision+$recall)"
-      fi
+          if [ $precision = 0 -a  $recall = 0  ];
+          then
+            fscore="0"
+          else 
+            fscore="2*$precision*$recall/($precision+$recall)"
+          fi
 
-      execute psql $threshold_db_name -c "insert into total_rates(sem_threshold, cg_threshold, path_threshold, \
-        recall, precision, specificity, fscore) \
-        values ($sem_threshold, $cg_threshold, $path_threshold, $recall, $precision, $specificity, $fscore)" || exit 1
+          execute psql $threshold_db_name -c "insert into total_rates(sem_threshold, cg_threshold, path_threshold, \
+            recall, precision, specificity, fscore) \
+            values ($sem_threshold, $cg_threshold, $path_threshold, $recall, $precision, $specificity, $fscore)" || exit 1
 
 
-      #compute recall, precision, etc over separate computations for Ox vs Oy
-      recall_min=`psql $results_db_name -t -c "select recall_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      recall_max=`psql $results_db_name -t -c "select recall_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      recall_mean=`psql $results_db_name -t -c "select recall_mean from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      recall_standard_deviation=`psql $results_db_name -t -c "select recall_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          #compute recall, precision, etc over separate computations for Ox vs Oy
+          recall_min=`psql $results_db_name -t -c "select recall_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          recall_max=`psql $results_db_name -t -c "select recall_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          recall_mean=`psql $results_db_name -t -c "select recall_mean from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          recall_standard_deviation=`psql $results_db_name -t -c "select recall_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
       
-      specificity_min=`psql $results_db_name -t -c "select specificity_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      specificity_max=`psql $results_db_name -t -c "select specificity_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      specificity_mean=`psql $results_db_name -t -c "select specificity_mean from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      specificity_standard_deviation=`psql $results_db_name -t -c "select specificity_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          specificity_min=`psql $results_db_name -t -c "select specificity_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          specificity_max=`psql $results_db_name -t -c "select specificity_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          specificity_mean=`psql $results_db_name -t -c "select specificity_mean from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          specificity_standard_deviation=`psql $results_db_name -t -c "select specificity_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
 
-      precision_min=`psql $results_db_name -t -c "select precision_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      precision_max=`psql $results_db_name -t -c "select precision_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      precision_mean=`psql $results_db_name -t -c "select precision_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
-      precision_standard_deviation=`psql $results_db_name -t -c "select precision_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          precision_min=`psql $results_db_name -t -c "select precision_min from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          precision_max=`psql $results_db_name -t -c "select precision_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          precision_mean=`psql $results_db_name -t -c "select precision_max from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
+          precision_standard_deviation=`psql $results_db_name -t -c "select precision_standard_deviation from resilience_to_optimization_rate limit 1" | tr "\\n"  " " `
 
-      if [ $precision_mean = 0 -a $recall_mean = 0  ];
-      then
-        fscore_mean="0"
-      else 
-        fscore_mean="2*$precision_mean*$recall_mean/($precision_mean+$recall_mean)"
-      fi
+          if [ $precision_mean = 0 -a $recall_mean = 0  ];
+          then
+            fscore_mean="0"
+          else 
+            fscore_mean="2*$precision_mean*$recall_mean/($precision_mean+$recall_mean)"
+          fi
 
-      if [ $precision_min = 0 -a $recall_min = 0  ];
-      then
-        fscore_min="0"
-      else 
-        fscore_min="2*$precision_min*$recall_min/($precision_min+$recall_min)"
-      fi
+          if [ $precision_min = 0 -a $recall_min = 0  ];
+          then
+            fscore_min="0"
+          else 
+            fscore_min="2*$precision_min*$recall_min/($precision_min+$recall_min)"
+          fi
 
-      if [ $precision_max = 0 -a $recall_max = 0  ];
-      then
-        fscore_max="0"
-      else 
-        fscore_max="2*$precision_max*$recall_max/($precision_max+$recall_max)"
-      fi
-
-
+          if [ $precision_max = 0 -a $recall_max = 0  ];
+          then
+            fscore_max="0"
+          else 
+            fscore_max="2*$precision_max*$recall_max/($precision_max+$recall_max)"
+          fi
 
 
-      execute psql $threshold_db_name -c "insert into rates_over_Ox_Oy_pairs(sem_threshold, cg_threshold, path_threshold, \
-        recall_min, recall_max, recall_mean, recall_standard_deviation, \
-        specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, \
-        precision_min, precision_max, precision_mean, precision_standard_deviation, \
-        fscore_mean, fscore_min, fscore_max) \
-        values ($sem_threshold, $cg_threshold, $path_threshold, $recall_min, $recall_max, $recall_mean, $recall_standard_deviation, \
-            $specificity_min, $specificity_max, $specificity_mean, $specificity_standard_deviation, \
-            $precision_min, $precision_max, $precision_mean, $precision_standard_deviation, \
-            $fscore_mean, $fscore_min, $fscore_max )" || exit 1
 
+
+          execute psql $threshold_db_name -c "insert into rates_over_Ox_Oy_pairs(sem_threshold, cg_threshold, path_threshold, \
+            min_insns, max_cluster_size,
+            recall_min, recall_max, recall_mean, recall_standard_deviation, \
+            specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, \
+            precision_min, precision_max, precision_mean, precision_standard_deviation, \
+            fscore_mean, fscore_min, fscore_max) \
+            values ($sem_threshold, $cg_threshold, $path_threshold, $min_insns, $max_cluster_size, $recall_min, $recall_max, $recall_mean, $recall_standard_deviation, \
+               $specificity_min, $specificity_max, $specificity_mean, $specificity_standard_deviation, \
+               $precision_min, $precision_max, $precision_mean, $precision_standard_deviation, \
+               $fscore_mean, $fscore_min, $fscore_max )" || exit 1
+
+        done
+      done
     done                                                 
  done
 done

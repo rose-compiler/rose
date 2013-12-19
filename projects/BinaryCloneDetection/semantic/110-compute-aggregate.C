@@ -12,9 +12,27 @@
 #include <boost/accumulators/statistics/variance.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/incremental_components.hpp>
+#include <boost/pending/disjoint_sets.hpp>
+#include <boost/graph/breadth_first_search.hpp> 
+#include <boost/graph/visitors.hpp> 
+
+#include <boost/foreach.hpp>
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+
+
+using namespace boost;
+
+
+typedef boost::adjacency_list< boost::vecS, 
+        boost::vecS, 
+        boost::directedS > DirectedGraph; 
+
+
 
 namespace FailureEvaluation {
   extern const char *failure_schema;
@@ -40,6 +58,11 @@ usage(int exit_status)
               <<"            Path sensitive similarity threshold between 0 and 1.\n"
               <<"    --cg-threshold=0.0|..|1.0\n"
               <<"            Call graph similarity threshold between 0 and 1.\n"
+              <<"    --min-insns=0|..|MAX_INT\n"
+              <<"            Minimum number of instructions in candidate functions.\n"
+              <<"    --max-cluster-size=0|..|MAX_INT\n"
+              <<"            Maximum number of functions in a cluster. All functions that \n"
+              <<"            are part of a larger cluster will be ignored.   \n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -147,6 +170,132 @@ compute_mean_similarity_statistics( double bucket_size, double increment, SqlDat
 
 };
 
+void
+find_clusters(int max_cluster_size, SqlDatabase::TransactionPtr transaction)
+{
+
+  SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into fr_ignored_function_pairs"
+      // 0        1         2  
+      "(func1_id, func2_id, from_cluster_of_size)"
+      " values (?, ?, ?)");
+
+
+  //Get all vetexes and find the union 
+
+  std::string _query_condition = "select func1_id, func2_id from fr_clone_pairs";
+  SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
+
+  if(stmt->begin() == stmt->end())
+    return;
+
+  //Count how many vertices we have for boost graph
+
+  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
+
+  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+  typedef graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
+
+  Graph graph(VERTEX_COUNT);
+
+  std::vector<VertexIndex> rank(num_vertices(graph));
+  std::vector<Vertex> parent(num_vertices(graph));
+
+  typedef VertexIndex* Rank;
+  typedef Vertex* Parent;
+
+
+
+  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
+
+  initialize_incremental_components(graph, ds);
+  incremental_components(graph, ds);
+
+
+
+  graph_traits<Graph>::edge_descriptor edge;
+  bool flag;
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+
+    int func1 = row.get<int>(0);
+    int func2 = row.get<int>(1);
+
+      boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      ds.union_set(func1,func2);
+
+
+  }
+
+
+
+  typedef component_index<VertexIndex> Components;
+
+  Components components(parent.begin(), parent.end());
+
+  std::map<int,int> size_distribution;
+
+  // Iterate through the component indices
+  BOOST_FOREACH(VertexIndex current_index, components) {
+
+    std::vector<int> cluster_functions;
+
+    // Iterate through the child vertex indices for [current_index]
+    BOOST_FOREACH(VertexIndex child_index,
+        components[current_index]) {
+
+      cluster_functions.push_back(child_index);
+
+    }
+
+    std::sort(cluster_functions.begin(), cluster_functions.end());
+
+    std::map<int,int>::iterator it = size_distribution.find(cluster_functions.size());
+
+    if( it == size_distribution.end() )
+      size_distribution[cluster_functions.size()] = 1;
+    else
+      ++it->second;
+
+    for( std::vector<int>::iterator it = cluster_functions.begin(); it != cluster_functions.end(); ++it  )
+    {
+      for( std::vector<int>::iterator it2 = it; it2 != cluster_functions.end(); ++it2  ){
+        insert_stmt->bind(0, *it);
+        insert_stmt->bind(1, *it2);
+        insert_stmt->bind(2, cluster_functions.size());
+        insert_stmt->execute();
+      }
+
+    }
+
+  }
+
+
+
+  transaction->execute("drop table IF EXISTS size_distribution");
+  transaction->execute("create table size_distribution(cluster_size integer, num_clusters integer);");
+
+  insert_stmt = transaction->statement("insert into size_distribution"
+      // 0        1         2  
+      "(cluster_size, num_clusters)"
+      " values (?, ?)");
+
+
+
+
+  for(  std::map<int, int>::iterator it = size_distribution.begin(); it != size_distribution.end(); ++it )
+  {
+
+    insert_stmt->bind(0, it->first);
+    insert_stmt->bind(1, it->second);
+    insert_stmt->execute();
+  }
+
+
+
+
+}
+
 
 
 
@@ -165,6 +314,9 @@ int main(int argc, char *argv[])
   double bucket_size = 0.0250;
   double increment   = 0.0500;
 
+  int min_insns = 100;
+  int max_cluster_size = -1;
+
   bool compute_semantic_distribution = false;
 
   int argno = 1;
@@ -182,6 +334,10 @@ int main(int argc, char *argv[])
       cg_threshold = boost::lexical_cast<double>(argv[argno]+15);
     } else if (!strncmp(argv[argno], "--semantic-distribution",23)) {
       compute_semantic_distribution = true;
+    } else if (!strncmp(argv[argno], "--min-insns=",12)) {
+      min_insns= boost::lexical_cast<int>(argv[argno]+12);
+    } else if (!strncmp(argv[argno], "--max-cluster-size=",19)){
+      max_cluster_size = boost::lexical_cast<int>(argv[argno]+19);
     } else {
       std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
         <<argv0 <<": see --help for more info\n";
@@ -203,12 +359,25 @@ int main(int argc, char *argv[])
     "drop table IF EXISTS fr_settings; "
     "create table fr_settings as"
     " select "
+    "   (select " + boost::lexical_cast<std::string>(max_cluster_size)     +  " ) as max_cluster_size,"
+    "   (select " + boost::lexical_cast<std::string>(min_insns)     +  " ) as min_insns,"
     "   (select " + boost::lexical_cast<std::string>(sem_threshold) +  " ) as similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(path_threshold) + " ) as path_similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(cg_threshold) +   " ) as cg_similarity_threshold;";
 
   transaction->execute(set_thresholds);
+
+  //Functions that should be ignored when computing clone pairs
+  transaction->execute("drop table IF EXISTS fr_ignored_function_pairs;");
+  transaction->execute("create table fr_ignored_function_pairs(func1_id integer, func2_id integer, from_cluster_of_size integer);");
+  
   transaction->execute(FailureEvaluation::failure_schema); // could take a long time if the database is large
+
+  if( max_cluster_size > 0 ){
+    find_clusters(max_cluster_size, transaction);
+    transaction->execute(FailureEvaluation::failure_schema); // could take a long time if the database is large
+  }
+
 
   if(compute_semantic_distribution){
     compute_percent_similarity_statistics(bucket_size, increment, transaction);
