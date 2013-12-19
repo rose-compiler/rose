@@ -3228,10 +3228,10 @@ Grammar::buildCode ()
      ROSE_ASSERT (GrammarDotFile.good());
      buildGrammarDotFile(rootNode, GrammarDotFile);
      cout << "DONE: buildGrammarDotFile" << endl;
-     ofstream GrammarLatexFile("generated_abstractcppgrammar.atg");
-     ROSE_ASSERT (GrammarLatexFile.good());
-     buildGrammarLatexFile(rootNode, GrammarLatexFile);
-     cout << "DONE: buildGrammarLatexFile" << endl;
+     ofstream AbstractTreeGrammarFile("generated_abstractcppgrammar.atg");
+     ROSE_ASSERT (AbstractTreeGrammarFile.good());
+     buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
+     cout << "DONE: buildAbstractTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3349,7 +3349,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
    // possibly other pointers to containers.
    // if( (stype.find("*") == string::npos) // not found, not a pointer
    // && (stype.find("List") == stype.size()-4) ) // postfix
-      if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
+   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+      if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
         info.numSingleDataMembers++;
@@ -3373,7 +3375,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
     std::string nodeName = grammarnode->getName();
 
  // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
-    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s \n",nodeName.c_str());
+    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now
