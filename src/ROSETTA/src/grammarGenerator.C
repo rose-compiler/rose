@@ -72,7 +72,7 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
 }
 
 bool 
-Grammar::isAbstractGrammarSymbol(string s) {
+Grammar::isAbstractTreeGrammarSymbol(string s) {
   //set<string>::iterator posIter = traversedTerminals.find(s);
   //if (posIter != traversedTerminals.end())
   //  return true;
@@ -142,7 +142,7 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* gramma
 
 // MS: 2002,2003
 Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateGrammarLatexString(Terminal* grammarnode,
+Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
 				  vector<GrammarSynthesizedAttribute> v) {
   //cout << "Creating grammar latex string:" << endl;
   GrammarSynthesizedAttribute saLatex;
@@ -150,15 +150,14 @@ Grammar::CreateGrammarLatexString(Terminal* grammarnode,
 
   // EBNF generated Grammar symbols (this can be parameterized in future)
   // tree grammar
-  string grammarSymTreeLB=" \"(\" ";
-  string grammarSymTreeRB=" \")\" ";
-  string GrammarSymTreeElSep=""; // "\",\" "; comma no longer necessary
-  // kontext free grammar
+  string grammarSymTreeLB="(";
+  string grammarSymTreeRB=")";
+  string GrammarSymTreeElSep=",";
   string grammarSymArrow=" = ";
   string grammarSymOr     ="    | ";
-  string grammarSymEndRule="    .\n";
-  string grammarSymListOpPrefix=" { ";
-  string grammarSymListOpPostfix=" } ";
+  string grammarSymEndRule="    ;\n\n";
+  string grammarSymListOpPrefix="";
+  string grammarSymListOpPostfix="*";
 
     if(grammarnode->isLeafNode()) {
       string rhsTerminalSuccessors;
@@ -221,25 +220,23 @@ Grammar::CreateGrammarLatexString(Terminal* grammarnode,
 	}
 	else {
       */
-      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
+      if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
 	saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
       else {
-// DQ (5/24/2005): debugging code (not generally required)
-// cout << "Terminal " << grammarnode->getName() << " excluded." << endl;
 	saLatex.nodetext="";
       }
     } // end of terminal handling
     else {
-      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
+      if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
 	saLatex.nodetext=grammarnode->getName();
       else
 	saLatex.nodetext="";
     }
-  // create BNF grammar rule for current grammar node and its successors
+  // create grammar rule for current grammar node and its successors
   string grammarRule;
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    if((*viter).nodetext!="" && isAbstractGrammarSymbol(string(grammarnode->getName())) ) {
+    if((*viter).nodetext!="" && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
       if(first) {
 	grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
 	first=false;
@@ -248,7 +245,7 @@ Grammar::CreateGrammarLatexString(Terminal* grammarnode,
       }
     }
   }
-  if(v.size()>0 && isAbstractGrammarSymbol(string(grammarnode->getName())) )
+  if(v.size()>0 && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
     grammarRule+=grammarSymEndRule;
 
   // union data of subtree nodes
@@ -291,7 +288,7 @@ void Grammar::buildGrammarDotFile(Terminal* rootNode, ostream& GrammarDotFile) {
 }
 
 // MS:2002
-void Grammar::buildGrammarLatexFile(Terminal* rootNode, ostream& GrammarLatexFile) {
+void Grammar::buildAbstractTreeGrammarFile(Terminal* rootNode, ostream& AbstractTreeGrammarFile) {
   GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
 #if 0
 // DQ (5/24/2005): debugging code (not required generally)
@@ -300,24 +297,14 @@ void Grammar::buildGrammarLatexFile(Terminal* rootNode, ostream& GrammarLatexFil
        cout << "traversed Terminal: " << *i << endl;
      }
 #endif
-  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarLatexString);
-  /*
-  GrammarLatexFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
-  GrammarLatexFile << "NonTerminals:\n" << a.nonterminalsbunch;
-  GrammarLatexFile << "\nTerminals:\n" << a.terminalsbunch;
-  GrammarLatexFile << "\nRules:\n" << a.text;
-  GrammarLatexFile << "\nProblematic Nodes:\n" << a.problematicnodes;
-  GrammarLatexFile << endl;
-  */
-  //GrammarLatexFile << "$CX /* Generate main module */ \n";
-  GrammarLatexFile << "/* Abstract C++ Attribute Grammar */\n";
-  GrammarLatexFile << "$CX /* Generate C++ code */\n";
-  GrammarLatexFile << "COMPILER SgNode\n #include \"slangs.hpp\"\n\n";
-  GrammarLatexFile << "\nTOKENS\n\n" << a.terminalsbunch;
-  GrammarLatexFile << "\nPRODUCTIONS\n\n" << a.text;
-  GrammarLatexFile << "\nEND SgNode.\n";
-  GrammarLatexFile << endl;
-  
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
+  AbstractTreeGrammarFile << "//  Abstract Tree Grammar"<<endl<<endl;
+  //AbstractTreeGrammarFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
+  AbstractTreeGrammarFile << "/*  Problematic nodes (fixed number of children and container(s)):\n" << a.problematicnodes<<"*/"<<endl<<endl;
+  AbstractTreeGrammarFile << "NONTERMINALS:\n" << a.nonterminalsbunch<<endl;
+  AbstractTreeGrammarFile << "TERMINALS:\n" << a.terminalsbunch<<endl;
+  AbstractTreeGrammarFile << "PRODUCTIONS:\n" << a.text<<endl;
+  AbstractTreeGrammarFile << "END"<<endl;
 }
 
 
