@@ -18,7 +18,6 @@ drop table if exists fr_functions;
 drop table if exists fr_funcnames;
 drop table if exists fr_specimens;
 
-
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
     select distinct specimen_id as id
@@ -117,6 +116,9 @@ create table fr_clone_pairs as
   AND api_sem.cg_similarity >=  (select cg_similarity_threshold   from fr_settings)
   --AND sim.path_max_euclidean_d_ratio - sim.path_min_euclidean_d_ratio < 0.5
   --AND sim.path_max_euclidean_d_ratio < 3.0
+  except(
+      select func1_id, func2_id from fr_ignored_function_pairs where from_cluster_of_size > (select max_cluster_size from fr_settings)
+  )
   ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
