@@ -1,7 +1,7 @@
 
-#include "KLT/Core/mfb-klt.hpp"
+#include "KLT/mfb-klt.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
 
 KLT_Driver::KLT_Driver(SgProject * project_) :
   Driver<Sage>(project_),
@@ -9,3 +9,4 @@ KLT_Driver::KLT_Driver(SgProject * project_) :
 {}
 
 }
+

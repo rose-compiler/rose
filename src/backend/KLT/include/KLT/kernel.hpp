@@ -1,8 +1,8 @@
 
-#ifndef __KLT_CORE_KERNEL_HPP__
-#define __KLT_CORE_KERNEL_HPP__
+#ifndef __KLT_KERNEL_HPP__
+#define __KLT_KERNEL_HPP__
 
-#include "KLT/Core/loop-trees.hpp"
+#include "KLT/loop-trees.hpp"
 
 #include <list>
 #include <set>
@@ -11,15 +11,12 @@ class SgVariableSymbol;
 
 namespace KLT {
 
-namespace Core {
-
 /*!
- * \addtogroup grp_klt_core
+ * \addtogroup grp_klt_kernel
  * @{
 */
 
-class Data;
-
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
 class Kernel {
   public:
     const unsigned long id;
@@ -60,7 +57,7 @@ class Kernel {
 
   protected:
     /// Root loop-tree
-    LoopTrees::node_t * p_root;
+    LoopTrees<>::node_t * p_root;
 
     /// Set of data sorted accordingly to how they flow through the kernel
     dataflow_t p_data_flow;
@@ -99,7 +96,5 @@ void collectReferencedSymbols(Kernel * kernel, std::set<SgVariableSymbol *> & sy
 
 }
 
-}
-
-#endif /* __KLT_CORE_KERNEL_HPP__ */
+#endif /* __KLT_KERNEL_HPP__ */
 

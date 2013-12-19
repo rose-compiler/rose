@@ -3,13 +3,22 @@
  * @{
  *   \defgroup grp_klt KLT
  *   @{
- *     \defgroup grp_klt_core Core
+ *     \defgroup grp_klt__codegen Code Generation and Analysis
  *     @{
  *     @}
- *     \defgroup grp_klt_ocl OpenCL
+ *     \defgroup grp_klt_data Data Representation
  *     @{
  *     @}
- *     \defgroup grp_klt_seq Sequential
+ *     \defgroup grp_klt_looptree LoopTree
+ *     @{
+ *     @}
+ *     \defgroup grp_klt_dataflow DataFlow
+ *     @{
+ *     @}
+ *     \defgroup grp_klt_data Data
+ *     @{
+ *     @}
+ *     \defgroup grp_klt_kernel Kernel
  *     @{
  *     @}
  *     \defgroup grp_klt_mfb MFB Driver for KLT

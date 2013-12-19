@@ -4,8 +4,6 @@
 
 namespace KLT {
 
-namespace Core {
-
 void initAstFromString(std::ifstream & in_file) {
   SgScopeStatement * scope = SageBuilder::buildBasicBlock();
 
@@ -28,8 +26,6 @@ void ensure(char c) {
   AstFromString::afs_skip_whitespace();
   assert(AstFromString::afs_match_char(c));
   AstFromString::afs_skip_whitespace();
-}
-
 }
 
 }

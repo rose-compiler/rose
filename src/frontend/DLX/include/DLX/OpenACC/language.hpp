@@ -15,7 +15,7 @@
 #include "DLX/Core/parser.hpp"
 #include "DLX/Core/compiler.hpp"
 
-#include "transformation-handler.hpp"
+//#include "transformation-handler.hpp"
 
 #include <vector>
 #include <map>
@@ -323,7 +323,7 @@ namespace Compiler {
  * \addtogroup grp_dlx_openacc_compiler
  * @{
  */
-
+/*
 template <>
 Compiler<OpenACC::language_t, Handles::TransformationHandler>::Compiler(
   Handles::TransformationHandler & transformation_handler,
@@ -336,7 +336,7 @@ bool Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::compile
   const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_entry,
   const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_final
 );
-
+*/
 /** @} */
 }
 

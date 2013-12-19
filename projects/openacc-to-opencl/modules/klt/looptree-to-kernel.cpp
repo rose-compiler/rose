@@ -1,26 +1,46 @@
 
-#include "KLT/Core/loop-trees.hpp"
-#include "KLT/Core/data.hpp"
+#include "KLT/loop-trees.hpp"
+#include "KLT/data.hpp"
+
+/*
+#include "KLT/iteration-mapper.hpp"
+#include "KLT/loop-mapper.hpp"
+#include "KLT/data-flow.hpp"
+#include "KLT/cg-config.hpp"
+#include "KLT/generator.hpp"
+#include "KLT/kernel.hpp"
+#include "KLT/mfb-klt.hpp"
+*/
 
 #include "DLX/OpenACC/language.hpp"
 
 #include <cassert>
 
+//#include "sage3basic.h"
+
+namespace DLX {
+  template <class Lang> class KLT_Data;
+  template <class Lang> class KLT_Region;
+  template <class Lang> class KLT_Loop;
+}
 
 int main(int argc, char ** argv) {
   assert(argc == 3);
 
-  KLT::Core::LoopTrees<
+  KLT::LoopTrees<
       DLX::KLT_Data   <DLX::OpenACC::language_t>,
       DLX::KLT_Region <DLX::OpenACC::language_t>,
       DLX::KLT_Loop   <DLX::OpenACC::language_t>
   > loop_trees;
 
   std::list<SgVariableSymbol *> parameter_order;
-  std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > inout_data_order;
+  std::pair<
+      std::list< KLT::Data<DLX::KLT_Data<DLX::OpenACC::language_t> > *>,
+      std::list< KLT::Data<DLX::KLT_Data<DLX::OpenACC::language_t> > *>
+  > inout_data_order;
 
   loop_trees.read(argv[1], parameter_order, inout_data_order);
-
+/*
   SgProject * project = new SgProject::SgProject();
   { // Add default command line to an empty project
     std::vector<std::string> arglist;
@@ -35,15 +55,39 @@ int main(int argc, char ** argv) {
 
   std::set<std::list<KLT::Kernel<KLT::Language::OpenCL, KLT::Runtime::OpenACC> *> > kernel_lists;
 
-  KLT::Core::CG_Config< KLT::Language::OpenCL , KLT::Runtime::OpenACC > cg_config(
-      new KLT::Core::LoopMapper      < KLT::Language::OpenCL , KLT::Runtime::OpenACC >(),
-      new KLT::Core::IterationMapper < KLT::Language::OpenCL , KLT::Runtime::OpenACC >(),
-      new KLT::Core::DataFlow        < KLT::Language::OpenCL , KLT::Runtime::OpenACC >()
+  KLT::CG_Config<
+      DLX::KLT_Data   <DLX::OpenACC::language_t>,
+      DLX::KLT_Region <DLX::OpenACC::language_t>,
+      DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+      KLT::Language::OpenCL,
+      KLT::Runtime::OpenACC
+  > cg_config(
+      new KLT::LoopMapper<
+          DLX::KLT_Data   <DLX::OpenACC::language_t>,
+          DLX::KLT_Region <DLX::OpenACC::language_t>,
+          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          KLT::Language::OpenCL,
+          KLT::Runtime::OpenACC
+      >(),
+      new KLT::IterationMapper<
+          DLX::KLT_Data   <DLX::OpenACC::language_t>,
+          DLX::KLT_Region <DLX::OpenACC::language_t>,
+          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          KLT::Language::OpenCL,
+          KLT::Runtime::OpenACC
+      >(),
+      new KLT::DataFlow<
+          DLX::KLT_Data   <DLX::OpenACC::language_t>,
+          DLX::KLT_Region <DLX::OpenACC::language_t>,
+          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          KLT::Language::OpenCL,
+          KLT::Runtime::OpenACC
+      >()
   );
   generator.generate(loop_trees, kernel_lists, cg_config);
 
   project->unparse();
-
+*/
   return 0;
 }
 

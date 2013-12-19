@@ -1,31 +1,50 @@
 
-#ifdef __NO_TEMPLATE_DEFINITION__
-#error "Compiling a template definition file while the macro __NO_TEMPLATE_DEFINITION__ is defined."
-#endif
+#ifndef __KLT_DATA_FLOW_HPP__
+#define __KLT_DATA_FLOW_HPP__
 
-#include "KLT/Core/data.hpp"
-#include "KLT/Core/loop-trees.hpp"
-#include "KLT/Core/kernel.hpp"
-
-#include <set>
+#include <list>
 
 namespace KLT {
 
-namespace Core {
+template <class Annotation> class Data;
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class Kernel;
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> class LoopTrees;
 
 /*!
- * \addtogroup grp_klt_core
+ * \addtogroup grp_klt_dataflow
  * @{
 */
 
-void append_access(SgExpression * exp, std::set<Data *> & access_set, const std::set<Data *> & datas);
-void compute_read_write(LoopTrees::node_t * tree, Kernel::dataflow_t & data_flow, const std::set<Data *> & datas);
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
+class DataFlow {
+  public:
+    virtual void generateFlowSets(
+      const LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees,
+      const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernels
+    ) const;
+};
 
-template <class Kernel>
-void DataFlow<Kernel>::generateFlowSets(
-  const LoopTrees & loop_trees,
-  const std::list<Kernel *> & kernels
+template <class DataAnnotation>
+void append_access(
+    SgExpression * exp,
+    std::set<Data<DataAnnotation> *> & access_set,
+    const std::set<Data<DataAnnotation> *> & datas
+);
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
+void compute_read_write(
+    LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree,
+    DataFlow<Language, Runtime> & data_flow,
+    const std::set<Data<DataAnnotation> *> & datas
+);
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
+void DataFlow<Language, Runtime>::generateFlowSets<DataAnnotation, RegionAnnotation, LoopAnnotation>(
+  const LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees,
+  const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernels
 ) const {
+  assert(false);
+#if 0
   assert(kernels.size() > 0);
 
   typename std::list<Kernel *>::const_iterator it_kernel;
@@ -76,10 +95,12 @@ void DataFlow<Kernel>::generateFlowSets(
   // 3 - Compute the flow of data
 
   // TODO last set of equations...
+#endif
 }
 
 /** @} */
 
 }
 
-}
+#endif /* __KLT_DATA_FLOW_HPP__ */
+

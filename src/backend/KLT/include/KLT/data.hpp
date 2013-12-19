@@ -1,6 +1,6 @@
 
-#ifndef __DATA_HPP__
-#define __DATA_HPP__
+#ifndef __KLT_DATA_HPP__
+#define __KLT_DATA_HPP__
 
 #include <set>
 #include <list>
@@ -17,13 +17,12 @@ class SgTypeModifier;
 
 namespace KLT {
 
-namespace Core {
-
 /*!
- * \addtogroup grp_klt_core
+ * \addtogroup grp_klt_data
  * @{
 */
 
+template <class Annotation>
 class Data {
   public:
     typedef std::pair<SgExpression *, SgExpression *> section_t;
@@ -34,6 +33,8 @@ class Data {
     SgType * p_base_type;
 
     std::vector<section_t> p_sections;
+
+    std::vector<Annotation> p_annotations;
 
   protected:
     bool subset(Data * d) const;
@@ -60,13 +61,27 @@ class Data {
 
     void toText(std::ostream & out) const;
 
-  static void set_union         (std::set<Data *> & result_, const std::set<Data *> & datas_1_, const std::set<Data *> & datas_2_);
-  static void set_intersection  (std::set<Data *> & result_, const std::set<Data *> & datas_1_, const std::set<Data *> & datas_2_);
-  static void set_remove        (std::set<Data *> & result_, const std::set<Data *> & datas_);
+  static void set_union(
+      std::set<Data<Annotation> *> & result_,
+      const std::set<Data<Annotation> *> & datas_1_,
+      const std::set<Data<Annotation> *> & datas_2_
+  );
+  static void set_intersection(
+      std::set<Data<Annotation> *> & result_,
+      const std::set<Data<Annotation> *> & datas_1_,
+      const std::set<Data<Annotation> *> & datas_2_
+  );
+  static void set_remove(
+      std::set<Data<Annotation> *> & result_,
+      const std::set<Data<Annotation> *> & datas_
+  );
 };
 
-void collectBoundExpressions(const std::set<Data *> & datas, std::set<SgExpression *> & exprs);
-void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariableSymbol *> & symbols);
+template <class Annotation>
+void collectBoundExpressions(const std::set<Data<Annotation> *> & datas, std::set<SgExpression *> & exprs);
+
+template <class Annotation>
+void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::set<SgVariableSymbol *> & symbols);
 
 /** Generate a parameter list for a kernel (the 3 lists of symbols/datas)
  *    \param  params List of parameters as variable symbol pointers
@@ -76,10 +91,11 @@ void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariabl
  *    \param  suffix add a suffix to the default generated name (kind + "_" + name : where kind is param/coef/data and name the name of the associated symbol)
  *    \return a Function Parameter List
  */
+template <class Annotation>
 SgFunctionParameterList * createParameterList(
   const std::list<SgVariableSymbol *> & params,
   const std::list<SgVariableSymbol *> & coefs,
-  const std::list<Data *> & datas,
+  const std::list<Data<Annotation> *> & datas,
   unsigned long data_type_modifer_,
   std::string suffix
 );
@@ -88,7 +104,5 @@ SgFunctionParameterList * createParameterList(
 
 }
 
-}
-
-#endif /* __DATA_HPP__ */
+#endif /* __KLT_DATA_HPP__ */
 
