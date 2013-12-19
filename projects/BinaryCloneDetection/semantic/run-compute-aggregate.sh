@@ -64,6 +64,8 @@ prefix=""
 sem_threshold=""
 cg_threshold=""
 path_threshold=""
+min_insns=""
+max_cluster_size=""
 
 while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
     arg="$1"; shift
@@ -82,6 +84,12 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
 	    ;;
 	--path-threshold=*)
 	    path_threshold=${arg#--path-threshold=}
+	    ;;
+	--min-insns=*)
+	    min_insns=${arg#--min-insns=}
+	    ;;
+	--max-cluster-size=*)
+	    max_cluster_size=${arg#--max-cluster-size=}
 	    ;;
 	--prefix=*)
 	    prefix=${arg#--prefix=}
@@ -115,7 +123,20 @@ if [ "12$path_threshold" = "12" ]; then
     usage 0
 fi
 
-cg_computation_flags="--sem-threshold=$sem_threshold --cg-threshold=$cg_threshold --path-threshold=$path_threshold"
+if [ "12$min_insns" = "12" ]; then
+    echo "Please provide a min insns threshold" 
+    usage 0
+fi
+
+
+if [ "12$max_cluster_size" = "12" ]; then
+    echo "Please provide a max cluster size" 
+    usage 0
+fi
+
+
+
+cg_computation_flags="--sem-threshold=$sem_threshold --cg-threshold=$cg_threshold --path-threshold=$path_threshold --min-insns=$min_insns --max-cluster-size=$max_cluster_size"
 
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
@@ -143,7 +164,7 @@ execute make -f $SRCDIR/run-analysis.mk -j $nprocs \
   ca-computation || exit 1
 
 
-results_db_name="postgresql:///results_db_$prefix"
+results_db_name="results_db_$prefix"
 
 execute dropdb $results_db_name
 execute createdb $results_db_name
