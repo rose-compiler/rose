@@ -19,6 +19,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 class Data {
   public:
     typedef std::pair<SgExpression *, SgExpression *> section_t;
@@ -78,6 +83,8 @@ SgFunctionParameterList * createParameterList(
   unsigned long data_type_modifer_,
   std::string suffix
 );
+
+/** @} */
 
 }
 

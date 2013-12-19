@@ -15,7 +15,12 @@ template <typename Kernel> class IterationMap;
 }
 }
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_klt_mfb
+ * @{
+*/
 
 template <>
 class KLT< ::KLT::OpenCL::Kernel> {
@@ -40,6 +45,8 @@ class KLT< ::KLT::OpenCL::Kernel> {
 
 template <>
 KLT< ::KLT::OpenCL::Kernel>::build_result_t Driver<KLT>::build< ::KLT::OpenCL::Kernel>(const KLT< ::KLT::OpenCL::Kernel>::object_desc_t & desc);
+
+/** @} */
 
 }
 

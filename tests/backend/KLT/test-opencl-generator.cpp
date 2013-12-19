@@ -34,8 +34,8 @@ int main(int argc, char ** argv) {
   std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > inout_data_order;  
   loop_trees.read(argv[1], parameter_order, inout_data_order);
 
-  ::MultiFileBuilder::KLT_Driver driver(project);
-  KLT::Core::Generator<KLT::OpenCL::Kernel, ::MultiFileBuilder::KLT_Driver> generator(driver, std::string(argv[2]) + ".kernel");
+  MFB::KLT_Driver driver(project);
+  KLT::Core::Generator<KLT::OpenCL::Kernel, ::MFB::KLT_Driver> generator(driver, std::string(argv[2]) + ".kernel");
 
   std::set<std::list<KLT::OpenCL::Kernel *> > kernel_lists;
   KLT::Core::CG_Config<KLT::OpenCL::Kernel> cg_config(

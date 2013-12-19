@@ -7,6 +7,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel>
 CG_Config<Kernel>::CG_Config(LoopMapper<Kernel> * loop_mapper, IterationMapper<Kernel> * iteration_mapper, DataFlow<Kernel> * data_flow) :
   p_loop_mapper(loop_mapper),
@@ -30,6 +35,9 @@ const IterationMapper<Kernel> & CG_Config<Kernel>::getIterationMapper() const { 
 template <class Kernel>
 const DataFlow<Kernel> & CG_Config<Kernel>::getDataFlow() const { return *p_data_flow; }
 
+/** @} */
+
 }
 
 }
+

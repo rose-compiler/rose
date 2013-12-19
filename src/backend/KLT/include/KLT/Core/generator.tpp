@@ -21,6 +21,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel, class Driver>
 typename Kernel::a_kernel * Generator<Kernel, Driver>::callToKernelBuilder(
   Kernel * kernel,
@@ -143,6 +148,9 @@ void Generator<Kernel, Driver>::generate(const LoopTrees & loop_trees, std::set<
   }
 }
 
+/** @} */
+
 }
 
 }
+

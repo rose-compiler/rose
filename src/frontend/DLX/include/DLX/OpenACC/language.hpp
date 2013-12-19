@@ -30,7 +30,7 @@ namespace DLX {
 namespace OpenACC {
 
 /*!
- * \ingroup grp_dlx_openacc_language
+ * \addtogroup grp_dlx_openacc_language
  *
 */
 struct language_t {

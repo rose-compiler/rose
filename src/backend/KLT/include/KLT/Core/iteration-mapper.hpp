@@ -11,6 +11,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel>
 class IterationMap {
   protected:
@@ -74,6 +79,8 @@ class IterationMapper {
       std::set<IterationMap<Kernel> *> & shapes
     ) const;
 };
+
+/** @} */
 
 }
 

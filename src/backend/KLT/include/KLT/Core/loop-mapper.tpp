@@ -9,6 +9,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 /** Very simple implementation of this method. It creates one Kernel per tree in the loop-trees.
  *  Then it select perfectly nested (fully parallel) loops for parallelisation.
  */
@@ -61,6 +66,9 @@ void LoopMapper<Kernel>::createKernels(
   kernel_lists.insert(kernel_list);
 }
 
+/** @} */
+
 }
 
 }
+

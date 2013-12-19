@@ -42,18 +42,12 @@ int main(int argc, char ** argv) {
       std::string filename = line.substr(pos, end_filename - pos);
       pos = end_filename + 1;
 
-      std::cout << "filename : " << filename << std::endl;
-
       size_t end_path = line.find_first_of(' ', pos);
       assert(end_path != std::string::npos);
       std::string path = line.substr(pos, end_path - pos);
       pos = end_path + 1;
 
-      std::cout << "path : " << path << std::endl;
-
       std::string extension = line.substr(pos);
-
-      std::cout << "extension : " << extension << std::endl;
 
       model_builder.addOne(model, filename, path, extension);
     }

@@ -11,6 +11,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel>
 IterationMap<Kernel>::IterationMap(typename Kernel::loop_mapping_t * loop_mapping) :
   p_loop_mapping(loop_mapping)
@@ -67,6 +72,9 @@ void IterationMapper<Kernel>::generateShapes(
   shapes.insert(new IterationMap<Kernel>(loop_mapping));
 }
 
+/** @} */
+
 }
 
 }
+

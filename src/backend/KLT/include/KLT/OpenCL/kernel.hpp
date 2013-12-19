@@ -18,6 +18,11 @@ template <typename Kernel> class IterationMap;
 
 namespace OpenCL {
 
+/*!
+ * \addtogroup grp_klt_ocl
+ * @{
+*/
+
 class Kernel : public virtual Core::Kernel {
   public:
     struct local_symbol_maps_t {
@@ -69,6 +74,8 @@ class Kernel : public virtual Core::Kernel {
     void setKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel> * iteration_map, a_kernel * kernel);
     a_kernel * getKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel> * iteration_map) const;
 };
+
+/** @} */
 
 }
 

@@ -4,7 +4,12 @@
 
 #include "MFB/Sage/driver.hpp"
 
-namespace MultiFileBuilder {
+namespace MFB {
+
+/*!
+ * \addtogroup grp_klt_mfb
+ * @{
+*/
 
 template <typename Object>
 class KLT {};
@@ -20,6 +25,8 @@ class KLT_Driver : public Driver<Sage>, public Driver<KLT> {
   public:
     KLT_Driver(SgProject * project_ = NULL);
 };
+
+/** @} */
 
 }
 

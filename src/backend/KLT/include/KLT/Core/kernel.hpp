@@ -13,6 +13,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 class Data;
 
 class Kernel {
@@ -89,6 +94,8 @@ class Kernel {
 };
 
 void collectReferencedSymbols(Kernel * kernel, std::set<SgVariableSymbol *> & symbols);
+
+/** @} */
 
 }
 

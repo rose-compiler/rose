@@ -16,6 +16,11 @@ namespace KLT {
 
 namespace OpenCL {
 
+/*!
+ * \addtogroup grp_klt_ocl
+ * @{
+*/
+
 class WorkSizeShape {
   protected:
     unsigned int p_number_dims;
@@ -107,6 +112,8 @@ class Dummy_WorkSizeShaper : public WorkSizeShaper {
       std::set<WorkSizeShape *> & shapes
     ) const;
 };
+
+/** @} */
 
 }
 

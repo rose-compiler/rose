@@ -13,6 +13,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 void append_access(SgExpression * exp, std::set<Data *> & access_set, const std::set<Data *> & datas);
 void compute_read_write(LoopTrees::node_t * tree, Kernel::dataflow_t & data_flow, const std::set<Data *> & datas);
 
@@ -72,6 +77,8 @@ void DataFlow<Kernel>::generateFlowSets(
 
   // TODO last set of equations...
 }
+
+/** @} */
 
 }
 

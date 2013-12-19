@@ -18,6 +18,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 class Data;
 
 class LoopTrees {
@@ -155,6 +160,8 @@ void collectExpressions(LoopTrees::node_t * tree, std::set<SgExpression *> & exp
 void collectIteratorSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols);
 
 void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children = true);
+
+/** @} */
 
 }
 

@@ -8,6 +8,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 class Data;
 class LoopTrees;
 
@@ -19,6 +24,8 @@ class DataFlow {
       const std::list<Kernel *> & kernels
     ) const;
 };
+
+/** @} */
 
 }
 

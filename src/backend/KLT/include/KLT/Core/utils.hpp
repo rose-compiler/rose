@@ -11,9 +11,16 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 void initAstFromString(std::ifstream & in_file);
 
 void ensure(char c);
+
+/** @} */
 
 }
 

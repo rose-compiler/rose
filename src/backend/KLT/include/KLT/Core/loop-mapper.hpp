@@ -9,6 +9,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel>
 class LoopMapper {
   public:
@@ -17,6 +22,8 @@ class LoopMapper {
       std::set<std::list<Kernel *> > & kernel_lists
     ) const;
 };
+
+/** @} */
 
 }
 

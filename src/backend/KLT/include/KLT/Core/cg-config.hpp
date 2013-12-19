@@ -8,6 +8,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 template <class Kernel> class LoopMapper;
 template <class Kernel> class IterationMapper;
 template <class Kernel> class DataFlow;
@@ -27,6 +32,8 @@ class CG_Config {
     const DataFlow<Kernel>        & getDataFlow()        const;
     const IterationMapper<Kernel> & getIterationMapper() const;
 };
+
+/** @} */
 
 }
 

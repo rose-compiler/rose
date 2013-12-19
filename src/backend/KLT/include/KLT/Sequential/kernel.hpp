@@ -16,6 +16,11 @@ template <typename Kernel> class IterationMap;
 
 namespace Sequential {
 
+/*!
+ * \addtogroup grp_klt_seq
+ * @{
+*/
+
 class Kernel : public virtual Core::Kernel {
   public:
     struct local_symbol_maps_t {
@@ -59,6 +64,8 @@ class Kernel : public virtual Core::Kernel {
     void setKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel> * iteration_map, a_kernel * kernel);
     a_kernel * getKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel> * iteration_map) const;
 };
+
+/** @} */
 
 }
 

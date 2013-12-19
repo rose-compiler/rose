@@ -24,6 +24,11 @@ namespace KLT {
 
 namespace Core {
 
+/*!
+ * \addtogroup grp_klt_core
+ * @{
+*/
+
 class Data;
 class LoopTrees;
 
@@ -58,6 +63,8 @@ class Generator {
 
     void generate(const LoopTrees & loop_trees, std::set<std::list<Kernel *> > & kernel_lists, const CG_Config<Kernel> & cg_config);
 };
+
+/** @} */
 
 }
 
