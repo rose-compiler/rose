@@ -109,8 +109,9 @@ redirect="yes"
 
 echo "$dbs_to_compute_for"
 
+DATE=`date +%m_%d_`
 results_db_name="results_db_$prefix"
-threshold_db_name="thresholds_$prefix"
+threshold_db_name="thresholds_$DATE$prefix"
 
 execute dropdb   $threshold_db_name
 execute createdb $threshold_db_name
@@ -146,7 +147,7 @@ do
       for min_insns in 100 50 20;
       do
 
-        for max_cluster_size in $(seq 1 1 100)
+        for max_cluster_size in -1 $(seq 2 1 100) ;
         do
           execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
                                                --min-insns=$min_insns \
@@ -167,9 +168,9 @@ do
             fscore="2*$precision*$recall/($precision+$recall)"
           fi
 
-          execute psql $threshold_db_name -c "insert into total_rates(sem_threshold, cg_threshold, path_threshold, \
+          execute psql $threshold_db_name -c "insert into total_rates(sem_threshold, cg_threshold, path_threshold, min_insns, max_cluster_size, \
             recall, precision, specificity, fscore) \
-            values ($sem_threshold, $cg_threshold, $path_threshold, $recall, $precision, $specificity, $fscore)" || exit 1
+            values ($sem_threshold, $cg_threshold, $path_threshold, $min_insns, $max_cluster_size, $recall, $precision, $specificity, $fscore)" || exit 1
 
 
           #compute recall, precision, etc over separate computations for Ox vs Oy
@@ -210,10 +211,8 @@ do
           fi
 
 
-
-
           execute psql $threshold_db_name -c "insert into rates_over_Ox_Oy_pairs(sem_threshold, cg_threshold, path_threshold, \
-            min_insns, max_cluster_size,
+            min_insns, max_cluster_size, \
             recall_min, recall_max, recall_mean, recall_standard_deviation, \
             specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, \
             precision_min, precision_max, precision_mean, precision_standard_deviation, \
