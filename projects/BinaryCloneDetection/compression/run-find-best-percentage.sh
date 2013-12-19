@@ -74,28 +74,32 @@ execute psql  $database -c "drop table IF EXISTS threshold_rates; create table t
           recall double precision, specificity double precision, precision double precision, \
           fscore double precision, true_positives integer, true_negatives integer, false_positives integer, false_negatives integer );"
 
-for THRESHOLD_TYPE in ncd_distance reuse_c_distance_1 reuse_c_distance_2 reuse_d_distance ; 
+for THRESHOLD_TYPE in reuse_d_distance_1 reuse_d_distance_2   ncd_distance reuse_c_distance_2 reuse_c_distance_1; 
 do
    MIN_DISTANCE=`psql $database -t -c "select min($THRESHOLD_TYPE) from specimen_comparison;"`
    MAX_DISTANCE=`psql $database -t -c "select max($THRESHOLD_TYPE) from specimen_comparison;"`
 
-   for THRESHOLD in $(seq $MIN_DISTANCE 0.05 $MAX_DISTANCE); 
+   SEQ_STEP=`echo "($MAX_DISTANCE-$MIN_DISTANCE)/20" | bc -l`
+
+
+
+   for THRESHOLD in $(seq $MIN_DISTANCE $SEQ_STEP `echo "$MAX_DISTANCE+$SEQ_STEP" | bc`); 
    do
 
      echo "Analyzing $THRESHOLD_TYPE with $THRESHOLD"
-     TRUE_POSITIVES=`psql $database -t -c "select count(*) from specimen_comparison where   program_name_1=program_name_2  AND base_name_1=base_name_2    AND $THRESHOLD_TYPE <= $THRESHOLD;"`
-     TRUE_NEGATIVES=`psql $database -t -c "select count(*) from specimen_comparison where ( program_name_1!=program_name_2  OR base_name_1!=base_name_2 ) AND $THRESHOLD_TYPE >  $THRESHOLD;"`
-     FALSE_POSITIVES=`psql $database -t -c "select count(*) from specimen_comparison where ( program_name_1!=program_name_2  OR base_name_1!=base_name_2 ) AND $THRESHOLD_TYPE <= $THRESHOLD;"`
-     FALSE_NEGATIVES=`psql $database -t -c "select count(*) from specimen_comparison where ( program_name_1=program_name_2  AND base_name_1=base_name_2  ) AND $THRESHOLD_TYPE >  $THRESHOLD;"`
+     TRUE_POSITIVES=`psql $database -t -c "select count(*) from specimen_comparison as sc join function_information as fi on sc.func_name_1=fi.id join function_information as fi2 on sc.func_name_2=fi2.id where   fi.program_name=fi2.program_name AND fi.base_name=fi2.base_name AND sc.$THRESHOLD_TYPE <= $THRESHOLD;"`
+     TRUE_NEGATIVES=`psql $database -t -c "select count(*) from specimen_comparison  as sc join function_information as fi on sc.func_name_1=fi.id join function_information as fi2 on sc.func_name_2=fi2.id where ( fi.program_name!=fi2.program_name  OR fi.base_name!=fi2.base_name ) AND sc.$THRESHOLD_TYPE >  $THRESHOLD;"`
+     FALSE_POSITIVES=`psql $database -t -c "select count(*) from specimen_comparison as sc join function_information as fi on sc.func_name_1=fi.id join function_information as fi2 on sc.func_name_2=fi2.id where ( fi.program_name!=fi2.program_name  OR fi.base_name!=fi2.base_name ) AND sc.$THRESHOLD_TYPE <= $THRESHOLD;"`
+     FALSE_NEGATIVES=`psql $database -t -c "select count(*) from specimen_comparison as sc join function_information as fi on sc.func_name_1=fi.id join function_information as fi2 on sc.func_name_2=fi2.id where ( fi.program_name=fi2.program_name  AND fi.base_name=fi2.base_name  ) AND sc.$THRESHOLD_TYPE >  $THRESHOLD;"`
 
-     if [ $TRUE_POSITIVES = 0 -a  $FALSE_NEGATIVES = 0  ];
+     if [ $TRUE_POSITIVES -eq 0 -a  $FALSE_NEGATIVES -eq 0  ];
      then
         RECALL="100.0"
      else 
         RECALL="100.0*$TRUE_POSITIVES/($TRUE_POSITIVES+$FALSE_NEGATIVES)"
      fi
 
-     if [ $TRUE_POSITIVES = 0 -a  $FALSE_POSITIVES = 0  ];
+     if [ $TRUE_POSITIVES -eq 0 -a  $FALSE_POSITIVES -eq 0  ];
      then
         PRECISION="100.0"
      else 
@@ -103,7 +107,7 @@ do
      fi
 
 
-     if [ $TRUE_NEGATIVES = 0 -a  $FALSE_POSITIVES = 0  ];
+     if [ $TRUE_NEGATIVES -eq 0 -a  $FALSE_POSITIVES -eq 0  ];
      then
        SPECIFICITY="100.0"
      else 
@@ -111,7 +115,9 @@ do
      fi
 
      echo "PRECISION IS $PRECISION AND RECALL IS $RECALL"
-     if [ `echo "$PRECISION" | bc` -eq 0 -a  `echo "$RECALL" | bc` -eq 0  ];
+     cur_precision=`echo "($PRECISION)>0" | bc -l`
+     cur_recall=`echo "($RECALL)>0" | bc -l`
+     if [  "12$cur_precision" -eq "120" -a "12$cur_recall" -eq "120" ];
      then
         FSCORE="0"
      else 
