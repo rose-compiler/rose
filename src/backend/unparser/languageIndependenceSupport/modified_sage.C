@@ -1693,6 +1693,12 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
           curprint(")))");
         }
 
+  // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c).
+     if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+        {
+          curprint( " __attribute__((packed))");
+        }
+
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
      if (functionDeclaration != NULL)
         {
