@@ -316,7 +316,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     newedges<<" [label=\"";
     newedges<<(*j)->target->constraints()->toString()<<"\"";
     if((*j)->source==(*j)->target)
-      newedges<<" color=red ";
+      newedges<<" color=black "; // self-edge-color
     newedges<<"];"<<endl;
       }
       newedges<<endl;
@@ -330,8 +330,10 @@ string Visualizer::transitionGraphWithIOToDot() {
       color="orange";
     if(labeler->isStdErrLabel(lab))
       color="orangered";
-    if((*i)->io.op==InputOutput::FAILED_ASSERT)
-       color="grey10";
+
+
+    if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
+       color="black";
     ss<<" color="<<color<<" style=\"filled\"";
     ss<<"];";
     ss<<endl;

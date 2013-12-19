@@ -12,7 +12,6 @@ using std::cout;
 using std::endl;
 
 namespace po = boost::program_options;
-using namespace CodeThorn;
 
 int main( int argc, char *argv[] ) {
   try {

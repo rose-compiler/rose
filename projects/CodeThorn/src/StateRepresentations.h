@@ -29,9 +29,7 @@ typedef int EStateId;
 
 //using namespace CodeThorn;
 
-using CodeThorn::VariableId;
 using CodeThorn::CppCapsuleAValue;
-using CodeThorn::Label;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using CodeThorn::Edge;
@@ -267,17 +265,19 @@ class EStateList : public list<EState> {
 class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
    typedef set<const Transition*> TransitionPtrSet;
- TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
+ TransitionGraph():_startLabel(Labeler::NO_LABEL),_numberOfNodes(0){}
   EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
   EStatePtrSet estateSetOfLabel(Label lab);
   EStatePtrSet estateSet();
   void add(Transition trans);
   string toString() const;
-  CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
+  LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   long removeDuplicates();
   Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
+  // this allows to deal with multiple start transitions (must share same start state)
+  const EState* getStartEState();
   Transition getStartTransition();
 #if 1
   void erase(TransitionGraph::iterator transiter);
@@ -298,6 +298,8 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   const Transition* hasSelfEdge(const EState* estate);
   // deletes EState and *deletes* all ingoing and outgoing transitions
   void eliminateEState(const EState* estate);
+  int eliminateBackEdges();
+  void determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet);
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet

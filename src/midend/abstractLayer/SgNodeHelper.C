@@ -11,7 +11,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace CodeThorn;
 
 /*! 
   * \author Markus Schordan
@@ -244,10 +243,10 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
 bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
-    // TODO: refine this to also check for name, paramters, etc.
-    if(isSgConditionalExp(node))
-      return true;
   }
+  // TODO: refine this to also check for name, paramters, etc.
+  if(isSgConditionalExp(node))
+	return true;
   return false;
 }
 

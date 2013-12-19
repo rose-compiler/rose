@@ -2,22 +2,18 @@
 #define LABELER_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
+ * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
-#include "Miscellaneous.h"
 
 using namespace std;
 
 #define NO_STATE -3
 #define NO_ESTATE -4
-
-namespace CodeThorn {
 
 typedef size_t Label;
 
@@ -163,7 +159,5 @@ class Labeler {
   VariableIdMapping* _variableIdMapping;
   bool _isValidMappingNodeToLabel;
 };
-
-} // end of namespace CodeThorn
 
 #endif

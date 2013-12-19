@@ -1,18 +1,23 @@
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
-
-#include "sage3basic.h"
 
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
 
 using std::set;
-using namespace CodeThorn;
 
+SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
+  SgSymbol* varSym=getSymbol(varId);
+  return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(varSym));
+}
+
+SgType* VariableIdMapping::getType(VariableId varId) {
+  SgSymbol* varSym=getSymbol(varId);
+  return varSym->get_type();
+}
 
 /*! 
   * \author Markus Schordan
@@ -334,7 +339,10 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
  */
 string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
-    return variableName(varId)+"_"+varId.toString().substr(1);
+    if(!varId.isValid())
+      return "$invalidId";
+    else
+      return variableName(varId)+"_"+varId.toString().substr(1);
     //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
     return string("tmp")+"_"+varId.toString().substr(1);
@@ -481,13 +489,13 @@ VariableId::longVariableName() const {
 }
 #endif
 
-bool CodeThorn::operator<(VariableId id1, VariableId id2) {
+bool operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;
 }
-bool CodeThorn::operator==(VariableId id1, VariableId id2) {
+bool operator==(VariableId id1, VariableId id2) {
   return id1._id==id2._id;
 }
-bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
+bool operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
@@ -495,7 +503,7 @@ bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   * \author Markus Schordan
   * \date 2012.
  */
-size_t hash_value(const CodeThorn::VariableId& vid) {
+size_t hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 

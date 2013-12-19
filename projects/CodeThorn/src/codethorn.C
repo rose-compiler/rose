@@ -385,6 +385,8 @@ string readableruntime(double time) {
   return s.str();
 }
 
+static Analyzer* global_analyzer=0;
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -422,8 +424,6 @@ int main( int argc, char * argv[] ) {
     ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
     ("report-failed-assert",po::value< string >(),
      "report failed assert estates during analysis [=yes|no]")
-    ("precision-intbool",po::value< string >(),
-     "use precise top with intbool-(and/or) operators (used in int-analyzer) [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
@@ -436,7 +436,6 @@ int main( int argc, char * argv[] ) {
     ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
-    ("reset-state-on-input",po::value< string >(),"Resets all current state to empty state on input input. Default is No. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
@@ -447,10 +446,9 @@ int main( int argc, char * argv[] ) {
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
     ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
     ("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
-    ("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
-    ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+    ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
+    ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
-    ("assign-top",po::value< string >(),"Assignment always evaluate to top [=yes|no]")
     ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
@@ -462,6 +460,9 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
+    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
+    ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
+    ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -494,7 +495,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("report-stdout",false);
   boolOptions.registerOption("report-stderr",false);
   boolOptions.registerOption("report-failed-assert",false);
-  boolOptions.registerOption("precision-intbool",true);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
@@ -506,7 +506,6 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
-  boolOptions.registerOption("reset-state-on-input",false);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",true);
   boolOptions.registerOption("print-all-options",false);
@@ -519,16 +518,16 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
-  boolOptions.registerOption("input-var-values-as-constraints",false);
+  boolOptions.registerOption("input-values-as-constraints",false);
 
   boolOptions.registerOption("arith-top",false);
-  boolOptions.registerOption("assign-top",false);
   boolOptions.registerOption("abstract-interpreter",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
   boolOptions.registerOption("stderr-like-failed-assert",false);
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);
+  boolOptions.registerOption("eliminate-stg-back-edges",false);
 
   boolOptions.processOptions();
 
@@ -544,45 +543,24 @@ int main( int argc, char * argv[] ) {
   }
 
   Analyzer analyzer;
+  global_analyzer=&analyzer;
   
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
-    for (int i=1; i<argc; ++i) {
-      if ((string(argv[i]) == "--verify") || 
-          (string(argv[i]) == "--csv-ltl")) {
-        // do not confuse ROSE frontend
-        argv[i] = strdup("");
-        assert(i+1<argc);
-        argv[i+1] = strdup("");
-      }
-    }
   }
   if(args.count("csv-assert-live")) {
     analyzer._csv_assert_live_file=args["csv-assert-live"].as<string>();
   }
 
-  if(args.count("input-var-values")) {
-    string setstring=args["input-var-values"].as<string>();
-    cout << "STATUS: input-var-values="<<setstring<<endl;
-    stringstream ss(setstring);
-    if(ss.peek()=='{')
-      ss.ignore();
-    else
-      throw "Error: option input-var-values: wrong input format (at start).";
-    int i;
-    while(ss>>i) {
-      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
-      analyzer.insertInputVarValue(i);
-      if(ss.peek()==','||ss.peek()==' ')
-        ss.ignore();
-    }
-#if 0
-    if(ss.peek()=='}')
-      ss.ignore();
-    else
-      throw "Error: option input-var-values: wrong input format (at end).";
-#endif
+  if(args.count("input-values")) {
+    string setstring=args["input-values"].as<string>();
+    cout << "STATUS: input-values="<<setstring<<endl;
+
+	set<int> intSet=Parse::integerSet(setstring);
+	for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
+	  analyzer.insertInputVarValue(*i);
+	}
   }
 
   if(args.count("rersformat")) {
@@ -594,6 +572,17 @@ int main( int argc, char * argv[] ) {
     // otherwise it remains RF_UNKNOWN
   }
 
+  if(args.count("exploration-mode")) {
+    string explorationMode=args["exploration-mode"].as<string>();
+	if(explorationMode=="depth-first")
+	  analyzer.setExplorationMode(Analyzer::EXPL_DEPTH_FIRST);
+	else if(explorationMode=="breadth-first") {
+	  analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+	} else {
+	  cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
+	  exit(1);
+	}
+  }
   if(args.count("max-transitions")) {
     analyzer.setMaxTransitions(args["max-transitions"].as<int>());
   }
@@ -631,9 +620,12 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--csv-assert-live"
         || string(argv[i])=="--threads" 
         || string(argv[i])=="--display-diff"
-        || string(argv[i])=="--input-var-values"
+        || string(argv[i])=="--input-values"
         || string(argv[i])=="--ltl-verifier"
         || string(argv[i])=="--dot-io-stg"
+        || string(argv[i])=="--verify"
+        || string(argv[i])=="--csv-ltl"
+        || string(argv[i])=="--spot-stg"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -654,7 +646,7 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["semantic-explosion"]) {
     boolOptions.registerOption("semantic-fold",true);
-    boolOptions.registerOption("semantic-elimination",true);
+    //boolOptions.registerOption("semantic-elimination",true);
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
@@ -726,13 +718,24 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
+
+	analyzer.reachabilityResults.printResults();
+#if 0
   // TODO: reachability in presence of semantic folding
-  if(!boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
+  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+
+  } else {
     printAsserts(analyzer,sageProject);
   }
+#endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-    generateAssertsCsvFile(analyzer,sageProject,filename);
+	switch(resultsFormat) {
+	case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
+	case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
+	default: assert(0);
+	}
+	//	OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
@@ -748,6 +751,11 @@ int main( int argc, char * argv[] ) {
     cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "=============================================================="<<endl;
   }
+  if(boolOptions["eliminate-stg-back-edges"]) {
+	int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
+	cout<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
+  }
+
   timer.start();
   if (ltl_file.size()) {
     generateLTLOutput(analyzer,ltl_file);
@@ -755,11 +763,11 @@ int main( int argc, char * argv[] ) {
   }
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-      cout << "NOTE: no reachability results with semantic folding (not implemented yet)."<<endl;
-    } else {
-      printAssertStatistics(analyzer,sageProject);
-    }
+  //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
+	analyzer.reachabilityResults.printResultsStatistics();
+	//  } else {
+	//printAssertStatistics(analyzer,sageProject);
+	//}
   cout << "=============================================================="<<endl;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
@@ -875,7 +883,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("dot-io-stg")) {
-    string filename=args["dot-io-stg"].as<string>().c_str();
+    string filename=args["dot-io-stg"].as<string>();
     cout << "generating dot IO graph file:"<<filename<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphWithIOToDot();
@@ -883,6 +891,17 @@ int main( int argc, char * argv[] ) {
     write_file(filename, dotFile);
     cout << "=============================================================="<<endl;
   }
+
+  if (args.count("spot-stg")) {
+    string filename=args["spot-stg"].as<string>();
+    cout << "generating spot IO STG file:"<<filename<<endl;
+    string spotSTG=analyzer.generateSpotSTG();
+    write_file(filename, spotSTG);
+    cout << "=============================================================="<<endl;
+  }
+
+
+
 
 #if 0
   {

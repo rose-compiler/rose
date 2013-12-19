@@ -1,17 +1,13 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
 
 #include "Labeler.h"
 #include "SgNodeHelper.h"
-#include "AstTerm.h"
+//#include "AstTerm.h"
 #include <sstream>
-
-using namespace CodeThorn;
 
 LabelProperty::LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
 }

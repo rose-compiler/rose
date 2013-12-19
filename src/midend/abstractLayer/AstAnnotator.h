@@ -10,8 +10,6 @@ using std::string;
 #include "DFAstAttribute.h"
 #include "Labeler.h"
 
-using namespace CodeThorn;
-
 /*! 
   * \author Markus Schordan
   * \date 2013.

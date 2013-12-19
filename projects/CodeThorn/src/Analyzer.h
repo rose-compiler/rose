@@ -22,6 +22,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "ReachabilityResults.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -105,7 +106,7 @@ namespace CodeThorn {
     int semanticEliminationOfSelfInInTransitions();
     // eliminates only input states
     int semanticEliminationOfDeadStates();
-    int semanticFoldingOfInInTransitions();
+    int semanticFusionOfInInTransitions();
     // requires semantically reduced STG
     int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
@@ -133,7 +134,10 @@ namespace CodeThorn {
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    
+    string generateSpotSTG();
+  private:
+    void generateSpotTransition(stringstream& ss, const Transition& t);
+  public:
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -181,8 +185,11 @@ namespace CodeThorn {
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
-      assert(labelName.size()>0);
+      //assert(labelName.size()>0);
       return labelName;
+    }
+    bool isCppLabeledAssertLabel(Label lab) {
+      return labelNameOfAssertLabel(lab).size()>0;
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;
@@ -208,6 +215,10 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     bool isIncompleteSTGReady();
+	ReachabilityResults reachabilityResults;
+	int reachabilityAssertCode(const EState* currentEStatePtr);
+	enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
+	void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -228,6 +239,7 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
     bool _treatStdErrLikeFailedAssert;
+	ExplorationMode _explorationMode;
   };
   
 } // end of namespace CodeThorn
