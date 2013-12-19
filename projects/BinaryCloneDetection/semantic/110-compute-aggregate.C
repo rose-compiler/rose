@@ -257,15 +257,17 @@ find_clusters(int max_cluster_size, SqlDatabase::TransactionPtr transaction)
     else
       ++it->second;
 
-    for( std::vector<int>::iterator it = cluster_functions.begin(); it != cluster_functions.end(); ++it  )
-    {
-      for( std::vector<int>::iterator it2 = it; it2 != cluster_functions.end(); ++it2  ){
-        insert_stmt->bind(0, *it);
-        insert_stmt->bind(1, *it2);
-        insert_stmt->bind(2, cluster_functions.size());
-        insert_stmt->execute();
-      }
+    if( max_cluster_size < cluster_functions.size() ){
+	    for( std::vector<int>::iterator it = cluster_functions.begin(); it != cluster_functions.end(); ++it  )
+	    {
+		    for( std::vector<int>::iterator it2 = it; it2 != cluster_functions.end(); ++it2  ){
+			    insert_stmt->bind(0, *it);
+			    insert_stmt->bind(1, *it2);
+			    insert_stmt->bind(2, cluster_functions.size());
+			    insert_stmt->execute();
+		    }
 
+	    }
     }
 
   }
