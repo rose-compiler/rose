@@ -117,7 +117,7 @@ create table fr_clone_pairs as
   --AND sim.path_max_euclidean_d_ratio - sim.path_min_euclidean_d_ratio < 0.5
   --AND sim.path_max_euclidean_d_ratio < 3.0
   except(
-      select func1_id, func2_id from fr_ignored_function_pairs where from_cluster_of_size > (select max_cluster_size from fr_settings)
+      select func1_id, func2_id from fr_ignored_function_pairs 
   )
   ;
 
