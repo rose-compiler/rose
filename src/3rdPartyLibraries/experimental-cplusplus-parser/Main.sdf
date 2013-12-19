@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
 %% and extended with rules covering the GNU compiler extensions (superset)                          %%
-%% Version 1.0                                                                                      %%
+%% Version: 1.2                                                                                     %%
 %% Author: Markus Schordan, 2013.                                                                   %%
 %% Copyright: Lawrence Livermore National Laboratory                                                %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,6 +29,7 @@ Attribute
 Attribute-argument-clause
 Attribute-declaration
 Attribute-list
+Attribute-namespace
 Attribute-scoped-token
 Attribute-specifier
 Attribute-specifier-seq
@@ -121,6 +122,7 @@ Handler
 Handler-seq
 Id-expression
 Inclusive-or-expression
+Init-capture
 Init-declarator
 Init-declarator-list
 Initializer
@@ -187,6 +189,7 @@ Ref-qualifier
 Relational-expression
 Selection-statement
 Shift-expression
+Simple-capture
 Simple-declaration
 Simple-template-id
 Simple-type-specifier
@@ -222,6 +225,7 @@ Unqualified-id
 Using-declaration
 Using-directive
 Virt-specifier
+Virt-specifier-seq
 
 
 context-free syntax
@@ -701,7 +705,7 @@ GNU-asm-definition ";" 					-> Asm-definition %% GNU-extended asm
 "extern" String-literal GNU-typeof-extension? "{" Declaration-seq? "}"	-> Linkage-specification
 "extern" String-literal GNU-typeof-extension? Declaration		-> Linkage-specification
 
-Attribute-specififer-seq? Attribute-specifier		-> Attribute-specifier-seq
+Attribute-specifier-seq? Attribute-specifier		-> Attribute-specifier-seq
 
 "[" "[" Attribute-list "]" "]"				-> Attribute-specifier
 Alignment-specifier					-> Attribute-specifier
@@ -720,6 +724,8 @@ Identifier						-> Attribute-token
 Attribute-scoped-token					-> Attribute-token
 
 Attribute-namespace "::" Identifier			-> Attribute-scoped-token
+
+Identifier						-> Attribute-namespace
 
 "(" Balanced-token-seq ")" 				-> Attribute-argument-clause
 
@@ -743,7 +749,7 @@ Init-declarator-list "," Init-declarator 				-> Init-declarator-list
 Declarator GNU-attribute-list? GNU-asm-definition? Initializer?			-> Init-declarator
 
 Ptr-declarator								-> Declarator
-Noptr-declarator Parameters-and-qualifiers Trailing-Return-Type 	-> Declarator
+Noptr-declarator Parameters-and-qualifiers Trailing-return-type 	-> Declarator
 
 Noptr-declarator							-> Ptr-declarator
 Ptr-operator GNU-restrict? Ptr-declarator				-> Ptr-declarator
@@ -864,7 +870,7 @@ Function-definition ";"? 							-> Member-declaration
 Using-declaration 								-> Member-declaration
 Static-assert-declaration 							-> Member-declaration
 Template-declaration 								-> Member-declaration
-Alias-Declaration 								-> Member-declaration
+Alias-declaration 								-> Member-declaration
 
 Member-declarator 						-> Member-declarator-list
 Member-declarator-list "," Member-declarator 			-> Member-declarator-list
@@ -873,10 +879,13 @@ Declarator Virt-specifier-seq? Pure-specifier? 			-> Member-declarator
 Declarator Brace-or-equal-initializer? 				-> Member-declarator
 Identifier? Attribute-specifier-seq? ":" Constant-expression 	-> Member-declarator
 
-"override" -> Virt-specifier
-"final" -> Virt-specifier
+Virt-specifier							-> Virt-specifier-seq
+Virt-specifier-seq Virt-specifier				-> Virt-specifier-seq
 
-"=" "0" -> Pure-specifier
+"override"							-> Virt-specifier
+"final"								-> Virt-specifier
+
+"=" "0"								-> Pure-specifier
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -907,11 +916,11 @@ Class-or-decltype -> Base-type-specifier
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-"operator" Conversion-type-id -> Conversion-function-id
+"operator" Conversion-type-id			-> Conversion-function-id
 
-Type-specifier-seq Conversion-declarator? -> Conversion-type-id
+Type-specifier-seq Conversion-declarator?	-> Conversion-type-id
 
-Ptr-operator Conversion-declarator? -> Conversion-declarator
+Ptr-operator Conversion-declarator?		-> Conversion-declarator
 
 ":" Mem-initializer-list 			-> Ctor-initializer
 
