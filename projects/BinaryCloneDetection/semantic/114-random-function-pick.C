@@ -92,8 +92,8 @@ evaluate_random_function(int random_fid)
   int total_matches = transaction->statement("SELECT count(*) from tmp_clone_pairs where func1_id = " + boost::lexical_cast<std::string>(random_fid) +
       " OR func2_id = " + boost::lexical_cast<std::string>(random_fid) )->execute_int();
 
-  int matches_with_same_name = transaction->statement("SELECT count(*) from tmp_clone_pairs where func1_id = " + boost::lexical_cast<std::string>(random_fid) +
-      " OR func2_id = " + boost::lexical_cast<std::string>(random_fid) + " AND func1_name = func2_name " )->execute_int();
+  int matches_with_same_name = transaction->statement("SELECT count(*) from tmp_clone_pairs where ( func1_id = " + boost::lexical_cast<std::string>(random_fid) +
+      " OR func2_id = " + boost::lexical_cast<std::string>(random_fid) + " ) AND func1_name = func2_name " )->execute_int();
 
 
 
