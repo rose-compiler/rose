@@ -10,10 +10,10 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=10_
+DB_PREFIX=ten_
 
 # Try to drop the database ('yes' or 'no')?
-DROP_DB=yes
+DROP_DB=no
 
 # Create the database ('yes' or 'no')?  If 'no' then the analysis is skipped, which is a convenient way to drop a whole bunch
 # of databases that you no longer want.  If 'yes' and the creation fails, then the analysis is skipped--either the database
@@ -79,14 +79,14 @@ generate_api_config() {
 
 # Find the names of the directories containing target directories. Target directories are O0, O1, O2, or O3
 SEARCH_DIR="${1-.}"
-TARGET_DIRS=$(find "$SEARCH_DIR" -type d -name '[Olgs][0123]' |perl -p -e 's((.*)/[Olgs][0123]$)($1)' |sort |uniq)
+TARGET_DIRS=$(find "$SEARCH_DIR" -type d -name '[Olgst][0123s]' |perl -p -e 's((.*)/[Olgst][0123s]$)($1)' |sort |uniq)
 [ -n "$TARGET_DIRS" ] || die "no target directories found in $SEARCH_DIR"
 
 for TARGET_DIR in $TARGET_DIRS; do
     TARGET_NAME=$(basename $TARGET_DIR)
 
     # What optimizations are present?
-    OPTIM_DIRS=$(find "$TARGET_DIR" -type d -name '[Olgs][0123]')
+    OPTIM_DIRS=$(find "$TARGET_DIR" -type d -name '[Olgst][0123s]')
     if [ ! "$OPTIM_DIRS" ]; then
 	echo "no optimization directories (O0, O1, O2, O3) in $TARGET_DIR"
 	continue
