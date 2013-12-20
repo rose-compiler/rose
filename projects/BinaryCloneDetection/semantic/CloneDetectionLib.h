@@ -1275,7 +1275,7 @@ public:
                 OutputGroup::value_type v1 = 0;
                 MemoryCells::const_iterator ci2=ci;
                 for (size_t i=0; i<mval.first_of_n && ci2!=memory.end(); ++i, ++ci2) {
-                    if (ci2->first != addr+i)
+                    if (ci2->first != addr+i || (i>0 && ci2->second.first_of_n!=0) || !is_memory_output(ci2->first, ci2->second))
                         break;
                     v1 |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
                 }
@@ -1304,7 +1304,7 @@ public:
     }
     void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
         this->registers.print(o, fmt);
-        size_t ncells=0, max_ncells=100;
+        size_t ncells=0, max_ncells=500;
         o <<"== Memory ==\n";
         for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
             uint32_t addr = ci->first;
@@ -1312,14 +1312,17 @@ public:
             if (++ncells>max_ncells) {
                 o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
-        }
-        o <<"         cell access:"
-          <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
-          <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-          <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
-          <<"\n"
-          <<"    address " <<addr <<"\n";
-        o <<"      value " <<mval.val <<"\n";
+            }
+            o <<"    mem[" <<StringUtility::addrToString(addr) <<"] = " <<StringUtility::addrToString(mval.val, 8);
+            if (mval.first_of_n) {
+                o <<" 1/" <<mval.first_of_n;
+            } else {
+                o <<"    ";
+            }
+            o <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+              <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" write")
+              <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" init":"")
+              <<"\n";
       }
     }
 
