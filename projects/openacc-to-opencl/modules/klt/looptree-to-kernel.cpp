@@ -19,9 +19,9 @@
 //#include "sage3basic.h"
 
 namespace DLX {
-  template <class Lang> class KLT_Data;
-  template <class Lang> class KLT_Region;
-  template <class Lang> class KLT_Loop;
+  template <class Lang> class KLT_Data {};
+  template <class Lang> class KLT_Region {};
+  template <class Lang> class KLT_Loop {};
 }
 
 int main(int argc, char ** argv) {
@@ -33,13 +33,7 @@ int main(int argc, char ** argv) {
       DLX::KLT_Loop   <DLX::OpenACC::language_t>
   > loop_trees;
 
-  std::list<SgVariableSymbol *> parameter_order;
-  std::pair<
-      std::list< KLT::Data<DLX::KLT_Data<DLX::OpenACC::language_t> > *>,
-      std::list< KLT::Data<DLX::KLT_Data<DLX::OpenACC::language_t> > *>
-  > inout_data_order;
-
-  loop_trees.read(argv[1], parameter_order, inout_data_order);
+  loop_trees.read(argv[1]);
 /*
   SgProject * project = new SgProject::SgProject();
   { // Add default command line to an empty project

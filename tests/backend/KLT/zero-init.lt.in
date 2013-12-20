@@ -1,8 +1,0 @@
-params(n)
-data(A[0:n], flow-out)
-loop-trees(
-  loop(
-    i, 0, n-1, parfor,
-    stmt(A[i]=0;)
-  )
-)

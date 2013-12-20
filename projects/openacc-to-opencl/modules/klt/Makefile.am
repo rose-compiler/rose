@@ -18,3 +18,6 @@ looptree_to_kernel_LDADD = \
 
 check-local: looptree-to-kernel
 
+$(top_builddir)/src/backend/KLT/lib/libKLT.la:
+	make -C $(top_builddir)/src/backend/KLT/lib libKLT.la
+

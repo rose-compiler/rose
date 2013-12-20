@@ -1,6 +1,6 @@
 params(n)
 scalar(offset)
-data(a, float, shape1d(0, n), openacc(copy))
+data(a, float, section(1, 0, n), openacc(copy))
 region(
   openacc(nbr_gang,nbr_worker,nbr_vector),
   loop(

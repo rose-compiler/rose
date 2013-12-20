@@ -1771,13 +1771,7 @@ src/backend/KLT/docs/doxygen/Makefile
 src/backend/KLT/docs/doxygen/doxy.conf
 src/backend/KLT/include/Makefile
 src/backend/KLT/include/KLT/Makefile
-src/backend/KLT/include/KLT/Core/Makefile
-src/backend/KLT/include/KLT/Sequential/Makefile
-src/backend/KLT/include/KLT/OpenCL/Makefile
 src/backend/KLT/lib/Makefile
-src/backend/KLT/lib/core/Makefile
-src/backend/KLT/lib/sequential/Makefile
-src/backend/KLT/lib/opencl/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2162,8 +2156,6 @@ tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
-tests/backend/Makefile
-tests/backend/KLT/Makefile
 tests/midend/Makefile
 tests/midend/MFB/Makefile
 tests/midend/MDCG/Makefile
