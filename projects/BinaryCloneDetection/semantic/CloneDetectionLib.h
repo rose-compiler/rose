@@ -1257,7 +1257,7 @@ public:
                 OutputGroup::value_type v1 = 0;
                 MemoryCells::const_iterator ci2=ci;
                 for (size_t i=0; i<mval.first_of_n && ci2!=memory.end(); ++i, ++ci2) {
-                    if (ci2->first != addr+i)
+                    if (ci2->first != addr+i || (i>0 && ci2->second.first_of_n!=0) || !is_memory_output(ci2->first, ci2->second))
                         break;
                     v1 |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
                 }
