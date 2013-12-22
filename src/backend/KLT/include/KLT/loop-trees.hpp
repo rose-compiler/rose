@@ -32,7 +32,7 @@ namespace KLT {
 
 template <class Annotation> class Data;
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+template <class Annotation>
 class LoopTrees {
   public:
     struct node_t {
@@ -50,7 +50,7 @@ class LoopTrees {
       SgExpression * lower_bound;
       SgExpression * upper_bound;
 
-      std::vector<LoopAnnotation> annotations;
+      std::vector<Annotation> annotations;
 
       std::list<node_t *> children;
 
@@ -77,7 +77,7 @@ class LoopTrees {
     std::list<node_t *> p_trees;
 
     /// Datas used by loop trees
-    std::set<Data<DataAnnotation> *> p_datas;
+    std::set<Data<Annotation> *> p_datas;
 
     /// Coefficiants (constant values) used in the sequence loop trees
     std::set<SgVariableSymbol *> p_scalar;
@@ -86,12 +86,12 @@ class LoopTrees {
     std::set<SgVariableSymbol *> p_parameters;
 
   public:
-    std::vector<RegionAnnotation> annotations;
+    std::vector<Annotation> annotations;
 
   public:
     const std::list<node_t *> & getTrees() const;
 
-    const std::set<Data<DataAnnotation> *> getDatas() const;
+    const std::set<Data<Annotation> *> getDatas() const;
 
     const std::set<SgVariableSymbol *> getScalar() const;
     const std::set<SgVariableSymbol *> getParameters() const;
@@ -104,7 +104,7 @@ class LoopTrees {
     void addTree(node_t * tree);
 
     /// Add a data used by loop trees
-    void addData(Data<DataAnnotation> * data);
+    void addData(Data<Annotation> * data);
 
     /// Add a coefficient of the sequence of loop trees
     void addScalar(SgVariableSymbol * var_sym);
@@ -127,30 +127,30 @@ class LoopTrees {
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+template <class Annotation>
+void parseParams(LoopTrees<Annotation> & loop_trees);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseScalars(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+template <class Annotation>
+void parseScalars(LoopTrees<Annotation> & loop_trees);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+template <class Annotation>
+void parseDatas(LoopTrees<Annotation> & loop_trees);
 
-template <class DataAnnotation>
-void parseDataAnnotations(Data<DataAnnotation> * data);
+template <class Annotation>
+void parseDataAnnotations(Data<Annotation> * data);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseRegionAnnotations(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+template <class Annotation>
+void parseRegionAnnotations(LoopTrees<Annotation> & loop_trees);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseLoopAnnotations(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop);
+template <class Annotation>
+void parseLoopAnnotations(typename LoopTrees<Annotation>::loop_t * loop);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * parseLoopTreesNode();
+template <class Annotation>
+typename LoopTrees<Annotation>::node_t * parseLoopTreesNode();
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+template <class Annotation>
 void printLoopAnnotations(
-  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop,
+  typename LoopTrees<Annotation>::loop_t * loop,
   std::ostream & out,
   std::string indent
 );
@@ -163,41 +163,41 @@ SgExpression * translateConstExpression(
   const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
 );
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+template <class Annotation>
 SgStatement * generateStatement(
-  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * node,
+  typename LoopTrees<Annotation>::node_t * node,
   const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
   const std::map<SgVariableSymbol *, SgVariableSymbol *> & coef_to_local,
-  const std::map<Data<DataAnnotation> *, SgVariableSymbol *> & data_to_local,
+  const std::map<Data<Annotation> *, SgVariableSymbol *> & data_to_local,
   const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local,
   bool generate_in_depth = false,
   bool flatten_array_ref = true
 );
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void collectLeaves(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree, std::set<SgStatement *> & leaves);
+template <class Annotation>
+void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void collectExpressions(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree, std::set<SgExpression *> & exprs);
+template <class Annotation>
+void collectExpressions(typename LoopTrees<Annotation>::node_t * tree, std::set<SgExpression *> & exprs);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void collectIteratorSymbols(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols);
+template <class Annotation>
+void collectIteratorSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols);
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void collectReferencedSymbols(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children = true);
+template <class Annotation>
+void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children = true);
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t::node_t() :
+template <class Annotation>
+LoopTrees<Annotation>::node_t::node_t() :
   parent(NULL)
 {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t::~node_t() {}
+template <class Annotation>
+LoopTrees<Annotation>::node_t::~node_t() {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t::loop_t(
+template <class Annotation>
+LoopTrees<Annotation>::loop_t::loop_t(
   SgVariableSymbol * it,
   SgExpression * lb,
   SgExpression * ub
@@ -210,20 +210,20 @@ LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t::loop_t(
   children()
 {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t::~loop_t() {}
+template <class Annotation>
+LoopTrees<Annotation>::loop_t::~loop_t() {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::stmt_t::stmt_t(SgStatement * stmt) :
+template <class Annotation>
+LoopTrees<Annotation>::stmt_t::stmt_t(SgStatement * stmt) :
   node_t(),
   statement(stmt)
 {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::stmt_t::~stmt_t() {}
+template <class Annotation>
+LoopTrees<Annotation>::stmt_t::~stmt_t() {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(node_t * node, std::ostream & out, std::string indent) {
+template <class Annotation>
+void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::string indent) {
   loop_t * loop = dynamic_cast<loop_t *>(node);
   stmt_t * stmt = dynamic_cast<stmt_t *>(node);
   
@@ -236,7 +236,7 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(node_t 
         << loop->lower_bound->unparseToString()   << ", "
         << loop->upper_bound->unparseToString()   << ", ";
 
-    printLoopAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(loop, out, indent);
+    printLoopAnnotations<Annotation>(loop, out, indent);
     
     typename std::list<node_t *>::const_iterator it_child = loop->children.begin();
     toText(*it_child, out, indent + "  ");
@@ -254,21 +254,21 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(node_t 
   }
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-const std::list<typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t *> & 
-                    LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getTrees() const { return p_trees; }
+template <class Annotation>
+const std::list<typename LoopTrees<Annotation>::node_t *> & 
+                    LoopTrees<Annotation>::getTrees() const { return p_trees; }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-const std::set<Data<DataAnnotation> *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getDatas() const { return p_datas; }
+template <class Annotation>
+const std::set<Data<Annotation> *> LoopTrees<Annotation>::getDatas() const { return p_datas; }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-const std::set<SgVariableSymbol *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getScalar() const { return p_scalar; }
+template <class Annotation>
+const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getScalar() const { return p_scalar; }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-const std::set<SgVariableSymbol *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getParameters() const { return p_parameters; }
+template <class Annotation>
+const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getParameters() const { return p_parameters; }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::LoopTrees() :
+template <class Annotation>
+LoopTrees<Annotation>::LoopTrees() :
   p_trees(),
   p_datas(),
   p_scalar(),
@@ -276,23 +276,23 @@ LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::LoopTrees() :
   annotations()
 {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::~LoopTrees() {}
+template <class Annotation>
+LoopTrees<Annotation>::~LoopTrees() {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addTree(node_t * tree) { p_trees.push_back(tree); }
+template <class Annotation>
+void LoopTrees<Annotation>::addTree(node_t * tree) { p_trees.push_back(tree); }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addData(Data<DataAnnotation> * data) { p_datas.insert(data); }
+template <class Annotation>
+void LoopTrees<Annotation>::addData(Data<Annotation> * data) { p_datas.insert(data); }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addScalar(SgVariableSymbol * var_sym) { p_scalar.insert(var_sym); }
+template <class Annotation>
+void LoopTrees<Annotation>::addScalar(SgVariableSymbol * var_sym) { p_scalar.insert(var_sym); }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
+template <class Annotation>
+void LoopTrees<Annotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(char * filename) const {
+template <class Annotation>
+void LoopTrees<Annotation>::toText(char * filename) const {
   std::ofstream file;
   file.open(filename);
   assert(file.is_open());
@@ -300,10 +300,10 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(char * 
   file.close();
 }
    
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> 
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(std::ostream & out) const {
+template <class Annotation> 
+void LoopTrees<Annotation>::toText(std::ostream & out) const {
   std::set<SgVariableSymbol *>::const_iterator it_sym;
-  typename std::set<Data<DataAnnotation> *>::const_iterator it_data;
+  typename std::set<Data<Annotation> *>::const_iterator it_data;
   typename std::list<node_t *>::const_iterator it_tree;
 
   if (!p_parameters.empty()) {
@@ -339,8 +339,8 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(std::os
   out << std::endl << ")" << std::endl;
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> 
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(char * filename) {
+template <class Annotation> 
+void LoopTrees<Annotation>::read(char * filename) {
   std::ifstream in_file;
   in_file.open(filename);
 
@@ -351,26 +351,26 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(char * fi
   in_file.close();
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> 
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(std::ifstream & in_file) {
+template <class Annotation> 
+void LoopTrees<Annotation>::read(std::ifstream & in_file) {
   initAstFromString(in_file);
 
-  parseParams<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+  parseParams<Annotation>(*this);
 
-  parseScalars<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+  parseScalars<Annotation>(*this);
 
-  parseDatas<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+  parseDatas<Annotation>(*this);
 
   if (AstFromString::afs_match_substr("region")) {
 
     ensure('(');
 
-    parseRegionAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+    parseRegionAnnotations<Annotation>(*this);
 
     ensure(',');
 
     do {
-      LoopTrees::node_t * lt_node = parseLoopTreesNode<DataAnnotation, RegionAnnotation, LoopAnnotation>();
+      LoopTrees::node_t * lt_node = parseLoopTreesNode<Annotation>();
       assert(lt_node != NULL);
       addTree(lt_node);
 
@@ -386,8 +386,8 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(std::ifst
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
+template <class Annotation>
+void parseParams(LoopTrees<Annotation> & loop_trees) {
   while (AstFromString::afs_match_substr("param")) {
     ensure('(');
 
@@ -412,8 +412,8 @@ void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & l
   AstFromString::afs_skip_whitespace();
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseScalars(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
+template <class Annotation>
+void parseScalars(LoopTrees<Annotation> & loop_trees) {
   while (AstFromString::afs_match_substr("scalar")) {
 
     ensure('(');
@@ -439,8 +439,8 @@ void parseScalars(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & 
   AstFromString::afs_skip_whitespace();
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
+template <class Annotation>
+void parseDatas(LoopTrees<Annotation> & loop_trees) {
   while (AstFromString::afs_match_substr("data")) {
 
     ensure('(');
@@ -494,7 +494,7 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
     SgVariableSymbol * var_sym = isSgVariableSymbol(data_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
     assert(var_sym != NULL);
 
-    Data<DataAnnotation> * data = new Data<DataAnnotation>(var_sym);
+    Data<Annotation> * data = new Data<Annotation>(var_sym);
 
     std::list<std::pair<SgExpression *, SgExpression *> >::const_iterator it_section;
     for (it_section = sections.begin(); it_section != sections.end(); it_section++)
@@ -502,7 +502,7 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
 
     ensure(',');
 
-    parseDataAnnotations<DataAnnotation>(data);
+    parseDataAnnotations<Annotation>(data);
 
     ensure(')');
 
@@ -511,9 +511,9 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
   AstFromString::afs_skip_whitespace();
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * parseLoopTreesNode() {
-  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * lt_node = NULL;
+template <class Annotation>
+typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
+  typename LoopTrees<Annotation>::node_t * lt_node = NULL;
   AstFromString::afs_skip_whitespace();
 
   if (AstFromString::afs_match_substr("loop")) {
@@ -539,20 +539,20 @@ typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * p
     SgExpression * ub_exp = isSgExpression(AstFromString::c_parsed_node);
     assert(ub_exp != NULL);
 
-    typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * lt_loop =
-               new typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t(it_sym, lb_exp, ub_exp);
+    typename LoopTrees<Annotation>::loop_t * lt_loop =
+               new typename LoopTrees<Annotation>::loop_t(it_sym, lb_exp, ub_exp);
 
     ensure(',');
 
-    parseLoopAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(lt_loop);
+    parseLoopAnnotations<Annotation>(lt_loop);
 
     ensure(',');
 
     do {
       AstFromString::afs_skip_whitespace();
 
-      typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * child_node = 
-          parseLoopTreesNode<DataAnnotation, RegionAnnotation, LoopAnnotation>();
+      typename LoopTrees<Annotation>::node_t * child_node = 
+          parseLoopTreesNode<Annotation>();
       assert(child_node != NULL);
       lt_loop->children.push_back(child_node);
 
@@ -571,7 +571,7 @@ typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * p
     SgStatement * stmt = isSgStatement(AstFromString::c_parsed_node);
     assert(stmt != NULL);
     stmt->set_parent(AstFromString::c_sgnode);
-    lt_node = new typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::stmt_t(stmt);
+    lt_node = new typename LoopTrees<Annotation>::stmt_t(stmt);
 
     ensure(')');
   }
@@ -581,16 +581,16 @@ typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * p
   return lt_node;
 }
 
-template <class DataAnnotation>
-void parseDataAnnotations(Data<DataAnnotation> * data) {
-  assert(DataAnnotation::matchLabel());
+template <class Annotation>
+void parseDataAnnotations(Data<Annotation> * data) {
+  assert(Annotation::matchLabel());
 
   ensure('(');
 
   do {
     AstFromString::afs_skip_whitespace();
 
-    DataAnnotation::parse(data->annotations);
+    Annotation::parseData(data->annotations);
 
     AstFromString::afs_skip_whitespace();
   } while (AstFromString::afs_match_char(','));
@@ -598,35 +598,35 @@ void parseDataAnnotations(Data<DataAnnotation> * data) {
   ensure(')');
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseRegionAnnotations(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
-  assert(RegionAnnotation::matchLabel());
+template <class Annotation>
+void parseRegionAnnotations(LoopTrees<Annotation> & loop_trees) {
+  assert(Annotation::matchLabel());
 
   ensure('(');
 
   do {
-    RegionAnnotation::parse(loop_trees.annotations);
+    Annotation::parseRegion(loop_trees.annotations);
   } while (AstFromString::afs_match_char(','));
 
   ensure(')');
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseLoopAnnotations(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop) {
-  assert(LoopAnnotation::matchLabel());
+template <class Annotation>
+void parseLoopAnnotations(typename LoopTrees<Annotation>::loop_t * loop) {
+  assert(Annotation::matchLabel());
 
   ensure('(');
 
   do {
-    LoopAnnotation::parse(loop->annotations);
+    Annotation::parseLoop(loop->annotations);
   } while (AstFromString::afs_match_char(','));
 
   ensure(')');
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+template <class Annotation>
 void printLoopAnnotations(
-  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop,
+  typename LoopTrees<Annotation>::loop_t * loop,
   std::ostream & out,
   std::string indent
 ) {

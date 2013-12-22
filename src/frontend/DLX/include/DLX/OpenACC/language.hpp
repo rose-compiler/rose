@@ -162,25 +162,25 @@ struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_num_gangs> {
-  std::vector<SgExpression *> sync_tags; // FIXME is it to be known at compile time or runtime ?
+  SgExpression * exp;
 };
 
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_num_workers> {
-  // empty
+  SgExpression * exp;
 };
 
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_vector_length> {
-  // empty
+  SgExpression * exp;
 };
 
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_reduction> {
-  // empty
+  /// \todo
 };
 
 template <>

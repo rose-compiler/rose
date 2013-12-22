@@ -118,9 +118,10 @@ namespace AstFromString
     // or the match is revoked, e.g: "parallel1" match sub str "parallel" but 
     // the trail is not legal
     // TODO: any other characters?
+    //     TV (12/22/2013) : added ',' as legal trail.
     if (checkTrail)
     {
-      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')')
+      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',')
       {
         result = false;
         c_char = old_char;

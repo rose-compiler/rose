@@ -17,82 +17,105 @@
 
 #include <cassert>
 
-namespace DLX {
-
-template <>
-bool KLT_Region <OpenACC::language_t>::matchLabel() {
-  AstFromString::afs_skip_whitespace();
-  return AstFromString::afs_match_substr("openacc");
-}
-
-template <>
-void KLT_Region <OpenACC::language_t>::parse(std::vector<DLX::KLT_Region <OpenACC::language_t> > & container) {
+//! This helper function return non-null value iff the expression found is statically defined integer.
+SgExpression * parseExpressionOrLabel() {
+  SgExpression * exp = NULL;
   if (AstFromString::afs_match_additive_expression()) {
-    SgExpression * exp = isSgExpression(AstFromString::c_parsed_node);
+    exp = isSgExpression(AstFromString::c_parsed_node);
     assert(exp != NULL);
-    /// \todo save into container
+    /// \todo Is it a statically defined integer?
   }
   else if (AstFromString::afs_match_identifier()) {
     SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
     assert(label != NULL);
-    /// \todo save into container
+    // We don't save in this case as it implies a dynamically determined value
   }
   else assert(false);
+
+  return exp;
+}
+
+namespace DLX {
+
+template <>
+void KLT_Annotation<OpenACC::language_t>::parseRegion(std::vector<DLX::KLT_Annotation<OpenACC::language_t> > & container) {
+  parseClause(container);
+
+  DLX::KLT_Annotation<OpenACC::language_t> & annotation = container.back();
+
+  switch (annotation.clause->kind) {
+    case OpenACC::language_t::e_acc_clause_if:
+      assert(false); /// \todo
+      break;
+    case OpenACC::language_t::e_acc_clause_async:
+      assert(false); /// \todo
+      break;
+    case OpenACC::language_t::e_acc_clause_num_gangs:
+      KLT::ensure('(');
+      ((Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_num_gangs> *)annotation.clause)->parameters.exp
+                = parseExpressionOrLabel();
+      KLT::ensure(')');
+      break;
+    case OpenACC::language_t::e_acc_clause_num_workers:
+      KLT::ensure('(');
+      ((Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_num_workers> *)annotation.clause)->parameters.exp
+                = parseExpressionOrLabel();
+      KLT::ensure(')');
+      break;
+    case OpenACC::language_t::e_acc_clause_vector_length:
+      KLT::ensure('(');
+      ((Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_vector_length> *)annotation.clause)->parameters.exp
+                = parseExpressionOrLabel();
+      KLT::ensure(')');
+      break;
+    case OpenACC::language_t::e_acc_clause_reduction:
+      assert(false); /// \todo
+      break;
+    default:
+      assert(false);
+  }
 }
 
 template <>
-bool KLT_Data <OpenACC::language_t>::matchLabel() {
-  AstFromString::afs_skip_whitespace();
-  return AstFromString::afs_match_substr("openacc");
+void KLT_Annotation<OpenACC::language_t>::parseData(std::vector<DLX::KLT_Annotation<OpenACC::language_t> > & container) {
+  parseClause(container);
+
+  DLX::KLT_Annotation<OpenACC::language_t> & annotation = container.back();
+
+  switch (annotation.clause->kind) {
+    case OpenACC::language_t::e_acc_clause_copy:
+    case OpenACC::language_t::e_acc_clause_copyin:
+    case OpenACC::language_t::e_acc_clause_copyout:
+    case OpenACC::language_t::e_acc_clause_create:
+    case OpenACC::language_t::e_acc_clause_present:
+    case OpenACC::language_t::e_acc_clause_present_or_copy:
+    case OpenACC::language_t::e_acc_clause_present_or_copyin:
+    case OpenACC::language_t::e_acc_clause_present_or_copyout:
+    case OpenACC::language_t::e_acc_clause_present_or_create:
+      // Nothing to do as in the LoopTree format, clauses are applied to each data (in directive format the clause encompass multiple data)
+      break;
+    default:
+      assert(false);
+  }
 }
 
 template <>
-void KLT_Data <OpenACC::language_t>::parse(std::vector<DLX::KLT_Data <OpenACC::language_t> > & container) {
-  if (AstFromString::afs_match_substr("copy")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("copyin")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("copyout")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("create")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("present_or_copy")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("present_or_copyin")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("present_or_copyout")) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("present_or_create")) {
-    /// \todo
-  }
-  else assert(false);
-}
+void KLT_Annotation<OpenACC::language_t>::parseLoop(std::vector<DLX::KLT_Annotation<OpenACC::language_t> > & container) {
+  parseClause(container);
 
-template <>
-bool KLT_Loop <OpenACC::language_t>::matchLabel() {
-  AstFromString::afs_skip_whitespace();
-  return AstFromString::afs_match_substr("openacc");
-}
+  DLX::KLT_Annotation<OpenACC::language_t> & annotation = container.back();
 
-template <>
-void KLT_Loop <OpenACC::language_t>::parse(std::vector<DLX::KLT_Loop <OpenACC::language_t> > & container) {
-  if (AstFromString::afs_match_substr("gang",  false)) {
-    /// \todo
+  switch (annotation.clause->kind) {
+    case OpenACC::language_t::e_acc_clause_gang:
+    case OpenACC::language_t::e_acc_clause_worker:
+    case OpenACC::language_t::e_acc_clause_vector:
+    case OpenACC::language_t::e_acc_clause_seq:
+    case OpenACC::language_t::e_acc_clause_independent:
+      // None of these clauses take any parameters
+      break;
+    default:
+      assert(false);
   }
-  else if (AstFromString::afs_match_substr("worker",  false)) {
-    /// \todo
-  }
-  else if (AstFromString::afs_match_substr("vector",  false)) {
-    /// \todo
-  }
-  else assert(false);
 }
 
 }
@@ -102,10 +125,10 @@ void KLT_Loop <OpenACC::language_t>::parse(std::vector<DLX::KLT_Loop <OpenACC::l
 int main(int argc, char ** argv) {
   assert(argc == 3);
 
+  DLX::OpenACC::language_t::init();
+
   KLT::LoopTrees<
-      DLX::KLT_Data   <DLX::OpenACC::language_t>,
-      DLX::KLT_Region <DLX::OpenACC::language_t>,
-      DLX::KLT_Loop   <DLX::OpenACC::language_t>
+      DLX::KLT_Annotation<DLX::OpenACC::language_t>
   > loop_trees;
 
   loop_trees.read(argv[1]);
@@ -125,30 +148,22 @@ int main(int argc, char ** argv) {
   std::set<std::list<KLT::Kernel<KLT::Language::OpenCL, KLT::Runtime::OpenACC> *> > kernel_lists;
 
   KLT::CG_Config<
-      DLX::KLT_Data   <DLX::OpenACC::language_t>,
-      DLX::KLT_Region <DLX::OpenACC::language_t>,
-      DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+      DLX::KLT_Annotation<DLX::OpenACC::language_t>,
       KLT::Language::OpenCL,
       KLT::Runtime::OpenACC
   > cg_config(
       new KLT::LoopMapper<
-          DLX::KLT_Data   <DLX::OpenACC::language_t>,
-          DLX::KLT_Region <DLX::OpenACC::language_t>,
-          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
           KLT::Language::OpenCL,
           KLT::Runtime::OpenACC
       >(),
       new KLT::IterationMapper<
-          DLX::KLT_Data   <DLX::OpenACC::language_t>,
-          DLX::KLT_Region <DLX::OpenACC::language_t>,
-          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
           KLT::Language::OpenCL,
           KLT::Runtime::OpenACC
       >(),
       new KLT::DataFlow<
-          DLX::KLT_Data   <DLX::OpenACC::language_t>,
-          DLX::KLT_Region <DLX::OpenACC::language_t>,
-          DLX::KLT_Loop   <DLX::OpenACC::language_t>,
+          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
           KLT::Language::OpenCL,
           KLT::Runtime::OpenACC
       >()

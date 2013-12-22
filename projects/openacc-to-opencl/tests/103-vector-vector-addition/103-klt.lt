@@ -1,11 +1,11 @@
 param(n, unsigned)
-data(a, float, section(1, 0, n), openacc(copyin))
-data(b, float, section(1, 0, n), openacc(copyin))
-data(c, float, section(1, 0, n), openacc(copyout))
+data(a, float, section(1, 0, n), acc(copyin))
+data(b, float, section(1, 0, n), acc(copyin))
+data(c, float, section(1, 0, n), acc(copyout))
 region(
-  openacc(nbr_gang,nbr_worker,nbr_vector),
+  acc(num_gangs(nbr_gang),num_workers(nbr_worker),vector_length(nbr_vector)),
   loop(
-    i, 0, n, openacc(gang,worker,vector),
+    i, 0, n, acc(gang,worker,vector),
     stmt(c[i] = a[i] + b[i];)
   )
 )

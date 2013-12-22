@@ -1,10 +1,10 @@
 param(n, unsigned)
 scalar(scalar, float)
-data(a, float, section(1, 0, n), openacc(copy))
+data(a, float, section(1, 0, n), acc(copy))
 region(
-  openacc(nbr_gang,nbr_worker,nbr_vector),
+  acc(num_gangs(nbr_gang),num_workers(nbr_worker),vector_length(nbr_vector)),
   loop(
-    i, 0, n, openacc(gang,worker,vector),
+    i, 0, n, acc(gang,worker,vector),
     stmt(a[i]*=scalar;)
   )
 )
