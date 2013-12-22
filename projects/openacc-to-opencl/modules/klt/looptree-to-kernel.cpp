@@ -13,16 +13,91 @@
 */
 
 #include "DLX/OpenACC/language.hpp"
+#include "DLX/klt-annotations.hpp"
 
 #include <cassert>
 
-//#include "sage3basic.h"
-
 namespace DLX {
-  template <class Lang> class KLT_Data {};
-  template <class Lang> class KLT_Region {};
-  template <class Lang> class KLT_Loop {};
+
+template <>
+bool KLT_Region <OpenACC::language_t>::matchLabel() {
+  AstFromString::afs_skip_whitespace();
+  return AstFromString::afs_match_substr("openacc");
 }
+
+template <>
+void KLT_Region <OpenACC::language_t>::parse(std::vector<DLX::KLT_Region <OpenACC::language_t> > & container) {
+  if (AstFromString::afs_match_additive_expression()) {
+    SgExpression * exp = isSgExpression(AstFromString::c_parsed_node);
+    assert(exp != NULL);
+    /// \todo save into container
+  }
+  else if (AstFromString::afs_match_identifier()) {
+    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+    assert(label != NULL);
+    /// \todo save into container
+  }
+  else assert(false);
+}
+
+template <>
+bool KLT_Data <OpenACC::language_t>::matchLabel() {
+  AstFromString::afs_skip_whitespace();
+  return AstFromString::afs_match_substr("openacc");
+}
+
+template <>
+void KLT_Data <OpenACC::language_t>::parse(std::vector<DLX::KLT_Data <OpenACC::language_t> > & container) {
+  if (AstFromString::afs_match_substr("copy")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("copyin")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("copyout")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("create")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("present_or_copy")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("present_or_copyin")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("present_or_copyout")) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("present_or_create")) {
+    /// \todo
+  }
+  else assert(false);
+}
+
+template <>
+bool KLT_Loop <OpenACC::language_t>::matchLabel() {
+  AstFromString::afs_skip_whitespace();
+  return AstFromString::afs_match_substr("openacc");
+}
+
+template <>
+void KLT_Loop <OpenACC::language_t>::parse(std::vector<DLX::KLT_Loop <OpenACC::language_t> > & container) {
+  if (AstFromString::afs_match_substr("gang",  false)) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("worker",  false)) {
+    /// \todo
+  }
+  else if (AstFromString::afs_match_substr("vector",  false)) {
+    /// \todo
+  }
+  else assert(false);
+}
+
+}
+
+//#include "sage3basic.h"
 
 int main(int argc, char ** argv) {
   assert(argc == 3);

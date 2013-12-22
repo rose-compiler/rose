@@ -1,7 +1,7 @@
-params(n)
-data(a, float, shape1d(0, n), openacc(copyin))
-data(b, float, shape1d(0, n), openacc(copyin))
-data(c, float, shape1d(0, n), openacc(copyout))
+param(n, unsigned)
+data(a, float, section(1, 0, n), openacc(copyin))
+data(b, float, section(1, 0, n), openacc(copyin))
+data(c, float, section(1, 0, n), openacc(copyout))
 region(
   openacc(nbr_gang,nbr_worker,nbr_vector),
   loop(

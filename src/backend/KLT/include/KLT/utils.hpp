@@ -10,7 +10,7 @@ class SgProject;
 namespace KLT {
 
 /*!
- * \addtogroup grp_klt_core
+ * \addtogroup grp_klt
  * @{
 */
 

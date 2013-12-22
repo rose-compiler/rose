@@ -1,5 +1,5 @@
-params(n)
-scalar(offset)
+param(n, unsigned)
+scalar(offset, float)
 data(a, float, section(1, 0, n), openacc(copy))
 region(
   openacc(nbr_gang,nbr_worker,nbr_vector),

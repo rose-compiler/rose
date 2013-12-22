@@ -119,8 +119,10 @@ namespace AstFromString
   //! Match a storage class specifier. Not yet implemented.
   bool afs_match_storage_class_specifier();
 
-  //! Match a type specifier : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned' | struct_or_union_specifier | enum_specifier | type_id. The recognized type is stored in c_parsed_node.
-  bool afs_match_type_specifier();
+  /*! Match a type specifier : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned' | struct_or_union_specifier | enum_specifier | type_id. The recognized type is stored in c_parsed_node.
+   *  \param checkTrail if false it authorizes any character to follow the type. Used to parse fragments of C (as a comma separated list of types)
+   */
+  bool afs_match_type_specifier(bool checkTrail = true);
   // type_id in ANTLR grammar
   //struct_or_union_specifier
   //struct_or_union

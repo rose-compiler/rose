@@ -16,6 +16,7 @@
 #include <cassert>
 
 #include "sage3basic.h"
+#include "AstFromString.h"
 
 class SgProject;
 class SgExpression;
@@ -84,14 +85,15 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::set<SgVariableSymbol *> p_parameters;
 
-    std::vector<RegionAnnotation> p_annotations;
+  public:
+    std::vector<RegionAnnotation> annotations;
 
   public:
     const std::list<node_t *> & getTrees() const;
 
     const std::set<Data<DataAnnotation> *> getDatas() const;
 
-    const std::set<SgVariableSymbol *> getscalar() const;
+    const std::set<SgVariableSymbol *> getScalar() const;
     const std::set<SgVariableSymbol *> getParameters() const;
 
   public:
@@ -105,7 +107,7 @@ class LoopTrees {
     void addData(Data<DataAnnotation> * data);
 
     /// Add a coefficient of the sequence of loop trees
-    void addCoefficient(SgVariableSymbol * var_sym);
+    void addScalar(SgVariableSymbol * var_sym);
 
     /// Add a parameter of the sequence of loop trees
     void addParameter(SgVariableSymbol * var_sym);
@@ -129,13 +131,29 @@ template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void parseCoefs(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+void parseScalars(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
 
+template <class DataAnnotation>
+void parseDataAnnotations(Data<DataAnnotation> * data);
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void parseRegionAnnotations(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees);
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void parseLoopAnnotations(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop);
+
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * parseLoopTreesNode();
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void printLoopAnnotations(
+  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop,
+  std::ostream & out,
+  std::string indent
+);
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -218,7 +236,7 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::toText(node_t 
         << loop->lower_bound->unparseToString()   << ", "
         << loop->upper_bound->unparseToString()   << ", ";
 
-    /// \todo annotations.toText(out, indent);
+    printLoopAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(loop, out, indent);
     
     typename std::list<node_t *>::const_iterator it_child = loop->children.begin();
     toText(*it_child, out, indent + "  ");
@@ -244,7 +262,7 @@ template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 const std::set<Data<DataAnnotation> *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getDatas() const { return p_datas; }
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-const std::set<SgVariableSymbol *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getscalar() const { return p_scalar; }
+const std::set<SgVariableSymbol *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getScalar() const { return p_scalar; }
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 const std::set<SgVariableSymbol *> LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::getParameters() const { return p_parameters; }
@@ -255,7 +273,7 @@ LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::LoopTrees() :
   p_datas(),
   p_scalar(),
   p_parameters(),
-  p_annotations()
+  annotations()
 {}
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
@@ -268,7 +286,7 @@ template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addData(Data<DataAnnotation> * data) { p_datas.insert(data); }
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
-void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addCoefficient(SgVariableSymbol * var_sym) { p_scalar.insert(var_sym); }
+void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addScalar(SgVariableSymbol * var_sym) { p_scalar.insert(var_sym); }
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
@@ -339,7 +357,7 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(std::ifst
 
   parseParams<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
 
-  parseCoefs<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+  parseScalars<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
 
   parseDatas<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
 
@@ -347,7 +365,9 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(std::ifst
 
     ensure('(');
 
-    /// \todo parse annotation
+    parseRegionAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(*this);
+
+    ensure(',');
 
     do {
       LoopTrees::node_t * lt_node = parseLoopTreesNode<DataAnnotation, RegionAnnotation, LoopAnnotation>();
@@ -368,28 +388,26 @@ void LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::read(std::ifst
 
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
-  if (AstFromString::afs_match_substr("params")) {
-    SgType * param_type = SageBuilder::buildUnsignedLongType();
-
+  while (AstFromString::afs_match_substr("param")) {
     ensure('(');
 
-    do {
-      AstFromString::afs_skip_whitespace();
+    assert(AstFromString::afs_match_identifier());
+    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+    assert(label != NULL);
 
-      assert(AstFromString::afs_match_identifier());
-      SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
-      assert(label != NULL);
+    ensure(',');
 
-      SgVariableDeclaration * param_decl = SageBuilder::buildVariableDeclaration_nfi(*label, param_type, NULL, NULL);
-      SgVariableSymbol * var_sym = isSgVariableSymbol(param_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
-      assert(var_sym != NULL);
-
-      loop_trees.addParameter(var_sym);
-
-      AstFromString::afs_skip_whitespace();
-    } while (AstFromString::afs_match_char(','));
+    assert(AstFromString::afs_match_type_specifier());
+    SgType * param_type = dynamic_cast<SgType *>(AstFromString::c_parsed_node);
+    assert(param_type != NULL);
 
     ensure(')');
+
+    SgVariableDeclaration * param_decl = SageBuilder::buildVariableDeclaration_nfi(*label, param_type, NULL, NULL);
+    SgVariableSymbol * var_sym = isSgVariableSymbol(param_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+    assert(var_sym != NULL);
+
+    loop_trees.addParameter(var_sym);
   }
   AstFromString::afs_skip_whitespace();
 }
@@ -397,27 +415,26 @@ void parseParams(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & l
 template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
 void parseScalars(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
   while (AstFromString::afs_match_substr("scalar")) {
-    SgType * coef_type = SageBuilder::buildFloatType();
 
     ensure('(');
 
-    do {
-      AstFromString::afs_skip_whitespace();
+    assert(AstFromString::afs_match_identifier());
+    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+    assert(label != NULL);
 
-      assert(AstFromString::afs_match_identifier());
-      SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
-      assert(label != NULL);
+    ensure(',');
 
-      SgVariableDeclaration * coef_decl = SageBuilder::buildVariableDeclaration_nfi(*label, coef_type, NULL, NULL);
-      SgVariableSymbol * var_sym = isSgVariableSymbol(coef_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
-      assert(var_sym != NULL);
-
-      loop_trees.addCoefficient(var_sym);
- 
-      AstFromString::afs_skip_whitespace();
-    } while (AstFromString::afs_match_char(','));
+    assert(AstFromString::afs_match_type_specifier());
+    SgType * coef_type = dynamic_cast<SgType *>(AstFromString::c_parsed_node);
+    assert(coef_type != NULL);
 
     ensure(')');
+
+    SgVariableDeclaration * coef_decl = SageBuilder::buildVariableDeclaration_nfi(*label, coef_type, NULL, NULL);
+    SgVariableSymbol * var_sym = isSgVariableSymbol(coef_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+    assert(var_sym != NULL);
+
+    loop_trees.addScalar(var_sym);
   }
   AstFromString::afs_skip_whitespace();
 }
@@ -432,9 +449,27 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
     SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
     assert(label != NULL);
 
+    ensure(',');
+
+    assert(AstFromString::afs_match_type_specifier(false));
+    SgType * data_type = dynamic_cast<SgType *>(AstFromString::c_parsed_node);
+    assert(data_type != NULL);
+
+    ensure(',');
+
     std::list<std::pair<SgExpression *, SgExpression *> > sections;
-    SgType * data_type = SageBuilder::buildFloatType();
-    while (AstFromString::afs_match_char('[')) {
+
+    assert(AstFromString::afs_match_substr("section"));
+
+    ensure('(');
+
+    int nbr_dims;
+    assert(AstFromString::afs_match_integer_const(&nbr_dims));
+    assert(nbr_dims > 0);
+
+    for (int i = 0; i < nbr_dims; i++) {
+      ensure(',');
+
       sections.push_back(std::pair<SgExpression *, SgExpression *>(NULL, NULL));
       std::pair<SgExpression *, SgExpression *> & section = sections.back();
 
@@ -444,24 +479,16 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
       section.first = isSgExpression(AstFromString::c_parsed_node);
       assert(section.first != NULL);
 
-      AstFromString::afs_skip_whitespace();
-      if (AstFromString::afs_match_char(':')) {
-        AstFromString::afs_skip_whitespace();
+      ensure(',');
 
-        assert(AstFromString::afs_match_additive_expression());
-        section.second = isSgExpression(AstFromString::c_parsed_node);
-        assert(section.second != NULL);
-
-        AstFromString::afs_skip_whitespace();
-      }
-      else {
-        section.second = section.first;
-      }
-
-      ensure(']');
+      assert(AstFromString::afs_match_additive_expression());
+      section.second = isSgExpression(AstFromString::c_parsed_node);
+      assert(section.second != NULL);
 
       data_type = SageBuilder::buildPointerType(data_type);
     }
+
+    ensure(')');
 
     SgVariableDeclaration * data_decl = SageBuilder::buildVariableDeclaration_nfi(*label, data_type, NULL, NULL);
     SgVariableSymbol * var_sym = isSgVariableSymbol(data_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
@@ -475,7 +502,7 @@ void parseDatas(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & lo
 
     ensure(',');
 
-    /// \todo parse Annotation
+    parseDataAnnotations<DataAnnotation>(data);
 
     ensure(')');
 
@@ -517,7 +544,7 @@ typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * p
 
     ensure(',');
 
-    /// \todo parseAnnotation(lt_loop);
+    parseLoopAnnotations<DataAnnotation, RegionAnnotation, LoopAnnotation>(lt_loop);
 
     ensure(',');
 
@@ -552,6 +579,58 @@ typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * p
 
   AstFromString::afs_skip_whitespace();
   return lt_node;
+}
+
+template <class DataAnnotation>
+void parseDataAnnotations(Data<DataAnnotation> * data) {
+  assert(DataAnnotation::matchLabel());
+
+  ensure('(');
+
+  do {
+    AstFromString::afs_skip_whitespace();
+
+    DataAnnotation::parse(data->annotations);
+
+    AstFromString::afs_skip_whitespace();
+  } while (AstFromString::afs_match_char(','));
+
+  ensure(')');
+}
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void parseRegionAnnotations(LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees) {
+  assert(RegionAnnotation::matchLabel());
+
+  ensure('(');
+
+  do {
+    RegionAnnotation::parse(loop_trees.annotations);
+  } while (AstFromString::afs_match_char(','));
+
+  ensure(')');
+}
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void parseLoopAnnotations(typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop) {
+  assert(LoopAnnotation::matchLabel());
+
+  ensure('(');
+
+  do {
+    LoopAnnotation::parse(loop->annotations);
+  } while (AstFromString::afs_match_char(','));
+
+  ensure(')');
+}
+
+template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation>
+void printLoopAnnotations(
+  typename LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::loop_t * loop,
+  std::ostream & out,
+  std::string indent
+) {
+  assert(false);
 }
 
 /** @} */

@@ -834,47 +834,47 @@ namespace AstFromString
   ;
 
 */
-  bool afs_match_type_specifier()
+  bool afs_match_type_specifier(bool checkTrail)
   {
     bool result = false;
     const char* old_char = c_char;
 
-    if (afs_match_substr("void"))
+    if (afs_match_substr("void", checkTrail))
     {
       c_parsed_node = buildVoidType();
       result = true;
     }
-    else if (afs_match_substr("char"))
+    else if (afs_match_substr("char", checkTrail))
     {
       c_parsed_node = buildCharType();
       result = true;
     }
-    else if (afs_match_substr("short"))
+    else if (afs_match_substr("short", checkTrail))
     {
       c_parsed_node = buildShortType();
       result = true;
     }
-    else if (afs_match_substr("int"))
+    else if (afs_match_substr("int", checkTrail))
     {
       c_parsed_node = buildIntType();
       result = true;
     }
-    else if (afs_match_substr("long"))
+    else if (afs_match_substr("long", checkTrail))
     {
       c_parsed_node = buildLongType();
       result = true;
     }
-    else if (afs_match_substr("float"))
+    else if (afs_match_substr("float", checkTrail))
     {
       c_parsed_node = buildFloatType();
       result = true;
     }
-    else if (afs_match_substr("double"))
+    else if (afs_match_substr("double", checkTrail))
     {
       c_parsed_node = buildDoubleType();
       result = true;
     }
-    else if (afs_match_substr("signed"))
+    else if (afs_match_substr("signed", checkTrail))
     {
       // ROSE does not have a dedicated node for signed or unsigned. 
       // we abuse SgTypeSignedLongLong SgTypeUnSignedLongLong to represent them
@@ -883,7 +883,7 @@ namespace AstFromString
       c_parsed_node = buildSignedLongLongType();
       result = true;
     }
-    else if (afs_match_substr("unsigned"))
+    else if (afs_match_substr("unsigned", checkTrail))
     {
       c_parsed_node = buildUnsignedLongLongType();
       result = true;

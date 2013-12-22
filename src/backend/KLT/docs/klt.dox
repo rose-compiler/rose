@@ -3,7 +3,13 @@
  * @{
  *   \defgroup grp_klt KLT
  *   @{
- *     \defgroup grp_klt__codegen Code Generation and Analysis
+ *     \defgroup grp_klt_codegen Code Generation
+ *     @{
+ *     @}
+ *     \defgroup grp_klt_itmap Iteration Mapper
+ *     @{
+ *     @}
+ *     \defgroup grp_klt_loopmap Loop Mapper
  *     @{
  *     @}
  *     \defgroup grp_klt_data Data Representation
