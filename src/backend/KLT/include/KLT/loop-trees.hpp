@@ -59,7 +59,9 @@ class LoopTrees {
         SgExpression * lb = NULL,
         SgExpression * ub = NULL
       );
-      virtual ~loop_t();
+      ~loop_t();
+
+      bool isParallel() const;
     };
 
     struct stmt_t : public node_t {
@@ -80,7 +82,7 @@ class LoopTrees {
     std::set<Data<Annotation> *> p_datas;
 
     /// Coefficiants (constant values) used in the sequence loop trees
-    std::set<SgVariableSymbol *> p_scalar;
+    std::set<SgVariableSymbol *> p_scalars;
 
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::set<SgVariableSymbol *> p_parameters;
@@ -93,7 +95,7 @@ class LoopTrees {
 
     const std::set<Data<Annotation> *> getDatas() const;
 
-    const std::set<SgVariableSymbol *> getScalar() const;
+    const std::set<SgVariableSymbol *> getScalars() const;
     const std::set<SgVariableSymbol *> getParameters() const;
 
   public:
@@ -262,7 +264,7 @@ template <class Annotation>
 const std::set<Data<Annotation> *> LoopTrees<Annotation>::getDatas() const { return p_datas; }
 
 template <class Annotation>
-const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getScalar() const { return p_scalar; }
+const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getScalars() const { return p_scalars; }
 
 template <class Annotation>
 const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getParameters() const { return p_parameters; }
@@ -271,7 +273,7 @@ template <class Annotation>
 LoopTrees<Annotation>::LoopTrees() :
   p_trees(),
   p_datas(),
-  p_scalar(),
+  p_scalars(),
   p_parameters(),
   annotations()
 {}
@@ -286,7 +288,7 @@ template <class Annotation>
 void LoopTrees<Annotation>::addData(Data<Annotation> * data) { p_datas.insert(data); }
 
 template <class Annotation>
-void LoopTrees<Annotation>::addScalar(SgVariableSymbol * var_sym) { p_scalar.insert(var_sym); }
+void LoopTrees<Annotation>::addScalar(SgVariableSymbol * var_sym) { p_scalars.insert(var_sym); }
 
 template <class Annotation>
 void LoopTrees<Annotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
@@ -316,11 +318,11 @@ void LoopTrees<Annotation>::toText(std::ostream & out) const {
   }
   else assert(false);
 
-  if (!p_scalar.empty()) {
-    it_sym = p_scalar.begin();
+  if (!p_scalars.empty()) {
+    it_sym = p_scalars.begin();
     out << "scalars(" << (*it_sym)->get_name().getString();
     it_sym++;
-    for (; it_sym != p_scalar.end(); it_sym++)
+    for (; it_sym != p_scalars.end(); it_sym++)
       out << ", " << (*it_sym)->get_name().getString();
     out << ")" << std::endl;
   }

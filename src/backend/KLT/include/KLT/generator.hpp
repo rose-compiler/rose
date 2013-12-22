@@ -7,39 +7,32 @@
 #include <list>
 #include <string>
 
+#include "KLT/mfb-klt.hpp"
 
 class SgProject;
 class SgSourceFile;
 class SgVariableSymbol;
 
-namespace MFB {
-  template <class Object> class KLT;
-  template <class Object> class Sage;
-  template <template <class Object> class Model> class Driver;
-
-  class KLT_Driver;
-}
-
 namespace KLT {
 
 template <class Annotation> class Data;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class Kernel;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> class LoopTrees;
+template <class Annotation, class Language, class Runtime> class Kernel;
+template <class Annotation> class LoopTrees;
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class LoopMapper;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class IterationMapper;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class DataFlow;
+template <class Annotation, class Language, class Runtime> class LoopMapper;
+template <class Annotation, class Language, class Runtime> class IterationMapper;
+template <class Annotation, class Language, class Runtime> class DataFlow;
 
-template <class Language, class Runtime> class IterationMap;
+template <class Annotation, class Language, class Runtime> class IterationMap;
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class CG_Config;
+template <class Annotation, class Language, class Runtime> class CG_Config;
 
 /*!
  * \addtogroup grp_klt_codegen
  * @{
 */
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver = ::MFB::KLT_Driver>
+template <class Annotation, class Language, class Runtime, class Driver = ::MFB::KLT_Driver>
 class Generator {
   protected:
     Driver & p_driver;
@@ -53,12 +46,12 @@ class Generator {
   protected:
     unsigned long createFile();
 
-    void buildArgumentLists(const LoopTrees & loop_trees, Kernel * kernel);
+    void buildArgumentLists(const LoopTrees<Annotation> & loop_trees, Kernel<Annotation, Language, Runtime> * kernel);
 
-    typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::a_kernel * callToKernelBuilder(
-      Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> * kernel,
-      typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t * loop_map,
-      IterationMap<Language, Runtime> * iteration_map
+    typename Kernel<Annotation, Language, Runtime>::a_kernel * callToKernelBuilder(
+      Kernel<Annotation, Language, Runtime> * kernel,
+      typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_map,
+      IterationMap<Annotation, Language, Runtime> * iteration_map
     ) const;
 
   public:
@@ -66,30 +59,33 @@ class Generator {
     virtual ~Generator();
 
     void generate(
-      const LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> & loop_trees,
-      std::set<std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> > & kernel_lists,
-      const CG_Config<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> & cg_config
+      const LoopTrees<Annotation> & loop_trees,
+      std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
+      const CG_Config<Annotation, Language, Runtime> & cg_config
     );
 };
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver>
-typename Kernel::a_kernel * Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::callToKernelBuilder(
-  Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> * kernel,
-  typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t * loop_mapping,
-  IterationMap<Language, Runtime> * iteration_map
+template <class Annotation, class Language, class Runtime, class Driver>
+typename Kernel<Annotation, Language, Runtime>::a_kernel * Generator<Annotation, Language, Runtime, Driver>::callToKernelBuilder(
+  Kernel<Annotation, Language, Runtime> * kernel,
+  typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping,
+  IterationMap<Annotation, Language, Runtime> * iteration_map
 ) const {
-  typename ::MFB::KLT<Kernel>::object_desc_t kernel_desc(kernel, loop_mapping, iteration_map, p_file_id);
-  typename ::MFB::KLT<Kernel>::build_result_t result =  p_klt_driver.build<Kernel>(kernel_desc);
+  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(kernel, loop_mapping, iteration_map, p_file_id);
+  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::build_result_t result =  p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc);
   return result;
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver>
-void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::buildArgumentLists(const LoopTrees & loop_trees, Kernel * kernel) {
+template <class Annotation, class Language, class Runtime, class Driver>
+void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
+  const LoopTrees<Annotation> & loop_trees,
+  Kernel<Annotation, Language, Runtime> * kernel
+) {
   std::set<SgVariableSymbol *>::const_iterator it_symbol;
-  std::set<Data<DataAnnotation> *>::const_iterator it_data;
+  typename std::set<Data<Annotation> *>::const_iterator it_data;
 
   const std::set<SgVariableSymbol *> & parameters = loop_trees.getParameters();
-  const std::set<SgVariableSymbol *> & coefficients = loop_trees.getCoefficients();
+  const std::set<SgVariableSymbol *> & coefficients = loop_trees.getScalars();
 
   std::set<SgVariableSymbol *> sym_var_refs;
     collectReferencedSymbols(kernel, sym_var_refs);
@@ -111,7 +107,7 @@ void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runti
   }
 
   for (it_data = kernel->getDataflow().datas.begin(); it_data != kernel->getDataflow().datas.end(); it_data++) {
-    Data<DataAnnotation> * data = *it_data;
+    Data<Annotation> * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol(); // FIXME Whole data approx (same symbol same data)
 
     bool used = sym_var_refs.find(data_sym) != sym_var_refs.end();
@@ -122,8 +118,8 @@ void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runti
   // FIXME with partial data we might end up referencing multiple time the same variable..
 }
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver>
-Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::Generator(
+template <class Annotation, class Language, class Runtime, class Driver>
+Generator<Annotation, Language, Runtime, Driver>::Generator(
   Driver & driver,
   const std::string & file_name
 ) :
@@ -134,15 +130,19 @@ Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::
   p_file_id(createFile())
 {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver>
-Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::~Generator() {}
+template <class Annotation, class Language, class Runtime, class Driver>
+Generator<Annotation, Language, Runtime, Driver>::~Generator() {}
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime, class Driver>
-void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::generate(const LoopTrees & loop_trees, std::set<std::list<Kernel *> > & kernel_lists, const CG_Config<Kernel> & cg_config) {
-  typename std::set<std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> >::const_iterator it_kernel_list;
-  typename std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *>::const_iterator it_kernel;
-  typename std::set<typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t  *>::const_iterator it_loop_mapping;
-  typename std::set<IterationMap<Language, Runtime> *>::const_iterator it_iteration_map;
+template <class Annotation, class Language, class Runtime, class Driver>
+void Generator<Annotation, Language, Runtime, Driver>::generate(
+  const LoopTrees<Annotation> & loop_trees,
+  std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
+  const CG_Config<Annotation, Language, Runtime> & cg_config
+) {
+  typename std::set<std::list<Kernel<Annotation, Language, Runtime> *> >::const_iterator it_kernel_list;
+  typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
+  typename std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  *>::const_iterator it_loop_mapping;
+  typename std::set<IterationMap<Annotation, Language, Runtime> *>::const_iterator it_iteration_map;
 
   // 1 - Loop Selection
 
@@ -151,15 +151,15 @@ void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runti
   // 2 - Data Flow
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel *> & kernel_list = *it_kernel_list;
+    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
     cg_config.getDataFlow().generateFlowSets(loop_trees, kernel_list);
   }
 
   // 3 - Arguments
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
+    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
     for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel * kernel = *it_kernel;
+      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
       buildArgumentLists(loop_trees, kernel);
     }
   }
@@ -167,12 +167,12 @@ void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runti
   // 4 - Iterations Mapping
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
+    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
     for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> * kernel = *it_kernel;
-      const std::set<typename Kernel::loop_mapping_t *> & loop_mappings = kernel->getLoopMappings();
+      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
+      const std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t *> & loop_mappings = kernel->getLoopMappings();
       for (it_loop_mapping = loop_mappings.begin(); it_loop_mapping != loop_mappings.end(); it_loop_mapping++) {
-        typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t  * loop_mapping = *it_loop_mapping;
+        typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  * loop_mapping = *it_loop_mapping;
         cg_config.getIterationMapper().generateShapes(loop_mapping, kernel->getIterationMaps(loop_mapping));
       }
     }
@@ -181,15 +181,15 @@ void Generator<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runti
   // 5 - Code Generation
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
+    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
     for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> * kernel = *it_kernel;
-      const std::set<typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t  *> & loop_mappings = kernel->getLoopMappings();
+      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
+      const std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  *> & loop_mappings = kernel->getLoopMappings();
       for (it_loop_mapping = loop_mappings.begin(); it_loop_mapping != loop_mappings.end(); it_loop_mapping++) {
-        typename Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime>::loop_mapping_t * loop_mapping = *it_loop_mapping;
-        const std::set<IterationMap<Language, Runtime> *> & iteration_maps =  kernel->getIterationMaps(loop_mapping);
+        typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping = *it_loop_mapping;
+        const std::set<IterationMap<Annotation, Language, Runtime> *> & iteration_maps =  kernel->getIterationMaps(loop_mapping);
         for (it_iteration_map = iteration_maps.begin(); it_iteration_map != iteration_maps.end(); it_iteration_map++) {
-          IterationMap<Language, Runtime> * iteration_map = *it_iteration_map;
+          IterationMap<Annotation, Language, Runtime> * iteration_map = *it_iteration_map;
           kernel->setKernel(loop_mapping, iteration_map, callToKernelBuilder(kernel, loop_mapping, iteration_map));
         }
       }

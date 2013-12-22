@@ -7,6 +7,7 @@ looptree_to_kernel_SOURCES= \
 looptree_to_kernel_CXXFLAGS= \
   -g \
   -I$(top_srcdir)/src/frontend/DLX/include \
+  -I$(top_srcdir)/src/midend/MFB/include \
   -I$(top_srcdir)/src/backend/KLT/include \
   $(ROSE_INCLUDES)
 looptree_to_kernel_LDADD = \

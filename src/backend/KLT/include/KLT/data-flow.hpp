@@ -7,41 +7,41 @@
 namespace KLT {
 
 template <class Annotation> class Data;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime> class Kernel;
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation> class LoopTrees;
+template <class Annotation, class Language, class Runtime> class Kernel;
+template <class Annotation> class LoopTrees;
 
 /*!
  * \addtogroup grp_klt_dataflow
  * @{
 */
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
+template <class Annotation, class Language, class Runtime>
 class DataFlow {
   public:
     virtual void generateFlowSets(
-      const LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees,
-      const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernels
+      const LoopTrees<Annotation> & loop_trees,
+      const std::list<Kernel<Annotation, Language, Runtime> *> & kernels
     ) const;
 };
 
-template <class DataAnnotation>
+template <class Annotation>
 void append_access(
     SgExpression * exp,
-    std::set<Data<DataAnnotation> *> & access_set,
-    const std::set<Data<DataAnnotation> *> & datas
+    std::set<Data<Annotation> *> & access_set,
+    const std::set<Data<Annotation> *> & datas
 );
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
+template <class Annotation, class Language, class Runtime>
 void compute_read_write(
-    LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation>::node_t * tree,
-    DataFlow<Language, Runtime> & data_flow,
-    const std::set<Data<DataAnnotation> *> & datas
+    typename LoopTrees<Annotation>::node_t * tree,
+    DataFlow<Annotation, Language, Runtime> & data_flow,
+    const std::set<Data<Annotation> *> & datas
 );
 
-template <class DataAnnotation, class RegionAnnotation, class LoopAnnotation, class Language, class Runtime>
-void DataFlow<Language, Runtime>::generateFlowSets<DataAnnotation, RegionAnnotation, LoopAnnotation>(
-  const LoopTrees<DataAnnotation, RegionAnnotation, LoopAnnotation> & loop_trees,
-  const std::list<Kernel<DataAnnotation, RegionAnnotation, LoopAnnotation, Language, Runtime> *> & kernels
+template <class Annotation, class Language, class Runtime>
+void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
+  const LoopTrees<Annotation> & loop_trees,
+  const std::list<Kernel<Annotation, Language, Runtime> *> & kernels
 ) const {
   assert(false);
 #if 0
