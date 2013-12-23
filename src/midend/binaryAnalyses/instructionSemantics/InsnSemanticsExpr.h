@@ -23,7 +23,7 @@ enum Operator
     {
     OP_ADD,                 /**< Addition. One or more operands, all the same width. */
     OP_AND,                 /**< Boolean AND. Operands are all Boolean (1-bit) values. See also OP_BV_AND. */
-    OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). */
+    OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). A is unsigned. */
     OP_BV_AND,              /**< Bitwise AND. One or more operands, all the same width. */
     OP_BV_OR,               /**< Bitwise OR. One or more operands, all the same width. */
     OP_BV_XOR,              /**< Bitwise exclusive OR. One or more operands, all the same width. */
@@ -39,8 +39,8 @@ enum Operator
     OP_NOOP,                /**< No operation. Used only by the default constructor. */
     OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
     OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
-    OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). */
-    OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
+    OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). A is unsigned. */
+    OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B). A is unsigned.  */
     OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
     OP_SEXTEND,             /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
     OP_SGE,                 /**< Signed greater-than-or-equal. Two operands of equal width. Result is Boolean. */
@@ -525,6 +525,11 @@ public:
      *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
     uint64_t get_name() const;
 
+    /** Prints an integer interpreted as a signed value. */
+    void print_as_signed(std::ostream&, Formatter&, bool as_signed=true) const;
+    void print_as_unsigned(std::ostream &o, Formatter &f) const {
+        print_as_signed(o, f, false);
+    }
 };
 
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
