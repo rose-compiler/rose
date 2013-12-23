@@ -330,14 +330,17 @@ struct UdivSimplifier: Simplifier {
 struct UmodSimplifier: Simplifier {
     virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
 };
-struct ShlSimplifier: Simplifier {
+struct ShiftSimplifier: Simplifier {
     bool newbits;
-    ShlSimplifier(bool newbits): newbits(newbits) {}
+    ShiftSimplifier(bool newbits): newbits(newbits) {}
+    TreeNodePtr combine_strengths(TreeNodePtr strength1, TreeNodePtr strength2, size_t value_width) const;
+};
+struct ShlSimplifier: ShiftSimplifier {
+    ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
     virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
 };
-struct ShrSimplifier: Simplifier {
-    bool newbits;
-    ShrSimplifier(bool newbits): newbits(newbits) {}
+struct ShrSimplifier: ShiftSimplifier {
+    ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
     virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
 };
 struct LssbSimplifier: Simplifier {

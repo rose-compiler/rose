@@ -957,6 +957,30 @@ UmodSimplifier::rewrite(const InternalNode *inode) const
 }
 
 TreeNodePtr
+ShiftSimplifier::combine_strengths(TreeNodePtr strength1, TreeNodePtr strength2, size_t value_width) const
+{
+    if (!strength1 || !strength2)
+        return TreeNodePtr();
+
+    // Calculate the width for the sum of the strengths.  If the width of the value being shifted isn't a power of two then we
+    // need to avoid overflow in the sum, otherwise overflow doesn't matter.
+    size_t sum_width = std::max(strength1->get_nbits(), strength2->get_nbits());
+    if (!IntegerOps::isPowerOfTwo(value_width))
+        ++sum_width;
+    if (sum_width > 64)
+        return TreeNodePtr();
+
+    // Zero-extend the strengths if they're not as wide as the sum.  This is because the ADD operator requires that its
+    // operands are the same width, and the result will also be that width.
+    if (strength1->get_nbits() < sum_width)
+        strength1 = InternalNode::create(sum_width, OP_UEXTEND, LeafNode::create_integer(32, sum_width), strength1);
+    if (strength2->get_nbits() < sum_width)
+        strength2 = InternalNode::create(sum_width, OP_UEXTEND, LeafNode::create_integer(32, sum_width), strength2);
+
+    return InternalNode::create(sum_width, OP_ADD, strength1, strength2);
+}
+
+TreeNodePtr
 ShlSimplifier::rewrite(const InternalNode *inode) const
 {
     // Constant folding
@@ -972,6 +996,15 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
         return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
     }
 
+    // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
+    // (shl AMT1 (shl AMT2 X)) ==> (shl (add AMT1 AMT2) X)
+    InternalNodePtr val_inode = inode->child(1)->isInternalNode();
+    if (val_inode && val_inode->get_operator()==inode->get_operator()) {
+        if (TreeNodePtr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->get_nbits())) {
+            return InternalNode::create(inode->get_nbits(), inode->get_operator(), strength, val_inode->child(1));
+        }
+    }
+    
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
         uint64_t val = newbits ? -1 : 0;
@@ -1001,6 +1034,15 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
         return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
     }
 
+    // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
+    //   (shr0 AMT1 (shr0 AMT2 X)) ==> (shr0 (add AMT1 AMT2) X)
+    InternalNodePtr val_inode = inode->child(1)->isInternalNode();
+    if (val_inode && val_inode->get_operator()==inode->get_operator()) {
+        if (TreeNodePtr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->get_nbits())) {
+            return InternalNode::create(inode->get_nbits(), inode->get_operator(), strength, val_inode->child(1));
+        }
+    }
+    
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
         uint64_t val = newbits ? -1 : 0;
