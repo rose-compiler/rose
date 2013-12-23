@@ -81,8 +81,50 @@ InternalNode::print(std::ostream &o, Formatter &formatter) const
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
+        bool printed = false;
+        LeafNodePtr child_leaf = children[i]->isLeafNode();
         o <<" ";
-        children[i]->print(o, formatter);
+        switch (op) {
+            case OP_ASR:
+            case OP_ROL:
+            case OP_ROR:
+            case OP_UEXTEND:
+                if (0==i && child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+
+            case OP_EXTRACT:
+                if ((0==i || 1==i) && child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+                
+            case OP_BV_AND:
+            case OP_BV_OR:
+            case OP_BV_XOR:
+            case OP_CONCAT:
+            case OP_UDIV:
+            case OP_UGE:
+            case OP_UGT:
+            case OP_ULE:
+            case OP_ULT:
+            case OP_UMOD:
+            case OP_UMUL:
+                if (child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        if (!printed)
+            children[i]->print(o, formatter);
     }
     o <<")";
 }
@@ -1324,13 +1366,19 @@ LeafNode::get_name() const
 void
 LeafNode::print(std::ostream &o, Formatter &formatter) const
 {
+    print_as_signed(o, formatter, true);
+}
+
+void
+LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed) const
+{
     bool showed_comment = false;
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
             // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
             // with 0xffff0000 is for negative values.
             o <<StringUtility::addrToString(ival);
-        } else if (nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
+        } else if (as_signed && nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
             uint64_t sign_extended = ival | ~(((uint64_t)1<<nbits)-1);
             o <<(int64_t)sign_extended;
         } else {
