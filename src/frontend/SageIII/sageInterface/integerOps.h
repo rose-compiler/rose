@@ -163,6 +163,21 @@ inline T rotateRight2(T value, size_t count, size_t width=8*sizeof(T)) {
 }
 /** @} */
 
+/** Returns true if the value is a power of two.  Zero is considered a power of two. */
+template <typename T>
+inline bool isPowerOfTwo(T value)
+{
+    if (0 != (value & GenMask<T, 8*sizeof(T)-1>::value))
+        value = ~value + 1;
+    uint64_t uval = value;
+    while (uval) {
+        if (uval & 1)
+            return 1==uval;
+        uval >>= 1u;
+    }
+    return true; // treat zero as a power of two
+}
+
 template <typename T>
 inline T log2(T a) {
     T n = T(1);
