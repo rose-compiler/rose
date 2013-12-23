@@ -963,10 +963,16 @@ ShiftSimplifier::combine_strengths(TreeNodePtr strength1, TreeNodePtr strength2,
         return TreeNodePtr();
 
     // Calculate the width for the sum of the strengths.  If the width of the value being shifted isn't a power of two then we
-    // need to avoid overflow in the sum, otherwise overflow doesn't matter.
+    // need to avoid overflow in the sum, otherwise overflow doesn't matter.  The sum should be wide enough to hold a shift
+    // amount that's the same as the width of the value, otherwise we wouldn't be able to distinguish between the case where
+    // modulo addition produced a shift amount that's large enough to decimate the value, as opposed to a shift count of zero
+    // which is a no-op.
     size_t sum_width = std::max(strength1->get_nbits(), strength2->get_nbits());
-    if (!IntegerOps::isPowerOfTwo(value_width))
-        ++sum_width;
+    if (IntegerOps::isPowerOfTwo(value_width)) {
+        sum_width = std::max(sum_width, IntegerOps::log2max(value_width)+1);
+    } else {
+        sum_width = std::max(sum_width+1, IntegerOps::log2max(value_width)+1);
+    }
     if (sum_width > 64)
         return TreeNodePtr();
 
