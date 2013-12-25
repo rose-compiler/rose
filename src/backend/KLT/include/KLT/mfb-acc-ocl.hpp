@@ -12,7 +12,6 @@
 #include <vector>
 
 typedef ::KLT::Kernel< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> Kernel_OpenCL_OpenACC;
-typedef ::KLT::IterationMap< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> ItMap_OpenCL_OpenACC;
 
 namespace MFB {
 
@@ -24,16 +23,16 @@ namespace MFB {
 template <>
 class KLT<Kernel_OpenCL_OpenACC> {
   public:
+    typedef ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> Annotation;
+    typedef ::KLT::Language::OpenCL Language;
+    typedef ::KLT::Runtime::OpenACC Runtime;
+
     struct object_desc_t {
       Kernel_OpenCL_OpenACC * kernel;
-      Kernel_OpenCL_OpenACC::loop_mapping_t * loop_mapping;
-      ItMap_OpenCL_OpenACC * iteration_map;
       unsigned long file_id;
 
       object_desc_t(
         Kernel_OpenCL_OpenACC * kernel_,
-        Kernel_OpenCL_OpenACC::loop_mapping_t * loop_mapping_,
-        ItMap_OpenCL_OpenACC * iteration_map_,
         unsigned long file_id_
       );
     };

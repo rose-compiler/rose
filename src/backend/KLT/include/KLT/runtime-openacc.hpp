@@ -9,9 +9,12 @@ namespace Runtime {
 class OpenACC {
   public:
     struct loop_shape_t {
-      
+      bool gang;
+      bool worker;
+      bool vector;
     };
 };
+
 }
 
 }

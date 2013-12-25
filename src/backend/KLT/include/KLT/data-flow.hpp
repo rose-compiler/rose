@@ -104,6 +104,7 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
 
   typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
   typename std::list<Kernel<Annotation, Language, Runtime> *>::const_reverse_iterator rit_kernel;
+  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
   typename std::set<Data<Annotation> *>::iterator it_data;
 
   std::set<Data<Annotation> *> datas(loop_trees.getDatas());
@@ -118,11 +119,14 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
   }
 
   // 1 - Compute read/write sets for each kernel and set of all accessed data
-  
+
   for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
     Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
     typename Kernel<Annotation, Language, Runtime>::dataflow_t & data_flow = kernel->getDataflow();
-    compute_read_write<Annotation, Language, Runtime>(kernel->getRoot(), data_flow, datas);
+    const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
+
+    for (it_root = roots.begin(); it_root != roots.end(); it_root++)
+      compute_read_write<Annotation, Language, Runtime>(*it_root, data_flow, datas);
   }
 
   // 2 - Propagate:

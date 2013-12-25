@@ -88,23 +88,6 @@ void collectBoundExpressions(const std::set<Data<Annotation> *> & datas, std::se
 template <class Annotation>
 void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::set<SgVariableSymbol *> & symbols);
 
-/** Generate a parameter list for a kernel (the 3 lists of symbols/datas)
- *    \param  params List of parameters as variable symbol pointers
- *    \param  coefs List of Coefficients as variable symbol pointers
- *    \param  datas List of Datas as Data pointers
- *    \param  data_type_modifer_ an enumeration value to will cast to SgTypeModifier::type_modifier_enum
- *    \param  suffix add a suffix to the default generated name (kind + "_" + name : where kind is param/coef/data and name the name of the associated symbol)
- *    \return a Function Parameter List
- */
-template <class Annotation>
-SgFunctionParameterList * createParameterList(
-  const std::list<SgVariableSymbol *> & params,
-  const std::list<SgVariableSymbol *> & coefs,
-  const std::list<Data<Annotation> *> & datas,
-  unsigned long data_type_modifer_,
-  std::string suffix
-);
-
 //////////////////////////////////////////////////////////////////////////////////////
 
 template <class Annotation>
@@ -308,71 +291,6 @@ void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::s
         symbols.insert((*it_var_ref)->get_symbol());
     }
   }
-}
-
-template <class Annotation>
-SgFunctionParameterList * createParameterList(
-  const std::list<SgVariableSymbol *> & params,
-  const std::list<SgVariableSymbol *> & coefs,
-  const std::list<Data<Annotation> *> & datas,
-  unsigned long data_type_modifer_,
-  std::string suffix
-) {
-  std::list<SgVariableSymbol *>::const_iterator it_var_sym;
-  typename std::list<Data<Annotation> *>::const_iterator it_data;
-
-  SgTypeModifier::type_modifier_enum data_type_modifer = (SgTypeModifier::type_modifier_enum)data_type_modifer_;
-
-  SgFunctionParameterList * result = SageBuilder::buildFunctionParameterList();
-
-  // ******************
-
-  for (it_var_sym = params.begin(); it_var_sym != params.end(); it_var_sym++) {
-    SgVariableSymbol * param_sym = *it_var_sym;
-    std::string param_name = param_sym->get_name().getString();
-    SgType * param_type =  param_sym->get_type();
-
-    result->append_arg(SageBuilder::buildInitializedName("param_" + param_name + suffix, param_type, NULL));
-  }
-
-  // ******************
-
-  for (it_var_sym = coefs.begin(); it_var_sym != coefs.end(); it_var_sym++) {
-    SgVariableSymbol * coef_sym = *it_var_sym;
-    std::string coef_name = coef_sym->get_name().getString();
-    SgType * coef_type = coef_sym->get_type();
-
-    result->append_arg(SageBuilder::buildInitializedName("coef_" + coef_name + suffix, coef_type, NULL));
-  }
-
-  // ******************
-
-  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
-    Data<Annotation> * data = *it_data;
-    SgVariableSymbol * data_sym = data->getVariableSymbol();
-    std::string data_name = data_sym->get_name().getString();
-
-    SgType * base_type = data->getBaseType();
-    SgType * field_type = SageBuilder::buildPointerType(base_type);
-
-    switch (data_type_modifer) {
-      case SgTypeModifier::e_default:
-        break;
-      case SgTypeModifier::e_ocl_global__:
-      {
-        SgModifierType * modif_type = SageBuilder::buildModifierType(field_type);
-        modif_type->get_typeModifier().setOpenclGlobal();
-        field_type = modif_type;
-        break;
-      }
-      default:
-        assert(false);
-    }
-
-    result->append_arg(SageBuilder::buildInitializedName("data_" + data_name + suffix, field_type, NULL));
-  }
-  
-  return result;
 }
 
 /** @} */

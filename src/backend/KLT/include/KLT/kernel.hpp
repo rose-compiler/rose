@@ -22,13 +22,6 @@ class Kernel {
     const unsigned long id;
 
   public:
-    struct loop_mapping_t {
-      /// the loop nests to be distributed over threads/work-item/processor/...
-      std::list<typename LoopTrees<Annotation>::loop_t *> loop_nest;
-      /// remaining statement to be put in the body of the kernel (inside the loop nest)
-      std::list<typename LoopTrees<Annotation>::node_t *> body;
-    };
-
     struct dataflow_t {
       /// All datas
       std::set<Data<Annotation> *> datas;
@@ -63,98 +56,54 @@ class Kernel {
     };
 
     struct a_kernel {
+      std::string kernel_name;
       /// \todo
     };
 
   protected:
-    /// Root loop-tree
-    typename LoopTrees<Annotation>::node_t * p_root;
+    /// List of trees forming the kernel (can be loops or statements)
+    std::list<typename LoopTrees<Annotation>::node_t *> p_looptree_roots;
 
     /// Set of data sorted accordingly to how they flow through the kernel
     dataflow_t p_data_flow;
 
     /// ordered symbol lists
-    arguments_t p_argument_order;
+    arguments_t p_arguments;
 
-    /// Set of possible loop distributions
-    std::set<loop_mapping_t *> p_loop_mappings;
+    /// Shapes (runtime dependent) associated to each loop in the kernel
+    std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> p_loop_shapes;
 
-    /// A set of iteration mapping for each loop distribution
-    std::map<loop_mapping_t *, std::set<IterationMap<Annotation, Language, Runtime> *> > p_iteration_maps;
-
-    /// A map between the different iteration mapping and the produced kernel for each loop distribution
-    std::map<loop_mapping_t *, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *> > p_kernel_map;
+    /// All actual kernels that have been generated for this kernel (different decisions made in shape interpretation)
+    std::vector<a_kernel *> p_generated_kernels;
 
   public:
-    Kernel(typename LoopTrees<Annotation>::node_t * root) :
+    Kernel() :
       id(id_cnt++),
-      p_root(root),
+      p_looptree_roots(),
       p_data_flow(),
-      p_argument_order(),
-      p_loop_mappings(),
-      p_iteration_maps(),
-      p_kernel_map()
+      p_arguments(),
+      p_loop_shapes(),
+      p_generated_kernels()
     {}
       
     ~Kernel() {
       /// \todo
     }
 
-    void setRoot(typename LoopTrees<Annotation>::node_t * root) { p_root = root; }
-    typename LoopTrees<Annotation>::node_t * getRoot() const { return p_root; }
+    std::list<typename LoopTrees<Annotation>::node_t *> & getRoots() { return p_looptree_roots; }
+    const std::list<typename LoopTrees<Annotation>::node_t *> & getRoots() const { return p_looptree_roots; }
 
     dataflow_t & getDataflow() { return p_data_flow; }
     const dataflow_t & getDataflow() const { return p_data_flow; }
 
-    arguments_t & getArguments() { return p_argument_order; }
-    const arguments_t & getArguments() const { return p_argument_order; }
+    arguments_t & getArguments() { return p_arguments; }
+    const arguments_t & getArguments() const { return p_arguments; }
 
-    std::set<loop_mapping_t *> & getLoopMappings() { return p_loop_mappings; }
-    const std::set<loop_mapping_t *> & getLoopMappings() const  { return p_loop_mappings; }
-
-    std::set<IterationMap<Annotation, Language, Runtime> *> & getIterationMaps(loop_mapping_t * loop_mapping) {
-      typename std::map<loop_mapping_t *, std::set<IterationMap<Annotation, Language, Runtime> *> >::iterator it_map = p_iteration_maps.find(loop_mapping);
-      if (it_map == p_iteration_maps.end()) {
-        it_map = p_iteration_maps.insert(std::pair<loop_mapping_t *, std::set<IterationMap<Annotation, Language, Runtime> *> >(
-                     loop_mapping, std::set<IterationMap<Annotation, Language, Runtime> *>()
-                 )).first;
-      }
-      return it_map->second;
+    void setShape(typename LoopTrees<Annotation>::loop_t * loop, typename Runtime::loop_shape_t * shape) {
+      p_loop_shapes.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(loop, shape));
     }
 
-    const std::set<IterationMap<Annotation, Language, Runtime> *> & getIterationMaps(loop_mapping_t * loop_mapping) const {
-      typename std::map<loop_mapping_t *, std::set<IterationMap<Annotation, Language, Runtime> *> >::const_iterator it_map = p_iteration_maps.find(loop_mapping);
-      if (it_map == p_iteration_maps.end()) {
-        it_map = p_iteration_maps.insert(std::pair<loop_mapping_t *, std::set<IterationMap<Annotation, Language, Runtime> *> >(
-                     loop_mapping, std::set<IterationMap<Annotation, Language, Runtime> *>()
-                 )).first;
-      }
-      return it_map->second;
-    }
-
-    void setKernel(loop_mapping_t * loop_mapping, IterationMap<Annotation, Language, Runtime> * iteration_map, a_kernel * kernel) {
-      typename std::map<loop_mapping_t *, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *> >::iterator it1 = p_kernel_map.find(loop_mapping);
-      if (it1 == p_kernel_map.end()) {
-        it1 = p_kernel_map.insert(std::pair<loop_mapping_t *, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *> >(
-                     loop_mapping, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *>()
-                 )).first;
-      }
-      typename std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *>::iterator it2 = it1->second.find(iteration_map);
-      assert(it2 == it1->second.end());
-      it1->second.insert(std::pair<IterationMap<Annotation, Language, Runtime> *, a_kernel *>(iteration_map, kernel));
-    }
-
-    a_kernel * getKernel(loop_mapping_t * loop_mapping, IterationMap<Annotation, Language, Runtime> * iteration_map) const {
-      typename std::map<loop_mapping_t *, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *> >::iterator it1 = p_kernel_map.find(loop_mapping);
-      if (it1 == p_kernel_map.end()) {
-        it1 = p_kernel_map.insert(std::pair<loop_mapping_t *, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *> >(
-                     loop_mapping, std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *>()
-                 )).first;
-      }
-      typename std::map<IterationMap<Annotation, Language, Runtime> *, a_kernel *>::iterator it2 = it1->second.find(iteration_map);
-      assert(it2 != it1->second.end());
-      return it2->second;
-    }
+    void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
 
   private:
     static unsigned long id_cnt;
@@ -162,12 +111,19 @@ class Kernel {
 
 template <class Annotation, class Language, class Runtime>
 void collectReferencedSymbols(Kernel<Annotation, Language, Runtime> * kernel, std::set<SgVariableSymbol *> & symbols) {
-  assert(kernel->getRoot() != NULL); // Root should have been setup
-  collectReferencedSymbols<Annotation>(kernel->getRoot(), symbols);
+  const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
+  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
+  for (it_root = roots.begin(); it_root != roots.end(); it_root++)
+    collectReferencedSymbols<Annotation>(*it_root, symbols);
 
   assert(!kernel->getDataflow().datas.empty()); // Should always have some data
   collectReferencedSymbols<Annotation>(kernel->getDataflow().datas, symbols);
 }
+
+/** Generate a parameter list for a kernel
+ */
+template <class Annotation, class Language, class Runtime>
+SgFunctionParameterList * createParameterList(Kernel<Annotation, Language, Runtime> * kernel);
 
 /** @} */
 

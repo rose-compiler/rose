@@ -61,7 +61,7 @@ class LoopTrees {
       );
       ~loop_t();
 
-      bool isParallel() const;
+      bool isDistributed() const;
     };
 
     struct stmt_t : public node_t {
@@ -652,27 +652,40 @@ void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgSta
 }
 
 template <class Annotation>
+void collectIteratorSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols) {
+  typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
+  if (loop == NULL) return;
+
+  symbols.insert(loop->iterator);
+
+  typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+    collectIteratorSymbols<Annotation>(*it_child, symbols);
+}
+
+template <class Annotation>
 void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
   std::vector<SgVarRefExp *> var_refs;
   std::vector<SgVarRefExp *>::const_iterator it_var_ref;
 
   typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
   if (loop != NULL) {
+    // If a loop is distributed (have gang, worker, or vector annotation) bounds will evaluated before launching the kernel.
+    if (!loop->isDistributed()) {
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->lower_bound);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+        symbols.insert((*it_var_ref)->get_symbol());
 
-    var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->lower_bound);
-    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-      symbols.insert((*it_var_ref)->get_symbol());
-
-    var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
-    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
-      symbols.insert((*it_var_ref)->get_symbol());
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
+        symbols.insert((*it_var_ref)->get_symbol());
+    }
 
     if (go_down_children) {
       typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
       for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
         collectReferencedSymbols<Annotation>(*it_child, symbols);
     }
-    
   }
   else {
     typename LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename LoopTrees<Annotation>::stmt_t *>(tree);

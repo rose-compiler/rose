@@ -19,6 +19,7 @@ looptree_to_kernel_LDADD = \
   $(ROSE_LIBS)
 
 check-local: looptree-to-kernel
+	rm -rf *.cpp *.hpp
 	./looptree-to-kernel $(srcdir)/../../tests/101-vector-constant-addition/101-klt.lt 101-klt.out
 	./looptree-to-kernel $(srcdir)/../../tests/102-vector-constant-product/102-klt.lt 102-klt.out
 	./looptree-to-kernel $(srcdir)/../../tests/103-vector-vector-addition/103-klt.lt 103-klt.out

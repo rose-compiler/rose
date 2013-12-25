@@ -48,10 +48,8 @@ class Generator {
 
     void buildArgumentLists(const LoopTrees<Annotation> & loop_trees, Kernel<Annotation, Language, Runtime> * kernel);
 
-    typename Kernel<Annotation, Language, Runtime>::a_kernel * callToKernelBuilder(
-      Kernel<Annotation, Language, Runtime> * kernel,
-      typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_map,
-      IterationMap<Annotation, Language, Runtime> * iteration_map
+    void callToKernelBuilder(
+      Kernel<Annotation, Language, Runtime> * kernel
     ) const;
 
   public:
@@ -66,14 +64,12 @@ class Generator {
 };
 
 template <class Annotation, class Language, class Runtime, class Driver>
-typename Kernel<Annotation, Language, Runtime>::a_kernel * Generator<Annotation, Language, Runtime, Driver>::callToKernelBuilder(
-  Kernel<Annotation, Language, Runtime> * kernel,
-  typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping,
-  IterationMap<Annotation, Language, Runtime> * iteration_map
+void Generator<Annotation, Language, Runtime, Driver>::callToKernelBuilder(
+  Kernel<Annotation, Language, Runtime> * kernel
 ) const {
-  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(kernel, loop_mapping, iteration_map, p_file_id);
-  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::build_result_t result =  p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc);
-  return result;
+  /// \todo generate multiple kernels (will depend on the runtime)
+  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(kernel, p_file_id);
+  kernel->addKernel(p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc));
 }
 
 template <class Annotation, class Language, class Runtime, class Driver>
@@ -141,60 +137,35 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
 ) {
   typename std::set<std::list<Kernel<Annotation, Language, Runtime> *> >::const_iterator it_kernel_list;
   typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
-  typename std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  *>::const_iterator it_loop_mapping;
   typename std::set<IterationMap<Annotation, Language, Runtime> *>::const_iterator it_iteration_map;
 
-  // 1 - Loop Selection
+  // 1 - Loop Selection : Generate multiple list of kernel that implement the given LoopTree
 
   cg_config.getLoopMapper().createKernels(loop_trees, kernel_lists);
 
-  // 2 - Data Flow
+  // 2 - Data Flow : performs data-flow analysis for each list of kernel
 
-  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
-    cg_config.getDataFlow().generateFlowSets(loop_trees, kernel_list);
-  }
+  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
+    cg_config.getDataFlow().generateFlowSets(loop_trees, *it_kernel_list);
 
-  // 3 - Arguments
-  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
-    for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
-      buildArgumentLists(loop_trees, kernel);
-    }
-  }
+  // 3 - Arguments : determines the list of arguments needed by each kernel
 
-  // 4 - Iterations Mapping
+  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
+    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++)
+      buildArgumentLists(loop_trees, *it_kernel);
 
-  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
-    for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
-      const std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t *> & loop_mappings = kernel->getLoopMappings();
-      for (it_loop_mapping = loop_mappings.begin(); it_loop_mapping != loop_mappings.end(); it_loop_mapping++) {
-        typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  * loop_mapping = *it_loop_mapping;
-        cg_config.getIterationMapper().generateShapes(loop_mapping, kernel->getIterationMaps(loop_mapping));
-      }
-    }
-  }
+  // 4 - Iterations Mapping : determines the "shape" of every loop of each kernel.
+  //     The "shape" of a loop is how this loop is adapted to the execution model.
+
+  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
+    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++)
+      cg_config.getIterationMapper().determineShapes(*it_kernel);
 
   // 5 - Code Generation
 
-  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
-    const std::list<Kernel<Annotation, Language, Runtime> *> & kernel_list = *it_kernel_list;
-    for (it_kernel = kernel_list.begin(); it_kernel != kernel_list.end(); it_kernel++) {
-      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
-      const std::set<typename Kernel<Annotation, Language, Runtime>::loop_mapping_t  *> & loop_mappings = kernel->getLoopMappings();
-      for (it_loop_mapping = loop_mappings.begin(); it_loop_mapping != loop_mappings.end(); it_loop_mapping++) {
-        typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping = *it_loop_mapping;
-        const std::set<IterationMap<Annotation, Language, Runtime> *> & iteration_maps =  kernel->getIterationMaps(loop_mapping);
-        for (it_iteration_map = iteration_maps.begin(); it_iteration_map != iteration_maps.end(); it_iteration_map++) {
-          IterationMap<Annotation, Language, Runtime> * iteration_map = *it_iteration_map;
-          kernel->setKernel(loop_mapping, iteration_map, callToKernelBuilder(kernel, loop_mapping, iteration_map));
-        }
-      }
-    }
-  }
+  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
+    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++)
+      callToKernelBuilder(*it_kernel);
 }
 
 
