@@ -1,11 +1,20 @@
 
+#ifndef __KLT_RUNTIME_OPENACC_HPP__
+#define __KLT_RUNTIME_OPENACC_HPP__
+
 namespace KLT {
 
 namespace Runtime {
 
-class OpenACC {};
-
+class OpenACC {
+  public:
+    struct loop_shape_t {
+      
+    };
+};
 }
 
 }
+
+#endif /* __KLT_RUNTIME_OPENACC_HPP__ */
 

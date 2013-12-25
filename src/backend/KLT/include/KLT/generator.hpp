@@ -85,7 +85,7 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
   typename std::set<Data<Annotation> *>::const_iterator it_data;
 
   const std::set<SgVariableSymbol *> & parameters = loop_trees.getParameters();
-  const std::set<SgVariableSymbol *> & coefficients = loop_trees.getScalars();
+  const std::set<SgVariableSymbol *> & scalars = loop_trees.getScalars();
 
   std::set<SgVariableSymbol *> sym_var_refs;
     collectReferencedSymbols(kernel, sym_var_refs);
@@ -98,12 +98,12 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
     if (used) kernel->getArguments().parameters.push_back(parameter);
   }
 
-  for (it_symbol = coefficients.begin(); it_symbol != coefficients.end(); it_symbol++) {
-    SgVariableSymbol * coefficient = *it_symbol;
+  for (it_symbol = scalars.begin(); it_symbol != scalars.end(); it_symbol++) {
+    SgVariableSymbol * scalar = *it_symbol;
 
-    bool used = sym_var_refs.find(coefficient) != sym_var_refs.end(); // If it is referenced (SgVarRefExp) then it is needed
+    bool used = sym_var_refs.find(scalar) != sym_var_refs.end(); // If it is referenced (SgVarRefExp) then it is needed
 
-    if (used) kernel->getArguments().coefficients.push_back(coefficient);
+    if (used) kernel->getArguments().scalars.push_back(scalar);
   }
 
   for (it_data = kernel->getDataflow().datas.begin(); it_data != kernel->getDataflow().datas.end(); it_data++) {

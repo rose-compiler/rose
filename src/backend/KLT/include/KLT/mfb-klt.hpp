@@ -1,6 +1,6 @@
 
-#ifndef __KLT_CORE_MFB_KLT_HPP__
-#define __KLT_CORE_MFB_KLT_HPP__
+#ifndef __KLT_MFB_KLT_HPP__
+#define __KLT_MFB_KLT_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
@@ -30,4 +30,4 @@ class KLT_Driver : public Driver<Sage>, public Driver<KLT> {
 
 }
 
-#endif /* __KLT_CORE_MFB_KLT_HPP__ */
+#endif /* __KLT__MFB_KLT_HPP__ */

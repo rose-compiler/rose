@@ -27,7 +27,7 @@ class IterationMap {
   protected:
     typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * p_loop_mapping;
 
-    /// \todo std::map<typename LoopTrees<Annotation>::loop_t *, Runtime::loop_tiles_t>
+    std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t> p_loop_shapes;
 
   public:
     IterationMap(typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping);

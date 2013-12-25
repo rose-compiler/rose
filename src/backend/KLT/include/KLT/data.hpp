@@ -56,9 +56,11 @@ class Data {
     SgVariableSymbol * getVariableSymbol() const;
 
     SgType * getBaseType();
-//  SgType * getBaseType() const;
 
     const std::vector<section_t> & getSections() const;
+
+    bool isFlowIn() const;
+    bool isFlowOut() const;
 
     void toText(std::ostream & out) const;
 

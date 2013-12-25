@@ -49,11 +49,11 @@ void LoopMapper<Annotation, Language, Runtime>::createKernels(
     typename Kernel<Annotation, Language, Runtime>::loop_mapping_t * loop_mapping = new typename Kernel<Annotation, Language, Runtime>::loop_mapping_t();
       kernel->getLoopMappings().insert(loop_mapping);
 
-    // Collect all perfectly nested fully-parallel loops
+    // Collect all perfectly nested parallel loops
     typename LoopTrees<Annotation>::loop_t * loop =
         dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
     while (loop != NULL && loop->isParallel()) {
-      loop_mapping->loop_nest.push_back(loop); // cond: loop != NULL && loop->parallel_pattern == LoopTrees<Annotation>::parfor
+      loop_mapping->loop_nest.push_back(loop);
       if (loop->children.size() == 1) {
         tree = loop->children.front();
         loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);

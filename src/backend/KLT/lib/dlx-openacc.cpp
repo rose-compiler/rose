@@ -1,6 +1,14 @@
 
 #include "KLT/dlx-openacc.hpp"
-
+#include "KLT/loop-trees.hpp"
+#include "KLT/generator.hpp"
+#include "KLT/kernel.hpp"
+#include "KLT/data.hpp"
+#include "KLT/iteration-mapper.hpp"
+#include "KLT/language-opencl.hpp"
+#include "KLT/runtime-openacc.hpp"
+#include "KLT/mfb-klt.hpp"
+#include "KLT/mfb-acc-ocl.hpp"
 #include "KLT/utils.hpp"
 
 #include "sage3basic.h"
@@ -107,4 +115,88 @@ void KLT_Annotation<OpenACC::language_t>::parseLoop(std::vector<DLX::KLT_Annotat
 }
 
 }
+
+namespace KLT {
+
+template <>
+bool LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t::isParallel() const {
+  std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
+  for (it = annotations.begin(); it != annotations.end(); it++) {
+    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_seq) return false;
+  }
+  return true;
+}
+
+template <>
+unsigned long Generator<
+  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
+  Language::OpenCL,
+  Runtime::OpenACC,
+  MFB::KLT_Driver
+>::createFile() {
+  return p_sage_driver.createStandaloneSourceFile(p_file_name, "cl");
+}
+
+template <>
+unsigned long Kernel<DLX::KLT_Annotation<DLX::OpenACC::language_t>, Language::OpenCL, Runtime::OpenACC>::id_cnt = 0;
+
+template <>
+bool Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::isFlowIn() const {
+  std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
+  for (it = annotations.begin(); it != annotations.end(); it++) {
+    if (   it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_copy
+        || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_copyin
+    ) return true;
+  }
+  return false;
+}
+
+template <>
+bool Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::isFlowOut() const {
+  std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
+  for (it = annotations.begin(); it != annotations.end(); it++) {
+    if (   it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_copy
+        || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_copyout
+    ) return true;
+  }
+  return false;
+}
+
+template <>
+void IterationMapper<
+  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
+  KLT::Language::OpenCL,
+  KLT::Runtime::OpenACC
+>::generateShapes(
+  Kernel_OpenCL_OpenACC::loop_mapping_t * loop_mapping,
+  std::set<ItMap_OpenCL_OpenACC *> & shapes
+) const {
+  assert(false);
+}
+
+}
+
+namespace MFB {
+
+template <>
+KLT<Kernel_OpenCL_OpenACC>::build_result_t Driver<KLT>::build<Kernel_OpenCL_OpenACC>(
+    KLT<Kernel_OpenCL_OpenACC>::object_desc_t const & object
+) {
+  assert(false); /// \todo
+}
+
+KLT<Kernel_OpenCL_OpenACC>::object_desc_t::object_desc_t(
+      Kernel_OpenCL_OpenACC * kernel_,
+      Kernel_OpenCL_OpenACC::loop_mapping_t * loop_mapping_,
+      ItMap_OpenCL_OpenACC * iteration_map_,
+      unsigned long file_id_
+) :
+  kernel(kernel_),
+  loop_mapping(loop_mapping_),
+  iteration_map(iteration_map_),
+  file_id(file_id_)
+{}
+
+}
+
 

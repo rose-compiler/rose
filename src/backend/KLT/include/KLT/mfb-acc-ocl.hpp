@@ -11,15 +11,15 @@
 
 #include <vector>
 
+typedef ::KLT::Kernel< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> Kernel_OpenCL_OpenACC;
+typedef ::KLT::IterationMap< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> ItMap_OpenCL_OpenACC;
+
 namespace MFB {
 
 /*!
  * \addtogroup grp_mfb_acc_ocl
  * @{
 */
-
-typedef ::KLT::Kernel< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> Kernel_OpenCL_OpenACC;
-typedef ::KLT::IterationMap< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t>, ::KLT::Language::OpenCL, ::KLT::Runtime::OpenACC> ItMap_OpenCL_OpenACC;
 
 template <>
 class KLT<Kernel_OpenCL_OpenACC> {
