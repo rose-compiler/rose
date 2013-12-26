@@ -190,7 +190,7 @@ SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
     if (retval.empty()) {
         retval = "<" + refkind; // extra level of brackets to indicate that it's not a real name
         if (offset)
-            retval += "@" + StringUtility::addrToString(virtual_address(node), 32, false/*unsigned*/);
+            retval += "@" + StringUtility::addrToString(virtual_address(node), 32);
         retval += ">";
     }
 
@@ -238,7 +238,7 @@ SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
         retval += buf;
     }
     if (nbits!=0)
-        retval += StringUtility::addrToString(offset, nbits, false/*unsigned*/);
+        retval += StringUtility::addrToString(offset, nbits);
 
     return retval;
 }

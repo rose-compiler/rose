@@ -84,11 +84,12 @@ struct Formatter {
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true) {}
+    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+    bool use_hexadecimal;                       /**< Show values in hexadecimal and decimal rather than just decimal. */
 };
 
 /** Base class for visiting nodes during expression traversal. */

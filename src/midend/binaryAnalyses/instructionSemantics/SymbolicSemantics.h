@@ -48,6 +48,9 @@ namespace BinaryAnalysis {              // documented elsewhere
             /** Formatter for symbolic values. */
             class Formatter: public BaseSemantics::Formatter {
             public:
+                Formatter() {
+                    expr_formatter.use_hexadecimal = false;             // preserve the old behavior in API1
+                }
                 InsnSemanticsExpr::Formatter expr_formatter;
             };
 
