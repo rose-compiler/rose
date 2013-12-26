@@ -13,6 +13,13 @@ class OpenACC {
       bool worker;
       bool vector;
     };
+
+    struct shape_config_t {
+      long tile_0;
+      long tile_1;
+      long tile_2;
+      long tile_3;
+    };
 };
 
 }

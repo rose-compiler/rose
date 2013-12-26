@@ -46,9 +46,12 @@ class Kernel {
       std::list<SgVariableSymbol *> scalars;
       /// Datas : reference order for call argument
       std::list<Data<Annotation> *> datas;
+      /// Context : used to communicate information (loop shape, ...) from the host to the device
+      SgVariableSymbol * context;
     };
 
     struct local_symbol_maps_t {
+      std::map<SgVariableSymbol *, SgVariableSymbol *> parameters;
       std::map<SgVariableSymbol *, SgVariableSymbol *> scalars;
       std::map<Data<Annotation> *, SgVariableSymbol *> datas;
       std::map<SgVariableSymbol *, SgVariableSymbol *> iterators;
@@ -102,6 +105,8 @@ class Kernel {
     void setShape(typename LoopTrees<Annotation>::loop_t * loop, typename Runtime::loop_shape_t * shape) {
       p_loop_shapes.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(loop, shape));
     }
+
+    const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & getShapes() const { return p_loop_shapes; }
 
     void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
 

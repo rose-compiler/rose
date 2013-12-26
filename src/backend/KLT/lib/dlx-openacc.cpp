@@ -125,8 +125,8 @@ bool LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t::isDistri
   std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
   for (it = annotations.begin(); it != annotations.end(); it++) {
     if (   it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_gang
-        && it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_worker
-        && it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector
+        || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_worker
+        || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector
     ) return true;
   }
   return false;
@@ -175,6 +175,8 @@ Runtime::OpenACC::loop_shape_t * IterationMapper<
 >::createShape(
   LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop
 ) const {
+  if (!loop->isDistributed()) return NULL;
+
   Runtime::OpenACC::loop_shape_t * shape = new Runtime::OpenACC::loop_shape_t();
   shape->gang   = false;
   shape->worker = false;
@@ -187,6 +189,19 @@ Runtime::OpenACC::loop_shape_t * IterationMapper<
     if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector) shape->vector = true;
   }
   return shape;
+}
+
+template <>
+void IterationMapper<
+  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
+  Language::OpenCL,
+  Runtime::OpenACC
+>::generateShapeConfigs(
+  ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop,
+  Runtime::OpenACC::loop_shape_t * shape,
+  std::vector<Runtime::OpenACC::shape_config_t *> & shape_configs
+) const {
+  /// \todo
 }
 
 template <>
@@ -275,7 +290,8 @@ KLT<Kernel_OpenCL_OpenACC>::object_desc_t::object_desc_t(
       unsigned long file_id_
 ) :
   kernel(kernel_),
-  file_id(file_id_)
+  file_id(file_id_),
+  shape_configs()
 {}
 
 template <>
@@ -291,20 +307,27 @@ SgBasicBlock * createLocalDeclarations<
     ::KLT::Language::OpenCL,
     ::KLT::Runtime::OpenACC
   >::local_symbol_maps_t & local_symbol_maps,
-  const std::set<SgVariableSymbol *> & iterators,
   const ::KLT::Kernel<
     DLX::KLT_Annotation<DLX::OpenACC::language_t>,
     ::KLT::Language::OpenCL,
     ::KLT::Runtime::OpenACC
-  >::arguments_t & arguments
+  >::arguments_t & arguments,
+  const std::map<
+    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t *,
+    ::KLT::Runtime::OpenACC::loop_shape_t *
+  > & loop_shapes
 ) {
-/*
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
-  std::list< ::KLT::Core::Data *>::const_iterator it_data;
+  std::list< ::KLT::Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *>::const_iterator it_data;
 
   std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator   it_param_to_field;
-  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator   it_coef_to_field;
-  std::map< ::KLT::Core::Data *, SgVariableSymbol *>::const_iterator it_data_to_field;
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator   it_scalar_to_field;
+  std::map< ::KLT::Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *, SgVariableSymbol *>::const_iterator it_data_to_field;
+
+  std::map<
+    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t *,
+    ::KLT::Runtime::OpenACC::loop_shape_t *
+  >::const_iterator it_loop_shape;
   
   // * Definition *
 
@@ -323,54 +346,139 @@ SgBasicBlock * createLocalDeclarations<
     local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, arg_sym));
   }
 
-  // * Lookup coeficient symbols *
+  // * Lookup scalar symbols *
 
-  for (it_var_sym = arguments.coefficients.begin(); it_var_sym != arguments.coefficients.end(); it_var_sym++) {
-    SgVariableSymbol * coef_sym = *it_var_sym;
-    std::string coef_name = coef_sym->get_name().getString();
+  for (it_var_sym = arguments.scalars.begin(); it_var_sym != arguments.scalars.end(); it_var_sym++) {
+    SgVariableSymbol * scalar_sym = *it_var_sym;
+    std::string scalar_name = scalar_sym->get_name().getString();
 
-    SgVariableSymbol * arg_sym = kernel_defn->lookup_variable_symbol("coef_" + coef_name);
+    SgVariableSymbol * arg_sym = kernel_defn->lookup_variable_symbol("scalar_" + scalar_name);
     assert(arg_sym != NULL);
 
-    local_symbol_maps.coefficients.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(coef_sym, arg_sym));
+    local_symbol_maps.scalars.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(scalar_sym, arg_sym));
   }
 
   // * Lookup data symbols *
 
   for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
-    ::KLT::Core::Data * data = *it_data;
+    ::KLT::Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();;
     std::string data_name = data_sym->get_name().getString();
 
     SgVariableSymbol * arg_sym = kernel_defn->lookup_variable_symbol("data_" + data_name);
     assert(arg_sym != NULL);
 
-    local_symbol_maps.datas.insert(std::pair< ::KLT::Core::Data *, SgVariableSymbol *>(data, arg_sym));
+    local_symbol_maps.datas.insert(
+      std::pair< ::KLT::Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *, SgVariableSymbol *>(data, arg_sym)
+    );
   }
 
-  // ***************
+  // * Create iterator *
 
-  std::set<SgVariableSymbol *>::const_iterator it_iter_sym;
-  for (it_iter_sym = iterators.begin(); it_iter_sym != iterators.end(); it_iter_sym++) {
-    SgVariableSymbol * iter_sym = *it_iter_sym;
+  for (it_loop_shape = loop_shapes.begin(); it_loop_shape != loop_shapes.end(); it_loop_shape++) {
+    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop = it_loop_shape->first;
+    ::KLT::Runtime::OpenACC::loop_shape_t * shape = it_loop_shape->second;
+    SgVariableSymbol * iter_sym = loop->iterator;
     std::string iter_name = iter_sym->get_name().getString();
     SgType * iter_type = iter_sym->get_type();
 
-    SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-      "local_it_" + iter_name,
-      iter_type,
-      NULL,
-      kernel_body
-    );
-    SageInterface::appendStatement(iter_decl, kernel_body);
+    if (!loop->isDistributed()) {
+      assert(shape == NULL);
 
-    SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
-    assert(local_sym != NULL);
-    local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+        "local_it_" + iter_name, iter_type, NULL, kernel_body
+      );
+      SageInterface::appendStatement(iter_decl, kernel_body);
+
+      SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
+      assert(local_sym != NULL);
+      local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+    }
+    else { // for now we add all possible iterators
+      /* if (shape->tile_0) */ {
+        std::string name = "local_it_" + iter_name + "_tile_0";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->gang) */ {
+        std::string name = "local_it_" + iter_name + "_gang";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->tile_1) */ {
+        std::string name = "local_it_" + iter_name + "_tile_1";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->worker) */ {
+        std::string name = "local_it_" + iter_name + "_worker";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->tile_2) */ {
+        std::string name = "local_it_" + iter_name + "_tile_2";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->vector) */ {
+        std::string name = "local_it_" + iter_name + "_vector";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+      /* if (shape->tile_3) */ {
+        std::string name = "local_it_" + iter_name + "_tile_3";
+        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+          name, iter_type, NULL, kernel_body
+        );
+        SageInterface::appendStatement(iter_decl, kernel_body);
+
+        SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol(name);
+        assert(local_sym != NULL);
+        local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
+      }
+    }
   }
 
+  /// \todo context
+
   return kernel_body;
-*/
+
 }
 
 }

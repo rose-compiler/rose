@@ -38,6 +38,12 @@ class IterationMapper {
         if (loop != NULL) determineShapes(kernel, loop);
       }
     }
+
+    void generateShapeConfigs(
+      typename ::KLT::LoopTrees<Annotation>::loop_t * loop,
+      typename Runtime::loop_shape_t * shape,
+      std::vector<typename Runtime::shape_config_t *> & shape_configs
+    ) const;
 };
 
 /** @} */

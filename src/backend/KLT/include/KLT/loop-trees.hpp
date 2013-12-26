@@ -183,9 +183,6 @@ template <class Annotation>
 void collectExpressions(typename LoopTrees<Annotation>::node_t * tree, std::set<SgExpression *> & exprs);
 
 template <class Annotation>
-void collectIteratorSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols);
-
-template <class Annotation>
 void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children = true);
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -649,18 +646,6 @@ void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgSta
   assert(stmt != NULL);
 
   leaves.insert(stmt->statement);
-}
-
-template <class Annotation>
-void collectIteratorSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols) {
-  typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
-  if (loop == NULL) return;
-
-  symbols.insert(loop->iterator);
-
-  typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-    collectIteratorSymbols<Annotation>(*it_child, symbols);
 }
 
 template <class Annotation>

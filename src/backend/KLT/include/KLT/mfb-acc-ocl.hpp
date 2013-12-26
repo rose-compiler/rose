@@ -3,6 +3,7 @@
 #define __MFB_ACC_OCL_HPP__
 
 #include "KLT/kernel.hpp"
+#include "KLT/loop-trees.hpp"
 #include "KLT/runtime-openacc.hpp"
 #include "KLT/language-opencl.hpp"
 
@@ -30,6 +31,7 @@ class KLT<Kernel_OpenCL_OpenACC> {
     struct object_desc_t {
       Kernel_OpenCL_OpenACC * kernel;
       unsigned long file_id;
+      std::map< ::KLT::LoopTrees< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> >::loop_t *, Runtime::shape_config_t *> shape_configs;
 
       object_desc_t(
         Kernel_OpenCL_OpenACC * kernel_,

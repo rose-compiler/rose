@@ -34,8 +34,11 @@ SgBasicBlock * createLocalDeclarations(
   Driver<Sage> & driver,
   SgFunctionDefinition * kernel_defn,
   typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
-  const std::set<SgVariableSymbol *> & iterators,
-  const typename ::KLT::Kernel<Annotation, Language, Runtime>::arguments_t & arguments
+  const typename ::KLT::Kernel<Annotation, Language, Runtime>::arguments_t & arguments,
+  const std::map<
+    typename ::KLT::LoopTrees<Annotation>::loop_t *,
+    typename Runtime::loop_shape_t *
+  > & loop_shapes
 );
 
 template <class Object>
@@ -53,14 +56,6 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::loop_t *>::const_iterator it_nested_loop;
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_body_branch;
-
-  // * Build Iterator Set *
-
-  std::set<SgVariableSymbol *> iterators;
-  const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & roots = object.kernel->getRoots();
-  typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
-  for (it_root = roots.begin(); it_root != roots.end(); it_root++)
-    ::KLT::collectIteratorSymbols<typename KLT<Object>::Annotation>(*it_root, iterators);
 
   // * Function Declaration *
 
@@ -111,8 +106,8 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     *(Driver<Sage> *)this,
     kernel_result.definition,
     local_symbol_maps,
-    iterators,
-    object.kernel->getArguments()
+    object.kernel->getArguments(),
+    object.kernel->getShapes()
   );
 
 #if 0

@@ -64,15 +64,6 @@ class Generator {
 };
 
 template <class Annotation, class Language, class Runtime, class Driver>
-void Generator<Annotation, Language, Runtime, Driver>::callToKernelBuilder(
-  Kernel<Annotation, Language, Runtime> * kernel
-) const {
-  /// \todo generate multiple kernels (will depend on the runtime)
-  typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(kernel, p_file_id);
-  kernel->addKernel(p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc));
-}
-
-template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
   const LoopTrees<Annotation> & loop_trees,
   Kernel<Annotation, Language, Runtime> * kernel
@@ -164,8 +155,43 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
   // 5 - Code Generation
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
-    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++)
-      callToKernelBuilder(*it_kernel);
+    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++) {
+      Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
+
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::shape_config_t *> > shape_configs_map;
+
+      const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & loop_shapes = kernel->getShapes();
+      typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape;
+      for (it_shape = loop_shapes.begin(); it_shape != loop_shapes.end(); it_shape++) {
+        std::vector<typename Runtime::shape_config_t *> & shape_configs = shape_configs_map.insert(
+          std::pair<
+            typename LoopTrees<Annotation>::loop_t *,
+            std::vector<typename Runtime::shape_config_t *>
+          >(
+            it_shape->first,
+            std::vector<typename Runtime::shape_config_t *>()
+          )
+        ).first->second;
+        cg_config.getIterationMapper().generateShapeConfigs(it_shape->first, it_shape->second, shape_configs);
+      }
+
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::pair<size_t, size_t> > counters;
+
+      /// \todo init counters
+
+      std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> > shape_configs_set;
+
+      /// \todo generate all combinaisons
+
+      typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> >::iterator it_shape_config;
+      for (it_shape_config = shape_configs_set.begin(); it_shape_config != shape_configs_set.end(); it_shape_config++) {
+        typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(kernel, p_file_id);
+
+        kernel_desc.shape_configs.insert(it_shape_config->begin(), it_shape_config->end());
+
+        kernel->addKernel(p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc));
+      }
+    }
 }
 
 
