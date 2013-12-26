@@ -1375,14 +1375,28 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
     bool showed_comment = false;
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
-            // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
-            // with 0xffff0000 is for negative values.
-            o <<StringUtility::addrToString(ival);
-        } else if (as_signed && nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
-            uint64_t sign_extended = ival | ~(((uint64_t)1<<nbits)-1);
-            o <<(int64_t)sign_extended;
+            // The value is probably an address, so print it like one.
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::unsignedToHex2(ival, nbits);
+            } else {
+                // The old behavior (which is enabled when formatter.use_hexadecimal is false) was to print only the
+                // hexadecimal format and not the decimal format, so we'll emulate that. [Robb P. Matzke 2013-12-26]
+                o <<StringUtility::addrToString(ival, nbits);
+            }
+        } else if (as_signed) {
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::toHex2(ival, nbits); // show as signed and unsigned
+            } else if (IntegerOps::signBit2(ival, nbits)) {
+                o <<(int64_t)IntegerOps::signExtend2(ival, nbits, 64);
+            } else {
+                o <<ival;
+            }
         } else {
-            o <<ival;
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::unsignedToHex2(ival, nbits); // show only as unsigned
+            } else {
+                o <<ival;
+            }
         }
     } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
         o <<comment;
