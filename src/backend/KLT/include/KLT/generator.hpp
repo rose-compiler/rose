@@ -6,6 +6,7 @@
 #include <set>
 #include <list>
 #include <string>
+#include <iostream>
 
 #include "KLT/mfb-klt.hpp"
 
@@ -120,6 +121,29 @@ Generator<Annotation, Language, Runtime, Driver>::Generator(
 template <class Annotation, class Language, class Runtime, class Driver>
 Generator<Annotation, Language, Runtime, Driver>::~Generator() {}
 
+/// Helper function to build set of all loop shape configuration.
+template <class Annotation, class Language, class Runtime>
+void buildAllShapeConfigs(
+  std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> curr_elem,
+  typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::shape_config_t *> >::const_iterator curr_it,
+  const typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::shape_config_t *> >::const_iterator end_it,
+  std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> > & shape_configs_set
+) {
+  if (curr_it == end_it) {
+    shape_configs_set.insert(curr_elem);
+  }
+  else {
+    typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::shape_config_t *> >::const_iterator new_curr_it = curr_it;
+    new_curr_it++;
+    typename std::vector<typename Runtime::shape_config_t *>::const_iterator it;
+    for (it = curr_it->second.begin(); it != curr_it->second.end(); it++) {
+      std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> new_curr_elem(curr_elem);
+      new_curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *>(curr_it->first, *it));
+      buildAllShapeConfigs<Annotation, Language, Runtime>(new_curr_elem, new_curr_it, end_it, shape_configs_set);
+    }
+  }
+}
+
 template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::generate(
   const LoopTrees<Annotation> & loop_trees,
@@ -164,24 +188,22 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape;
       for (it_shape = loop_shapes.begin(); it_shape != loop_shapes.end(); it_shape++) {
         std::vector<typename Runtime::shape_config_t *> & shape_configs = shape_configs_map.insert(
-          std::pair<
-            typename LoopTrees<Annotation>::loop_t *,
-            std::vector<typename Runtime::shape_config_t *>
-          >(
+          std::pair<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::shape_config_t *> >(
             it_shape->first,
             std::vector<typename Runtime::shape_config_t *>()
           )
         ).first->second;
         cg_config.getIterationMapper().generateShapeConfigs(it_shape->first, it_shape->second, shape_configs);
+        assert(shape_configs.size() > 0);
       }
 
-      std::map<typename LoopTrees<Annotation>::loop_t *, std::pair<size_t, size_t> > counters;
-
-      /// \todo init counters
-
       std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> > shape_configs_set;
-
-      /// \todo generate all combinaisons
+      buildAllShapeConfigs<Annotation, Language, Runtime>(
+        std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *>(),
+        shape_configs_map.begin(),
+        shape_configs_map.end(),
+        shape_configs_set
+      );
 
       typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::shape_config_t *> >::iterator it_shape_config;
       for (it_shape_config = shape_configs_set.begin(); it_shape_config != shape_configs_set.end(); it_shape_config++) {

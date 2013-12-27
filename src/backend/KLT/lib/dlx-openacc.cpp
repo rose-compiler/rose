@@ -201,7 +201,14 @@ void IterationMapper<
   Runtime::OpenACC::loop_shape_t * shape,
   std::vector<Runtime::OpenACC::shape_config_t *> & shape_configs
 ) const {
-  /// \todo
+  /// \todo only generating the default (not usable) shape
+
+  Runtime::OpenACC::shape_config_t * shape_config = new Runtime::OpenACC::shape_config_t();
+    shape_config->tile_0 = 0;
+    shape_config->tile_1 = 0;
+    shape_config->tile_2 = 0;
+    shape_config->tile_3 = 0;
+  shape_configs.push_back(shape_config);
 }
 
 template <>
