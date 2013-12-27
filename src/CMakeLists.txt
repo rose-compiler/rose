@@ -170,6 +170,8 @@ set( sage3_SRC
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/omplexer.ll
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/Utf8.C
+
    )
 
 add_definitions(-DPOET_VERSION="1.03.06")
