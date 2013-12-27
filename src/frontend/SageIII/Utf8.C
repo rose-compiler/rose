@@ -3,6 +3,10 @@
 #include <string.h>
 #include "Utf8.h"
 
+// Define static member variables
+Utf8::BadUnicodeException Utf8::bad_unicode_exception;
+Utf8::BadUtf8CodeException Utf8::bad_utf8_code_exception;
+
 /**
  * Compute the code value of a Unicode character encoded in UTF8 format
  * in the array bytes starting.  "size" indicates the number of ASCII
