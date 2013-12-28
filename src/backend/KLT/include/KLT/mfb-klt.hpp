@@ -60,7 +60,7 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
   // * Function Declaration *
 
   std::ostringstream kernel_function_name;
-  kernel_function_name << "kernel_function_" << object.kernel->id << "_" << object.kernel;
+  kernel_function_name << "kernel_" << object.kernel << "_" << object.id;
   result->kernel_name = kernel_function_name.str();
 
   SgFunctionParameterList * kernel_function_params =
@@ -107,34 +107,17 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     kernel_result.definition,
     local_symbol_maps,
     object.kernel->getArguments(),
-    object.kernel->getShapes()
+    object.shapes
   );
 
-#if 0
+  /// \todo add loops descriptor to 'result'
 
-  // * Create code to handle nested loops (mapped on the work sharing grid) *
-
-  std::map<SgVariableSymbol *, SgVariableSymbol *> iter_to_local;
-
-  object.iteration_map->generateDimensions(local_symbol_maps, result->dimensions);
-
-  body = object.iteration_map->generateBodyForMappedIterationDomain(local_symbol_maps, body, result->dimensions);
-
-  // * Create the content of the loop nest *
-
-  for (it_body_branch = object.loop_mapping->body.begin(); it_body_branch != object.loop_mapping->body.end(); it_body_branch++) {
-    SgStatement * stmt = ::KLT::Core::generateStatement(
-      *it_body_branch, 
-      local_symbol_maps.parameters,
-      local_symbol_maps.coefficients,
-      local_symbol_maps.datas,
-      local_symbol_maps.iterators,
-      true, // generate statement for the whole tree not only the top node
-      true  // flatten array reference
+  const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & kernel_roots = object.kernel->getRoots();
+  typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
+  for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++)
+    ::KLT::generateKernelBody<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(
+      *it_root, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
     );
-    SageInterface::appendStatement(stmt, body);
-  }
-#endif
 
   return result;
 }

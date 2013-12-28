@@ -6,6 +6,7 @@ lib_LTLIBRARIES=libKLT.la
 libKLT_la_SOURCES= \
   mfb-klt.cpp \
   dlx-openacc.cpp \
+  runtime-openacc.cpp \
   utils.cpp
 libKLT_la_CXXFLAGS= \
   -g \

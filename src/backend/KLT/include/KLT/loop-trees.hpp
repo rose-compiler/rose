@@ -166,17 +166,6 @@ SgExpression * translateConstExpression(
 );
 
 template <class Annotation>
-SgStatement * generateStatement(
-  typename LoopTrees<Annotation>::node_t * node,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & coef_to_local,
-  const std::map<Data<Annotation> *, SgVariableSymbol *> & data_to_local,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local,
-  bool generate_in_depth = false,
-  bool flatten_array_ref = true
-);
-
-template <class Annotation>
 void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves);
 
 template <class Annotation>

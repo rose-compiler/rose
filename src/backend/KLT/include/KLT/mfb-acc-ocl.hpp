@@ -29,11 +29,16 @@ class KLT<Kernel_OpenCL_OpenACC> {
     typedef ::KLT::Runtime::OpenACC Runtime;
 
     struct object_desc_t {
+      unsigned id;
       Kernel_OpenCL_OpenACC * kernel;
       unsigned long file_id;
-      std::map< ::KLT::LoopTrees< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> >::loop_t *, Runtime::shape_config_t *> shape_configs;
+      std::map<
+        ::KLT::LoopTrees< ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> >::loop_t *,
+        Runtime::loop_shape_t *
+      > shapes;
 
       object_desc_t(
+        unsigned id_,
         Kernel_OpenCL_OpenACC * kernel_,
         unsigned long file_id_
       );

@@ -14,14 +14,30 @@ template <class Annotation, class Language, class Runtime> class Kernel;
 template <class Annotation, class Language, class Runtime>
 class IterationMapper {
   private:
-    typename Runtime::loop_shape_t * createShape(typename LoopTrees<Annotation>::loop_t * loop) const;
+    void computeValidShapes(
+      typename LoopTrees<Annotation>::loop_t * loop,
+      std::vector<typename Runtime::loop_shape_t *> & shapes
+    ) const;
 
-    void determineShapes(Kernel<Annotation, Language, Runtime> * kernel, typename LoopTrees<Annotation>::loop_t * loop) const {
-      kernel->setShape(loop, createShape(loop));
+    void determineLoopShapes(
+      Kernel<Annotation, Language, Runtime> * kernel,
+      typename LoopTrees<Annotation>::loop_t * loop,
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > & shape_map
+    ) const {
+      std::vector<typename Runtime::loop_shape_t *> & shapes = shape_map.insert(
+        std::pair<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> >(
+          loop, std::vector<typename Runtime::loop_shape_t *>()
+        )
+      ).first->second;
+
+      computeValidShapes(loop, shapes);
+
+      if (shapes.empty()) shape_map.erase(loop);
+
       typename std::list<typename LoopTrees<Annotation>::node_t *>::iterator it_child;
       for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++) {
         typename LoopTrees<Annotation>::loop_t * child = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_child);
-        if (child != NULL) determineShapes(kernel, child);
+        if (child != NULL) determineLoopShapes(kernel, child, shape_map);
       }
     }
 
@@ -30,20 +46,17 @@ class IterationMapper {
      *  \param loop_distribution
      *  \param shapes
      */
-    void determineShapes(Kernel<Annotation, Language, Runtime> * kernel) const {
+    void determineLoopShapes(
+      Kernel<Annotation, Language, Runtime> * kernel,
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > & shape_map
+    ) const {
       const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
       typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
       for (it_root = roots.begin(); it_root != roots.end(); it_root++) {
         typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_root);
-        if (loop != NULL) determineShapes(kernel, loop);
+        if (loop != NULL) determineLoopShapes(kernel, loop, shape_map);
       }
     }
-
-    void generateShapeConfigs(
-      typename ::KLT::LoopTrees<Annotation>::loop_t * loop,
-      typename Runtime::loop_shape_t * shape,
-      std::vector<typename Runtime::shape_config_t *> & shape_configs
-    ) const;
 };
 
 /** @} */

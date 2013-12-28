@@ -168,47 +168,43 @@ bool Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::isFlowOut() const {
 }
 
 template <>
-Runtime::OpenACC::loop_shape_t * IterationMapper<
-  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-  Language::OpenCL,
-  Runtime::OpenACC
->::createShape(
-  LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop
-) const {
-  if (!loop->isDistributed()) return NULL;
-
-  Runtime::OpenACC::loop_shape_t * shape = new Runtime::OpenACC::loop_shape_t();
-  shape->gang   = false;
-  shape->worker = false;
-  shape->vector = false;
-
-  std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
-  for (it = loop->annotations.begin(); it != loop->annotations.end(); it++) {
-    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_gang  ) shape->gang   = true;
-    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_worker) shape->worker = true;
-    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector) shape->vector = true;
-  }
-  return shape;
-}
-
-template <>
 void IterationMapper<
   DLX::KLT_Annotation<DLX::OpenACC::language_t>,
   Language::OpenCL,
   Runtime::OpenACC
->::generateShapeConfigs(
-  ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop,
-  Runtime::OpenACC::loop_shape_t * shape,
-  std::vector<Runtime::OpenACC::shape_config_t *> & shape_configs
+>::computeValidShapes(
+  LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop,
+  std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
 ) const {
-  /// \todo only generating the default (not usable) shape
+  if (!loop->isDistributed()) return;
 
-  Runtime::OpenACC::shape_config_t * shape_config = new Runtime::OpenACC::shape_config_t();
-    shape_config->tile_0 = 0;
-    shape_config->tile_1 = 0;
-    shape_config->tile_2 = 0;
-    shape_config->tile_3 = 0;
-  shape_configs.push_back(shape_config);
+  long gang = 1;
+  long worker = 1;
+  long vector = 1;
+
+  std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
+  for (it = loop->annotations.begin(); it != loop->annotations.end(); it++) {
+    /// \todo Does not support static values for gang.worker,vector
+    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_gang  ) gang   = 0;
+    if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_worker) worker = 0;
+  //if (it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector) vector = 0;
+  }
+  if (vector == 0) {
+    assert(false); /// \todo Generate different static values for vector
+  }
+  else {
+    shapes.push_back(new Runtime::OpenACC::loop_shape_t(0, gang, 0, worker, 0, 1, 0)); // default, not usable
+
+    shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 1, worker, 1, 1, 1)); // only gang and worker are dynamic
+
+    for (unsigned i = 0; i < 8; i++)
+      for (unsigned j = 0; j < 8; j++) {
+        shapes.push_back(new Runtime::OpenACC::loop_shape_t(        0, gang, (1 >> i), worker, (1 >> j), 1, 1)); // Tile #0
+        shapes.push_back(new Runtime::OpenACC::loop_shape_t( (1 >> i), gang,        0, worker, (1 >> j), 1, 1)); // Tile #1
+        shapes.push_back(new Runtime::OpenACC::loop_shape_t( (1 >> i), gang, (1 >> j), worker,        0, 1, 1)); // Tile #2
+      }
+
+  }
 }
 
 template <>
@@ -288,17 +284,231 @@ SgFunctionParameterList * createParameterList<
   return result;
 }
 
+template <>
+SgStatement * generateStatement<
+  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
+  Language::OpenCL,
+  Runtime::OpenACC
+> (
+  LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::stmt_t * stmt,
+  const Kernel<
+    DLX::KLT_Annotation<DLX::OpenACC::language_t>, Language::OpenCL, Runtime::OpenACC
+  >::local_symbol_maps_t & local_symbol_maps,
+  bool flatten_array_ref
+) {
+  SgStatement * result = SageInterface::copyStatement(stmt->statement);
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
+  std::map<Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *, SgVariableSymbol *>::const_iterator it_data_to_local;
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *> data_sym_to_local;
+  std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *> data_sym_to_data;
+
+  for (it_data_to_local = local_symbol_maps.datas.begin(); it_data_to_local != local_symbol_maps.datas.end(); it_data_to_local++) {
+    Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > * data = it_data_to_local->first;
+    SgVariableSymbol * data_sym = it_data_to_local->first->getVariableSymbol();
+    SgVariableSymbol * local_sym = it_data_to_local->second;
+
+    data_sym_to_local.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, local_sym));
+    data_sym_to_data.insert(std::pair<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *>(data_sym, data));
+  }
+
+  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+
+  if (flatten_array_ref) {
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+      SgVarRefExp * var_ref = *it_var_ref;
+      SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+      std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > *>::const_iterator it_data_sym_to_data = data_sym_to_data.find(var_sym);
+      if (it_data_sym_to_data == data_sym_to_data.end()) continue; // Not a variable reference to a Data
+
+      Data<DLX::KLT_Annotation<DLX::OpenACC::language_t> > * data = it_data_sym_to_data->second;
+
+      if (data->getSections().size() <= 1) continue; // No need for flattening
+
+      SgPntrArrRefExp * arr_ref = isSgPntrArrRefExp(var_ref->get_parent());
+      SgPntrArrRefExp * top_arr_ref = NULL;
+      std::list<SgExpression *> subscripts;
+      while (arr_ref != NULL) {
+        top_arr_ref = arr_ref;
+        subscripts.push_back(arr_ref->get_rhs_operand_i());
+        arr_ref = isSgPntrArrRefExp(arr_ref->get_parent());
+      }
+      assert(top_arr_ref != NULL);
+      assert(subscripts.size() == data->getSections().size());
+
+      std::list<SgExpression *>::const_iterator it_subscript;
+      SgExpression * subscript = SageInterface::copyExpression(subscripts.front());
+      subscripts.pop_front();
+      unsigned int cnt = 0;
+      for (it_subscript = subscripts.begin(); it_subscript != subscripts.end(); it_subscript++) {
+        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt++].second);
+        subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
+        subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
+      }
+
+      SageInterface::replaceExpression(top_arr_ref, SageBuilder::buildPntrArrRefExp(SageInterface::copyExpression(var_ref), subscript));
+    }
+  }
+
+  var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+    SgVarRefExp * var_ref = *it_var_ref;
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+    SgVariableSymbol * local_sym = NULL;
+    it_sym_to_local = local_symbol_maps.parameters.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.parameters.end())
+      local_sym = it_sym_to_local->second;
+
+    it_sym_to_local = local_symbol_maps.scalars.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.scalars.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    it_sym_to_local = data_sym_to_local.find(var_sym);
+    if (it_sym_to_local != data_sym_to_local.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    it_sym_to_local = local_symbol_maps.iterators.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.iterators.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol
+
+    SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym));
+  }
+
+  assert(result != NULL);
+
+  return result;
+}
+
+SgExpression * translateConstExpression(
+  SgExpression * expr,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
+) {
+  SgExpression * result = SageInterface::copyExpression(expr);
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
+
+  if (isSgVarRefExp(result)) {
+    // Catch an issue when reading looptree from file. In this case, 'expr' may not have a valid parent.
+    // If 'expr' is a SgVarRefExp, it causes an assertion to fail in SageInterface::replaceExpression
+
+    SgVarRefExp * var_ref = (SgVarRefExp *)result;
+
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+    SgVariableSymbol * local_sym = NULL;
+
+    it_sym_to_local = param_to_local.find(var_sym);
+    if (it_sym_to_local != param_to_local.end())
+      local_sym = it_sym_to_local->second;
+
+    it_sym_to_local = iter_to_local.find(var_sym);
+    if (it_sym_to_local != iter_to_local.end()) {
+      assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
+
+    return SageBuilder::buildVarRefExp(local_sym);
+  }
+  
+  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+    SgVarRefExp * var_ref = *it_var_ref;
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+    SgVariableSymbol * local_sym = NULL;
+
+    it_sym_to_local = param_to_local.find(var_sym);
+    if (it_sym_to_local != param_to_local.end())
+      local_sym = it_sym_to_local->second;
+
+    it_sym_to_local = iter_to_local.find(var_sym);
+    if (it_sym_to_local != iter_to_local.end()) {
+      assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
+
+    SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym));
+  }
+
+  return result;
+}
+
+template <>
+std::pair<SgStatement *, SgScopeStatement *> generateLoops<
+  DLX::KLT_Annotation<DLX::OpenACC::language_t>,
+  Language::OpenCL,
+  Runtime::OpenACC
+> (
+  LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop,
+  Runtime::OpenACC::loop_shape_t * shape,
+  const Kernel<
+    DLX::KLT_Annotation<DLX::OpenACC::language_t>, Language::OpenCL, Runtime::OpenACC
+  >::local_symbol_maps_t & local_symbol_maps
+) {
+  if (!loop->isDistributed()) {
+    assert(shape == NULL);
+
+    std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(loop->iterator);
+    assert(it_sym_to_local != local_symbol_maps.iterators.end());
+    SgVariableSymbol * local_it_sym = it_sym_to_local->second;
+
+    SgExpression * lower_bound = translateConstExpression(loop->lower_bound, local_symbol_maps.parameters, local_symbol_maps.iterators);
+    SgExpression * upper_bound = translateConstExpression(loop->upper_bound, local_symbol_maps.parameters, local_symbol_maps.iterators);
+
+    SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(local_it_sym), lower_bound));
+    SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(local_it_sym), upper_bound));;
+    SgExpression * inc_expr = SageBuilder::buildPlusPlusOp(SageBuilder::buildVarRefExp(local_it_sym));
+
+    SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
+    SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
+
+    return std::pair<SgStatement *, SgScopeStatement *>(for_stmt, for_body);
+  }
+  else {
+    assert(shape != NULL);
+
+    /// \todo
+  }
+
+  assert(false);
+}
+
 }
 
 namespace MFB {
 
 KLT<Kernel_OpenCL_OpenACC>::object_desc_t::object_desc_t(
-      Kernel_OpenCL_OpenACC * kernel_,
-      unsigned long file_id_
+  unsigned id_,
+  Kernel_OpenCL_OpenACC * kernel_,
+  unsigned long file_id_
 ) :
+  id(id_),
   kernel(kernel_),
   file_id(file_id_),
-  shape_configs()
+  shapes()
 {}
 
 template <>
@@ -389,19 +599,16 @@ SgBasicBlock * createLocalDeclarations<
     std::string iter_name = iter_sym->get_name().getString();
     SgType * iter_type = iter_sym->get_type();
 
-    if (!loop->isDistributed()) {
-      assert(shape == NULL);
+    SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+      "local_it_" + iter_name, iter_type, NULL, kernel_body
+    );
+    SageInterface::appendStatement(iter_decl, kernel_body);
 
-      SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-        "local_it_" + iter_name, iter_type, NULL, kernel_body
-      );
-      SageInterface::appendStatement(iter_decl, kernel_body);
+    SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
+    assert(local_sym != NULL);
+    local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
 
-      SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
-      assert(local_sym != NULL);
-      local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
-    }
-    else { // for now we add all possible iterators
+    if (loop->isDistributed()) { // for now we add all possible iterators
       /* if (shape->tile_0) */ {
         std::string name = "local_it_" + iter_name + "_tile_0";
         SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(

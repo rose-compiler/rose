@@ -4,8 +4,11 @@
 
 #include "KLT/loop-trees.hpp"
 
+#include <vector>
 #include <list>
 #include <set>
+
+#include "sage3basic.h"
 
 class SgVariableSymbol;
 
@@ -60,7 +63,8 @@ class Kernel {
 
     struct a_kernel {
       std::string kernel_name;
-      /// \todo
+
+      std::vector<typename Runtime::a_loop> loops;
     };
 
   protected:
@@ -73,9 +77,6 @@ class Kernel {
     /// ordered symbol lists
     arguments_t p_arguments;
 
-    /// Shapes (runtime dependent) associated to each loop in the kernel
-    std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> p_loop_shapes;
-
     /// All actual kernels that have been generated for this kernel (different decisions made in shape interpretation)
     std::vector<a_kernel *> p_generated_kernels;
 
@@ -85,7 +86,6 @@ class Kernel {
       p_looptree_roots(),
       p_data_flow(),
       p_arguments(),
-      p_loop_shapes(),
       p_generated_kernels()
     {}
       
@@ -101,12 +101,6 @@ class Kernel {
 
     arguments_t & getArguments() { return p_arguments; }
     const arguments_t & getArguments() const { return p_arguments; }
-
-    void setShape(typename LoopTrees<Annotation>::loop_t * loop, typename Runtime::loop_shape_t * shape) {
-      p_loop_shapes.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(loop, shape));
-    }
-
-    const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & getShapes() const { return p_loop_shapes; }
 
     void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
 
@@ -129,6 +123,56 @@ void collectReferencedSymbols(Kernel<Annotation, Language, Runtime> * kernel, st
  */
 template <class Annotation, class Language, class Runtime>
 SgFunctionParameterList * createParameterList(Kernel<Annotation, Language, Runtime> * kernel);
+
+template <class Annotation, class Language, class Runtime>
+SgStatement * generateStatement(
+  typename LoopTrees<Annotation>::stmt_t * stmt,
+  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
+  bool flatten_array_ref
+);
+
+template <class Annotation, class Language, class Runtime>
+std::pair<SgStatement *, SgScopeStatement *> generateLoops(
+  typename LoopTrees<Annotation>::loop_t * loop,
+  typename Runtime::loop_shape_t * shape,
+  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
+);
+
+template <class Annotation, class Language, class Runtime>
+void generateKernelBody(
+  typename ::KLT::LoopTrees<Annotation>::node_t * node,
+  typename Runtime::exec_mode_e exec_mode,
+  std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> shapes,
+  const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
+  SgScopeStatement * scope
+) {
+  typename ::KLT::LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t *>(node);
+  typename ::KLT::LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t *>(node);
+  if (loop != NULL) {
+    typename Runtime::loop_shape_t * shape = NULL;
+    typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
+    if (it_shape != shapes.end()) shape = it_shape->second;
+
+    std::pair<SgStatement *, SgScopeStatement *> sg_loop = generateLoops<Annotation, Language, Runtime>(loop, shape, local_symbol_maps);
+    SageInterface::appendStatement(sg_loop.first, scope);
+
+    /// \todo change the execution mode if needed
+
+    scope = sg_loop.second;
+
+    typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+      generateKernelBody<Annotation, Language, Runtime>(*it_child, exec_mode, shapes, local_symbol_maps, scope);
+  }
+  else if (stmt != NULL) {
+    SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps, true);
+
+    /// \todo guard execution function of the curret Execution Mode
+
+    SageInterface::appendStatement(sg_stmt, scope);
+  }
+  else assert(false);
+}
 
 /** @} */
 
