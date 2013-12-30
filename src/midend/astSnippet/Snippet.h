@@ -53,8 +53,6 @@ protected:
     explicit SnippetFile(const std::string &fileName): fileName(fileName), ast(NULL) {}
 
 public:
-    ~SnippetFile() { registry.erase(fileName); }
-
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
      * one.  No attempt is made to determine whether unequal names resolve to the same file. */
     static SnippetFilePtr instance(const std::string &fileName);
