@@ -5004,7 +5004,9 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
                  // Then the comment is in between the start of the construct and the end of the construct.
                     if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                        {
+#if 0
                          printf ("Found cpp include directive \n");
+#endif
                          returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
