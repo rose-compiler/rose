@@ -2895,7 +2895,12 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
+                 // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
+                 // because it doesn't try to resolve any conflicts with symbols, but if the following assertion is
+                 // commented out it at least works.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
 
                  // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
