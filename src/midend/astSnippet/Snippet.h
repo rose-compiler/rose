@@ -41,6 +41,7 @@ private:
     FunctionDefinitionMap functions;            // cache the functions so we don't have to do a traversal every lookup
 
     std::set<SgGlobal*> globals;                // global scopes where this snippet has been inserted
+    std::map<std::string/*filename*/, std::set<SgGlobal*>/*insertion points*/> headersIncluded;
 
     typedef Map<std::string/*fileName*/, SnippetFilePtr> Registry;
     static Registry registry;
@@ -85,6 +86,9 @@ public:
      *  scope, and returns a boolean to indicate whether they had already been injected (true if injected, false if not). */
     bool globallyInjected(SgGlobal *destination_scope);
 
+    /** Indicates that the specified file has been included into the specified scope. Returns the previous value. */
+    bool fileIsIncluded(const std::string &filename, SgGlobal *destination_scope);
+
     /** Load variable names from a file. The file should have one name per line. Returns the number of variable names added to
      *  the list. */
     static size_t loadVariableNames(const std::string &fileName);
@@ -110,6 +114,8 @@ protected:
  *  isn't intended to handle all possible cases, but rather to be an alternative to the more complicated SageBuilder
  *  interface.
  *
+ * @section S1 What is a snippet?
+ *
  *  A snippet is a function in a snippet source file (SnippetFile) along with prerequisites in its global scope. The statements
  *  of the snippet are injected into a specimen function at a chosen insertion point akin to inlining, and the snippets global
  *  prerequisites are injected ino the specimen's global scope. For C source code, each function definition in the snippet file
@@ -125,21 +131,34 @@ protected:
  *  SnippetPtr banana = Snippet::instanceFromFile("banana", "fruit.c");
  * @endcode
  *
+ * @section S2 The injection process
+ *
  *  A snippet is injected along with its global prerequisites via its insert() method.  The first argument is a SgStatement
- *  cursor to indicate where the insertion is to take place (the snippet is inserted after before the cursor). The remaining
+ *  cursor to indicate where the insertion is to take place (the snippet is inserted before the cursor). The remaining
  *  arguments are either variable declarations (SgInitializedName) or expressions (SgExpression) that are bound to the formal
  *  arguments of the snippet and thereby expanded into the specimen during the injection. They should be variables or
  *  expressions that are valid at the point where the snippet is injected.
  *
  * @code
- *  SgStatement *cursor = ...;
- *  SgInitializedName *var_a = ..., *var_b = ...;
- *  SgExpression *expr_1 = ...;
+ *  SgStatement *cursor = ...;                    // statement before which snippet is inserted
+ *  SgInitializedName *var_a = ..., *var_b = ...; // insertion point variables bound to snippet
+ *  SgExpression *expr_1 = ...;                   // insertion point expression bound to snippet
  *
- *  foo->insert(cursor);
- *  bar->insert(cursor, var_a);
- *  bannana->insert(cursor, var_a, expr_1, var_b);
+ *  foo->insert(cursor);                          // insert foo() with no arguments
+ *  bar->insert(cursor, var_a);                   // 1st arg of bar() is bound to var_a
+ *  bannana->insert(cursor, var_a, expr_1, var_b);// 3 args of bannana() are bound to things
  * @endcode
+ *
+ *  Two modes of insertion are supported: The INJECT_BODY mode copies the snippets body scope into the insertion point so that
+ *  all snippet local variables remain in the same (new) scope as the rest of the inserted snippet statements.  This is quick
+ *  and easy, but doesn't allow two snippets that are inserted at the same level in a function to share any local variables
+ *  (but they can still both refer to variables at the injection site via argument binding in the insert() method).  The
+ *  alternative is INJECT_STMTS, which doesn't create a new scope for the injected statements, but rather copies each statement
+ *  individually to the injection site.  During INJECT_STMTS mode, snippet local declarations are copied to either the
+ *  beginning of the injection point's function, or to the end of that function's list of declarations (see
+ *  setLocalDeclarationPosition()).
+ *
+ * @section S3 Parameterized data types
  *
  *  Sometimes a snippet needs to know the type of an actual argument, and this is accomplished with a function-local typedef
  *  that has a special name.  If the snippet has a formal argument named "a" then a typedef for "typeof_a" will be modified so
@@ -166,11 +185,32 @@ protected:
  *  }
  * @endcode
  *
- *  Snippet insertion is recursive.  If one snippet's expansion results in calls to other snippets, then the other snippets are
- *  injected at the point of their call. Only direct calls (not function pointers) at the statement level (not in
- *  subexpressions) are recognized. Here's an example: [FIXME: Currently only snippets in the same SnippetFile are expanded.]
+ * @section S4 Global declarations
+ *
+ *  Snippets often require additional support in the form of global variables, data types, and function declarations. Whenever
+ *  a snippet is inserted, certain things in the snippet's global scope are copied into the global scope of the insertion
+ *  point.  This copying happens only once per snippet + insertion file pair.  The things copied are:
+ *
+ *  <ul>
+ *    <li>Function declarations.</li>
+ *    <li>Function definitions if desired (see setCopyAllSnippetDefinitions), including the defintion of the snippet that's
+ *        being inserted (because it might be needed by other snippets).</li>
+ *    <li>Global variables, but not extern declarations.</li>
+ *    <li>Include directives, conditionally (see below).</li>
+ *  </ul>
+ *
+ *  Include directives in a snippet file may be followed by a comment whose first word is the name of a function or
+ *  typedef. The include directive is inserted only if no typedef or function declaration exists with that name.  If the
+ *  include directive isn't followed by a comment, then it is inserted unconditionally.
+ *
+ * @section S5 Recursive insertion
+ *
+ *  Snippet insertion is optionally recursive (see setInsertRecursively()).  If one snippet's expansion results in calls to
+ *  other snippets defined in the same snippet file, then the other snippets are injected at the point of their call. Only
+ *  direct calls (not function pointers) at the statement level (not in subexpressions) are recognized. Here's an example:
  *
  * @code
+ *  // Snippet file
  *  void assert(int);
  *  void *malloc(unsigned);
  *  void *memcpy(void*, const void*, unsigned);
@@ -181,18 +221,23 @@ protected:
  *  }
  *
  *  void copyTo(void *dst, const void *src, unsigned nbytes) {
- *      notNull(dst);
- *      notNull(src);
+ *      notNull(dst);                           // may be expanded recursively
+ *      notNull(src);                           // may be expanded recursively
  *      memcpy(dst, src, nbytes);
  *  }
  *          
  *  void storeStringInHeap(const char *s) {
  *      unsigned s_size = strlen(s) + 1;
  *      char *storage = malloc(s_size);
- *      checkAllocation(storage);
- *      copyTo(storage, s, s_size);
+ *      checkAllocation(storage);               // may be expanded recursively
+ *      copyTo(storage, s, s_size);             // may be expanded recursively
  *  }
  * @endcode
+ *
+ *  If recursive expansion is disabled then the definitions of the referenced snippets are copied into the global scope of the
+ *  insertion point.
+ *
+ * @section S5 Variable renaming
  *
  *  In order to avoid conflicts between the names of local variables in the snippet code and variables that are visible at the
  *  point of insertion, any snippet local variable whose name begins with "tmp" will be renamed to "T_xxxxxx" where "xxxxxx" is
@@ -218,16 +263,39 @@ protected:
 class Snippet {
     friend class SnippetFile;                           // for protected constructor
 
+public:
+    /** Determines how a snippet is injected at the insertion point.  Either the entire body scope of the snippet can be
+     *  inserted in its entirety as a new scope, or each statement of the body can be inserted individually without using a new
+     *  scope.  The latter allows sharing of snippet local variables since they're essentially hoisted into the function scope
+     *  of the injection point. */
+    enum InsertMechanism {
+        INSERT_BODY,                                    /**< Insert entire snippet body as a single scope. */
+        INSERT_STMTS,                                   /**< Insert snippet statements one at a time. */
+    };
+
+    /** Determines where local declarations are injected when using INSERT_STMTS.  New declarations can be injected starting at
+     * the beginning of the injection site's function scope, or after the last leading declaration statement in that scope. In
+     * either case, the snippet's declarations will appear in the injected code in the same order as in the snippet. */
+    enum LocalDeclarationPosition {
+        LOCDECLS_AT_BEGINNING,                          /**< Local declarations inserted at beginning of function. */
+        LOCDECLS_AT_END,                                /**< Local declarations inserted at end of leading declarations. */
+    };
+
 private:
     typedef Map<SgSymbol*, SgNode*> ArgumentBindings;   // bindings from snippet formals to actual vars and/or expressions
     std::string name;                                   // name of snippet
     SnippetFilePtr file;                                // file containing the snippet definition
     SgFunctionDefinition *ast;                          // snippet definition
+    InsertMechanism insertMechanism;                    // how snippet is inserted
+    LocalDeclarationPosition locDeclsPosition;          // position for local declarations for INSERT_STMTS mode
+    bool insertRecursively;                             // is the insert() operation recursive?
+    bool copyAllSnippetDefinitions;                     // should all snippet definitions be copied to global scope?
 
 protected:
     // Use one of the "instance" methods instead.
     Snippet(const std::string &name, const SnippetFilePtr &file, SgFunctionDefinition *ast)
-        : name(name), file(file), ast(ast) {
+        : name(name), file(file), ast(ast), insertMechanism(INSERT_STMTS), locDeclsPosition(LOCDECLS_AT_END),
+          insertRecursively(true), copyAllSnippetDefinitions(false) {
         assert(!name.empty());
         assert(file!=NULL);
         assert(ast!=NULL);
@@ -250,6 +318,36 @@ public:
     /** Returns the number of formal arguments for the snippet. */
     size_t numberOfArguments() const;
 
+    /** Accessor for the snippet insertion mechanism. See enum for documentation.
+     *  @{ */
+    InsertMechanism getInsertMechanism() const { return insertMechanism; }
+    void setInsertMechanism(InsertMechanism im) { insertMechanism = im; }
+    /** @} */
+
+    /** Accessor for local declaration insertion position. See enum for documentation.
+     *  @{ */
+    LocalDeclarationPosition getLocalDeclarationPosition() const { return locDeclsPosition; }
+    void setLocalDeclarationPosition(LocalDeclarationPosition pos) { locDeclsPosition = pos; }
+    /** @} */
+
+    /** Accessor for the property that indicates whether an insert() should be recursive.  If insertion is recursive, then any
+     *  calls in the inserted code to another snippet in the same snippet file as the inserted snippet will be inserted
+     *  recursively.
+     *  @{ */
+    bool getInsertRecursively() const { return insertRecursively; }
+    void setInsertRecursively(bool b=true) { insertRecursively = b; }
+    void clearInsertRecursively() { insertRecursively = false; }
+    /** @} */
+
+    /** Accessor for the property that controls whether snippet definitions are copied into the global scope. If true, then all
+     *  function definitions in the snippet file are copied into the global scope of the file into which the snippet is being
+     *  inserted.
+     *  @{ */
+    bool getCopyAllSnippetDefinitions() const { return copyAllSnippetDefinitions; }
+    void setCopyAllSnippetDefinitions(bool b=true) { copyAllSnippetDefinitions = b; }
+    void clearCopyAllSnippetDefinitions() { copyAllSnippetDefinitions = false; }
+    /** @} */
+    
     /** Insert a snippet into the project.  Inserts the snippet before the @p insertionPoint statement.  The remaining arguments
      *  of this method are bound to formal arguments in the snippet code; they can be either variable declarations
      *  (SgInitializedName) or expressions (SgExpression).
@@ -275,6 +373,9 @@ protected:
     /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
      *  aren't already inserted. */
     void insertGlobalStuff(SgStatement *insertionPoint);
+
+    /** Insert an #include directive from a snippet's file to the insertion point.. */
+    void insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective);
 
     /** Rename snippet local variables so they don't interfere with names visible at the insertion point. Only local variables
      * whose names begin with "tmp" are renamed. */
