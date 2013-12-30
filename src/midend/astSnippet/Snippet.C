@@ -66,31 +66,6 @@ SnippetFile::parse()
         }
     } snippetFinder(functions);
     snippetFinder.traverse(ast, preorder);
-                
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-04]*/
-    // Based on exampleTranslators/defaultTranslator/preprocessingInfoDumpber.C
-    // but doesn't appear to work correctly -- "got preprocessing info" is never printed.
-    struct: AstSimpleProcessing {
-        void visit(SgNode *node) {
-            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                if (AttachedPreprocessingInfoType *cpp = loc->getAttachedPreprocessingInfo()) {
-                    std::cerr <<"ROBB: got preprocessing info\n";
-                    for (AttachedPreprocessingInfoType::iterator cppi=cpp->begin(); cppi!=cpp->end(); ++cppi) {
-                        switch ((*cppi)->getTypeOfDirective()) {
-                            case PreprocessingInfo::CpreprocessorIncludeDeclaration:
-                            case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
-                                std::cerr <<"ROBB:   " <<(*cppi)->getString() <<"\n";
-                                break;
-                            default: break; // prevent gcc warnings
-                        }
-                    }
-                }
-            }
-        }
-    } t1;
-    t1.traverse(ast, preorder);
-#endif
 }
 
 SnippetPtr
@@ -122,6 +97,12 @@ SnippetFile::globallyInjected(SgGlobal *destination)
     assert(this!=NULL);
     assert(destination!=NULL);
     return !globals.insert(destination).second; // return true iff not already present
+}
+
+bool
+SnippetFile::fileIsIncluded(const std::string &filename, SgGlobal *destination_scope)
+{
+    return !headersIncluded[filename].insert(destination_scope).second;
 }
 
 void
@@ -156,10 +137,6 @@ SnippetFile::expandSnippets(SgNode *ast)
         SgFunctionCallExp *fcall = ci->first;
         SnippetPtr snippet = findSnippet(ci->second);
         assert(fcall!=NULL && snippet!=NULL);
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-06]*/
-        std::cerr <<"ROBB: recursive snippet call to " <<snippet->getName() <<"\n";
-#endif
         const SgExpressionPtrList &fcall_args = fcall->get_args()->get_expressions();
         std::vector<SgNode*> actuals(fcall_args.begin(), fcall_args.end());
         SgStatement *toReplace = SageInterface::getEnclosingNode<SgStatement>(fcall);
@@ -311,6 +288,12 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgScopeStatement *targetFunctionScope = targetFunction->get_body();
     assert(targetFunctionScope!=NULL);
 
+    // Find the first declaration statement in the insertion point's function
+    SgDeclarationStatement *targetFirstDeclaration = NULL;
+    SgStatementPtrList targetStatements = targetFunctionScope->generateStatementList();
+    for (size_t i=0; targetFirstDeclaration==NULL && i<targetStatements.size(); ++i)
+        targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
+
     // Build a map binding formal argument symbols to their actual values
     ArgumentBindings bindings;
     SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
@@ -368,26 +351,41 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     renameTemporaries(toInsert);
     causeUnparsing(toInsert, insertionPoint->get_file_info());
     replaceArguments(toInsert, bindings);
-#if 0
-    // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
-    // one snippet can't be used in a later snippet injected into the same function.
-    SageInterface::insertStatementBefore(insertionPoint, toInsert);
-#else
-    // Insert one statement at a time.  Snippet declarations are placed at the top of the injection point's function, which
-    // means that snippet variables cannot always be inialized in their declarations because the initialization expression
-    // might be something that's only well defined at the point of insertion.
-    const SgStatementPtrList &stmts = toInsert->getStatementList();
-    for (size_t i=0; i<stmts.size(); ++i) {
-        if (isSgDeclarationStatement(stmts[i])) {
-            SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
-        } else {
-            SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+
+    switch (insertMechanism) {
+        case INSERT_BODY: {
+            // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
+            // one snippet can't be used in a later snippet injected into the same function.
+            SageInterface::insertStatementBefore(insertionPoint, toInsert);
+            break;
+        }
+        case INSERT_STMTS: {
+            // Insert one statement at a time.  Snippet declarations are placed at the top of the injection point's function,
+            // which means that snippet variables cannot always be inialized in their declarations because the initialization
+            // expression might be something that's only well defined at the point of insertion.
+            const SgStatementPtrList &stmts = toInsert->getStatementList();
+            for (size_t i=0; i<stmts.size(); ++i) {
+                if (isSgDeclarationStatement(stmts[i])) {
+                    switch (locDeclsPosition) {
+                        case LOCDECLS_AT_BEGINNING:
+                            SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                            break;
+                        case LOCDECLS_AT_END:
+                            SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+                            break;
+                    }
+                } else {
+                    SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+                }
+            }
+            break;
         }
     }
-#endif
 
     insertGlobalStuff(insertionPoint);
-    file->expandSnippets(toInsert);
+
+    if (insertRecursively)
+        file->expandSnippets(toInsert);
 }
 
 // class method
@@ -421,9 +419,6 @@ Snippet::renameTemporaries(SgNode *ast)
             if (SgInitializedName *vdecl = isSgInitializedName(node)) {
                 if (0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
                     std::string newName = SnippetFile::randomVariableName();
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-09]*/
-                    std::cerr <<"ROBB: renaming temporary variable " <<vdecl->get_name() <<" to \"" <<newName <<"\"\n";
-#endif
                     vdecl->set_name(newName);
                 }
             }
@@ -480,7 +475,6 @@ Snippet::replaceArguments(SgNode *toInsert, const ArgumentBindings &bindings)
                 std::string tdef_name = tdef->get_name().getString();
                 for (ArgumentBindings::const_iterator bi=bindings.begin(); bi!=bindings.end(); ++bi) {
                     if (0==tdef_name.compare("typeof_" + bi->first->get_name().getString())) {
-                        std::cerr <<"ROBB: found typedef for " <<bi->first->get_name() <<"\n";
                         if (SgInitializedName *actual = isSgInitializedName(bi->second)) {
                             tdef->set_base_type(actual->get_type());
                         } else if (SgExpression *actual = isSgExpression(bi->second)) {
@@ -494,6 +488,97 @@ Snippet::replaceArguments(SgNode *toInsert, const ArgumentBindings &bindings)
         }
     } t1(bindings);
     t1.traverse(toInsert, postorder); // post-order because we're modifying the AST as we retreat
+}
+
+void
+Snippet::insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective)
+{
+    assert(this!=NULL);
+    assert(insertionPoint!=NULL);
+    assert(includeDirective!=NULL);
+    assert(includeDirective->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration);
+    std::string inc = includeDirective->getString(); // the entire thing, with comment if any
+    SgGlobal *ipoint_globscope = SageInterface::getEnclosingNode<SgGlobal>(insertionPoint);
+    assert(ipoint_globscope!=NULL);
+
+    // match regular expression:  ^\s*#\s*include\s*["<]([^">]*)[">]\s*(.*)
+    std::string filename, m2;
+    bool is_system_header = false;
+#if 1
+    // We do this the hard way because boost::regex doesn't ever seem to work right for me (throws bad_alloc this time).
+    do {
+        const char *cstr = inc.c_str();
+        const char *s = cstr;
+        while (isspace(*s)) ++s;
+        if ('#'!=*s) break;
+        ++s;
+        while (isspace(*s)) ++s;
+        if (strncmp(s, "include", 7)) break;
+        s += 7;
+        while (isspace(*s)) ++s;
+        if ('"'!=*s && '<'!=*s) break;
+        is_system_header = '<'==*s;
+        ++s;
+        const char *filename_start = s;
+        while (*s && '"'!=*s && '>'!=*s) ++s;
+        if ('"'!=*s && '>'!=*s) break;
+        filename = std::string(filename_start, s);
+        ++s;
+        while (isspace(*s)) ++s;
+        m2 = std::string(s);
+    } while (0);
+#else
+    boost::regex re("(\\s*#\\s*include\\s*[\"<][^\">]*[\">])\\s*(.*)");
+    boost::cmatch match_data;
+    if (boost::regex_match(inc.c_str(), match_data, re)) {
+        filename = std::string(match_data[1].first, match_data[1].second);
+        m2 = std::string(match_data[2].first, match_data[2].second);
+    }
+#endif
+    assert(!filename.empty());
+
+    // Skip insertion if we already inserted it.
+    if (file->fileIsIncluded(filename, ipoint_globscope))
+        return;
+
+    // Strip non-word characters from the beginning and end of m2 (keep '::')
+    {
+        const char *word_start = m2.c_str();
+        while (*word_start && ':'!=*word_start && '_'!=*word_start && !isalnum(*word_start)) ++word_start;
+        const char *word_end = word_start;
+        while (':'==*word_end || '_'==*word_end || isalnum(*word_end)) ++word_end;
+        m2 = std::string(word_start, word_end);
+    }
+
+    // Does this m2 word exist as a function declaration or typedef name
+    // FIXME[ROBB P. MATZKE 2013-12-27]: We should use AST iterators and avoid visiting subtrees when possible.
+    SgNode *exists = NULL;
+    struct T1: AstSimpleProcessing {
+        std::string name;
+        T1(const std::string &name): name(name) {}
+        void visit(SgNode *node) {
+            if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(node)) {
+                if (0==fdecl->get_name().getString().compare(name) ||
+                    0==fdecl->get_qualified_name().getString().compare(name))
+                    throw fdecl; // bypass potentially long traversal
+            } else if (SgTypedefType *tdef = isSgTypedefType(node)) {
+                if (0==tdef->get_name().getString().compare(name))
+                    throw tdef; // bypass potentially long traversal
+            }
+        }
+    } t1(m2);
+    try {
+        if (!m2.empty())
+            t1.traverse(ipoint_globscope, preorder);
+    } catch (SgFunctionDeclaration *found) {
+        exists = found;
+    } catch (SgTypedefType *found) {
+        exists = found;
+    }
+
+    // Insert the include if necessary
+    if (!exists || m2.empty())
+        SageInterface::insertHeader(filename, PreprocessingInfo::after, is_system_header, ipoint_globscope);
 }
 
 void
@@ -524,16 +609,13 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 for (AttachedPreprocessingInfoType::iterator cppi=cpp->begin(); cppi!=cpp->end(); ++cppi) {
                     if ((*cppi)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
                         (*cppi)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration) {
-                        // Inject the #include directive by attaching it to an already present node.
-                        std::cerr <<"ROBB: #include injection is not handled yet\n"; // FIXME
+                        insertIncludeDirective(dst_cursor, *cppi);
                     }
                 }
             }
 
-            if (loc->get_startOfConstruct()->get_file_id() != ast->get_startOfConstruct()->get_file_id()) {
-                // this came from some included file rather than the snippet itself.
-                continue;
-            }
+            if (loc->get_startOfConstruct()->get_file_id() != ast->get_startOfConstruct()->get_file_id())
+                continue; // this came from some included file rather than the snippet itself.
         }
 
         if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(stmts[i])) {
@@ -543,9 +625,6 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 SgStatement *stmt = isSgStatement(stmts[i]->copy(deep));
                 causeUnparsing(stmt, dst_cursor->get_file_info());
                 SageInterface::insertStatementBefore(dst_cursor, stmt);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-10]*/
-                std::cerr <<"ROBB: inserted variable declaration\n";
-#endif
                 continue;
             }
         }
@@ -561,10 +640,22 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
         }
 
         if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(stmts[i])) {
+            SgFunctionDefinition *fdef = fdecl->get_definition();
+            
+            if (copyAllSnippetDefinitions && fdef!=NULL &&
+                fdef->get_startOfConstruct()->get_file_id()==ast->get_startOfConstruct()->get_file_id()) {
+                SgTreeCopy deep;
+                SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
+                causeUnparsing(fdecl_copy, dst_cursor->get_file_info());
+                SageInterface::insertStatementBefore(dst_cursor, fdecl_copy);
+                continue;
+            }
+
             if (fdecl->get_definition()==ast) {
                 // Do not insert the snippet itself (this happens separately)
                 continue;
             }
+
             if (fdecl->get_definition()==NULL) {
                 // Insert function declaration.
                 SgTreeCopy deep;
@@ -574,14 +665,6 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 continue;
             }
         }
-
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-05]*/
-        std::cerr <<"ROBB: insertGlobalStuff: skipped " <<stmts[i]->class_name() <<"\n";
-        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(stmts[i])) {
-            std::cerr <<"        name = " <<fdecl->get_name() <<"\n";
-        }
-#endif
     }
 }
 
