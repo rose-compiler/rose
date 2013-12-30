@@ -1,11 +1,5 @@
-// #include directives don't work yet, so declare the stuff we need. None of
-// this stuff needs to be injected (because we'd inject the #include directvies
-// instead if that actually worked).
-void free(void*);
-void* malloc(unsigned long);
-void* memcpy(void*, const void*, unsigned long);
-void* memset(void*, unsigned, unsigned long);
-unsigned long strlen(const char*);
+#include <stdlib.h>                                     // free
+#include <string.h>                                     // memcpy
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The rest of the file is snippets

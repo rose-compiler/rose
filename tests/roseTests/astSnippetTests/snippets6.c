@@ -1,9 +1,7 @@
 // Tests for variable renaming. Any variable whose name begins with "tmp" is renamed
 // so it doesn't conflict with other variables that might be visible at the insertion point.
-long int random(void);
-void *malloc(unsigned long);
-unsigned long strlen(const char*);
-void* memcpy(void*, const void*, unsigned long);
+#include <stdlib.h>                                     // random
+#include <string.h>                                     // strlen
 
 void randomOffByOne(int arg1)
 {

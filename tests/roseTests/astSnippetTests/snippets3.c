@@ -1,6 +1,6 @@
 /* Snippets with #include directives */
 
-#include <stdio.h>
+#include <stdio.h>                                      // fputs
 
 void print(const char *v1)
 {
