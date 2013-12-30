@@ -184,6 +184,7 @@ create_reachable_node_graph()
     SqlDatabase::StatementPtr func_in_file_stmt = transaction->statement(
         "select scg.caller, scg.callee from semantic_cg as scg "
         " join semantic_functions as sf on scg.caller = sf.id "
+        " join tmp_interesting_funcs as tif on tif.func_id = scg.callee "
         " where sf.file_id = ? "
         );
 
@@ -263,6 +264,7 @@ create_tables_and_indexes(int call_depth)
   transaction->execute("drop table IF EXISTS tmp_library_funcs");
   transaction->execute("drop table IF EXISTS tmp_interesting_funcs");
   transaction->execute("drop table IF EXISTS tmp_called_functions");
+  transaction->execute("drop table IF EXISTS tmp_uninteresting_funcs");
 
 
   //table of tested functions. Criteria is that it needs to pass at least one test.
@@ -274,6 +276,19 @@ create_tables_and_indexes(int call_depth)
       " )"
       );
   transaction->execute("create table tmp_interesting_funcs as ( select func_id from tmp_tested_funcs UNION select func_id from tmp_library_funcs ) ");
+
+
+  //The __x86.get_pc_thunk.bx isn't a normal function. It's just GCC's way
+  //of loading the EIP into EBX in preparation for finding thing like the
+  //PLT in position independent code.  I would expect that ICC uses the
+  //exact same instructions even if it doesn't give it a function symbol.
+
+  //tolower() is a real function in ICC rather than macros that reference
+  //arrays of character characteristics.
+
+  transaction->execute("delete from tmp_interesting_funcs where func_id IN (select id from semantic_functions where name='__x86.get_pc_thunk.bx' OR name='tolower@plt');  ");
+  transaction->execute("create table tmp_uninteresting_funcs as (select id as func_id from semantic_functions where name='__x86.get_pc_thunk.bx' OR name='tolower@plt');  ");
+
 
   // Table of called fuctions.  Do this in two steps so we're not doing a join on the large semantic_fio_calls table. Also,
   // we don't need to have the igroup_id column since it's never used. Note that this table is named "functions" not "funcs"
