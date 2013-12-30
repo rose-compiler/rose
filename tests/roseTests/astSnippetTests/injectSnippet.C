@@ -153,7 +153,7 @@ main(int argc, char *argv[])
     SgProject *project = frontend(frontend_args);
     assert(project!=NULL);
     if (ipoint_function_name.empty()) {
-        std::cerr <<"use --test:ipoint_function=NAME to specify a fully qualified insertion point function\n"
+        std::cerr <<"use --test:ipoint-function=NAME to specify a fully qualified insertion point function\n"
                   <<"the following insertion point functions are available:\n";
         list_function_definitions(project);
         exit(1);
