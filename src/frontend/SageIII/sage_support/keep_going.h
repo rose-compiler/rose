@@ -19,6 +19,8 @@ extern bool g_keep_going;
 extern struct sigaction SignalAction;
 typedef void(*SignalHandlerFunction)(int);
 
+
+#ifndef _MSC_VER
 //-----------------------------------------------------------------------------
 // Public API
 //-----------------------------------------------------------------------------
@@ -43,6 +45,20 @@ typedef void(*SignalHandlerFunction)(int);
           &ROSE::KeepGoing::Backend::Unparser::SignalHandler) &&        \
       sigsetjmp(ROSE::KeepGoing::Backend::Unparser::jmp_target, 0) != 0 \
   )
+#else //_MSC_VER
+// TOO1 (2013/12/30): See setjmp/longjmp for implementation details:
+//
+//                     http://msdn.microsoft.com/en-us/library/xe7acxfb.aspx
+//                     http://msdn.microsoft.com/en-us/library/3ye15wsy.aspx
+//    See:
+//                     http://stackoverflow.com/questions/8934879/how-to-handle-sigabrt-signal
+//
+#define KEEP_GOING_CAUGHT_FRONTEND_SIGNAL false
+#define KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL false
+#define KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL false
+
+#define sigjmp_buf int
+#endif //_MSC_VER
 
 //-----------------------------------------------------------------------------
 // Private API

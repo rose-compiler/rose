@@ -2541,7 +2541,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
           }
           else
           {
-              if (SgProject::verbose() > 1)
+              if (SgProject::get_verbose() > 1)
               {
                   std::cout
                       << "[WARN] "
