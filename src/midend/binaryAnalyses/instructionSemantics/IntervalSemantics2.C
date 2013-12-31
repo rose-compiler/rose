@@ -149,6 +149,8 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
 {
     assert(!"FIXME"); // [Robb Matzke 2013-03-14]
     abort();
+    BaseSemantics::SValuePtr retval;
+    return retval;
 }
 
 void
