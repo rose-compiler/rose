@@ -54,6 +54,18 @@ const int roseTargetCacheLineSize = 32;
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
 std::map<SgNode*,TokenStreamSequenceToNodeMapping*> ROSE::tokenSubsequenceMap;
 
+// DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
+// std::vector<FrontierNode*> ROSE::frontierNodes;
+std::map<SgStatement*,FrontierNode*> ROSE::frontierNodes;
+
+// DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
+std::map<SgNode*,PreviousAndNextNodeData*> ROSE::previousAndNextNodeMap;
+
+// DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+std::multimap<int,SgStatement*> ROSE::redundantlyMappedTokensToStatementMultimap;
+std::set<int> ROSE::redundantTokenEndingsSet;
+
+
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
 std::string edgVersionString()

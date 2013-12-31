@@ -1630,7 +1630,7 @@ ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
 template <class actualFunction>
-ROSE_DLL_API void
+void
 // SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
 setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
    {
