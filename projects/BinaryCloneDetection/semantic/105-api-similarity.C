@@ -104,6 +104,8 @@ computational_equivalent_classes(std::map<int,int>& norm_map)
 
 
 typedef std::vector<int> CallVec;
+typedef std::multiset<int> MSet;
+
 
 
 CallVec* 
@@ -336,6 +338,29 @@ if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
 };
 
 double 
+multiset_jaccard(CallVec* vec1, CallVec* vec2 )
+{
+
+  MSet ms1, ms2;
+
+  ms1.insert(vec1->begin(), vec1->end());
+  ms2.insert(vec2->begin(), vec2->end());
+
+  typedef std::vector<CloneDetection::OutputGroup::value_type> Vector;
+
+  std::vector<int> sunion(ms1.size()+ms2.size(), 0);
+  std::vector<int> sinter(std::max(ms1.size(), ms2.size()));
+  std::vector<int>::iterator ui = std::set_union(ms1.begin(), ms1.end(), ms2.begin(), ms2.end(), sunion.begin());
+  std::vector<int>::iterator ii = std::set_intersection(ms1.begin(), ms1.end(), ms2.begin(), ms2.end(), sinter.begin());
+  size_t usize = ui-sunion.begin();
+  size_t isize = ii-sinter.begin();
+
+  return usize ? (double)isize/usize : 1.0;
+
+}
+
+
+double 
 whole_function_similarity(int func1_id, int func2_id, std::map<int,int>& norm_map, bool reachability_graph)
 {
 
@@ -368,18 +393,8 @@ whole_function_similarity(int func1_id, int func2_id, std::map<int,int>& norm_ma
 
 
   //compute similarity
-  size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
 
-  double dl_similarity = 1.0;
-
-  if ( dl_max > 0 ){
-
-    size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
-
-    dl_similarity = 1.0 - (double)dl / dl_max;
-
-  }
-
+  double dl_similarity = multiset_jaccard(func1_vec, func2_vec);
 
   delete func1_vec;
   delete func2_vec;
