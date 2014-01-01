@@ -4329,6 +4329,12 @@ HEADER_INITIALIZED_NAME_START
           void setGnuAttributeWeakReference();
           void unsetGnuAttributeWeakReference();
 
+       // DQ (12/30/2013): Added support fo packing for variables (e.g. field values), instead of just there types.
+       // The differences are represented in test codes: test2013_104.c and test2013_113.c.
+          bool isGnuAttributePacked() const;
+          void setGnuAttributePacked();
+          void unsetGnuAttributePacked();
+
           void post_construction_initialization();
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -11032,6 +11038,12 @@ void SgInitializedName::unsetGnuAttributeTransparentUnion()    { unsetBit(e_gnu_
 bool SgInitializedName::isGnuAttributeWeakReference() const { return checkBit(e_gnu_attribute__weakref__); }
 void SgInitializedName::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__); }
 void SgInitializedName::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__); }
+
+// DQ (12/30/2013): Added support for packing on variables (instead of just on the types).
+bool SgInitializedName::isGnuAttributePacked() const  { return checkBit(e_gnu_attribute__packed__); }
+void SgInitializedName::setGnuAttributePacked()       { setBit(e_gnu_attribute__packed__); }
+void SgInitializedName::unsetGnuAttributePacked()     { unsetBit(e_gnu_attribute__packed__); }
+
 
 SOURCE_INITIALIZED_NAME_END
 

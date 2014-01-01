@@ -4310,8 +4310,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint("\n/* END: output using unp->u_type->unparseType (1st part) */ \n");
 #endif
+#if 0
+            // DQ (12/31/2013): review this in light of change to support type attributres directly.
+               printf ("Inside of unparseVarDeclStmt: calling printAttributes(decl_item,info): Find out what what sorts of gnu attributes this causes to be put out! \n");
+#endif
             // DQ (8/31/2013): Added support for missing attributes.
                unp->u_sage->printAttributes(decl_item,info);
+
+            // DQ (12/30/2013): Adding support to seperate how packing is handled when attached to the type of a variable vs. the variable directly.
+               if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
+                  {
+                 // unp->u_sage->printAttributes(vardecl_stmt,info);
+                    unp->u_sage->printAttributesForType(vardecl_stmt,info);
+                  }
 
             // DQ (11/28/2004): Added qualifier to variable name.
 
