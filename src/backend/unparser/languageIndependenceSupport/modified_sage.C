@@ -1645,6 +1645,15 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
           curprint( " __attribute__((weak_reference)) ");
         }
 
+#if 0
+  // DQ (12/31/2013): This is now handled by the new printAttributesForType() function.
+  // DQ (12/30/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributePacked() == true)
+        {
+          curprint(" /* from printAttributes(SgInitializedName*) */ __attribute__((packed)) ");
+        }
+#endif
+
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      short alignmentValue = initializedName->get_gnu_attribute_alignment();
      if (alignmentValue >= 0)
@@ -1655,6 +1664,36 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
            curprint("))) ");
         }
    }
+
+
+void
+Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+   {
+  // DQ (12/31/2013): Added support for missing attributes on types within declarations (in unparsed code).
+
+     ROSE_ASSERT(decl_stmt != NULL);
+
+#if 0
+     printf ("In printAttributesForType(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+#endif
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c 
+       // (required after variable) and test2013_113.c (required after type and before variable)).
+          if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+             {
+            // curprint(" /* from printAttributesForType(SgDeclarationStatement*) */ __attribute__((packed))");
+               curprint(" __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+   }
+
 
 void
 Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
@@ -1687,16 +1726,41 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      if (alignmentValue >= 0)
         {
-       // curprint( " __attribute__((align(N)))");
-          curprint( " __attribute__((align(");
+       // curprint(" __attribute__((align(N)))");
+          curprint(" __attribute__((align(");
           curprint(StringUtility::numberToString((int)alignmentValue));
           curprint(")))");
         }
 
-  // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c).
-     if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
         {
-          curprint( " __attribute__((packed))");
+       // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c).
+#if 0
+          if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+             {
+               curprint(" /* from printAttributes(SgDeclarationStatement*) */ __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#else
+       // DQ (12/31/2013): Note that we need to look at the SgInitializedName in the variable declaration, since
+       // we use the type modifier on the declaration to set the attributes for the type (not the variable).
+          SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+          ROSE_ASSERT(initializedName != NULL);
+          initializedName->isGnuAttributePacked();
+          if (initializedName->isGnuAttributePacked() == true)
+             {
+            // curprint(" /* from printAttributes(SgDeclarationStatement*) triggered from SgInitializedName */ __attribute__((packed))");
+               curprint(" __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
         }
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);

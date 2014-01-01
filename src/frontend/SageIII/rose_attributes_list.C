@@ -985,6 +985,92 @@ PreprocessingInfo::set_optionalflagsForCompilerGeneratedLinemarker( std::string 
    }
 
 
+std::string
+PreprocessingInfo::getMacroName()
+   {
+  // This function is only supporting the retrival of the macro name for #define macros (all other cases are an error trapped below).
+
+     std::string macroName = "unknown";
+     if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string s = internalString;
+          string defineSubString = "define";
+
+          size_t lengthOfDefineSubstring = defineSubString.length();
+          size_t startOfDefineSubstring  = s.find(defineSubString);
+          ROSE_ASSERT(startOfDefineSubstring != string::npos);
+          size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
+#if 0
+          printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
+#endif
+          string substring = s.substr(endOfDefineSubstring);
+
+          size_t startOfMacroName = s.find_first_of("abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+          size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
+#if 0
+          printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
+#endif
+          size_t macroNameLength = (endOfMacroName - startOfMacroName);
+
+          macroName = s.substr(startOfMacroName,macroNameLength);
+#if 0
+          printf ("   --- macroName = %s \n",macroName.c_str());
+#endif
+        }
+       else
+        {
+       // DQ (12/30/2013): I think I want this to be an error for now.
+          printf ("ERROR: In PreprocessingInfo::getMacroName(): (this->getTypeOfDirective() != PreprocessingInfo::CpreprocessorDefineDeclaration): returning error -- %s \n",macroName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     return macroName;
+   }
+
+bool
+PreprocessingInfo::isSelfReferential()
+   {
+  // DQ (12/30/2013): Adding support to supress output of macros that are self-referential.
+  // e.g. "#define foo X->foo", which would be expanded a second time in the backend processing.
+  // Note that if we don't output the #define, then we still might have a problem if there was 
+  // code that depended upon a "#ifdef foo".  So this handling is not without some risk, but it
+  // always better to use the token stream unparsing for these cases.
+
+     bool result = true;
+
+     if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          result = true;
+          string macroName = getMacroName();
+#if 0
+          printf ("   --- macroName = %s \n",macroName.c_str());
+#endif
+          string s = internalString;
+          size_t startOfMacroSubstring  = s.find(macroName);
+          ROSE_ASSERT(startOfMacroSubstring != string::npos);
+          size_t endOfMacroSubstring    = startOfMacroSubstring + macroName.length();
+#if 0
+          printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);
+#endif
+          size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
+#if 0
+          printf ("   --- secondReferenceToMacroSubstring = %zu \n",secondReferenceToMacroSubstring);
+#endif
+          result = (secondReferenceToMacroSubstring != string::npos);
+#if 0
+          printf ("   --- result = %s \n",result ? "true" : "false");
+#endif
+        }
+       else
+        {
+       // We might want test for #ifdef that was associated with an ignored #define...but for now we ignore this case.
+          result = false;
+        }
+
+     return result;
+   }
+
+
 // *********************************************
 // Member functions for class ROSEATTRIBUTESList
 // *********************************************

@@ -1024,8 +1024,18 @@ ResetParentPointers::evaluateInheritedAttribute (
                     ROSE_ASSERT(variableRefExpression != NULL);
 
                     SgVariableSymbol *variableSymbol = variableRefExpression->get_symbol();
+
+                    if (variableSymbol == NULL)
+                       {
+                         printf ("WARNING: variableSymbol == NULL: variableRefExpression = %p \n",variableRefExpression);
+                       }
                     ROSE_ASSERT(variableSymbol != NULL);
 
+                 // DQ (1/1/2014): I think we may have to allow this for cases such as that in test2014_01.c
+                 // But I would prefer to have a sysmbol always built so that ROSE had a consistant representation.
+                 // Initially we want to allow this so that we can get the graph of the AST so that I can understand the problem better.
+                    if (variableSymbol != NULL)
+                       {
                  // This is bit confusing since what is returned is the SgInitializedName and NOT a declaration!
                     SgInitializedName *initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
@@ -1044,6 +1054,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                          initializedName->set_parent(variableRefExpression);
                        }
                     ROSE_ASSERT(initializedName->get_parent() != NULL);
+                       }
+
                     break;
                   }
 
