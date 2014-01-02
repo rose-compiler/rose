@@ -2134,7 +2134,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             SgSourceFile *sourcefile = isSgSourceFile(file);
             ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
             SgJavaPackageStatement *package_statement = sourcefile -> get_package();
-            string package_name = package_statement -> get_name().getString();
+            string package_name = (package_statement ? package_statement -> get_name().getString() : "");
             //NOTE: Default package equals the empty string ""
             //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
             string outFolder = "";
