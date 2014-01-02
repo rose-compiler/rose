@@ -46,13 +46,13 @@ eval_readInput_nosyntax(POETCode* inputFiles, POETCode* codeType, POETCode* inpu
 
 POETAstInterface::AstList POETAstInterface::
 GetChildrenList(const POETAstInterface::Ast& p)
-{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); return POETAstInterface::AstList(); }
 
 bool POETAstInterface::MatchAstTypeName(const Ast& n, const std::string& name, std::vector<POETCode*>* children)
-{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); return false; }
 
 std::string POETAstInterface::Ast2String(const Ast & n)
-{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); return ""; }
 
 std::string POETAstInterface::unparseToString(const Ast & n)
-{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); return ""; }

@@ -3053,6 +3053,29 @@ TestAstSymbolTables::visit ( SgNode* node )
                             }
                        }
                  // ROSE_ASSERT(declarationStatement->hasAssociatedSymbol() == false || local_symbol != NULL);
+
+#if 0
+                 // DQ (11/21/2013): Adding test as a result of debugging with Philippe.
+                 // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+                         if (classDeclaration->get_scope() != scope)
+                            {
+                              printf ("Error (AST consistency test): classDeclaration->get_scope() != scope of symbol table (classDeclaration->get_scope() = %p = %s scope = %p = %s) \n",
+                                   classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str(),scope,scope->class_name().c_str());
+                              printf ("   --- classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+
+                              classDeclaration->get_file_info()->display("classDeclaration: debug");
+                              scope->get_file_info()->display("scope: debug");
+                            }
+                      // ROSE_ASSERT(classDeclaration->get_scope() == scope);
+                         if (isSgNamespaceDefinitionStatement(classDeclaration->get_scope()) == NULL)
+                            {
+                              ROSE_ASSERT(classDeclaration->get_scope() == scope);
+                            }
+                       }
+#endif
                   }
                  else
                   {

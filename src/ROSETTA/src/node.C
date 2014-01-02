@@ -107,20 +107,81 @@ Grammar::setUpNodes ()
   // negara1 (08/10/2011): Support for included files (i.e. headers) bodies.
      NEW_TERMINAL_MACRO (HeaderFileBody,  "HeaderFileBody",  "TEMP_Header_File_Body" );
 
+
+  // DQ (11/26/2013): Moved SgToken to be before the UntypedNode IR nodes.
+  // NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
+
+  // ***************************************************************************************
+  // ***************************************************************************************
+  //                                 Untyped IR Node Support
+  // ***************************************************************************************
+  // ***************************************************************************************
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
+
+  // Additional IR nodes that we expect to require for expressions:
+     NEW_TERMINAL_MACRO (UntypedUnaryOperator,            "UntypedUnaryOperator",            "TEMP_UntypedUnaryOperator" );
+     NEW_TERMINAL_MACRO (UntypedBinaryOperator,           "UntypedBinaryOperator",           "TEMP_UntypedBinaryOperator" );
+     NEW_TERMINAL_MACRO (UntypedValueExpression,          "UntypedValueExpression",          "TEMP_UntypedValueExpression" );
+     NEW_TERMINAL_MACRO (UntypedArrayReferenceExpression, "UntypedArrayReferenceExpression", "TEMP_UntypedArrayReferenceExpression" );
+     NEW_TERMINAL_MACRO (UntypedOtherExpression,          "UntypedOtherExpression",          "TEMP_UntypedOtherExpression" );
+     NEW_TERMINAL_MACRO (UntypedFunctionCallOrArrayReferenceExpression, "UntypedFunctionCallOrArrayReferenceExpression",  "TEMP_UntypedFunctionCallOrArrayReferenceExpression" );
+
+     NEW_NONTERMINAL_MACRO (UntypedExpression, UntypedUnaryOperator | UntypedBinaryOperator | UntypedValueExpression | 
+         UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression,
+         "UntypedExpression", "UntypedExpressionTag", false);
+
+  // Additional IR nodes that we expect to require for declarations:
+  //    UntypedModuleDeclaration
+  //    UntypedTypeDeclaration
+  //    
+     NEW_TERMINAL_MACRO (UntypedImplicitDeclaration,      "UntypedImplicitDeclaration",      "TEMP_UntypedImplicitDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedVariableDeclaration,      "UntypedVariableDeclaration",      "TEMP_UntypedVariableDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedProgramHeaderDeclaration, "UntypedProgramHeaderDeclaration", "TEMP_UntypedProgramHeaderDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedFunctionDeclaration,      "UntypedFunctionDeclaration",      "TEMP_UntypedFunctionDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedSubroutineDeclaration,    "UntypedSubroutineDeclaration",    "TEMP_UntypedSubroutineDeclaration" );
+
+     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | UntypedProgramHeaderDeclaration | UntypedFunctionDeclaration | UntypedSubroutineDeclaration ,
+         "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
+
+  // Additional IR nodes that we expect to require for statements:
+  // Add UntypedOtherStatement
+  //
+     NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
+     NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedBlockStatement,        "UntypedBlockStatement",        "TEMP_UntypedBlockStatement" );
+     NEW_TERMINAL_MACRO (UntypedOtherStatement,        "UntypedOtherStatement",        "TEMP_UntypedOtherStatement" );
+
+     NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | UntypedFunctionCallStatement | UntypedBlockStatement | UntypedOtherStatement ,
+         "UntypedStatement", "UntypedStatementTag", false);
+
+  // Additional IR nodes that we expect to require for located nodes:
+  //    UntypedInitializedName
+
+     NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement,
+         "UntypedNode", "UntypedNodeTag", false);
+
+
+  // DQ (11/26/2013): Added UntypedNode to be derived from LocatedNodeSupport.
   // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
   // are forced to have an interface for the source position interface information (already present in 
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
   // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+  // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
   // NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement, "LocatedNode", "LocatedNodeTag" );
+
      NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
-   // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement  
-     NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
+
+  // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement  
+  // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression , "LocatedNode", "LocatedNodeTag", false );
 
      Terminal & Type    = *lookupTerminal(terminalList, "Type");
      Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
@@ -338,6 +399,74 @@ Grammar::setUpNodes ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      LocatedNodeSupport.setFunctionPrototype ( "HEADER_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
+
+
+
+  // ***************************************************************************************
+  // ***************************************************************************************
+  //                                 Untyped IR Node Support
+  // ***************************************************************************************
+  // ***************************************************************************************
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
+
+     UntypedNode.setFunctionPrototype       ( "HEADER_UNTYPED_NODE", "../Grammar/LocatedNode.code");
+
+     UntypedExpression.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
+
+
+     UntypedUnaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedUnaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedUnaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedUnaryOperator.setDataPrototype     ( "SgUntypedExpression*", "operand", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UntypedBinaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedBinaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedBinaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UntypedValueExpression.setFunctionPrototype          ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
+  // Save this as a string so that we can reproduce the exact value for floating point numbers.
+     UntypedValueExpression.setDataPrototype     ( "std::string", "value_string", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedArrayReferenceExpression.setFunctionPrototype ( "HEADER_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedOtherExpression.setFunctionPrototype          ( "HEADER_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedFunctionCallOrArrayReferenceExpression.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+
+     UntypedStatement.setFunctionPrototype             ( "HEADER_UNTYPED_STATEMENT", "../Grammar/LocatedNode.code");
+  // Save this as a string so that we catch details such as "0025" instead of just 25 as an integer.
+     UntypedStatement.setDataPrototype     ( "std::string", "label_string", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_ABSTRACT",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+     UntypedAssignmentStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UntypedFunctionCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedOtherStatement.setFunctionPrototype        ( "HEADER_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
+
+     UntypedDeclarationStatement.setFunctionPrototype     ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedImplicitDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedVariableDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedProgramHeaderDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_PROGRAM_HEADER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedFunctionDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_FUNCTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedSubroutineDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
+
 
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/LocatedNode.code");
@@ -624,6 +753,41 @@ Grammar::setUpNodes ()
      Token.setFunctionSource ( "SOURCE_TOKEN", "../Grammar/LocatedNode.code");
 
      LocatedNodeSupport.setFunctionSource ( "SOURCE_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
+
+
+  // ***************************************************************************************
+  // ***************************************************************************************
+  //                                 Untyped IR Node Support
+  // ***************************************************************************************
+  // ***************************************************************************************
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
+
+     UntypedNode.setFunctionSource       ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
+
+     UntypedExpression.setFunctionSource ( "SOURCE_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedUnaryOperator.setFunctionSource        ( "SOURCE_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedBinaryOperator.setFunctionSource           ( "SOURCE_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedValueExpression.setFunctionSource          ( "SOURCE_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedOtherExpression.setFunctionSource          ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedFunctionCallOrArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+
+     UntypedStatement.setFunctionSource             ( "SOURCE_UNTYPED_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAssignmentStatement.setFunctionSource   ( "SOURCE_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedFunctionCallStatement.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedBlockStatement.setFunctionSource        ( "SOURCE_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedOtherStatement.setFunctionSource        ( "SOURCE_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
+
+     UntypedDeclarationStatement.setFunctionSource     ( "SOURCE_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedImplicitDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedVariableDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedProgramHeaderDeclaration.setFunctionSource ( "SOURCE_UNTYPED_PROGRAM_HEADER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedFunctionDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_FUNCTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedSubroutineDeclaration.setFunctionSource    ( "SOURCE_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
+
+
 
   // DQ (10/6/2008): Moved from SgSupport.
      RenamePair.setFunctionSource ( "SOURCE_RENAME_PAIR", "../Grammar/LocatedNode.code");

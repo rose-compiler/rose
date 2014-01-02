@@ -17041,15 +17041,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      */
     SgForStatement *& target_loop = loop;
 
-    SgInitializedName* ivar[collapsing_factor];
-    SgExpression* lb[collapsing_factor];
-    SgExpression* ub[collapsing_factor];
-    SgExpression* step[collapsing_factor];
-    SgStatement* orig_body[collapsing_factor]; 
+    SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
+    SgExpression** lb = new SgExpression*[collapsing_factor];
+    SgExpression** ub = new SgExpression*[collapsing_factor];
+    SgExpression** step = new SgExpression*[collapsing_factor];
+    SgStatement** orig_body = new SgStatement*[collapsing_factor]; 
     
-    SgExpression* total_iters[collapsing_factor]; //Winnie, the real iteration counter in each loop level
-    SgExpression* interval[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
-    bool isPlus[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
+    SgExpression** total_iters = new SgExpression*[collapsing_factor]; //Winnie, the real iteration counter in each loop level
+    SgExpression** interval = new SgExpression*[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
+    bool *isPlus = new bool[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
 
 
     //Winnie, get loops info first
@@ -17230,6 +17230,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
+
+    delete [] ivar;
+    delete [] lb;
+    delete [] ub;
+    delete [] step;
+    delete [] orig_body;
+    delete [] total_iters;
+    delete [] interval;
+    delete [] isPlus;
 
     #endif
 
