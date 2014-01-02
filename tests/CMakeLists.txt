@@ -1,7 +1,7 @@
 include_directories(${QT_INCLUDES} ${Boost_INCLUDE_DIRS})
 
 add_executable( testTranslator testTranslator.C )
-target_link_libraries(testTranslator ROSE_DLL EDG ${link_with_libraries} )
+target_link_libraries(testTranslator ROSE_DLL ${edg_lib} ${link_with_libraries} )
 
 add_executable( testGraphGeneration testGraphGeneration.C )
 target_link_libraries(testGraphGeneration ROSE_DLL EDG ${link_with_libraries} )

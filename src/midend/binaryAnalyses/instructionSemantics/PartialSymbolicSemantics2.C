@@ -88,6 +88,7 @@ State::equal_registers(const StatePtr &other) const
 {
     assert(!"FIXME");
     abort();
+    return false;
 }
 
 void
@@ -543,7 +544,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     BaseSemantics::SValuePtr dflt = undefined_(nbits);
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
-        uint8_t buf[nbytes];
+        uint8_t *buf = new uint8_t[nbytes];
         size_t nread = map->read(buf, address->get_number(), nbytes);
         if (nread == nbytes) {
             ByteOrder::convert(buf, nbytes, map->get_byte_order(), ByteOrder::ORDER_LSB);
@@ -552,6 +553,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                 dflt_val |= IntegerOps::shiftLeft2<uint64_t>(buf[i], 8*i);
             dflt = number_(nbits, dflt_val);
         }
+        delete [] buf;
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
