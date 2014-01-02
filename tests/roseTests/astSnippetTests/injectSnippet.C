@@ -141,8 +141,8 @@ main(int argc, char *argv[])
               <<"    snippet file base name:   " <<snippet_file_name <<"\n"
               <<"    snippet name:             " <<snippet_name <<"\n"
               <<"    insertion point function: " <<ipoint_function_name <<"\n"
-              <<"    insert mechanism:         " <<stringify_roseSnippetInsertMechanism(insert_mechanism) <<"\n"
-              <<"    local decls position:     " <<stringify_roseSnippetLocalDeclarationPosition(locdecls_position) <<"\n"
+              <<"    insert mechanism:         " <<stringifySnippetInsertMechanism(insert_mechanism) <<"\n"
+              <<"    local decls position:     " <<stringifySnippetLocalDeclarationPosition(locdecls_position) <<"\n"
               <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
               <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n";
 
