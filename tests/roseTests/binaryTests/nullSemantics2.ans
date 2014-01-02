@@ -866,7 +866,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048345:and    esp, 0xf0<-0x10>
+0x8048345:and    esp, 0xf0<-16>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -1784,7 +1784,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804836f:add    ebx, 0x0000135a
+0x804836f:add    ebx, 0x0000135a<4954>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -1838,7 +1838,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -4430,7 +4430,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804841b:and    esp, 0xf0<-0x10>
+0x804841b:and    esp, 0xf0<-16>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -6536,7 +6536,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484bf:add    ebx, 0x0000120a
+0x80484bf:add    ebx, 0x0000120a<4618>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -6644,7 +6644,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -6698,7 +6698,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -6860,7 +6860,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -7724,7 +7724,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804852f:add    ebx, 0x0000119a
+0x804852f:add    ebx, 0x0000119a<4506>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -7778,7 +7778,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -7832,7 +7832,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -7994,7 +7994,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -8102,7 +8102,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804854a:cmp    eax, 0xff<-0x01>
+0x804854a:cmp    eax, 0xff<-1>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -8588,7 +8588,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -9398,7 +9398,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048591:cmp    eax, 0xff<-0x01>
+0x8048591:cmp    eax, 0xff<-1>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -9776,7 +9776,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485a7:cmp    eax, 0xff<-0x01>
+0x80485a7:cmp    eax, 0xff<-1>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }
@@ -10424,7 +10424,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485bb:add    ebx, 0x0000110e
+0x80485bb:add    ebx, 0x0000110e<4366>
 registers:
   eax       = { VOID[32] }
   ecx       = { VOID[32] }

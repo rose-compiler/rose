@@ -178,7 +178,7 @@ registers:
 memory:
   addr=v1144[32] value=v1145[32]
 
-0x8048345:and    esp, 0xf0<-0x10>
+0x8048345:and    esp, 0xf0<-16>
 registers:
   ecx    = v1144+0x4[32]
   esp    = v1147[32]
@@ -472,7 +472,7 @@ registers:
 memory:
   addr=v1453[32] value=v1454[32]
 
-0x804836f:add    ebx, 0x0000135a
+0x804836f:add    ebx, 0x0000135a<4954>
 registers:
   ebx    = v1454+0x135a[32]
   esp    = v1453+0x4[32]
@@ -486,7 +486,7 @@ registers:
 memory:
   addr=v1453[32] value=v1454[32]
 
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
   edx    = v1477[32]
   ebx    = v1454+0x135a[32]
@@ -1069,7 +1069,7 @@ registers:
 memory:
   addr=v3119-0x4[32] value=v3120[32]
 
-0x804841b:and    esp, 0xf0<-0x10>
+0x804841b:and    esp, 0xf0<-16>
 registers:
   edx    = 0x8048480[32]
   esp    = v3142[32]
@@ -1572,7 +1572,7 @@ registers:
 memory:
   addr=v4164[32] value=v4165[32]
 
-0x80484bf:add    ebx, 0x0000120a
+0x80484bf:add    ebx, 0x0000120a<4618>
 registers:
   ebx    = v4165+0x120a[32]
   esp    = v4164+0x4[32]
@@ -1604,14 +1604,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax    = v4282-0xe0[32]
   ebx    = v4282[32]
   eip    = 0x80484d0[32]
 memory:
 
-0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax    = v4282-0xe0[32]
   edx    = v4282-0xe0[32]
@@ -1647,7 +1647,7 @@ registers:
   of     = v4285[1]
 memory:
 
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax    = 0x0[32]
   edx    = v4282-0xe0[32]
@@ -1910,7 +1910,7 @@ registers:
 memory:
   addr=v4683[32] value=v4684[32]
 
-0x804852f:add    ebx, 0x0000119a
+0x804852f:add    ebx, 0x0000119a<4506>
 registers:
   ebx    = v4684+0x119a[32]
   esp    = v4683+0x4[32]
@@ -1924,7 +1924,7 @@ registers:
 memory:
   addr=v4683[32] value=v4684[32]
 
-0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax    = v4684+0x10ba[32]
   ebx    = v4684+0x119a[32]
@@ -1939,7 +1939,7 @@ registers:
 memory:
   addr=v4683[32] value=v4684[32]
 
-0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax    = v4684+0x10ba[32]
   edx    = v4684+0x10ba[32]
@@ -1987,7 +1987,7 @@ registers:
 memory:
   addr=v4683[32] value=v4684[32]
 
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax    = 0x0[32]
   edx    = v4684+0x10ba[32]
@@ -2023,7 +2023,7 @@ memory:
   addr=v4710-0x10[32] value=0x0[32]
   addr=v4683[32] value=v4684[32]
 
-0x804854a:cmp    eax, 0xff<-0x01>
+0x804854a:cmp    eax, 0xff<-1>
 registers:
   eax    = 0xffffffff (-0x1)[32]
   edx    = v4684+0x10ba[32]
@@ -2179,7 +2179,7 @@ registers:
   cf     = -v4978+0x1[1]
 memory:
 
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
   ebp    = v4982[32]
   esi    = v4960-0x4[32]
@@ -2392,7 +2392,7 @@ memory:
   addr=v5228-0x8[32] value=v5230[32]
   addr=v5228-0x4[32] value=v5229[32]
 
-0x8048591:cmp    eax, 0xff<-0x01>
+0x8048591:cmp    eax, 0xff<-1>
 registers:
   eax    = v5252[32]
   ebx    = 0x80495e8[32]
@@ -2486,7 +2486,7 @@ registers:
 memory:
   addr=v5542[32] value=v5543[32]
 
-0x80485a7:cmp    eax, 0xff<-0x01>
+0x80485a7:cmp    eax, 0xff<-1>
 registers:
   eax    = v5543[32]
   ebx    = v5542[32]
@@ -2625,7 +2625,7 @@ registers:
 memory:
   addr=v5862[32] value=v5863[32]
 
-0x80485bb:add    ebx, 0x0000110e
+0x80485bb:add    ebx, 0x0000110e<4366>
 registers:
   ebx    = v5863+0x110e[32]
   esp    = v5862+0x4[32]

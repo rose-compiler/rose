@@ -41,4 +41,13 @@ case6:	mov [eax], ebx
 case7:	mov eax, [ebx]
 	je end
 
+	;; Is repeated logical right shift simplified?
+case8:
+	shr eax, 10		;eax is originally an unknown value
+	shr eax, 10
+	shr eax, 10
+	shr eax, 2		;eax should be zero after this
+	mov eax, ebx		;so the predicate isn't opaque
+	je end
+	
 end:	hlt

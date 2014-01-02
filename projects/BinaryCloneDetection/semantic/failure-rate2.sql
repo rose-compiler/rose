@@ -7,11 +7,12 @@
 
 drop table if exists debug_settings;
 create table debug_settings (
+    npasses integer,					-- number of times test must have passed
     ret_threshold double precision,			-- whether a function returns a value [0..1]
     sim_threshold double precision			-- threshold of similarity [0..1]
 );
 
-insert into debug_settings (ret_threshold, sim_threshold) values (0.25, 0.70);
+insert into debug_settings (npasses, ret_threshold, sim_threshold) values (10, 0.25, 0.70);
 
 -------------------------------------------------------------------------------------------------------------------------------
 -- Clean-up. Cut and paste this block if you want to clean up all the tables. They're also dropped before each is created
@@ -58,7 +59,7 @@ create table debug_fpass as
 	from semantic_fio
 	where status = 0
 	group by func_id
-	having count(*) >= (select count(*) from (select distinct igroup_id from semantic_inputvalues) as igroup_ids);
+	having count(*) >= (select npasses from debug_settings);
 
 -- Functions that return a value
 drop table if exists debug_freturns;
@@ -170,20 +171,24 @@ create table debug_posneg as
 	-- Number of expected positives -- those pairs which the oracle says should be similar
 	(select count(*) from debug_ep) as num_ep,
 
-	-- Number of expected negatives -- those pairs which the oracle says should not be similar
-	(select count(*) from debug_en) as num_en,
-
-	-- Number of false positives -- pairs we unexpectedly detected as similar
-	(select count(*) from debug_en where similarity >= (select sim_threshold from debug_settings)) as num_fp,
+        -- Number of true positives -- pairs we correctly identified as similar
+	(select count(*) from debug_ep where similarity >= (select sim_threshold from debug_settings)) as num_tp,
 
 	-- Number of false negatives -- pairs of expected similarity that we failed to detect
 	(select count(*) from debug_ep where similarity < (select sim_threshold from debug_settings)) as num_fn,
 
-        -- Number of true positives -- pairs we correctly identified as similar
-	(select count(*) from debug_ep where similarity >= (select sim_threshold from debug_settings)) as num_tp,
+	(select null)::varchar(1) as " ",
+
+	-- Number of expected negatives -- those pairs which the oracle says should not be similar
+	(select count(*) from debug_en) as num_en,
 
 	-- Number of true negatives -- pairs we correctly identified as being not similar
 	(select count(*) from debug_en where similarity < (select sim_threshold from debug_settings)) as num_tn,
+
+	-- Number of false positives -- pairs we unexpectedly detected as similar
+	(select count(*) from debug_en where similarity >= (select sim_threshold from debug_settings)) as num_fp,
+
+	(select null)::varchar(1) as "  ",
 
 	-- Number of similarities detected (true positives plus false positives)
 	((select count(*) from debug_ep where similarity >= (select sim_threshold from debug_settings)) +
