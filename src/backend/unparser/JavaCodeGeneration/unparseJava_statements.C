@@ -69,8 +69,6 @@ cout.flush();
 */
 
     SgJavaPackageStatement *package_statement = sourcefile -> get_package();
-    vector<SgJavaImportStatement *> &import_list = sourcefile -> get_import_list() -> get_java_import_list();
-    vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
 // TODO: Remove this !
 /*
 cout << "*** @ unparseJavaFile on " << sourcefile -> getFileName()
@@ -81,9 +79,11 @@ cout.flush();
     //
     // Process the package declaration statement.
     //
-    SgName package_name = package_statement -> get_name();
-    if (package_name.getString().size() > 0) { // not the null package name?
-        unparseStatement(package_statement, info);
+    if (package_statement) {
+        SgName package_name = package_statement -> get_name();
+        if (package_name.getString().size() > 0) { // not the null package name?
+            unparseStatement(package_statement, info);
+        }
     }
 // TODO: Remove this !
 /*
@@ -96,14 +96,17 @@ cout.flush();
     //
     // Process the import declaration statements.
     //
-    for (int i = 0; i < import_list.size(); i++) {
-        SgJavaImportStatement *import_declaration = import_list[i];
+    if (sourcefile -> get_import_list()) {
+        vector<SgJavaImportStatement *> &import_list = sourcefile -> get_import_list() -> get_java_import_list();
+        for (int i = 0; i < import_list.size(); i++) {
+            SgJavaImportStatement *import_declaration = import_list[i];
 // TODO: Remove this !
 /*
 cout << "*** @ Import declaration " << i << endl;
 cout.flush();
 */
-        unparseStatement(import_declaration, info);
+            unparseStatement(import_declaration, info);
+        }
     }
 // TODO: Remove this !
 /*
@@ -116,14 +119,17 @@ cout.flush();
     //
     // Process the class declarations.
     //
-    for (int i = 0; i < type_list.size(); i++) {
-        SgClassDeclaration *type_declaration = type_list[i];
+    if (sourcefile -> get_class_list()) {
+        vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
+        for (int i = 0; i < type_list.size(); i++) {
+            SgClassDeclaration *type_declaration = type_list[i];
 // TODO: Remove this !
 /*
 cout << "*** @ type " << i << ": " << type_declaration -> get_qualified_name().str() << endl;
 cout.flush();
 */
-        unparseStatement(type_declaration, info);
+            unparseStatement(type_declaration, info);
+        }
     }
 // TODO: Remove this !
 /*
