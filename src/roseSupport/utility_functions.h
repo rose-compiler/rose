@@ -175,6 +175,17 @@ namespace ROSE
 
        // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
           extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
+
+       // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
+       // extern std::vector<FrontierNode*> frontierNodes;
+          extern std::map<SgStatement*,FrontierNode*> frontierNodes;
+
+       // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
+          extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
+
+       // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+          extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
+          extern std::set<int> redundantTokenEndingsSet;
    };
 
 
