@@ -7,7 +7,11 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#ifndef _MSC_VER
 #include <sys/time.h>
+#else
+#include "timing.h"
+#endif
 
 #ifdef ROSE_HAVE_SQLITE3
 #include "sqlite3x.h"
@@ -1466,6 +1470,7 @@ std::string
 TimeRenderer::operator()(const time_t &value, size_t width) const
 {
     char buf[256];
+#ifndef _MSC_VER
     struct tm tm;
     if (local_tz) {
         if (NULL==localtime_r(&value, &tm))
@@ -1476,6 +1481,7 @@ TimeRenderer::operator()(const time_t &value, size_t width) const
     }
     if (0==strftime(buf, sizeof buf, format.c_str(), &tm) && !format.empty())
         return "(invalid format)";
+#endif
     return buf;
 }
 
