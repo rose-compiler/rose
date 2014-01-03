@@ -27,7 +27,9 @@ noinst_PROGRAMS = \
 	testPragmaInBody \
 	querySubTree \
 	testCopyAndDelete \
-   testTraversalOfTemplateInstantiations
+   testTraversalOfTemplateInstantiations \
+	testTranslator2013_01 \
+	testTranslator2013_02
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -59,6 +61,9 @@ querySubTree_SOURCES = querySubTree.C
 testCopyAndDelete_SOURCES = testCopyAndDelete.C
 
 testTraversalOfTemplateInstantiations_SOURCES = testTraversalOfTemplateInstantiations.C
+
+testTranslator2013_01_SOURCES = testTranslator2013_01.C
+testTranslator2013_02_SOURCES = testTranslator2013_02.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -125,6 +130,11 @@ input_testCopyAndDelete_2.o:
 input_testTraversalOfTemplateInstantiations.o:
 	./testTraversalOfTemplateInstantiations -c $(srcdir)/input_testTraversalOfTemplateInstantiations.C  && touch $@
 
+input_testTranslator2013_01.o: testTranslator2013_01
+	./testTranslator2013_01 -rose:verbose 0 $(srcdir)/input_testTranslator2013_01.C && touch $@
+
+input_testTranslator2013_02.o: testTranslator2013_02
+	./testTranslator2013_02 -rose:verbose 0 $(srcdir)/input_testTranslator2013_02.C && touch $@
 
 
 EXTRA_DIST = \

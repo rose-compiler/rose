@@ -7,6 +7,7 @@ HEADER_NODE_PREDECLARATION_START
 //#include "sage3basic.h"
 #include "setup.h"
 #include "rangemap.h"
+#include "Map.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -146,6 +147,9 @@ public:
     unsigned get_major() const {
         return majr;
     }
+    bool is_valid() const {
+        return nbits!=0;
+    }
     RegisterDescriptor &set_major(unsigned majr) {
         this->majr = majr;
         return *this;
@@ -171,9 +175,9 @@ public:
         this->nbits = nbits;
         return *this;
     }
-    bool equal(const RegisterDescriptor &other) const {
-	return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
-    }
+    bool operator<(const RegisterDescriptor &other) const;
+    bool operator==(const RegisterDescriptor &other) const;
+    bool operator!=(const RegisterDescriptor &other) const;
     void print(std::ostream &o) const {
 	o <<"{" <<majr <<"," <<minr <<"," <<offset <<"," <<nbits <<"}";
     }
@@ -185,6 +189,9 @@ private:
     unsigned offset;	/** Low-bit offset within the physical register. */
     unsigned nbits;	/** Number of bits referenced by this descriptor. */
 };
+
+/** Mapping from instruction virtual address to instruction. */
+typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
 
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
@@ -591,6 +598,11 @@ typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
 typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrList;
 typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
+
+// DQ (10/28/2013): Forward declaration for new token unparsing support.
+class TokenStreamSequenceToNodeMapping;
+class FrontierNode;
+class PreviousAndNextNodeData;
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
@@ -2951,16 +2963,3 @@ $CLASSNAME::error()
 #endif
 
 SOURCE_ERROR_FUNCTION_END
-
-
-
-
-
-
-
-
-
-
-
-
-

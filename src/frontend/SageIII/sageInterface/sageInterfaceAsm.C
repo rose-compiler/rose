@@ -307,7 +307,7 @@ SageInterface::equivalenceTest(SgNode* x, SgNode* y)
              {
                SgAsmRegisterReferenceExpression* x_exp = isSgAsmRegisterReferenceExpression(x);
                SgAsmRegisterReferenceExpression* y_exp = isSgAsmRegisterReferenceExpression(y);
-               result = x_exp->get_descriptor().equal(y_exp->get_descriptor());
+               result = x_exp->get_descriptor() == y_exp->get_descriptor();
                break;
              }
 

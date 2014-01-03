@@ -18,31 +18,31 @@ SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
 
 /** Initialize a dynamic section entry by parsing something stored in the file. */
 void
-SgAsmElfDynamicEntry::parse(ByteOrder sex, const Elf32DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf32DynamicEntry_disk *disk)
 {
-    p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
-    p_d_val = disk_to_host(sex, disk->d_val);
+    p_d_tag = (EntryType)ByteOrder::disk_to_host(sex, disk->d_tag);
+    p_d_val = ByteOrder::disk_to_host(sex, disk->d_val);
 }
 void
-SgAsmElfDynamicEntry::parse(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf64DynamicEntry_disk *disk)
 {
-    p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
-    p_d_val = disk_to_host(sex, disk->d_val);
+    p_d_tag = (EntryType)ByteOrder::disk_to_host(sex, disk->d_tag);
+    p_d_val = ByteOrder::disk_to_host(sex, disk->d_val);
 }
 
 /** Encode a native entry back into disk format */
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk) const
+SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf32DynamicEntry_disk *disk) const
 {
-    host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
+    ByteOrder::host_to_disk(sex, p_d_tag, &(disk->d_tag));
+    ByteOrder::host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
+SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf64DynamicEntry_disk *disk) const
 {
-    host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
+    ByteOrder::host_to_disk(sex, p_d_tag, &(disk->d_tag));
+    ByteOrder::host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 
@@ -284,7 +284,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);

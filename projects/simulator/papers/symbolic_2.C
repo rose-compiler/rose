@@ -145,8 +145,8 @@ public:
                     trace->mesg("%s: branch %staken; target=0x%08"PRIx64, name, take?"":"not ", target);
 
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
-                    InternalNodePtr c = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
-                                                             LeafNode::create_integer(32, target));
+                    TreeNodePtr c = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
+                                                         LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
                     if (SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
@@ -181,7 +181,7 @@ public:
                 trace->mesg("%s: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...", name);
                 std::vector<TreeNodePtr> exprs = constraints;
                 LeafNodePtr result_var = LeafNode::create_variable(32);
-                InternalNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
+                TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
                 for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                     expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
@@ -206,8 +206,8 @@ public:
             if (!result.is_known()) {
                 trace->mesg("%s: setting result equal to 0xff015e7c and trying to find inputs...", name);
                 std::vector<TreeNodePtr> exprs = constraints;
-                InternalNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
-                                                            LeafNode::create_integer(32, 0xff015e7c));
+                TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
+                                                        LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
                 if (SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {

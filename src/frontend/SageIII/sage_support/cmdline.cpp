@@ -745,25 +745,31 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
 #endif
 
+#if 0
+     printf ("In SgProject: before processing option: (get_wave() == %s) \n",get_wave() ? "true" : "false");
+#endif
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
-       // printf ("Option -c found (compile only)! \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Option -rose:wave found! (get_wave() == %s) \n",get_wave() ? "true" : "false");
+
           set_wave(true);
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("   --- after calling set_wave(true) (get_wave() == %s) \n",get_wave() ? "true" : "false");
         }
 
-     // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
+  // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
      set_openmp_linking(false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
          ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
-     {
-       if ( SgProject::get_verbose() >= 1 )
-         printf ("In SgProject: openmp_linking mode ON \n");
-       set_openmp_linking(true);
-     }
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: openmp_linking mode ON \n");
+          set_openmp_linking(true);
+        }
 
-      SageSupport::Cmdline::X10::
-          Process(this, local_commandLineArgumentList);
-
+      SageSupport::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
   // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
@@ -1411,8 +1417,10 @@ SgFile::usage ( int status )
 "                               separately).\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
-"     -rose:output_tokens     call parser with --tokens option (fortran only)\n"
-"                             (not yet supported for C/C++)\n"
+"     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
+"                             Supported for C/C++, and currently only generates token \n"
+"                             stream for fortran (call parser with --tokens option)\n"
+"                             call parser with --tokens option (fortran only)\n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -1754,13 +1762,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // DQ (11/20/2010): Added token handling support.
   // Turn on the output of the tokens from the parser (only applies to Fortran support).
   //
-     set_output_tokens(false);
-     ROSE_ASSERT (get_output_tokens() == false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(output_tokens)",true) == true )
+     set_unparse_tokens(false);
+     ROSE_ASSERT (get_unparse_tokens() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_tokens)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("output tokens mode ON \n");
-          set_output_tokens(true);
+               printf ("unparse tokens mode ON \n");
+          set_unparse_tokens(true);
         }
 
   //
@@ -3015,7 +3023,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
-     optionCount = sla(argv, "-rose:", "($)", "(output_tokens)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
@@ -3472,6 +3480,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
@@ -3479,6 +3488,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
   // DQ (7/3/2013): define this so that the rose_edg_required_macros_and_functions.h header file can make

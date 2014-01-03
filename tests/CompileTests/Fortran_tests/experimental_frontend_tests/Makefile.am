@@ -11,8 +11,30 @@ TEST_F90_Objects = main_program_2008_01.f90
 
 PASSING_TEST_Objects = $(TEST_F90_Objects)
 
+# Go back and build the translator we are using to test Fortran (in case make check 
+# is run directly in this directory before make has been run from the root of the 
+# ROSE directory structure).  This does not appear to work!
+../../../testTranslator:
+	cd ../../..; $(MAKE) testTranslator
+
+testTranslator: ../../../testTranslator
+
 $(TEST_F90_Objects): ../../../testTranslator
 	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
+endif
+
+junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl
+#	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | addPosInfo -i junk.pt -p $(srcdir)/junk.f90 -m | implode-asfix | pp-aterm -o junk.ast-info.pp
+	sglr -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | addPosInfo -p $(srcdir)/junk.f90 -m | implode-asfix | pp-aterm -o junk.ast-info.pp
+
+junk : $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl
+	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
+
+
+clean-local:
+	rm -f rose_*.* *.aterm *.o
 
 check-local:
 	@echo "Tests for experimental Fortran frontend."

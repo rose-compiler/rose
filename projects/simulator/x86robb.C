@@ -39,6 +39,12 @@ main(int argc, char *argv[], char *envp[])
     int n = sim.configure(argc, argv, envp);
     sim.install_callback(new RSIM_Tools::UnhandledInstruction);
 
+    /**************************************************************************************************************************
+     *                                  Debugging callbacks...
+     **************************************************************************************************************************/
+
+
+#if 0
     /* Parse the ELF container so we can get to the symbol table. */
     char *rose_argv[4];
     rose_argv[0] = argv[0];
@@ -47,12 +53,6 @@ main(int argc, char *argv[], char *envp[])
     rose_argv[3] = NULL;
     SgProject *project = frontend(3, rose_argv);
 
-    /**************************************************************************************************************************
-     *                                  Debugging callbacks...
-     **************************************************************************************************************************/
-
-
-#if 0
     /* Disassemble when we hit main() */
     rose_addr_t disassemble_va = RSIM_Tools::FunctionFinder().address(project, "main");
     assert(disassemble_va>0);

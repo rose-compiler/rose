@@ -1,6 +1,7 @@
 #ifndef ROSE_MemoryMap_H
 #define ROSE_MemoryMap_H
 
+#include "ByteOrder.h"
 #include <boost/shared_ptr.hpp>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
@@ -483,13 +484,16 @@ public:
      **************************************************************************************************************************/
 
     /** Constructs an empty memory map. */
-    MemoryMap() {}
+    MemoryMap(): sex(ByteOrder::ORDER_UNSPECIFIED) {}
 
     /** Shallow copy constructor.  The new memory map describes the same mapping and points to shared copies of the underlying
      *  data.  In other words, changing the mapping of one map (clear(), insert(), erase()) does not change the mapping of the
      *  other, but changing the data (write()) in one map changes it in the other.  See also init(), which takes an argument
      *  describing how to copy. */
-    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW) { init(other, copy_level); }
+    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW)
+        : sex(ByteOrder::ORDER_UNSPECIFIED) {
+        init(other, copy_level);
+    }
 
     /** Initialize this memory map with info from another.  This map is first cleared and then initialized with a copy of the
      *  @p source map.  A reference to this map is returned for convenience since init is often used in conjunction with
@@ -502,6 +506,13 @@ public:
 
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
+
+    /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
+     *  The default byte order is little-endian.
+     * @{ */
+    ByteOrder::Endianness get_byte_order() const { return sex; }
+    void set_byte_order(ByteOrder::Endianness order) { sex = order; }
+     /** @} */
 
     /** Define a new area of memory.  The @p segment is copied into the memory map and the reference count for the Buffer to
      *  which it points (if any) is incremented.  A check is performed to ensure that the @p range and @p segment are
@@ -561,6 +572,9 @@ public:
      *  prohibited bits.   No bits are required if @p required is zero. */
     void prune(unsigned required, unsigned prohibited=MM_PROT_NONE);
 
+    /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
+    void erase_zeros(size_t minsize);
+
     /** List of map segments. */
     const Segments &segments() const { return p_segments; }
 
@@ -586,6 +600,20 @@ public:
      *  we reach a point in the memory map that is not defined or which does not have the requested permissions.  The size of
      *  the return value indicates that number of bytes that were read (i.e., the return value is not zero-filled). */
     SgUnsignedCharList read(rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+
+    /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p start_va in the memory map and
+     *  continuing until one of the following conditions:
+     *    <ul>
+     *      <li>The return value contains the @p desired number of characters.</li>
+     *      <li>The next character to be read is a NUL character.</li>
+     *      <li>A @p valid_char function is specified but the next character causes it to return zero.</li>
+     *      <li>An @p invalid_char function is specified and the next character causes it to return non-zero.</li>
+     *    </ul>
+     *
+     *  The @p valid_char and @p invalid_char take an integer argument and return an integer value so that the C character
+     *  classification functions from <ctype.h> can be used directly. */
+    std::string read_string(rose_addr_t start_va, size_t desired, int(*valid_char)(int)=NULL, int(*invalid_char)(int)=NULL,
+                            unsigned req_perms=MM_PROT_READ) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
@@ -654,6 +682,7 @@ public:
      **************************************************************************************************************************/
 protected:
     Segments p_segments;
+    ByteOrder::Endianness sex;
 };
 
 #endif
