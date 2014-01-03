@@ -245,6 +245,9 @@ set(rose_support_src
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/IncludeDirective.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/SqlDatabase.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/LinearCongruentialGenerator.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/Combinatorics.C
      )
 
 
@@ -318,6 +321,7 @@ set (unparser_SRC
 
 set(roseBinaryFormats_fileList_part0
    ### Utilities ###
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ByteOrder.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/DataConversion.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C
@@ -421,6 +425,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCallingConvention.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/DwarfLineMapper.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
  #${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C
@@ -517,13 +522,22 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherPowerpc.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherX86.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/NullSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/TraceSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 )
 
@@ -712,6 +726,9 @@ set( libastTokenStream_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/doCompleteMapping.C  
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/linearizeAST.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/unparseMacro.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/tokenStreamMapping.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/frontierDetection.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/previousAndNextNode.C
    )
 
 
@@ -963,7 +980,7 @@ add_custom_target(
 
 add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
 generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
@@ -973,6 +990,7 @@ set(LINK_FILES
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
+   libX10Traversal
 )
 
 if (have_EDG_source OR NOT WIN32)
@@ -1035,7 +1053,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL ${edg_lib} ${link_with_libraries}
     )
 
 ########### install files ###############

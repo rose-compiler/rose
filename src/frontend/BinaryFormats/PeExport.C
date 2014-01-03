@@ -26,17 +26,17 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     }
     
     /* Convert disk-format data members to native format */
-    p_res1         = le_to_host(disk.res1);
-    p_timestamp    = le_to_host(disk.timestamp);
-    p_vmajor       = le_to_host(disk.vmajor);
-    p_vminor       = le_to_host(disk.vminor);
-    p_name_rva     = le_to_host(disk.name_rva);       p_name_rva.set_section(section);
-    p_ord_base     = le_to_host(disk.ord_base);
-    p_expaddr_n    = le_to_host(disk.expaddr_n);
-    p_nameptr_n    = le_to_host(disk.nameptr_n);
-    p_expaddr_rva  = le_to_host(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
-    p_nameptr_rva  = le_to_host(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
-    p_ordinals_rva = le_to_host(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
+    p_res1         = ByteOrder::le_to_host(disk.res1);
+    p_timestamp    = ByteOrder::le_to_host(disk.timestamp);
+    p_vmajor       = ByteOrder::le_to_host(disk.vmajor);
+    p_vminor       = ByteOrder::le_to_host(disk.vminor);
+    p_name_rva     = ByteOrder::le_to_host(disk.name_rva);       p_name_rva.set_section(section);
+    p_ord_base     = ByteOrder::le_to_host(disk.ord_base);
+    p_expaddr_n    = ByteOrder::le_to_host(disk.expaddr_n);
+    p_nameptr_n    = ByteOrder::le_to_host(disk.nameptr_n);
+    p_expaddr_rva  = ByteOrder::le_to_host(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
+    p_nameptr_rva  = ByteOrder::le_to_host(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
+    p_ordinals_rva = ByteOrder::le_to_host(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
 
     /* Read the name */
     std::string name;
@@ -169,7 +169,7 @@ SgAsmPEExportSection::parse()
             }
             nameptr_disk = 0;
         }
-        rose_addr_t fname_rva = le_to_host(nameptr_disk);
+        rose_addr_t fname_rva = ByteOrder::le_to_host(nameptr_disk);
         rose_addr_t fname_va = fname_rva + fhdr->get_base_va();
 
         /* Function name (fname) */
@@ -200,7 +200,7 @@ SgAsmPEExportSection::parse()
             }
             ordinal_disk = 0;
         }
-        unsigned ordinal = le_to_host(ordinal_disk);
+        unsigned ordinal = ByteOrder::le_to_host(ordinal_disk);
 
         /* Export address. Convert the symbol's Ordinal into an index into the Export Address Table. The spec says to subtract
          * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
@@ -222,7 +222,7 @@ SgAsmPEExportSection::parse()
                     e.map->dump(stderr, "    ");
                 }
             }
-            expaddr = le_to_host(expaddr_disk);
+            expaddr = ByteOrder::le_to_host(expaddr_disk);
             expaddr.bind(fhdr);
         } else {
             expaddr = 0xffffffff; /*Ordinal out of range!*/
