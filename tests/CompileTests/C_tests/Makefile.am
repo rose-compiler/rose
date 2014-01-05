@@ -380,6 +380,22 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_109.c \
      test2013_110.c \
      test2013_111.c \
+     test2013_112.c \
+     test2013_113.c \
+     test2014_01.c \
+     test2014_02.c \
+     test2014_04.c \
+     test2014_05.c \
+     test2014_06.c \
+     test2014_07.c \
+     test2014_08.c \
+     test2014_09.c \
+     test2014_12.c \
+     test2014_13.c \
+     test2014_14.c \
+     test2014_15.c \
+     test2014_16.c \
+     test2014_17.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -391,6 +407,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_11.c \
      test2010_14.c \
      constants.c
+
+# DQ (1/5/2014): Some failing test codes:
+#     test2014_03.c  demonstrates nested functions (not supported in EDG).
+#     test2014_10.c  demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation.
+#     test2014_11.c  (simpler case of test2014_10.c.
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 

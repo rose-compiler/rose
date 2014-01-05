@@ -1036,30 +1036,61 @@ PreprocessingInfo::isSelfReferential()
   // code that depended upon a "#ifdef foo".  So this handling is not without some risk, but it
   // always better to use the token stream unparsing for these cases.
 
+#define DEBUG_SELF_REFERENTIAL_MACRO 0
+
      bool result = true;
 
      if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
           result = true;
           string macroName = getMacroName();
-#if 0
+#if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- macroName = %s \n",macroName.c_str());
 #endif
           string s = internalString;
           size_t startOfMacroSubstring  = s.find(macroName);
           ROSE_ASSERT(startOfMacroSubstring != string::npos);
           size_t endOfMacroSubstring    = startOfMacroSubstring + macroName.length();
-#if 0
+#if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);
 #endif
           size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
-#if 0
+#if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- secondReferenceToMacroSubstring = %zu \n",secondReferenceToMacroSubstring);
 #endif
           result = (secondReferenceToMacroSubstring != string::npos);
-#if 0
+#if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- result = %s \n",result ? "true" : "false");
 #endif
+
+          if (secondReferenceToMacroSubstring != string::npos)
+             {
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- Double check for self-referencing macro: macroName = %s s = %s ",macroName.c_str(),s.c_str());
+#endif
+               size_t endOfSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring + macroName.length();
+               ROSE_ASSERT(endOfSecondReferenceToMacroSubstring != string::npos);
+               ROSE_ASSERT(endOfSecondReferenceToMacroSubstring <= s.length());
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- endOfSecondReferenceToMacroSubstring = %zu \n",endOfSecondReferenceToMacroSubstring);
+#endif
+               size_t startOfRemainderSubstring = s.find_first_of("abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring);
+               size_t endOfRemainderSubstring   = s.find_first_of(" (\t\n\0",endOfSecondReferenceToMacroSubstring);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- startOfRemainderSubstring = %zu endOfRemainderSubstring = %zu \n",startOfRemainderSubstring,endOfRemainderSubstring);
+#endif
+            // DQ (1/2/2014): Handle the special case of macro pasting "#define foo(X) foo##X"
+            // if (s[endOfSecondReferenceToMacroSubstring+1] == '#' && s[endOfSecondReferenceToMacroSubstring+2] == '#')
+               if (startOfRemainderSubstring < endOfRemainderSubstring)
+                  {
+                 // Detected case of macro pasting.  since the secondary reference to the macro name is modified 
+                 // to be different from the primary macro name this is not a case of self-referencing macro.
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                    printf ("   --- Detected case of macro pasting, not a self-referencing macro (set result = false) \n");
+#endif
+                    result = false;
+                  }
+             }
         }
        else
         {

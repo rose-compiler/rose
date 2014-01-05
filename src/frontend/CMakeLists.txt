@@ -4,6 +4,7 @@ add_subdirectory(BinaryLoader)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
 add_subdirectory(PHPFrontend)
+add_subdirectory(X10_ROSE_Connection)
 
 if(enable-c)
   add_subdirectory(CxxFrontend)
