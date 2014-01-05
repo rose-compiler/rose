@@ -3710,7 +3710,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // SgName nameQualifier = (*p)->get_qualified_name_prefix();
                  // SgName nameQualifier = (*p)->get_qualified_name();
                     SgName nameQualifier = (*p)->get_qualified_name_prefix();
-#if 1
+#if 0
                     printf ("In unparseMFuncDeclStmt(): preinitialization list element name = %s nameQualifier = %s \n",(*p)->get_name().str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
 #endif
                     if (nameQualifier.is_null() == false)
@@ -5161,6 +5161,10 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(saved_context);
 
+#if 0
+     printf ("Calling unparseTypeAttributes(): classdefn_stmt->get_declaration() = %p \n",classdefn_stmt->get_declaration());
+#endif
+
      unparseTypeAttributes(classdefn_stmt->get_declaration());
 
 #if 0
@@ -5202,6 +5206,18 @@ Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
 #endif
           curprint(" __attribute__((__transparent_union__))");
         }
+
+  // DQ (1/3/2014): Added support for packing attribute.
+     if (declaration->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+        {
+       // curprint(" /* from unparseTypeAttributes(SgDeclarationStatement*) */ __attribute__((packed))");
+          curprint(" __attribute__((packed))");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
    }
 
 

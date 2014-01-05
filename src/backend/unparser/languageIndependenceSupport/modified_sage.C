@@ -1864,9 +1864,51 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( " __attribute__((weakref))");
              }
+
+       // DQ (1/5/2014): Adding support for gnu visibility attributes.
+       // Set using: decl->get_declarationModifier().set_gnu_attribute_visability(get_ELF_visibility_attribute(rout->ELF_visibility, &rout->source_corresp));
+          SgDeclarationModifier::gnu_declaration_visability_enum visibility = functionDeclaration->get_declarationModifier().get_gnu_attribute_visability();
+          if (visibility != SgDeclarationModifier::e_unspecified_visibility)
+             {
+#if 0
+               printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified \n");
+#endif
+               string s;
+               switch (visibility)
+                  {
+                    case SgDeclarationModifier::e_unknown_visibility: s = "(\"unknown\")";
+                    case SgDeclarationModifier::e_error_visibility:   s = "(\"error\")";
+                       {
+                         printf ("Error or unknown visibility setting \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+
+                    case SgDeclarationModifier::e_unspecified_visibility: s = "(\"xxx\")"; break;
+                       {
+                         printf ("unspecified visibility (trapped) \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+
+                    case SgDeclarationModifier::e_hidden_visibility:      s = "(\"hidden\")";    break;
+                    case SgDeclarationModifier::e_protected_visibility:   s = "(\"protected\")"; break;
+                    case SgDeclarationModifier::e_internal_visibility:    s = "(\"internal\")";  break;
+
+                    case SgDeclarationModifier::e_default_visibility:     s = "(\"default\")"; break;
+
+                    default:
+                         printf ("ERROR: In printAttributes(SgDeclarationStatement*): Bad visibility specification: visibility = %d \n", visibility);
+                         ROSE_ASSERT(false);
+                  }
+
+            // curprint(" __attribute__((visibility%s))",s.c_str());
+               curprint(" __attribute__((visibility");
+               curprint(s);
+               curprint("))");
+             }
         }
    }
-
 
 
 #if 0
