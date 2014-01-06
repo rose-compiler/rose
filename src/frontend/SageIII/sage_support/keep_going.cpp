@@ -7,14 +7,19 @@
 #include <iostream>
 
 #include "keep_going.h"
+#include "sage3basic.h"
 
 namespace ROSE {
 namespace KeepGoing {
 bool g_keep_going = false;
+
+#ifndef _MSC_VER
 struct sigaction SignalAction;
+#endif //_MSC_VER
 
 bool set_signal_handler(SignalHandlerFunction handler)
 {
+#ifndef _MSC_VER
     SignalAction.sa_flags   = 0;
     SignalAction.sa_handler = handler;
 
@@ -22,12 +27,17 @@ bool set_signal_handler(SignalHandlerFunction handler)
 
     sigaction(SIGSEGV, &SignalAction, 0);
     sigaction(SIGABRT, &SignalAction, 0);
+#else
+    ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+#endif //_MSC_VER
 
     return true;
 }
 
 namespace Frontend {
-  sigjmp_buf jmp_target;
+  #ifndef _MSC_VER
+    sigjmp_buf jmp_target;
+  #endif //_MSC_VER
   void SignalHandler(int sig)
   {
       std::cout
@@ -37,11 +47,17 @@ namespace Frontend {
           << "during frontend processing"
           << std::endl;
 
-      siglongjmp(Frontend::jmp_target, -1);
+      #ifndef _MSC_VER
+          siglongjmp(Frontend::jmp_target, -1);
+      #else
+          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+      #endif //_MSC_VER
   }
 
   namespace SecondaryPass {
-    sigjmp_buf jmp_target;
+    #ifndef _MSC_VER
+      sigjmp_buf jmp_target;
+    #endif //_MSC_VER
     void SignalHandler(int sig)
     {
         std::cout
@@ -51,14 +67,20 @@ namespace Frontend {
             << "during secondary pass in frontend processing"
             << std::endl;
 
-        siglongjmp(Frontend::SecondaryPass::jmp_target, -1);
+        #ifndef _MSC_VER
+            siglongjmp(Frontend::SecondaryPass::jmp_target, -1);
+        #else
+            ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+        #endif //_MSC_VER
     }
   }// ::ROSE::KeepGoing::Frontend::SecondaryPass
 }// ::ROSE::KeepGoing::Frontend
 
 namespace Backend {
 namespace Unparser {
-  sigjmp_buf jmp_target;
+  #ifndef _MSC_VER
+    sigjmp_buf jmp_target;
+  #endif //_MSC_VER
   void SignalHandler(int sig)
   {
       std::cout
@@ -68,7 +90,11 @@ namespace Unparser {
           << "during backend unparser processing"
           << std::endl;
 
-      siglongjmp(Backend::Unparser::jmp_target, -1);
+      #ifndef _MSC_VER
+          siglongjmp(Backend::Unparser::jmp_target, -1);
+      #else
+          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+      #endif //_MSC_VER
   }
 }// ::ROSE::KeepGoing::Backend::Unparser
 }// ::ROSE::KeepGoing::Backend
