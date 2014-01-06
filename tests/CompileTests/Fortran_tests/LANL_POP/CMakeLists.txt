@@ -173,7 +173,7 @@ set_tests_properties(hmix_gm.F90 PROPERTIES DEPENDS
   "vertical_mix.F90;vmix_kpp.F90")
 
 set_tests_properties(horizontal_mix.F90 PROPERTIES DEPENDS
-  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;communicate.F90;time_management.F90;broadcast.F90;grid.F90;io_types.F90;hmix_del2.F90;hmix_del4.F90;hmix_gm.F90;hmix_aniso.F90;topostress.F90;tavg.F90;timers.F90;exit_mod.F90")
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;communicate.F90;time_management.F90;broadcast.F90;grid.F90;io_types.F90;hmix_del2.F90;hmix_del4.F90;hmix_gm.F90;hmix_aniso.F90;topostress.F90;tavg.F90;timers.F90;exit_mod.F90io_netcdf.F90")
 
 set_tests_properties(ice.F90 PROPERTIES DEPENDS
   "kinds_mod.F90;blocks.F90;constants.F90;broadcast.F90;io_types.F90;time_management.F90;exit_mod.F90")
