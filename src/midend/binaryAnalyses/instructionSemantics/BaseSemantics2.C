@@ -108,6 +108,7 @@ void
 RegisterStateGeneric::clear()
 {
     registers.clear();
+    clear_latest_writers();
 }
 
 void
@@ -375,6 +376,43 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
 }
 
 void
+RegisterStateGeneric::set_latest_writer(const RegisterDescriptor &desc, rose_addr_t writer_va)
+{
+    WrittenParts &parts = writers[desc];
+    parts.insert(Extent(desc.get_offset(), desc.get_nbits()), writer_va);
+}
+
+void
+RegisterStateGeneric::clear_latest_writer(const RegisterDescriptor &desc)
+{
+    WritersMap::iterator wi = writers.find(desc);
+    if (wi!=writers.end())
+        wi->second.clear();
+}
+
+void
+RegisterStateGeneric::clear_latest_writers()
+{
+    writers.clear();
+}
+
+std::set<rose_addr_t>
+RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
+{
+    std::set<rose_addr_t> retval;
+    WritersMap::const_iterator wi = writers.find(desc);
+    if (wi!=writers.end()) {
+        Extent desc_extent(desc.get_offset(), desc.get_nbits());
+        for (WrittenParts::const_iterator pi=wi->second.begin(); pi!=wi->second.end(); ++pi) {
+            if (pi->first.overlaps(desc_extent))
+                retval.insert(pi->second.get());
+        }
+    }
+    return retval;
+}
+
+
+void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
     const RegisterDictionary *regdict = fmt.get_register_dictionary();
@@ -394,8 +432,20 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                     if (0==i) {
                         maxlen = std::max(maxlen, regname.size());
                     } else {
-                        stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname <<" = ";
+                        stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname;
                         oflags.restore();
+                        if (fmt.get_show_latest_writers()) {
+                            std::set<rose_addr_t> writers = get_latest_writers(rvi->desc);
+                            if (writers.size()==1) {
+                                stream <<" [writer=" <<StringUtility::addrToString(*writers.begin()) <<"]";
+                            } else if (!writers.empty()) {
+                                stream <<" [writers={";
+                                for (std::set<rose_addr_t>::iterator wi=writers.begin(); wi!=writers.end(); ++wi)
+                                    stream <<(wi==writers.begin()?"":", ") <<StringUtility::addrToString(*wi);
+                                stream <<"}]";
+                            }
+                        }
+                        stream <<" = ";
                         rvi->value->print(stream, fmt);
                         stream <<"\n";
                     }
@@ -769,7 +819,10 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
 void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
-    stream <<"addr=" <<(*address+fmt) <<" value=" <<(*value+fmt);
+    stream <<"addr=" <<(*address+fmt);
+    if (fmt.get_show_latest_writers() && latest_writer)
+        stream <<" writer=" <<StringUtility::addrToString(*latest_writer);
+    stream <<" value=" <<(*value+fmt);
 }
 
 SValuePtr
@@ -797,12 +850,28 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
     return retval;
 }
 
+std::set<rose_addr_t>
+MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops)
+{
+    assert(addr!=NULL);
+    std::set<rose_addr_t> retval;
+    bool short_circuited;
+    CellList found = scan(addr, nbits, ops, short_circuited/*out*/);
+    for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
+        MemoryCellPtr cell = *fi;
+        if (cell->get_latest_writer())
+            retval.insert(cell->get_latest_writer().get());
+    }
+    return retval;
+}
+
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops)
 {
     assert(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
     cells.push_front(cell);
+    latest_written_cell = cell;
 }
 
 void
