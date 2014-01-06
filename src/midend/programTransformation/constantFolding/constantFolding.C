@@ -503,6 +503,27 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
   }
   return foldedValue;
 }
+
+// For T type which is compatible for all unary operators we are interested in.
+template<typename T>
+T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
+{
+  T foldedValue; // to be converted to result type
+  switch (unaryOperator->variantT())
+  {
+    // integer-exclusive oprations
+    case V_SgMinusOp:
+      {
+        foldedValue = -theValue;
+        break;
+      }
+   default:
+      {
+        cerr<<"warning: calculuate - unhandled operator type:"<<unaryOperator->class_name()<<endl;
+      }
+  }
+  return foldedValue;
+}
 // T1: a SgValExp's child SAGE class type, 
 // T2: its internal storage C type for its value
 template <typename T1, typename T2> 
@@ -526,6 +547,23 @@ static SgValueExp* buildResultValueExp_t (SgBinaryOp* binaryOperator, SgValueExp
 
 // T1: a SgValExp's child SAGE class type, 
 // T2: its internal storage C type for its value
+template <typename T1, typename T2>
+static SgValueExp* buildResultValueExp_u_t (SgUnaryOp* unaryOperator, SgValueExp* theValue)
+{
+  SgValueExp* result = NULL;
+  T1* t1_v = dynamic_cast<T1*>(theValue);
+  ROSE_ASSERT(t1_v);
+  T2 t2_v = cf_get_value_t<T2>(t1_v);
+  T2 foldedValue ;
+  foldedValue = calculate_u_t(unaryOperator,t2_v);
+  result = new T1(foldedValue,"");
+  ROSE_ASSERT(result != NULL);
+  SageInterface::setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+// T1: a SgValExp's child SAGE class type,
+// T2: its internal storage C type for its value
 // for T2 types (floating point types) which are incompatible with integer-only operations: e.g. if T2 is double, then % is now allowed
 template <typename T1, typename T2> 
 static SgValueExp* buildResultValueExp_float_t (SgBinaryOp* binaryOperator, SgValueExp* lhsValue, SgValueExp* rhsValue)
@@ -545,7 +583,6 @@ static SgValueExp* buildResultValueExp_float_t (SgBinaryOp* binaryOperator, SgVa
   SageInterface::setOneSourcePositionForTransformation(result);
   return result;
 }
-
 
 //!Evaluate a binary expression  a binOp b, return a value exp if both operands are constants
 static SgValueExp* evaluateBinaryOp(SgBinaryOp* binaryOperator)
@@ -728,6 +765,95 @@ static SgValueExp* evaluateBinaryOp(SgBinaryOp* binaryOperator)
 #endif    
   } // both operands are constant
 
+  return result;
+}
+//!Evaluate a unary expression, return a value exp if operand is a constant
+static SgValueExp* evaluateUnaryOp(SgUnaryOp* unaryOperator){
+  SgValueExp* result = NULL;
+  ROSE_ASSERT(unaryOperator != NULL);
+
+  SgExpression* theOperand = unaryOperator->get_operand();
+  if (theOperand == NULL)
+    return NULL;
+  // Check if these are value expressions (constants appropriate for constant folding)
+  SgValueExp* theValue = isSgValueExp(theOperand);
+  if (theValue != NULL) {
+    switch (theValue->variantT()) {
+      case V_SgBoolValExp:
+        { // special handling for bool type, since intVal is built as a result
+          int theInteger = cf_get_value_t<int>(isSgBoolValExp(theValue));
+          int foldedValue = calculate_u_t(unaryOperator, theInteger);
+          result = SageBuilder::buildIntVal(foldedValue);
+          break;
+        }
+      case V_SgDoubleVal:
+        {
+          result = buildResultValueExp_u_t<SgDoubleVal,double>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgEnumVal:
+        {
+          result = buildResultValueExp_u_t<SgIntVal,int>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgFloatVal:
+        {
+          // folding float to float may decrease the accuracy. promoting it to double
+          result = buildResultValueExp_u_t<SgFloatVal,float>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgIntVal:
+        {
+          result = buildResultValueExp_u_t<SgIntVal,int>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgLongDoubleVal:
+        {
+          result = buildResultValueExp_u_t<SgLongDoubleVal,long double>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgLongIntVal:
+        {
+          result = buildResultValueExp_u_t<SgLongIntVal,long int>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgLongLongIntVal:
+        {
+          result = buildResultValueExp_u_t<SgLongLongIntVal,long long int>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgShortVal:
+        {
+          result = buildResultValueExp_u_t<SgShortVal,short>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgUnsignedIntVal:
+        {
+          result = buildResultValueExp_u_t<SgUnsignedIntVal,unsigned int>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgUnsignedLongLongIntVal:
+        {
+          result = buildResultValueExp_u_t<SgUnsignedLongLongIntVal,unsigned long long int>(unaryOperator,theValue);
+          break;
+        }
+
+      case V_SgUnsignedLongVal:
+        {
+          result = buildResultValueExp_u_t<SgUnsignedLongVal,unsigned long>(unaryOperator,theValue);
+          break;
+        }
+      case V_SgUnsignedShortVal:
+        {
+          result = buildResultValueExp_u_t<SgUnsignedShortVal,unsigned short>(unaryOperator,theValue);
+          break;
+        }
+      default:
+        {
+          cout<<"evaluateUnaryOp(): "<<"Unhandled SgValueExp case for:"<<theValue->class_name()<<endl;
+        }
+    }
+  } // operand is constant
   return result;
 }
 
@@ -916,11 +1042,9 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                   returnAttribute.newValueExp = evaluateBinaryOp(binaryOperator);
 
                } // end if binary op
-               else if (isSgUnaryOp(expr))
+               else if (SgUnaryOp* unaryOperator = isSgUnaryOp(expr))
                {
                  // Constant folding makes sense on unary operators, but this case is not implemented yet!
-                 SgUnaryOp* unaryOperator = isSgUnaryOp(expr);
-                 ROSE_ASSERT(unaryOperator != NULL);
                  ROSE_ASSERT(synthesizedAttributeList.size() == 1 || (synthesizedAttributeList.size() == 2 && isSgCastExp(unaryOperator)));
                  SgExpression* synthesizedValue = synthesizedAttributeList[SgUnaryOp_operand_i].newValueExp;
                  // Replace the lhs and/or rhs if generated at a child node in the AST traversal
@@ -934,8 +1058,12 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                  {
                    switch (unaryOperator->variantT())
                    {
-                     case V_SgUnaryAddOp:
                      case V_SgMinusOp:
+                     {
+                       returnAttribute.newValueExp = evaluateUnaryOp(unaryOperator);
+                       break;
+                     }
+                     case V_SgUnaryAddOp:
                      case V_SgCastExp:
                        {
                          //TODO
