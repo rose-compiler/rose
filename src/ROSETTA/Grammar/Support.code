@@ -12434,7 +12434,13 @@ int
 Sg_File_Info::get_physical_line() const
    {
      assert (this != NULL);
-     return p_physical_line;
+     // PHL (11/25/2013) use get_line for Fortran frontend
+     if (SageInterface::is_Fortran_language() )
+     {
+       return Sg_File_Info::get_line();
+     }else{
+       return p_physical_line;
+     }
    }
 
 // DQ (1/23/2013): Added source position sequence information.
