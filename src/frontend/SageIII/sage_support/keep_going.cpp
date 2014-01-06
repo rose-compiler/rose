@@ -3,11 +3,10 @@
  * \author  Justin Too <too1@llnl.gov>
  * \date    November 16, 2013
  */
-
 #include <iostream>
 
 #include "keep_going.h"
-#include "sage3basic.h"
+#include "processSupport.h" // ROSE_ASSERT in ROSE/src/util
 
 namespace ROSE {
 namespace KeepGoing {
