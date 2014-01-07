@@ -10,6 +10,7 @@
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/graph/breadth_first_search.hpp> 
 #include <boost/graph/visitors.hpp> 
+#include <boost/algorithm/string.hpp>
 
 #include <boost/foreach.hpp>
 
@@ -25,6 +26,49 @@ using namespace boost;
 typedef boost::adjacency_list< boost::vecS, 
         boost::vecS, 
         boost::directedS > DirectedGraph; 
+
+
+
+void 
+insert_specialized_funtions()
+{
+        transaction->execute("drop table IF EXISTS compiler_specializations;");
+        transaction->execute("create table compiler_specializations(func_id integer, equivalent_func_name text);");
+
+	SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into compiler_specializations"
+			"(func_id, equivalent_func_name)"
+			" values (?, ?)");
+        std::cerr << "Compute equivalent functions";
+
+	SqlDatabase::StatementPtr stmt = transaction->statement("select id,name from semantic_functions where name like '\_\_intel%' and id NOT IN ( select func_id as id from tmp_uninteresting_funcs)");
+	for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+
+		int func_id = row.get<int>(0);
+		std::string name = row.get<std::string>(1);
+                boost::replace_first(name, "_P3", "");
+
+		size_t left_word_boundary  = name.find_last_of("_");
+                size_t right_word_boundary = name.find_last_of("@");
+                if(right_word_boundary == std::string::npos)
+                   right_word_boundary = name.find_last_of(".");
+                
+ 
+                std::string equivalent_function = name.substr(left_word_boundary+1, right_word_boundary == std::string::npos ? std::string::npos : right_word_boundary-1-left_word_boundary );
+                 
+                std::cerr << "Equivalent function: " << equivalent_function << std::endl; 
+		insert_stmt->bind(0, func_id);
+		insert_stmt->bind(1, equivalent_function );
+                insert_stmt->execute();
+
+		insert_stmt->bind(0, func_id);
+		insert_stmt->bind(1, equivalent_function+"@plt" );
+                insert_stmt->execute();
+	}
+
+
+
+
+}
 
 void
 compute_eqivalence_classes(double similarity_threshold, bool reachability_graph)
@@ -69,6 +113,11 @@ compute_eqivalence_classes(double similarity_threshold, bool reachability_graph)
       "   join tmp_library_funcs sem2 on sem.name = sem2.name"
       "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf1 on sem.func_id  = tcf1.callee"
       "   join " + std::string(reachability_graph ? "semantic_rg" : "semantic_cg " ) + " as tcf2 on sem2.func_id = tcf2.callee"
+
+      " UNION "
+   
+      " select cs.func_id as func1_id, sf.id as func2_id from compiler_specializations as cs "
+      " join semantic_functions as sf on sf.name=cs.equivalent_func_name "
 
       ") as functions_to_normalize"
       );
@@ -173,8 +222,8 @@ create_reachable_node_graph()
 
 
   //Create the new reachability graph
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
-
+  for   (SqlDatabase::Statement::iterator row=stmt->begin(); row!= stmt->end(); ++row) {
+ 
     DirectedGraph G( VERTEX_COUNT );
 
     //add all edges from functions in file
@@ -286,9 +335,13 @@ create_tables_and_indexes(int call_depth)
   //tolower() is a real function in ICC rather than macros that reference
   //arrays of character characteristics.
 
-  transaction->execute("delete from tmp_interesting_funcs where func_id IN (select id from semantic_functions where name='__x86.get_pc_thunk.bx' OR name='tolower@plt');  ");
-  transaction->execute("create table tmp_uninteresting_funcs as (select id as func_id from semantic_functions where name='__x86.get_pc_thunk.bx' OR name='tolower@plt');  ");
+  transaction->execute("create table tmp_uninteresting_funcs as (select id as func_id from semantic_functions where name LIKE '__x86.get_pc_thunk.%' OR "
+                  " name IN ( 'tolower@plt', '__intel_cpu_features_init_x', '__intel_cpu_features_init', '__intel_new_feature_proc_init', "
+		  "           '__intel_proc_init_ftzdazule', '__intel_cpu_features_init_body', '__intel_f2int', '__intel_cpu_indicator_init' )"
+		  ");");
+  transaction->execute("delete from tmp_interesting_funcs where func_id IN (select func_id from tmp_uninteresting_funcs);  ");
 
+  insert_specialized_funtions(); 
 
   // Table of called fuctions.  Do this in two steps so we're not doing a join on the large semantic_fio_calls table. Also,
   // we don't need to have the igroup_id column since it's never used. Note that this table is named "functions" not "funcs"
