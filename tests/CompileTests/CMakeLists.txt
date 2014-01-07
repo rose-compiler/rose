@@ -1,3 +1,4 @@
+# setup ROSE_INCLUDE_FLAGS variable (used by some compile tests)
 foreach(include ${ROSE_INCLUDES})
   list(APPEND ROSE_INCLUDE_FLAGS "-I${include}")
 endforeach()
@@ -9,6 +10,7 @@ endforeach()
 set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0)
 set(translator testTranslator)
 
+# define compile_test CMake function
 function(compile_test input_file)
   get_filename_component(test_name ${input_file} NAME_WE)
 
@@ -29,11 +31,21 @@ function(compile_test input_file)
   endif()
 endfunction()
 
+# determine what subdirectories to enter based on our configuration settings.
+
+if(enable-x10)
+  add_subdirectory(x10_tests)
+endif()
+
+if(enable-cuda)
+  add_subdirectory(CudaTests)
+endif()
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    add_subdirectory(C_tests)
+   add_subdirectory(C39_std_c89_tests)
    add_subdirectory(C_subset_of_Cxx_tests)
-   #add_subdirectory(CudaTests)
-   #add_subdirectory(OpenClTests)
+   add_subdirectory(OpenClTests)
 else()
   if(enable-c)
     if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Xtensa")
@@ -69,6 +81,7 @@ else()
       add_subdirectory(unparseToString_tests)
       add_subdirectory(sourcePosition_tests)
       add_subdirectory(boost_tests)
+      # requires Valgrind
       #add_subdirectory(uninitializedField_tests)
       add_subdirectory(OvertureCode)
       add_subdirectory(P++Tests)
@@ -98,11 +111,5 @@ else()
   if(enable-python)
      #add_subdirectory(Python_tests)
   endif()
-
-  #add_subdirectory(CudaTests)
-
-  # Used to check all C and C++ test codes: not really specific to EDG 4.x
-  #add_subdirectory(EDG_4_x)
-
 endif() # end of ROSE_USE_CLANG_FRONTEND
 
