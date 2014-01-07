@@ -1090,6 +1090,24 @@ PreprocessingInfo::isSelfReferential()
 #endif
                     result = false;
                   }
+                 else
+                  {
+                 // Detect second kind of macro pasting.
+
+                 // DQ (1/6/2014): Macro pasting is used in libwww application in the forms:
+                 //    --- #define NS(x) x ## NS
+                 //    --- #define ns(x) x ## _ns
+                 // And we have to allow this since it does not appear to build a self-referenced macro name.
+                    size_t startOfPastingSubstring  = s.find("##");
+                    if (startOfPastingSubstring != string::npos)
+                       {
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                         printf ("   --- Detected 2nd kind of case of macro pasting, not a self-referencing macro (set result = false) \n");
+#endif
+                         result = false;
+                       }
+                  }
+               
              }
         }
        else
@@ -2368,41 +2386,53 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                printf ("lineNumberString = %s \n",lineNumberString.c_str());
 #endif
                int line = atoi(lineNumberString.c_str());
-
-            // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
-               string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
 #if 0
-               printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+               printf ("p = %zu \n",p);
+               printf ("directiveStringWithoutHashAndKeyword.length() = %zu \n",directiveStringWithoutHashAndKeyword.length());
+               printf ("directiveStringWithoutHashLineAndKeyword (trimmed) = %s \n",directiveStringWithoutHashAndKeyword.c_str());
 #endif
-            // Remove white space between the line number and the filename.
-               p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
-               directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
-#if 0
-               printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
-#endif
-               string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
-#if 0
-               printf ("quotedFilename = %s \n",quotedFilename.c_str());
-#endif
-               ROSE_ASSERT(quotedFilename[0] == '\"');
-               ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-               std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
-#if 0
-               printf ("filename = %s \n",filename.c_str());
-#endif
-            // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
-               Sg_File_Info::addFilenameToMap(filename);
-
-               int fileId = Sg_File_Info::getIDFromFilename(filename);
-
-               if (SgProject::get_verbose() > 1)
+            // DQ (1/7/2014): Added handling for case where filename is not present in #line directive.
+               if (p != string::npos)
                   {
-                    printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                 // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
+                    string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
+#if 0
+                    printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                 // Remove white space between the line number and the filename.
+                    p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
+                    directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
+#if 0
+                    printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                    string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
+#if 0
+                    printf ("quotedFilename = %s \n",quotedFilename.c_str());
+#endif
+                    ROSE_ASSERT(quotedFilename[0] == '\"');
+                    ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                    std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+#if 0
+                    printf ("filename = %s \n",filename.c_str());
+#endif
+                 // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                    Sg_File_Info::addFilenameToMap(filename);
+
+                    int fileId = Sg_File_Info::getIDFromFilename(filename);
+
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                       }
+
+                    if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                       {
+                         filenameIdSet.insert(fileId);
+                       }
                   }
-
-               if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                 else
                   {
-                    filenameIdSet.insert(fileId);
+                    printf ("NOTE: In ROSEAttributesList::generateFileIdListFromLineDirectives(): no filename present in directiveString = %s \n",directiveString.c_str());
                   }
              }
         }
