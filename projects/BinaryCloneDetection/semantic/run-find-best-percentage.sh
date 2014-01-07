@@ -135,6 +135,15 @@ execute psql  $threshold_db_name -c "create table total_rates( \
           recall double precision, specificity double precision, precision double precision, \
           fscore double precision );"
 
+#create table to hold precision, recall etc for each optimization pair
+execute psql  $threshold_db_name -c "create table Ox_Oy_pairs( \
+          sem_threshold double precision, cg_threshold double precision, path_threshold double precision, \
+          min_insns integer, max_cluster_size integer, db_group text, \
+          recall double precision, specificity double precision, precision double precision, \
+          fscore double precision );"
+
+
+
 
 
 for sem_threshold in 0.750 1.000 0.000 0.250 0.500; 
@@ -144,10 +153,10 @@ do
      for path_threshold in $(seq 0.000 0.100 1.00); 
      do
 
-      for min_insns in 100 50 20;
+      for min_insns in 100;
       do
 
-        for max_cluster_size in -1 $(seq 2 1 100) ;
+        for max_cluster_size in -1;
         do
           execute $SRCDIR/run-compute-aggregate.sh --prefix=$prefix \
                                                --min-insns=$min_insns \
@@ -155,6 +164,28 @@ do
                                                --sem-threshold=$sem_threshold \
                                                --cg-threshold=$cg_threshold \
                                                --path-threshold=$path_threshold || exit 1
+
+          #compute the recall, precision etc total for each optimization pair
+          DB_GROUPS=`psql $results_db_name -t -c "select db_group from resilience_to_optimization" | tr "\\n"  " "`
+          
+          for GROUP in $DB_GROUPS; do
+            recall=`psql $results_db_name -t -c "select recall from resilience_to_optimization where db_group='$GROUP' limit 1" | tr "\\n"  " " `
+            precision=`psql $results_db_name -t -c "select precision from resilience_to_optimization where db_group='$GROUP' limit 1" | tr "\\n"  " " `
+            specificity=`psql $results_db_name -t -c "select specificity from resilience_to_optimization where db_group='$GROUP' limit 1" | tr "\\n"  " " `
+      
+            if [ $precision = 0 -a  $recall = 0  ];
+            then
+              fscore="0"
+            else 
+              fscore="2*$precision*$recall/($precision+$recall)"
+            fi
+
+            execute psql $threshold_db_name -c "insert into Ox_Oy_pairs(sem_threshold, cg_threshold, path_threshold, min_insns, max_cluster_size, db_group, \
+              recall, precision, specificity, fscore) \
+              values ($sem_threshold, $cg_threshold, $path_threshold, $min_insns, $max_cluster_size, '$GROUP', $recall, $precision, $specificity, $fscore)" || exit 1
+
+          done
+         
 
           #compute recall, precision etc total over all dbs
           recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `
