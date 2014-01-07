@@ -723,7 +723,7 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__always_inline__          = 22,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__nothrow__                = 23,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
-               
+
             // TV (04/08/2010): Support for CUDA functions modifiers
                e_cuda_device                 = 25, /*!< CUDA device function */
                e_cuda_kernel                 = 26, /*!< CUDA kernel */
@@ -4283,8 +4283,14 @@ HEADER_INITIALIZED_NAME_START
                e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
-            // Packed was same value than weakref
+
+            // DQ (12/30/2013): Added support fo packing for variables (e.g. field values), instead of just there types.
+            // Also, fixed bug where packed was same enum value as weakref
                e_gnu_attribute__packed__                 = 7,/*!< GNU specific attribute for (GNU extension) */
+
+            // DQ (1/6/2014): Added support for GNU noreturn attribute
+               e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
+
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4334,6 +4340,11 @@ HEADER_INITIALIZED_NAME_START
           bool isGnuAttributePacked() const;
           void setGnuAttributePacked();
           void unsetGnuAttributePacked();
+
+       // DQ (1/6/2014): Added support for noreturn attribute on function parameters (appies only for function pointers used as function parameters).
+          bool isGnuAttributeNoReturn() const;
+          void setGnuAttributeNoReturn();
+          void unsetGnuAttributeNoReturn();
 
           void post_construction_initialization();
 
@@ -11043,6 +11054,11 @@ void SgInitializedName::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_att
 bool SgInitializedName::isGnuAttributePacked() const  { return checkBit(e_gnu_attribute__packed__); }
 void SgInitializedName::setGnuAttributePacked()       { setBit(e_gnu_attribute__packed__); }
 void SgInitializedName::unsetGnuAttributePacked()     { unsetBit(e_gnu_attribute__packed__); }
+
+// DQ (12/30/2013): Added support for packing on variables (instead of just on the types).
+bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_attribute__noreturn__); }
+void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
+void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
 
 
 SOURCE_INITIALIZED_NAME_END

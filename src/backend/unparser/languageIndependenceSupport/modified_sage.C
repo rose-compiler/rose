@@ -1677,6 +1677,11 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
      printf ("In printAttributesForType(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
 #endif
 
+#if 0
+     printf ("Exiting as a test of attribute(__noreturn__) \n");
+     ROSE_ASSERT(false);
+#endif
+
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
      if (variableDeclaration != NULL)
         {
@@ -1686,6 +1691,22 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
              {
             // curprint(" /* from printAttributesForType(SgDeclarationStatement*) */ __attribute__((packed))");
                curprint(" __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+  // DQ (1/6/2014): Added support for specification of noreturn (function type) attribute.
+  // This is one of two place where the attribute may be used (after the function declaration)
+  // and after the function pointer function parameter in a function's parameter list.
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
+     if (functionDeclaration != NULL)
+        {
+          if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
+             {
+               curprint(" __attribute__((noreturn))");
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -1877,10 +1898,16 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                switch (visibility)
                   {
                     case SgDeclarationModifier::e_unknown_visibility: s = "(\"unknown\")";
+                       {
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: unknown visibility setting \n");
+                      // ROSE_ASSERT(false);
+                         break;
+                       }
+
                     case SgDeclarationModifier::e_error_visibility:   s = "(\"error\")";
                        {
-                         printf ("Error or unknown visibility setting \n");
-                         ROSE_ASSERT(false);
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: error visibility setting \n");
+                      // ROSE_ASSERT(false);
                          break;
                        }
 

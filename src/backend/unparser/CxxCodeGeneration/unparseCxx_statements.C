@@ -391,6 +391,17 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           curprint(" = ");
           unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
         }
+
+  // DQ (1/7/2014): Adding support for GNU specific noreturn attribute for function parameters 
+  // (only applies to parameters that are of function pointer type).
+     if (initializedName->isGnuAttributeNoReturn() == true)
+        {
+          curprint(" __attribute__((noreturn))");
+#if 0
+          printf ("Detected initializedName->isGnuAttributeNoReturn() == true: (not implemented) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
    }
 
 
@@ -2931,6 +2942,11 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // DQ (2/26/2013): Added support for missing attributes.
                unp->u_sage->printAttributes(funcdecl_stmt,info);
+
+            // DQ (1/6/2014): Added output of type attributes for function declaration.
+            // This function must be a seperate call so that for variable declarations 
+            // it can be put after the type and before the variable name.
+               unp->u_sage->printAttributesForType(funcdecl_stmt,info);
 
                curprint ( string(";"));
                if (funcdecl_stmt->isExternBrace())
