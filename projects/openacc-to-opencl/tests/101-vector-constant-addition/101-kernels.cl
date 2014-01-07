@@ -1,6 +1,7 @@
 
 #include "OpenACC/device/opencl.h"
 
+#if 0
 /*!
  *  Generic kernel generated for Offset Addition. Include the 3 levels from OpenACC (gang, worker, vector) and the 4 tiles.
  *  Suffix should be "_gang_worker_vector_tile_0_tile_1_tile_2_tile_3" but by conv this suffix is replaced by ""
@@ -11,15 +12,17 @@ __kernel void kernel_101(float offset, __global float * a, __constant struct acc
   long it_loop_0_tile_2;
   long it_loop_0_tile_3;
 
+  long it_loop_0_gang;
+  long it_loop_0_worker;
   long it_loop_0_vect;
 
   // Outer tile loop
   for (it_loop_0_tile_0  = ctx->loops[0].original.lower;
-       it_loop_0_tile_0  < ctx->loops[0].original.upper;
+       it_loop_0_tile_0  < ctx->loops[0].original.lower + ctx->loops[0].tiles[e_tile_0].length; // == ctx->loops[0].original.upper
        it_loop_0_tile_0 += ctx->loops[0].tiles[e_tile_0].stride) {
 
     // Gang "loop"
-    const long it_loop_0_gang = acc_gang_iteration(ctx, 0, it_loop_0_tile_0);
+    it_loop_0_gang = acc_gang_iteration(ctx, 0, it_loop_0_tile_0);
 
     // Loop for tile between Gang and Worker
     for (it_loop_0_tile_1  = it_loop_0_gang;
@@ -27,7 +30,7 @@ __kernel void kernel_101(float offset, __global float * a, __constant struct acc
          it_loop_0_tile_1 += ctx->loops[0].tiles[e_tile_1].stride) {
 
       // Worker "loop"
-      const long it_loop_0_worker = acc_worker_iteration(ctx, 0, it_loop_0_tile_1);
+      it_loop_0_worker = acc_worker_iteration(ctx, 0, it_loop_0_tile_1);
 
       // Loop for tile between Worker and Vector
       for (it_loop_0_tile_2  = it_loop_0_worker;
@@ -58,6 +61,7 @@ __kernel void kernel_101(float offset, __global float * a, __constant struct acc
     }
   }
 }
+#endif
 
 /*!
  *  Kernel generated for Vector Addition when only considering Gang and Worker (no Vector) and only tile #2 (ie. between Worker and Vector).

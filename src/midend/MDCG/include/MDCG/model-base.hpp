@@ -49,7 +49,6 @@ struct scope_t;
 /// Actual representation of an element
 template <model_elements_e kind_>
 struct element_t {
-
   enum { kind = kind_ };
 
   node_t<kind_>  * node;  ///< Node  part of the element: store the symbol and some extra-information

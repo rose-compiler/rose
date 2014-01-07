@@ -18,14 +18,19 @@
 
 #include "sage3basic.h"
 
+
+typedef ::KLT::Language::OpenCL Language;
+typedef ::KLT::Runtime::OpenACC Runtime;
+typedef ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> Annotation;
+typedef ::KLT::LoopTrees<Annotation> LoopTrees;
+typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
+
 int main(int argc, char ** argv) {
-  assert(argc == 3);
+  assert(argc == 4);
 
   DLX::OpenACC::language_t::init();
 
-  KLT::LoopTrees<
-      DLX::KLT_Annotation<DLX::OpenACC::language_t>
-  > loop_trees;
+  LoopTrees loop_trees;
 
   loop_trees.read(argv[1]);
 
@@ -34,52 +39,38 @@ int main(int argc, char ** argv) {
     std::vector<std::string> arglist;
       arglist.push_back("c++");
       arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
+      arglist.push_back(std::string("-I") + argv[3]);
       arglist.push_back("-c");
     project->set_originalCommandLineArgumentList (arglist);
   }
 
   MFB::KLT_Driver driver(project);
-  KLT::Generator<
-      DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-      KLT::Language::OpenCL,
-      KLT::Runtime::OpenACC,
-      MFB::KLT_Driver
-  > generator(driver, std::string(argv[2]));
 
-  std::set<
-      std::list<
-          KLT::Kernel<
-              DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-              KLT::Language::OpenCL,
-              KLT::Runtime::OpenACC
-          > *
-      > 
-  > kernel_lists;
+  KLT::Runtime::OpenACC::loadAPI(driver, argv[3]);
 
-  KLT::CG_Config<
-      DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-      KLT::Language::OpenCL,
-      KLT::Runtime::OpenACC
-  > cg_config(
-      new KLT::LoopMapper<
-          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-          KLT::Language::OpenCL,
-          KLT::Runtime::OpenACC
-      >(),
-      new KLT::IterationMapper<
-          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-          KLT::Language::OpenCL,
-          KLT::Runtime::OpenACC
-      >(),
-      new KLT::DataFlow<
-          DLX::KLT_Annotation<DLX::OpenACC::language_t>,
-          KLT::Language::OpenCL,
-          KLT::Runtime::OpenACC
-      >()
+  KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, std::string(argv[2]));
+
+  std::set<std::list<Kernel *> > kernel_lists;
+
+  KLT::CG_Config<Annotation, Language, Runtime> cg_config(
+      new KLT::LoopMapper<Annotation, Language, Runtime>(),
+      new KLT::IterationMapper<Annotation, Language, Runtime>(),
+      new KLT::DataFlow<Annotation, Language, Runtime>()
   );
   generator.generate(loop_trees, kernel_lists, cg_config);
 
-  project->unparse();
+  project->unparse(); // Cannot call the backend directly because of OpenCL files. There is a warning when trying, just have to trace it.
+
+  std::set<std::list<Kernel *> >::const_iterator it_kernel_list;
+  std::list<Kernel *>::const_iterator it_kernel;
+  for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++) {
+    for (it_kernel = it_kernel_list->begin(); it_kernel != it_kernel_list->end(); it_kernel++) {
+      Kernel * kernel = *it_kernel;
+      const std::vector<Kernel::a_kernel *> & kernels = kernel->getKernels();
+
+      /// \todo print info about generated kernel
+    }
+  }
 
   return 0;
 }

@@ -26,6 +26,9 @@ namespace Model {
 */
 
 struct model_t {
+  model_t();
+  model_t(const model_t & model);
+
   std::vector<variable_t> variables;
   std::vector<function_t> functions;
   std::vector<type_t> types;

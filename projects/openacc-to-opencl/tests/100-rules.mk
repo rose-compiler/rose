@@ -7,7 +7,9 @@ all: $(TEST_ID)-libopenacc $(TEST_ID)-reference
 
 check: $(TEST_ID)-libopenacc $(TEST_ID)-libopenacc $(TEST_ID)-reference
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(OPENACC_LIB_DIR) ./$(TEST_ID)-libopenacc $(NBR_GANG) $(NBR_WORKER) $(NBR_VECTOR) $(TEST_PARAMS)
+	@echo
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(OPENACC_LIB_DIR) ./$(TEST_ID)-reference 1 1 1 $(TEST_PARAMS)
+	@echo
 
 clean:
 	rm -f *.o $(TEST_ID)-libopenacc* $(TEST_ID)-reference

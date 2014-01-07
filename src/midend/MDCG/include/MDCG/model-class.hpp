@@ -45,13 +45,15 @@ struct node_t<e_model_class> {
 
 template <>
 struct scope_t<e_model_class> {
-  namespace_t * parent;
+  union {
+    namespace_t * a_namespace;
+    class_t * a_class;
+  } parent;
 
   std::vector<type_t *>      type_children;
   std::vector<class_t *>     class_children;
   std::vector<field_t *>     field_children;
   std::vector<method_t *>    method_children;
-  std::vector<namespace_t *> namespace_children;
 };
 
 /** @} */

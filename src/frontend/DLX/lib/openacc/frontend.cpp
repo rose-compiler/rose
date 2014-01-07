@@ -174,7 +174,7 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_num_gangs> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
-  bool res = parser.parse_list<SgExpression *>(clause->parameters.sync_tags, '(', ')', ',');
+  bool res = parser.parse_singleton<SgExpression *>(clause->parameters.exp, '(', ')');
   if (res) directive_str = parser.getDirectiveString();
   return res;
 }

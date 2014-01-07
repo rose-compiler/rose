@@ -103,6 +103,7 @@ class Kernel {
     const arguments_t & getArguments() const { return p_arguments; }
 
     void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
+    const std::vector<a_kernel *> & getKernels() const { return p_generated_kernels; }
 
   private:
     static unsigned long id_cnt;
@@ -134,6 +135,8 @@ SgStatement * generateStatement(
 template <class Annotation, class Language, class Runtime>
 std::pair<SgStatement *, SgScopeStatement *> generateLoops(
   typename LoopTrees<Annotation>::loop_t * loop,
+  unsigned & loop_id,
+  std::vector<typename Runtime::a_loop> & loop_descriptors,
   typename Runtime::loop_shape_t * shape,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
 );
@@ -141,6 +144,8 @@ std::pair<SgStatement *, SgScopeStatement *> generateLoops(
 template <class Annotation, class Language, class Runtime>
 void generateKernelBody(
   typename ::KLT::LoopTrees<Annotation>::node_t * node,
+  unsigned & loop_id,
+  std::vector<typename Runtime::a_loop> & loop_descriptors,
   typename Runtime::exec_mode_e exec_mode,
   std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> shapes,
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
@@ -153,7 +158,9 @@ void generateKernelBody(
     typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
     if (it_shape != shapes.end()) shape = it_shape->second;
 
-    std::pair<SgStatement *, SgScopeStatement *> sg_loop = generateLoops<Annotation, Language, Runtime>(loop, shape, local_symbol_maps);
+    std::pair<SgStatement *, SgScopeStatement *> sg_loop = generateLoops<Annotation, Language, Runtime>(
+      loop, loop_id, loop_descriptors, shape, local_symbol_maps
+    );
     SageInterface::appendStatement(sg_loop.first, scope);
 
     /// \todo change the execution mode if needed
@@ -162,7 +169,9 @@ void generateKernelBody(
 
     typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
     for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-      generateKernelBody<Annotation, Language, Runtime>(*it_child, exec_mode, shapes, local_symbol_maps, scope);
+      generateKernelBody<Annotation, Language, Runtime>(
+        *it_child, loop_id, loop_descriptors, exec_mode, shapes, local_symbol_maps, scope
+      );
   }
   else if (stmt != NULL) {
     SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps, true);

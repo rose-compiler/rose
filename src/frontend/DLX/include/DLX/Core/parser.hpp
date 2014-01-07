@@ -52,10 +52,6 @@ typedef std::pair<SgVariableSymbol *, section_list_t> data_sections_t;
 class Parser {
   static bool s_singleton;
 
-  protected:
-    void skip_whitespace() const;
-    bool consume(const char) const;
-
   public:
     Parser(std::string & directive_str, SgLocatedNode * directive_node);
     ~Parser();
@@ -65,11 +61,17 @@ class Parser {
     template <typename A>
     bool parse(A &) const;
 
+    template <typename A>
+    bool parse_singleton(A & singleton, char start, char stop) const;
+
     template <typename A, typename B>
     bool parse_pair(std::pair<A, B> & pair, char start, char stop, char sep) const;
 
     template <typename A>
     bool parse_list(std::vector<A> & vect, char start, char stop, char sep) const;
+
+    void skip_whitespace() const;
+    bool consume(const char) const;
 };
 
 // Builtin clause's argument types parsing
@@ -89,20 +91,24 @@ bool Parser::parse<section_list_t>(section_list_t &) const;
 template <>
 bool Parser::parse<section_t>(section_t &) const;
 
+// Template for singleton parsing
+
+template <typename A>
+bool Parser::parse_singleton(A & singleton, char start, char stop) const {
+  if (!consume(start)) return false;
+  if (!parse<A>(singleton)) return false;
+  return consume(stop);
+}
+
 // Template for pair parsing
 
 template <typename A, typename B>
 bool Parser::parse_pair(std::pair<A, B> & pair, char start, char stop, char sep) const {
-  bool result = consume(start);
-  if (!result) return false;
-  result = parse<A>(pair.first);
-  if (!result) return false;
-  result = consume(sep);
-  if (!result) return false;
-  result = parse<B>(pair.second);
-  if (!result) return false;
-  result = consume(stop);
-  return result;
+  if (!consume(start))        return false;
+  if (!parse<A>(pair.first))  return false;
+  if (!consume(sep))          return false;
+  if (!parse<B>(pair.second)) return false;
+  return consume(stop);
 }
 
 // Template for list parsing

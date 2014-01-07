@@ -37,25 +37,6 @@ model_t::model_t(const model_t & model) :
 {
   /// \todo copy
 }
-
-Model::Model() :
-  model()
-{}
-
-Model::Model(const model_t & model_) :
-  model(model_)
-{}
-
-Model::Model(const Model & model_) :
-  model(model_.model)
-{}
-
-Model::~Model() {}
-
-const model_t & Model::getModel() const {
-  return model;
-}
-
 /** @} */
 
 }

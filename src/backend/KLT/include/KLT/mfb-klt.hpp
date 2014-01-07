@@ -112,11 +112,12 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
   /// \todo add loops descriptor to 'result'
 
+  unsigned loop_id = 0;
   const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & kernel_roots = object.kernel->getRoots();
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
   for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++)
     ::KLT::generateKernelBody<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(
-      *it_root, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
+      *it_root, loop_id, result->loops, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
     );
 
   return result;

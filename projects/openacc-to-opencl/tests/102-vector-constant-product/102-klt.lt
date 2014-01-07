@@ -4,7 +4,7 @@ data(a, float, section(1, 0, n), acc(copy))
 region(
   acc(num_gangs(nbr_gang),num_workers(nbr_worker),vector_length(nbr_vector)),
   loop(
-    i, 0, n, acc(gang,worker,vector),
+    i, 0, n, acc(gang,worker),
     stmt(a[i]*=scalar;)
   )
 )

@@ -43,7 +43,10 @@ struct node_t<e_model_type> {
 
 template <>
 struct scope_t<e_model_type> {
-  namespace_t * parent;
+  union {
+    namespace_t * a_namespace;
+    class_t * a_class;
+  } parent;
 };
 
 /** @} */
