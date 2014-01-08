@@ -1473,7 +1473,8 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
      printf ("Inside of unparseEnumType(): info.isTypeFirstPart() = %s info.isTypeSecondPart() = %s \n",(info.isTypeFirstPart() == true) ? "true" : "false",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 #if 0
-     printf ("Inside of unparseEnumType(): info.SkipEnumDefinition() = %s \n",info.SkipEnumDefinition() ? "true" : "false");
+     printf ("Inside of unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Inside of unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true)  ? "true" : "false");
 #endif
 #if 0
      info.display("Inside of unparseEnumType(): call to info.display()");
@@ -1605,6 +1606,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #else
             // DQ (5/29/2011): Newest support for name qualification...
                SgName nameQualifier;
+
+#error "DEAD CODE!"
+
                printf ("info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
                SgInitializedName* initializedName = isSgInitializedName(info.get_reference_node_for_qualification());
             // ROSE_ASSERT(initializedName != NULL);
@@ -1616,6 +1620,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   {
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
                  // ROSE_ASSERT(initializedName != NULL);
+
+#error "DEAD CODE!"
+
                     if (typedefDeclaration != NULL)
                        {
                          nameQualifier = typedefDeclaration->get_qualified_name_prefix_for_base_type();
@@ -1636,6 +1643,8 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                curprint ( nameQualifier.str());
                SgName nm = enum_type->get_name();
+
+#error "DEAD CODE!"
 
                if (nm.getString() != "")
                   {
@@ -1689,6 +1698,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                             }
                        }
 #else
+
+#error "DEAD CODE!"
+
                     SgName nm = enum_type->get_name();
 #endif
 
@@ -1707,7 +1719,11 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
+
+  // DQ (1/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      if (info.isTypeFirstPart() == true)
         {
@@ -1718,9 +1734,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
          ninfo.unset_SkipSemiColon();
 
          ninfo.set_isUnsetAccess();
-
-      // printf ("info.SkipEnumDefinition() = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
-
+#if 0
+         printf ("info.SkipEnumDefinition() = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
          if ( info.SkipEnumDefinition() == false)
             {
               SgUnparse_Info ninfo(info);
@@ -1747,7 +1763,6 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
            // DQ (6/26/2005): Output the opend and closing braces even if there are no enumerators!
            // This permits support of the empty enum case! "enum x{};"
               curprint ("{");
-
 #if 0
               printf ("In unparseEnumType(): Output enumerators from enum_stmt = %p \n",enum_stmt);
               printf ("     --- enum_stmt->get_firstNondefiningDeclaration() = %p \n",enum_stmt->get_firstNondefiningDeclaration());
@@ -2274,6 +2289,9 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
   // DQ (10/8/2004): Skip output of class definition for return type! C++ standard does not permit
   // a defining declaration within a return type, function parameter, or sizeof expression.
      ninfo.set_SkipClassDefinition();
+
+  // DQ (1/7/2014): We also need to skip the enum definition (see test2014_24.c).
+     ninfo.set_SkipEnumDefinition();
 
      if (ninfo.isTypeFirstPart())
         {

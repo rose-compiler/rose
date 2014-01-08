@@ -1,13 +1,15 @@
 
 enum Y
    {
-     a,
-     b
+     enum_value_a,
+//   b
    };
+
+enum Y yyy;
 
 struct X
    {
-     int bufsize;
+//   int bufsize;
 
      enum Y (*foobar)(void);
    };

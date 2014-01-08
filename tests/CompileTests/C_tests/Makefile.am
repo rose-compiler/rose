@@ -399,6 +399,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_18.c \
      test2014_19.c \
      test2014_20.c \
+     test2014_21.c \
+     test2014_22.c \
+     test2014_23.c \
+     test2014_24.c \
      math.c \
      complex_01.c \
      stdio.c \
