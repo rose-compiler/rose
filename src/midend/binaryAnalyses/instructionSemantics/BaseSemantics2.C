@@ -243,7 +243,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             size_t nbits = next_offset - offset;
             part = get_protoval()->undefined_(nbits);
         }
-        retval = retval==NULL ? part : ops->concat(part, retval);
+        retval = retval==NULL ? part : ops->concat(retval, part);
         offset += part->get_width();
     }
 
