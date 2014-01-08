@@ -44,6 +44,26 @@ RiscOperators::reset()
     mem_writes.clear();
 }
 
+void
+RiscOperators::emit_changed_state(std::ostream &o)
+{
+    const RegisterDictionary *dictionary = get_state()->get_register_state()->get_register_dictionary();
+    RegisterDescriptors modified_registers = get_modified_registers();
+    emit_prerequisites(o, modified_registers, dictionary);
+    emit_register_definitions(o, modified_registers);
+    emit_memory_writes(o);
+    make_current();
+}
+
+std::string
+RiscOperators::prefix() const 
+{
+    std::string retval = "";
+    for (size_t i=0; i<indent_level; ++i)
+        retval += indent_string;
+    return retval;
+}
+
 // FIXME[Robb P. Matzke 2014-01-07]: this is x86 specific.
 const RegisterDescriptors &
 RiscOperators::get_important_registers()
@@ -205,7 +225,7 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         assert(!name.empty());
-        o <<"@" <<name <<"\n";
+        o <<prefix() <<"@" <<name <<"\n";
     }
 }
 
@@ -218,9 +238,9 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
         const std::string &name = dictionary->lookup(regs[i]);
         assert(!name.empty());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
-        o <<"; register " <<name <<" = " <<*value <<"\n";
+        o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         TreeNodePtr t1 = emit_expression(o, value);
-        o <<"@" <<name <<" = " <<llvm_integer_type(t1->get_nbits()) <<" " << llvm_term(t1) <<"\n";
+        o <<prefix() <<"@" <<name <<" = " <<llvm_integer_type(t1->get_nbits()) <<" " << llvm_term(t1) <<"\n";
     }
 }
 
@@ -229,7 +249,7 @@ RiscOperators::emit_next_eip(std::ostream &o)
 {
     SValuePtr eip = get_instruction_pointer();
     if (eip->is_number()) {
-        o <<"br label " <<addr_label(eip->get_number()) <<"\n";
+        o <<prefix() <<"br label " <<addr_label(eip->get_number()) <<"\n";
         return;
     }
 
@@ -239,16 +259,16 @@ RiscOperators::emit_next_eip(std::ostream &o)
         LeafNodePtr false_leaf = inode->child(2)->isLeafNode();
         if (true_leaf!=NULL && true_leaf->is_known() && false_leaf!=NULL && false_leaf->is_known()) {
             LeafNodePtr t1 = emit_expression(o, inode->child(0));
-            o <<"br i1 " <<llvm_term(t1)
+            o <<prefix() <<"br i1 " <<llvm_term(t1)
               <<", label " <<addr_label(true_leaf->get_value())
               <<", label " <<addr_label(false_leaf->get_value()) <<"\n";
             return;
         }
     }
 
-    o <<"; EIP = " <<*eip <<"\n";
+    o <<prefix() <<"; EIP = " <<*eip <<"\n";
     LeafNodePtr t1 = emit_expression(o, eip);
-    o <<"indirectbr i8* " <<llvm_term(t1) <<"\n";
+    o <<prefix() <<"indirectbr i8* " <<llvm_term(t1) <<"\n";
 }
 
 void
@@ -262,7 +282,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
         LeafNodePtr addr = emit_expression(o, inode->child(1));
         LeafNodePtr value = emit_expression(o, inode->child(2));
         std::string type = llvm_integer_type(value->get_nbits());
-        o <<"store " <<type <<" " <<llvm_term(value) <<", " <<type <<"* " <<llvm_term(addr) <<"\n";
+        o <<prefix() <<"store " <<type <<" " <<llvm_term(value) <<", " <<type <<"* " <<llvm_term(addr) <<"\n";
     }
 }
 
@@ -343,7 +363,7 @@ RiscOperators::emit_zero_extend(std::ostream &o, const TreeNodePtr &value, size_
     std::string t1_type = llvm_integer_type(t1->get_nbits());
     TreeNodePtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
-    o <<llvm_term(t2) <<" = zext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
+    o <<prefix() <<llvm_term(t2) <<" = zext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
 }
 
@@ -360,7 +380,7 @@ RiscOperators::emit_sign_extend(std::ostream &o, const TreeNodePtr &value, size_
     std::string t1_type = llvm_integer_type(t1->get_nbits());
     TreeNodePtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
-    o <<llvm_term(t2) <<" = sext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
+    o <<prefix() <<llvm_term(t2) <<" = sext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
 }
 
@@ -378,7 +398,7 @@ RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t n
     std::string t1_type = llvm_integer_type(t1->get_nbits());
     LeafNodePtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
-    o <<llvm_term(t2) <<" = trunc " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
+    o <<prefix() <<llvm_term(t2) <<" = trunc " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
 }
 
@@ -404,7 +424,9 @@ RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, co
     TreeNodePtr t1 = emit_expression(o, a);
     TreeNodePtr t2 = emit_expression(o, b);
     TreeNodePtr t3 = next_temporary(a->get_nbits());
-    o <<llvm_term(t3) <<" = " <<llvm_operator <<" " <<type <<" " <<llvm_term(t1) <<", " <<type <<" " <<llvm_term(t2) <<"\n";
+    o <<prefix() <<llvm_term(t3) <<" = " <<llvm_operator
+      <<" " <<type <<" " <<llvm_term(t1)
+      <<", " <<type <<" " <<llvm_term(t2) <<"\n";
     return t3;
 }
 
@@ -577,7 +599,9 @@ RiscOperators::emit_divide(std::ostream &o, const std::string llvm_operator,
     TreeNodePtr t2 = emit_expression(o, denominator);
     std::string t2_type = llvm_integer_type(t2->get_nbits());
     TreeNodePtr t3 = next_temporary(t1->get_nbits());
-    o <<llvm_term(t3) <<" = " <<llvm_operator <<" " <<t1_type <<" " <<llvm_term(t1) <<", " <<t2_type <<" " <<llvm_term(t2) <<"\n";
+    o <<prefix() <<llvm_term(t3) <<" = " <<llvm_operator
+      <<" " <<t1_type <<" " <<llvm_term(t1)
+      <<", " <<t2_type <<" " <<llvm_term(t2) <<"\n";
     return t3;
 }
 
@@ -660,22 +684,28 @@ RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNode
     std::string end_label = next_label();
     TreeNodePtr result = next_temporary(a->get_nbits());
     TreeNodePtr t1 = emit_expression(o, cond);
-    o <<"br i1 " <<llvm_term(t1) <<", label " <<true_label <<", label " <<false_label <<"\n";
+    o <<prefix() <<"br i1 " <<llvm_term(t1) <<", label " <<true_label <<", label " <<false_label <<"\n";
 
     // True body
     o <<true_label <<":\n";
-    TreeNodePtr t2 = emit_expression(o, a);
-    o <<llvm_term(result) <<" = " <<llvm_term(t2) <<"\n";
-    o <<"br i1 1, label " <<end_label <<"\n";
+    {
+        Indent indent(this);
+        TreeNodePtr t2 = emit_expression(o, a);
+        o <<llvm_term(result) <<" = " <<llvm_term(t2) <<"\n";
+        o <<prefix() <<"br i1 1, label " <<end_label <<"\n";
+    }
 
     // False body
-    o <<false_label <<":\n";
-    TreeNodePtr t3 = emit_expression(o, b);
-    o <<llvm_term(result) <<" = " <<llvm_term(t3) <<"\n";
-    o <<"br i1 1, label " <<end_label <<"\n";
+    o <<prefix() <<false_label <<":\n";
+    {
+        Indent indent(this);
+        TreeNodePtr t3 = emit_expression(o, b);
+        o <<llvm_term(result) <<" = " <<llvm_term(t3) <<"\n";
+        o <<prefix() <<"br i1 1, label " <<end_label <<"\n";
+    }
 
     // End
-    o <<end_label <<":\n";
+    o <<prefix() <<end_label <<":\n";
     return result;
 }
 
@@ -686,7 +716,7 @@ RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t
     LeafNodePtr t1 = emit_expression(o, addr);
     std::string type = llvm_integer_type(nbits);
     LeafNodePtr t2 = next_temporary(nbits);
-    o <<llvm_term(t2) <<" = load " <<type <<"* " <<llvm_term(t1) <<"\n";
+    o <<prefix() <<llvm_term(t2) <<" = load " <<type <<"* " <<llvm_term(t1) <<"\n";
     return t2;
 }
 
@@ -877,7 +907,7 @@ RiscOperators::emit_assignment(std::ostream &o, const TreeNodePtr &rhs)
     assert(rhs!=NULL);
     LeafNodePtr lhs = next_temporary(rhs->get_nbits());
     LeafNodePtr t1 = emit_expression(o, rhs);
-    o <<llvm_term(lhs) <<" = " <<llvm_integer_type(rhs->get_nbits()) <<" " <<llvm_term(t1) <<"\n";
+    o <<prefix() <<llvm_term(lhs) <<" = " <<llvm_integer_type(rhs->get_nbits()) <<" " <<llvm_term(t1) <<"\n";
     rewrites.insert(std::make_pair(rhs->hash(), lhs));
     return lhs;
 }
@@ -902,34 +932,35 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     assert(this!=NULL);
     if (!bb)
         return;
-    o <<operators->addr_label(bb->get_address()) <<": ;Basic block\n";
-    const RegisterDictionary *dictionary = operators->get_state()->get_register_state()->get_register_dictionary();
+    o <<operators->prefix() <<operators->addr_label(bb->get_address()) <<":\n";
+    RiscOperators::Indent indent(operators);
     RoseAst ast(bb);
     operators->reset();
+    bool emit_eip = false;
     for (RoseAst::iterator ai=ast.begin().withoutNullValues(); ai!=ast.end(); ++ai) {
         if (SgAsmInstruction *insn = isSgAsmInstruction(*ai)) {
             ai.skipChildrenOnForward();
-            o <<"; " <<StringUtility::addrToString(insn->get_address()) <<": " <<unparseInstruction(insn) <<"\n";
+            o <<operators->prefix() <<"; " <<StringUtility::addrToString(insn->get_address())
+              <<": " <<unparseInstruction(insn) <<"\n";
             dispatcher->processInstruction(insn);
-            if (!operators->get_memory_writes().empty()) {
-                // In order to avoid issues of memory aliasing, whenever a write occurs we dump the current machine state to
-                // LLVM. We're assuming that a machine instruction performs at most one write and if it performs a memory write
-                // then it doesn't also perform a memory read.
-                RegisterDescriptors modified_registers = operators->get_modified_registers();
-                operators->emit_prerequisites(o, modified_registers, dictionary);
-                operators->emit_register_definitions(o, modified_registers);
-                operators->emit_memory_writes(o);
-                operators->make_current();
-            }
+            emit_eip = true;
+            // In order to avoid issues of memory aliasing, whenever a write occurs we dump the current machine state to
+            // LLVM. We're assuming that a machine instruction performs at most one write and if it performs a memory write
+            // then it doesn't also perform a memory read.
+            if (!operators->get_memory_writes().empty())
+                operators->emit_changed_state(o);
+        } else if (SgAsmStaticData *data = isSgAsmStaticData(*ai)) {
+            SgUnsignedCharList bytes = data->get_raw_bytes();
+            o <<operators->prefix() <<"@" + StringUtility::addrToString(data->get_address())
+              <<" = [" <<bytes.size() <<" x i8] [";
+            for (size_t i=0; i<bytes.size(); ++i)
+                o <<(i?", ":"") <<"i8 " <<StringUtility::unsignedToHex2(bytes[i], 8);
+            o <<"]\n";
         }
     }
-
-    RegisterDescriptors modified_registers = operators->get_modified_registers();
-    operators->emit_prerequisites(o, modified_registers, dictionary);
-    operators->emit_register_definitions(o, modified_registers);
-    operators->emit_next_eip(o);
-    operators->make_current();
-    o <<"\n";
+    operators->emit_changed_state(o);
+    if (emit_eip)
+        operators->emit_next_eip(o);
 }
 
 std::string
@@ -946,12 +977,28 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     assert(this!=NULL);
     if (!func)
         return;
+
+    o <<operators->prefix() <<"define void @" <<operators->addr_label(func->get_entry_va()) <<"() {\n";
+    RiscOperators::Indent func_body_indentation(operators);
+
+    // Note that in LLVM the first basic block of a function cannot be the target of a branch instruction.  Therefore, we emit
+    // a no-op as the first basic block.  We indent two levels because the bodies of the other basic blocks are indented two
+    // levels (one for the label and another for the instructions).
+    {
+        RiscOperators::Indent bb_indentation(operators);
+        o <<operators->prefix() <<"br i1 1, label " <<operators->addr_label(func->get_entry_va()) <<"\n";
+    }
+
     const SgAsmStatementPtrList &bbs = func->get_statementList();
     for (SgAsmStatementPtrList::const_iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
         SgAsmBlock *bb = isSgAsmBlock(*bbi);
         assert(bb!=NULL);
+        if (bbi!=bbs.begin())
+            o <<"\n";
         transcodeBasicBlock(bb, o);
     }
+
+    o <<"}\n";
 }
 
 std::string

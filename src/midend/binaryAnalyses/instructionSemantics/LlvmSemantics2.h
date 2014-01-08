@@ -40,17 +40,19 @@ private:
     RegisterStatePtr prev_regstate;                     // most recently emitted register state
     RegisterDescriptors important_registers;            // registers that should be emitted to LLVM
     InsnSemanticsExpr::TreeNodes  mem_writes;           // memory write operations (OP_WRITE expressions)
+    size_t indent_level;                                // level of indentation
+    std::string indent_string;                          // white space per indentation level
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(protoval, solver) {
+        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    ") {
         set_name("Llvm");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(state, solver) {
+        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    ") {
         set_name("Llvm");
     }
 
@@ -108,6 +110,35 @@ public:
                                                 const BaseSemantics::SValuePtr &cond, size_t nbits) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods to control indentation of LLVM output
+public:
+    /** Increase indentation level by one. */
+    void indent(size_t nlevels=1) { indent_level += nlevels; }
+
+    /** Decrease indentation level by one. */
+    void undent(size_t nlevels=1) { indent_level -= std::min(indent_level, nlevels); }
+
+    /** Return indentation string. */
+    std::string prefix() const;
+
+    /** Cause indentation until this object is destroyed. */
+    struct Indent {
+        RiscOperators *ops;
+        RiscOperatorsPtr ops_ptr;
+        size_t nlevels;
+        explicit Indent(const RiscOperatorsPtr &ops_ptr, size_t nlevels=1): ops_ptr(ops_ptr), nlevels(nlevels) {
+            ops = ops_ptr.get();
+            ops->indent(nlevels);
+        }
+        explicit Indent(RiscOperators *ops, size_t nlevels=1): ops(ops), nlevels(nlevels) {
+            ops->indent(nlevels);
+        }
+        ~Indent() {
+            ops->undent(nlevels);
+        }
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to control/query the machine state
@@ -179,6 +210,9 @@ public:
 
     /** Output changed memory state. */
     virtual void emit_memory_writes(std::ostream&);
+
+    /** Output LLVM to bring the LLVM state up to date with respect to the ROSE state. */
+    virtual void emit_changed_state(std::ostream&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to return snippets of LLVM as strings or expressions
