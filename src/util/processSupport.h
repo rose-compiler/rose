@@ -13,6 +13,7 @@ FILE* popenReadFromVector(const std::vector<std::string>& argv);
 int pcloseFromVector(FILE* f);
 
 #if _MSC_VER
+#include <assert.h>
 #define ROSE_ASSERT assert
 #endif
 
