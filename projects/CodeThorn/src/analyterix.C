@@ -126,12 +126,10 @@ int main(int argc, char* argv[]) {
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-
   Labeler* labeler=new Labeler(root);
-  cout<<"Labelling:\n"<<labeler->toString()<<endl;
+  //cout<<"Labelling:\n"<<labeler->toString()<<endl;
   IOLabeler* iolabeler=new IOLabeler(root,&variableIdMapping);
-  cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
-
+  //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
