@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=ten_
+DB_PREFIX=3comp_
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=no
@@ -22,7 +22,7 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=10 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+generate_inputs_flags='--ngroups=3 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
 add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
 get_pending_tests_flags='--size=2'
 run_tests_nprocs=''
@@ -79,14 +79,14 @@ generate_api_config() {
 
 # Find the names of the directories containing target directories. Target directories are O0, O1, O2, or O3
 SEARCH_DIR="${1-.}"
-TARGET_DIRS=$(find "$SEARCH_DIR" -type d -name '[Olgst][0123s]' |perl -p -e 's((.*)/[Olgst][0123s]$)($1)' |sort |uniq)
+TARGET_DIRS=$(find "$SEARCH_DIR" -type d -name '[Olgist][0123s]' |perl -p -e 's((.*)/[Olgist][0123s]$)($1)' |sort |uniq)
 [ -n "$TARGET_DIRS" ] || die "no target directories found in $SEARCH_DIR"
 
 for TARGET_DIR in $TARGET_DIRS; do
     TARGET_NAME=$(basename $TARGET_DIR)
 
     # What optimizations are present?
-    OPTIM_DIRS=$(find "$TARGET_DIR" -type d -name '[Olgst][0123s]')
+    OPTIM_DIRS=$(find "$TARGET_DIR" -type d -name '[Olgist][0123s]')
     if [ ! "$OPTIM_DIRS" ]; then
 	echo "no optimization directories (O0, O1, O2, O3) in $TARGET_DIR"
 	continue
