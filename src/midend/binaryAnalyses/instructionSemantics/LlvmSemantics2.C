@@ -2,6 +2,7 @@
 #include "LlvmSemantics2.h"
 #include "RoseAst.h"
 #include "AsmUnparser_compat.h"
+#include "integerOps.h"
 
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -245,14 +246,37 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
 }
 
 void
-RiscOperators::emit_next_eip(std::ostream &o)
+RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 {
+    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(latest_insn);
+    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(bb);
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+    assert(interp!=NULL);                           // instructions must be part of the global AST
+    const InstructionMap &insns = interp->get_instruction_map();
     SValuePtr eip = get_instruction_pointer();
+
+    // If EIP is a constant then it is one of the following cases:
+    //    1. It points to an instruction that's in a different function than the last executed instruction, in which
+    //       case we treat it like a function call.  LLVM requires us to treat all inter-function control flow as a
+    //       function call even though the same restriction isn't present in the binary. FIXME[ROBB P. MATZKE 2014-01-09]
+    //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
     if (eip->is_number()) {
-        o <<prefix() <<"br label " <<addr_label(eip->get_number()) <<"\n";
+        SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
+        SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst_insn);
+        if (func!=dst_func) {                       // one or both could be null
+            std::string funcname = function_label(dst_func);
+            o <<prefix() <<"declare void " <<funcname <<"()\n";
+            o <<prefix() <<"invoke void " <<funcname <<"()\n";
+        } else {
+            o <<prefix() <<"br label " <<addr_label(eip->get_number()) <<"\n";
+        }
         return;
     }
 
+    o <<prefix() <<"; register eip = " <<*eip <<"\n";
+
+    // If EIP is a symbolic if-then-else ("ite") and both operands are constants then the binary has a conditional branch
+    // instruction (like an x86 "je", "jne", etc.) and we can emit an LLVM conditional "br" with true and false parts.
     InternalNodePtr inode = eip->get_expression()->isInternalNode();
     if (inode && InsnSemanticsExpr::OP_ITE==inode->get_operator()) {
         LeafNodePtr true_leaf = inode->child(1)->isLeafNode();
@@ -266,9 +290,51 @@ RiscOperators::emit_next_eip(std::ostream &o)
         }
     }
 
-    o <<prefix() <<"; EIP = " <<*eip <<"\n";
-    LeafNodePtr t1 = emit_expression(o, eip);
-    o <<prefix() <<"indirectbr i8* " <<llvm_term(t1) <<"\n";
+    // If the last executed instruction is some kind of function return instruction, then emit an LLVM "ret" instruction.
+    // The stack used by LLVM is distinct from the stack used by the binary. The latter's stack is implemented via the @ebp (or
+    // similar) global pointer.  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
+    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+        if (insn_x86->get_kind() == x86_ret || insn_x86->get_kind() == x86_retf) {
+            o <<prefix() <<"ret\n";
+            return;
+        }
+    }
+
+    // If this function is a thunk, then we need to treat it as an LLVM function call (because LLVM doesn't allow
+    // inter-function branches).  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
+    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+        std::vector<SgAsmInstruction*> func_insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+        if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
+            (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
+            LeafNodePtr t1 = emit_expression(o, eip);
+            o <<prefix() <<"invoke void()* " <<llvm_term(t1) <<"\n"
+              <<prefix() <<"ret\n";
+            return;
+        }
+    }
+
+    // If we don't know the target address and this is an indirect function call, then the successors are the entry points of
+    // all known functions.  FIXME[Robb P. Matzke 2014-01-09]: Detection of a function call is architecture dependent.
+    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+        if (insn_x86->get_kind() == x86_call || insn_x86->get_kind() == x86_farcall) {
+            LeafNodePtr t1 = emit_expression(o, eip);
+            o <<prefix() <<"invoke void()* " <<llvm_term(t1) <<"\n";
+            return;
+        }
+    }
+
+    // Catch-all: this must be an intra-function indirect branch.  LLVM requires us to enumerate all possible targets, but
+    // since we don't actually know them we must enumerate all basic blocks of the function.
+    {
+        LeafNodePtr t1 = emit_expression(o, eip);
+        o <<prefix() <<"indirectbr i8* " <<llvm_term(t1) <<" [";
+        size_t nblocks = 0;
+        for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            if (SageInterface::getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->is_first_in_block())
+                o <<(nblocks++ ? ", " : "") <<"label " <<addr_label(ii->first);
+        }
+        o <<"]\n";
+    }
 }
 
 void
@@ -314,8 +380,19 @@ RiscOperators::llvm_term(const TreeNodePtr &expr)
 {
     LeafNodePtr leaf = expr->isLeafNode();
     assert(leaf!=NULL);
-    if (leaf->is_known())
-        return StringUtility::numberToString(leaf->get_value());
+    if (leaf->is_known()) {
+        // Emit as a negative value in some cases for readability.
+        uint64_t uv = leaf->get_value();
+        int64_t sv = IntegerOps::signExtend2(leaf->get_value(), leaf->get_nbits(), 8*sizeof(int64_t));
+        if (sv >= 256) {
+            return StringUtility::addrToString(uv, leaf->get_nbits());
+        } else if (sv > -256) {
+            return StringUtility::numberToString(sv);
+        } else {
+            return StringUtility::addrToString(uv, leaf->get_nbits());
+        }
+    }
+
     if (leaf->is_variable()) {
         std::string comment = leaf->get_comment();
         if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0")) {
@@ -347,6 +424,19 @@ std::string
 RiscOperators::addr_label(rose_addr_t addr)
 {
     return "L_" + StringUtility::addrToString(addr);
+}
+
+std::string
+RiscOperators::function_label(SgAsmFunction *func)
+{
+    std::string fname = func->get_name();
+    if (fname.empty())
+        fname = "L_" + StringUtility::addrToString(func->get_entry_va());
+    for (size_t i=0; i<fname.size(); ++i) {
+        if ('_'!=fname[i] && !isalnum(fname[i]))
+            fname[i] = '.';
+    }
+    return "@" + fname;
 }
 
 // Emit an LLVM instruction to zero-extend a value if necessary.  If the value is already the specified width then this is a
@@ -611,9 +701,11 @@ RiscOperators::emit_divide(std::ostream &o, const std::string llvm_operator,
 TreeNodePtr
 RiscOperators::emit_signed_modulo(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
 {
-    TreeNodePtr t1 = emit_sign_extend(o, numerator, denominator->get_nbits());
-    TreeNodePtr t2 = emit_binary(o, "srem", t1, denominator);
-    return emit_truncate(o, t2, denominator->get_nbits());
+    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    TreeNodePtr t1 = emit_sign_extend(o, numerator, width);
+    TreeNodePtr t2 = emit_sign_extend(o, denominator, width);
+    TreeNodePtr t3 = emit_binary(o, "srem", t1, t2);
+    return emit_truncate(o, t3, denominator->get_nbits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
@@ -621,9 +713,11 @@ RiscOperators::emit_signed_modulo(std::ostream &o, const TreeNodePtr &numerator,
 TreeNodePtr
 RiscOperators::emit_unsigned_modulo(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
 {
-    TreeNodePtr t1 = emit_zero_extend(o, numerator, denominator->get_nbits());
-    TreeNodePtr t2 = emit_binary(o, "srem", t1, denominator);
-    return emit_truncate(o, t2, denominator->get_nbits());
+    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    TreeNodePtr t1 = emit_zero_extend(o, numerator, width);
+    TreeNodePtr t2 = emit_zero_extend(o, denominator, width);
+    TreeNodePtr t3 = emit_binary(o, "urem", t1, t2);
+    return emit_truncate(o, t3, denominator->get_nbits());
 }
 
 // Emits LLVM to compute the product of all the operands.  Multiply operations in LLVM are always sign-independent since the
@@ -936,19 +1030,21 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     RiscOperators::Indent indent(operators);
     RoseAst ast(bb);
     operators->reset();
-    bool emit_eip = false;
+    SgAsmInstruction *last_insn = NULL;
     for (RoseAst::iterator ai=ast.begin().withoutNullValues(); ai!=ast.end(); ++ai) {
         if (SgAsmInstruction *insn = isSgAsmInstruction(*ai)) {
             ai.skipChildrenOnForward();
             o <<operators->prefix() <<"; " <<StringUtility::addrToString(insn->get_address())
               <<": " <<unparseInstruction(insn) <<"\n";
+            last_insn = insn;
             dispatcher->processInstruction(insn);
-            emit_eip = true;
             // In order to avoid issues of memory aliasing, whenever a write occurs we dump the current machine state to
             // LLVM. We're assuming that a machine instruction performs at most one write and if it performs a memory write
             // then it doesn't also perform a memory read.
-            if (!operators->get_memory_writes().empty())
+            if (!operators->get_memory_writes().empty()) {
+                RiscOperators::Indent indent2(operators);
                 operators->emit_changed_state(o);
+            }
         } else if (SgAsmStaticData *data = isSgAsmStaticData(*ai)) {
             SgUnsignedCharList bytes = data->get_raw_bytes();
             o <<operators->prefix() <<"@" + StringUtility::addrToString(data->get_address())
@@ -958,9 +1054,13 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
             o <<"]\n";
         }
     }
-    operators->emit_changed_state(o);
-    if (emit_eip)
-        operators->emit_next_eip(o);
+
+    {
+        RiscOperators::Indent indent2(operators);
+        operators->emit_changed_state(o);
+        if (last_insn)
+            operators->emit_next_eip(o, last_insn);
+    }
 }
 
 std::string
@@ -978,14 +1078,14 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     if (!func)
         return;
 
-    o <<operators->prefix() <<"define void @" <<operators->addr_label(func->get_entry_va()) <<"() {\n";
+    o <<operators->prefix() <<"define void " <<operators->function_label(func) <<"() {\n";
     RiscOperators::Indent func_body_indentation(operators);
 
     // Note that in LLVM the first basic block of a function cannot be the target of a branch instruction.  Therefore, we emit
-    // a no-op as the first basic block.  We indent two levels because the bodies of the other basic blocks are indented two
-    // levels (one for the label and another for the instructions).
+    // a no-op as the first basic block.  We indent three levels because the bodies of the other basic blocks are indented
+    // by that amount.
     {
-        RiscOperators::Indent bb_indentation(operators);
+        RiscOperators::Indent bb_indentation(operators, 2);
         o <<operators->prefix() <<"br i1 1, label " <<operators->addr_label(func->get_entry_va()) <<"\n";
     }
 

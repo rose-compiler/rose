@@ -205,8 +205,9 @@ public:
      */
     virtual void emit_prerequisites(std::ostream&, const RegisterDescriptors&, const RegisterDictionary*);
 
-    /** Output an LLVM branch instruction. */
-    virtual void emit_next_eip(std::ostream&);
+    /** Output an LLVM branch instruction. The @p latest_insn is the most recent instruction that was transcoded, usually
+     *  the last instruction of a basic block. */
+    virtual void emit_next_eip(std::ostream&, SgAsmInstruction *latest_insn);
 
     /** Output changed memory state. */
     virtual void emit_memory_writes(std::ostream&);
@@ -231,6 +232,9 @@ public:
 
     /** Obtain a label for a virtual address. */
     virtual std::string addr_label(rose_addr_t);
+
+    /** Obtain a label for a function. */
+    virtual std::string function_label(SgAsmFunction*);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to emit LLVM code for an expression.
