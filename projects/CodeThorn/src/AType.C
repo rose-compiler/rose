@@ -16,6 +16,8 @@ using namespace std;
 
 using namespace CodeThorn;
 
+bool AType::ConstIntLattice::arithTop=false;
+
 ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
   os << value.toString();
   return os;
@@ -436,6 +438,8 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
   return tmp;
 }
 
+//#define ARITH_TOP
+
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
@@ -444,7 +448,7 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()+b.getIntValue();
@@ -457,7 +461,7 @@ AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()-b.getIntValue();
@@ -470,7 +474,7 @@ AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()*b.getIntValue();
@@ -483,7 +487,7 @@ AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()/b.getIntValue();
@@ -496,7 +500,7 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()%b.getIntValue();

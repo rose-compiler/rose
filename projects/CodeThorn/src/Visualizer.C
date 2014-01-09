@@ -123,7 +123,7 @@ Visualizer::Visualizer(Analyzer* analyzer):
 }
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
+Visualizer::Visualizer(IOLabeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
   labeler(l),
   variableIdMapping(vim),
   flow(f),
@@ -136,7 +136,7 @@ Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* s
 {}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
-void Visualizer::setLabeler(Labeler* x) { labeler=x; }
+void Visualizer::setLabeler(IOLabeler* x) { labeler=x; }
 void Visualizer::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }

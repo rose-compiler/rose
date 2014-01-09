@@ -39,10 +39,10 @@ class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::Analyzer* analyzer);
-  Visualizer(Labeler* l, VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
+  Visualizer(IOLabeler* l, VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setVariableIdMapping(VariableIdMapping* x);
-  void setLabeler(Labeler* x);
+  void setLabeler(IOLabeler* x);
   void setFlow(CodeThorn::Flow* x);
   void setPStateSet(CodeThorn::PStateSet* x);
   void setEStateSet(CodeThorn::EStateSet* x);
@@ -58,7 +58,7 @@ class Visualizer {
   string foldedTransitionGraphToDot();
   string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:
-  Labeler* labeler;
+  IOLabeler* labeler;
   VariableIdMapping* variableIdMapping;
   CodeThorn::Flow* flow;
   CodeThorn::PStateSet* pstateSet;

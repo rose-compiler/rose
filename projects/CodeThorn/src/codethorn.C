@@ -22,6 +22,7 @@
 #include "AstAnnotator.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
+#include "AType.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
@@ -535,6 +536,11 @@ int main( int argc, char * argv[] ) {
     cout<<boolOptions.toString(); // prints all bool options
   }
   
+  if(boolOptions["arith-top"]) {
+    CodeThorn::AType::ConstIntLattice cil;
+    cil.arithTop=true;
+  }
+
   if (args.count("internal-checks")) {
     if(CodeThorn::internalChecks(argc,argv)==false)
       return 1;

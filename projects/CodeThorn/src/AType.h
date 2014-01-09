@@ -128,10 +128,12 @@ class ConstIntLattice {
   ValueType getValueType() const;
   int getIntValue() const;
   long hash() const;
+  static bool arithTop;
  private:
   ValueType valueType;
   int intValue;
 };
+
 // arithmetic operators
  AType::ConstIntLattice operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
  AType::ConstIntLattice operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b);

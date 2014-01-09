@@ -150,7 +150,11 @@ namespace CodeThorn {
     
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    Labeler* getLabeler() const { return cfanalyzer->getLabeler(); }
+    IOLabeler* getLabeler() const {
+      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+      ROSE_ASSERT(ioLabeler);
+      return ioLabeler;
+    }
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
     EStateSet* getEStateSet() { return &estateSet; }

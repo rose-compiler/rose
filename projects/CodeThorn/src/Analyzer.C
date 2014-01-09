@@ -1063,7 +1063,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new Labeler(root,getVariableIdMapping());
+  Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
