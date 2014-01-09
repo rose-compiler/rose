@@ -28,37 +28,46 @@ typedef size_t Label;
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND
    };
-   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUTVAR, LABELIO_STDOUTCONST, LABELIO_STDERR
-   };
-
    LabelProperty();
+   LabelProperty(SgNode* node);
+   LabelProperty(SgNode* node, LabelType labelType);
    LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping);
    LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping);
-   void initialize(VariableIdMapping* variableIdMapping);
    string toString();
-
-   void makeTerminationIrrelevant(bool t);
-   bool isTerminationRelevant();
-   bool isLTLRelevant();
    SgNode* getNode();
-   bool isStdOutLabel();
-   bool isStdOutVarLabel();
-   bool isStdOutConstLabel();
-   bool isStdInLabel();
-   bool isStdErrLabel();
-   bool isIOLabel();
    bool isFunctionCallLabel();
    bool isFunctionCallReturnLabel();
    bool isFunctionEntryLabel();
    bool isFunctionExitLabel();
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
+
+ protected:
+   void initializeIO(VariableIdMapping* variableIdMapping);
+
+ public:
+   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUTVAR, LABELIO_STDOUTCONST, LABELIO_STDERR
+   };
+
+   bool isStdOutLabel();
+   bool isStdOutVarLabel();
+   bool isStdOutConstLabel();
+   bool isStdInLabel();
+   bool isStdErrLabel();
+   bool isIOLabel();
    VariableId getIOVarId();
    int getIOConst();
+
+   void makeTerminationIrrelevant(bool t);
+   bool isTerminationRelevant();
+   bool isLTLRelevant();
+
  private:
    bool _isValid;
    SgNode* _node;
    LabelType _labelType;
+
+ private:
    IOType _ioType;
    VariableId _variableId;
    int _ioValue;
@@ -114,11 +123,10 @@ LabelSet& operator+=(LabelSet& s2) {
 class Labeler {
  public:
   static const Label NO_LABEL=-1;
-
-  Labeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  Labeler(SgNode* start);
   static string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
-  void createLabels(SgNode* node);
+  virtual void createLabels(SgNode* node);
 
   /* Labels are numbered 0..n-1 where n is the number of labeled nodes (not all nodes are labeled).
      A return value of NO_LABEL means that this node has no label.
@@ -144,20 +152,30 @@ class Labeler {
   bool isBlockEndLabel(Label lab);
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
+  bool isConditionLabel(Label lab);
+
+ protected:
+  void computeNodeToLabelMapping();
+  void registerLabel(LabelProperty);
+  vector<LabelProperty> mappingLabelToLabelProperty;
+  map<SgNode*,Label> mappingNodeToLabel;
+  bool _isValidMappingNodeToLabel;
+};
+
+class IOLabeler : public Labeler {
+ public:
+  IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  virtual void createLabels(SgNode* node);
+
+ public:
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label); // deprecated
   bool isStdOutVarLabel(Label label, VariableId* id=0);
   bool isStdOutConstLabel(Label label, int* constvalue=0);
   bool isStdErrLabel(Label label, VariableId* id=0);
-  bool isConditionLabel(Label lab);
 
  private:
-  void computeNodeToLabelMapping();
-  void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToLabelProperty;
-  map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
-  bool _isValidMappingNodeToLabel;
 };
 
 #endif
