@@ -216,7 +216,7 @@ struct hash_nodeptr
     */
    // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
    // to this location where it can be a part of the interface for the Sage III AST.
-   int set_name (SgInitializedName * initializedNameNode, SgName new_name);
+   ROSE_DLL_API int set_name (SgInitializedName * initializedNameNode, SgName new_name);
 
    /*! \brief Output function type symbols in global function type symbol table.
     */
@@ -387,7 +387,7 @@ struct hash_nodeptr
    std::string extractPragmaKeyword(const SgPragmaDeclaration *);
 
    //! Check if a node is SgOmp*Statement
-   bool isOmpStatement(SgNode* );
+   ROSE_DLL_API bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
     */
    // DQ (8/27/2005):
@@ -479,7 +479,7 @@ struct hash_nodeptr
 
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
-    std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
+    ROSE_DLL_API std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
 
   //! Deep copy an arbitrary subtree
    ROSE_DLL_API SgNode* deepCopyNode (const SgNode* subtree);
