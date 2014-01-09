@@ -96,6 +96,7 @@ bool LabelProperty::isIOLabel() { assert(_isValid); return isStdOutLabel()||isSt
 VariableId LabelProperty::getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
 int LabelProperty::getIOConst() { assert(_ioType!=LABELIO_NONE); return _ioValue; }
 
+Labeler::Labeler(){}
 Labeler::Labeler(SgNode* start) {
   createLabels(start);
   computeNodeToLabelMapping();
@@ -198,7 +199,7 @@ string Labeler::labelToString(Label lab) {
   return ss.str();
 }
 
-SgNode*    Labeler::getNode(Label label) {
+SgNode* Labeler::getNode(Label label) {
   if(label>=mappingLabelToLabelProperty.size() || label==Labeler::NO_LABEL) {
     cerr << "Error: mapping size: "<<mappingLabelToLabelProperty.size();
     cerr << " getNode: label"<<label<<" => 0."<<endl;
@@ -339,9 +340,14 @@ std::string Labeler::toString() {
   IO Labeler Implementation
 */
 
-IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler(start) {
+// note: calling Labeler(start) would be wrong because it would call createLabels twice.
+IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler() {
   _variableIdMapping=variableIdMapping;
   createLabels(start);
+  // initialize all labels' property with additional IO info
+  for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
+    (*i).initializeIO(variableIdMapping);
+  }
   computeNodeToLabelMapping();
 }
 
@@ -381,40 +387,3 @@ bool IOLabeler::isStdErrLabel(Label label, VariableId* id) {
   return res;
 }
 
-void IOLabeler::createLabels(SgNode* root) {
-  cout<<"DEBUG: creating IO Labels."<<endl;
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(int num=isLabelRelevantNode(*i)) {
-      if(SgNodeHelper::Pattern::matchFunctionCall(*i)) {
-        if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(*i)) {
-          assert(num==3);
-          registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
-          registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
-          registerLabel(LabelProperty(*i,_variableIdMapping)); // return-stmt-label
-        } else {
-          assert(num==2);
-          registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
-          registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
-        }
-      } else if(isSgFunctionDefinition(*i)) {
-        assert(num==2);
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY,_variableIdMapping));
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT,_variableIdMapping));
-      } else if(isSgBasicBlock(*i)) {
-        assert(num==2);
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN,_variableIdMapping));
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND,_variableIdMapping));
-      } else {
-        // all other cases
-        for(int j=0;j<num;j++) {
-          registerLabel(LabelProperty(*i,_variableIdMapping));
-        }
-      }
-    }
-       if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
-      i.skipChildrenOnForward();
-  }
-  std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
-  //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
-}

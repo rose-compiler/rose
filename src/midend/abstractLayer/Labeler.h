@@ -42,7 +42,7 @@ typedef size_t Label;
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
 
- protected:
+ public:
    void initializeIO(VariableIdMapping* variableIdMapping);
 
  public:
@@ -122,6 +122,7 @@ LabelSet& operator+=(LabelSet& s2) {
  */
 class Labeler {
  public:
+  Labeler();
   static const Label NO_LABEL=-1;
   Labeler(SgNode* start);
   static string labelToString(Label lab);
@@ -157,15 +158,16 @@ class Labeler {
  protected:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToLabelProperty;
-  map<SgNode*,Label> mappingNodeToLabel;
+  typedef vector<LabelProperty> LabelToLabelPropertyMapping;
+  LabelToLabelPropertyMapping mappingLabelToLabelProperty;
+  typedef  map<SgNode*,Label> NodeToLabelMapping;
+  NodeToLabelMapping mappingNodeToLabel;
   bool _isValidMappingNodeToLabel;
 };
 
 class IOLabeler : public Labeler {
  public:
   IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
-  virtual void createLabels(SgNode* node);
 
  public:
   bool isStdInLabel(Label label, VariableId* id=0);
