@@ -6,6 +6,12 @@
 # --------check C compiler -----------------------
 include (CMakeDetermineCCompiler)
 
+# Support for Visual Studio is handled in a separate file
+if(WIN32)
+  include(roseWindowsSupport)
+  return()
+endif()
+
 if (CMAKE_COMPILER_IS_GNUCC)
 #  message("find gnucc  ${CMAKE_C_COMPILER}")
   if(NOT BACKEND_C_COMPILER)
