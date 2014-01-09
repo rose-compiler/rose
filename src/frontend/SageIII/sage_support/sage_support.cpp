@@ -819,8 +819,17 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
-       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
+#if 0
+          printf ("In determineFileType(): filenameExtension = %s \n",filenameExtension.c_str());
        // ROSE_ASSERT(false);
+#endif
+
+       // DQ (1/8/2014): We need to handle the case of "/dev/null" being used as an input filename.
+          if (filenameExtension == "/dev/null")
+             {
+               printf ("Warning: detected use of /dev/null as input filename: not yet supported (exiting with 0 exit code) \n");
+               exit(0);
+             }
 
        // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
        // file->set_requires_C_preprocessor(true);
@@ -860,7 +869,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                           //if the command line includes "-D" options
                           ! getProject()->get_macroSpecifierList().empty()
 #if 0
-// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
+            // SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
                        ||
                           //if the command line includes "-I" options
                           ! getProject()->get_includeDirectorySpecifierList().empty()
@@ -1413,7 +1422,7 @@ void
 SgFile::runFrontend(int & nextErrorCode)
    {
   // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the 
-  // invocation of the fronend on each SgFile IR node.
+  // invocation of the frontend on each SgFile IR node.
 
 #if 0
      printf ("************************ \n");
@@ -1465,7 +1474,7 @@ SgFile::runFrontend(int & nextErrorCode)
                this->set_frontendErrorCode(-1);
              }
 #else
-if (0) {}
+          if (0) {}
 #endif
             else
              {

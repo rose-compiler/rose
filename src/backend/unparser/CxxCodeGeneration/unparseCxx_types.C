@@ -702,7 +702,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
      printf("Inside of Unparse_Type::unparsePointerType \n");
-  // curprint("\n/* Inside of Unparse_Type::unparsePointerType */ \n");
+     curprint("\n/* Inside of Unparse_Type::unparsePointerType */ \n");
 #endif
 
 #if 0
@@ -719,6 +719,15 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
      SgPointerType* pointer_type = isSgPointerType(type);
      ROSE_ASSERT(pointer_type != NULL);
 
+#if 0
+     printf ("In unparsePointerType(): isSgReferenceType(pointer_type->get_base_type())      = %s \n",(isSgReferenceType(pointer_type->get_base_type())      != NULL) ? "true" : "false");
+     printf ("In unparsePointerType(): isSgPointerType(pointer_type->get_base_type())        = %s \n",(isSgPointerType(pointer_type->get_base_type())        != NULL) ? "true" : "false");
+     printf ("In unparsePointerType(): isSgArrayType(pointer_type->get_base_type())          = %s \n",(isSgArrayType(pointer_type->get_base_type())          != NULL) ? "true" : "false");
+     printf ("In unparsePointerType(): isSgFunctionType(pointer_type->get_base_type())       = %s \n",(isSgFunctionType(pointer_type->get_base_type())       != NULL) ? "true" : "false");
+     printf ("In unparsePointerType(): isSgMemberFunctionType(pointer_type->get_base_type()) = %s \n",(isSgMemberFunctionType(pointer_type->get_base_type()) != NULL) ? "true" : "false");
+     printf ("In unparsePointerType(): isSgModifierType(pointer_type->get_base_type())       = %s \n",(isSgModifierType(pointer_type->get_base_type())       != NULL) ? "true" : "false");
+#endif
+
   /* special cases: ptr to array, int (*p) [10] */
   /*                ptr to function, int (*p)(int) */
   /*                ptr to ptr to .. int (**p) (int) */
@@ -728,8 +737,15 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
          isSgArrayType(pointer_type->get_base_type()) ||
          isSgFunctionType(pointer_type->get_base_type()) ||
          isSgMemberFunctionType(pointer_type->get_base_type()) ||
-         isSgModifierType(pointer_type->get_base_type()) )
+
+      // DQ (1/8/2014): debugging test2014_25.c.
+      // isSgModifierType(pointer_type->get_base_type()) ||
+
+         false)
         {
+#if 0
+          printf ("In unparsePointerType(): calling info.set_isPointerToSomething() \n");
+#endif
           info.set_isPointerToSomething();
         }
 
@@ -2274,6 +2290,9 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      SgFunctionType* func_type = isSgFunctionType(type);
      ROSE_ASSERT (func_type != NULL);
 
+  // DQ (1/8/2014): debugging test2014_25.c.
+  // info.unset_isPointerToSomething();
+
      SgUnparse_Info ninfo(info);
      int needParen = 0;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
@@ -2286,12 +2305,21 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
 #endif
 
+#if 0
+     printf ("In unparseFunctionType(): info.isReferenceToSomething() = %s \n",info.isReferenceToSomething() ? "true" : "false");
+     printf ("In unparseFunctionType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
+#endif
+
+     ROSE_ASSERT(info.isReferenceToSomething() == ninfo.isReferenceToSomething());
+     ROSE_ASSERT(info.isPointerToSomething()   == ninfo.isPointerToSomething());
+
   // DQ (10/8/2004): Skip output of class definition for return type! C++ standard does not permit
   // a defining declaration within a return type, function parameter, or sizeof expression.
      ninfo.set_SkipClassDefinition();
 
   // DQ (1/7/2014): We also need to skip the enum definition (see test2014_24.c).
      ninfo.set_SkipEnumDefinition();
+
 
      if (ninfo.isTypeFirstPart())
         {
@@ -2313,7 +2341,8 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                curprint ( string("\n/* ") + ninfo.displayString("Skipping the first part of the return type (in needParen == true case)") + " */ \n");
 #endif
                unparseType(func_type->get_return_type(), ninfo);
-               curprint ( "(");
+               curprint("(");
+            // curprint("/* unparseFunctionType */ (");
              }
             else
              {
@@ -2337,7 +2366,9 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
                     curprint ("/* needParen must be true */ \n ");
 #endif
-                    curprint (")");
+                    curprint(")");
+                 // curprint("/* unparseFunctionType */ )");
+
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
                   }
@@ -2365,7 +2396,9 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
                curprint ("/* Output the type arguments (with parenthesis) */ \n ");
 #endif
-               curprint ( "(");
+               curprint("(");
+            // curprint("/* unparseFunctionType:parameters */ (");
+
                SgTypePtrList::iterator p = func_type->get_arguments().begin();
                while(p != func_type->get_arguments().end())
                   {
@@ -2383,7 +2416,10 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                          curprint(", ");
                        }
                   }
+
                curprint(")");
+            // curprint("/* unparseFunctionType:parameters */ )");
+
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
                curprint ("\n/* In unparseFunctionType(): AFTER parenthesis are output */ \n");
 #endif
@@ -2450,7 +2486,9 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                curprint ( "(");
              }
             else
+             {
                unparseType(mfunc_type->get_return_type(), ninfo);
+             }
         }
        else
         {
@@ -2511,7 +2549,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #if 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In Unparse_Type::unparseArrayType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+     printf ("In Unparse_Type::unparseArrayType(): type = %p type->class_name() = %s firstPart = %s secondPart = %s \n",type,type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
 
 #if 0
@@ -2523,6 +2561,11 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseArrayType() using generated type name string: ") + type->class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
 
+#if 0
+     printf ("In Unparse_Type::unparseArrayType(): info.isReferenceToSomething() = %s \n",info.isReferenceToSomething() ? "true" : "false");
+     printf ("In Unparse_Type::unparseArrayType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
+#endif
+
      SgUnparse_Info ninfo(info);
      bool needParen = false;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
@@ -2530,7 +2573,9 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
           needParen = true;
         }
 
-  // printf ("needParen = %s \n",(needParen == true) ? "true" : "false");
+#if 0
+     printf ("In unparseArrayType(): needParen = %s \n",(needParen == true) ? "true" : "false");
+#endif
 
      if (ninfo.isTypeFirstPart() == true)
         {
@@ -2539,7 +2584,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                ninfo.unset_isReferenceToSomething();
                ninfo.unset_isPointerToSomething();
                unparseType(array_type->get_base_type(), ninfo);
-               curprint ( "(");
+            // curprint("(");
+               curprint(" /* unparseArrayType */ (");
              }
             else
              {
@@ -2552,11 +2598,12 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              {
                if (needParen == true)
                   {
-                    curprint ( ")");
+                 // curprint(")");
+                    curprint(" /* unparseArrayType */ )");
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
                   }
-               curprint ( "[");
+               curprint("[");
                if (array_type->get_index())
                   {
                  // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
@@ -2564,7 +2611,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                     ninfo2.unset_isTypeSecondPart();
                     unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                   }
-               curprint ( "]");
+               curprint("]");
                unparseType(array_type->get_base_type(), info); // second part
              }
             else
@@ -2631,6 +2678,9 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
         }
 #else
   // Older version of code...
+
+#error "DEAD CODE!"
+
 #if 0
   // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
   // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).

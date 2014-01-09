@@ -402,6 +402,11 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 0
+     printf ("Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     curprint( string("\n/* Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
    }
 
 
