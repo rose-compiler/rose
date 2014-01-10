@@ -10,12 +10,10 @@ endif()
 list(GET result 0 BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
 list(GET result 1 BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
 
-message(STATUS "full path: ${CMAKE_CXX_COMPILER}")
 get_filename_component(
   BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH
   "${CMAKE_CXX_COMPILER}"
   NAME)
-message(STATUS "BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
 
 # For Visual Studio, the C & CXX compilers are the same.
 set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
@@ -55,15 +53,25 @@ if (NOT EXISTS "${rose_system_headers_dir}/Windows.h")
     # <rose-bin>/include
     if (EXISTS "${vs9_include_dir}")
       message(STATUS "copying from ${vs9_include_dir}")
-      file(GLOB_RECURSE headers "${vs9_include_dir}/*.h")
+      file(GLOB_RECURSE h_files "${vs9_include_dir}/*.h")
+      file(GLOB_RECURSE inl_files "${vs9_include_dir}/*.inl")
+      set(headers ${h_files} ${inl_files})
       foreach(header ${headers})
+        string(REPLACE "${vs9_include_dir}/" "" relative_path "${header}")
         execute_process(
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          "${header}" "${rose_system_headers_dir}")
+          "${header}" "${rose_system_headers_dir}${relative_path}")
       endforeach()
     endif()
   endforeach()
   message(STATUS "done copying system headers")
+
+  # ROSE wants <string>, but Windows provides <string.h>
+  configure_file(
+    ${rose_system_headers_dir}/string.h
+    ${rose_system_headers_dir}/string
+    COPYONLY
+  )
 endif()
 
 configure_file(
