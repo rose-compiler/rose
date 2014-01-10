@@ -13,10 +13,10 @@ set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
 
 set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0 --edg:restrict)
 
-# This populates the list CXX_TESTCODES
+# This populates the list ROSE__CXX_TESTS
 include(${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/Cxx_Testcodes.cmake)
 
-foreach(file_to_test ${CXX_TESTCODES})
+foreach(file_to_test ${ROSE__CXX_TESTS})
 
   add_test(
     NAME testStaticCFG_Cxx_${file_to_test}
