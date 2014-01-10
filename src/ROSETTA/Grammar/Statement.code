@@ -4513,6 +4513,26 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
      ROSE_ASSERT(symbolAlreadyPresent == false);
 #endif
 
+#if 1
+  // DQ (11/21/2013): Adding test as a result of debugging with Philippe.
+  // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+     SgClassSymbol* class_symbol = isSgClassSymbol(s);
+     if (class_symbol != NULL)
+        {
+          SgClassDeclaration* class_declaration = isSgClassDeclaration(class_symbol->get_declaration());
+          ROSE_ASSERT(class_declaration != NULL);
+          if (class_declaration->get_scope() != this)
+             {
+               printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
+               printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
+               printf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
+               printf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
+               class_declaration->get_file_info()->display("class_declaration: debug");
+             }
+       // ROSE_ASSERT(class_declaration->get_scope() == this);
+        }
+#endif
+
      p_symbol_table->insert(n,s);
    }
 

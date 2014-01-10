@@ -5269,34 +5269,34 @@ SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 SgClassDeclaration*
 SgConstructorInitializer::get_class_decl () const
 {
-    SgClassDeclaration *cdecl = NULL;
+    SgClassDeclaration *class_decl = NULL;
 
     if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
         // The constructor is declared (and is a member of a class type)
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
-        cdecl = isSgClassDeclaration(cdef->get_parent());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(cdef->get_parent());
+        assert(class_decl!=NULL);
     } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
         // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
         // p_expression_type's declaration.
-        cdecl = isSgClassDeclaration(expr_type->get_declaration());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(expr_type->get_declaration());
+        assert(class_decl!=NULL);
     } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
 	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
 	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
 	    // SAGE Representation.
-        cdecl = isSgClassDeclaration(parmType->get_declaration());
-        ROSE_ASSERT(cdecl != NULL);    
+        class_decl = isSgClassDeclaration(parmType->get_declaration());
+        ROSE_ASSERT(class_decl != NULL);    
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
 
-    if (cdecl) {
-        cdecl = isSgClassDeclaration(cdecl->get_firstNondefiningDeclaration());
-        assert(cdecl!=NULL);
+    if (class_decl) {
+        class_decl = isSgClassDeclaration(class_decl->get_firstNondefiningDeclaration());
+        assert(class_decl!=NULL);
     }
-    return cdecl;
+    return class_decl;
 }
 
 void

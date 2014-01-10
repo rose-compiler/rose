@@ -10441,6 +10441,21 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // mysymbol = scope->lookup_class_symbol(name);
        // mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments);
           mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments,templateArgumentsList);
+
+#if 0
+       // DQ (11/21/2013): Added test based on debugging session with Philippe.
+       // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+          if (mysymbol != NULL)
+             {
+               SgClassDeclaration* symbol_declaration = isSgClassDeclaration(mysymbol->get_declaration());
+               ROSE_ASSERT(symbol_declaration != NULL);
+               ROSE_ASSERT(symbol_declaration->get_scope() == scope);
+
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): Testing scope->get_symbol_table()->exists(mysymbol) == true (expensive) \n");
+
+               ROSE_ASSERT(scope->get_symbol_table()->exists(mysymbol) == true);
+             }
+#endif
         }
        else
         {
@@ -10713,6 +10728,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
+
+            // DQ (11/21/2013): Added test based on debugging session with Philippe.
+               ROSE_ASSERT(nondefdecl->get_scope() == scope);
              }
             else
              {

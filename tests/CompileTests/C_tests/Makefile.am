@@ -364,6 +364,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_93.c \
      test2013_94.c \
      test2013_95.c \
+     test2013_96.c \
+     test2013_97.c \
+     test2013_98.c \
+     test2013_99.c \
+     test2013_100.c \
      math.c \
      complex_01.c \
      stdio.c \

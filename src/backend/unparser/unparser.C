@@ -8,12 +8,9 @@
 // #include "propagateHiddenListData.h"
 // #include "HiddenList.h"
 
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-#include <setjmp.h>
-#include <signal.h>
-
 // include "array_class_interface.h"
 #include "unparser.h"
+#include "keep_going.h"
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -36,14 +33,6 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-static sigjmp_buf rose__sgproject_unparse_mark;
-static void HandleUnparserSignal(int sig)
-{
-  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__sgproject_unparse_mark, -1);
-}
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -390,8 +379,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // and attaches the toke stream to the SgSourceFile IR node.  
        // *** Next we have to attached the data base ***
           buildTokenStreamMapping(file);
+
 #if 1
-          printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",file->get_token_list().size());
+          if ( SgProject::get_verbose() > 0 )
+             {
+               printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",file->get_token_list().size());
+             }
 #endif
 
 #if 0
@@ -409,18 +402,22 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           u_exprStmt->markGeneratedFile();
         }
 
-     if (file->get_unparse_tokens() == true)
+     if ( SgProject::get_verbose() > 0 )
         {
-       // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
+          if (file->get_unparse_tokens() == true)
+             {
+            // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
 
-       // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
-          printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
+            // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
+#if 0
+               printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
+#endif
+            // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
+               unparseFileUsingTokenStream(file);
 
-       // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
-          unparseFileUsingTokenStream(file);
-
-       // Now we want to just continue to unparse the file that will be generated from the AST 
-       // (and modify that code to selectively use the token stream).
+            // Now we want to just continue to unparse the file that will be generated from the AST 
+            // (and modify that code to selectively use the token stream).
+             }
         }
 
   // SgScopeStatement* globalScope = (SgScopeStatement*) (&(file->root()));
@@ -702,7 +699,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
      LexTokenStreamType & tokenList = *(existingListOfAttributes->get_rawTokenStream());
 
-#if 1
+#if 0
      printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
      printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
 #endif
@@ -817,7 +814,9 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
      string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();
 
+#if 0
      printf ("In Unparser::unparseFileUsingTokenStream(): Output tokens stream to file: %s \n",outputFilename.c_str());
+#endif
 
      fstream ROSE_RawTokenStream_OutputFile(outputFilename.c_str(),ios::out);
   // ROSE_OutputFile.open(s_file.c_str());
@@ -2504,36 +2503,53 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
 {
   ROSE_ASSERT(fileList != NULL);
-  // for (int i=0; i < fileList->numberOfFiles(); ++i)
+
+  int status_of_function = 0;
+
   for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
   {
-      SgSourceFile *file = isSgSourceFile(fileList->get_listOfFiles()[i]);
-
-      if ( SgProject::get_verbose() > 1 )
-           printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
-
-      // TOO1 (05/14/2013): Signal handling for -rose:keep_going
-      if (file->get_project()->get_keep_going())
+      SgFile* file = fileList->get_listOfFiles()[i];
       {
-          struct sigaction act;
-          act.sa_handler = HandleUnparserSignal;
-          sigemptyset(&act.sa_mask);
-          act.sa_flags = 0;
-          sigaction(SIGSEGV, &act, 0);
-      }
+          ROSE_ASSERT(file != NULL);
 
-      if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
-      {
-          std::cout
-              << "[WARN] Ignoring unparser failure "
-              << " as directed by -rose:keep_going"
-              << std::endl;
-          file->set_unparserErrorCode(-1);
-      }
-      else if (file -> get_frontendErrorCode() == 0)
-      {
-          unparseFile(file, unparseFormatHelp, unparseDelegate);
-      }
-  }
+          if (SgProject::get_verbose() > 1)
+          {
+               printf("Unparsing file = %p = %s \n",
+                      file,
+                      file->class_name().c_str());
+          }
+
+      #ifndef _MSC_VER
+          if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Configured to keep going after catching a "
+                  << "signal in Unparser::unparseFile()"
+                  << std::endl;
+
+              file->set_unparserErrorCode(-1);
+              status_of_function =
+                  max(1, status_of_function);
+          }
+      #else
+      if (false) {}
+      #endif
+          else if (!isSgSourceFile(file) || isSgSourceFile(file) -> get_frontendErrorCode() == 0)
+          {
+              unparseFile(file, unparseFormatHelp, unparseDelegate);
+          }
+          else
+          {
+              if (SgProject::get_verbose() > 1)
+              {
+                  std::cout
+                      << "[WARN] "
+                      << "Skipping unparsing of file "
+                      << file->getFileName()
+                      << std::endl;
+              }
+          }
+      }//file
+  }//for each
 }
-

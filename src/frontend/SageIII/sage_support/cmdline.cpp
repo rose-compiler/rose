@@ -8,6 +8,9 @@
  *  Dependencies
  *---------------------------------------------------------------------------*/
 #include "cmdline.h"
+#include "keep_going.h"
+
+#include <boost/foreach.hpp>
 
 /*-----------------------------------------------------------------------------
  *  namespace SageSupport::Cmdline {
@@ -238,6 +241,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
           argument == "-include" ||                         // Used for preinclude file list (to include some header files before all others, common requirement for compiler)
           argument == "-isystem" ||                         // Used for preinclude directory list (to specify include paths to be search before all others, common requirement for compiler)
+
+          // Darwin options
+          argument == "-dylib_file" ||                      // -dylib_file <something>:<something>
+
+          // ROSE options
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
@@ -511,7 +519,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
   // the modification of the command line by SLA (to save the original command line)
-     vector<string> local_commandLineArgumentList = input_argv;
+  vector<string> local_commandLineArgumentList = input_argv;
+  { // Perform normalization on CLI before processing and storing
+
+      // Turn "-I <path>" into "-I<path>" for subsequent processing
+      local_commandLineArgumentList =
+          SageSupport::Cmdline::NormalizeIncludePathOptions(
+              local_commandLineArgumentList);
+  }
 
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
@@ -1062,6 +1077,36 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                   }
              }
 
+        // TOO1 (11/23/2013):
+        // (Darwin linker) -dylib_file <library_name.dylib>:<library_name.dylib>
+        if (argv[i].compare("-dylib_file") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -dylib_file"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -dylib_file");
+            }
+            else
+            {
+                // TODO: Save library argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -dylib_file: argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
+
        // look only for -l library files (library files)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'l') )
              {
@@ -1081,13 +1126,25 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
 
        // look only for -I include directories (directories where #include<filename> will be found)
-          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // AS Changed source code to support absolute paths
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-               p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
-             }
+          if ((length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I'))
+          {
+              std::string include_path = argv[i].substr(2);
+              {
+                  include_path =
+                      StringUtility::getAbsolutePathFromRelativePath(include_path);
+              }
+
+              p_includeDirectorySpecifierList.push_back("-I" + include_path);
+
+              bool is_directory = boost::filesystem::is_directory(include_path);
+              if (false == is_directory)
+              {
+                  std::cout  << "[WARN] "
+                          << "Invalid argument to -I; path does not exist: "
+                          << "'" << include_path << "'"
+                          << std::endl;
+              }
+          }
 
        // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
        // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
@@ -1167,6 +1224,70 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 //------------------------------------------------------------------------------
 //                                 Cmdline
 //------------------------------------------------------------------------------
+std::vector<std::string>
+SageSupport::Cmdline::
+NormalizeIncludePathOptions (std::vector<std::string>& argv)
+{
+  std::vector<std::string> r_argv;
+
+  bool looking_for_include_path_arg = false;
+  BOOST_FOREACH(std::string arg, argv)
+  {
+      // Must be first since there could be, for example, "-I -I",
+      // in which case, the else if branch checking for -I would
+      // be entered.
+      if (looking_for_include_path_arg)
+      {
+          r_argv.push_back("-I" + arg);
+          looking_for_include_path_arg = false; // reset for next iteration
+
+          // Sanity check
+          bool is_directory = boost::filesystem::is_directory(arg);
+          if (false == is_directory)
+          {
+              std::cout  << "[WARN] "
+                        << "Invalid argument to -I; path does not exist: "
+                        << "'" << arg << "'"
+                        << std::endl;
+          }
+      }
+      else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
+      {
+          // -I <path>: There is a space between the option and the argument...
+          //   ^
+          //
+          // ...meaning this current argument is exactly "-I".
+          //
+          if (arg.size() == 2)
+          {
+              looking_for_include_path_arg = true;
+              continue; // next iteration should be the path argument
+          }
+          else
+          {
+              // no normalization required for -I<path>
+              r_argv.push_back(arg);
+          }
+      }
+      else // not an include path option
+      {
+          r_argv.push_back(arg);
+      }
+  }//argv.each
+
+  // Found -I option but no accompanying <path> argument
+  if (looking_for_include_path_arg == true)
+  {
+      std::cout  << "[FATAL] "
+                << "Missing required argument to -I; expecting '-I<path>'"
+                << std::endl;
+      exit(1);
+  }
+  else
+  {
+      return r_argv;
+  }
+}//NormalizeIncludePathOptions (std::vector<std::string>& argv)
 
 void
 SageSupport::Cmdline::
@@ -1185,6 +1306,7 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
       project->set_keep_going(true);
+      ROSE::KeepGoing::g_keep_going = true;
   }
 }
 
@@ -3483,6 +3605,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
@@ -3490,6 +3613,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
   // DQ (7/3/2013): define this so that the rose_edg_required_macros_and_functions.h header file can make

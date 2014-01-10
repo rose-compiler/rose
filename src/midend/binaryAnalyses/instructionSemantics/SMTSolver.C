@@ -63,6 +63,8 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 #ifdef _MSC_VER
     // tps (06/23/2010) : Does not work under Windows
     abort();
+    Satisfiable retval;
+    return retval;
 #else
 
     clear_evidence();
