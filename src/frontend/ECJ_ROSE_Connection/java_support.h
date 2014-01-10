@@ -1,15 +1,16 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
-extern int sg_file_count;
+using namespace std;
 
+extern SgProject *project;
 extern SgGlobal *globalScope;
+extern SgSourceFile *currentSourceFile;
 extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
 extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
-
-extern int initializerCount;
+extern SgName java_lang;
 
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile *OpenFortranParser_globalFilePointer;
@@ -22,6 +23,9 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
+// TODO: Remove this !!!
+//extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
@@ -30,17 +34,35 @@ extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
 
-using namespace std;
+bool isConflictingType(string, SgClassType *);
+bool isImportedType(SgClassType *);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
-string getArrayTypeName(SgPointerType *);
 string getFullyQualifiedName(SgClassDefinition *);
 string getFullyQualifiedTypeName(SgClassType *);
 string getFullyQualifiedTypeName(SgJavaParameterizedType *);
+string getTypeName(SgClassType *class_type);
+string getTypeName(SgJavaParameterizedType *parm_type);
 string getTypeName(SgType *);
 
-string normalize(string str);
+//
+// This class is kept here as documentation. IT is declared in:  ./src/midend/astProcessing/AstAttributeMechanism.h
+//
+// class AstSgNodeListAttribute : public AstAttribute {
+//     std::vector<SgNode *> nodeList;
+//
+//     public:
+//         std::vector<SgNode *> &getNodeList();
+//         void addNode(SgNode *);
+//         SgNode *getNode(int);
+//         void setNode(SgNode *, int);
+//         int size();
+//
+//         AstSgNodeListAttribute();
+//         AstSgNodeListAttribute(std::vector<SgNode *> &);
+// };
+
 
 //
 // Attribute used to construct array types.
@@ -225,7 +247,7 @@ public:
 class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
-if (isSgLocatedNode(n)) {
+if (isSgLocatedNode(n) && n != ::globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
@@ -245,7 +267,7 @@ cout.flush();
     SgScopeStatement *pop() {
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
-if (isSgLocatedNode(n)) {
+if (isSgLocatedNode(n) && n != ::globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while popping scope node " << n -> class_name() << endl;
@@ -296,10 +318,10 @@ cout.flush();
                      << endl;
             ROSE_ASSERT(false);
         }
-        else if (! isSgClassDefinition(n) -> attributeExists("namespace")) {
+        else if (! isSgJavaPackageDeclaration(isSgClassDefinition(n) -> get_declaration())) {
             cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
-                     << " without the attribute \"namespace\" as a package"
+                     << " as an SgJavaPackageDeclaration"
                      << endl;
             ROSE_ASSERT(false);
         }
@@ -467,16 +489,17 @@ extern ComponentStack astJavaComponentStack;
 // Global stack of scopes
 extern ScopeStack astJavaScopeStack;
 
-void setJavaSourcePosition(SgLocatedNode *locatedNode, JavaSourceCodePosition *posInfo);
+void setJavaSourcePosition(SgLocatedNode *locatedNode, Token_t *);
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
 void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
 
-string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string);
-string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
-extern SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
+SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
+SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
+SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
+SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
+SgJavaPackageDeclaration *findPackageDeclaration(SgName &);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
@@ -484,24 +507,25 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
 SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
 SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 
-SgClassDeclaration *buildJavaClass (SgName className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
-
-SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType *type);
-
 list<SgName> generateQualifierList (const SgName &classNameWithQualification);
 
 bool isCompatibleTypes(SgType *source, SgType *target);
 
+// TODO: Remove this !!!
 // It might be that this function should take a "const SgName &" instead of a "string".
-SgClassSymbol *lookupSymbolFromQualifiedName(string className);
+// SgClassSymbol *lookupSymbolFromQualifiedName(string className);
+
+//
+// This function is needed in order to bypass a serious bug in Rose.  See implementation for detail
+//
+SgClassSymbol *lookupClassSymbolInScope(SgScopeStatement *, const SgName &);
+
+SgClassSymbol *lookupTypeSymbol(SgName &type_name);
 
 SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensions);
 
 //! Support to get current class scope.
 SgClassDefinition *getCurrentTypeDefinition();
-
-//! Support to get current class scope.
-SgFunctionDefinition *getCurrentMethodDefinition();
 
 //! Support for identification of symbols using simple names in a given scope.
 SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);

@@ -8,9 +8,9 @@ set(TESTCODE_DIR ${CMAKE_SOURCE_DIR}/tests/CompileTests/Cxx_tests)
 set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code
                       -I${TESTCODE_DIR})
 
-# This populates the list CXX_TESTCODES
+# This populates the list ROSE__CXX_TESTS
 include(${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/Cxx_Testcodes.cmake)
-foreach(file_to_test ${CXX_TESTCODES})
+foreach(file_to_test ${ROSE__CXX_TESTS})
   add_test(
     NAME ut_${file_to_test}
     COMMAND unparseToString ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
