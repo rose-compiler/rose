@@ -1483,6 +1483,9 @@ Unparse_ExprStmt::unparseStatementExpression (SgExpression* expr, SgUnparse_Info
   // (so they are exceptions, see test2007_51.C).
      info2.unset_SkipClassDefinition();
 
+  // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+     info2.unset_SkipEnumDefinition();
+
      curprint ( "(");
      unparseStatement(statement,info2);
      curprint ( ")");
@@ -1526,6 +1529,14 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 #if 0
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
+
+#if 0
+     printf ("In unparseBinaryOperator(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseBinaryOperator(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      unparseBinaryExpr(expr, newinfo);
 
@@ -4177,6 +4188,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      cast_op->get_file_info()->display("In unparseCastOp(): debug");
 #endif
 
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info newinfo(info);
      newinfo.unset_PrintName();
      newinfo.unset_isTypeFirstPart();
@@ -4482,6 +4501,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (6/21/2011): Added support for name qualification.
      info.set_reference_node_for_qualification(cast_op->get_operand());
      ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      unparseExpression(cast_op->get_operand(), info); 
 
@@ -5080,6 +5107,15 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
                newinfo.unset_SkipClassDefinition();
+
+            // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+               newinfo.unset_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
              }
             else
              {
@@ -5885,6 +5921,14 @@ Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
 
      ROSE_ASSERT (operand != NULL);
      ROSE_ASSERT (type != NULL);
+
+#if 0
+     printf ("In unparseVarArgOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarArgOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      curprint ( "va_arg(");
      unparseExpression(operand,info);
