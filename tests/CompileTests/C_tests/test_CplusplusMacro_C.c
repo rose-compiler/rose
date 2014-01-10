@@ -1,5 +1,9 @@
 #ifdef __cplusplus
  #error "__cplusplus defined"
 #else
- #warning "__cplusplus NOT defined"
+ #ifdef _MSC_VER
+  #pragma message("__cplusplus NOT defined")
+ #else
+  #warning "__cplusplus NOT defined"
+ #endif
 #endif
