@@ -86,6 +86,7 @@ class VariableIdMapping {
   // checks whether the computed ROSE-based variable-symbol mapping is bijective.
   bool isUniqueVariableSymbolMapping();
   void reportUniqueVariableSymbolMappingViolations();
+
  private:
 
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
@@ -111,7 +112,7 @@ class VariableId {
   friend class VariableIdMapping;
   friend bool operator<(VariableId id1, VariableId id2);
   friend bool operator==(VariableId id1, VariableId id2);
-  friend class ConstraintSetHashFun; // TODO: investigate why getSymbol needs to be public
+  friend class ConstraintSetHashFun;
   //friend size_t hash_value(const VariableId&);
  public:
   VariableId();
