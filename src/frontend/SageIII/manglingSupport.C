@@ -352,6 +352,10 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                  //! \todo Compute local scope names correctly (consistently).
                     ostringstream scope_name;
                     scope_name << scope->class_name ();
+AstRegExAttribute *attribute = (AstRegExAttribute *) scope -> getAttribute("name");
+if (attribute) {
+scope_name << "_" << attribute -> expression;
+}
 
                  // Build full name
                     mangled_name = joinMangledQualifiersToString (par_scope_name,scope_name.str ());

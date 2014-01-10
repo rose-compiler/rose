@@ -2928,6 +2928,9 @@ SgJavaWildcardType::get_mangled (void) const
      SgName mangled_name;
      mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
                   << get_name().str() // name of wildcard type is "?"
+                  << (this -> get_has_extends() ? "_extends_" : "")
+                  << (this -> get_has_super() ? "_super_" : "")
+                  << (! this -> get_is_unbound() ? this -> get_bound_type() -> get_mangled() : "")
                   << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
 
 #if 0
