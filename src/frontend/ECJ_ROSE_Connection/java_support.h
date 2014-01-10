@@ -29,19 +29,22 @@ extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgTemplateParameterPtrList &);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgType *containing_type, SgTemplateParameterPtrList &);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
+
+string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
 bool isConflictingType(string, SgClassType *);
 bool isImportedType(SgClassType *);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
-string getFullyQualifiedName(SgClassDefinition *);
+//string getFullyQualifiedName(SgClassDefinition *);
 string getFullyQualifiedTypeName(SgClassType *);
 string getFullyQualifiedTypeName(SgJavaParameterizedType *);
+bool hasConflicts(SgClassDeclaration *class_declaration);
 string getTypeName(SgClassType *class_type);
 string getTypeName(SgJavaParameterizedType *parm_type);
 string getTypeName(SgType *);
@@ -102,7 +105,7 @@ private:
 public:
     AstParameterizedTypeAttribute(SgClassType *rawType_) : rawType(rawType_) {}
 
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgTemplateParameterPtrList &newArgs) {
+    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList &newArgs) {
         //
         // Keep track of parameterized types in a table so as not to duplicate them.
         //
@@ -121,8 +124,11 @@ public:
                         }
                     }
 
-                    if (arg_it == args.end()) { // Found a match!
-                        return (*type_it);
+                    if (arg_it == args.end()) { // Found an arguments match!
+                        AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ((*type_it) -> getAttribute("enclosing_type"));
+                        if ((attribute == NULL && containing_type == NULL) || (attribute != NULL && attribute -> getNode() == containing_type)) {
+                            return (*type_it);
+                        }
                     }
                 }
             }
@@ -136,10 +142,10 @@ public:
         SgTemplateParameterList *typeParameterList = new SgTemplateParameterList();
         typeParameterList -> set_args(newArgs);
         SgJavaParameterizedType *parameterizedType = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
-
-        ROSE_ASSERT(parameterizedType != NULL);
-        ROSE_ASSERT(parameterizedType -> get_raw_type() != NULL);
-        ROSE_ASSERT(parameterizedType -> get_type_list() != NULL);
+        if (containing_type != NULL) {
+            AstSgNodeAttribute *attribute = new AstSgNodeAttribute(containing_type);
+            parameterizedType -> setAttribute("enclosing_type", attribute);
+        }
 
         parameterizedTypes.push_front(parameterizedType);
 
@@ -165,7 +171,9 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            cerr << "***Popping Component node " << n -> class_name() << endl;
+            cerr << "***Popping Component node ";
+            cerr << n -> class_name();
+            cerr << endl;
             cerr.flush();
         }
         pop_front();
@@ -198,7 +206,7 @@ public:
         SgNode *n = pop();
         if (! isSgExpression(n)) {
             cerr << "Invalid attempt to pop a Component node of type "
-                     << n -> class_name()
+                     << (isSgClassDefinition(n) ? isSgClassDefinition(n) -> get_qualified_name().getString() : n -> class_name())
                      << " as an SgExpression"
                      << endl;
             ROSE_ASSERT(false);
@@ -258,7 +266,15 @@ cout << "file_info with null string found while pushing scope node " << n -> cla
 cout.flush();
 }
         if (SgProject::get_verbose() > 0) {
-            cerr << "***Pushing Stack node " << n -> class_name() << endl; 
+            cerr << "***Pushing Stack node ";
+            if (isSgClassDefinition(n))
+                 cerr << isSgClassDefinition(n) -> get_qualified_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else cerr << n -> class_name();
+            cerr << endl; 
             cerr.flush();
         }
         push_front(n);
@@ -277,8 +293,16 @@ cout << "file_info with null string found while popping scope node " << n -> cla
 //cout << "file_info with file: " << file_info -> get_filenameString() << ", found while popping scope node " << n -> class_name() << endl;
 cout.flush();
 }
-        if (SgProject::get_verbose() > 0) {
-            cerr << "***Popping Stack node " << n -> class_name() << endl;
+       if (SgProject::get_verbose() > 0) {
+            cerr << "***Popping Stack node ";
+            if (isSgClassDefinition(n))
+                 cerr << isSgClassDefinition(n) -> get_qualified_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else cerr << n -> class_name();
+            cerr << endl;
             cerr.flush();
         }
         pop_front();
@@ -520,7 +544,7 @@ bool isCompatibleTypes(SgType *source, SgType *target);
 //
 SgClassSymbol *lookupClassSymbolInScope(SgScopeStatement *, const SgName &);
 
-SgClassSymbol *lookupTypeSymbol(SgName &type_name);
+void lookupLocalTypeSymbols(list<SgClassSymbol *> &, SgName &type_name);
 
 SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensions);
 
@@ -528,7 +552,9 @@ SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensio
 SgClassDefinition *getCurrentTypeDefinition();
 
 //! Support for identification of symbols using simple names in a given scope.
-SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
+SgClassSymbol *lookupParameterTypeByName(const SgName &name);
+SgClassSymbol *lookupUniqueSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
+void lookupAllSimpleNameTypesInClass(list<SgClassSymbol *>&, const SgName &name, SgClassDefinition *classDefinition);
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
 
 //! Support for identification of variable symbols using simple names.
