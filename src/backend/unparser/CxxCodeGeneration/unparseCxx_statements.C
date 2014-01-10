@@ -3844,6 +3844,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // must also allow for this
   //    void (*set_foo)()=doo
 
+#if 0
+     printf ("In unparseVarDeclStmt(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
   // Build a new SgUnparse_Info object to represent formatting options for this statement
      SgUnparse_Info ninfo(info);
 
@@ -4182,6 +4189,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(tmp_type != NULL);
 
                SgUnparse_Info ninfo_for_type(ninfo);
+#if 0
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 #if 0
@@ -4461,6 +4474,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ROSE_ASSERT(ninfo.isTypeFirstPart() == false);
                ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == true);
                ROSE_ASSERT(ninfo_for_type.isTypeFirstPart() == false);
+#if 0
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
             // DQ (7/31/2006): I think that we can simplify to just this code.
             // unp->u_type->unparseType(tmp_type, ninfo2);
@@ -4568,6 +4587,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     SgUnparse_Info statementInfo(ninfo);
                     statementInfo.set_SkipClassDefinition();
 
+                 // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+                    statementInfo.set_SkipEnumDefinition();
+
                  // DQ (1/7/2007): Unset the declstatement_ptr so that we can know that we 
                  // are processing initalizers which might require name qualification!
                     statementInfo.set_declstatement_ptr(NULL);
@@ -4582,6 +4604,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // DQ (5/26/2013): Added support for name qualification.
                     statementInfo.set_reference_node_for_qualification(tmp_init);
                     ROSE_ASSERT(statementInfo.get_reference_node_for_qualification() != NULL);
+#if 0
+                    printf ("In unparseVarDeclStmt(): statementInfo.SkipClassDefinition() = %s \n",(statementInfo.SkipClassDefinition() == true) ? "true" : "false");
+                    printf ("In unparseVarDeclStmt(): statementInfo.SkipEnumDefinition()  = %s \n",(statementInfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+                 // DQ (1/9/2014): These should have been setup to be the same.
+                    ROSE_ASSERT(statementInfo.SkipClassDefinition() == statementInfo.SkipEnumDefinition());
 
                  // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
@@ -5437,6 +5465,17 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (5/23/2007): Note that statement expressions can have class definition
   // (so they are exceptions, see test2007_51.C).
      newinfo.set_SkipClassDefinition();
+
+  // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+     newinfo.set_SkipEnumDefinition();
+
+#if 0
+     printf ("In unparseExprStmt(): info.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseExprStmt(): info.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
 
   // if (expr_stmt->get_the_expr())
      if (expr_stmt->get_expression())

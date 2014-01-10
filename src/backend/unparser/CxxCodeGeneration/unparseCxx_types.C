@@ -1043,6 +1043,14 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparseClassType");
 #endif
 
+#if 0
+     printf ("In unparseClassType(): ninfo.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseClassType(): ninfo.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
      SgClassType* class_type = isSgClassType(type);
@@ -1372,6 +1380,15 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                printf ("In unparseClassType: Detected un-nmed class declaration: Calling  unset_SkipClassDefinition() \n");
 #endif
                info.unset_SkipClassDefinition();
+
+            // DQ (1/9/2014): Mark Enum and Class declaration handling consistantly (enforces within the unparser now).
+               info.unset_SkipEnumDefinition();
+#if 0
+               printf ("In unparseClassType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseClassType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
              }
         }
 
@@ -1436,6 +1453,13 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if 0
                          printf ("In unparseClassType: output member declaration: %p ninfo.isSkipSemiColon() = %s \n",*pp,ninfo.SkipSemiColon() ? "true" : "false");
 #endif
+#if 0
+                         printf ("In unparseClassType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
+                         printf ("In unparseClassType(): ninfo.SkipEnumDefinition()  = %s \n",(ninfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+                      // DQ (1/9/2014): These should have been setup to be the same.
+                         ROSE_ASSERT(ninfo.SkipClassDefinition() == ninfo.SkipEnumDefinition());
+
                          unp->u_exprStmt->unparseStatement((*pp), ninfo);
                          pp++;
                        }
@@ -2609,6 +2633,13 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                  // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
                     SgUnparse_Info ninfo2(ninfo);
                     ninfo2.unset_isTypeSecondPart();
+#if 0
+                    printf ("In unparseArrayType(): ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
+                    printf ("In unparseArrayType(): ninfo2.SkipEnumDefinition()  = %s \n",(ninfo2.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+                 // DQ (1/9/2014): These should have been setup to be the same.
+                    ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
+
                     unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                   }
                curprint("]");
@@ -2820,6 +2851,13 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (5/29/2011): We have to set the associated reference node so that the type unparser can get the name qualification if required.
   // ninfo_for_type.set_reference_node_for_qualification(initializedName);
      ninfo_for_type.set_reference_node_for_qualification(referenceNode);
+
+#if 0
+     printf ("In outputType(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In outputType(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
   // unparseType(tmp_type, info);
   // unp->u_type->unparseType(tmp_type, ninfo_for_type);

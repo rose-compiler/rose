@@ -1045,16 +1045,17 @@ PreprocessingInfo::isSelfReferential()
           result = true;
           string macroName = getMacroName();
 #if DEBUG_SELF_REFERENTIAL_MACRO
-          printf ("   --- macroName = %s \n",macroName.c_str());
+          printf ("   --- macroName = %s macroName.length() = %zu \n",macroName.c_str(),macroName.length());
 #endif
           string s = internalString;
           size_t startOfMacroSubstring  = s.find(macroName);
           ROSE_ASSERT(startOfMacroSubstring != string::npos);
-          size_t endOfMacroSubstring    = startOfMacroSubstring + macroName.length();
+          size_t endOfMacroSubstring    = startOfMacroSubstring + (macroName.length() - 1);
 #if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);
 #endif
-          size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
+       // size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
+          size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring + 1);
 #if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- secondReferenceToMacroSubstring = %zu \n",secondReferenceToMacroSubstring);
 #endif
@@ -1068,13 +1069,47 @@ PreprocessingInfo::isSelfReferential()
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- Double check for self-referencing macro: macroName = %s s = %s ",macroName.c_str(),s.c_str());
 #endif
-               size_t endOfSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring + macroName.length();
+            // DQ (1/9/2014): Detect a prefix at the start of the second referenced string to make sure it is not embedded in another string.
+            // e.g. test for cases such as "#define ABC __ABC" which is not a self-referential macro.
+               size_t characterBeforeSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring - 1;
+               ROSE_ASSERT(endOfMacroSubstring < characterBeforeSecondReferenceToMacroSubstring);
+               string beforeSecondReferenceToMacroSubstring          = s.substr(endOfMacroSubstring+1,(characterBeforeSecondReferenceToMacroSubstring-endOfMacroSubstring));
+            // size_t find_last_not_of (const string& str, size_t pos = npos) const;
+            // size_t characterBeforeSecondReferenceToMacroSubstring = s.find_last_not_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",characterBeforeSecondReferenceToMacroSubstring);
+               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- characterBeforeSecondReferenceToMacroSubstring              = %zu \n",characterBeforeSecondReferenceToMacroSubstring);
+               printf ("   --- beforeSecondReferenceToMacroSubstring                       = %s \n",beforeSecondReferenceToMacroSubstring.c_str());
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring);
+#endif
+               ROSE_ASSERT(nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring != string::npos);
+               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring + endOfMacroSubstring + 1;
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString);
+#endif
+            // if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring < characterBeforeSecondReferenceToMacroSubstring)
+               if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString < characterBeforeSecondReferenceToMacroSubstring)
+                  {
+                 // This is a case like: "#define ABC __ABC" which is not a self-referential macro.
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                    printf ("   --- Detected case of macro renaming: \"#define ABC __ABC\": not a self-referencing macro (set result = false) \n");
+#endif
+                    result = false;
+                  }
+
+            // DQ (1/9/2014): Detect a suffix on the macro name such that it would be a renamed macro instead of a self-referential macro.
+               ROSE_ASSERT(secondReferenceToMacroSubstring != string::npos);
+               size_t endOfSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring + macroName.length() - 1;
                ROSE_ASSERT(endOfSecondReferenceToMacroSubstring != string::npos);
                ROSE_ASSERT(endOfSecondReferenceToMacroSubstring <= s.length());
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- endOfSecondReferenceToMacroSubstring = %zu \n",endOfSecondReferenceToMacroSubstring);
 #endif
-               size_t startOfRemainderSubstring = s.find_first_of("abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring);
+               string afterSecondReferenceToMacroSubstring  = s.substr(endOfSecondReferenceToMacroSubstring+1,(s.length() - endOfSecondReferenceToMacroSubstring));
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- afterSecondReferenceToMacroSubstring = %s \n",afterSecondReferenceToMacroSubstring.c_str());
+#endif
+               size_t startOfRemainderSubstring = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring+1);
                size_t endOfRemainderSubstring   = s.find_first_of(" (\t\n\0",endOfSecondReferenceToMacroSubstring);
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- startOfRemainderSubstring = %zu endOfRemainderSubstring = %zu \n",startOfRemainderSubstring,endOfRemainderSubstring);
