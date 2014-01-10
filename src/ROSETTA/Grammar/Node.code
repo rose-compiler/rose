@@ -601,7 +601,8 @@ typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrLis
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;
-
+class FrontierNode;
+class PreviousAndNextNodeData;
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
