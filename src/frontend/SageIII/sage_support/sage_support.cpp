@@ -787,6 +787,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
+if (fileList.size() != 1){
+cout << endl;
+for ( Rose_STL_Container<string>::iterator i = fileList.begin(); i != fileList.end(); i++) {
+cout << (*i) << endl;
+}
+cout << endl;
+cout.flush();
+}
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -2986,7 +2994,7 @@ global_build_classpath()
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
   // Java (ECJ front-end) support (adding specific jar file)
-     string ecj_jar_file_name = string("ecjROSE.jar");
+     string ecj_jar_file_name = string("ecj-3.8.jar");
      string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
 
@@ -3888,18 +3896,18 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           javaCommandLine.push_back(classpath);
 
           // Specify warnings for javac compiler.
-          if (backendJavaCompiler == "javac")
-          {
-                  if (get_output_warnings() == true) {
-                          javaCommandLine.push_back("-Xlint");
-                  } else {
-                          javaCommandLine.push_back("-Xlint:none");
-                  }
+          if (backendJavaCompiler == "javac") {
+              if (get_output_warnings() == true) {
+                  javaCommandLine.push_back("-Xlint");
+              } else {
+                  javaCommandLine.push_back("-Xlint:none");
+              }
+              javaCommandLine.push_back("-proc:none");
           }
           else
           {
-                  printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
-                  ROSE_ASSERT(false);
+              printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+              ROSE_ASSERT(false);
           }
 
           javaCommandLine.push_back(get_sourceFileNameWithPath());
