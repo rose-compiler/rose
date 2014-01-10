@@ -150,6 +150,7 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyz
   ProgramStats.C                 \
   Flow.h \
   Flow.C \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
@@ -189,6 +190,7 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
 analyterix_LDADD = -lrose
 analyterix_SOURCES = \
   CommandLineOptions.h CommandLineOptions.C \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   CFAnalyzer.h \

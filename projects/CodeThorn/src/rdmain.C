@@ -15,11 +15,13 @@
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
+#include "DFAstAttributeConversion.h"
 
 using namespace std;
 using namespace CodeThorn;
+using namespace DFAstAttributeConversion;
 
-
+#if 0
 void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
@@ -30,6 +32,7 @@ void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNam
       node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
   }
 }
+#endif
 
 template<typename T>
 void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {

@@ -42,6 +42,8 @@ static bool detailedOutput=0;
 const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 ReachabilityResults reachabilityResults;
+bool global_option_multiconstanalysis=false;
+
 
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
@@ -162,7 +164,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
     }
     if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
       VariableValuePair varValPair;
-      bool found=analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
+      bool found=FIConstAnalysis::analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
       if(found) {
         VariableId varId=varValPair.varId;
         if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
@@ -172,7 +174,7 @@ int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
     }
     if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
       VariableId varId;
-      bool found=determineVariable(varRef, varId, *variableIdMapping);
+      bool found=FIConstAnalysis::determineVariable(varRef, varId, *variableIdMapping);
       if(found) {
         if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
           SgIntVal* newSgIntValExpr=SageBuilder::buildIntVal(vci.uniqueConst(varId));
@@ -256,233 +258,17 @@ int isIfWithLabeledAssert(SgNode* node) {
   }
   return -1;
 }
-// ===================== EVALUATION ========================
-
-// to become a template/pattern
-typedef ConstIntLattice EvalValueType;
-EvalValueType evalSgBoolValExp(SgExpression* node) {
-  EvalValueType res;
-  SgBoolValExp* boolValExp=isSgBoolValExp(node);
-  assert(boolValExp);
-  int boolVal= boolValExp->get_value();
-  if(boolVal==0) {
-	res=false;
-	return res;
-  }
-  if(boolVal==1) {
-	res=true;
-	return res;
-  }
-  cerr<<"Error: boolean value different to 0 and 1.";
-  assert(0);
-}
-
-EvalValueType evalSgIntVal(SgExpression* node) {
-  EvalValueType res;
-  SgIntVal* intValNode=isSgIntVal(node);
-  int intVal=intValNode->get_value();
-  res=intVal;
-  return res;
-}
-
-// uses global environment (for this prototype only)
-// putting eval functions into an evaluator-class will model this properly
-// globals (for this function only):
-// global_xxx, global_variableIdMappingPtr
-VariableIdMapping* global_variableIdMappingPtr=0;
-VariableConstInfo* global_variableConstInfo=0;
-bool global_option_multiconstanalysis=false;
-EvalValueType evalSgVarRefExp(SgExpression* node) {
-  assert(global_variableIdMappingPtr);
-  assert(global_variableConstInfo);
-  VariableId varId;
-  bool isVar=determineVariable(node, varId, *global_variableIdMappingPtr);
-  assert(isVar);
-  // varId is now VariableId of VarRefExp
-  if(global_variableConstInfo->isUniqueConst(varId)) {
-	return ConstIntLattice(global_variableConstInfo->uniqueConst(varId));
-  } else {
-	return ConstIntLattice(AType::Top());
-  }
-}
-
-bool isRelationalOperator(SgExpression* node) {
-  switch(node->variantT()) {
-  case V_SgEqualityOp:
-  case V_SgNotEqualOp:
-  case V_SgGreaterOrEqualOp:
-  case V_SgGreaterThanOp:
-  case V_SgLessThanOp:
-  case V_SgLessOrEqualOp:
-	return true;
-  default: return false;
-  }
-}
-
-EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult) {
-  EvalValueType res;
-  // short-circuit CPP-AND semantics
-  if(lhsResult.isFalse()) {
-	res=lhsResult;
-  } else {
-	res=(lhsResult&&rhsResult);
-  }
-  return res;
-}
-
-EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult) {
-  EvalValueType res;
-  // short-circuit CPP-OR semantics
-  if(lhsResult.isTrue()) {
-	res=lhsResult;
-  } else {
-	res=(lhsResult||rhsResult);
-  }
-  return res;
-}
-
-EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val) {
-  assert(op);
-  assert(var);
-
-  assert(global_variableIdMappingPtr);
-  assert(global_variableConstInfo);
-
-  assert(!(val.isTop()||val.isBot()));
-
-    EvalValueType res=AType::Top(); // default if no more precise result can be determined
-
-  int constVal=val.getIntValue();
-  VariableId varId;
-  bool isVar=determineVariable(var, varId, *global_variableIdMappingPtr);
-  assert(isVar);
-  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
-  bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
-  if(myIsMultiConst) {
-	bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
-	int myMinConst=global_variableConstInfo->minConst(varId);
-	int myMaxConst=global_variableConstInfo->maxConst(varId);
-	if(detailedOutput) {
-	  cout<<" isMC:"<<myIsMultiConst;
-	  cout<<" isInConstSet:"<<myIsInConstSet;
-	  cout<<" min:"<<myMinConst;
-	  cout<<" max:"<<myMaxConst;
-	}
-	//cout<<endl;
-	
-	// it holds here: val *is* a multi const
-	// handle all cases with 3-valued logic
-	switch(op->variantT()) {
-	case V_SgEqualityOp:
-	  if(!myIsInConstSet) res=EvalValueType(false);
-	  else res=AType::Top();
-	  break;
-	case V_SgNotEqualOp: 
-	  if(!myIsInConstSet) res=EvalValueType(true);
-	  else res=AType::Top();
-	  break;
-	case V_SgGreaterOrEqualOp:
-	  if(myMaxConst>=constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgGreaterThanOp:
-	  if(myMaxConst>constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgLessThanOp:
-	  if(myMinConst<constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgLessOrEqualOp:
-	  if(myMinConst<=constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	default:
-	  cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
-	  assert(0);
-	}
-  } else {
-	if(detailedOutput) cout<<" not MC.";
-  }
-
-  if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
-  return res;
-}
-
-bool isConstVal(SgExpression* node) {
-  return isSgBoolValExp(node)||isSgIntVal(node);
-}
-
-EvalValueType eval(SgExpression* node) {
-  EvalValueType res;
-  stringstream watch;
-
-  if(dynamic_cast<SgBinaryOp*>(node)) {
-    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
-    assert(lhs);
-    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
-    assert(rhs);
-
-	if(global_option_multiconstanalysis) {
-	  // refinement for special cases handled by multi-const analysis
-	  if(isRelationalOperator(node)) {
-		EvalValueType res2;
-		if(isSgVarRefExp(lhs) && isConstVal(rhs))
-		  res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
-		if(isConstVal(lhs) && isSgVarRefExp(rhs))
-		  res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
-		if(!res2.isTop()) {
-		  // found a more precise result with multi-const analysis results
-		  return res2;
-		}
-	  }
-	  // otherwise we continue with all other cases
-	}
-    EvalValueType lhsResult=eval(lhs);
-    EvalValueType rhsResult=eval(rhs);
-    switch(node->variantT()) {
-    case V_SgAndOp: res=evalSgAndOp(lhsResult,rhsResult);break;
-    case V_SgOrOp : res=evalSgOrOp(lhsResult,rhsResult);break;
-    case V_SgEqualityOp: res=(lhsResult==rhsResult);break;
-    case V_SgNotEqualOp: res=(lhsResult!=rhsResult);break;
-    case V_SgGreaterOrEqualOp: res=(lhsResult>=rhsResult);break;
-    case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
-    case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
-    case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
-
-    case V_SgPntrArrRefExp: res=AType::Top();break;
-    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
-    }
-  } else if(dynamic_cast<SgUnaryOp*>(node)) {
-    SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
-    assert(child);
-    EvalValueType childVal=eval(child);
-    switch(node->variantT()) {
-    case V_SgNotOp: res=!childVal;break;
-    case V_SgCastExp: res=childVal;break; // requires refinement for different types
-    case V_SgMinusOp: res=-childVal; break;
-    case V_SgPointerDerefExp: res=AType::Top();break;
-    default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
-    }
-  } else {
-    // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
-    switch(node->variantT()) {
-    case V_SgBoolValExp: res=evalSgBoolValExp(node);break;
-    case V_SgIntVal: res=evalSgIntVal(node);break;
-    case V_SgVarRefExp: res=evalSgVarRefExp(node);break;
-    default: cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
-    }
-  }
-  return res;
-}
 
 
 int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
                             VariableIdMapping* variableIdMapping,
                             VariableConstInfo& vci) {
   // temporary global var
-  global_variableIdMappingPtr=variableIdMapping;
-  global_variableConstInfo=&vci;
+  //global_variableIdMappingPtr=variableIdMapping;
+  //global_variableConstInfo=&vci;
+  FIConstAnalysis fiConstAnalysis(variableIdMapping);
+  fiConstAnalysis.setVariableConstInfo(&vci);
+  fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
 
   RoseAst ast1(root);
 
@@ -501,7 +287,7 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
       //cout<<node->class_name()<<";";
       exp=isSgExpression(node);
       if(exp) {
-        ConstIntLattice res=eval(exp);
+        ConstIntLattice res=fiConstAnalysis.eval(exp);
         int assertCode=isIfWithLabeledAssert(*i);
         if(assertCode>=0) {
           if(res.isTrue()) {
@@ -537,9 +323,9 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     setstr<<"}";
     cout<<variableName<<"="<<setstr.str()<<";";
 #if 1
-    cout<<"Range:"<<createVariableValueRangeInfo(varId,map).toString();
-    cout<<" width: "<<createVariableValueRangeInfo(varId,map).width().toString();
-	cout<<" top: "<<createVariableValueRangeInfo(varId,map).isTop();
+    cout<<"Range:"<<VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
+    cout<<" width: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
+	cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
 	cout<<endl;
 #endif
 	cout<<" isAny:"<<vci.isAny(varId)
@@ -556,82 +342,6 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"---------------------"<<endl;
 }
 
-/* format: varname, isAny, isUniqueconst, isMultiConst, width(>=1 or 0 or -1 (for any)), min, max, numBits, "{...}"
-*/
-void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, const char* filename) {
-  ofstream myfile;
-  myfile.open(filename);
-
-  //  cout<<"Result:"<<endl;
-  VariableConstInfo vci(&variableIdMapping, &map);
-  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
-    VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
-    string variableName=variableIdMapping.variableName(varId);
-    myfile<<variableName;
-	myfile<<",";
-    myfile<<vci.isAny(varId);
-	myfile<<",";
-	myfile<<vci.isUniqueConst(varId);
-	myfile<<",";
-	myfile<<vci.isMultiConst(varId);
-	myfile<<",";
-    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
-	  myfile<<vci.minConst(varId);
-	  myfile<<",";
-	  myfile<<vci.maxConst(varId);
-	  size_t mywidth=vci.width(varId);
-	  assert(mywidth==(size_t)vci.maxConst(varId)-vci.minConst(varId)+1);
-	  int mylog2=log2(mywidth);
-	  // compute upper whole number
-	  int bits=-1;
-	  if(mywidth==pow(2,mylog2)) {
-		if(mylog2==0)
-		  bits=1;
-		else
-		  bits=mylog2;
-	  } else {
-		bits=mylog2+1;
-	  }
-	  assert(bits!=-1);
-	  myfile<<",";
-	  myfile<<bits;
-    } else {
-      myfile<<INT_MIN
-			<<","
-			<<INT_MAX
-			<<","
-			<<sizeof(int)*8;
-    }
-	myfile<<",";
-
-	// TODO: print array size
-	// myfile<<",";
-	SgType* varType=variableIdMapping.getType(varId);
-	if(isSgArrayType(varType))
-	  myfile<<"CA_ARRAY";
-	else if(isSgPointerType(varType))
-	  myfile<<"CA_PTR";
-	else if(isSgTypeInt(varType))
-	  myfile<<"CA_INT";
-	else
-	  myfile<<"CA_UNKNOWN";
-	myfile<<",";	
-#if 1
-    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
-    stringstream setstr;
-    myfile<<"{";
-    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
-      if(i!=valueSet.begin())
-        myfile<<",";
-      myfile<<(*i).getValue().toString();
-    }
-    myfile<<"}";
-#endif
-    myfile<<endl;
-  }
-  myfile.close();
-}
 
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
@@ -819,17 +529,17 @@ int main(int argc, char* argv[]) {
   variableIdMapping.computeVariableSymbolMapping(root);
 
   VarConstSetMap varConstSetMap;
-  varConstSetMap=computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+  FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+  varConstSetMap=fiConstAnalysis.computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
 
-  if(detailedOutput) printResult(variableIdMapping,varConstSetMap);
-  VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
-
-  //printResult(variableIdMapping, varConstSetMap);
+  if(detailedOutput)
+    printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
-    writeCvsConstResult(variableIdMapping, varConstSetMap,csvConstResultFileName);
+    FIConstAnalysis::writeCvsConstResult(variableIdMapping, varConstSetMap,string(csvConstResultFileName));
   }
 
+  VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
   if(boolOptions["eliminate-dead-code"]) {
     cout<<"STATUS: performing dead code elimination."<<endl;
     eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);

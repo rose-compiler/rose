@@ -44,6 +44,8 @@ public:
   int minConst(VariableId);
   int maxConst(VariableId);
   int arraySize(VariableId);
+  static VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map);
+  static ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet);
 private:
   VariableIdMapping* _variableIdMapping;
   VarConstSetMap* _map;
@@ -60,6 +62,36 @@ public:
     string varValueString=varValue.toString();
     return varNameString+"="+varValueString;
   }
+};
+
+typedef ConstIntLattice EvalValueType;
+class FIConstAnalysis {
+ public:
+  FIConstAnalysis(VariableIdMapping*);
+  static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
+  static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
+  static bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
+  VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
+  void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
+  VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
+
+  // Expression evaluation functions
+  EvalValueType evalSgBoolValExp(SgExpression* node);
+  EvalValueType evalSgIntVal(SgExpression* node);
+  EvalValueType evalSgVarRefExp(SgExpression* node);
+  bool isRelationalOperator(SgExpression* node);
+  EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult);
+  EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult);
+  EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val);
+  bool isConstVal(SgExpression* node);
+  EvalValueType eval(SgExpression* node);
+  void setVariableConstInfo(VariableConstInfo* varConstInfo);
+  void setOptionMultiConstAnalysis(bool);
+  static void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, string filename);
+ private:
+  VariableIdMapping* global_variableIdMapping;
+  VariableConstInfo* global_variableConstInfo;
+  bool option_multiconstanalysis;
 };
 
 #endif

@@ -25,11 +25,11 @@ SgType* VariableIdMapping::getType(VariableId varId) {
  */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    os<<"("<<i
+    os<<""<<i
       <<","<<mappingVarIdToSym[i]
       <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      <<" ::: "<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
-      <<")"<<endl;
+      <<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
+      <<endl;
     assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }

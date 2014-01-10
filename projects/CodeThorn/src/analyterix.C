@@ -20,6 +20,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "AType.h"
 #include "SgNodeHelper.h"
+#include "DFAstAttributeConversion.h"
 
 #include <vector>
 #include <set>
@@ -33,8 +34,19 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
+using namespace DFAstAttributeConversion;
 
 #include "ReachabilityResults.h"
+
+string option_prefix;
+bool option_stats=false;
+const char* csvConstResultFileName=0;
+static bool detailedOutput=0; // temporary - to be eliminated
+static VariableIdSet variablesOfInterest; // temporary - to be eliminated
+
+#include "FIConstAnalysis.C"
+
+//boost::program_options::variables_map args;
 
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
@@ -45,16 +57,12 @@ void printCodeStatistics(SgNode* root) {
   cout<<"Statistics:"<<endl;
   cout<<"Number of functions          : "<<SgNodeHelper::listOfFunctionDefinitions(project).size()<<endl;
   cout<<"Number of global variables   : "<<SgNodeHelper::listOfGlobalVars(project).size()<<endl;
+  cout<<"Number of global variableIds : "<<AnalysisAbstractionLayer::globalVariables(project,&variableIdMapping).size()<<endl;
   cout<<"Number of used variables     : "<<setOfUsedVars.size()<<endl;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"VariableIdMapping-size       : "<<variableIdMapping.getVariableIdSet().size()<<endl;
   cout<<"----------------------------------------------------------------------"<<endl;
 }
-
-string option_prefix;
-bool option_stats=false;
-
-//boost::program_options::variables_map args;
 
 int main(int argc, char* argv[]) {
   try {
@@ -74,7 +82,10 @@ int main(int argc, char* argv[]) {
       ("rose-help", "show help for compiler frontend options.")
       ("version,v", "display the version.")
       ("stats", "display code statistics.")
-      ("prefix",po::value< string >(), "set prefix for generated files.")
+      ("varidmapping", "prints variableIdMapping")
+      ("write-varidmapping", "writes variableIdMapping to a file variableIdMapping.csv")
+      ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
+      ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -103,11 +114,17 @@ int main(int argc, char* argv[]) {
     if(args.count("stats")) {
       option_stats=true;
     }
+    if (args.count("csv-const-result")) {
+      csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
+    }
+  
+
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
       if (string(argv[i]) == "--prefix" 
+          || string(argv[i]) == "--csv-const-result"
           ) {
-      // do not confuse ROSE frontend
+        // do not confuse ROSE frontend
         argv[i] = strdup("");
         assert(i+1<argc);
         argv[i+1] = strdup("");
@@ -126,10 +143,25 @@ int main(int argc, char* argv[]) {
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
+  cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
   //cout<<"Labelling:\n"<<labeler->toString()<<endl;
   IOLabeler* iolabeler=new IOLabeler(root,&variableIdMapping);
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
+
+  if (args.count("varidmapping")) {
+    variableIdMapping.toStream(cout);
+  }
+
+  VarConstSetMap varConstSetMap;
+  FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+  SgFunctionDefinition* mainFunctionRoot=0;
+  varConstSetMap=fiConstAnalysis.computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+  if(csvConstResultFileName) {
+    FIConstAnalysis::writeCvsConstResult(variableIdMapping, varConstSetMap,option_prefix+csvConstResultFileName);
+  }
+
+
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
