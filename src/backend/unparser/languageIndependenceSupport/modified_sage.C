@@ -1897,23 +1897,26 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                string s;
                switch (visibility)
                   {
+                 // DQ (1/10/2014): This appears to be a common setting, but it is an error in later versions of gcc to output this specification.
                     case SgDeclarationModifier::e_unknown_visibility: s = "(\"unknown\")";
                        {
-                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: unknown visibility setting \n");
+#if 0
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: unknown visibility setting (supressed) \n");
+#endif
                       // ROSE_ASSERT(false);
                          break;
                        }
 
                     case SgDeclarationModifier::e_error_visibility:   s = "(\"error\")";
                        {
-                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: error visibility setting \n");
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: error visibility setting (supressed) \n");
                       // ROSE_ASSERT(false);
                          break;
                        }
 
                     case SgDeclarationModifier::e_unspecified_visibility: s = "(\"xxx\")"; break;
                        {
-                         printf ("unspecified visibility (trapped) \n");
+                         printf ("unspecified visibility (trapped) (supressed) \n");
                          ROSE_ASSERT(false);
                          break;
                        }
@@ -1922,17 +1925,23 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                     case SgDeclarationModifier::e_protected_visibility:   s = "(\"protected\")"; break;
                     case SgDeclarationModifier::e_internal_visibility:    s = "(\"internal\")";  break;
 
-                    case SgDeclarationModifier::e_default_visibility:     s = "(\"default\")"; break;
+                    case SgDeclarationModifier::e_default_visibility:     s = "(\"default\")";   break;
 
                     default:
                          printf ("ERROR: In printAttributes(SgDeclarationStatement*): Bad visibility specification: visibility = %d \n", visibility);
                          ROSE_ASSERT(false);
                   }
 
-            // curprint(" __attribute__((visibility%s))",s.c_str());
-               curprint(" __attribute__((visibility");
-               curprint(s);
-               curprint("))");
+            // DQ (1/10/2014): Note that later versions of gcc will report use of "unknown" and "error" as an error.
+               if (visibility != SgDeclarationModifier::e_unknown_visibility && 
+                   visibility != SgDeclarationModifier::e_error_visibility   && 
+                   visibility != SgDeclarationModifier::e_unspecified_visibility)
+                  {
+                 // curprint(" __attribute__((visibility%s))",s.c_str());
+                    curprint(" __attribute__((visibility");
+                    curprint(s);
+                    curprint("))");
+                  }
              }
         }
    }

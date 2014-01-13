@@ -424,6 +424,10 @@ WARN_LOGFILE           =
 #       listed explicitly here (we can't add "*.C" to FILE_PATTERNS because
 #       doing so creates *lots* of doxygen entries for undocumented stuff).
 
+# DQ (1/10/2014): Removed these files to permit doxygen to be run directly from docs/Rose directory.
+#                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_4.7/documentation.docs		     
+#                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C			     
+
 INPUT                  =										     \
                          @top_pwd@/rose.docs								     \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs				     \
@@ -431,7 +435,6 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/frontend.docs					     \
                          @top_srcdir@/docs/testDoxygen							     \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C				     \
-                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs		     \
                          @top_srcdir@/src/frontend/Disassemblers					     \
                          @top_srcdir@/src/frontend/Disassemblers/Disassembler.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C			     \
@@ -470,7 +473,6 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/BinaryFormats/GenericString.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C			     \
-                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/PeExport.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C				     \
