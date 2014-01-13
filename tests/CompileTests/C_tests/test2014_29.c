@@ -6,7 +6,7 @@ void foobar(/* can't list the parameters since TYPE is not defined yet */);
 
 typedef int TYPE;
 
-// void foobar(TYPE x);
+void foobar(TYPE x);
 
 void foobar(TYPE x) {}
 

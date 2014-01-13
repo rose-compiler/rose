@@ -990,30 +990,36 @@ PreprocessingInfo::getMacroName()
    {
   // This function is only supporting the retrival of the macro name for #define macros (all other cases are an error trapped below).
 
+#define DEBUG_MACRO_NAME 0
+
      std::string macroName = "unknown";
      if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
           string s = internalString;
           string defineSubString = "define";
-
+#if DEBUG_MACRO_NAME
+          printf ("s = %s \n",s.c_str());
+#endif
           size_t lengthOfDefineSubstring = defineSubString.length();
           size_t startOfDefineSubstring  = s.find(defineSubString);
           ROSE_ASSERT(startOfDefineSubstring != string::npos);
           size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
-#if 0
+#if DEBUG_MACRO_NAME
           printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
 #endif
           string substring = s.substr(endOfDefineSubstring);
 
-          size_t startOfMacroName = s.find_first_of("abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+          size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
           size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
-#if 0
+#if DEBUG_MACRO_NAME
           printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
 #endif
           size_t macroNameLength = (endOfMacroName - startOfMacroName);
-
+#if DEBUG_MACRO_NAME
+          printf ("   --- macroNameLength = %zu \n",macroNameLength);
+#endif
           macroName = s.substr(startOfMacroName,macroNameLength);
-#if 0
+#if DEBUG_MACRO_NAME
           printf ("   --- macroName = %s \n",macroName.c_str());
 #endif
         }

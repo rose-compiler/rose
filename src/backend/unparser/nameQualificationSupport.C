@@ -3404,27 +3404,44 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // SgType* type = initializedName->get_type();
                          SgType* type = constructorInitializer->get_type();
                          ROSE_ASSERT(type != NULL);
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: type = %p = %s \n",type,type->class_name().c_str());
 #endif
                          SgFunctionType* functionType             = isSgFunctionType(type);
                          SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
 
                          SgCtorInitializerList* ctor = isSgCtorInitializerList(currentStatement);
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: ctor = %p functionType = %p memberFunctionType = %p \n",ctor,functionType,memberFunctionType);
 #endif
                       // if (ctor != NULL)
                          if (ctor != NULL && (functionType != NULL || memberFunctionType != NULL))
                             {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Calling setNameQualificationOnName() (operating DIRECTLY on the SgInitializedName) \n");
 #endif
-                              setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                           // DQ (1/13/2014): This only get's qualification when the name being used matches the class name, 
+                           // else this is a data member and should not be qualified.  See test2014_01.C.
+                           // SgName functionName = (functionType != NULL) ? functionType->get_name() : memberFunctionType->get_name();
+                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(constructorInitializer->get_declaration());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: functionDeclaration = %p \n",functionDeclaration);
+#endif
+                              SgName functionName = functionDeclaration->get_name();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: functionName = %s \n",functionName.str());
+                              printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: initializedName->get_name() = %s \n",initializedName->get_name().str());
+#endif
+                              if (initializedName->get_name() == functionName)
+                                 {
+                                   setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                                 }
                             }
                            else
                             {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Calling setNameQualification() (operating on the TYPE of the SgInitializedName) \n");
 #endif
                               setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
@@ -3432,7 +3449,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                       else
                        {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Calling setNameQualification(): constructorInitializer == NULL: (operating on the TYPE of the SgInitializedName) \n");
 #endif
                          setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
@@ -3440,7 +3457,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("Calling setNameQualification(): initializedName->get_initptr() == NULL: (operating on the TYPE of the SgInitializedName) \n");
 #endif
                     setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
@@ -5689,6 +5706,11 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
             // ROSE_ASSERT(false);
              }
         }
+
+#if 0
+     printf ("Exiting as a test in the support for name qualifiction in the preinitialization list \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
