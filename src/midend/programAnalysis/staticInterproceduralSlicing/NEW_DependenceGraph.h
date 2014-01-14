@@ -171,7 +171,7 @@ class DependenceNode:public SimpleDirectedGraphNode
  public:
 
   // ! This enum notes what type of node this is
-  enum NodeType
+  enum NodeType // NO_STRINGIFY
   {
     CONTROL=0,                /* !< Used to indicate a dummy node for
                                  control dependence */
@@ -689,7 +689,7 @@ class DependenceGraph:public SimpleDirectedGraph
 
      This enum is used in conjunction with bit vector representations, so
      some of the values are powers of two */
-  enum EdgeType
+  enum EdgeType // NO_STRINGIFY
   {
     // control information
     CONTROL         = 0x1,          /* !< A control dependence edge */

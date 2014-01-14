@@ -5,16 +5,16 @@
 public class JavaToken {
     // We mostly just want the token to carry a string version
     // of the parsed code and source position.
-    public String text;
+    public String filename;
     private JavaSourcePositionInformation posInfo;
 
     public JavaToken(String s, JavaSourcePositionInformation posInfo) {
-        this.text = s;
+        this.filename = s;
         this.posInfo = posInfo;
     }
 
-    public String getText() {
-        return text;
+    public String getFileName() {
+        return filename;
     }
 
     public JavaSourcePositionInformation getJavaSourcePositionInformation() {

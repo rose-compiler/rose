@@ -474,44 +474,59 @@ Grammar::setUpBinaryInstructions()
      AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-#if 1
-  // DQ (8/30/2013): Added back declarations that had been dropped by Robb and which were required for the Data-Structure recognition work.
-     NEW_TERMINAL_MACRO ( AsmSynthesizedDataStructureDeclaration , "AsmSynthesizedDataStructureDeclaration", "AsmSynthesizedDataStructureDeclarationTag" );
 
-  // DQ (8/30/2013): This one is already defined above.
-  // NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
 
-  // There are several sorts of declarations within a binary
-     AsmSynthesizedDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
-     AsmSynthesizedDataStructureDeclaration.setFunctionSource ( "SOURCE_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
-  // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
-  // Binaries have some easily resolved data structures so we use this to represent these
-  // AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+     // Declaration-like nodes that encapsulate multiple instructions.  Binary ASTs have two sides: the container side that
+     // corresponds to the ELF/PE/etc. file formats, and the interpretation side that corresponds to instructions and data from
+     // multiple sources (specimen + dynamic libraries) organized into multiple SgAsmInterpretation where each interpretation
+     // makes a coherent binary entity such as the DOS part of a PE executable.  The declaration-like nodes that follow appear
+     // on the interpretation side of the AST.  We may add other declaration nodes to the container side of the AST at a later
+     // time.
+     //
+     // These interpretation-side declaration-like nodes are used by the projects/BinaryDataStructureRecognition even if they
+     // aren't used internally by ROSE.
+     NEW_TERMINAL_MACRO(AsmSynthesizedDataStructureDeclaration,
+                        "AsmSynthesizedDataStructureDeclaration", "AsmSynthesizedDataStructureDeclarationTag");
+     AsmSynthesizedDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE",
+                                                                 "../Grammar/BinaryInstruction.code");
+     AsmSynthesizedDataStructureDeclaration.setFunctionSource("SOURCE_BINARY_DATA_STRUCTURE",
+                                                              "../Grammar/BinaryInstruction.code");
+#if 0
+     // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
+     // Binaries have some easily resolved data structures so we use this to represent these
+     AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+                                                  NO_DELETE, COPY_DATA);
+#endif
 
-     NEW_TERMINAL_MACRO ( AsmSynthesizedFieldDeclaration         , "AsmSynthesizedFieldDeclaration",         "AsmSynthesizedFieldDeclarationTag" );
 
-  // These are used as data members in AsmDataStructureDeclaration
+
+     NEW_TERMINAL_MACRO(AsmSynthesizedFieldDeclaration, "AsmSynthesizedFieldDeclaration", "AsmSynthesizedFieldDeclarationTag");
+     // These are used as data members in AsmDataStructureDeclaration
      AsmSynthesizedFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Not clear if we want to store the offset explicitly
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // Not clear if we want to store the offset explicitly
      AsmSynthesizedFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/2/2013): We may later wish to change "AsmFunction" to "AsmSynthesizedFunction", since functions 
-  // are physophically a synthesized concept within a binary (except where Binary API standards must be
-  // followed to permit seperate compilation).
-     NEW_NONTERMINAL_MACRO ( AsmSynthesizedDeclaration, AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration, "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
 
+
+     // DQ (9/2/2013): We may later wish to change "AsmFunction" to "AsmSynthesizedFunction", since functions are
+     // philosophically a synthesized concept within a binary (except where Binary API standards must be followed to permit
+     // seperate compilation).
+     // RPM (9/18/2013): On the other hand, most things on the interpretation side of the AST will be synthesized: basic
+     // blocks, functions, code vs. data, thunk tables, trampolines, exception handling structures, data types, CFG structures
+     // like switch statements, ... do users want or need "synthesized" in all those node type names?
+     NEW_NONTERMINAL_MACRO(AsmSynthesizedDeclaration,
+                           AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration,
+                           "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
      AsmSynthesizedDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
 
-  // NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
-     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmSynthesizedDeclaration | AsmBlock | AsmInstruction | AsmStaticData, "AsmStatement", "AsmStatementTag", false);
-#else
+
+
      NEW_NONTERMINAL_MACRO(AsmStatement,
-                           AsmFunction | AsmBlock | AsmInstruction | AsmStaticData,
+                           AsmSynthesizedDeclaration | AsmBlock | AsmInstruction | AsmStaticData,
                            "AsmStatement", "AsmStatementTag", false);
-#endif
      AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
@@ -526,8 +541,6 @@ Grammar::setUpBinaryInstructions()
       * an AST that represents a single, coherent sub-part of the file.
       *************************************************************************************************************************/
 
-     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
-     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
      NEW_TERMINAL_MACRO(AsmInterpretationList, "AsmInterpretationList", "AsmInterpretationListTag");
      AsmInterpretationList.setDataPrototype("SgAsmInterpretationPtrList", "interpretations", "",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -538,8 +551,6 @@ Grammar::setUpBinaryInstructions()
      AsmInterpretation.setFunctionPrototype("HEADER_INTERPRETATION", "../Grammar/BinaryInstruction.code");
      AsmInterpretation.setPredeclarationString("HEADER_INTERPRETATION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
      AsmInterpretation.setAutomaticGenerationOfConstructor(false);
-     AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmInterpretation.setDataPrototype("SgAsmGenericHeaderList*", "headers", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmInterpretation.setDataPrototype("SgAsmBlock*", "global_block", "= NULL",
@@ -843,7 +854,7 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfRelocEntryList, "AsmElfRelocEntryList", "AsmElfRelocEntryListTag");
      AsmElfRelocEntryList.setDataPrototype("SgAsmElfRelocEntryPtrList", "entries", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2506,7 +2517,7 @@ Grammar::setUpBinaryInstructions()
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecPurpose", "purpose", "= SgAsmGenericFormat::PURPOSE_EXECUTABLE",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ByteOrder", "sex", "= SgAsmGenericFormat::ORDER_UNSPECIFIED",
+     AsmGenericFormat.setDataPrototype("ByteOrder::Endianness", "sex", "= ByteOrder::ORDER_UNSPECIFIED",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // actual file format version number stored in file
      AsmGenericFormat.setDataPrototype("unsigned", "version", "= 0",
@@ -2537,6 +2548,10 @@ Grammar::setUpBinaryInstructions()
      AsmGenericFile.setPredeclarationString("HEADER_GENERIC_FILE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
      AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
+     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
+     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
+     AsmGenericFile.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("std::string", "name", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // File descriptor opened for read-only (or negative)

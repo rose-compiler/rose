@@ -368,9 +368,9 @@ Grammar::setUpStatements ()
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
 #else
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
 #endif
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
@@ -481,7 +481,7 @@ Grammar::setUpStatements ()
           UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine   | 
-          JavaImportStatement                     | StmtDeclarationStatement,
+          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement,
           "DeclarationStatement","DECL_STMT", false);
 
 
@@ -499,7 +499,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement | JavaPackageStatement,
+             JavaSynchronizedStatement /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -1399,6 +1399,9 @@ Grammar::setUpStatements ()
 #endif
 
   // DQ (7/30/2008): Added support suggested by Ryan for PHP interface specification.
+     ClassDeclaration.setDataPrototype ( "bool", "explicit_annotation_interface", "= false",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ClassDeclaration.setDataPrototype ( "bool", "explicit_interface", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1433,6 +1436,11 @@ Grammar::setUpStatements ()
   // template argument lists inside of template declarations.  Related to concept of is_non_real setting.
      ClassDeclaration.setDataPrototype("bool","isRepresentingTemplateParameterInTemplateDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+  // DQ (11/18/2013): Adding Java specific support
+     ClassDeclaration.setDataPrototype("bool","java_annonomous","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      

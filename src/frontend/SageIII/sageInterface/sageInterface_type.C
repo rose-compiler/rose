@@ -2096,7 +2096,7 @@ if (!sgClassType) { \
     SgType *  UnderlyingType(SgType *type){
         ROSE_ASSERT(IsEnum(type));
         ROSE_ASSERT( 0  && "Cxx11 feature NYI");
-        
+        return NULL;
     }
 
 #endif //CPP_TYPE_TRAITS

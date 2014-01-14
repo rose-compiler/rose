@@ -19,6 +19,19 @@
 
 using namespace std;
 
+inline bool
+namesMatch ( const string &x, const string &y )
+   {
+  // This function checks a case insensitive match of x against y.
+  // This is required because Fortran is case insensitive.
+
+     size_t x_length = x.length();
+     size_t y_length = y.length();
+     ROSE_ASSERT(x_length > 0 && y_length > 0);
+     return (x_length == y_length) ? strncasecmp(x.c_str(),y.c_str(),x_length) == 0 : false;
+   }
+
+
 FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
@@ -1249,7 +1262,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                ROSE_ASSERT(commonBlockObject);
                string blockName = commonBlockObject->get_block_name();
 //               std::cout << "commonblock:" << commonBlockObject << blockName << std::endl;
-               if(blockName.compare(outputName) == 0)
+               if (namesMatch(blockName, outputName))
                 {
                   outputName = "/" + outputName + "/";
                   break;
