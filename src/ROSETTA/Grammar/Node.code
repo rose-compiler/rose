@@ -560,7 +560,7 @@ typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
 typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 
 // TOO1 (5/16/2013)
-typedef Rose_STL_Container<SgJavaPackageStatement*> SgJavaPackageStatementPtrList;
+typedef Rose_STL_Container<SgJavaPackageDeclaration*> SgJavaPackageDeclarationPtrList;
 
 // DQ (6/12/2013): Added to support use in Java support (in SgSourceFile).
 typedef Rose_STL_Container<SgJavaImportStatement*> SgJavaImportStatementPtrList;

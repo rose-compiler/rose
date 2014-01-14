@@ -159,6 +159,7 @@ $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libsage3Sources = \
+   Utf8.C \
    rose_attributes_list.C \
    attachPreprocessingInfo.C \
    attachPreprocessingInfoTraversal.C \
@@ -171,6 +172,7 @@ libsage3Sources = \
    $(fSageSupport_la_sources)
 else
 libsage3Sources = \
+   Utf8.C \
    rose_attributes_list.C \
    attachPreprocessingInfo.C \
    attachPreprocessingInfoTraversal.C \

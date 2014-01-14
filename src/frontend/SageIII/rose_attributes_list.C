@@ -1109,7 +1109,28 @@ PreprocessingInfo::isSelfReferential()
           printf ("   --- macroName = %s macroName.length() = %zu \n",macroName.c_str(),macroName.length());
 #endif
           string s = internalString;
-          size_t startOfMacroSubstring  = s.find(macroName);
+
+       // DQ (1/13/2014):if the macro name is "n" then the "n" in "define" will be found by mistake.
+          string defineSubstring = "define";
+          size_t startOfMacro_define_Substring  = s.find(defineSubstring);
+
+       // DQ (1/13/2014): This case could happen if we had a macro marked as #define, but
+       // it was not properly formed (getMacroName() returns "unknown CPP directive").
+       // ROSE_ASSERT(startOfMacroSubstring != string::npos);
+          if (startOfMacro_define_Substring == string::npos)
+             {
+               printf ("WARNING: In PreprocessingInfo::isSelfReferential(): (return false): \"define\" substring not found in CPP #define directitve = %s \n",s.c_str());
+               return false;
+             }
+
+          size_t endOfMacro_define_Substring = startOfMacro_define_Substring + defineSubstring.length();
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- startOfMacro_define_Substring = %zu endOfMacro_define_Substring = %zu \n",startOfMacro_define_Substring,endOfMacro_define_Substring);
+#endif
+
+       // DQ (1/13/2014):if the macro name is "n" then the "n" in "define" will be found by mistake.
+       // size_t startOfMacroSubstring  = s.find(macroName);
+          size_t startOfMacroSubstring  = s.find(macroName,endOfMacro_define_Substring);
 
        // DQ (1/13/2014): This case could happen if we had a macro marked as #define, but
        // it was not properly formed (getMacroName() returns "unknown CPP directive").

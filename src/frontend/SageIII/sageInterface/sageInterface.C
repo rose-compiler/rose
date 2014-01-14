@@ -1107,6 +1107,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageDeclaration:
+             {
+               name = "_java_package_declaration_";
+               const SgJavaPackageDeclaration* package_declaration = isSgJavaPackageDeclaration(declaration);
+               ROSE_ASSERT(package_declaration != NULL);
+               ROSE_ASSERT(package_declaration->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageDeclaration*>(package_declaration));
+               break;
+             }
+
            case V_SgJavaPackageStatement:
              {
                name = "_java_package_stmt_";

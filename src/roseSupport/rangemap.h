@@ -588,6 +588,72 @@ public:
 };
 
 /******************************************************************************************************************************
+ *                                      RangeMap numeric values
+ ******************************************************************************************************************************/
+
+/** Scalar value type for a RangeMap.  Values can be merged if they compare equal; splitting a value is done by copying it.
+ *  The removing() and truncate() methods are no-ops.  See the RangeMapVoid class for full documentation. */
+template<class R, class T>
+class RangeMapNumeric /*final*/ {
+public:
+    typedef R Range;
+    typedef T Value;
+
+    /** Constructor creates object whose underlying value is zero. */
+    RangeMapNumeric(): value(0) {}
+
+    /** Constructor creates object with specified value. */
+    RangeMapNumeric(Value v): value(v) {} // implicit
+    
+    /** Accessor for the value actually stored here.
+     *  @{ */
+    void set(Value v) /*final*/ {
+        value = v;
+    }
+    virtual Value get() const /*final*/ {
+        return value;
+    }
+    /** @} */
+
+
+    /** Called when this value is being removed from a RangeMap. */
+    void removing(const Range &my_range) /*final*/ {
+        assert(!my_range.empty());
+    }
+
+    /** Called when removing part of a value from a RangeMap. */
+    void truncate(const Range &my_range, const typename Range::Value &new_end) /*final*/ {
+        assert(new_end>my_range.first() && new_end<=my_range.last());
+    }
+
+    /** Called to merge two RangeMap values.  The values can be merged only if they compare equal. */
+    bool merge(const Range &my_range, const Range &other_range, RangeMapNumeric other_value) /*final*/ {
+        assert(!my_range.empty() && !other_range.empty());
+        return get()==other_value.get();
+    }
+
+    /** Split a RangeMap value into two parts. */
+    RangeMapNumeric split(const Range &my_range, typename Range::Value new_end) /*final*/ {
+        assert(my_range.contains(Range(new_end)));
+        return *this;
+    }
+
+    /** Print a RangeMap value.
+     *  @{ */
+    void print(std::ostream &o) const /*final*/ {
+        o <<value;
+    }
+    friend std::ostream& operator<<(std::ostream &o, const RangeMapNumeric &x) {
+        x.print(o);
+        return o;
+    }
+    /** @} */
+    
+private:
+    Value value;
+};
+
+/******************************************************************************************************************************
  *                                      RangeMap simple values
  ******************************************************************************************************************************/
 

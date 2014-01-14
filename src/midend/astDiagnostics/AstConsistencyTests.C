@@ -906,9 +906,12 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
 
   // Test all traversed nodes to make sure that they have a valid file info object
   // Note that SgFile and SgProject nodes don't have file info objects (so skip them)
+
+  // DQ (11/20/2013): Added SgJavaImportStatementList and SgJavaClassDeclarationList to the exception list since they don't have a source position field.
   // if ( !isSgFile(node) && !isSgProject(node) )
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
+  // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
+     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node) && !isSgJavaImportStatementList(node) && !isSgJavaClassDeclarationList(node) )
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -4787,6 +4790,14 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                           ROSE_ASSERT(false);
                       }
                       break;
+                  }
+
+            // DQ (11/20/2013): Added support for checking that these are non-null (also just added code to set them to be non-null).
+               case V_SgJavaImportStatementList:
+               case V_SgJavaClassDeclarationList:
+                  {
+                    ROSE_ASSERT(support->get_parent() != NULL);
+                    break;
                   }
 
                default:
