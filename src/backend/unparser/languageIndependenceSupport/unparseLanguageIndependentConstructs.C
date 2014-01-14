@@ -2237,6 +2237,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                      // DQ (12/30/2013): Handle the case of a self referential macro declaration e.g. "#define foo  X->foo".
                                         if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
                                            {
+#if 0
+                                             printf ("In unparser: CPP macro = %s \n",(*i)->getString().c_str());
+#endif
                                           // We need to supress the output of self-referential macros since they will be expanded 
                                           // twice in the back-end compilation of the ROSE generated code.
                                              bool isSelfReferential = (*i)->isSelfReferential();

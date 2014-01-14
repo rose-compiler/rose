@@ -1439,6 +1439,24 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
+HEADER_JAVA_ANNOTATION_START
+HEADER_JAVA_ANNOTATION_END
+
+HEADER_JAVA_MARKER_ANNOTATION_START
+HEADER_JAVA_MARKER_ANNOTATION_END
+
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_START
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+HEADER_JAVA_NORMAL_ANNOTATION_START
+
+  // DQ (1/13/2014): Added append and prepend member functions to support Java annotations.
+     void append_value_pair (SgJavaMemberValuePair *what);
+     void prepend_value_pair(SgJavaMemberValuePair *what);
+
+HEADER_JAVA_NORMAL_ANNOTATION_END
+
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -6777,3 +6795,41 @@ SgCudaKernelCallExp::post_construction_initialization()
 SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
+
+
+SOURCE_JAVA_ANNOTATION_START
+
+// DQ (1/13/2014): This function helps to provide a uniform interface even though 
+// the type is held in a field called p_expression_type.  This supports Java annotations
+// for the SgJavaMarkerAnnotation, SgJavaSingleMemberAnnotation, and SgJavaNormalAnnotation.
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_expression_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_JAVA_ANNOTATION_END
+
+SOURCE_JAVA_MARKER_ANNOTATION_START
+SOURCE_JAVA_MARKER_ANNOTATION_END
+
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_START
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+SOURCE_JAVA_NORMAL_ANNOTATION_START
+
+void
+SgJavaNormalAnnotation::append_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.push_back(what); }
+
+void
+SgJavaNormalAnnotation::prepend_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.insert(p_value_pair_list.begin(), what); }
+
+SOURCE_JAVA_NORMAL_ANNOTATION_END
+

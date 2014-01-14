@@ -2625,6 +2625,9 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+       // DQ (1/13/2014): Set the output of the enum defintion to match that of the class definition (consistancy is now inforced).
+          unparseInfoPointer->set_SkipEnumDefinition();
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
 #endif
@@ -2702,8 +2705,11 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
           ROSE_ASSERT (unparseInfoPointer != NULL);
           unparseInfoPointer->set_outputCompilerGeneratedStatements();
 
-       // Avoid unpasing the class definition when unparseing the type.
+       // Avoid unpasing the class definition when unparsing the type.
           unparseInfoPointer->set_SkipClassDefinition();
+
+       // DQ (1/13/2014): Set the output of the enum defintion to match that of the class definition (consistancy is now inforced).
+          unparseInfoPointer->set_SkipEnumDefinition();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
