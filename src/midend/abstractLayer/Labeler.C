@@ -211,6 +211,13 @@ SgNode* Labeler::getNode(Label label) {
 /* this access function has O(n). This is OK as this function should only be used rarely, whereas
    the function getNode is used frequently (and has O(1)).
 */
+void Labeler::ensureValidNodeToLabelMapping() {
+  if(_isValidMappingNodeToLabel)
+    return;
+  else
+    computeNodeToLabelMapping();
+}
+
 void Labeler::computeNodeToLabelMapping() {
   mappingNodeToLabel.clear();
   std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
@@ -335,6 +342,55 @@ std::string Labeler::toString() {
   }
   return ss.str();
 }
+
+Labeler::iterator::iterator():_currentLabel(0),_numLabels(0) {
+  ROSE_ASSERT(is_past_the_end());
+}
+Labeler::iterator::iterator(Label start, size_t numLabels):_currentLabel(start),_numLabels(numLabels) {
+}
+
+bool Labeler::iterator::operator==(const iterator& x) const { 
+  return (is_past_the_end() && x.is_past_the_end())
+    || (_numLabels==x._numLabels && _currentLabel==x._currentLabel)
+    ;
+}
+
+bool Labeler::iterator::operator!=(const iterator& x) const { 
+  return !(*this==x);
+}
+
+Label Labeler::iterator::operator*() const { 
+  return _currentLabel;
+}
+
+Labeler::iterator&
+Labeler::iterator::operator++() {
+  if(is_past_the_end())
+    return *this;
+  else
+    ++_currentLabel;
+  return *this;
+}
+
+Labeler::iterator Labeler::iterator::operator++(int) {
+  iterator tmp = *this;
+  ++*this;
+  return tmp;
+}
+
+bool Labeler::iterator::is_past_the_end() const {
+  return _currentLabel>=_numLabels;
+}
+
+Labeler::iterator Labeler::begin() {
+  ensureValidNodeToLabelMapping();
+  return iterator(0,numberOfLabels());
+}
+
+Labeler::iterator Labeler::end() {
+  return iterator(0,0);
+}
+
 
 /*
   IO Labeler Implementation

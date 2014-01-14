@@ -1,11 +1,30 @@
 // analysis
-
 #include "FIConstAnalysis.h"
+#include "AType.h"
+#include "CPAstAttribute.h"
+#include "AnalysisAbstractionLayer.h"
+
+using namespace CodeThorn;
 
 FIConstAnalysis::FIConstAnalysis(VariableIdMapping* variableIdMapping):
   global_variableIdMapping(variableIdMapping),
   global_variableConstInfo(0),
-  option_multiconstanalysis(false) {
+  option_multiconstanalysis(false),
+  detailedOutput(false) {
+}
+
+void FIConstAnalysis::runAnalysis(SgProject* root) {
+  SgFunctionDefinition* mainFunctionRoot=0;
+  runAnalysis(root,mainFunctionRoot);
+}
+
+void FIConstAnalysis::runAnalysis(SgProject* root, SgFunctionDefinition* mainFunctionRoot) {
+  _varConstSetMap=computeVarConstValues(root, mainFunctionRoot, *global_variableIdMapping);
+  cout<<"INFO: varConstSetMap: size: "<<_varConstSetMap.size()<<endl;
+  global_variableConstInfo=new VariableConstInfo(global_variableIdMapping,&_varConstSetMap);
+}
+VariableConstInfo* FIConstAnalysis::getVariableConstInfo() {
+  return global_variableConstInfo;
 }
 
 ConstIntLattice FIConstAnalysis::analyzeAssignRhs(SgNode* rhs) {
@@ -158,6 +177,8 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
 }
 
 VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
+  ROSE_ASSERT(map.size()>0);
+  ROSE_ASSERT(varId.isValid());
   set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
   AType::ConstIntLattice minVal;
   AType::ConstIntLattice maxVal;
@@ -206,6 +227,7 @@ bool VariableConstInfo::isAny(VariableId varId) {
   return createVariableValueRangeInfo(varId,*_map).isTop();
 }
 bool VariableConstInfo::isUniqueConst(VariableId varId) {
+  ROSE_ASSERT(_map);
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
 }
@@ -515,32 +537,41 @@ void FIConstAnalysis::setOptionMultiConstAnalysis(bool opt) {
   option_multiconstanalysis=opt;
 }
 
+void FIConstAnalysis::attachAstAttributes(Labeler* labeler, string attributeName) {
+  ROSE_ASSERT(global_variableConstInfo);
+  for(Labeler::iterator i=labeler->begin();i!=labeler->end();++i) {
+    SgNode* node=labeler->getNode(*i);
+    ROSE_ASSERT(node);
+    node->setAttribute(attributeName, new CPAstAttribute(global_variableConstInfo,node,global_variableIdMapping));
+  }
+}
+
 /* format: varname, isAny, isUniqueconst, isMultiConst, width(>=1 or 0 or -1 (for any)), min, max, numBits, "{...}"
 */
-void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, string filename) {
+void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename) {
   ofstream myfile;
   myfile.open(filename.c_str());
 
   //  cout<<"Result:"<<endl;
-  VariableConstInfo vci(&variableIdMapping, &map);
-  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
+  //VariableConstInfo vci(&variableIdMapping, &map);
+  for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueShortVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
     myfile<<variableName;
     myfile<<",";
-    myfile<<vci.isAny(varId);
+    myfile<<global_variableConstInfo->isAny(varId);
     myfile<<",";
-    myfile<<vci.isUniqueConst(varId);
+    myfile<<global_variableConstInfo->isUniqueConst(varId);
     myfile<<",";
-    myfile<<vci.isMultiConst(varId);
+    myfile<<global_variableConstInfo->isMultiConst(varId);
     myfile<<",";
-    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
-      myfile<<vci.minConst(varId);
+    if(global_variableConstInfo->isUniqueConst(varId)||global_variableConstInfo->isMultiConst(varId)) {
+      myfile<<global_variableConstInfo->minConst(varId);
       myfile<<",";
-      myfile<<vci.maxConst(varId);
-      size_t mywidth=vci.width(varId);
-      assert(mywidth==(size_t)vci.maxConst(varId)-vci.minConst(varId)+1);
+      myfile<<global_variableConstInfo->maxConst(varId);
+      size_t mywidth=global_variableConstInfo->width(varId);
+      assert(mywidth==(size_t)global_variableConstInfo->maxConst(varId)-global_variableConstInfo->minConst(varId)+1);
       int mylog2=log2(mywidth);
       // compute upper whole number
       int bits=-1;

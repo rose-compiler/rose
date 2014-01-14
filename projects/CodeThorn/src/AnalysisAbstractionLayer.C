@@ -54,3 +54,20 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   return resultSet;
 }
 
+VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
+  VariableIdSet vset;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    VariableId vid; // default creates intentionally an invalid id.
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      vid=vidm.variableId(varDecl);
+    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(*i)) {
+      vid=vidm.variableId(varRefExp);
+    } else if(SgInitializedName* initName=isSgInitializedName(*i)) {
+      vid=vidm.variableId(initName);
+    }
+    if(vid.isValid())
+      vset.insert(vid);
+  }
+  return vset;
+}

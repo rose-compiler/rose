@@ -21,6 +21,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "AType.h"
 #include "SgNodeHelper.h"
+#include "FIConstAnalysis.h"
 
 #include <vector>
 #include <set>
@@ -137,7 +138,7 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
   return num;
 }
 
-#include "FIConstAnalysis.C"
+//#include "FIConstAnalysis.C"
 #include "DeadCodeEliminationOperators.C"
 
 // returns the number of eliminated expressions
@@ -530,16 +531,16 @@ int main(int argc, char* argv[]) {
 
   VarConstSetMap varConstSetMap;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
-  varConstSetMap=fiConstAnalysis.computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
+  fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
 
   if(detailedOutput)
     printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
-    FIConstAnalysis::writeCvsConstResult(variableIdMapping, varConstSetMap,string(csvConstResultFileName));
+    fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
 
-  VariableConstInfo vci(&variableIdMapping, &varConstSetMap); // use vci as PState for dead code elimination
+  VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
   if(boolOptions["eliminate-dead-code"]) {
     cout<<"STATUS: performing dead code elimination."<<endl;
     eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);

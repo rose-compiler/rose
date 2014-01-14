@@ -168,6 +168,7 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   RDAstAttribute.C         \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
+  CPAstAttribute.h CPAstAttribute.C \
   AstTerm.h                        \
   AstTerm.C                        \
   Miscellaneous.C                  \
@@ -176,6 +177,7 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   ProgramStats.C                 \
   Flow.h \
   Flow.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
@@ -199,6 +201,7 @@ analyterix_SOURCES = \
   RDLattice.C \
   RDAnalyzer.h \
   RDAnalyzer.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \
   LanguageRestrictorCollection.h \
@@ -211,6 +214,7 @@ analyterix_SOURCES = \
   RDAstAttribute.C \
   UDAstAttribute.h \
   UDAstAttribute.C \
+  CPAstAttribute.h CPAstAttribute.C \
   AstTerm.h \
   AstTerm.C \
   Miscellaneous.C \

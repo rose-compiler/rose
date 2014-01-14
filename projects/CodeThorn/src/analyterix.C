@@ -21,6 +21,7 @@
 #include "AType.h"
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
+#include "FIConstAnalysis.h"
 
 #include <vector>
 #include <set>
@@ -40,13 +41,106 @@ using namespace DFAstAttributeConversion;
 
 string option_prefix;
 bool option_stats=false;
+bool option_rdanalysis=false;
+bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
-static bool detailedOutput=0; // temporary - to be eliminated
-static VariableIdSet variablesOfInterest; // temporary - to be eliminated
-
-#include "FIConstAnalysis.C"
 
 //boost::program_options::variables_map args;
+
+template<typename T>
+void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {
+  long labelNum=labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+    Label lab=i;
+    SgNode* node=labeler->getNode(i);
+    //    cout<<"@Label "<<lab<<":";
+    T* node0=dynamic_cast<T*>(node->getAttribute(attributeName));
+    if(node0)
+      node0->toStream(cout,vim);
+    else
+      cout<<" none.";
+    cout<<endl;
+  }
+}
+
+void rdAnalysis(SgProject* root) {
+  boolOptions.registerOption("semantic-fold",false); // temporary
+  boolOptions.registerOption("post-semantic-fold",false); // temporary
+
+  RDAnalyzer* rdAnalyzer=new RDAnalyzer();
+  rdAnalyzer->initialize(root);
+  rdAnalyzer->initializeGlobalVariables(root);
+
+  std::string funtofind="main";
+  RoseAst completeast(root);
+  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+  rdAnalyzer->determineExtremalLabels(startFunRoot);
+  rdAnalyzer->run();
+  cout << "INFO: attaching RD-data to AST."<<endl;
+  rdAnalyzer->attachInInfoToAst("rd-analysis-in");
+  rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
+  //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
+  cout << "INFO: generating and attaching UD-data to AST."<<endl;
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
+
+  Flow* flow=rdAnalyzer->getFlow();
+#if 1
+  cout << "INFO: computing program statistics."<<endl;
+  ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
+                       rdAnalyzer->getLabeler(), 
+                       rdAnalyzer->getFlow(),
+                       "ud-analysis");
+  ps.computeStatistics();
+  //ps.printStatistics();
+  cout << "INFO: generating resource usage visualization."<<endl;
+  ps.setGenerateWithSource(false);
+  ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
+  flow->resetDotOptions();
+#endif
+  cout << "INFO: generating visualization data."<<endl;
+  // generate ICFG visualization
+  cout << "generating icfg.dot."<<endl;
+  write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+
+  //  cout << "INFO: generating control dependence graph."<<endl;
+  //Flow cdg=rdAnalyzer->getCFAnalyzer()->controlDependenceGraph(*flow);
+
+  cout << "generating datadependencegraph.dot."<<endl;
+  DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+                                 "ud-analysis");
+  //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //ddvis._showSourceCode=false; // for large programs
+  ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
+  flow->resetDotOptions();
+
+  cout << "generating icfgdatadependencegraph.dot."<<endl;
+  DataDependenceVisualizer ddvis1(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+                                 "ud-analysis");
+  ddvis1.includeFlowGraphEdges(flow);
+  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
+  flow->resetDotOptions();
+
+  cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
+  DataDependenceVisualizer ddvis2(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+                                 "ud-analysis");
+  ddvis2.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
+
+  cout << "generating icfg_clustered.dot."<<endl;
+  DataDependenceVisualizer ddvis3(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+                                 "ud-analysis");
+  ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
+
+  cout << "INFO: annotating analysis results as comments."<<endl;
+  AstAnnotator ara(rdAnalyzer->getLabeler());
+  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
+  ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
+  cout << "INFO: generating annotated source code."<<endl;
+  root->unparse(0,0);
+}
 
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
@@ -82,9 +176,11 @@ int main(int argc, char* argv[]) {
       ("rose-help", "show help for compiler frontend options.")
       ("version,v", "display the version.")
       ("stats", "display code statistics.")
+      ("rdanalysis", "perform reaching definitions analysis.")
+      ("fi-constanalysis", "perform flow-insensitive constant analysis.")
       ("varidmapping", "prints variableIdMapping")
       ("write-varidmapping", "writes variableIdMapping to a file variableIdMapping.csv")
-      ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
+      ("csv-fi-constanalysis",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -114,8 +210,15 @@ int main(int argc, char* argv[]) {
     if(args.count("stats")) {
       option_stats=true;
     }
-    if (args.count("csv-const-result")) {
-      csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
+    if(args.count("rdanalysis")) {
+      option_rdanalysis=true;
+    }
+    if(args.count("fi-constanalysis")) {
+      option_fi_constanalysis=true;
+    }
+    if (args.count("csv-fi-constanalysis")) {
+      csvConstResultFileName=args["csv-fi-constanalysis"].as<string>().c_str();
+      option_fi_constanalysis=true;
     }
   
 
@@ -153,15 +256,28 @@ int main(int argc, char* argv[]) {
     variableIdMapping.toStream(cout);
   }
 
-  VarConstSetMap varConstSetMap;
-  FIConstAnalysis fiConstAnalysis(&variableIdMapping);
-  SgFunctionDefinition* mainFunctionRoot=0;
-  varConstSetMap=fiConstAnalysis.computeVarConstValues(root, mainFunctionRoot, variableIdMapping);
-  if(csvConstResultFileName) {
-    FIConstAnalysis::writeCvsConstResult(variableIdMapping, varConstSetMap,option_prefix+csvConstResultFileName);
+  if(option_fi_constanalysis) {
+    VarConstSetMap varConstSetMap;
+    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+    fiConstAnalysis.runAnalysis(root);
+    fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
+    if(csvConstResultFileName) {
+      cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
+      fiConstAnalysis.writeCvsConstResult(variableIdMapping, option_prefix+csvConstResultFileName);
+    }
+#if 1
+    cout << "INFO: annotating analysis results as comments."<<endl;
+    AstAnnotator ara(labeler);
+    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
+    ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+    cout << "INFO: generating annotated source code."<<endl;
+    root->unparse(0,0);
+#endif
   }
-
-
+  if(option_rdanalysis) {
+    cout<<"STATUS: Performing RD analysis."<<endl;
+    rdAnalysis(root);
+  }
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch

@@ -1,6 +1,16 @@
 #ifndef FICONSTANALYSIS_H
 #define FICONSTANALYSIS_H
 
+#include "AType.h"
+#include <cassert>
+#include <map>
+#include <set>
+#include "VariableIdMapping.h"
+#include "Labeler.h"
+
+using namespace std;
+using namespace CodeThorn::AType;
+
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {
 public:
@@ -74,6 +84,10 @@ class FIConstAnalysis {
   VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
   VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
+  void runAnalysis(SgProject* root);
+  void runAnalysis(SgProject* root,SgFunctionDefinition* mainFunctionRoot);
+  VariableConstInfo* getVariableConstInfo();
+  void attachAstAttributes(Labeler* labeler, string attributeName);
 
   // Expression evaluation functions
   EvalValueType evalSgBoolValExp(SgExpression* node);
@@ -87,11 +101,14 @@ class FIConstAnalysis {
   EvalValueType eval(SgExpression* node);
   void setVariableConstInfo(VariableConstInfo* varConstInfo);
   void setOptionMultiConstAnalysis(bool);
-  static void writeCvsConstResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map, string filename);
+  void writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename);
+  set<VariableId> variablesOfInterest; // temporary (refactoring artefact, will be removed)
  private:
   VariableIdMapping* global_variableIdMapping;
+  VarConstSetMap _varConstSetMap;
   VariableConstInfo* global_variableConstInfo;
   bool option_multiconstanalysis;
+  bool detailedOutput;
 };
 
 #endif

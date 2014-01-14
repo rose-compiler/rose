@@ -21,19 +21,6 @@ using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
 
-#if 0
-void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
-  long labelNum=labeler->numberOfLabels();
-  for(long i=0;i<labelNum;++i) {
-    Label lab=i;
-    SgNode* node=labeler->getNode(lab);
-    RDAstAttribute* rdAttr=dynamic_cast<RDAstAttribute*>(node->getAttribute(rdAttributeName));
-    if(rdAttr)
-      node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
-  }
-}
-#endif
-
 template<typename T>
 void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {
   long labelNum=labeler->numberOfLabels();
@@ -55,6 +42,7 @@ int main(int argc, char* argv[]) {
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   SgProject* root = frontend(argc,argv);
+
   RDAnalyzer* rdAnalyzer=new RDAnalyzer();
   rdAnalyzer->initialize(root);
   rdAnalyzer->initializeGlobalVariables(root);

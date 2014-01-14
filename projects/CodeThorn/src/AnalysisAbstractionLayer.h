@@ -10,5 +10,6 @@ namespace AnalysisAbstractionLayer {
   VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet useVariables(SgNode* node, VariableIdMapping& vidm);
   VariableIdSet defVariables(SgNode* node, VariableIdMapping& vidm);
+  VariableIdSet astSubTreeVariables(SgNode* node, VariableIdMapping& vidm);
 }
 #endif
