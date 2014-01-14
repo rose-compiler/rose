@@ -88,6 +88,11 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
         case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
 
+        case V_SgJavaMarkerAnnotation:       { unparseMarkerAnnotation(expr, info); break; }
+        case V_SgJavaSingleMemberAnnotation: { unparseSingleMemberAnnotation(expr, info); break; }
+        case V_SgJavaNormalAnnotation:       { unparseNormalAnnotation(expr, info); break; }
+
+
         default: {
 
             // migrate the above switch stmt to use variantT() instead on variant(). The former has much
@@ -830,8 +835,8 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     ROSE_ASSERT(cast != NULL);
 
     curprint("(");
-    ROSE_ASSERT(cast -> attributeExists("type"));
     AstRegExAttribute *attribute = (AstRegExAttribute *) cast -> getAttribute("type");
+    ROSE_ASSERT(attribute);
     curprint(attribute -> expression);
     curprint(") ");
 
@@ -1465,3 +1470,58 @@ void Unparse_Java::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
     unparseExpression(rhs, info);
 }
 
+
+void 
+Unparse_Java::unparseMarkerAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaMarkerAnnotation *marker_annotation = isSgJavaMarkerAnnotation(expr);
+    // SgClassType *type = isSgClassType(marker_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) marker_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+}
+
+void
+Unparse_Java::unparseSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaSingleMemberAnnotation *single_member_annotation = isSgJavaSingleMemberAnnotation(expr);
+    // SgClassType *type = isSgClassType(single_member_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) single_member_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+
+    curprint("(");
+    unparseExpression(single_member_annotation -> get_value(), info);
+    curprint(")");
+}
+
+void
+Unparse_Java::unparseNormalAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaNormalAnnotation *normal_annotation = isSgJavaNormalAnnotation(expr);
+    // SgClassType *type = isSgClassType(normal_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) normal_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+
+    SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
+    for (int k = 0; k < pair_list.size(); k++) {
+        SgJavaMemberValuePair *pair = pair_list[k];
+        if (k > 0) {
+            curprint(", ");
+        }
+        curprint(pair -> get_name().getString());
+        curprint(" = ");
+        unparseExpression(pair -> get_value(), info);
+    }
+    curprint(")");
+}

@@ -78,6 +78,114 @@ string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string) {
 }
 */
 
+bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr) {
+    if (type_arg_list == NULL && new_args_ptr == NULL) { // two null argument list? ... then they compare.
+        return true;
+    }
+    if (type_arg_list == NULL || new_args_ptr == NULL) { // Only one of the argument lists is null?
+        return false;
+    }
+    ROSE_ASSERT(type_arg_list != NULL && new_args_ptr != NULL);
+
+    SgTemplateParameterPtrList args = type_arg_list -> get_args();
+    if (args.size() != new_args_ptr -> size()) {
+        return false;
+    }
+    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
+                                         new_arg_it = new_args_ptr -> begin();
+    for (; arg_it != args.end(); arg_it++, new_arg_it++) {
+        SgType *type1 = (*arg_it) -> get_type(),
+               *type2 = (*new_arg_it) -> get_type();
+        if (type1 != type2) {
+            break;
+        }
+    }
+    return (arg_it == args.end()); // The two argument lists match?
+}
+
+SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr) {
+/*
+cout << "Looking for type ";
+if (containing_type != NULL)
+cout << getTypeName(containing_type) << "." << rawType -> get_name().getString() << endl;
+else cout << getFullyQualifiedTypeName(rawType);
+if (new_args_ptr == NULL)
+cout << " with no arguments";
+else {
+  cout << "<";
+for (SgTemplateParameterPtrList::iterator new_arg_it = new_args_ptr -> begin(); new_arg_it != new_args_ptr -> end(); new_arg_it++){
+if (new_arg_it != new_args_ptr -> begin()) cout <<", ";
+cout << getTypeName((*new_arg_it) -> get_type());
+}
+cout <<">";
+}
+cout << endl;
+cout.flush();
+*/
+
+    //
+    // Keep track of parameterized types in a table so as not to duplicate them.
+    //
+/*
+cout << "Ready to check type list with " << parameterizedTypes.size() << " elements" << endl;
+cout.flush();
+*/
+
+    for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+
+/*
+cout << "Considering parameterized type "
+    << getTypeName(*type_it)
+    << endl;
+cout.flush();
+*/
+
+        if (argumentsMatch((*type_it) -> get_type_list(), new_args_ptr)) {
+/*
+cout << "Got this far for raw type " << getFullyQualifiedTypeName(rawType)
+     << endl;
+cout.flush();
+*/
+
+            AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ((*type_it) -> getAttribute("enclosing_type"));
+            if ((attribute == NULL && containing_type == NULL) || (attribute != NULL && attribute -> getNode() == containing_type)) {
+/*
+cout << "Found a match for "
+    << getTypeName(*type_it)
+     << endl;
+cout.flush();
+*/
+                return (*type_it);
+            }
+        }
+    }
+
+    //
+    // This parameterized type does not yet exist. Create it, store it in the table and return it.
+    //
+    SgClassDeclaration *classDeclaration = isSgClassDeclaration(rawType -> getAssociatedDeclaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    SgTemplateParameterList *typeParameterList = (new_args_ptr == NULL ? NULL : new SgTemplateParameterList());
+    if (new_args_ptr != NULL) {
+        typeParameterList -> set_args(*new_args_ptr);
+    }
+    SgJavaParameterizedType *parameterized_type = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
+    if (containing_type != NULL) {
+        AstSgNodeAttribute *attribute = new AstSgNodeAttribute(containing_type);
+        parameterized_type -> setAttribute("enclosing_type", attribute);
+    }
+
+    parameterizedTypes.push_front(parameterized_type);
+
+/*
+cout << "Entering a new type for raw type " << getTypeName(parameterized_type)
+     << endl;
+cout.flush();
+*/
+
+    return parameterized_type;
+}
+
 //
 // This function converts a Java string into its Utf8 representation.
 //
@@ -280,7 +388,7 @@ SgPointerType *getUniquePointerType(SgType *base_type, int num_dimensions) {
 }
 
 
-SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgType *containing_type, SgTemplateParameterPtrList &newArgs) {
+SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgType *containing_type, SgTemplateParameterPtrList *new_args) {
     AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) raw_type -> getAttribute("parameterized types");
     if (! attribute) {
         attribute = new AstParameterizedTypeAttribute(raw_type);
@@ -288,7 +396,7 @@ SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgTyp
     }
     ROSE_ASSERT(attribute);
 
-    return attribute -> findOrInsertParameterizedType(containing_type, newArgs);
+    return attribute -> findOrInsertParameterizedType(containing_type, new_args);
 }
 
 
@@ -538,24 +646,38 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
 }
 
 string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
-    ROSE_ASSERT(isSgClassType(parm_type -> get_raw_type()));
-    string result = getFullyQualifiedTypeName(isSgClassType(parm_type -> get_raw_type()));
-
-    result += "<";
-    SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-    for (int i = 0; i < arg_list.size(); i++) {
-        SgTemplateParameter *templateParameter = arg_list[i];
-        SgType *argument_type = templateParameter -> get_type();
-        SgJavaParameterizedType *p_type = isSgJavaParameterizedType(argument_type);
-        SgClassType *c_type = isSgClassType(argument_type);
-        result += (p_type ? getFullyQualifiedTypeName(p_type)
-                          : c_type ? getFullyQualifiedTypeName(c_type)
-                                   : getTypeName(argument_type));
-        if (i + 1 < arg_list.size()) {
-            result += ", ";
-        }
+    SgClassType *raw_type = isSgClassType(parm_type -> get_raw_type());
+    ROSE_ASSERT(raw_type);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) parm_type -> getAttribute("enclosing_type");
+    string result;
+    if (attribute) {
+        result = (isSgJavaParameterizedType(attribute -> getNode())
+                      ? getFullyQualifiedTypeName((SgJavaParameterizedType *) attribute -> getNode())
+                      : getFullyQualifiedTypeName((SgClassType *) attribute -> getNode()));
+        result += ".";
+        result += raw_type -> get_name().getString();
     }
-    result += ">";
+    else {
+        result = getFullyQualifiedTypeName(raw_type);
+    }
+
+    if (parm_type -> get_type_list()) { // This type has parameters?
+        result += "<";
+        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
+        for (int i = 0; i < arg_list.size(); i++) {
+            SgTemplateParameter *templateParameter = arg_list[i];
+            SgType *argument_type = templateParameter -> get_type();
+            SgJavaParameterizedType *p_type = isSgJavaParameterizedType(argument_type);
+            SgClassType *c_type = isSgClassType(argument_type);
+            result += (p_type ? getFullyQualifiedTypeName(p_type)
+                              : c_type ? getFullyQualifiedTypeName(c_type)
+                                       : getTypeName(argument_type));
+            if (i + 1 < arg_list.size()) {
+                result += ", ";
+            }
+        }
+        result += ">";
+    }
 
     return result;
 }
@@ -761,9 +883,9 @@ string getTypeName(SgJavaParameterizedType *parm_type) {
         result += raw_type -> get_name().getString();
     }
 
-    SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-    if (arg_list.size() > 0) {
+    if (parm_type -> get_type_list()) {
         result += "<";
+        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
         for (int i = 0; i < arg_list.size(); i++) {
             SgTemplateParameter *templateParameter = arg_list[i];
             SgType *argument_type = templateParameter -> get_type();
@@ -997,6 +1119,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
     locatedNode -> get_startOfConstruct() -> unsetCompilerGenerated();
     locatedNode -> get_endOfConstruct() -> unsetCompilerGenerated();
 
+    /* // TODO: This code causes problems for Annotations!!!
     // DQ (8/16/2011): Added support for setting the operator source code position 
     // (Note that for expressions get_file_info() returns get_operatorPosition()).
     SgExpression *expression = isSgExpression(locatedNode);
@@ -1008,6 +1131,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
         expression -> get_operatorPosition() -> unsetTransformation();
         expression -> get_operatorPosition() -> unsetCompilerGenerated();
     }
+    */
 }
 
 
@@ -1244,6 +1368,26 @@ cout.flush();
     unsigned int mfunc_specifier = 0;
     SgMemberFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(return_type, typeList, class_definition, mfunc_specifier);
     ROSE_ASSERT(member_function_type != NULL);
+// TODO: Remove this !!!
+
+if (member_function_type -> get_return_type() != return_type){
+cout << "Mismatch in the return type of "
+     << inputName.getString()
+     << " in class "
+     << class_definition -> get_qualified_name().getString()
+     << "; The types are "
+     << getTypeName(member_function_type -> get_return_type())
+     << " ("
+     << member_function_type -> get_return_type() -> class_name()
+     << ")  and  "
+     << getTypeName(return_type)
+     << " ("
+     << return_type -> class_name()
+     << ")"
+<< endl;
+cout.flush();
+}
+
     ROSE_ASSERT(member_function_type -> get_return_type() == return_type);
 
     // parameterlist = SageBuilder::buildFunctionParameterList(typeList);
@@ -1902,8 +2046,8 @@ cout.flush();
                 }
 
                 //
-		// Check to see if the type is a parameter type.
-		//
+                // Check to see if the type is a parameter type.
+                //
                 AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_definition -> get_declaration() -> getAttribute("type_space");
                 if (type_space_attribute) { // Initializer blocks don't have a type_space attribute
                     SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());

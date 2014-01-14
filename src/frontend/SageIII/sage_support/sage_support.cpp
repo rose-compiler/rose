@@ -4527,9 +4527,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-// TODO: Remove this!  PC 07/03/2013
-//                    frontend_failed = (frontendErrorLevel > 0);
-                    this -> set_frontendErrorCode(frontendErrorLevel);
+                    this -> set_javacErrorCode(frontendErrorLevel);
                     frontendErrorLevel = 0; // PC: Always keep going for Java!
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
@@ -4926,7 +4924,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report if an error detected only while compilng the output file?
               //
-              if (this -> get_frontendErrorCode()                == 0 &&
+              if (this -> get_javacErrorCode()                   == 0 &&
+                  this -> get_frontendErrorCode()                == 0 &&
                   this -> get_project() -> get_midendErrorCode() == 0 &&
                   this -> get_unparserErrorCode()                == 0 &&
                   this -> get_backendCompilerErrorCode()         != 0) {
@@ -4938,10 +4937,16 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report Error or Success of this translation.
               //
-              if (this -> get_frontendErrorCode()                != 0 ||
-                  this -> get_project() -> get_midendErrorCode() != 0 ||
-                  this -> get_unparserErrorCode()                != 0 ||
-                  this -> get_backendCompilerErrorCode()         != 0)
+              if (this -> get_javacErrorCode() != 0) {
+                  cout << "SYNTAX ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_frontendErrorCode()                != 0 ||
+                       this -> get_project() -> get_midendErrorCode() != 0 ||
+                       this -> get_unparserErrorCode()                != 0 ||
+                       this -> get_backendCompilerErrorCode()         != 0)
                  {
                   cout << "ERROR compiling "
                        << this -> getFileName()

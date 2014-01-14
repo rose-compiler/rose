@@ -29,7 +29,7 @@ extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgType *containing_type, SgTemplateParameterPtrList &);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgType *containing_type, SgTemplateParameterPtrList *);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
@@ -105,52 +105,8 @@ private:
 public:
     AstParameterizedTypeAttribute(SgClassType *rawType_) : rawType(rawType_) {}
 
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList &newArgs) {
-        //
-        // Keep track of parameterized types in a table so as not to duplicate them.
-        //
-        for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
-            SgTemplateParameterList *type_arg_list = (*type_it) -> get_type_list();
-            if (type_arg_list) {
-                SgTemplateParameterPtrList args = type_arg_list -> get_args();
-                if (args.size() == newArgs.size()) {
-                    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
-                                                         newArg_it = newArgs.begin();
-                    for (; arg_it != args.end(); arg_it++, newArg_it++) {
-                        SgType *type1 = (*arg_it) -> get_type(),
-                               *type2 = (*newArg_it) -> get_type();
-                        if (type1 != type2) {
-                            break;
-                        }
-                    }
-
-                    if (arg_it == args.end()) { // Found an arguments match!
-                        AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ((*type_it) -> getAttribute("enclosing_type"));
-                        if ((attribute == NULL && containing_type == NULL) || (attribute != NULL && attribute -> getNode() == containing_type)) {
-                            return (*type_it);
-                        }
-                    }
-                }
-            }
-        }
-
-        //
-        // This parameterized type does not yet exist. Create it, store it in the table and return it.
-        //
-        SgClassDeclaration *classDeclaration = isSgClassDeclaration(rawType -> getAssociatedDeclaration());
-        ROSE_ASSERT(classDeclaration != NULL);
-        SgTemplateParameterList *typeParameterList = new SgTemplateParameterList();
-        typeParameterList -> set_args(newArgs);
-        SgJavaParameterizedType *parameterizedType = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
-        if (containing_type != NULL) {
-            AstSgNodeAttribute *attribute = new AstSgNodeAttribute(containing_type);
-            parameterizedType -> setAttribute("enclosing_type", attribute);
-        }
-
-        parameterizedTypes.push_front(parameterizedType);
-
-        return parameterizedType;
-    }
+    bool argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr);
+    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr);
 };
 
 

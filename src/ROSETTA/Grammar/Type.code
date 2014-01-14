@@ -2896,10 +2896,12 @@ $CLASSNAME::get_mangled(void) const
              }
 */
              mangled_name = get_raw_type() -> get_mangled();
-             SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
-             for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
-                 mangled_name += "_";
-                 mangled_name += (*i) -> get_type() -> get_mangled();
+             if (get_type_list() != NULL) {
+                 SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+                 for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                     mangled_name += "_";
+                     mangled_name += (*i) -> get_type() -> get_mangled();
+                 }
              }
         }
 

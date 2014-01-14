@@ -254,6 +254,10 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
           void unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info);
+
+          void unparseMarkerAnnotation(SgExpression *, SgUnparse_Info& info);
+          void unparseSingleMemberAnnotation(SgExpression *, SgUnparse_Info& info);
+          void unparseNormalAnnotation(SgExpression *, SgUnparse_Info& info);
    };
 
 #endif

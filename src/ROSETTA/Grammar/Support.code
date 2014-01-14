@@ -14886,6 +14886,7 @@ SgProject::get_files_with_errors() const
   {
       SgFile* file = *it;
       bool has_errors =
+          file->get_javacErrorCode()            != 0 ||
           file->get_frontendErrorCode()         != 0 ||
           file->get_unparserErrorCode()         != 0 ||
           file->get_backendCompilerErrorCode()  != 0;
@@ -14909,6 +14910,7 @@ SgProject::get_files_without_errors() const
   {
       SgFile* file = *it;
       bool has_no_errors =
+          file->get_javacErrorCode()            == 0 &&
           file->get_frontendErrorCode()         == 0 &&
           file->get_unparserErrorCode()         == 0 &&
           file->get_backendCompilerErrorCode()  == 0;
