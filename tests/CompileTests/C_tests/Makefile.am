@@ -407,6 +407,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_26.c \
      test2014_27.c \
      test2014_28.c \
+     test2014_30.c \
+     test2014_31.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -423,6 +425,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 #     test2014_03.c  demonstrates nested functions (not supported in EDG).
 #     test2014_10.c  demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation.
 #     test2014_11.c  (simpler case of test2014_10.c.
+#     test2014_29.c  This is the test of function prototypes without parameters used for functions with parametes (C only).
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 
