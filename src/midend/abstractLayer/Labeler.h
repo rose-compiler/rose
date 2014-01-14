@@ -21,7 +21,9 @@ typedef size_t Label;
   * \author Markus Schordan
   * \date 2012.
  */
- class LabelProperty {
+
+// internal data structure (not used in Labeler's interface)
+class LabelProperty {
  public:
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
                     LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
@@ -155,6 +157,23 @@ class Labeler {
   bool isFunctionCallReturnLabel(Label lab);
   bool isConditionLabel(Label lab);
 
+  class iterator {
+  public:
+    iterator();
+    iterator(Label start, size_t numLabels);
+    bool operator==(const iterator& x) const;
+    bool operator!=(const iterator& x) const;
+    Label operator*() const;
+    iterator& operator++(); // prefix
+    iterator operator++(int); // postfix
+  private:
+    bool is_past_the_end() const;
+    Label _currentLabel;
+    size_t _numLabels;
+  };
+  iterator begin();
+  iterator end();
+
  protected:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
@@ -163,6 +182,7 @@ class Labeler {
   typedef  map<SgNode*,Label> NodeToLabelMapping;
   NodeToLabelMapping mappingNodeToLabel;
   bool _isValidMappingNodeToLabel;
+  void ensureValidNodeToLabelMapping();
 };
 
 class IOLabeler : public Labeler {
