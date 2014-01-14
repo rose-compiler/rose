@@ -1696,6 +1696,27 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetupStringAndClassTypes(JNIEnv *e
         printf ("Leaving Java_JavaParser_cactionSetupObject\n");
 }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionPackageAnnotations(JNIEnv *env, jclass, int num_annotations, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionPackageAnnotations(): %d annotations\n", num_annotations);
+
+    if (num_annotations > 0) {
+        ROSE_ASSERT(::currentSourceFile);
+        SgJavaPackageStatement *package_statement = ::currentSourceFile -> get_package();
+        ROSE_ASSERT(package_statement);
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        package_statement -> setAttribute("annotations", annotations_attribute);
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(package_statement);
+            annotations_attribute -> setNode(annotation, i);
+        }
+    }
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionPackageAnnotetions(): %d annotations\n", num_annotations);
+}
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration(JNIEnv *env, jclass, jstring java_full_file_name, jstring java_package_name, jstring java_filename, jobject jToken) {
      if (SgProject::get_verbose() > 0)
@@ -2013,15 +2034,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env, jclass,
                                                                     jboolean java_has_super_class,
-                                                                    jint java_numberOfInterfaces,
-                                                                    jint java_numberOfParameters,
+                                                                    jint num_interfaces,
+                                                                    jint num_parameters,
                                                                     jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgClassDeclaration (cactionTypeDeclarationHeader) \n");
 
     bool has_super_class = java_has_super_class;
-    int number_of_interfaces = java_numberOfInterfaces;
-    int number_of_parameters = java_numberOfParameters;
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
@@ -2033,7 +2052,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
     //
     // Process the interfaces for this type, if any.
     //
-    for (int i = 0; i < number_of_interfaces; i++) {
+    for (int i = 0; i < num_interfaces; i++) {
          SgType *type = astJavaComponentStack.popType();
     }
 
@@ -2044,14 +2063,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
         SgType *type = astJavaComponentStack.popType();
     }
 
-    ROSE_ASSERT(class_definition == astJavaComponentStack.top());
-
     if (SgProject::get_verbose() > 0)
         printf ("Leaving Java_JavaParser_cactionTypeDeclarationHeader() (cactionTypeDeclarationHeader) \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jclass, jint num_annotations, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
 
@@ -2062,20 +2079,21 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jc
     if (SgProject::get_verbose() > 0)
         printf ("Build class type: name = %s \n", class_definition -> get_qualified_name().str());
 
-// TODO: Remove this!
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_definition -> get_declaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration != NULL);
 
-if(class_definition != astJavaComponentStack.top()) {
-cout << "The class " << class_definition -> get_qualified_name() << " does not match the top of the stack! " << astJavaComponentStack.top() -> class_name() << endl;
-if (isSgJavaParameterizedType(astJavaComponentStack.top())) {
-cout << "Found " << getFullyQualifiedTypeName(isSgJavaParameterizedType(astJavaComponentStack.top())) << endl;
-}
-}
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(class_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        class_declaration -> setAttribute("annotations", annotations_attribute);
+    }
 
     ROSE_ASSERT(class_definition == astJavaComponentStack.top());
     astJavaComponentStack.pop(); // remove the class definition from the stack
-
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_definition -> get_declaration() -> get_definingDeclaration());
-    ROSE_ASSERT(class_declaration != NULL);
 
     //
     // Now that we are processing declarations in two passes, type declarations are always entered in their
@@ -2267,21 +2285,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *env, jclass, jint java_numberOfStatements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *env, jclass, jint num_annotations, jint num_statements, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("End of SgMemberFunctionDeclaration (constructor) \n");
 
-    // DQ (7/31/2011): Add more precise handling of the statement stack.
-    // This does not count (include) explicit constructor calls...
-    int numberOfStatements = java_numberOfStatements;
-
     if (SgProject::get_verbose() > 0)
-        printf ("cactionConstructorDeclarationEnd(): numberOfStatements = %d\n", numberOfStatements);
+        printf ("cactionConstructorDeclarationEnd(): number of statements = %d\n", num_statements);
 
     // Pop the constructor body...
     ROSE_ASSERT(! astJavaScopeStack.empty());
     SgBasicBlock *constructor_body = astJavaScopeStack.popBasicBlock();
-    for (int i = 0; i  < numberOfStatements; i++) {
+    for (int i = 0; i  < num_statements; i++) {
         SgStatement *statement = astJavaComponentStack.popStatement();
         if (SgProject::get_verbose() > 2) {
             cerr << "(3) Adding statement "
@@ -2293,8 +2307,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
         constructor_body -> prepend_statement(statement);
     }
 
-    /* SgFunctionDefinition *memberFunctionDefinition = */ 
-    astJavaScopeStack.popFunctionDefinition();
+    SgFunctionDefinition *constructor_definition = astJavaScopeStack.popFunctionDefinition();
+    SgMemberFunctionDeclaration *constructor_declaration = isSgMemberFunctionDeclaration(constructor_definition -> get_declaration());
+
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(constructor_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        constructor_declaration -> setAttribute("annotations", annotations_attribute);
+    }
 
     SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.pop());
     ROSE_ASSERT(type_space);
@@ -2640,15 +2664,15 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, int number_of_statements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_annotations, int num_statements, jobject jToken) {
     if (SgProject::get_verbose() > 0)
-        printf ("Entering  cactionMethodDeclarationEnd (method) for %d statements\n", number_of_statements);
+        printf ("Entering  cactionMethodDeclarationEnd (method) for %d statements\n", num_statements);
 
     // Pop the constructor body...
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
     SgBasicBlock *method_body = astJavaScopeStack.popBasicBlock(); // pop the body block
-    for (int i = 0; i < number_of_statements; i++) {
+    for (int i = 0; i < num_statements; i++) {
          SgStatement *statement = astJavaComponentStack.popStatement();
          if (SgProject::get_verbose() > 2) {
              cerr << "(4) Adding statement "
@@ -2660,8 +2684,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
         method_body -> prepend_statement(statement);
     }
 
-    /* SgFunctionDefinition *memberFunctionDefinition = */
-    astJavaScopeStack.popFunctionDefinition();
+    SgFunctionDefinition *method_definition = astJavaScopeStack.popFunctionDefinition();
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
+
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(method_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        method_declaration -> setAttribute("annotations", annotations_attribute);
+    }
 
     SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.pop());
     ROSE_ASSERT(type_space);
@@ -2889,10 +2923,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgument(JNIEnv *env, jclass, jstr
         printf ("Build a function argument \n");
 
     // TODO: Do Nothing ... At some point, this function should be removed!!!
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Done Building a function argument \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jclass, jstring java_argument_name, jint java_number_of_types, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring java_argument_name, jint java_number_of_types, jboolean java_is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
@@ -2963,16 +3000,42 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jcla
 //<< endl;
 //cout.flush();
 
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(variable_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        variable_declaration -> setAttribute("annotations", annotations_attribute);
+    }
+
     catch_option_stmt -> set_condition(variable_declaration);
     variable_declaration -> set_parent(catch_option_stmt);
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring java_argument_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
-    // TODO: Do nothing ... At some point, this function should be removed!!!
+    SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
+    SgVariableSymbol *variable_symbol = lookupVariableByName(argument_name);
+    ROSE_ASSERT(variable_symbol);
+    SgInitializedName *initialized_name = variable_symbol -> get_declaration();
+    ROSE_ASSERT(initialized_name);
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(initialized_name);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        initialized_name -> setAttribute("annotations", annotations_attribute);
+    }
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a function argument \n");
 }
 
 
@@ -2998,13 +3061,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jc
         printf ("Build a array type \n");
 
     int num_dimensions = java_num_dimensions;
-    ROSE_ASSERT(num_dimensions > 0);
-    SgType *base_type = astJavaComponentStack.popType();
-    ROSE_ASSERT(base_type);
-    SgType *array_type = getUniquePointerType(base_type, num_dimensions);
-    ROSE_ASSERT(array_type);
+    if (num_dimensions > 0) { // No dimensions?  Then leave the base type on the stack.
+        SgType *base_type = astJavaComponentStack.popType();
+        ROSE_ASSERT(base_type);
+        SgType *array_type = getUniquePointerType(base_type, num_dimensions);
+        ROSE_ASSERT(array_type);
 
-    astJavaComponentStack.push(array_type);
+        astJavaComponentStack.push(array_type);
+    }
 }
 
 
@@ -3375,7 +3439,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNIEnv *env, jclass, jstring java_string, jint method_index, jboolean has_default, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNIEnv *env, jclass, jstring java_string, jint method_index, jint num_annotations, jboolean has_default, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering Java_JavaParser_cactionAnnotationMethodDeclarationEnd() \n");
 
@@ -3408,6 +3472,16 @@ cout.flush();
     if (has_default) {
         SgExpression *default_expression = astJavaComponentStack.popExpression();
         method_declaration -> setAttribute("default", new AstSgNodeAttribute(default_expression));
+    }
+
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(method_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        method_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
     if (SgProject::get_verbose() > 0)
@@ -4142,7 +4216,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jclass, 
 
 // DQ (9/5/2011): This was changed to be processed bottom up (so there is no Java_JavaParser_cactionFieldDeclaration() function now.
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jclass,
-                                                                  jstring variableName,
+                                                                  jstring variable_name,
+                                                                  jint num_annotations,
                                                                   jboolean is_enum_constant,
                                                                   jboolean has_initializer,
                                                                   jboolean is_final,
@@ -4157,7 +4232,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionFieldDeclarationEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, variableName);
+    SgName name = convertJavaStringToCxxString(env, variable_name);
 
     if (SgProject::get_verbose() > 2)
         printf ("Building a Field declaration for name = %s \n", name.str());
@@ -4168,50 +4243,60 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     ROSE_ASSERT(outer_scope);
     SgVariableSymbol *symbol = outer_scope -> lookup_variable_symbol(name);
     ROSE_ASSERT(symbol);
-    SgInitializedName *initializedName = symbol -> get_declaration();
-    ROSE_ASSERT(initializedName);
-    SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(initializedName -> get_declaration());
-    ROSE_ASSERT(variableDeclaration);
+    SgInitializedName *initialized_name = symbol -> get_declaration();
+    ROSE_ASSERT(initialized_name);
+    SgVariableDeclaration *variable_declaration = isSgVariableDeclaration(initialized_name -> get_declaration());
+    ROSE_ASSERT(variable_declaration);
 
     // By default, the access modifier is set to unknown
-    variableDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
+    variable_declaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
 
     if (is_enum_constant) { // identify ENUM fields
-        variableDeclaration -> setAttribute("enum-constant", new AstRegExAttribute(""));
+        variable_declaration -> setAttribute("enum-constant", new AstRegExAttribute(""));
     }
     else { // if this is not an ENUM field then it has a type on the stack.
         SgType *type = astJavaComponentStack.popType();
         ROSE_ASSERT(type);
-        initializedName -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+        initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+    }
+
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(variable_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        variable_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
     // Set the modifiers (shared between PHP and Java)
     if (is_final) {
-        variableDeclaration -> get_declarationModifier().setFinal();
+        variable_declaration -> get_declarationModifier().setFinal();
     }
 
     if (is_private) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Private \n");
-        variableDeclaration -> get_declarationModifier().get_accessModifier().setPrivate();
+        variable_declaration -> get_declarationModifier().get_accessModifier().setPrivate();
     }
 
     if (is_protected) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Protected \n");
-        variableDeclaration -> get_declarationModifier().get_accessModifier().setProtected();
+        variable_declaration -> get_declarationModifier().get_accessModifier().setProtected();
     }
 
     if (is_public) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Public \n");
-        variableDeclaration -> get_declarationModifier().get_accessModifier().setPublic();
+        variable_declaration -> get_declarationModifier().get_accessModifier().setPublic();
     }
 
     if (is_volatile) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Volatile \n");
-        variableDeclaration -> get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile();
+        variable_declaration -> get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile();
     }
 
     if (is_synthetic) {
@@ -4222,17 +4307,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     if (is_static) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Static \n");
-        variableDeclaration -> get_declarationModifier().get_storageModifier().setStatic();
+        variable_declaration -> get_declarationModifier().get_storageModifier().setStatic();
     }
 
     if (is_transient) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Transient \n");
-        variableDeclaration -> get_declarationModifier().get_typeModifier().get_constVolatileModifier().setJavaTransient();
+        variable_declaration -> get_declarationModifier().get_typeModifier().get_constVolatileModifier().setJavaTransient();
     }
 
     if (SgProject::get_verbose() > 0)
-        variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionFieldDeclarationEnd(): debug");
+        variable_declaration -> get_file_info() -> display("source position in Java_JavaParser_cactionFieldDeclarationEnd(): debug");
 
     if (initializer_expression) { // There is an initialization expression
         SgInitializer *initializer = SageBuilder::buildAssignInitializer(initializer_expression);
@@ -4245,8 +4330,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
 
         initializer -> get_file_info() -> display("cactionFieldDeclarationEnd()");
 
-        initializedName -> set_initptr(initializer);
-        initializer -> set_parent(initializedName);
+        initialized_name -> set_initptr(initializer);
+        initializer -> set_parent(initialized_name);
     }
 }
 
@@ -4366,7 +4451,6 @@ if (! variable_symbol) {
        << endl;
   cout.flush();
 }
-
 
         ROSE_ASSERT(variable_symbol);
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
@@ -4951,7 +5035,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jclass, jstring variableName, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jclass, jstring variable_name, jboolean java_is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
 
@@ -4960,13 +5044,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, jclass, jstring variableName, jboolean hasInitializer, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, jclass, jint num_annotations, jstring variable_name, jboolean hasInitializer, jboolean java_is_final, jobject jToken) {
     // DQ (9/5/2011): This function is added as part of a move to process local declarations bottom up.
 
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionLocalDeclarationEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, variableName);
+    SgName name = convertJavaStringToCxxString(env, variable_name);
     bool is_final = java_is_final;
 
     if (SgProject::get_verbose() > 2)
@@ -4990,6 +5074,16 @@ cout.flush();
     SgVariableDeclaration *variable_declaration = SageBuilder::buildVariableDeclaration(name, type, NULL, astJavaScopeStack.top());
     ROSE_ASSERT(variable_declaration != NULL);
     variable_declaration -> set_parent(astJavaScopeStack.top());
+
+    if (num_annotations > 0) {
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        for (int i = num_annotations - 1; i >= 0; i--) {
+            SgExpression *annotation = astJavaComponentStack.popExpression();
+            annotation -> set_parent(variable_declaration);
+            annotations_attribute -> setNode(annotation, i);
+        }
+        variable_declaration -> setAttribute("annotations", annotations_attribute);
+    }
 
     // DQ (7/16/2011): Added test for scope
     ROSE_ASSERT(variable_declaration -> get_scope() != NULL);
@@ -5056,18 +5150,45 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLongLiteral(JNIEnv *env, jclass, j
     setJavaSourcePosition(longValue, env, jToken);
 
     astJavaComponentStack.push(longValue);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Done Building LongVal \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    cerr << "*** Ignoring a Marker Annotation" << endl;
-  //    ROSE_ASSERT(! "yet implemented Marker Annotation");
+JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotationEnd(JNIEnv *env, jclass, jobject jToken) {
+//    if (SgProject::get_verbose() > 0)
+        printf ("Build MarkerAnnotationEnd() \n");
+
+    SgType *type = astJavaComponentStack.popType();
+
+    SgJavaMarkerAnnotation *marker_annotation = new SgJavaMarkerAnnotation(type);
+    marker_annotation -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+    setJavaSourcePosition(marker_annotation, env, jToken);
+
+    astJavaComponentStack.push(marker_annotation);
+
+//    if (SgProject::get_verbose() > 0)
+        printf ("Done building MarkerAnnotationEnd() \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jclass, jobject jToken) {
-    cerr << "*** Ignoring a Member Value Pair" << endl; // This is a component of a NormalAnnotation
-  //    ROSE_ASSERT(! "yet implemented Member Value Pair");
+JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePairEnd(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build MemberValuePairEnd() \n");
+
+    SgName name = convertJavaStringToCxxString(env, java_name);
+    SgExpression *value = astJavaComponentStack.popExpression();
+
+    SgJavaMemberValuePair *member_value_pair = new SgJavaMemberValuePair();
+    member_value_pair -> set_name(name);
+    member_value_pair -> set_value(value);
+    setJavaSourcePosition(member_value_pair, env, jToken);
+
+    astJavaComponentStack.push(member_value_pair);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Done building MemberValuePairEnd() \n");
 }
 
 
@@ -5076,9 +5197,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    cerr << "*** Ignoring a Normal Annotation" << endl;
-//    ROSE_ASSERT(! "yet implemented Normal Annotation");
+JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotationEnd(JNIEnv *env, jclass, jint num_member_value_pairs, jobject jToken) {
+//    if (SgProject::get_verbose() > 0)
+        printf ("Build NormalAnnotationEnd() \n");
+
+    list<SgNode *> pair_list;
+    for (int i = 0; i < num_member_value_pairs; i++) {
+        SgNode *member_value_pair = astJavaComponentStack.pop();
+        pair_list.push_front(member_value_pair);
+    }
+
+    SgType *type = astJavaComponentStack.popType();
+    SgJavaNormalAnnotation *normal_annotation = new SgJavaNormalAnnotation(type);
+    while (pair_list.size()) {
+        SgJavaMemberValuePair *member_value_pair = isSgJavaMemberValuePair(pair_list.front());
+        member_value_pair -> set_parent(normal_annotation);
+        normal_annotation -> append_value_pair(member_value_pair);
+        pair_list.pop_front();
+    }
+    normal_annotation -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+    setJavaSourcePosition(normal_annotation, env, jToken);
+
+    astJavaComponentStack.push(normal_annotation);
+
+//    if (SgProject::get_verbose() > 0)
+        printf ("Done Building NormalAnnotationEnd() \n");
 }
 
 
@@ -5119,22 +5262,21 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReference(JNIEnv 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, int java_num_type_arguments, int java_num_dimensions, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering Java_JavaParser_cactionParameterizedTypeReferenceEnd() \n");
 
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
 
-    int num_type_arguments = java_num_type_arguments,
-        num_dimensions = java_num_dimensions;
+    int num_type_arguments = java_num_type_arguments;
 
 // TODO: Remove this
 //cout << "Here 10 with package " << package_name.getString() << " and type " << type_name.getString() 
 //     << " with " << num_type_arguments << " arguments"
 //<< endl;
 //cout.flush();
-    SgClassType *raw_type = isSgClassType(lookupTypeByName(package_name, type_name, 0 /* Look for the base type not the array of num_dimensions > 0 */));
+    SgClassType *raw_type = isSgClassType(lookupTypeByName(package_name, type_name, 0));
     ROSE_ASSERT(raw_type != NULL);
     list<SgTemplateParameter *> type_list;
     for (int i = 0; i < num_type_arguments; i++) {
@@ -5148,24 +5290,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIE
         ordered_type_list.push_back(type_list.front());
         type_list.pop_front();
     }
-    SgJavaParameterizedType *parameterizedType = getUniqueParameterizedType(raw_type, NULL /* no enclosing type */, ordered_type_list);
-    SgType *result_type = (num_dimensions > 0 ? (SgType *) getUniquePointerType(parameterizedType, num_dimensions) : (SgType *) parameterizedType);
+    ROSE_ASSERT(has_type_arguments || num_type_arguments == 0);
+    SgJavaParameterizedType *parameterized_type = getUniqueParameterizedType(raw_type, NULL /* no enclosing type */, (has_type_arguments ? &ordered_type_list : (SgTemplateParameterPtrList *) NULL));
 
-    astJavaComponentStack.push(result_type);
+    astJavaComponentStack.push(parameterized_type);
 
     if (SgProject::get_verbose() > 0)
         printf ("Leaving Java_JavaParser_cactionParameterizedTypeReferenceEnd() \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_type_name, int java_num_type_arguments, int java_num_dimensions, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject jToken) {
     SgName type_name = convertJavaStringToCxxString(env, java_type_name);
 
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd() for %s \n", type_name.getString().c_str());
 
-    int num_type_arguments = java_num_type_arguments,
-        num_dimensions = java_num_dimensions;
+    int num_type_arguments = java_num_type_arguments;
 
     list<SgTemplateParameter *> type_list;
     for (int i = 0; i < num_type_arguments; i++) {
@@ -5178,6 +5319,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenc
         ordered_type_list.push_back(type_list.front());
         type_list.pop_front();
     }
+    ROSE_ASSERT(has_type_arguments || num_type_arguments == 0);
 
     SgType *base_type = astJavaComponentStack.popType();
     SgClassType *base_raw_type = isSgClassType(isSgJavaParameterizedType(base_type) ? isSgJavaParameterizedType(base_type) -> get_raw_type() : base_type);
@@ -5194,11 +5336,9 @@ cout.flush();
     SgClassType *raw_type = isSgClassType(class_symbol -> get_type());
     ROSE_ASSERT(raw_type);
 
-    SgJavaParameterizedType *parameterizedType = getUniqueParameterizedType(raw_type, base_type, ordered_type_list);
+    SgJavaParameterizedType *parameterized_type = getUniqueParameterizedType(raw_type, base_type, (has_type_arguments ? &ordered_type_list : (SgTemplateParameterPtrList *) NULL));
 
-    SgType *result_type = (num_dimensions > 0 ? (SgType *) getUniquePointerType(parameterizedType, num_dimensions) : (SgType *) parameterizedType);
-
-    astJavaComponentStack.push(result_type);
+    astJavaComponentStack.push(parameterized_type);
 
     if (SgProject::get_verbose() > 0)
         printf ("Leaving Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd() for %s \n", type_name.getString().c_str());
@@ -5504,9 +5644,21 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jc
     astJavaComponentStack.push(returnStatement);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    cerr << "*** Ignoring a Single Member Annotation" << endl;
-  //    ROSE_ASSERT(! "yet implemented Single Member Annotation");
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotationEnd(JNIEnv *env, jclass, jobject jToken) {
+//    if (SgProject::get_verbose() > 2)
+        printf ("Inside of Java_JavaParser_cactionSingleMemberAnnotationEnd() \n");
+
+    SgExpression *value = astJavaComponentStack.popExpression();
+    SgType *type = astJavaComponentStack.popType();
+
+    SgJavaSingleMemberAnnotation *single_member_annotation = new SgJavaSingleMemberAnnotation(type, value);
+    single_member_annotation -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+    setJavaSourcePosition(single_member_annotation, env, jToken);
+
+    astJavaComponentStack.push(single_member_annotation);
+
+//    if (SgProject::get_verbose() > 2)
+        printf ("Exiting Java_JavaParser_cactionSingleMemberAnnotationEnd() \n");
 }
 
 

@@ -287,6 +287,7 @@ cout.flush();
             case V_SgDefaultOptionStmt:
             case V_SgJavaLabelStatement:
             case V_SgJavaSynchronizedStatement:
+
                 printSemicolon = false;
                 break;
             case V_SgVariableDeclaration: // charles4 09/23/2011 -- Shouldn't this be the default initialization!
@@ -963,6 +964,16 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          return;
      }
 
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
+
 //
 // TODO: REMOVE THIS
 // charles4 :  2/29/2012   I don't think this is needed!
@@ -1050,6 +1061,15 @@ else {
          if (name_it != names.begin()) {
              curprint(", ");
          }
+
+         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) (*name_it) -> getAttribute("annotations");
+         if (annotations_attribute) {
+             for (int i = 0; i < annotations_attribute -> size(); i++) {
+                 SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                 unparseExpression(annotation, info);
+                 curprint(" ");
+             }
+         }
          unparseInitializedName(*name_it, info);
      }
 
@@ -1092,6 +1112,15 @@ void
 Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
     ROSE_ASSERT(vardecl_stmt != NULL);
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) vardecl_stmt -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
     unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
     foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
         unparseInitializedName(init_name, info);
@@ -1132,6 +1161,15 @@ Unparse_Java::unparseJavaPackageStmt(SgStatement* stmt, SgUnparse_Info& info) {
         curprint(attribute -> expression);
     }
 */
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) package_statement -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
 
     curprint("package ");
     curprint(package_name.getString());
@@ -1154,6 +1192,16 @@ cout.flush();
 
      if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
          return;
+     }
+
+     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
+     if (annotations_attribute) {
+         for (int i = 0; i < annotations_attribute -> size(); i++) {
+             SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+             unparseExpression(annotation, info);
+             unp -> cur.insert_newline();
+             curprint_indented("", info);
+         }
      }
 
      unparseDeclarationModifier(classdecl_stmt -> get_declarationModifier(), info);
@@ -1401,7 +1449,15 @@ Unparse_Java::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (attribute) {
          curprint ("(");
          for (int i = 0; i < attribute -> size(); i++) {
-             SgVariableDeclaration *local_declaration = isSgVariableDeclaration(attribute -> getNode(i));
+            SgVariableDeclaration *local_declaration = isSgVariableDeclaration(attribute -> getNode(i));
+            AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) local_declaration -> getAttribute("annotations");
+            if (annotations_attribute) {
+                for (int i = 0; i < annotations_attribute -> size(); i++) {
+                    SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                    unparseExpression(annotation, info);
+                    curprint(" ");
+                }
+            }
              ROSE_ASSERT(local_declaration);
              if (i > 0) {
                  curprint ("; ");
@@ -1653,6 +1709,16 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
         if (enum_constant) { // An enum constant?
             ROSE_ASSERT(enum_constant -> attributeExists("enum-constant"));
 
+            AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) enum_constant -> getAttribute("annotations");
+            if (annotations_attribute) {
+                for (int i = 0; i < annotations_attribute -> size(); i++) {
+                    SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                    unparseExpression(annotation, info);
+                    unp -> cur.insert_newline();
+                    curprint_indented("", info);
+                }
+            }
+
             vector<SgInitializedName *> &vars = enum_constant -> get_variables();
             ROSE_ASSERT(vars.size() == 1);
             info.inc_nestingLevel();
@@ -1794,3 +1860,4 @@ Unparse_Java::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnpars
     }
     curprint(">");
 }
+

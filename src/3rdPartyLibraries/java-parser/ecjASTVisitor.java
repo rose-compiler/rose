@@ -68,11 +68,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             return false;
         }
 
-        if (// node instanceof AnnotationMethodDeclaration || // TODO: We need to implement this properly at some point! 
-            node instanceof Annotation) { // Ignore all Annotation nodes!!!
-            return false;
-        }
-
+// TODO: Remove this !
+/*
+if (node instanceof Annotation) {
+System.out.println("*** Annotation: " + node.getClass().getCanonicalName() + ":");
+StringBuffer buffer = new StringBuffer();
+buffer = ((Annotation) node).printExpression(0, buffer);
+System.out.println("    " + new String(buffer));
+}
+*/
         if (TypeHeaderDelimiters.containsKey(node)) {
             TypeDeclaration type = TypeHeaderDelimiters.get(node);
             if (javaParserSupport.verboseLevel > 1)
@@ -315,12 +319,15 @@ System.out.println("    " + "accessor[" + SingleNameReference.WRITE + "] =>  " +
             //
             // See the function traverseClass for more information about this method.
             //
+// TODO: Remove this
+/*
 if (javaParserSupport.enumTypeDeclarationToValuesMethodIndexTable.get(node) == null) {
 System.out.println("The enum Values() method is not defined for " + node.binding.debugName());
 }
 if (javaParserSupport.enumTypeDeclarationToValueOfMethodTable.get(node) == null) {
 System.out.println("The enum ValueOf() method is not defined for " + node.binding.debugName());
 }
+*/
             int values_index = javaParserSupport.enumTypeDeclarationToValuesMethodIndexTable.get(node),
                 valueOf_index = javaParserSupport.enumTypeDeclarationToValueOfMethodTable.get(node);
             JavaParser.cactionMethodDeclaration("values", values_index, this.unitInfo.getDefaultLocation());
@@ -339,7 +346,7 @@ System.out.println("The enum ValueOf() method is not defined for " + node.bindin
                                                       0,     // No thrown exceptions
                                                       this.unitInfo.getDefaultLocation()
                                                      );
-            JavaParser.cactionMethodDeclarationEnd(0, this.unitInfo.getDefaultLocation());
+            JavaParser.cactionMethodDeclarationEnd(0, 0, this.unitInfo.getDefaultLocation());
 
             //
             // valueOf()
@@ -367,7 +374,7 @@ System.out.println("The enum ValueOf() method is not defined for " + node.bindin
                                                       0,     // method.thrownExceptions
                                                       this.unitInfo.getDefaultLocation()
                                                      );
-            JavaParser.cactionMethodDeclarationEnd(0, this.unitInfo.getDefaultLocation());
+            JavaParser.cactionMethodDeclarationEnd(0, 0, this.unitInfo.getDefaultLocation());
         }
     }
 
@@ -380,7 +387,7 @@ System.out.println("The enum ValueOf() method is not defined for " + node.bindin
                                                     node.typeParameters == null  ? 0 : node.typeParameters.length,
                                                     this.unitInfo.createJavaToken(node));
         }
-        JavaParser.cactionTypeDeclarationEnd(this.unitInfo.createJavaToken(node));
+        JavaParser.cactionTypeDeclarationEnd(node.annotations == null ? 0 : node.annotations.length, this.unitInfo.createJavaToken(node));
     }
 
     public boolean enter(AllocationExpression node,BlockScope scope) {
@@ -449,19 +456,19 @@ System.out.println("The enum ValueOf() method is not defined for " + node.bindin
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (AnnotationMethodDeclaration,ClassScope)");
-/*
-        if (node.annotations != null) {
-        	int annotationsLength = node.annotations.length;
-        	for (int i = 0; i < annotationsLength; i++)
-        		node.annotations[i].traverse(this, node.scope);
-        }
 
-        if (node.returnType != null) {
-        	node.returnType.traverse(this, node.scope);
+        if (node.annotations != null) {
+            int annotationsLength = node.annotations.length;
+            for (int i = 0; i < annotationsLength; i++)
+                node.annotations[i].traverse(this, node.scope);
+        }
+/*
+        if (node.returnType != null) { // return type was already processed.
+            node.returnType.traverse(this, node.scope);
         }
 */        
-        if (node.defaultValue != null && (! (node.defaultValue instanceof Annotation))) {
-        	node.defaultValue.traverse(this, node.scope);
+        if (node.defaultValue != null) {
+            node.defaultValue.traverse(this, node.scope);
         }
 
         return false; // true; // do nothing by default, keep traversing
@@ -473,8 +480,12 @@ System.out.println("The enum ValueOf() method is not defined for " + node.bindin
 
         String name = javaParserSupport.getMethodName(node.binding);
         int method_index = javaParserSupport.getMethodIndex(node);
-System.out.println("The default expression of method " + name + " is of type " + (node.defaultValue == null ? "???" : node.defaultValue.getClass().getCanonicalName()));        
-        JavaParser.cactionAnnotationMethodDeclarationEnd(name, method_index, node.defaultValue != null && (! (node.defaultValue instanceof Annotation)), this.unitInfo.createJavaToken(node));
+// System.out.println("The default expression of method " + name + " is of type " + (node.defaultValue == null ? "???" : node.defaultValue.getClass().getCanonicalName()));        
+        JavaParser.cactionAnnotationMethodDeclarationEnd(name,
+                                                         method_index,
+                                                         (node.annotations == null ? 0 : node.annotations.length),
+                                                         node.defaultValue != null,
+                                                         this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (AnnotationMethodDeclaration,ClassScope)");
@@ -516,10 +527,10 @@ System.out.println("The default expression of method " + name + " is of type " +
 
         if (catchArguments.contains(node)) {
             int number_of_types = (node.type instanceof UnionTypeReference ? ((UnionTypeReference ) node.type).typeReferences.length : 1);
-            JavaParser.cactionCatchArgumentEnd(name, number_of_types, is_final, this.unitInfo.createJavaToken(node));
+            JavaParser.cactionCatchArgumentEnd(node.annotations == null ? 0 : node.annotations.length, name, number_of_types, is_final, this.unitInfo.createJavaToken(node));
         }
         else {
-            JavaParser.cactionArgumentEnd(name, is_final, this.unitInfo.createJavaToken(node));
+            JavaParser.cactionArgumentEnd(node.annotations == null ? 0 : node.annotations.length, name, this.unitInfo.createJavaToken(node));
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -562,10 +573,10 @@ System.out.println("The default expression of method " + name + " is of type " +
 
         if (catchArguments.contains(node)) {
             int number_of_types = (node.type instanceof UnionTypeReference ? ((UnionTypeReference ) node.type).typeReferences.length : 1);
-            JavaParser.cactionCatchArgumentEnd(name, number_of_types, is_final, this.unitInfo.createJavaToken(node));
+            JavaParser.cactionCatchArgumentEnd(node.annotations == null ? 0 : node.annotations.length, name, number_of_types, is_final, this.unitInfo.createJavaToken(node));
         }
         else {
-            JavaParser.cactionArgumentEnd(name, is_final, this.unitInfo.createJavaToken(node));
+            JavaParser.cactionArgumentEnd(node.annotations == null ? 0 : node.annotations.length, name, this.unitInfo.createJavaToken(node));
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1048,20 +1059,10 @@ System.out.println("The default expression of method " + name + " is of type " +
         // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
         // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
         // String packageReference = "";
-        StringBuffer packageReference = new StringBuffer();
-        for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++) {
-            String tokenString = new String(scope.currentPackageName[i]);
-
-            if (i > 0) {
-                packageReference.append('.');
-            }
-
-            packageReference.append(tokenString);
-        }
-        String package_name = new String(packageReference);
+        String package_name = (node.currentPackage == null ? "" : node.currentPackage.print(0, new StringBuffer(), false /* Not on-demand package */).toString());
 
         if (javaParserSupport.verboseLevel > 0)
-            System.out.println("Package name = " + packageReference.toString());
+            System.out.println("Package name = " + package_name);
 
         // Call the Java side of the JNI function.
         // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
@@ -1170,13 +1171,13 @@ System.out.println("The default expression of method " + name + " is of type " +
         //
         // TODO: Do something !!!
         //
-/*        
+        /*        
         if (node.typeParameters != null) {
             System.out.println();
             System.out.println("*** No support yet for constructor type parameters");
             throw new RuntimeException(); // System.exit(1);
         }
-*/
+        */
 
         int constructor_index = javaParserSupport.getMethodIndex(node);
         JavaParser.cactionConstructorDeclaration(name, constructor_index, this.unitInfo.createJavaToken(node));
@@ -1190,15 +1191,15 @@ System.out.println("The default expression of method " + name + " is of type " +
         //
         //
         /*
-       if (node.javadoc != null) {
+        if (node.javadoc != null) {
             node.javadoc.traverse(this, node.scope);
         }
+        */
         if (node.annotations != null) {
             int annotationsLength = node.annotations.length;
             for (int i = 0; i < annotationsLength; i++)
                 node.annotations[i].traverse(this, node.scope);
         }
-        */
 
         if (node.typeParameters != null) {
             int typeParametersLength = node.typeParameters.length;
@@ -1207,13 +1208,20 @@ System.out.println("The default expression of method " + name + " is of type " +
             }
         }
 
-        /*
         if (node.arguments != null) {
             int argumentLength = node.arguments.length;
-            for (int i = 0; i < argumentLength; i++)
-                node.arguments[i].traverse(this, node.scope);
+            for (int i = 0; i < argumentLength; i++) {
+                Argument argument = node.arguments[i];
+                if (argument.annotations != null) { // does this parameter have annotations?
+                    for (int k = 0, max = argument.annotations.length; k < max; k++) {
+                        argument.annotations[k].traverse(this, node.scope);
+                    }
+                    JavaParser.cactionArgumentEnd(argument.annotations.length,
+                                                  new String(argument.name),
+                                                  this.unitInfo.createJavaToken(argument));
+                }
+            }
         }
-        */
 
         if (node.thrownExceptions != null) {
             int thrownExceptionsLength = node.thrownExceptions.length;
@@ -1236,15 +1244,15 @@ System.out.println("The default expression of method " + name + " is of type " +
 
         if (! node.isDefaultConstructor()) {        
             // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
-            int numberOfStatements = 0;
+            int num_statements = 0;
             if (node.statements != null) {
-                numberOfStatements = node.statements.length;
+                num_statements = node.statements.length;
                 if (javaParserSupport.verboseLevel > 0)
-                    System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
+                    System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): numberOfStatements = " + num_statements);
             }
 
             if (node.constructorCall != null && (! node.constructorCall.isImplicitSuper())) { // is there an Explicit constructor call?
-                numberOfStatements++;
+                num_statements++;
                 // System.out.println("Inside of exit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
             }
           
@@ -1254,7 +1262,9 @@ System.out.println("The default expression of method " + name + " is of type " +
                 javaParserSupport.processConstructorDeclarationHeader(node, this.unitInfo.createJavaToken(node));
             }
 
-            JavaParser.cactionConstructorDeclarationEnd(numberOfStatements, this.unitInfo.createJavaToken(node));
+            JavaParser.cactionConstructorDeclarationEnd(node.annotations == null ? 0 : node.annotations.length,
+                                                        num_statements,
+                                                        this.unitInfo.createJavaToken(node));
         }
     }
 
@@ -1376,13 +1386,13 @@ System.out.println("The default expression of method " + name + " is of type " +
         //
         // TODO: Do something !!!
         //
-/*        
+        /*        
         if (node.genericTypeArguments != null) {
             System.out.println();
             System.out.println("*** No support yet for constructor type arguments");
             throw new RuntimeException(); // System.exit(1);
         }
-*/
+        */
 
         JavaParser.cactionExplicitConstructorCall(this.unitInfo.createJavaToken(node));
           
@@ -1459,8 +1469,8 @@ System.out.println("The default expression of method " + name + " is of type " +
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (FieldDeclaration,BlockScope)");
 
-        // DO NOTHING !!!
-          
+        // Do nothing 
+        
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (FieldDeclaration,BlockScope)");
 
@@ -1501,7 +1511,8 @@ else System.out.println("** Found a  regular field " + new String(node.name));
 */
         String name = new String(node.name);
 
-        JavaParser.cactionFieldDeclarationEnd(name, 
+        JavaParser.cactionFieldDeclarationEnd(name,
+                                              (node.annotations == null ? 0 : node.annotations.length),
                                               node.getKind() == AbstractVariableDeclaration.ENUM_CONSTANT,
                                               hasInitializer,
                                               isFinal,
@@ -1760,7 +1771,16 @@ else System.out.println("** Found a  regular field " + new String(node.name));
             JavaParser.cactionImportReference(node.isStatic(), package_name, type_name, name_suffix, contains_wildcard, this.unitInfo.createJavaToken(node));
         }
 */
-        if (node != this.unitInfo.unit.currentPackage) { // Do no import the current package.
+        
+        //
+        // Do no import the current package.
+        //
+        if (node == this.unitInfo.unit.currentPackage) {
+            if (node.annotations != null && node.annotations.length > 0) {
+                JavaParser.cactionPackageAnnotations(node.annotations.length, this.unitInfo.createJavaToken(node));
+            }
+        }
+        else { // Do no import the current package.
             boolean contains_wildcard = ((node.bits & node.OnDemand) != 0);
 /*
             // 
@@ -2387,7 +2407,7 @@ else System.out.println("** Found a  regular field " + new String(node.name));
 
         // Build the variable declaration using the type from the astJavaTypeStack.
         // Note that this may have to handle an array of names or be even more complex in the future.
-        JavaParser.cactionLocalDeclarationEnd(name, node.initialization != null, is_final, this.unitInfo.createJavaToken(node));
+        JavaParser.cactionLocalDeclarationEnd(node.annotations == null ? 0 : node.annotations.length, name, node.initialization != null, is_final, this.unitInfo.createJavaToken(node));
     }
 
 
@@ -2414,7 +2434,7 @@ else System.out.println("** Found a  regular field " + new String(node.name));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (MarkerAnnotation,BlockScope)");
 
-        JavaParser.cactionMarkerAnnotation(this.unitInfo.createJavaToken(node));
+        // do nothing  by default
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (MarkerAnnotation,BlockScope)");
@@ -2423,7 +2443,38 @@ else System.out.println("** Found a  regular field " + new String(node.name));
     }
 
     public void exit(MarkerAnnotation node, BlockScope scope) {
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of exit (MarkerAnnotation,BlockScope)");
+
+        if (node.type != null) {
+            JavaParser.cactionMarkerAnnotationEnd(this.unitInfo.createJavaToken(node));
+        }
+
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (MarkerAnnotation,BlockScope)");
+    }
+
+
+    public boolean enter(MarkerAnnotation node, ClassScope scope) {
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of enter (MarkerAnnotation,BlockScope)");
+
         // do nothing  by default
+
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving enter (MarkerAnnotation,BlockScope)");
+
+        return true;
+    }
+
+    public void exit(MarkerAnnotation node, ClassScope scope) {
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of exit (MarkerAnnotation,BlockScope)");
+
+        if (node.type != null) {
+            JavaParser.cactionMarkerAnnotationEnd(this.unitInfo.createJavaToken(node));
+        }
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (MarkerAnnotation,BlockScope)");
     }
@@ -2433,7 +2484,8 @@ else System.out.println("** Found a  regular field " + new String(node.name));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (MemberValuePair,BlockScope)");
 
-        JavaParser.cactionMemberValuePair(this.unitInfo.createJavaToken(node));
+        // do nothing  by default
+        assert(node.value != null); // The member value pair must have a value
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (MemberValuePair,BlockScope)");
@@ -2442,7 +2494,11 @@ else System.out.println("** Found a  regular field " + new String(node.name));
     }
 
     public void exit(MemberValuePair node, BlockScope scope) {
-        // do nothing  by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of exit (MemberValuePair,BlockScope)");
+
+        JavaParser.cactionMemberValuePairEnd(new String(node.name), this.unitInfo.createJavaToken(node));
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (MemberValuePair,BlockScope)");
     }
@@ -2545,13 +2601,13 @@ System.out.println("I am looking at method reference " + new String(node.receive
 // javaParserSupport.generateAndPushType(node.binding.returnType, this.unitInfo.createJavaToken(node)); // push the return type
 System.out.print("node.actualReceiverType = " + node.actualReceiverType.debugName() + " (" + node.actualReceiverType.getClass().getCanonicalName() + ")");
 if(node.actualReceiverType.isAnonymousType())
-	System.out.print("; anonymous");
+System.out.print("; anonymous");
 if (node.actualReceiverType.isBoundParameterizedType())
-	System.out.print("; bound parameterized");
+System.out.print("; bound parameterized");
 if (node.actualReceiverType.isCapture())
-	System.out.print("; Capture");
+System.out.print("; Capture");
 if (node.actualReceiverType.isLocalType())
-	System.out.print("; local");
+System.out.print("; local");
 System.out.println();
 System.out.println("node.actualReceiverType.qualifiedSourceName = " + new String(node.actualReceiverType.qualifiedSourceName()));
 System.out.println("node.actualReceiverType.shortReadableName = " + new String(node.actualReceiverType.shortReadableName()));
@@ -2950,30 +3006,39 @@ System.out.println("Processing original parameters for Method " + new String(met
         if (node.javadoc != null) {
             node.javadoc.traverse(this, node.scope);
         }
+        */
         if (node.annotations != null) {
             int annotationsLength = node.annotations.length;
             for (int i = 0; i < annotationsLength; i++)
                 node.annotations[i].traverse(this, node.scope);
         }
-        */
+
         if (node.typeParameters != null) {
             for (int i = 0; i < node.typeParameters.length; i++) {
                 node.typeParameters[i].traverse(this, node.scope);
             }
         }
-/*
+        /*
         if (node.returnType != null) {
             node.returnType.traverse(this, node.scope);
         }
-
+        */
         if (node.arguments != null) {
             int argumentLength = node.arguments.length;
             for (int i = 0; i < argumentLength; i++) {
-                node.arguments[i].traverse(this, node.scope);
-System.out.println("Looking at argument " + i + " of method " + name + ": " + node.arguments[i].type.resolvedType.debugName());
+                Argument argument = node.arguments[i];
+                if (argument.annotations != null) { // does this parameter have annotations?
+                    for (int k = 0, max = argument.annotations.length; k < max; k++) {
+                        argument.annotations[k].traverse(this, node.scope);
+                    }
+
+                    JavaParser.cactionArgumentEnd(argument.annotations.length,
+                                                  new String(argument.name),
+                                                  this.unitInfo.createJavaToken(argument));
+                }
             }
         }
-*/
+
         if (node.thrownExceptions != null) {
             int thrownExceptionsLength = node.thrownExceptions.length;
             for (int i = 0; i < thrownExceptionsLength; i++)
@@ -2998,7 +3063,8 @@ System.out.println("Looking at argument " + i + " of method " + name + ": " + no
             javaParserSupport.processMethodDeclarationHeader(node, this.unitInfo.createJavaToken(node));
         }
 
-        JavaParser.cactionMethodDeclarationEnd(node.statements == null ? 0 : node.statements.length,
+        JavaParser.cactionMethodDeclarationEnd(node.annotations == null ? 0 : node.annotations.length,
+                                               node.statements == null ? 0 : node.statements.length,
                                                this.unitInfo.createJavaToken(node));
     }
 
@@ -3026,7 +3092,7 @@ System.out.println("Looking at argument " + i + " of method " + name + ": " + no
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (NormalAnnotation,BlockScope)");
 
-        JavaParser.cactionNormalAnnotation(this.unitInfo.createJavaToken(node));
+        // do nothing  by default
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (NormalAnnotation,BlockScope)");
@@ -3035,7 +3101,14 @@ System.out.println("Looking at argument " + i + " of method " + name + ": " + no
     }
 
     public void exit(NormalAnnotation node, BlockScope scope) {
-        // do nothing  by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of exit (NormalAnnotation,BlockScope)");
+
+        if (node.type != null && node.memberValuePairs != null) {
+            JavaParser.cactionNormalAnnotationEnd(node.memberValuePairs.length, this.unitInfo.createJavaToken(node));
+        }
+        else assert(node.type == null && node.memberValuePairs == null);
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (NormalAnnotation,BlockScope)");
     }
@@ -3342,9 +3415,12 @@ System.out.println("Processing parameterized type " + ((ReferenceBinding) type_b
 
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
+                                                        node.typeArguments != null, // We can assert that this is true, I think.
                                                         node.typeArguments.length,
-                                                        node.dimensions(),
                                                         this.unitInfo.createJavaToken(node));
+        if (node.dimensions() > 0) {
+            JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
+        }
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedSingleTypeReference,BlockScope)");
@@ -3379,9 +3455,12 @@ System.out.println("Processing parameterized type " + ((ReferenceBinding) type_b
         
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
+                                                        node.typeArguments != null, // We can assert that this is true, I think.
                                                         node.typeArguments.length,
-                                                        node.dimensions(),
                                                         this.unitInfo.createJavaToken(node));
+        if (node.dimensions() > 0) {
+            JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
+        }
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (ParameterizedSingleTypeReference,ClassScope)");
@@ -3704,7 +3783,7 @@ System.out.println("***Processing type " + node.resolvedType.debugName() +
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (SingleMemberAnnotation,BlockScope)");
 
-        JavaParser.cactionSingleMemberAnnotation(this.unitInfo.createJavaToken(node));
+        // do nothing  by default
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (SingleMemberAnnotation,BlockScope)");
@@ -3713,7 +3792,14 @@ System.out.println("***Processing type " + node.resolvedType.debugName() +
     }
 
     public void exit(SingleMemberAnnotation node, BlockScope scope) {
-        // do nothing  by default
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Inside of exit (SingleMemberAnnotation,BlockScope)");
+
+        if (node.type != null && node.memberValue != null) {
+            JavaParser.cactionSingleMemberAnnotationEnd(this.unitInfo.createJavaToken(node));
+        }
+        else assert(node.type == null && node.memberValue == null);
+
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (SingleMemberAnnotation,BlockScope)");
     }
