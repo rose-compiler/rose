@@ -382,6 +382,13 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
+     printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+  // DQ (1/13/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
      char buffer[512];
      sprintf (buffer,"entering case for %s",type->class_name().c_str());
      unp->u_debug->printDebugInfo(buffer,true);
@@ -766,6 +773,13 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
        // unparseType(pointer_type->get_base_type(), info);
           if (info.SkipBaseType() == false)
              {
+#if 0
+               printf ("In unparsePointerType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparsePointerType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
                unparseType(pointer_type->get_base_type(), info);
              }
 #if 0
@@ -2500,17 +2514,34 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
   // a defining declaration within a return type, function parameter, or sizeof expression.
      ninfo.set_SkipClassDefinition();
 
+  // DQ (1/13/2014): Set the output of the enum defintion to match that of the class definition (consistancy is now inforced).
+     ninfo.set_SkipEnumDefinition();
+
      if (ninfo.isTypeFirstPart())
         {
           if (needParen)
              {
                ninfo.unset_isReferenceToSomething();
                ninfo.unset_isPointerToSomething();
+#if 0
+               printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseMemberFunctionType(): ninfo.SkipEnumDefinition()  = %s \n",(ninfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo.SkipClassDefinition() == ninfo.SkipEnumDefinition());
+
                unparseType(mfunc_type->get_return_type(), ninfo);
                curprint ( "(");
              }
             else
              {
+#if 0
+               printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseMemberFunctionType(): ninfo.SkipEnumDefinition()  = %s \n",(ninfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo.SkipClassDefinition() == ninfo.SkipEnumDefinition());
+
                unparseType(mfunc_type->get_return_type(), ninfo);
              }
         }
@@ -2543,13 +2574,35 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                        }
                   }
                curprint ( ")");
+#if 0
+               printf ("In unparseMemberFunctionType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseMemberFunctionType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
                unparseType(mfunc_type->get_return_type(), info); // catch the 2nd part of the rtype
              }
             else
              {
                ninfo.set_isTypeFirstPart();
+#if 0
+               printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseMemberFunctionType(): ninfo.SkipEnumDefinition()  = %s \n",(ninfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo.SkipClassDefinition() == ninfo.SkipEnumDefinition());
+
                unparseType(mfunc_type, ninfo);
+
                ninfo.set_isTypeSecondPart();
+#if 0
+               printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseMemberFunctionType(): ninfo.SkipEnumDefinition()  = %s \n",(ninfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(ninfo.SkipClassDefinition() == ninfo.SkipEnumDefinition());
+
                unparseType(mfunc_type, ninfo);
              }
         }

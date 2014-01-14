@@ -44,6 +44,16 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     NEW_TERMINAL_MACRO (JavaMarkerAnnotation,         "JavaMarkerAnnotation",         "JAVA_MARKER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaSingleMemberAnnotation,   "JavaSingleMemberAnnotation",   "JAVA_SINGLE_MEMBER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaNormalAnnotation,         "JavaNormalAnnotation",         "JAVA_NORMAL_ANNOTATION" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations (hierarchy).
+     NEW_NONTERMINAL_MACRO (JavaAnnotation,
+                            JavaMarkerAnnotation | JavaSingleMemberAnnotation | JavaNormalAnnotation,
+                            "JavaAnnotation","JAVA_ANNOTATION", false);
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -326,7 +336,7 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinOperator | CompoundLiteralExp,
+          TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -462,6 +472,10 @@ Grammar::setUpExpressions ()
 
   // DQ (8/6/2013): We need to implement this member function explicitly and cannot use the default implementation.
      TemplateParameterVal.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Defife the get_type meber function in the JavaAnnotation (default), but exclude it from the subtree.
+  // JavaAnnotation.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     JavaAnnotation.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 
@@ -739,6 +753,12 @@ Grammar::setUpExpressions ()
 
      CompoundAssignOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
   //    This whole mechanism is not used presently.  Someone
@@ -762,6 +782,12 @@ Grammar::setUpExpressions ()
 
   // DQ (7/18/2011): What is the precedence of this operator?
      JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.editSubstitute             ( "PRECEDENCE_VALUE", "16" );
+     JavaMarkerAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+     JavaSingleMemberAnnotation.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+     JavaNormalAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -1549,6 +1575,28 @@ Grammar::setUpExpressions ()
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      JavaInstanceOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionPrototype ( "HEADER_JAVA_ANNOTATION", "../Grammar/Expression.code" );
+     JavaAnnotation.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaSingleMemberAnnotation.setFunctionPrototype ( "HEADER_JAVA_SINGLE_MEMBER_ANNOTATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setDataPrototype ( "SgExpression*", "value", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaNormalAnnotation.setFunctionPrototype ( "HEADER_JAVA_NORMAL_ANNOTATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setDataPrototype ( "SgJavaMemberValuePairPtrList", "value_pair_list", "",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaNormalAnnotation.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.editSubstitute   ( "LIST_NAME", "value_pair" );
+
+
 
      TypeIdOp.setFunctionPrototype ( "HEADER_TYPE_ID_OPERATOR", "../Grammar/Expression.code" );
      TypeIdOp.setDataPrototype ( "SgExpression*", "operand_expr"   , "= NULL",
@@ -2349,6 +2397,12 @@ Grammar::setUpExpressions ()
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_JAVA_ANNOTATION","../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_JAVA_MARKER_ANNOTATION","../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION","../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_JAVA_NORMAL_ANNOTATION","../Grammar/Expression.code" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );

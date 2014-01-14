@@ -299,8 +299,16 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
      (*tokenStream)= tokCont;
 
-    internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
 
      if(SgProject::get_verbose() >= 1)
          std::cout << " String for declaration:" << internalString<< " at line: " << lineNo << " and col:" << colNo << std::endl;
@@ -367,6 +375,15 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
 
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
 
    }
 
@@ -445,10 +462,18 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
 
      internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+     if(SgProject::get_verbose() >= 1)
+          std::cout << "Internal string is: " << internalString << std::endl;
+  // internalString = boost::wave::util::impl::as_string(tokenStream) ;
 
-         if(SgProject::get_verbose() >= 1)
-         std::cout << "Internal string is: " << internalString << std::endl;
-  //     internalString = boost::wave::util::impl::as_string(tokenStream) ;
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 
@@ -466,15 +491,14 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 
      whatSortOfDirective = PreprocessingInfo::CpreprocessorIncludeDeclaration;
      ROSE_ASSERT(inclDir != NULL);
-  //implement the position information
+  // implement the position information
      int lineNo = inclDir->directive.get_position().get_line(); 
-     int colNo  = inclDir->directive.get_position().get_column(); 
+     int colNo  = inclDir->directive.get_position().get_column();
 
+  // Support macros declared on the commandline. If declared on the commandline
+  // set filename to ""
 
-  //Support macros declared on the commandline. If declared on the commandline
-  //set filename to ""
-
-     if(inclDir->directive.get_position().get_file().size() != 0)
+     if (inclDir->directive.get_position().get_file().size() != 0)
           file_info = new Sg_File_Info(std::string(inclDir->directive.get_position().get_file().c_str()),lineNo,colNo);
      else
           file_info = new Sg_File_Info("", lineNo, colNo);
@@ -486,13 +510,12 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      lineNumber     = lineNo;
      columnNumber   = colNo;
 #endif
+
      internalString = std::string(inclDir->directive.get_value().c_str()) ;
    }
 
 
-  PreprocessingInfo::PreprocessingInfo( token_type directive, 
-   token_list_container expression, bool expression_value, 
-   DirectiveType dirType, RelativePositionType relPos )
+PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container expression, bool expression_value, DirectiveType dirType, RelativePositionType relPos )
    : relativePosition(relPos)
    {
      tokenStream = new token_container();
@@ -513,16 +536,21 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      tokenStream->push_back(directive);
      token_type tk1(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(directive.get_position().get_file().c_str(),lineNo,colNo));
      tokenStream->push_back(tk1);
-     copy (expression.begin(), expression.end(),
-         inserter(*tokenStream, tokenStream->end()));
-
+     copy (expression.begin(), expression.end(), inserter(*tokenStream, tokenStream->end()));
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
 
+     if (SgProject::get_verbose() >= 1)
+          std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
 
-         if(SgProject::get_verbose() >= 1)
-        std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
-
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 // #endif
@@ -602,6 +630,15 @@ PreprocessingInfo::PreprocessingInfo (
   // Normal code
      internalString = inputString;
 #endif
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 // Copy constructor
@@ -619,6 +656,15 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
      whatSortOfDirective = prepInfo.getTypeOfDirective();
      relativePosition    = prepInfo.getRelativePosition();
      internalString      = prepInfo.internalString;
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 
@@ -992,7 +1038,7 @@ PreprocessingInfo::getMacroName()
 
 #define DEBUG_MACRO_NAME 0
 
-     std::string macroName = "unknown";
+     std::string macroName = "unknown CPP directive";
      if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
           string s = internalString;
@@ -1002,26 +1048,35 @@ PreprocessingInfo::getMacroName()
 #endif
           size_t lengthOfDefineSubstring = defineSubString.length();
           size_t startOfDefineSubstring  = s.find(defineSubString);
-          ROSE_ASSERT(startOfDefineSubstring != string::npos);
-          size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
-#if DEBUG_MACRO_NAME
-          printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
-#endif
-          string substring = s.substr(endOfDefineSubstring);
 
-          size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
-          size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
+       // DQ (1/13/2014): trap out cases where the CPP directive has been marked as a #defin CPP directive, but does not contain the substring "define".
+       // ROSE_ASSERT(startOfDefineSubstring != string::npos);
+          if (startOfDefineSubstring != string::npos)
+             {
+               size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
 #if DEBUG_MACRO_NAME
-          printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
+               printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
 #endif
-          size_t macroNameLength = (endOfMacroName - startOfMacroName);
+               string substring = s.substr(endOfDefineSubstring);
+
+               size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+               size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
 #if DEBUG_MACRO_NAME
-          printf ("   --- macroNameLength = %zu \n",macroNameLength);
+               printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
 #endif
-          macroName = s.substr(startOfMacroName,macroNameLength);
+               size_t macroNameLength = (endOfMacroName - startOfMacroName);
 #if DEBUG_MACRO_NAME
-          printf ("   --- macroName = %s \n",macroName.c_str());
+               printf ("   --- macroNameLength = %zu \n",macroNameLength);
 #endif
+               macroName = s.substr(startOfMacroName,macroNameLength);
+#if DEBUG_MACRO_NAME
+               printf ("   --- macroName = %s \n",macroName.c_str());
+#endif
+             }
+            else
+             {
+               printf ("WARNING: In PreprocessingInfo::getMacroName(): 'define' keyword not identified in CpreprocessorDefineDeclaration type CPP directive: returning 'unknown' \n");
+             }
         }
        else
         {
@@ -1055,7 +1110,16 @@ PreprocessingInfo::isSelfReferential()
 #endif
           string s = internalString;
           size_t startOfMacroSubstring  = s.find(macroName);
-          ROSE_ASSERT(startOfMacroSubstring != string::npos);
+
+       // DQ (1/13/2014): This case could happen if we had a macro marked as #define, but
+       // it was not properly formed (getMacroName() returns "unknown CPP directive").
+       // ROSE_ASSERT(startOfMacroSubstring != string::npos);
+          if (startOfMacroSubstring == string::npos)
+             {
+               printf ("WARNING: In PreprocessingInfo::isSelfReferential(): (return false): macroName = %s not found in CPP #define directitve = %s \n",macroName.c_str(),s.c_str());
+               return false;
+             }
+
           size_t endOfMacroSubstring    = startOfMacroSubstring + (macroName.length() - 1);
 #if DEBUG_SELF_REFERENTIAL_MACRO
           printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);

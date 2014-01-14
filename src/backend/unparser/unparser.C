@@ -1472,9 +1472,20 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
 #if ROSE_GCC_OMP
 #pragma omp critical (unparser)
 #endif
-     {
-       returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
-     }
+        {
+          if (inputUnparseInfoPointer != NULL)
+             {
+#if 0
+               printf ("In globalUnparseToString(): inputUnparseInfoPointer->SkipClassDefinition() = %s \n",(inputUnparseInfoPointer->SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In globalUnparseToString(): inputUnparseInfoPointer->SkipEnumDefinition()  = %s \n",(inputUnparseInfoPointer->SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inputUnparseInfoPointer->SkipClassDefinition() == inputUnparseInfoPointer->SkipEnumDefinition());
+             }
+
+          returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+        }
+
      return returnString;
    }
 
@@ -1710,6 +1721,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
      printf ("In globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
+#if 0
+     printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipClassDefinition() = %s \n",(inheritedAttributeInfo.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipEnumDefinition()  = %s \n",(inheritedAttributeInfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+  // DQ (1/13/2014): These should have been setup to be the same.
+     ROSE_ASSERT(inheritedAttributeInfo.SkipClassDefinition() == inheritedAttributeInfo.SkipEnumDefinition());
+
   // Both SgProject and SgFile are handled via recursive calls
      if ( (isSgProject(astNode) != NULL) || (isSgSourceFile(astNode) != NULL) )
         {
@@ -1799,6 +1817,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
           if (isSgType(astNode) != NULL)
              {
                const SgType* type = isSgType(astNode);
+
+#if 0
+               printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipClassDefinition() = %s \n",(inheritedAttributeInfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipEnumDefinition()  = %s \n",(inheritedAttributeInfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inheritedAttributeInfo.SkipClassDefinition() == inheritedAttributeInfo.SkipEnumDefinition());
 
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
