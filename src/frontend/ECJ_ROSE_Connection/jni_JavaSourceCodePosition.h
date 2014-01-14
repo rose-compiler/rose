@@ -4,6 +4,12 @@
 #include <jni.h>
 #include "JavaSourceCodePosition.h"
 
-JavaSourceCodePosition * convert_Java_SourcePosition(JNIEnv *env, jobject sourcePosition);
+using namespace std;
+
+string normalize(string str);
+
+extern string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
+
+JavaSourceCodePosition *convert_Java_SourcePosition(JNIEnv *env, jobject sourcePosition);
 
 #endif

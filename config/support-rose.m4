@@ -289,8 +289,8 @@ AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental frotran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental frotran frontend])
+  AC_MSG_WARN([Using this mode enable experimental fortran front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
 # DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
@@ -1594,6 +1594,10 @@ AC_CHECK_TYPE(user_desc,
               [],
 	      [#include <asm/ldt.h>])
 
+# Check whether PostgreSQL is supported
+AC_CHECK_HEADERS([pqxx/version.hxx])
+AC_CHECK_LIB(pqxx, PQconnectdb)
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -1802,11 +1806,14 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
+projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryCloneDetection/semantic/Makefile
+projects/BinaryCloneDetection/syntactic/Makefile
+projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile

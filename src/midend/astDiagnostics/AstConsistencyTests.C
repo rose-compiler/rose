@@ -906,9 +906,12 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
 
   // Test all traversed nodes to make sure that they have a valid file info object
   // Note that SgFile and SgProject nodes don't have file info objects (so skip them)
+
+  // DQ (11/20/2013): Added SgJavaImportStatementList and SgJavaClassDeclarationList to the exception list since they don't have a source position field.
   // if ( !isSgFile(node) && !isSgProject(node) )
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
+  // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
+     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node) && !isSgJavaImportStatementList(node) && !isSgJavaClassDeclarationList(node) )
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -2454,6 +2457,11 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
 #if 0
+       // DQ (10/16/2013): Now that we have the token stream support computed correctly, 
+       // we have to disable this check to support the C++ tests (e.g. test2004_77.C).
+
+       // DQ (10/14/2013): Turn this on as part of testing the token stream mapping!
+
        // DQ (10/19/2012): This fails for a collection of C++ codes only:
        // test2011_121.C
        // test2011_141.C
@@ -3048,6 +3056,29 @@ TestAstSymbolTables::visit ( SgNode* node )
                             }
                        }
                  // ROSE_ASSERT(declarationStatement->hasAssociatedSymbol() == false || local_symbol != NULL);
+
+#if 0
+                 // DQ (11/21/2013): Adding test as a result of debugging with Philippe.
+                 // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+                         if (classDeclaration->get_scope() != scope)
+                            {
+                              printf ("Error (AST consistency test): classDeclaration->get_scope() != scope of symbol table (classDeclaration->get_scope() = %p = %s scope = %p = %s) \n",
+                                   classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str(),scope,scope->class_name().c_str());
+                              printf ("   --- classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+
+                              classDeclaration->get_file_info()->display("classDeclaration: debug");
+                              scope->get_file_info()->display("scope: debug");
+                            }
+                      // ROSE_ASSERT(classDeclaration->get_scope() == scope);
+                         if (isSgNamespaceDefinitionStatement(classDeclaration->get_scope()) == NULL)
+                            {
+                              ROSE_ASSERT(classDeclaration->get_scope() == scope);
+                            }
+                       }
+#endif
                   }
                  else
                   {
@@ -4761,6 +4792,14 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                       break;
                   }
 
+            // DQ (11/20/2013): Added support for checking that these are non-null (also just added code to set them to be non-null).
+               case V_SgJavaImportStatementList:
+               case V_SgJavaClassDeclarationList:
+                  {
+                    ROSE_ASSERT(support->get_parent() != NULL);
+                    break;
+                  }
+
                default:
                   {
                     if (support->get_parent() != NULL)
@@ -6116,7 +6155,7 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                  << " " << stack[i] << "; parent=" << stack[i]->get_parent()
                  << "\n";
 
-       // DQ (9/21/2013): Avide redundant output of debug info.
+       // DQ (9/21/2013): Avoid redundant output of debug info.
        // printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
           if (stack[i]->get_parent() != NULL)
              {
@@ -6127,7 +6166,6 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
              }
         }
-
      output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()

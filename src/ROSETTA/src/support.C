@@ -628,11 +628,20 @@ Grammar::setUpSupport ()
      Directory.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Directory.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
+#if 0
   // DQ (6/12/2013): Added support for Java requirements.
      JavaImportStatementList.setDataPrototype ( "SgJavaImportStatementPtrList", "java_import_list", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaClassDeclarationList.setDataPrototype ( "SgClassDeclarationPtrList", "java_class_list", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (11/20/2013): Modified these data members to be traversed by the AST traversal mechanism.
+  // DQ (6/12/2013): Added support for Java requirements.
+     JavaImportStatementList.setDataPrototype ( "SgJavaImportStatementPtrList", "java_import_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaClassDeclarationList.setDataPrototype ( "SgClassDeclarationPtrList", "java_class_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
      FileList.setDataPrototype          ( "SgFilePtrList", "listOfFiles", "",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -732,9 +741,25 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-  // DQ (6/12/2013): Added Java support for reference to SgJavaPackageStatement.
-     SourceFile.setDataPrototype   ( "SgJavaPackageStatement*", "package", "= NULL",
+#if 0
+  // DQ (6/12/2013): Added Java support for reference to Java package, imports and type declarations.
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement *", "package", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementList*", "import_list", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaClassDeclarationList*", "class_list", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+#else
+  // DQ (11/19/2013): Modified these data members to be traversed by the AST traversal mechanism.
+  // DQ (6/12/2013): Added Java support for reference to Java package, imports and type declarations.
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement *", "package", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementList*", "import_list", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaClassDeclarationList*", "class_list", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+#endif
+
 #if 0
      SourceFile.setDataPrototype   ( "SgJavaImportStatementPtrList", "import_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -1219,8 +1244,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/20/2010): Process only tokens.
-     File.setDataPrototype ("bool", "output_tokens", "= false",
+  // DQ (11/20/2010): Unparse using tokens were possible instead of from the AST.  This is possible
+  // where transformations have not been done (i.e. where the AST has not be modified).  Where this
+  // is possible the generated code is fundamentally more portable and can be diff'ed against to 
+  // generate patches (useful on large scale projects to design new tools).
+     File.setDataPrototype ("bool", "unparse_tokens", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1

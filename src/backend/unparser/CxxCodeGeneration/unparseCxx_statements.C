@@ -442,6 +442,17 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
    {
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
+     SgTemplateInstantiationFunctionDecl* templateFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(funcdecl_stmt);
+
+#if 0
+     printf ("In unparse_helper(): funcdecl_stmt->get_name() = %s \n",funcdecl_stmt->get_name().str());
+     if (templateFunctionDeclaration != NULL)
+        {
+          printf ("   --- templateFunctionDeclaration->get_name()         = %s \n",templateFunctionDeclaration->get_name().str());
+          printf ("   --- templateFunctionDeclaration->get_templateName() = %s \n",templateFunctionDeclaration->get_templateName().str());
+        }
+#endif
+
   // DQ (9/8/2007): Friend function declaration should be qualified, if the associated function has already been seen.
   // See test2007_124.C for an example. Friend declarations of operators are not qualified, or at least should not
   // use global qualification. If this is the first declaration, then no qualification should be used (see test2004_117.C).
@@ -481,7 +492,9 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      ninfoForFunctionName.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length());
      ninfoForFunctionName.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required());
 
-  // printf ("In unparse_helper(): funcdecl_stmt->get_name_qualification_length() = %d funcdecl_stmt->get_global_qualification_required() = %s \n",funcdecl_stmt->get_name_qualification_length(),funcdecl_stmt->get_global_qualification_required() ? "true" : "false");
+#if 0
+     printf ("In unparse_helper(): funcdecl_stmt->get_name_qualification_length() = %d funcdecl_stmt->get_global_qualification_required() = %s \n",funcdecl_stmt->get_name_qualification_length(),funcdecl_stmt->get_global_qualification_required() ? "true" : "false");
+#endif
 
      if (isSgClassDefinition(funcdecl_stmt->get_parent()))
         {
@@ -491,7 +504,10 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // SgName nameQualifier = unp->u_name->generateNameQualifier( funcdecl_stmt , ninfoForFunctionName );
      SgName nameQualifier = funcdecl_stmt->get_qualified_name_prefix();
 #endif
-  // printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+
+#if 0
+     printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+#endif
 
   // DQ (10/12/2006): need to trim off the global scope specifier (I think).
   // curprint( "\n/* Calling trimGlobalScopeQualifier() */\n ");
@@ -500,8 +516,20 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
 
      curprint(nameQualifier.str());
 
+  // DQ (11/16/2013): See test2013_273.C for where we don't always want to always output the name with template arguments.
+  // Alternatively we can just make sure that we use correct name qualification on the template arguments when this is a
+  // template instantiation.
   // output the function name
-     curprint( funcdecl_stmt->get_name().str());
+  // curprint( funcdecl_stmt->get_name().str());
+     if (templateFunctionDeclaration != NULL)
+        {
+       // curprint(templateFunctionDeclaration->get_templateName().str());
+          unp->u_exprStmt->unparseTemplateFunctionName(templateFunctionDeclaration,info);
+        }
+       else
+        {
+          curprint(funcdecl_stmt->get_name().str());
+        }
 
 #if 0
   // DQ (2/16/2005): Function name has been modified instead.
@@ -544,11 +572,11 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                unp->u_sage->curprint_newline();
           while ( p != funcdecl_stmt->get_args().end() )
              {
-#if 1
+#if 0
                printf ("Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
 #endif
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-#if 1
+#if 0
                printf ("DONE: Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
 #endif
             // Output declarations for function parameters (using old-style K&R syntax)
@@ -1561,7 +1589,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
      ROSE_ASSERT(functionDeclaration != NULL);
 
 #if 0
-     printf("Inside of Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+     printf ("Inside of Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+     printf ("   --- isTransformed (templateInstantiationFunctionDeclaration) = %s \n",isTransformed (templateInstantiationFunctionDeclaration) ? "true" : "false");
      curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 
@@ -1723,6 +1752,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
         }
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
@@ -2520,8 +2550,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-
+#if 0
                     printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
+#endif
 #if 0
                     curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
 #endif
@@ -2677,6 +2708,21 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           curprint( "\n/* DONE: Calling printSpecifier() */ ");
 #endif
+
+       // DQ (10/21/2013): In cases where this is a function declaration the "extern" keyword may have been in a #if...#endif block and then
+       // the #endif will be placed as "inside" the statement (instead of at the beginning or the end.  In this case we want to unparse
+       // any attached CPP directives (or comments) that are listed as "inside" the declaration after the unparsing of the specifiers (e.g. "extern").
+       // This is a new bug that is a result of having better source position information (required for the token handling support) and 
+       // getting the source position of the function declaration at the start of the specifiers (where this is available).  However,
+       // this then means that the "#end" is between the start and the end fo the statement (thus the "#end is considered "inside" the
+       // function declaration statement.  Previously the source position for the start of a function declaration had been the start of the
+       // function name (and not any specifiers).  Test code test2013_271.C and test2013_272.C demonstrate this problem.  So here well
+       // unparse any attached CPP directives that are marked as inside the declaration.  We can't actually know where the CPP directived
+       // should go relative to the different parts of the declaration, so this is approximate.  But at least we know that the CPP directive
+       // will be unparsed and this avoids unmatched #if...#endif pairings.  A more faithful job can only be done by the token based unparsing
+       // which is still in development.
+          unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::inside);
+
           ninfo.unset_CheckAccess();
 
        // DQ (11/10/2007): Modified from info.set_access_attribute(...) --> ninfo.set_access_attribute(...)
@@ -2915,6 +2961,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_Info& info)
    {
@@ -2924,6 +2971,7 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
      assert(declstmt!=NULL);
      unparseTemplateFunctionDeclStmt(declstmt, info);
    }
+
 
 // NOTE: Bug in Sage: No file information provided for FuncDeclStmt. 
 void
@@ -2987,11 +3035,14 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      info.set_declstatement_ptr(NULL);
      info.set_declstatement_ptr(funcdefn_stmt->get_declaration());
 
-     if (isSgMemberFunctionDeclaration(declstmt)) {
-         unparseMFuncDeclStmt( declstmt, info);
-     } else {
-         unparseFuncDeclStmt( declstmt, info);
-     }
+     if (isSgMemberFunctionDeclaration(declstmt)) 
+        {
+          unparseMFuncDeclStmt( declstmt, info);
+        }
+       else 
+        {
+          unparseFuncDeclStmt( declstmt, info);
+        }
 
   // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: DONE calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
 
@@ -3628,6 +3679,12 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // printf ("Unparsing the preinitialization list \n");
 
+            // DQ (10/17/2004): Skip output of enum and class definitions for return type! C++ standard does not permit 
+            // a defining declaration within a return type, function parameter, or sizeof expression. 
+            // SgUnparse_Info ninfo3(info);
+            // ninfo3.set_SkipClassDefinition();
+            // ninfo3.set_SkipEnumDefinition();
+
                while (p != mfuncdecl_stmt->get_ctors().end())
                   {
                     if (first)
@@ -3673,8 +3730,11 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // qualification (e.g. SgConstructorInitializer).  See test2005_42.C for an example.
                          info.set_reference_node_for_qualification(initializer);
 
+                      // DQ (11/16/2013): Use ninfo2 instead of info since it has been setup to avoid things 
+                      // that should not happen in preinitialization lists (e.g. output of type definitions).
                       // unparseExpression((*p)->get_initializer(), info);
-                         unparseExpression(initializer, info);
+                      // unparseExpression(initializer, info);
+                         unparseExpression(initializer, ninfo2);
 
                       // DQ (6/4/2011): Clear this since we have used the input SgUnparse_Info.
                          info.set_reference_node_for_qualification(NULL);

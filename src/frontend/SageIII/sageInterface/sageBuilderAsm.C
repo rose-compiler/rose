@@ -7,6 +7,31 @@
 
 using namespace std;
 
+SgAsmx86RegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor &desc) 
+{
+    return new SgAsmx86RegisterReferenceExpression(desc);
+}
+
+SgAsmArmRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmArmRegisterReferenceExpression(desc);
+}
+
+SgAsmMipsRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmMipsRegisterReferenceExpression(desc);
+}
+
+SgAsmPowerpcRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmPowerpcRegisterReferenceExpression(desc);
+}
+
+
 SgAsmx86Instruction* SageBuilderAsm::buildx86Instruction( X86InstructionKind kind )
    {
   // These are the default values used for the construction of new instructions.
@@ -163,7 +188,6 @@ SageBuilderAsm::buildMultibyteNopInstruction(int n)
 
      bool lock                               = false;
      X86RepeatPrefix repeatPrefix            = x86_repeat_none;
-     X86SegmentRegister segOverride          = x86_segreg_none;
      bool branchPredictionEnabled            = false;
      X86BranchPrediction branchPrediction    = x86_branch_prediction_none;
 
@@ -211,7 +235,6 @@ SageBuilderAsm::buildMultibyteNopInstruction(int n)
      instruction->set_lockPrefix(lock);
      instruction->set_repeatPrefix(repeatPrefix);
 
-     instruction->set_segmentOverride(segOverride);
      if (branchPredictionEnabled)
           instruction->set_branchPrediction(branchPrediction);
 

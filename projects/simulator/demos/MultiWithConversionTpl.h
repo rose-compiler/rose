@@ -609,7 +609,7 @@ bool
 State<ValueType>::must_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver)
 {
     assert(solver);
-    return addr1.get_expression()->equal_to(addr2.get_expression(), solver);
+    return addr1.get_expression()->must_equal(addr2.get_expression(), solver);
 }
 
 template <template <size_t> class ValueType>
@@ -690,7 +690,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
                 TreeNodePtr sv = convert_to_symbolic(found[i]).get_expression();
                 bool dup = false; // is 'sv' equivalent to any already in found_symbolic[] ?
                 for (size_t j=0; !dup && j<set_members.size(); ++j)
-                    dup = sv->equal_to(set_members[j], solver);
+                    dup = sv->must_equal(set_members[j], solver);
                 if (!dup) {
                     // Add 'sv' to the set
                     set_members.push_back(sv);

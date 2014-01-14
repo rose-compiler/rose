@@ -31,7 +31,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_258.C \
    test2013_259.C \
    test2013_260.C \
-   test2013_261.C 
+   test2013_261.C \
+   test2013_271.C \
+   test2013_272.C \
+   test2013_273.C \
+   test2013_274.C \
+   test2013_275.C \
+   test2013_276.C \
+   test2013_277.C \
+   test2013_278.C \
+   test2013_279.C \
+   test2013_280.C \
+   test2013_281.C \
+   test2013_282.C 
 
 # Current problem test codes:
 #  test2013_262.C 

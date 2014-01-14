@@ -1107,6 +1107,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageDeclaration:
+             {
+               name = "_java_package_declaration_";
+               const SgJavaPackageDeclaration* package_declaration = isSgJavaPackageDeclaration(declaration);
+               ROSE_ASSERT(package_declaration != NULL);
+               ROSE_ASSERT(package_declaration->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageDeclaration*>(package_declaration));
+               break;
+             }
+
            case V_SgJavaPackageStatement:
              {
                name = "_java_package_stmt_";
@@ -11230,23 +11240,41 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              {
                for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                   {
+                    SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
 #if 0
-                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
+                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Testing j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
 #endif
                  // DQ (3/9/2012): Avoid setting the function to be it's own firstNondefiningDeclaration.
                  // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
-                    if (*j != func)
+                 // if (*j != func)
+                    if (func_decl != func)
                        {
-                         isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                         if (func_decl->get_firstNondefiningDeclaration() == NULL)
+                            {
+#if 0
+                              printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
+#endif
+                              func_decl->set_firstNondefiningDeclaration(func);
+                            }
                        }
                   }
              }
             else // is a following nondefining declaration, grab any other's first nondefining link then
              {
 #if 0
-               printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+               printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-               func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+               if (func->get_firstNondefiningDeclaration() == NULL)
+                  {
+#if 0
+                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+#endif
+                    func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+                  }
              }
         }
    }
@@ -17023,15 +17051,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      */
     SgForStatement *& target_loop = loop;
 
-    SgInitializedName* ivar[collapsing_factor];
-    SgExpression* lb[collapsing_factor];
-    SgExpression* ub[collapsing_factor];
-    SgExpression* step[collapsing_factor];
-    SgStatement* orig_body[collapsing_factor]; 
+    SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
+    SgExpression** lb = new SgExpression*[collapsing_factor];
+    SgExpression** ub = new SgExpression*[collapsing_factor];
+    SgExpression** step = new SgExpression*[collapsing_factor];
+    SgStatement** orig_body = new SgStatement*[collapsing_factor]; 
     
-    SgExpression* total_iters[collapsing_factor]; //Winnie, the real iteration counter in each loop level
-    SgExpression* interval[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
-    bool isPlus[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
+    SgExpression** total_iters = new SgExpression*[collapsing_factor]; //Winnie, the real iteration counter in each loop level
+    SgExpression** interval = new SgExpression*[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
+    bool *isPlus = new bool[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
 
 
     //Winnie, get loops info first
@@ -17212,6 +17240,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
+
+    delete [] ivar;
+    delete [] lb;
+    delete [] ub;
+    delete [] step;
+    delete [] orig_body;
+    delete [] total_iters;
+    delete [] interval;
+    delete [] isPlus;
 
     #endif
 

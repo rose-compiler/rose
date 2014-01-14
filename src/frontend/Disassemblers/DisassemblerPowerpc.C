@@ -43,7 +43,7 @@ DisassemblerPowerpc::init()
 {
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
 }
 

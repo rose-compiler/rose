@@ -42,7 +42,25 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             extern uint64_t name_counter;
 
-            typedef std::map<uint64_t, uint64_t> RenameMap;
+            /** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using
+             *  lower numbers. This is useful for human-readable output because variable names tend to get very large (like
+             *  "v904885611"). */
+            class Formatter: public BaseSemantics::Formatter {
+            protected:
+                typedef std::map<uint64_t, uint64_t> Map;
+                Map renames;
+                size_t next_name;
+            public:
+                Formatter(): next_name(1) {}
+                uint64_t rename(uint64_t orig_name) {
+                    if (0==orig_name)
+                        return orig_name;
+                    std::pair<Map::iterator, bool> inserted = renames.insert(std::make_pair(orig_name, next_name));
+                    if (!inserted.second)
+                        return orig_name;
+                    return next_name++;
+                }
+            };
 
             /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
             template<size_t nBits>
@@ -88,15 +106,14 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return offset;
                 }
 
-                /** Returns a new, optionally renamed, value.  If the rename map, @p rmap, is non-null and this value is a
-                 *  named value, then its name will be transformed by looking up the name in the map and using the value found
-                 *  there. If the name is not in the map then a new entry is created in the map.  Remapped names start counting
-                 *  from one.  For example, if "v904885611+0xfc" is the first value to be renamed, it will become "v1+0xfc". */
-                ValueType<nBits> rename(RenameMap *rmap=NULL) const;
-
-                /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the
-                 *  rename() method for details. */
-                void print(std::ostream &o, RenameMap *rmap=NULL) const {
+                /** Print the value.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt_) const {
+                    Formatter *fmt = dynamic_cast<Formatter*>(&fmt_);
                     FormatRestorer restorer(o); // restore format flags when we leave this scope
                     uint64_t sign_bit = (uint64_t)1 << (nBits-1); /* e.g., 80000000 */
                     uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
@@ -105,16 +122,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                     if (name!=0) {
                         /* This is a named value rather than a constant. */
-                        uint64_t renamed = name;
-                        if (rmap) {
-                            RenameMap::iterator found = rmap->find(name);
-                            if (found==rmap->end()) {
-                                renamed = rmap->size()+1;
-                                rmap->insert(std::make_pair(name, renamed));
-                            } else {
-                                renamed = found->second;
-                            }
-                        }
+                        uint64_t renamed = fmt ? fmt->rename(name) : name;
                         const char *sign = negate ? "-" : "";
                         o <<sign <<"v" <<std::dec <<renamed;
                         if (negative) {
@@ -129,10 +137,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                         if (negative)
                             o <<" (-0x" <<std::hex <<negative <<")";
                     }
+                    o <<"[" <<std::dec <<nBits <<"]";
                 }
-                void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
-                    print(o, (RenameMap*)0);
-                }
+                /** @} */
 
                 friend bool operator==(const ValueType &a, const ValueType &b) {
                     return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
@@ -153,7 +160,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             template<size_t Len>
             std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
-                e.print(o, (RenameMap*)0);
+                e.print(o);
                 return o;
             }
 
@@ -197,9 +204,15 @@ namespace BinaryAnalysis {                      // documented elsewhere
             struct State: public BaseSemantics::StateX86<MemoryCell, ValueType> {
                 typedef typename BaseSemantics::StateX86<MemoryCell, ValueType>::Memory Memory;
 
-                /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
+                /** Print info about how registers differ.
+                 * @{ */
+                void print_diff_registers(std::ostream &o, const State &s) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, s, fmt);
+                }
+                void print_diff_registers(std::ostream &o, const State&,
+                                          BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const;
+                /** @} */
 
                 /** Tests registers of two states for equality. */
                 bool equal_registers(const State&) const;
@@ -253,11 +266,14 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     orig_state = cur_state;
                 }
 
-                /** Set the memory map that holds known values for known memory addresses.  This map is not modified by the
-                 *  policy and data is read from but not written to the map. */
+                /** Memory map that holds known values for known memory addresses.  This map is not modified by the
+                 *  policy and data is read from but not written to the map.
+                 * @{ */
                 void set_map(MemoryMap *map) {
                     this->map = map;
                 }
+                MemoryMap *get_map() const { return map; }
+                /** @} */
 
                 /** Returns the number of instructions processed. This counter is incremented at the beginning of each
                  *  instruction. */
@@ -305,13 +321,18 @@ namespace BinaryAnalysis {                      // documented elsewhere
                  *  memory that has only been read. */
                 bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
-                /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print(std::ostream&, RenameMap *rmap=NULL) const;
+                /** Print the current state of this policy.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream&, BaseSemantics::Formatter &fmt) const;
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
-                    p.print(o, NULL);
+                    p.print(o);
                     return o;
                 }
+                /** @} */
 
                 /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The
                  *  stack pointer need not have a known value. */
@@ -329,21 +350,35 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     return p_discard_popped_memory;
                 }
 
-                /** Print only the differences between two states.  If a rename map is specified then named values will be
-                 *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&, RenameMap *rmap=NULL) const ;
-
-                /** Print the difference between a state and the initial state.  If a rename map is specified then named values
-                 *  will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, const State<ValueType> &state, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, state, rmap);
+                /** Print only the differences between two states.
+                 * @{ */
+                void print_diff(std::ostream &o, const State<ValueType> &s1, const State<ValueType> &s2) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, s1, s2, fmt);
                 }
+                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&,
+                                BaseSemantics::Formatter &fmt) const ;
+                /** @} */
 
-                /** Print the difference between the current state and the initial state.  If a rename map is specified then
-                 *  named values will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, cur_state, rmap);
+                /** Print the difference between a state and the initial state.
+                 * @{ */
+                void print_diff(std::ostream &o, const State<ValueType> &state) const {
+                    print_diff(o, orig_state, state);
                 }
+                void print_diff(std::ostream &o, const State<ValueType> &state, BaseSemantics::Formatter &fmt) const {
+                    print_diff(o, orig_state, state, fmt);
+                }
+                /** @} */
+
+                /** Print the difference between the current state and the initial state.
+                 * @{ */
+                void print_diff(std::ostream &o) const {
+                    print_diff(o, orig_state, cur_state);
+                }
+                void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    print_diff(o, orig_state, cur_state, fmt);
+                }
+                /** @} */
 
                 /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is
                  *  not available then the return value will be an empty string. */
@@ -882,24 +917,6 @@ namespace BinaryAnalysis {                      // documented elsewhere
              *************************************************************************************************************/
 
 
-            template<size_t Len> ValueType<Len>
-            ValueType<Len>::rename(RenameMap *rmap) const
-            {
-                ValueType<Len> retval = *this;
-                if (rmap && name>0) {
-                    RenameMap::iterator found = rmap->find(name);
-                    if (found==rmap->end()) {
-                        retval.name = rmap->size()+1;
-                        rmap->insert(std::make_pair(name, retval.name));
-                    } else {
-                        retval.name = found->second;
-                    }
-                }
-                return retval;
-            }
-
-
-
             /*************************************************************************************************************
              *                              MemoryCell template functions
              *************************************************************************************************************/
@@ -935,34 +952,47 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
             template<template<size_t> class ValueType>
             void
-            State<ValueType>::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap/*=NULL*/) const
+            State<ValueType>::print_diff_registers(std::ostream &o, const State &other, BaseSemantics::Formatter &fmt) const
             {
 #ifndef CXX_IS_ROSE_ANALYSIS
                 // DQ (5/22/2010): This code does not compile using ROSE, it needs to be investigated to be reduced to an bug
                 // report.
 
-                std::string prefix = "    ";
+                std::string prefix = fmt.get_line_prefix();
 
                 for (size_t i=0; i<this->registers.n_gprs; ++i) {
                     if (this->registers.gpr[i]!=other.registers.gpr[i]) {
-                        o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": "
-                          <<this->registers.gpr[i].rename(rmap) <<" -> " <<other.registers.gpr[i].rename(rmap) <<"\n";
+                        o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": ";
+                        this->registers.gpr[i].print(o, fmt);
+                        o <<" -> ";
+                        other.registers.gpr[i].print(o, fmt);
+                        o <<"\n";
                     }
                 }
                 for (size_t i=0; i<this->registers.n_segregs; ++i) {
                     if (this->registers.segreg[i]!=other.registers.segreg[i]) {
-                        o <<prefix <<segregToString((X86SegmentRegister)i) <<": "
-                          <<this->registers.segreg[i].rename(rmap) <<" -> " <<other.registers.segreg[i].rename(rmap) <<"\n";
+                        o <<prefix <<segregToString((X86SegmentRegister)i) <<": ";
+                        this->registers.segreg[i].print(o, fmt);
+                        o <<" -> ";
+                        other.registers.segreg[i].print(o, fmt);
+                        o <<"\n";
                     }
                 }
                 for (size_t i=0; i<this->registers.n_flags; ++i) {
                     if (this->registers.flag[i]!=other.registers.flag[i]) {
-                        o <<prefix <<flagToString((X86Flag)i) <<": "
-                          <<this->registers.flag[i].rename(rmap) <<" -> " <<other.registers.flag[i].rename(rmap) <<"\n";
+                        o <<prefix <<flagToString((X86Flag)i) <<": ";
+                        this->registers.flag[i].print(o, fmt);
+                        o <<" -> ";
+                        other.registers.flag[i].print(o, fmt);
+                        o <<"\n";
                     }
                 }
                 if (this->registers.ip!=other.registers.ip) {
-                    o <<prefix <<"ip: " <<this->registers.ip.rename(rmap) <<" -> " <<other.registers.ip.rename(rmap) <<"\n";
+                    o <<prefix <<"ip: ";
+                    this->registers.ip.print(o, fmt);
+                    o <<" -> ";
+                    other.registers.ip.print(o, fmt);
+                    o <<"\n";
                 }
 #endif
             }
@@ -1050,9 +1080,9 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template <template <size_t> class ValueType> class State,
                 template<size_t> class ValueType>
             void
-            Policy<State, ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
+            Policy<State, ValueType>::print(std::ostream &o, BaseSemantics::Formatter &fmt) const
             {
-                cur_state.print(o, "", rmap);
+                cur_state.print(o, fmt);
             }
 
             template<
@@ -1060,10 +1090,10 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 template<size_t> class ValueType>
             void
             Policy<State, ValueType>::print_diff(std::ostream &o, const State<ValueType> &s1,
-                                                 const State<ValueType> &s2, RenameMap *rmap/*=NULL*/) const
+                                                 const State<ValueType> &s2, BaseSemantics::Formatter &fmt) const
             {
 #ifndef CXX_IS_ROSE_ANALYSIS
-                s1.print_diff_registers(o, s2, rmap);
+                s1.print_diff_registers(o, s2, fmt);
 
                 /* Get all addresses that have been written and are not currently clobbered. */
                 std::set<ValueType<32> > addresses;
@@ -1084,7 +1114,13 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     ValueType<32> v2 = mem_read<32>(tmp_s2, *ai);
                     if (v1 != v2) {
                         if (0==nmemdiff++) o <<"    memory:\n";
-                        o <<"      " <<(*ai).rename(rmap) <<": " <<v1.rename(rmap) <<" -> " <<v2.rename(rmap) <<"\n";
+                        o <<"      ";
+                        (*ai).print(o, fmt);
+                        o <<": ";
+                        v1.print(o, fmt);
+                        o <<" -> ";
+                        v2.print(o, fmt);
+                        o <<"\n";
                     }
                 }
 #endif
@@ -1133,8 +1169,8 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
 
                 std::stringstream s;
-                RenameMap rmap;
-                print_diff(s, &rmap);
+                Formatter fmt;
+                print_diff(s, fmt);
                 ROSE_ASSERT(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
                 gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
                 return true;
