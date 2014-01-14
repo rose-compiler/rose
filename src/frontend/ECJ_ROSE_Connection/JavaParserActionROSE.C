@@ -5197,6 +5197,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePairEnd(JNIEnv *env, jc
     SgJavaMemberValuePair *member_value_pair = new SgJavaMemberValuePair();
     member_value_pair -> set_name(name);
     member_value_pair -> set_value(value);
+    value -> set_parent(member_value_pair);
     setJavaSourcePosition(member_value_pair, env, jToken);
 
     astJavaComponentStack.push(member_value_pair);
