@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "FortranModuleInfo.h"
 #include "boost/filesystem.hpp"
+#include "boost/algorithm/string/replace.hpp"
+
 
 using namespace std;
 using std::string;
@@ -76,9 +78,11 @@ FortranModuleInfo::set_inputDirs(SgProject* project) {
 #else
      if (args[i].find("-I",0)==0) {
            rmodDir = args[i].substr(2);
+           std::string rmodDir_no_quotes =
+                boost::replace_all_copy(rmodDir, "\"", "");
 
-           if (boost::filesystem::exists(rmodDir.c_str())) {
-                inputDirs.push_back(rmodDir);
+           if (boost::filesystem::exists(rmodDir_no_quotes.c_str())) {
+                inputDirs.push_back(rmodDir_no_quotes);
           } else 
                 cout << "WARNING: the input directory does not exist : " << rmodDir<< endl;
      } 

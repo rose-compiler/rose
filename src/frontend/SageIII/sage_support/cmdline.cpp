@@ -1251,14 +1251,13 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
                         << "Invalid argument to -I; path does not exist: "
                         << "'" << arg << "'"
                         << std::endl;
-          }       
-          // ensure that the path is quoted.
-          if (arg[2] != '"')
-          {
-              arg.insert(2, "\"");
-              arg.append("\"");
           }
+          #ifdef _MSC_VER
+          // ensure that the path is quoted on Windows.
           r_argv.push_back("-I\"" + arg + "\"");
+          #else
+          r_argv.push_back("-I" + arg + "");
+          #endif
       }
       else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
       {
@@ -1275,12 +1274,14 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           else
           {
               // no normalization required for -I<path>, but ensure
-              // that the path is quoted.
+              // that the path is quoted on Windows.
+              #ifdef _MSC_VER
               if (arg[2] != '"')
               {
                   arg.insert(2, "\"");
                   arg.append("\"");
               }
+              #endif
               r_argv.push_back(arg);
           }
       }
