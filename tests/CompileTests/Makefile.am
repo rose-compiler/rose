@@ -32,7 +32,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += \
-      C_tests Cxx_tests Cxx11_tests C_subset_of_Cxx_tests C99_tests UPC_tests DLX
+      C_tests Cxx_tests Cxx11_tests C_subset_of_Cxx_tests C99_tests UPC_tests
 endif
 endif
 
