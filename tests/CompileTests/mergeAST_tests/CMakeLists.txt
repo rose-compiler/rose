@@ -1,5 +1,5 @@
-add_executable(testMerge testMerge.C)
-target_link_libraries(testMerge ROSE_DLL EDG ${link_with_libraries})
+add_executable(roseTestMerge testMerge.C)
+target_link_libraries(roseTestMerge ROSE_DLL EDG ${link_with_libraries})
 
 # This is a shortened list that tests more quickly.
 set(TESTCODES
@@ -32,6 +32,6 @@ set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict -rose:astMerge)
 foreach(file_to_test ${TESTCODES})
   add_test(
     NAME ${file_to_test}
-    COMMAND testMerge ${ROSE_FLAGS}
+    COMMAND roseTestMerge ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 endforeach()

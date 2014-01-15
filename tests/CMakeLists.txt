@@ -14,8 +14,12 @@ target_link_libraries(testAnalysis ROSE_DLL EDG ${link_with_libraries} )
 
 option(with-ROSE_LONG_MAKE_CHECK_RULE "Specify longer internal testing" ON)
 
-add_subdirectory (translatorTests)
 add_subdirectory (CompileTests)
+add_subdirectory (roseTests)
+#add_subdirectory (RunTests)
+#add_subdirectory (PerformanceTests)
+#add_subdirectory (CompilerOptionsTests)
+add_subdirectory (translatorTests)
 
 find_program(bash bash)
 if(bash)
