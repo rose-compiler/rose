@@ -1,7 +1,3 @@
-########### install files ###############
-
-install(FILES  ecjROSE.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
-
 # This file also needs to be in the binary dir for related
 # tests to pass
 configure_file(
@@ -98,4 +94,20 @@ add_custom_target(extract_rose_required_ecj_source_files
     ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.h
     ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
     ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.h)
+
+########### install files ###############
+
+install(
+  FILES
+    ecjROSE.jar
+    ${CMAKE_CURRENT_BINARY_DIR}/ecjASTVisitor.class
+    ${CMAKE_CURRENT_BINARY_DIR}/ExtendedASTVisitor.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport$LocalOrAnonymousType.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformation.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformationFactory.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaToken.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
+  DESTINATION lib)
 

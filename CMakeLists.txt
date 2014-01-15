@@ -870,6 +870,9 @@ endif (NOT WIN32)
 include(roseChooseBackendCompiler)
 include(roseGenerateBackendCompilerSpecificHeaders)
 
+# Install the directories within <bin>/include-staging
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include)
+
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
 # for a translator
@@ -1062,6 +1065,8 @@ add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
+add_subdirectory(scripts)
+add_subdirectory(tools)
 
 enable_testing()
 

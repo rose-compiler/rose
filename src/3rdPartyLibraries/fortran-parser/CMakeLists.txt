@@ -13,8 +13,9 @@ endif()
 
 install(
   FILES OpenFortranParser-0.8.3.jar
+        OpenFortranParser-20111001.jar
         ${jar_file}
-  DESTINATION ${INCLUDE_INSTALL_DIR} )
+  DESTINATION lib)
 
 # this file also needs to be in the binary directory for
 # related tests to pass

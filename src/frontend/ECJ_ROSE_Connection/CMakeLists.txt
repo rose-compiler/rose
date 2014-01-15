@@ -17,7 +17,7 @@ add_library(JavaTraversal SHARED ${JavaTraversal_LIB_SRCS})
 set_target_properties(JavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
 add_dependencies(JavaTraversal
   rosetta_generated extract_rose_required_ecj_source_files)
-install(TARGETS JavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS JavaTraversal DESTINATION lib)
 
 
 ########### next target ###############
@@ -38,5 +38,8 @@ add_dependencies(roseJava
 
 ########### install files ###############
 
-#install(FILES  DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  ecj.h JavaSourceCodePosition.h java_support.h
+               jni_JavaSourceCodePosition.h jni_token.h jni_utils.h
+               VisitorContext.h
+        DESTINATION include)
 
