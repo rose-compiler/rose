@@ -36,10 +36,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 private:
     typedef Map<uint64_t /*hash*/, LeafNodePtr /*term*/> Rewrites;
+    typedef Map<uint64_t, std::string> Variables;
+
     Rewrites rewrites;                                  // maps expressions to LLVM variables
+    Variables variables;                                // ROSE-to-LLVM variable map; name includes sigil
     RegisterStatePtr prev_regstate;                     // most recently emitted register state
     RegisterDescriptors important_registers;            // registers that should be emitted to LLVM
-    InsnSemanticsExpr::TreeNodes  mem_writes;           // memory write operations (OP_WRITE expressions)
+    TreeNodes  mem_writes;                              // memory write operations (OP_WRITE expressions)
     size_t indent_level;                                // level of indentation
     std::string indent_string;                          // white space per indentation level
 
@@ -163,10 +166,21 @@ public:
     /** Return the list of memory writes that have occured since the last call to make_current(). Each item in the list is an
      *  OP_WRITE symbolic expression, and the list is in the order the write occurred (oldest to most recent).  The memory
      *  states are each  unique and not used for anything in particular. */
-    virtual const InsnSemanticsExpr::TreeNodes& get_memory_writes() { return mem_writes; }
+    virtual const TreeNodes& get_memory_writes() { return mem_writes; }
 
     /** Mark the current state as having been emitted. */
     virtual void make_current();
+
+    /** Register a rewrite. */
+    virtual void add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to);
+
+    /** Register an LLVM variable. Returns the LLVM variable name including its sigil. If the variable doesn't exist yet then
+     *  it's added to the list of known variables. */
+    virtual std::string add_variable(const LeafNodePtr&);
+
+    /** Returns the LLVM name for a variable, including the sigil.  If the specified ROSE variable has no corresponding
+     *  LLVM definition, then the empty string is returned. */
+    virtual std::string get_variable(const LeafNodePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to emit the machine state
@@ -177,10 +191,10 @@ public:
     /** Output LLVM global register definitions for the specified registers. */
     virtual void emit_register_definitions(std::ostream&, const RegisterDescriptors&);
 
-    /** Output LLVM global variable reads that are needed to define the specified registers.  Since registers are stored in
-     *  global variables and we routinely emit more than one register definition at a time, we need to first make sure that any
-     *  global prerequisites for the definitions are saved in temporaries.  This is to handle cases like the following, where
-     *  the values of @p eax and @p ebx are swapped using @p edx as a temporary:
+    /** Output LLVM global variable reads that are needed to define the specified registers and pending memory writes.  Since
+     *  registers are stored in global variables and we routinely emit more than one register definition at a time, we need to
+     *  first make sure that any global prerequisites for the definitions are saved in temporaries.  This is to handle cases
+     *  like the following, where the values of @p eax and @p ebx are swapped using @p edx as a temporary:
      *
      * @code
      *  mov edx, eax
@@ -221,13 +235,17 @@ public:
     /** Obtain the LLVM type name for an integer. */
     virtual std::string llvm_integer_type(size_t nbits);
 
-    /** Convert a variable or integer to an LLVM term. */
+    /** Convert a ROSE variable or integer to an LLVM term. A term must be a constant or a variable reference (rvalue). */
     virtual std::string llvm_term(const TreeNodePtr&);
+
+    /** Convert a ROSE variable to an LLVM lvalue. The variable must not have been used as an lvalue previously since LLVM uses
+     *  single static assignment (SSA) format. */
+    virtual std::string llvm_lvalue(const LeafNodePtr&);
 
     /** Create a temporary variable. */
     virtual LeafNodePtr next_temporary(size_t nbits);
 
-    /** Obtain the name for an LLVM label. */
+    /** Obtain the name for an LLVM label, excluding the "%" sigil. */
     virtual std::string next_label();
 
     /** Obtain a label for a virtual address. */
@@ -261,8 +279,8 @@ public:
     /** @} */
 
 protected:
-    /** Emit an assignment and add a rewrite rule.  The left hand side is a new LLVM temporary variable (which is returned) and
-     *  the assignment is emitted even if the right hand side is also a variable.  A rewrite rule is added so that future
+    /** Emit an assignment and add a rewrite rule.  The left hand side is a new LLVM temporary variable (which is returned). If
+     *  @p rhs is an LLVM unamed local variable then @p rhs is returned. Otherwise, a rewrite rule is added so that future
      *  appearances of the right hand side will be replaced by the left hand side in calls to emit_expression(). */
     virtual LeafNodePtr emit_assignment(std::ostream&, const TreeNodePtr &rhs);
 
@@ -288,13 +306,17 @@ protected:
     virtual TreeNodePtr emit_invert(std::ostream&, const TreeNodePtr &value);
     virtual TreeNodePtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
     virtual TreeNodePtr emit_concat(std::ostream&, TreeNodes operands);
-    virtual TreeNodePtr emit_divide(std::ostream&, const std::string llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_signed_modulo(std::ostream&, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr&, const TreeNodePtr&);
+    virtual TreeNodePtr emit_signed_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
+    virtual TreeNodePtr emit_unsigned_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
+    virtual TreeNodePtr emit_signed_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
+    virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
     virtual TreeNodePtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
     virtual TreeNodePtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
-    virtual TreeNodePtr emit_memory_read(std::ostream&, const TreeNodePtr &address, size_t nbits);
+    virtual TreeNodePtr emit_compare(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
     virtual TreeNodePtr emit_ite(std::ostream&, const TreeNodePtr &cond, const TreeNodePtr&, const TreeNodePtr&);
+    virtual TreeNodePtr emit_memory_read(std::ostream&, const TreeNodePtr &address, size_t nbits);
+    virtual TreeNodePtr emit_global_read(std::ostream&, const std::string &varname, size_t nbits);
+    virtual void        emit_memory_write(std::ostream&, const TreeNodePtr &address, const TreeNodePtr &value);
     /** @} */
 };
 
@@ -327,6 +349,18 @@ public:
         return instance(dispatcher);
     }
 
+    /** Emit LLVM file prologue.
+     * @{ */
+    void emitFilePrologue(std::ostream&);
+    std::string emitFilePrologue();
+    /** @} */
+
+    /** Emit function declarations.  Emits declarations for all functions that appear in the specified AST.
+     *  @{ */
+    void emitFunctionDeclarations(SgNode *ast, std::ostream&);
+    std::string emitFunctionDeclarations(SgNode *ast);
+    /** @} */
+
     /** Translate a single machine instruction to LLVM instructions.  LLVM instructions are emitted to the specified stream
      *  or returned as a string.
      * @{ */
@@ -335,17 +369,24 @@ public:
     /** @} */
 
     /** Transcode a basic block of machine instructions to LLVM instructions.  LLVM instructions are emitted to the specified
-     *  stream or returned as a string.
+     *  stream or returned as a string.  When a string isn't returned, the return value is the number of instructions emitted.
      * @{ */
-    void transcodeBasicBlock(SgAsmBlock*, std::ostream&);
+    size_t transcodeBasicBlock(SgAsmBlock*, std::ostream&);
     std::string transcodeBasicBlock(SgAsmBlock*);
     /** @} */
 
     /** Transcode an entire function to LLVM instructions.  LLVM instructions are emitted to the specified stream or returned
-     *  as a string.
+     *  as a string.  When a string isn't returned, the return value is the number of basic blocks emitted.
      * @{ */
-    void transcodeFunction(SgAsmFunction*, std::ostream&);
+    size_t transcodeFunction(SgAsmFunction*, std::ostream&);
     std::string transcodeFunction(SgAsmFunction*);
+    /** @} */
+
+    /** Transcode an entire binary interpretation. Unlike the lower-level transcoder methods, this one also emits register and
+     *  function declarations.
+     * @{ */
+    void transcodeInterpretation(SgAsmInterpretation*, std::ostream&);
+    std::string transcodeInterpretation(SgAsmInterpretation*);
     /** @} */
 };
 
