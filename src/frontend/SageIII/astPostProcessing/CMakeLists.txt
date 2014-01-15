@@ -1,14 +1,3 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### next target ###############
-
-
-#add_library( libastPostProcessing STATIC ${libastPostProcessing_SRC}  )
-#add_dependencies( libastPostProcessing ROSETTA   )
-
-
 ########### install files ###############
 
 install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations.h
@@ -26,6 +15,11 @@ install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations
     markLhsValues.h       fixupUseAndUsingDeclarations.h
     fixupCxxSymbolTablesToSupportAliasingSymbols.h normalizeTypedefSequenceLists.h
     fixupConstantFoldedValues.h
-    DESTINATION ${INCLUDE_INSTALL_DIR})
 
+    checkIsCompilerGeneratedFlag.h checkIsFrontendSpecificFlag.h
+    checkPhysicalSourcePosition.h detectTransformations.h
+    fixupDeclarationScope.h fixupFunctionDefaultArguments.h
+    fixupSelfReferentialMacros.h fixupTypeReferences.h
+
+    DESTINATION ${INCLUDE_INSTALL_DIR})
 

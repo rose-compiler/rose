@@ -1,5 +1,6 @@
 add_executable(statements statements.C )
 target_link_libraries(statements ROSE_DLL EDG ${link_with_libraries} )
+install(TARGETS statements DESTINATION bin)
 
 if(NOT with-ROSE_LONG_MAKE_CHECK_RULE)
   return()

@@ -1,5 +1,6 @@
 add_executable(testMerge testMerge.C)
 target_link_libraries(testMerge ROSE_DLL EDG ${link_with_libraries})
+install(TARGETS testMerge DESTINATION bin)
 
 add_test(
   NAME testMerge_test1

@@ -1,8 +1,10 @@
 add_executable( SizeofTest_GNU SizeofTest_GNU.C )
 target_link_libraries(SizeofTest_GNU ROSE_DLL EDG ${link_with_libraries} )
+install(TARGETS SizeofTest_GNU DESTINATION bin)
 
 add_executable( SizeofTest_Intel SizeofTest_Intel.C )
 target_link_libraries(SizeofTest_Intel ROSE_DLL EDG ${link_with_libraries} )
+install(TARGETS SizeofTest_Intel DESTINATION bin)
 
 set(TESTCODES inputCode_SizeofTest.C)
 

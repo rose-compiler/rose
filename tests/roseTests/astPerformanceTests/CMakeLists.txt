@@ -10,6 +10,8 @@ target_link_libraries(testPerformance ROSE_DLL EDG ${link_with_libraries})
 add_executable(rosePerformanceTest rosePerformanceTest.C)
 target_link_libraries(rosePerformanceTest ROSE_DLL EDG ${link_with_libraries})
 
+install(TARGETS testPerformance rosePerformanceTest DESTINATION bin)
+
 if (NOT CYGWIN)
   add_test(
     NAME testPerformance

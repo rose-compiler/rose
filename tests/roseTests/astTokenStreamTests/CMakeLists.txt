@@ -88,3 +88,7 @@ add_test(
     -rose:verbose 2
     -c ${CMAKE_CURRENT_SOURCE_DIR}/input_testUnparsingUsingTokenStream.c
 )
+
+install(
+  TARGETS tokenStreamMapping testUnparsingUsingTokenStream
+  DESTINATION bin)

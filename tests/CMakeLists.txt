@@ -12,6 +12,10 @@ target_link_libraries(testTokenGeneration ROSE_DLL EDG ${link_with_libraries} )
 add_executable( testAnalysis testAnalysis.C )
 target_link_libraries(testAnalysis ROSE_DLL EDG ${link_with_libraries} )
 
+install(TARGETS
+  testTranslator testGraphGeneration testTokenGeneration testAnalysis
+  DESTINATION bin)
+
 option(with-ROSE_LONG_MAKE_CHECK_RULE "Specify longer internal testing" ON)
 
 add_subdirectory (CompileTests)

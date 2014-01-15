@@ -1,5 +1,6 @@
 add_executable(generateStaticCFG generateStaticCFG.C)
 target_link_libraries(generateStaticCFG ROSE_DLL EDG ${link_with_libraries} )
+install(TARGETS generateStaticCFG DESTINATION bin)
 
 add_executable(testStaticCFG testStaticCFG.C)
 target_link_libraries(testStaticCFG ROSE_DLL EDG ${link_with_libraries} )

@@ -26,3 +26,5 @@ add_test(
   NAME testQuery3_input1.C
   COMMAND testQuery3 ${CMAKE_CURRENT_SOURCE_DIR}/input1.C
 )
+
+install(TARGETS testQuery testQuery2 testQuery3 DESTINATION bin)

@@ -1,5 +1,6 @@
 add_executable(generateVirtualCFG generateVirtualCFG.C)
 target_link_libraries(generateVirtualCFG ROSE_DLL EDG ${link_with_libraries})
+install(TARGETS generateVirtualCFG DESTINATION bin)
 
 add_executable(testVirtualCFG testVirtualCFG.C)
 target_link_libraries(testVirtualCFG ROSE_DLL EDG ${link_with_libraries})
