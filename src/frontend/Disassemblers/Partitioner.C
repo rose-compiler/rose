@@ -4135,6 +4135,52 @@ Partitioner::get_instructions() const
     return retval;
 }
 
+// class method
+void
+Partitioner::disassembleInterpretation(SgAsmInterpretation *interp)
+{
+    assert(interp!=NULL);
+
+    // Obtain a disassembler based on the type of file we're disassembling and configure it according to the
+    // -rose:disassembler_search switches stored in the enclosing SgFile node.
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    if (!disassembler)
+        throw std::runtime_error("no valid disassembler for this interpretation");
+    disassembler = disassembler->clone();               // so we can change settings without affecting the registry
+    SgFile *file = SageInterface::getEnclosingNode<SgFile>(interp);
+    assert(file!=NULL);
+    disassembler->set_search(file->get_disassemblerSearchHeuristics());
+
+    // Obtain a partitioner to organize instructions into basic blocks and basic blocks into functions.
+    Partitioner *partitioner = new Partitioner();
+    partitioner->set_search(file->get_partitionerSearchHeuristics());
+    partitioner->load_config(file->get_partitionerConfigurationFileName());
+
+    // Decide what to disassemble. Include at least the entry addresses.
+    assert(interp->get_map()!=NULL);
+    MemoryMap map = *interp->get_map();
+    Disassembler::AddressSet worklist;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
+        for (size_t i=0; i<entry_rvalist.size(); ++i) {
+            rose_addr_t entry_va = (*hi)->get_base_va() + entry_rvalist[i].get_rva();
+            worklist.insert(entry_va);
+        }
+        if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
+            disassembler->search_function_symbols(&worklist, &map, *hi);
+    }
+
+    // Do the disassembly in a partitioner-driven manner and link the results into the AST
+    if (SgAsmBlock *block = partitioner->partition(interp, disassembler, &map)) {
+        interp->set_global_block(block);
+        block->set_parent(interp);
+    }
+
+    delete partitioner;
+    delete disassembler;
+}
+
 /* FIXME: Deprecated 2010-01-01 */
 Partitioner::BasicBlockStarts
 Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
