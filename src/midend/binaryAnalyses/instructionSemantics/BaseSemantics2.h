@@ -401,13 +401,11 @@ public:
  *******************************************************************************************************************************/
 
 /** Base class for exceptions thrown by instruction semantics. */
-class Exception {
+class Exception: public std::runtime_error {
 public:
-    std::string mesg;
     SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
-    virtual ~Exception() {}
-    virtual void print(std::ostream&) const;
+    Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
+    void print(std::ostream&) const;
 };
 
 /*******************************************************************************************************************************
