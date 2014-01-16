@@ -61,6 +61,17 @@ RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, cons
     return a;
 }
 
+std::string
+RiscOperators::register_name(const RegisterDescriptor &a) 
+{
+    BaseSemantics::StatePtr state = subdomain->get_state();
+    BaseSemantics::RegisterStatePtr regstate;
+    if (state!=NULL)
+        regstate = state->get_register_state();
+    RegisterNames regnames(regstate!=NULL ? regstate->get_register_dictionary() : NULL);
+    return regnames(a);
+}
+
 void
 RiscOperators::before(const std::string &operator_name)
 {
@@ -72,16 +83,14 @@ void
 RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a)
 {
     check_subdomain();
-    RegisterNames regnames(subdomain->get_state()->get_register_state()->get_register_dictionary());
-    mesg.multipart(operator_name, "%s(%s)", operator_name.c_str(), regnames(a).c_str());
+    mesg.multipart(operator_name, "%s(%s)", operator_name.c_str(), register_name(a).c_str());
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
 {
     check_subdomain();
-    RegisterNames regnames(subdomain->get_state()->get_register_state()->get_register_dictionary());
-    mesg.multipart(operator_name, "%s(%s, %s)", operator_name.c_str(), regnames(a).c_str(), toString(b).c_str());
+    mesg.multipart(operator_name, "%s(%s, %s)", operator_name.c_str(), register_name(a).c_str(), toString(b).c_str());
 }
 
 void
@@ -89,9 +98,8 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
                       const BaseSemantics::SValuePtr &c, size_t d)
 {
     check_subdomain();
-    RegisterNames regnames(subdomain->get_state()->get_register_state()->get_register_dictionary());
     mesg.multipart(operator_name, "%s(%s, %s, %s, %zu)",
-                   operator_name.c_str(), regnames(a).c_str(), toString(b).c_str(), toString(c).c_str(), d);
+                   operator_name.c_str(), register_name(a).c_str(), toString(b).c_str(), toString(c).c_str(), d);
 }
 
 void
@@ -99,9 +107,9 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
                       const BaseSemantics::SValuePtr &c, const BaseSemantics::SValuePtr &d)
 {
     check_subdomain();
-    RegisterNames regnames(subdomain->get_state()->get_register_state()->get_register_dictionary());
     mesg.multipart(operator_name, "%s(%s, %s, %s, %s)",
-                   operator_name.c_str(), regnames(a).c_str(), toString(b).c_str(), toString(c).c_str(), toString(d).c_str());
+                   operator_name.c_str(), register_name(a).c_str(), toString(b).c_str(), toString(c).c_str(),
+                   toString(d).c_str());
 }
 
 void

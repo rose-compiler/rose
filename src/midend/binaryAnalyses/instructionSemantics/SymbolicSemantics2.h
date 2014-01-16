@@ -64,7 +64,7 @@ public:
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
  *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
- *  instructions that were used to define the value.  This provides a framework for some simple forms of def-use
+ *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
  *  @section Unk_Uinit Unknown versus Uninitialized Values

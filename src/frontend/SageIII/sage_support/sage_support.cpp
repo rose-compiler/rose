@@ -775,6 +775,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
+if (fileList.size() != 1){
+cout << endl;
+for ( Rose_STL_Container<string>::iterator i = fileList.begin(); i != fileList.end(); i++) {
+cout << (*i) << endl;
+}
+cout << endl;
+cout.flush();
+}
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -3001,7 +3009,7 @@ global_build_classpath()
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
   // Java (ECJ front-end) support (adding specific jar file)
-     string ecj_jar_file_name = string("ecjROSE.jar");
+     string ecj_jar_file_name = string("ecj-3.8.jar");
      string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
 
@@ -3903,18 +3911,18 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           javaCommandLine.push_back(classpath);
 
           // Specify warnings for javac compiler.
-          if (backendJavaCompiler == "javac")
-          {
-                  if (get_output_warnings() == true) {
-                          javaCommandLine.push_back("-Xlint");
-                  } else {
-                          javaCommandLine.push_back("-Xlint:none");
-                  }
+          if (backendJavaCompiler == "javac") {
+              if (get_output_warnings() == true) {
+                  javaCommandLine.push_back("-Xlint");
+              } else {
+                  javaCommandLine.push_back("-Xlint:none");
+              }
+              javaCommandLine.push_back("-proc:none");
           }
           else
           {
-                  printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
-                  ROSE_ASSERT(false);
+              printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+              ROSE_ASSERT(false);
           }
 
           javaCommandLine.push_back(get_sourceFileNameWithPath());
@@ -4519,9 +4527,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-// TODO: Remove this!  PC 07/03/2013
-//                    frontend_failed = (frontendErrorLevel > 0);
-                    this -> set_frontendErrorCode(frontendErrorLevel);
+                    this -> set_javacErrorCode(frontendErrorLevel);
                     frontendErrorLevel = 0; // PC: Always keep going for Java!
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
@@ -4918,7 +4924,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report if an error detected only while compilng the output file?
               //
-              if (this -> get_frontendErrorCode()                == 0 &&
+              if (this -> get_javacErrorCode()                   == 0 &&
+                  this -> get_frontendErrorCode()                == 0 &&
                   this -> get_project() -> get_midendErrorCode() == 0 &&
                   this -> get_unparserErrorCode()                == 0 &&
                   this -> get_backendCompilerErrorCode()         != 0) {
@@ -4930,10 +4937,16 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report Error or Success of this translation.
               //
-              if (this -> get_frontendErrorCode()                != 0 ||
-                  this -> get_project() -> get_midendErrorCode() != 0 ||
-                  this -> get_unparserErrorCode()                != 0 ||
-                  this -> get_backendCompilerErrorCode()         != 0)
+              if (this -> get_javacErrorCode() != 0) {
+                  cout << "SYNTAX ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_frontendErrorCode()                != 0 ||
+                       this -> get_project() -> get_midendErrorCode() != 0 ||
+                       this -> get_unparserErrorCode()                != 0 ||
+                       this -> get_backendCompilerErrorCode()         != 0)
                  {
                   cout << "ERROR compiling "
                        << this -> getFileName()

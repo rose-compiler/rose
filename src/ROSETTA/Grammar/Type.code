@@ -2896,10 +2896,12 @@ $CLASSNAME::get_mangled(void) const
              }
 */
              mangled_name = get_raw_type() -> get_mangled();
-             SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
-             for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
-                 mangled_name += "_";
-                 mangled_name += (*i) -> get_type() -> get_mangled();
+             if (get_type_list() != NULL) {
+                 SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+                 for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                     mangled_name += "_";
+                     mangled_name += (*i) -> get_type() -> get_mangled();
+                 }
              }
         }
 
@@ -2928,6 +2930,9 @@ SgJavaWildcardType::get_mangled (void) const
      SgName mangled_name;
      mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
                   << get_name().str() // name of wildcard type is "?"
+                  << (this -> get_has_extends() ? "_extends_" : "")
+                  << (this -> get_has_super() ? "_super_" : "")
+                  << (! this -> get_is_unbound() ? this -> get_bound_type() -> get_mangled() : "")
                   << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
 
 #if 0
