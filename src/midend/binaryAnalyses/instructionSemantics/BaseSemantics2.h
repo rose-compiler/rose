@@ -996,6 +996,12 @@ public:
      *  constructed from the various smaller parts. */
     virtual void initialize_small();
 
+    /** Initialize the specified registers of the dictionary.  Each register in the list must not overlap with any other
+     *  register in the list, or strange things will happen.  If @p initialize_to_zero is set then the specified registers are
+     *  initialized to zero, otherwise they're initialized with the prototypical value's constructor that takes only a size
+     *  parameter. This method is somewhat low level and doesn't do much error checking. */
+    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
+
     /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
      * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
      * the x86 EFLAGS register then the return value will contain a register/value pair for EFLAGS but no pairs for individual
@@ -1100,8 +1106,6 @@ protected:
     void deep_copy_values();
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
-private:
-    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
 };
 
 /** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
