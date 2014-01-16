@@ -17,8 +17,9 @@ now:
 	$(path)pcg $(poet_lib) $(debug) $(srcdir)/stencil-gen.pt < $(srcdir)/$(input).$(ext) > $(input)-new.$(ext)
 	diff $(input)-new.$(ext) $(srcdir)/$(input)-save.$(ext)
 
-compile:
-	$(CXX) $(input)-new.$(ext)
+# Liao, what is this? 1/16/2014
+#compile:
+#	$(CXX) $(input)-new.$(ext)
 
 check-local:
 	$(MAKE) now input=relax ext=cpp
