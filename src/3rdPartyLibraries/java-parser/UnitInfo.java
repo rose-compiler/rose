@@ -13,12 +13,14 @@ public class UnitInfo {
 
     public JavaToken createJavaToken(ASTNode node) {
         JavaSourcePositionInformation pos = posFactory.createPosInfo(node);
-        return new JavaToken(fileName, pos);
+        JavaToken token = new JavaToken(fileName, pos);
+        return token;
     }
 
     public JavaToken createJavaToken(ASTNode lnode, ASTNode rnode) {
         JavaSourcePositionInformation pos = posFactory.createPosInfo(lnode.sourceStart(), rnode.sourceEnd());
-        return new JavaToken(fileName, pos);
+        JavaToken token = new JavaToken(fileName, pos);
+        return token;
     }
     
     JavaToken getDefaultLocation() {
