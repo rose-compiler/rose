@@ -81,18 +81,13 @@ class VariableIdMapping {
 
   VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
-
-  //private: (soon!)
-  // checks whether the computed ROSE-based variable-symbol mapping is bijective.
-  bool isUniqueVariableSymbolMapping();
-  void reportUniqueVariableSymbolMappingViolations();
+  VariableIdSet variableIdsOfAstSubTree(SgNode* node);
 
  private:
 
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   string generateDotSgSymbol(SgSymbol* sym);
   typedef pair<string,SgSymbol*> MapPair;
-  set<MapPair> checkSet;
   typedef pair<VariableId,VariableName> PairOfVarIdAndVarName;
   typedef set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
   TemporaryVariableIdMapping temporaryVariableIdMapping;
