@@ -244,7 +244,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
         assert(finalvarsym);
         MapPair pair=make_pair(longName,finalvarsym);
-        checkSet.insert(pair);
         if(symbolSet.find(finalvarsym)==symbolSet.end()) {
           assert(finalvarsym);
           registerNewSymbol(finalvarsym);
@@ -255,61 +254,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   }
   cout << "STATUS: computeVariableSymbolMapping: done."<<endl;
   return;
-}
-
-// Check if computed variable symbol mapping is bijective
-bool VariableIdMapping::isUniqueVariableSymbolMapping() {
-  size_t numOfPairs=checkSet.size();
-  set<string> nameSet;
-  set<SgSymbol*> symbolSet;
-  bool mappingOK=true;
-  for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
-    nameSet.insert((*i).first);
-    symbolSet.insert((*i).second);
-  }
-  return ((nameSet.size()==numOfPairs) && (symbolSet.size()==numOfPairs)&& mappingOK);
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
-  // in case of an error we perform some expensive operations to provide a proper error explanation
-  if(!isUniqueVariableSymbolMapping()) {
-    for(set<MapPair>::iterator i=checkSet.begin();i!=checkSet.end();++i) {
-      for(set<MapPair>::iterator j=checkSet.begin();j!=checkSet.end();++j) {
-        // check if we find a pair with same name but different symbol
-        if((*i).first==(*j).first && i!=j) {
-          cout << "Problematic mapping: same name  : "<<(*i).first <<" <-> "<<(*i).second
-               << " <==> "
-               <<(*j).first <<" <-> "<<(*j).second
-               <<endl;
-          // look up declaration and print
-
-          SgVariableSymbol* varsym1=isSgVariableSymbol((*i).second);
-          SgVariableSymbol* varsym2=isSgVariableSymbol((*j).second);
-          SgDeclarationStatement* vardecl1=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym1);
-          SgDeclarationStatement* vardecl2=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym2);
-          assert(vardecl1);
-          assert(vardecl2);
-          string lc1=SgNodeHelper::sourceFilenameLineColumnToString(vardecl1);
-          string lc2=SgNodeHelper::sourceFilenameLineColumnToString(vardecl2);
-          cout << "  VarSym1:"<<varsym1  <<" Decl1:"<<lc1<<" @"<<vardecl1<<": "<<vardecl1->unparseToString()<< endl;
-          cout << "  VarSym2:"<<varsym2  <<" Decl2:"<<lc2<< " @"<<vardecl2<<": "<<vardecl2->unparseToString()<< endl;
-          cout << "------------------------------------------------------------------"<<endl;
-        }
-        if((*i).second==(*j).second && i!=j) {
-          cout << "Problematic mapping: same symbol: "<<(*i).first <<" <-> "<<(*i).second
-               << " <==> "
-               <<(*j).first <<" <-> "<<(*j).second
-               <<endl;
-        }
-      }
-    }
-  } else {
-    // no violations to report
-  }
 }
 
 /*! 
@@ -536,4 +480,22 @@ VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInit
     }
   }
   return resultSet;
+}
+
+VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNode* node) {
+  VariableIdSet vset;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    VariableId vid; // default creates intentionally an invalid id.
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      vid=variableId(varDecl);
+    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(*i)) {
+      vid=variableId(varRefExp);
+    } else if(SgInitializedName* initName=isSgInitializedName(*i)) {
+      vid=variableId(initName);
+    }
+    if(vid.isValid())
+      vset.insert(vid);
+  }
+  return vset;
 }

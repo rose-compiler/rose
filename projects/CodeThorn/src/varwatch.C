@@ -48,6 +48,7 @@ int main( int argc, char *argv[] ) {
   cout << "INIT: Parsing and creating AST: finished."<<endl;
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(astRoot);
+#if 0
   bool check=variableIdMapping.isUniqueVariableSymbolMapping();
   cout << "VariableIdMapping is unique variable symbol mapping: ";
   check? cout << "YES":cout<<"NO";
@@ -60,6 +61,8 @@ int main( int argc, char *argv[] ) {
     variableIdMapping.toStream(cout);
     cout<<"-------------------------------------- OK --------------------------------------"<<endl;
   }
+#endif
+
   variableIdMapping.generateDot("vidmapping.dot",astRoot);
 
   } catch(char* str) {

@@ -683,10 +683,12 @@ int main( int argc, char * argv[] ) {
   //VariableIdMapping varIdMap;
   analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
   cout << "STATUS: Variable<->Symbol mapping created."<<endl;
+#if 0
   if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
     cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
     //varIdMap.reportUniqueVariableSymbolMappingViolations();
   }
+#endif
 #if 0
   analyzer.getVariableIdMapping()->toStream(cout);
 #endif
