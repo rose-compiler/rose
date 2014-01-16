@@ -13,6 +13,8 @@
 #include <boost/algorithm/string.hpp>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+
 
 #include <vector> 
 
@@ -387,6 +389,13 @@ usage(int exit_status)
               <<"  from this command is typically partitioned into multiple sets of lines and fed into 32-func-similarity\n"
               <<"  commands running in parallel.\n"
               <<"\n"
+              <<"  These switches control which functions are compared:\n"
+              <<"    --sem-threshold=0.0|..|1.0\n"
+              <<"            Similarity measure for semantic similarity between 0 and 1.\n"
+              <<"    --min-insns=0|..|MAX_INT\n"
+              <<"            Minimum number of instructions in candidate functions.\n"
+              <<"    --call-depth=-1|0|..|MAX_INT\n"
+              <<"            Depth of callgraph to consider. -1 is all. \n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -405,7 +414,8 @@ static struct Switches {
 int
 main(int argc, char *argv[])
 {
-  int  call_depth = -1;
+  int call_depth = -1;
+  int min_insns  = 100;
   double semantic_similarity_threshold = 0.70;
 
 
@@ -428,6 +438,10 @@ main(int argc, char *argv[])
             usage(0);
         } else if (!strncmp(argv[argno], "--call-depth=",13)) {
           call_depth = strtol(argv[argno]+13, NULL, 0);
+        } else if (!strncmp(argv[argno], "--min-insns=",12)) {
+          min_insns = strtol(argv[argno]+12, NULL, 0);
+	} else if (!strncmp(argv[argno], "--sem-threshold=",16)) {
+	  semantic_similarity_threshold = boost::lexical_cast<double>(argv[argno]+16);
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
@@ -474,8 +488,14 @@ main(int argc, char *argv[])
     // Create pairs of function IDs for those functions which have been tested and for which no similarity measurement has been
     // computed.  
     std::cerr <<argv0 <<": creating work list\n";
-    SqlDatabase::StatementPtr stmt2 = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ?");
+    SqlDatabase::StatementPtr stmt2 = transaction->statement("select sf.func1_id, sf.func2_id from semantic_funcsim as sf "
+                                                             " join semantic_functions as sf1 on sf1.id=sf.func1_id "
+                                                             " join semantic_functions as sf2 on sf2.id=sf.func2_id "
+                                                             " where similarity >= ? and " 
+                                                             " sf1.ninsns >= ? and sf2.ninsns >= ? ");
     stmt2->bind(0, semantic_similarity_threshold);
+    stmt2->bind(1, min_insns);
+    stmt2->bind(2, min_insns);
 
     for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row)
         std::cout <<row.get<int>(0) <<"\t" <<row.get<int>(1) <<"\n";
