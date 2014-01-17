@@ -629,10 +629,10 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
             }
         }
         
-        if (SgClassDeclaration *cdecl = isSgClassDeclaration(stmts[i])) {
-            if (cdecl->get_definition()!=NULL) {
+        if (SgClassDeclaration *class_decl = isSgClassDeclaration(stmts[i])) {
+            if (class_decl->get_definition()!=NULL) {
                 SgTreeCopy deep;
-                SgStatement *stmt = isSgClassDeclaration(cdecl);
+                SgStatement *stmt = isSgClassDeclaration(class_decl);
                 causeUnparsing(stmt, dst_cursor->get_file_info());
                 SageInterface::insertStatementBefore(dst_cursor, stmt);
                 continue;
