@@ -1,7 +1,8 @@
 ;;; These are various unit tests for the simple use-def analysis in BinaryAnalysis::InstructionSemantics2::SymbolicSemantics.
 ;;; Compile this on an intel machine with "nasm -f elf32 usedef.s && gcc -m32 -nostdlib -o usedef usedef.o"
 
-_start:	
+_start:	je case1
+end:	hlt
 	
 	;; Moving one register to another does not modify the definers for the value that was moved
 case1:  mov eax, ebx
@@ -49,5 +50,18 @@ case8:
 	shr eax, 2		;eax should be zero after this
 	mov eax, ebx		;so the predicate isn't opaque
 	je end
-	
-end:	hlt
+
+	;; XOR of a register with itself is an idiom for clearing the register. The result should not
+	;; depend on the operands
+case9:  mov eax, 1
+	xor eax, eax
+	neg ecx			;only here so next branch is unknown
+	je end
+
+	;; Pushing constants onto the stack
+case10:	push 3
+	mov eax, 7
+	push eax
+	je end
+
+	hlt

@@ -5,6 +5,10 @@
 #include "integerOps.h"
 #include "Combinatorics.h"
 
+#ifdef _MSC_VER
+#define xor ^
+#endif
+
 namespace InsnSemanticsExpr {
 
 uint64_t

@@ -5,7 +5,7 @@ INCLUDES = \
 
 bin_PROGRAMS = taintcheck
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) #-ldl $(LIBLTDL)
 
 taintcheck_SOURCES = taintcheck.C
 
