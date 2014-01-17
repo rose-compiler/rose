@@ -98,6 +98,9 @@ int main(int argc, char** argv)
 	VariableReversalFilter varFilter;
 	EventProcessor event_processor(&varFilter);
 
+//:MS
+#define REVERSE_CODE_GENERATION
+
 #ifdef REVERSE_CODE_GENERATION
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression handlers:

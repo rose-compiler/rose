@@ -17,7 +17,11 @@ EvaluationResult SgReturnStmt_Handler::evaluate(SgStatement* statement, const Va
 	{
 		//TODO: If the return statement itself contains side effects, these are discarded here
 		//We should reverse the side effects of the expression after 'return'
-		ROSE_ASSERT(BackstrokeUtility::containsModifyingExpression(returnStatement->get_expression()));
+		//ROSE_ASSERT(BackstrokeUtility::containsModifyingExpression(returnStatement->get_expression()));
+          // MS:
+          if(!BackstrokeUtility::containsModifyingExpression(returnStatement->get_expression())) {
+            cout<<"WARNING: return statement itself contains side effects but they are not reversed."<<endl;
+          }
 			
 		//We only allow a return statement to appear as the very last statement in a function. Assert this
 		ROSE_ASSERT(SageInterface::getEnclosingFunctionDefinition(statement)->get_body()->get_statements().back() == returnStatement);
