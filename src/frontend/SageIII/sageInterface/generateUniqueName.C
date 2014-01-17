@@ -810,6 +810,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgTemplateClassDeclaration:
 
                case V_SgClassDeclaration:
+               case V_SgJavaPackageDeclaration:
                case V_SgTemplateInstantiationDecl:
                   {
                     const SgClassDeclaration* classDeclaration = isSgClassDeclaration(statement);
