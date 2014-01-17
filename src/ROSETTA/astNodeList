@@ -750,6 +750,7 @@ SgCAFCoExpression
 SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
+SgJavaPackageDeclaration
 SgJavaPackageStatement
 SgJavaImportStatementList
 SgJavaClassDeclarationList

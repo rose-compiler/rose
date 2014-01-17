@@ -431,7 +431,6 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/frontend.docs					     \
                          @top_srcdir@/docs/testDoxygen							     \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C				     \
-                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs		     \
                          @top_srcdir@/src/frontend/Disassemblers					     \
                          @top_srcdir@/src/frontend/Disassemblers/Disassembler.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C			     \
@@ -470,7 +469,6 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/BinaryFormats/GenericString.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C			     \
-                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/PeExport.C				     \
                          @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C				     \
@@ -538,6 +536,9 @@ INPUT                  =										     \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs				     \
                          @top_srcdir@/src/extra.docs							     \
                          @top_srcdir@/projects/projects.docs
+# Liao 1/10/2014, EDG 3.3 is phased out
+#                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs		     
+#                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C
 # Liao 4/13/2012 commenting out outdated docs, We expect documentation in Manual/Tutorial pdfs, not
 #   in Doxygen documents (maintaining two copies is a pain and confusing to users). 
 #                         @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs 
