@@ -82,7 +82,7 @@ public:
     // Implementations of functions inherited
 public:
     virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { assert(!"not a number"); abort(); }
+    virtual uint64_t get_number() const { assert(!"not a number"); abort(); uint64_t retval; return retval;}
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/ {
         return true;

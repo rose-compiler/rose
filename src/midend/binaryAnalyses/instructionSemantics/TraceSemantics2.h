@@ -123,7 +123,13 @@ public:
     /** Instantiate a new RiscOperators object. The @p subdomain argument should be the RISC operators that we want to
      * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        return RiscOperatorsPtr(new RiscOperators(subdomain));
+        assert(subdomain!=NULL);
+        RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
+                                RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
+                                RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
+        self->subdomain = subdomain;
+        self->line_prefix.set_ops(subdomain);
+        return self;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +193,7 @@ protected:
     void check_equal_widths(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits,
                                                 const std::string &what="result");
+    std::string register_name(const RegisterDescriptor&);
 
     void before(const std::string&);
     void before(const std::string&, const RegisterDescriptor&);

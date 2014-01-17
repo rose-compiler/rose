@@ -9,17 +9,13 @@
  *---------------------------------------------------------------------------*/
 #include "sage_support.h"
 #include "dwarfSupport.h"
-
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-#include <setjmp.h>
-#include <signal.h>
+#include "keep_going.h"
 
 #include <algorithm>
 
 #define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
-
-#include "sage_support.h"
+#include <boost/foreach.hpp>
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -749,14 +745,6 @@ SgSourceFile::initializeGlobalScope()
         }
    }
 
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-sigjmp_buf rose__sgproject_parse_mark;
-static void HandleFrontendSignal(int sig)
-{
-  std::cout << "[WARN] Caught frontend signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__sgproject_parse_mark, -1);
-}
-
 SgFile*
 #if 0
 // FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
@@ -1409,7 +1397,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
 void 
 SgFile::runFrontend(int & nextErrorCode)
-   {
+{
   // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the 
   // invocation of the fronend on each SgFile IR node.
 
@@ -1433,62 +1421,18 @@ SgFile::runFrontend(int & nextErrorCode)
   // DQ (6/12/2013): This is the functionality that we need to separate out and run after all 
   // of the SgSourceFile IR nodes are constructed.
 
-#if 1
   // The frontend is called explicitly outside the constructor since that allows for a cleaner
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
   // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-     if ( this != NULL && isSgUnknownFile(this) == NULL )
-        {
-       // printf ("Calling file->callFrontEnd() \n");
+    if ( this != NULL && isSgUnknownFile(this) == NULL )
+    {
+        nextErrorCode = this->callFrontEnd();
+        this->set_frontendErrorCode(nextErrorCode);
+    }
 
-       // TOO1 (05/14/2013): Signal handling for -rose:keep_going
-          if (this->get_project()->get_keep_going())
-             {
-               struct sigaction act;
-               act.sa_handler = HandleFrontendSignal;
-               sigemptyset(&act.sa_mask);
-               act.sa_flags = 0;
-               sigaction(SIGSEGV, &act, 0);
-               sigaction(SIGABRT, &act, 0);
-             }
-
-          if (sigsetjmp(rose__sgproject_parse_mark, 0) == -1)
-             {
-               std::cout
-                    << "[WARN] Ignoring frontend failure "
-                    << " as directed by -rose:keep_going"
-                    << std::endl;
-               this->set_frontendErrorCode(-1);
-             }
-            else
-             {
-               try
-                  {
-                    nextErrorCode = this->callFrontEnd();
-                  }
-               catch (...)
-                  {
-                 // TOO1 (05/14/2013): Handling for -rose:keep_going
-                    std::cout << "[WARN] Caught frontend exception" << std::endl;
-                    if (this->get_project()->get_keep_going())
-                       {
-                         this->set_frontendErrorCode(-1);
-                       }
-                      else
-                       {
-                         throw;
-                       }
-                  }
-             }
-
-       // printf ("DONE: Calling file->callFrontEnd() \n");
-          ROSE_ASSERT ( nextErrorCode <= 3);
-        }
-#else
-     printf ("In SgFile::runFrontend(): Skipping call to frontend for SgFile = %p \n",this);
-#endif
-   }
+    ROSE_ASSERT(nextErrorCode <= 3);
+}
 
 
 // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
@@ -1778,6 +1722,67 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
 #endif
 }
 
+int
+SgProject::RunFrontend()
+{
+  TimingPerformance timer ("AST (SgProject::RunFrontend()):");
+
+  int status_of_function = 0;
+
+  //---------------------------------------------------------------------------
+  // Pass each File to the Frontend
+  //---------------------------------------------------------------------------
+  std::vector<SgFile*> all_files = get_fileList();
+  {
+      int status_of_file = 0;
+      BOOST_FOREACH(SgFile* file, all_files)
+      {
+          ROSE_ASSERT(file != NULL);
+          if (KEEP_GOING_CAUGHT_FRONTEND_SIGNAL)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Configured to keep going after catching a "
+                  << "signal in SgFile::RunFrontend()"
+                  << std::endl;
+
+              file->set_frontendErrorCode(100);
+              status_of_function =
+                  std::max(100, status_of_function);
+          }
+          else
+          {
+              try
+              {
+                  //-----------------------------------------------------------
+                  // Pass File to Frontend
+                  //-----------------------------------------------------------
+                  file->runFrontend(status_of_file);
+                  {
+                      status_of_function =
+                          max(status_of_file, status_of_function);
+                  }
+              }
+              catch(...)
+              {
+                  file->set_frontendErrorCode(100);
+
+                  if (ROSE::KeepGoing::g_keep_going)
+                  {
+                      raise(SIGABRT);// catch with signal handling above
+                  }
+                  else
+                  {
+                      throw;
+                  }
+              }
+          }
+      }//BOOST_FOREACH
+  }//all_files->callFrontEnd
+
+  this->set_frontendErrorCode(status_of_function);
+  return status_of_function;
+}//SgProject::RunFrontend
 
 int
 SgProject::parse()
@@ -1897,21 +1902,12 @@ SgProject::parse()
      printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %zu \n",vectorOfFiles.size());
 #endif
 
-  // DQ (6/12/2013): Now iterate over the list of SgFile objects that was just setup.
-     for (size_t i = 0; i < vectorOfFiles.size(); i++)
-        {
-#if 0
-          printf ("Call the frontend on each of the prebuilt SgSourceFile IR nodes! i = %zu \n",i);
-#endif
+  errorCode = this->RunFrontend();
+  if (errorCode > 3)
+  {
+      return errorCode;
+  }
 
-       // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-          ROSE_ASSERT(vectorOfFiles[i]->get_parent() != NULL);
-
-          int nextErrorCode = 0;
-          vectorOfFiles[i]->runFrontend(nextErrorCode);
-
-          errorCode = max(errorCode,nextErrorCode); // use STL max
-        }
 #endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
@@ -1984,14 +1980,33 @@ SgProject::parse()
   // secondary pass over each file runs after all fixes have been done. This
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
-     SgFilePtrList &files = get_fileList();
-     SgFilePtrList::iterator fIterator;
-     for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
-        {
-          SgFile *file = *fIterator;
+  SgFilePtrList &files = get_fileList();
+  {
+      BOOST_FOREACH(SgFile* file, files)
+      {
           ROSE_ASSERT(file != NULL);
-          file->secondaryPassOverSourceFile();
-        }
+
+          if (KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Configured to keep going after catching a signal in "
+                  << "SgFile::secondaryPassOverSourceFile()"
+                  << std::endl;
+              file->set_frontendErrorCode(-1);
+              errorCode = std::max(1, errorCode);
+          }
+          else
+          {
+              file->secondaryPassOverSourceFile();
+          }
+      }
+
+      if (errorCode != 0)
+      {
+          return errorCode;
+      }
+  }
 
   // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
   // In the second step (after preprocessing infos are already attached), collect the including files map.
@@ -3790,6 +3805,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     if (this -> get_package() != NULL) { // Has this file been processed already? If so, ignore it.
+        return 0;
+     }
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
@@ -3915,10 +3934,13 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              {
                printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
 
-            // We should define some convention for error codes returned by ROSE
-               throw std::exception();
+// TODO: Remove this!  PC 07/03/2013
+//            // We should define some convention for error codes returned by ROSE
+//               throw std::exception();
+                 return returnValueForSyntaxCheckUsingBackendCompiler;
              }
-          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+// TODO: Remove this!  PC 07/03/2013
+//          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
 
           if ( get_verbose() > 2 )
              {
@@ -4497,7 +4519,10 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-                    frontend_failed = (frontendErrorLevel > 0);
+// TODO: Remove this!  PC 07/03/2013
+//                    frontend_failed = (frontendErrorLevel > 0);
+                    this -> set_frontendErrorCode(frontendErrorLevel);
+                    frontendErrorLevel = 0; // PC: Always keep going for Java!
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
                                    "ROSE was not configured to support the Java frontend.");
@@ -4719,7 +4744,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                   // nothing to do...
                   }
-                 else
+               else if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
                   {
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
@@ -4735,7 +4760,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
              {
                boost::filesystem::path original_file = outputFilename;
                boost::filesystem::path unparsed_file = get_unparse_output_filename();
-               ROSE_ASSERT(original_file.string() != unparsed_file.string());
+
                if (SgProject::get_verbose() >= 2)
                   {
                     std::cout
@@ -4776,7 +4801,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 #endif
 
-     ROSE_ASSERT (get_unparse_output_filename().empty() == false);
+     ROSE_ASSERT (get_unparse_output_filename().empty() == false); // TODO: may need to add condition:  "&& (! get_Java_only())"  here
 
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
@@ -4866,7 +4891,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     if (this->get_unparsedFileFailedCompilation())
                        {
                          this->set_backendCompilerErrorCode(-1);
-                         throw std::runtime_error("Original input file is invalid");
+                         // TOO1 (11/16/2013): TODO: Allow user to catch InvalidOriginalInputFileException?
+                         //throw std::runtime_error("Original input file is invalid");
+                         std::cout  << "[FATAL] "
+                                    << "Original input file is invalid: "
+                                    << "'" << this->getFileName() << "'"
+                                    << std::endl;
+                         exit(1);
                        }
                       else
                        {
@@ -4879,7 +4910,45 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        }
                   }
              }
-        }
+          //
+          // If we are processing Java, ...
+          //
+          if (get_Java_only() == true)
+             {
+              //
+              // Report if an error detected only while compilng the output file?
+              //
+              if (this -> get_frontendErrorCode()                == 0 &&
+                  this -> get_project() -> get_midendErrorCode() == 0 &&
+                  this -> get_unparserErrorCode()                == 0 &&
+                  this -> get_backendCompilerErrorCode()         != 0) {
+                  cout << "ERROR found in output file: "
+                       << get_unparse_output_filename()
+                       << endl;
+              }
+
+              //
+              // Report Error or Success of this translation.
+              //
+              if (this -> get_frontendErrorCode()                != 0 ||
+                  this -> get_project() -> get_midendErrorCode() != 0 ||
+                  this -> get_unparserErrorCode()                != 0 ||
+                  this -> get_backendCompilerErrorCode()         != 0)
+                 {
+                  cout << "ERROR compiling "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+                 }
+              else
+                 {
+                  cout << "SUCCESS compiling "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+                 }
+             }
+          }
        else
         {
           if ( get_verbose() > 1 )

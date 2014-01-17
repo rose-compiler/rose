@@ -6,8 +6,13 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
+#ifndef _MSC_VER
 #include <sys/time.h>
+#else
+#include "timing.h"
+#endif
 
+#ifndef _MSC_VER
 void
 LinearCongruentialGenerator::init()
 {
@@ -34,6 +39,7 @@ LinearCongruentialGenerator::init()
         seed_ = value_ = rand();
     }
 }
+#endif
 
 uint64_t
 LinearCongruentialGenerator::next(size_t nbits, size_t niter)
@@ -63,9 +69,11 @@ LinearCongruentialGenerator::next(size_t nbits, size_t niter)
     return retval & IntegerOps::genMask<uint64_t>(nbits);
 }
 
+#ifndef _MSC_VER
 uint64_t
 LinearCongruentialGenerator::max()
 {
     // all 64 bits are returned by next()
     return UINT64_MAX;
 }
+#endif
