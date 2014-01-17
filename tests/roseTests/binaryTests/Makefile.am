@@ -425,6 +425,22 @@ usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
 # "2" in their name use the newer run-time plug-n-play API.
 ###############################################################################################################################
 
+# Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
+# depends on each of the targets individually rather than just this one).
+.PHONY: check-semantics
+#       API1 (the old stuff)            API2 (the newer stuff)           Extra tests
+check-semantics:											\
+        nullSemantics.passed            nullSemantics2.passed						\
+        partialSymbolicSemantics.passed partialSymbolicSemantics2.passed				\
+        intervalSemantics.passed        intervalSemantics2.passed					\
+        symbolicSemantics.passed        symbolicSemantics2.passed        traceSymbolicSemantics2.passed	\
+        yicesSemanticsExe.passed        yicesSemanticsExe2.passed					\
+        yicesSemanticsLib.passed        yicesSemanticsLib2.passed					\
+        multiSemantics.passed           multiSemantics2.passed						\
+        findConstants.passed										\
+        findConstantsABI.passed										\
+                                        semanticsSubclassing.passed     
+
 # Null semantics, old API
 noinst_PROGRAMS += nullSemantics
 nullSemantics_SOURCES = semantics.C

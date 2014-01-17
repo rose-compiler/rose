@@ -138,9 +138,8 @@ namespace StringUtility
            ROSE_UTIL_API std::string numberToString ( double x );
 
        //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.  The second argument
-       //  indicates the number of significant bits.  The third argument indicates whether the value is considered to be
-       //  signed, in which case a negative value is also output, as in "0xff<-1>".
-           ROSE_UTIL_API std::string addrToString(uint64_t x, size_t nbits=32, bool is_signed=false);
+       //  indicates the number of significant bits.
+           ROSE_UTIL_API std::string addrToString(uint64_t x, size_t nbits=32);
 
        //! Formatting support for generated code strings
            ROSE_UTIL_API std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
@@ -432,6 +431,42 @@ namespace StringUtility
     // DQ (2/3/2009): Moved this function from attach_all_info.C
        ROSE_UTIL_API std::vector<std::string> readWordsInFile( std::string filename);
 
+   /** Convert a number to a hexadecimal and decimal string.
+    *
+    *  The returned string starts with the hexadecimal representation of the number and an optional decimal representation
+    *  in angle brackets.  The decimal portion will contain a signed and/or unsigned value depending on whether the value
+    *  is interpretted as signed and whether the sign bit is set.  The signedToHex versions print the decimal value for only
+    *  the signed interpretation; the unsignedToHex versions print only the decimal unsigned interpretation, and the toHex
+    *  versions print both (but not redunantly).
+    *
+    *  @{ */
+   ROSE_UTIL_API std::string toHex2(uint64_t value, size_t nbits,
+                                    bool show_unsigned_decimal=true, bool show_signed_decimal=true,
+                                    uint64_t decimal_threshold=256);
+   ROSE_UTIL_API std::string signedToHex2(uint64_t value, size_t nbits);
+   ROSE_UTIL_API std::string unsignedToHex2(uint64_t value, size_t nbits);
+
+   template<typename T> std::string toHex(T value) { return toHex2((uint64_t)value, 8*sizeof(T)); }
+   template<typename T> std::string signedToHex(T value) { return signedToHex2((uint64_t)value, 8*sizeof(T)); }
+   template<typename T> std::string unsignedToHex(T value) { return unsignedToHex2((uint64_t)value, 8*sizeof(T)); }
+   /** @} */
+
+   /** Append an assembly comment to a string.  Assembly comments are surrounded by "<" and ">" characters.  If the string
+    *  already ends with an assembly comment, then the specified comment is inserted before the final ">" and separated from
+    *  the previous comment with a comma.  Assembly comments are usually used for things like printing a decimal representation
+    *  of a hexadecimal value, etc.
+    *
+    *  Example: after executing these statements:
+    *  
+    *  @code
+    *   std::string s = "0xff";
+    *   s = appendAsmComment(s, "255");
+    *   s = appendAsmComment(s, "-1");
+    *  @endcode
+    *
+    *  The variable "s" will contain "0xff<255,-1>" */
+   ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::string &comment);
+
        /** Insert a prefix string before every line.  This function breaks the @p lines string into individual lines,
         *  inserts the @p prefix string at the beginning of each line, then concatenates the lines together into a return
         *  value.  If @p prefixAtFront is true (the default) then the prefix is added to the first line of @p lines, otherwise
@@ -448,7 +483,7 @@ namespace StringUtility
         *  into the LF (line-feed) termination used by Multics, Unix and Unix-like systems (GNU/Linux, Mac OS X, FreeBSD, AIX,
         *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
         *  left-to-right matching) is replaced by a single LF character. */
-       std::string fixLineTermination(const std::string &input);
+       ROSE_UTIL_API std::string fixLineTermination(const std::string &input);
 
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
@@ -497,14 +532,14 @@ namespace StringUtility
       *  If @p trim_white_space is true then white space is removed from the beginning and end of each part. Empty parts are
       *  never removed from the returned vector since the C++ library already has functions for that. The first few arguments
       *  are in the same order as for Perl's "split" operator. */
-     std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
+     ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
                                     bool trim_white_space=false);
-     std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
+     ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
                                     bool trim_white_space=false);
 
      /** Trims white space from the beginning and end of a string. Caller may specify the characters to strip and whether the
       * stripping occurs at the begining, the end, or both. */
-     std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
+     ROSE_UTIL_API std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
 
      /** Expand horizontal tab characters. */
      std::string untab(const std::string &str, size_t tabstops=8, size_t firstcol=0);

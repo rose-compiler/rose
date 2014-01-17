@@ -156,6 +156,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/manglingSupport.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/sage_support.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/cmdline.cpp
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/keep_going.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_scopes.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_symbols.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 
@@ -170,6 +171,8 @@ set( sage3_SRC
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/omplexer.ll
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/Utf8.C
+
    )
 
 add_definitions(-DPOET_VERSION="1.03.06")
@@ -980,7 +983,7 @@ add_custom_target(
 
 add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
 generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
@@ -990,6 +993,7 @@ set(LINK_FILES
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
+   libX10Traversal
 )
 
 if (have_EDG_source OR NOT WIN32)
@@ -1052,7 +1056,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL ${edg_lib} ${link_with_libraries}
     )
 
 ########### install files ###############

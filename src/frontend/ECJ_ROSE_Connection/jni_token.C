@@ -4,22 +4,25 @@
 #include "jni_utils.h"
 #include "jni_JavaSourceCodePosition.h"
 #include <assert.h>
+#include <iostream>
   
 Token_t *convert_Java_token(JNIEnv *env, jobject token) {
-    jclass cls;
-    jstring java_string;
-    const char *text = NULL;
-    jmethodID method_id;
-    Token_t *our_token = NULL;
-    JavaSourceCodePosition * pos_info = NULL;
-    jobject jpos_info;
-
     assert(env != NULL);
 
     // Need to get the object class so we can use it to retrieve the methods.
     // printf ("Need to get the object class so we can use it to retrieve the methods. \n");  
-    cls = get_class(env, token);
+    jclass cls = get_class(env, token);
 
+    // ************************
+    // Get the file information
+    // ************************
+    jmethodID method_id = get_method(env, cls, "getFileName", "()Ljava/lang/String;");
+    string filename = convertJavaStringToCxxString(env, (jstring) env->CallObjectMethod(token, method_id));
+
+// TODO: Remove this !!!
+/*
+    jstring java_string;
+    const char *text = NULL;
     // Get the method ID for the getText() method.
     // printf ("Get the method ID for the getText() method. \n");
     method_id = get_method(env, cls, "getText", "()Ljava/lang/String;");
@@ -40,16 +43,17 @@ Token_t *convert_Java_token(JNIEnv *env, jobject token) {
     else {
         text = NULL;
     }
+*/
 
     // Get the method ID for the getJavaSourcePositionInformation() method.
     method_id = get_method(env, cls, "getJavaSourcePositionInformation", "()LJavaSourcePositionInformation;");
-    jpos_info = (jobject) env->CallObjectMethod(token, method_id);
+    jobject jpos_info = (jobject) env->CallObjectMethod(token, method_id);
 
     // Convert position to its C-based representation
-    pos_info = convert_Java_SourcePosition(env, jpos_info);
+    JavaSourceCodePosition *pos_info = convert_Java_SourcePosition(env, jpos_info);
 
     // Build a C-based representation of the JavaToken
-    our_token = new Token_t(text, pos_info);
+    Token_t *our_token = new Token_t(filename, pos_info);
 
     // printf ("returning from convert_Java_token()\n");
     return our_token;

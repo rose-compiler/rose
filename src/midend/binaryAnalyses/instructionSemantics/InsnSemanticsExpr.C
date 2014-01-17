@@ -5,6 +5,10 @@
 #include "integerOps.h"
 #include "Combinatorics.h"
 
+#ifdef _MSC_VER
+#define xor ^
+#endif
+
 namespace InsnSemanticsExpr {
 
 uint64_t
@@ -81,8 +85,50 @@ InternalNode::print(std::ostream &o, Formatter &formatter) const
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
+        bool printed = false;
+        LeafNodePtr child_leaf = children[i]->isLeafNode();
         o <<" ";
-        children[i]->print(o, formatter);
+        switch (op) {
+            case OP_ASR:
+            case OP_ROL:
+            case OP_ROR:
+            case OP_UEXTEND:
+                if (0==i && child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+
+            case OP_EXTRACT:
+                if ((0==i || 1==i) && child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+                
+            case OP_BV_AND:
+            case OP_BV_OR:
+            case OP_BV_XOR:
+            case OP_CONCAT:
+            case OP_UDIV:
+            case OP_UGE:
+            case OP_UGT:
+            case OP_ULE:
+            case OP_ULT:
+            case OP_UMOD:
+            case OP_UMUL:
+                if (child_leaf) {
+                    child_leaf->print_as_unsigned(o, formatter);
+                    printed = true;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        if (!printed)
+            children[i]->print(o, formatter);
     }
     o <<")";
 }
@@ -953,6 +999,36 @@ UmodSimplifier::rewrite(const InternalNode *inode) const
 }
 
 TreeNodePtr
+ShiftSimplifier::combine_strengths(TreeNodePtr strength1, TreeNodePtr strength2, size_t value_width) const
+{
+    if (!strength1 || !strength2)
+        return TreeNodePtr();
+
+    // Calculate the width for the sum of the strengths.  If the width of the value being shifted isn't a power of two then we
+    // need to avoid overflow in the sum, otherwise overflow doesn't matter.  The sum should be wide enough to hold a shift
+    // amount that's the same as the width of the value, otherwise we wouldn't be able to distinguish between the case where
+    // modulo addition produced a shift amount that's large enough to decimate the value, as opposed to a shift count of zero
+    // which is a no-op.
+    size_t sum_width = std::max(strength1->get_nbits(), strength2->get_nbits());
+    if (IntegerOps::isPowerOfTwo(value_width)) {
+        sum_width = std::max(sum_width, IntegerOps::log2max(value_width)+1);
+    } else {
+        sum_width = std::max(sum_width+1, IntegerOps::log2max(value_width)+1);
+    }
+    if (sum_width > 64)
+        return TreeNodePtr();
+
+    // Zero-extend the strengths if they're not as wide as the sum.  This is because the ADD operator requires that its
+    // operands are the same width, and the result will also be that width.
+    if (strength1->get_nbits() < sum_width)
+        strength1 = InternalNode::create(sum_width, OP_UEXTEND, LeafNode::create_integer(32, sum_width), strength1);
+    if (strength2->get_nbits() < sum_width)
+        strength2 = InternalNode::create(sum_width, OP_UEXTEND, LeafNode::create_integer(32, sum_width), strength2);
+
+    return InternalNode::create(sum_width, OP_ADD, strength1, strength2);
+}
+
+TreeNodePtr
 ShlSimplifier::rewrite(const InternalNode *inode) const
 {
     // Constant folding
@@ -968,6 +1044,15 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
         return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
     }
 
+    // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
+    // (shl AMT1 (shl AMT2 X)) ==> (shl (add AMT1 AMT2) X)
+    InternalNodePtr val_inode = inode->child(1)->isInternalNode();
+    if (val_inode && val_inode->get_operator()==inode->get_operator()) {
+        if (TreeNodePtr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->get_nbits())) {
+            return InternalNode::create(inode->get_nbits(), inode->get_operator(), strength, val_inode->child(1));
+        }
+    }
+    
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
         uint64_t val = newbits ? -1 : 0;
@@ -997,6 +1082,15 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
         return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
     }
 
+    // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
+    //   (shr0 AMT1 (shr0 AMT2 X)) ==> (shr0 (add AMT1 AMT2) X)
+    InternalNodePtr val_inode = inode->child(1)->isInternalNode();
+    if (val_inode && val_inode->get_operator()==inode->get_operator()) {
+        if (TreeNodePtr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->get_nbits())) {
+            return InternalNode::create(inode->get_nbits(), inode->get_operator(), strength, val_inode->child(1));
+        }
+    }
+    
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
         uint64_t val = newbits ? -1 : 0;
@@ -1276,17 +1370,37 @@ LeafNode::get_name() const
 void
 LeafNode::print(std::ostream &o, Formatter &formatter) const
 {
+    print_as_signed(o, formatter, true);
+}
+
+void
+LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed) const
+{
     bool showed_comment = false;
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
-            // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
-            // with 0xffff0000 is for negative values.
-            o <<StringUtility::addrToString(ival);
-        } else if (nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
-            uint64_t sign_extended = ival | ~(((uint64_t)1<<nbits)-1);
-            o <<(int64_t)sign_extended;
+            // The value is probably an address, so print it like one.
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::unsignedToHex2(ival, nbits);
+            } else {
+                // The old behavior (which is enabled when formatter.use_hexadecimal is false) was to print only the
+                // hexadecimal format and not the decimal format, so we'll emulate that. [Robb P. Matzke 2013-12-26]
+                o <<StringUtility::addrToString(ival, nbits);
+            }
+        } else if (as_signed) {
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::toHex2(ival, nbits); // show as signed and unsigned
+            } else if (IntegerOps::signBit2(ival, nbits)) {
+                o <<(int64_t)IntegerOps::signExtend2(ival, nbits, 64);
+            } else {
+                o <<ival;
+            }
         } else {
-            o <<ival;
+            if (formatter.use_hexadecimal) {
+                o <<StringUtility::unsignedToHex2(ival, nbits); // show only as unsigned
+            } else {
+                o <<ival;
+            }
         }
     } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
         o <<comment;

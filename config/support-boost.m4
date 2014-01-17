@@ -48,7 +48,7 @@ AC_DEFUN([ROSE_SUPPORT_BOOST],
     [yes]
   )
 
-AX_BOOST_BASE([1.40.0], [], [echo "Boost 1.40.0 or above is required for ROSE" 1>&2; exit 1])
+AX_BOOST_BASE([1.45.0], [], [echo "Boost 1.45.0 - 1.47.0 is required for ROSE" 1>&2; exit 1])
 
 dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only
 dnl be used to set --with-boost in distcheck.
@@ -90,12 +90,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_53, test "x$rose_boost_version" = "x10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_54, test "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54")
 
 if test \
-      "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40" \
-   -o "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41" \
-   -o "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42" \
-   -o "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43" \
-   -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
-   -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
+      "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"
@@ -103,7 +98,7 @@ then
     echo "Reasonable version of Boost found!"
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.40 to 1.47 is currently supported.])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.47 is currently supported.])
   else
     AC_MSG_WARN([Unsupported version of Boost is being used])
   fi

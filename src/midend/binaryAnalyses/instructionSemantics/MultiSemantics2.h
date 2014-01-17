@@ -372,6 +372,9 @@ public:
     virtual void print(std::ostream &o, BaseSemantics::Formatter&) const /*override*/;
     virtual void startInstruction(SgAsmInstruction *insn) /*override*/;
     virtual void finishInstruction(SgAsmInstruction *insn) /*override*/;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) /*override*/;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) /*override*/;
+    virtual BaseSemantics::SValuePtr boolean_(bool) /*override*/;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) /*override*/;
     virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) /*override*/;
     virtual BaseSemantics::SValuePtr filterIndirectJumpTarget(const BaseSemantics::SValuePtr&) /*override*/;
