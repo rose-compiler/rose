@@ -19,6 +19,22 @@ namespace Cmdline {
   makeSysIncludeList(const Rose_STL_Container<string> &dirs,
                      Rose_STL_Container<string> &result);
 
+  //! Convert <tt>-I &lt;path&gt;</tt> to <tt>-I&lt;path&gt;</tt>
+  //
+  // TOO1 (11/21/2013): Current CLI handling assumes that there is no space
+  // between the -I option and its <path> option. That is,
+  //
+  //      +----------+------------+
+  //      | Valid    |  -I<path>  |
+  //      +----------+------------+
+  //      | Invalid  |  -I <path> |
+  //      +----------+------------+
+  //
+  // Note: Path argument is validated for existence.
+  //
+  std::vector<std::string>
+  NormalizeIncludePathOptions (std::vector<std::string>& argv);
+
   void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
