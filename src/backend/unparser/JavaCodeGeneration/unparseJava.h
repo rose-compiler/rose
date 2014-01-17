@@ -32,6 +32,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual ~Unparse_Java();
 
+          void unparseJavaFile(SgSourceFile *file, SgUnparse_Info &info);
+
        // DQ (3/13/2004): Added to support templates
           virtual void unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info);
           virtual void unparseTemplateArgument (SgTemplateArgument*  templateArgument , SgUnparse_Info& info);
@@ -135,6 +137,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseMFuncDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseVarDeclStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseVarDefnStmt      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseJavaPackageStmt  (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDefnStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseEnumDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
@@ -250,6 +253,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info);
 
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
+          void unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info);
    };
 
 #endif

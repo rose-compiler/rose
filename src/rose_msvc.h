@@ -125,6 +125,7 @@ inline T min(const T& a, const T& b)
 // #define min(a,b)            (((a) < (b)) ? (a) : (b))
 // #endif
 // #include <afxcontrolbars.h>
+#define NOMINMAX
 #undef max
 #undef min
 // ...contine to use std::mix, std::max from here on
