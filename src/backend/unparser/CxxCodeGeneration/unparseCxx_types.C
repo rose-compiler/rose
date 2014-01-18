@@ -2661,8 +2661,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                ninfo.unset_isReferenceToSomething();
                ninfo.unset_isPointerToSomething();
                unparseType(array_type->get_base_type(), ninfo);
-            // curprint("(");
-               curprint(" /* unparseArrayType */ (");
+               curprint("(");
+            // curprint(" /* unparseArrayType */ (");
              }
             else
              {
@@ -2675,8 +2675,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              {
                if (needParen == true)
                   {
-                 // curprint(")");
-                    curprint(" /* unparseArrayType */ )");
+                    curprint(")");
+                 // curprint(" /* unparseArrayType */ )");
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
                   }
