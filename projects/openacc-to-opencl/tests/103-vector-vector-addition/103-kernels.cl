@@ -125,7 +125,7 @@ __kernel void kernel_103_gang_worker_tile_0_vector_4(__global float * a, __globa
 }
 
 __kernel void kernel_103_gang_worker_tile_0_vector_8(__global float * a, __global float * b, __global float * res, __constant struct acc_context_t_ * ctx) {
-  long it_loop_0_tile_0;
+  long it_loop_0_tile_0; 
 
   // Loop for tile #0
   for (it_loop_0_tile_0  = 0;
@@ -168,7 +168,7 @@ __kernel void kernel_103_gang_worker_tile_0_vector_16(__global float * a, __glob
 
 //////////////////////////////////////////////////////////
 // Version with tile #1 dynamic ; tiles #0 and #2 empty //
-//////////////////////////////////////////////////////////1
+//////////////////////////////////////////////////////////
 
 __kernel void kernel_103_gang_worker_tile_1(__global float * a, __global float * b, __global float * res, __constant struct acc_context_t_ * ctx) {
   long it_loop_0_tile_1;
