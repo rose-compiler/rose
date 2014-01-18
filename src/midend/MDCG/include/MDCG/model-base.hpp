@@ -56,25 +56,25 @@ struct element_t {
 };
 
 /// A variable: part of a namespace. interact_with(type)
-typedef element_t<e_model_variable> variable_t;
+typedef element_t<e_model_variable> * variable_t;
 
 /// A function: part of a namespace. interact_with(variable: global, type: argument and return value, method: call, function: call, field: of variable)
-typedef element_t<e_model_function> function_t;
+typedef element_t<e_model_function> * function_t;
 
 /// A type: can be native types, structures, classes or typedef. interact_with(type: typedef, class: classes)
-typedef element_t<e_model_type> type_t;
+typedef element_t<e_model_type> * type_t;
 
 /// A class: declare fields, methods, and types. interact_with(namespace: parent, class: child & parent, type: child, field: child, method:child)
-typedef element_t<e_model_class> class_t;
+typedef element_t<e_model_class> * class_t;
 
 /// A field: part of a class. interact_with(class: parent, type)
-typedef element_t<e_model_field> field_t;
+typedef element_t<e_model_field> * field_t;
 
 /// A method: part of a class. interact_with(class: parent, field: access, method: call, function: call, variable: global, type: argument and return value)
-typedef element_t<e_model_method> method_t;
+typedef element_t<e_model_method> * method_t;
 
 /// A namespace. interact_with(child: variable & function & type & class & namespace, namespace: parent)
-typedef element_t<e_model_namespace> namespace_t;
+typedef element_t<e_model_namespace> * namespace_t;
 
 /// [*_]symbol_t represents any symbol
 

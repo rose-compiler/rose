@@ -5,10 +5,12 @@
  *
  */
 
-#ifndef __MDCG_MODEL_BASE_HPP__
-#define __MDCG_MODEL_BASE_HPP__
+#ifndef __MDCG_MODEL_TYPE_HPP__
+#define __MDCG_MODEL_TYPE_HPP__
 
 #include "MDCG/model-base.hpp"
+
+class SgType;
 
 namespace MDCG {
 
@@ -55,5 +57,5 @@ struct scope_t<e_model_type> {
 
 }
 
-#endif /* __MDCG_MODEL__HPP__ */
+#endif /* __MDCG_MODEL_TYPE_HPP__ */
 

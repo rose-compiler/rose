@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __MDCG_MODEL__HPP__
-#define __MDCG_MODEL__HPP__
+#ifndef __MDCG_MODEL_CLASS_HPP__
+#define __MDCG_MODEL_CLASS_HPP__
 
 #include "MDCG/model-base.hpp"
 
@@ -62,5 +62,5 @@ struct scope_t<e_model_class> {
 
 }
 
-#endif /* __MDCG_MODEL__HPP__ */
+#endif /* __MDCG_MODEL_CLASS_HPP__ */
 

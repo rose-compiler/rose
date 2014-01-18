@@ -37,12 +37,15 @@ class ModelBuilder /*:
 {
   private:
     MFB::Driver<MFB::Sage> & p_mfb_driver;
-
     std::vector<Model::model_t> p_models;
 
   private:
-    const MFB::api_t & getApi(const std::string &) const;
-    void add(unsigned model, const MFB::api_t * api);
+    void add(Model::model_t & model, const MFB::api_t * api);
+    void add(Model::model_t & model, SgNamespaceSymbol * namespace_symbol);
+    void add(Model::model_t & model, SgVariableSymbol * variable_symbol);
+    void add(Model::model_t & model, SgFunctionSymbol * function_symbol);
+    void add(Model::model_t & model, SgClassSymbol * class_symbol);
+    void add(Model::model_t & model, SgMemberFunctionSymbol * member_function_symbol);
 
   public:
     ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver);
