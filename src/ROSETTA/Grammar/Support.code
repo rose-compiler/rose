@@ -11603,6 +11603,7 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
    {
 #if 0
      printf ("In Sg_File_Info::operator=(): get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->class_name().c_str() : "null");
+     printf ("In Sg_File_Info::operator=(): this = %p &X = %p \n",this,&X);
 #endif
 
      p_file_id                = X.p_file_id;
@@ -12130,6 +12131,9 @@ Sg_File_Info::get_file_id () const
              }
 #else
        // Older (previous) code
+
+#error "DEAD CODE!"
+
           if ( isCompilerGenerated() == true )
              {
             // returnValue = undefinedValue;
@@ -12736,6 +12740,10 @@ bool
 Sg_File_Info::isCompilerGenerated() const
    {
      assert(this != NULL);
+#if 0
+     printf ("In Sg_File_Info::isCompilerGenerated(): this = %p \n",this);
+#endif
+
      return (p_classificationBitField & e_compiler_generated);
    }
 
@@ -12743,6 +12751,11 @@ void
 Sg_File_Info::setCompilerGenerated()
    {
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::setCompilerGenerated(): this = %p \n",this);
+#endif
+
      p_classificationBitField |= e_compiler_generated;
    }
 
@@ -12782,6 +12795,11 @@ Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed()
   // Make sure that both bits are set!
   // setCompilerGenerated();
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed(): this = %p \n",this);
+#endif
+
      p_classificationBitField |= e_output_in_code_generation;
    }
 

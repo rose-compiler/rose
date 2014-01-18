@@ -420,6 +420,42 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 
+  // DQ (1/18/2014): This is a better implementation than setting the source position info on the function
+  // parameters.  See test2014_35.c for an example that requires this solution using a new data member.
+     if (funcdecl_stmt->get_prototypeIsWithoutParameters() == true )
+        {
+#if 0
+          printf ("In unparseFunctionArgs(): Detected prototypeIsWithoutParameters == true (funcdecl_stmt = %p) \n",funcdecl_stmt);
+#endif
+          return;
+        }
+
+#if 0
+  // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
+     bool functionParametersMarkedToBeOutput = false;
+     SgInitializedNamePtrList::iterator temp_p = funcdecl_stmt->get_args().begin();
+     while ( temp_p != funcdecl_stmt->get_args().end() )
+        {
+       // If any are marked with valid source position then functionParametersMarkedToBeOutput will be true after the loop.
+          if (functionParametersMarkedToBeOutput == false && (*temp_p)->get_file_info()->isCompilerGenerated() == true)
+             {
+               functionParametersMarkedToBeOutput = false;
+             }
+            else
+             {
+               functionParametersMarkedToBeOutput = true;
+             }
+#if 0
+          (*temp_p)->get_file_info()->display("unparseFunctionArgs(): SgInitializedName: debug");
+#endif
+          temp_p++;
+        }
+
+     bool outputFunctionParameters = functionParametersMarkedToBeOutput;
+#else
+     bool outputFunctionParameters = true;
+#endif
+
      SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
      while ( p != funcdecl_stmt->get_args().end() )
         {
@@ -433,7 +469,13 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
              }
 
-          unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+       // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
+       // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+       // if (outputFunctionParameters == true)
+          if ( (outputFunctionParameters == true) || (funcdecl_stmt->get_oldStyleDefinition() == true) )
+             {
+               unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+             }
 
        // Move to the next argument
           p++;
@@ -577,6 +619,10 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // printf ("Adding a closing \")\" to the end of the argument list \n");
      curprint(")");
 
+#if 0
+     printf ("In unparse_helper(): funcdecl_stmt->get_oldStyleDefinition() = %s \n",funcdecl_stmt->get_oldStyleDefinition() ? "true" : "false");
+#endif
+
      if ( funcdecl_stmt->get_oldStyleDefinition() )
         {
        // Output old-style C (K&R) function definition
@@ -598,6 +644,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
             // Output declarations for function parameters (using old-style K&R syntax)
             // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
+
                curprint( ";");
                unp->u_sage->curprint_newline();
                p++;

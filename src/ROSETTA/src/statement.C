@@ -1081,6 +1081,11 @@ Grammar::setUpStatements ()
   // FunctionDefinition.setDataPrototype ( "int","par_flag", "= 0",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/18/2014): Add support for old-style C function prototypes without function parameters (K&R style)
+     FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      MemberFunctionDeclaration.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MemberFunctionDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
 

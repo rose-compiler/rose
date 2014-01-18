@@ -1645,6 +1645,17 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
           curprint( " __attribute__((weak_reference)) ");
         }
 
+  // DQ (1/18/2014): Adding support for GNU specific noreturn attribute for variable 
+  // (only applies to variable that are of function pointer type).
+     if (initializedName->isGnuAttributeNoReturn() == true)
+        {
+          curprint(" __attribute__((noreturn)) ");
+#if 0
+          printf ("Detected initializedName->isGnuAttributeNoReturn() == true: (not implemented) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
 #if 0
   // DQ (12/31/2013): This is now handled by the new printAttributesForType() function.
   // DQ (12/30/2013): Added support for more GNU attributes.
