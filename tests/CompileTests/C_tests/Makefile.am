@@ -414,6 +414,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_33.c \
      test2014_34.c \
      test2014_35.c \
+     test2014_36.c \
+     test2014_37.c \
+     test2014_38.c \
      math.c \
      complex_01.c \
      stdio.c \
