@@ -1030,6 +1030,8 @@ PreprocessingInfo::set_optionalflagsForCompilerGeneratedLinemarker( std::string 
      optionalflagsForCompilerGeneratedLinemarker = x;
    }
 
+// DQ (1/19/2014): List the acceptable leading possible characters to any CPP macro only once to aboud errors.
+#define CPP_MACRO_ALPHABET "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 std::string
 PreprocessingInfo::getMacroName()
@@ -1059,11 +1061,18 @@ PreprocessingInfo::getMacroName()
 #endif
                string substring = s.substr(endOfDefineSubstring);
 
-               size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+               string cpp_macro_alphabet = CPP_MACRO_ALPHABET;
+               ROSE_ASSERT(cpp_macro_alphabet.length() == 53);
+
+            // size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+               size_t startOfMacroName = s.find_first_of(cpp_macro_alphabet,endOfDefineSubstring);
                size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
 #if DEBUG_MACRO_NAME
                printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
 #endif
+            // DQ (1/19/2014): Added assertion.
+               ROSE_ASSERT(startOfMacroName != string::npos);
+
                size_t macroNameLength = (endOfMacroName - startOfMacroName);
 #if DEBUG_MACRO_NAME
                printf ("   --- macroNameLength = %zu \n",macroNameLength);
@@ -1157,6 +1166,9 @@ PreprocessingInfo::isSelfReferential()
 
           if (secondReferenceToMacroSubstring != string::npos)
              {
+               string cpp_macro_alphabet = CPP_MACRO_ALPHABET;
+               ROSE_ASSERT(cpp_macro_alphabet.length() == 53);
+
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- Double check for self-referencing macro: macroName = %s s = %s ",macroName.c_str(),s.c_str());
 #endif
@@ -1166,8 +1178,9 @@ PreprocessingInfo::isSelfReferential()
                ROSE_ASSERT(endOfMacroSubstring < characterBeforeSecondReferenceToMacroSubstring);
                string beforeSecondReferenceToMacroSubstring          = s.substr(endOfMacroSubstring+1,(characterBeforeSecondReferenceToMacroSubstring-endOfMacroSubstring));
             // size_t find_last_not_of (const string& str, size_t pos = npos) const;
-            // size_t characterBeforeSecondReferenceToMacroSubstring = s.find_last_not_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",characterBeforeSecondReferenceToMacroSubstring);
-               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            // size_t characterBeforeSecondReferenceToMacroSubstring = s.find_last_not_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",characterBeforeSecondReferenceToMacroSubstring);
+            // size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of(cpp_macro_alphabet);
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- characterBeforeSecondReferenceToMacroSubstring              = %zu \n",characterBeforeSecondReferenceToMacroSubstring);
                printf ("   --- beforeSecondReferenceToMacroSubstring                       = %s \n",beforeSecondReferenceToMacroSubstring.c_str());
@@ -1200,7 +1213,8 @@ PreprocessingInfo::isSelfReferential()
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- afterSecondReferenceToMacroSubstring = %s \n",afterSecondReferenceToMacroSubstring.c_str());
 #endif
-               size_t startOfRemainderSubstring = s.find_first_of("_abcdefghijklmnopqustuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring+1);
+            // size_t startOfRemainderSubstring = s.find_first_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring+1);
+               size_t startOfRemainderSubstring = s.find_first_of(cpp_macro_alphabet,endOfSecondReferenceToMacroSubstring+1);
                size_t endOfRemainderSubstring   = s.find_first_of(" (\t\n\0",endOfSecondReferenceToMacroSubstring);
 #if DEBUG_SELF_REFERENTIAL_MACRO
                printf ("   --- startOfRemainderSubstring = %zu endOfRemainderSubstring = %zu \n",startOfRemainderSubstring,endOfRemainderSubstring);

@@ -1038,7 +1038,9 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regnum_attribute", "= 0",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );

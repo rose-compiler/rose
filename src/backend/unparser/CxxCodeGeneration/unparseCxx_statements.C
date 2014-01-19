@@ -2602,6 +2602,23 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
      ROSE_ASSERT(funcdecl_stmt != NULL);
 
+  // DQ (1/19/2014): Adding support for attributes that must be prefixed to the function declarations (e.g. "__attribute__((regnum(3)))").
+  // It is output here for non-defining declarations, but in unparseFuncDefnStmt() function for the attribute to be associated with the defining declaration.
+  // unp->u_sage->printPrefixAttributes(funcdecl_stmt,info);
+     if (funcdecl_stmt->isForward() == true) 
+        {
+          unp->u_sage->printPrefixAttributes(funcdecl_stmt,info);
+        }
+#if 0
+       else
+        {
+          if (funcdecl_stmt == funcdecl_stmt->get_definingDeclaration())
+             {
+               unp->u_sage->printPrefixAttributes(funcdecl_stmt,info);
+             }
+        }
+#endif
+
   // DQ (8/19/2012): I don't think I like how we are skipping forward declarations here (need to understand this better).
   // Liao, 9/25/2009, skip the compiler generated forward declaration for a SgTemplateInstantiationFunctionDecl
   // see bug 369: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=369&group_id=24&atid=185
@@ -3006,6 +3023,17 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint ( string(" }"));
                   }
              }
+#if 0
+            else
+             {
+            // DQ (1/19/2014): Added support for missing attributes.
+            // We certainly need to represent a number of different kinds of gnu attributes 
+            // consistantly on both the non-defining and defining function declarations.
+            // However, this is a bug if the attribute appears after the function declaration
+            // (at least for the case of the defining declaration).
+               unp->u_sage->printAttributes(funcdecl_stmt,info);
+             }
+#endif
         }
 
 #if 0
@@ -3080,6 +3108,10 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      info.set_SkipFunctionDefinition();
      SgStatement *declstmt = funcdefn_stmt->get_declaration();
+
+  // DQ (1/19/2014): Adding gnu attribute prefix support.
+     ROSE_ASSERT(funcdefn_stmt->get_declaration() != NULL);
+     unp->u_sage->printPrefixAttributes(funcdefn_stmt->get_declaration(),info);
 
   // DQ (3/24/2004): Need to permit SgMemberFunctionDecl and SgTemplateInstantiationMemberFunctionDecl
   // if (declstmt->variant() == MFUNC_DECL_STMT)
