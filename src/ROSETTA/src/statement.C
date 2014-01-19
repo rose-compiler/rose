@@ -1039,7 +1039,7 @@ Grammar::setUpStatements ()
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
-     FunctionDeclaration.setDataPrototype ( "int","gnu_regnum_attribute", "= 0",
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

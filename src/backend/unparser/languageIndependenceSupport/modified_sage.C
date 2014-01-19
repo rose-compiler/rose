@@ -1981,14 +1981,14 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
        // DQ (1/19/2014): Add support for prefix attributes.
 #if 0
           printf ("In printPrefixAttributes(SgDeclarationStatement*): function = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
-          printf ("In printPrefixAttributes(SgDeclarationStatement*): Look for the gnu_regnum_attribute and process it if it is non-zero: gnu_regnum_attribute = %d \n",functionDeclaration->get_gnu_regnum_attribute());
+          printf ("In printPrefixAttributes(SgDeclarationStatement*): Look for the gnu_regparm_attribute and process it if it is non-zero: gnu_regparm_attribute = %d \n",functionDeclaration->get_gnu_regparm_attribute());
 #endif
        // DQ (1/19/2014): Adding support for gnu attribute regnum to support use in Valgrind application.
-          int gnu_regnum_value = functionDeclaration->get_gnu_regnum_attribute();
-          if (gnu_regnum_value > 0)
+          int gnu_regparm_value = functionDeclaration->get_gnu_regparm_attribute();
+          if (gnu_regparm_value > 0)
              {
-               string s = StringUtility::numberToString(gnu_regnum_value);
-               curprint(" __attribute__((regnum(");
+               string s = StringUtility::numberToString(gnu_regparm_value);
+               curprint(" __attribute__((regparm(");
                curprint(s);
 
             // Add trailing space since this is for a prefixed attribute.
