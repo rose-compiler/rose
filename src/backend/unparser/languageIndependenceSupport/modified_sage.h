@@ -88,6 +88,9 @@ class Unparse_MOD_SAGE
        // DQ (2/27/2013): Added support for missing attributes in unparsed code.
           void printAttributes(SgInitializedName* initializedName, SgUnparse_Info& info);
 
+       // DQ (1/19/2014): Added support for prefixed attributes (it makes a difference where they go...).
+          void printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
+
        // DQ (12/31/2013): Added support for missing attributes in unparsed code (on types in variable declarations).
          void printAttributesForType(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
 
@@ -108,6 +111,8 @@ class Unparse_MOD_SAGE
        // DQ (2/4/2006): Removed since this is not used
        // DQ (4/3/2004): Added to output modifiers (e.g. register) in formal function arguments
        // void printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info );
+
+
    };
 
 #endif
