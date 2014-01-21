@@ -326,6 +326,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
   accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > recalls;
   accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > specificity;
   accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > precision;
+  accumulator_set<double, stats< tag::min, tag::max, tag::mean, tag::variance > > fscore;
  
   SqlDatabase::StatementPtr db_group_stmt = r_transaction->statement("select distinct db_group from analysis_results");
 
@@ -346,10 +347,12 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
 			  double cur_recall      = ( 100.0*true_positives ) / (0.001 + true_positives + false_negatives );  
 			  double cur_specificity = ( 100.0*true_negatives ) / (0.001 + true_negatives + false_positives );
 			  double cur_precision   = ( 100.0*true_positives ) / (0.001 + true_positives + false_positives );
-			  
+			  double cur_fscore      = compute_fscore(cur_recall, cur_precision);
+
                           recalls(cur_recall);
 			  specificity(cur_specificity);
 			  precision(cur_precision);
+                          fscore(cur_fscore);
 
                           insert_stmt->bind(0, db_group); 
 			  insert_stmt->bind(1, cur_recall);
@@ -370,7 +373,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
       " precision_mean double precision, precision_standard_deviation double precision, "
-      " fscore double precision "
+      " fscore double precision, fscore_min double precision, fscore_max double precision, fscore_standard_deviation double precision "
       " );");
 
 
@@ -380,8 +383,8 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       // 4              5                 6                 7
       "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
       // 8              9                 10          11
-      "precision_min, precision_max, precision_mean, precision_standard_deviation, fscore)"
-      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      "precision_min, precision_max, precision_mean, precision_standard_deviation, fscore, fscore_min, fscore_max, fscore_standard_deviation)"
+      " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 
 
@@ -397,13 +400,19 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
   insert_overall_rates_stmt->bind(9, max(precision));
   insert_overall_rates_stmt->bind(10, mean(precision));
   insert_overall_rates_stmt->bind(11, sqrt(boost::accumulators::variance(precision)));
-  insert_overall_rates_stmt->bind(12, compute_fscore(mean(precision), mean(recalls)));
+  insert_overall_rates_stmt->bind(12, mean(fscore));
+  insert_overall_rates_stmt->bind(13, min(fscore));
+  insert_overall_rates_stmt->bind(14, max(fscore));
+  insert_overall_rates_stmt->bind(15, sqrt(boost::accumulators::variance(fscore)));
+   
   insert_overall_rates_stmt->execute();
 
   std::cout << "\n\n Overall for all optimization levels for this db group: " << std::endl;
   std::cout << "\n\n    recall is      " << mean(recalls)     << "+-" << sqrt(boost::accumulators::variance(recalls))     << " min " << min(recalls)     << " max " << max(recalls) ;
   std::cout << "\n\n    specificity is " << mean(specificity) << "+-" << sqrt(boost::accumulators::variance(specificity)) << " min " << min(specificity) << " max " << max(specificity) ;
   std::cout << "\n\n    precision is   " << mean(precision)   << "+-" << sqrt(boost::accumulators::variance(precision))   << " min " << min(precision)   << " max " << max(precision) ;
+  std::cout << "\n\n    fscore is   " << mean(fscore)   << "+-" << sqrt(boost::accumulators::variance(fscore))   << " min " << min(fscore)   << " max " << max(fscore) ;
+ 
   std::cout << "\n\n";
 
 }
