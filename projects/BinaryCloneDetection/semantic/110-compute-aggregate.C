@@ -56,6 +56,10 @@ usage(int exit_status)
               <<"            Similarity measure for semantic similarity between 0 and 1.\n"
               <<"    --path-threshold=0.0|..|1.0\n"
               <<"            Path sensitive similarity threshold between 0 and 1.\n"
+              <<"    --hamming-threshold=0|..|MAX_INT\n"
+              <<"            Function syntactic hamming threshold.\n"
+              <<"    --euclidean-threshold=0|..|MAX_INT\n"
+              <<"            Function syntactic euclidean threshold.\n"
               <<"    --cg-threshold=0.0|..|1.0\n"
               <<"            Call graph similarity threshold between 0 and 1.\n"
               <<"    --min-insns=0|..|MAX_INT\n"
@@ -312,6 +316,8 @@ int main(int argc, char *argv[])
   double sem_threshold  = 0.7;
   double path_threshold = 0.0;
   double cg_threshold   = 0.0;
+  int hamming_threshold   = -1;
+  int euclidean_threshold = -1;
 
   double bucket_size = 0.0250;
   double increment   = 0.0500;
@@ -338,6 +344,10 @@ int main(int argc, char *argv[])
       compute_semantic_distribution = true;
     } else if (!strncmp(argv[argno], "--min-insns=",12)) {
       min_insns= boost::lexical_cast<int>(argv[argno]+12);
+    } else if (!strncmp(argv[argno], "--hamming-threshold=",20)) {
+      hamming_threshold= boost::lexical_cast<int>(argv[argno]+20);
+    } else if (!strncmp(argv[argno], "--euclidean-threshold=",22)) {
+      euclidean_threshold= boost::lexical_cast<int>(argv[argno]+22);
     } else if (!strncmp(argv[argno], "--max-cluster-size=",19)){
       max_cluster_size = boost::lexical_cast<int>(argv[argno]+19);
     } else {
@@ -363,6 +373,8 @@ int main(int argc, char *argv[])
     " select "
     "   (select " + boost::lexical_cast<std::string>(max_cluster_size)     +  " ) as max_cluster_size,"
     "   (select " + boost::lexical_cast<std::string>(min_insns)     +  " ) as min_insns,"
+    "   (select " + boost::lexical_cast<std::string>(hamming_threshold) +    " ) as hamming_threshold,"
+    "   (select " + boost::lexical_cast<std::string>(euclidean_threshold) +  " ) as euclidean_threshold,"
     "   (select " + boost::lexical_cast<std::string>(sem_threshold) +  " ) as similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(path_threshold) + " ) as path_similarity_threshold,"
     "   (select " + boost::lexical_cast<std::string>(cg_threshold) +   " ) as cg_similarity_threshold;";
