@@ -415,7 +415,7 @@ int
 main(int argc, char *argv[])
 {
   int call_depth = -1;
-  int min_insns  = 100;
+  int min_insns  = 2;
   double semantic_similarity_threshold = 0.70;
 
 
