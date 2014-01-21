@@ -877,7 +877,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
      ${ROSE_TOP_SRC_DIR}
-     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sage_support
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
      ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/

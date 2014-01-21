@@ -2227,9 +2227,45 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                               if ( !info.SkipCPPDirectives() )
                                  {
                                    if (unp->opt.get_unparse_includes_opt() == true)
-                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                      {
+                                        curprint(string("// (previously processed: ignored) " ) + (*i)->getString());
+                                      }
                                      else
-                                        curprint ( (*i)->getString());
+                                      {
+                                     // curprint((*i)->getString());
+
+                                     // DQ (12/30/2013): Handle the case of a self referential macro declaration e.g. "#define foo  X->foo".
+                                        if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                                           {
+#if 0
+                                             printf ("In unparser: CPP macro = %s \n",(*i)->getString().c_str());
+#endif
+                                          // We need to supress the output of self-referential macros since they will be expanded 
+                                          // twice in the back-end compilation of the ROSE generated code.
+                                             bool isSelfReferential = (*i)->isSelfReferential();
+#if 0
+                                             printf ("In unparser: isSelfReferential = %s CPP macro = %s \n",isSelfReferential ? "true" : "false",(*i)->getString().c_str());
+#endif
+                                             if (isSelfReferential == true)
+                                                {
+#if 1
+                                               // DQ (12/31/2013): Note that the final CR is a part of the CPP #define directive (so we don't need another one).
+                                                  printf ("Detected self-referential macro (supressed in generated code) macro = %s ",(*i)->getString().c_str());
+#endif
+                                               // DQ (12/31/2013): We can't use /* */ to comment out the #define macro since it might also include a "/* ... */" substring.
+                                               // curprint(string("/* (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " */\n");
+                                                  curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " \n");
+                                                }
+                                               else
+                                                {
+                                                  curprint((*i)->getString());
+                                                }
+                                           }
+                                          else
+                                           {
+                                             curprint((*i)->getString());
+                                           }
+                                      }
                                  }
                               break;
 
