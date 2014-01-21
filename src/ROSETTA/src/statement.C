@@ -368,9 +368,9 @@ Grammar::setUpStatements ()
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
 #else
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
 #endif
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
@@ -481,7 +481,7 @@ Grammar::setUpStatements ()
           UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine   | 
-          JavaImportStatement                     | StmtDeclarationStatement,
+          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement,
           "DeclarationStatement","DECL_STMT", false);
 
 
@@ -499,7 +499,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement | JavaPackageStatement,
+             JavaSynchronizedStatement /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -1034,8 +1034,13 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/18/2014): Add support for old-style C function prototypes without function parameters (K&R style)
+     FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1080,6 +1085,8 @@ Grammar::setUpStatements ()
   // DQ (1/17/2006): Removed since it was not properly initialized or ever used (hold over from CC++ days)
   // FunctionDefinition.setDataPrototype ( "int","par_flag", "= 0",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      MemberFunctionDeclaration.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MemberFunctionDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1399,6 +1406,9 @@ Grammar::setUpStatements ()
 #endif
 
   // DQ (7/30/2008): Added support suggested by Ryan for PHP interface specification.
+     ClassDeclaration.setDataPrototype ( "bool", "explicit_annotation_interface", "= false",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ClassDeclaration.setDataPrototype ( "bool", "explicit_interface", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
