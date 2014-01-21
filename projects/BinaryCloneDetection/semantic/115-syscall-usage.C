@@ -278,17 +278,54 @@ void
 analyze_data(SqlDatabase::TransactionPtr tx)
 {
 
- //all functions that is not a stub function for a dynamic library call 
- int num_functions    = tx->statement("select count(*) from semantic_functions where name NOT LIKE '%@plt'")->execute_int(); 
- int num_cg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_cg as cg on cg.callee = sm.caller; ")->execute_int();
- int num_rg_syscalls  = tx->statement("select count(distinct cg.caller) from syscalls_made as sm join semantic_rg as cg on cg.callee = sm.caller; ")->execute_int();
- int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
+    transaction->execute("drop table IF EXISTS functions_cg_accumulate;");
+    transaction->execute("create table functions_cg_accumulate as select sm.caller, count(sm.callee) as num_calls,"
+                         " sf.ninsns, sf.name from semantic_rg as sm join semantic_functions as sf on sf.id=sm.caller "
+                         " group by sm.caller, sf.ninsns, sf.name;");
 
- std::cout << std::fixed << std::setprecision(2);
- std::cout << "num functions:   "                 << num_functions   << std::endl;
- std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
- std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
- std::cout << "path calls: "                      << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
+    transaction->execute("drop table IF EXISTS functions_rg_accumulate;");
+    transaction->execute("create table functions_rg_accumulate as select sm.caller, count(sm.callee) as num_calls,"
+                         " sf.ninsns, sf.name from semantic_cg as sm join semantic_functions as sf on sf.id=sm.caller "
+                         " group by sm.caller, sf.ninsns, sf.name;");
+
+    transaction->execute("drop table IF EXISTS syscalls_cg_accumulate;");
+    transaction->execute("create table syscalls_cg_accumulate as select sm.caller, count(sm.callee) as num_calls,"
+                         " sf.ninsns, sf.name from semantic_cg as sm join semantic_functions as sf on sf.id=sm.caller "
+                         " join syscalls_made as sysm on sysm.caller=sm.callee "
+                         " group by sm.caller, sf.ninsns, sf.name;");
+
+    transaction->execute("drop table IF EXISTS syscalls_rg_accumulate;");
+    transaction->execute("create table syscalls_rg_accumulate as select sm.caller, count(sm.callee) as num_calls,"
+                         " sf.ninsns, sf.name from semantic_rg as sm join semantic_functions as sf on sf.id=sm.caller "
+                         " join syscalls_made as sysm on sysm.caller=sm.callee "
+                         " group by sm.caller, sf.ninsns, sf.name;");
+
+    transaction->execute("drop table IF EXISTS syscalls_fio_accumulate");
+    transaction->execute("create table syscalls_fio_accumulate as  "
+		    " select fio.caller_id, count(fio.callee_id) as num_calls, sf.ninsns, sf.name from syscalls_made as sm "
+		    " join semantic_fio_calls as fio on fio.callee_id = sm.caller "
+		    " join semantic_functions as sf on sf.id=fio.caller_id "
+		    " group by fio.caller_id, sf.ninsns, sf.name   "
+		    );
+
+
+    //all functions that is not a stub function for a dynamic library call 
+    int num_functions    = tx->statement("select count(*) from semantic_functions where name NOT LIKE '%@plt'")->execute_int(); 
+    int num_cg_syscalls  = tx->statement("select count(*) from syscalls_cg_accumulate; ")->execute_int();
+    int num_rg_syscalls  = tx->statement("select count(*) from syscalls_rg_accumulate; ")->execute_int();
+    int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
+
+
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "num functions:   "                 << num_functions   << std::endl;
+    std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
+    std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
+    std::cout << "path calls: "                      << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
+
+
+
+
+
 
  tx->statement("drop table IF EXISTS syscall_statistics;");
  tx->statement("create table syscall_statistics as  select distinct rg.caller, sm.syscall_id, sm.syscall_name from syscalls_made as sm"
