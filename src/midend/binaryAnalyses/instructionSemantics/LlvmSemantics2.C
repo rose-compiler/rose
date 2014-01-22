@@ -3,6 +3,9 @@
 #include "RoseAst.h"
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
+#include "stringify.h"
+
+using namespace rose;                                   // temporary until this stuff is all inside that namespace
 
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -35,9 +38,11 @@ RiscOperators::reset()
     BaseSemantics::RegisterStatePtr regs = state->get_register_state();
     BaseSemantics::MemoryStatePtr mem = state->get_memory_state();
 
-    BaseSemantics::RegisterStatePtr new_regs = regs->create(get_protoval(), regs->get_register_dictionary());
+    RegisterStatePtr new_regs = RegisterState::promote(regs->create(get_protoval(), regs->get_register_dictionary()));
     BaseSemantics::MemoryStatePtr new_mem = mem->create(get_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
+
+    new_regs->initialize_nonoverlapping(get_important_registers(), false);
 
     set_state(new_state);
     rewrites.clear();
@@ -61,7 +66,7 @@ std::string
 RiscOperators::prefix() const 
 {
     std::string retval = "";
-    for (size_t i=0; i<indent_level; ++i)
+    for (int i=0; i<indent_level; ++i)
         retval += indent_string;
     return retval;
 }
@@ -167,11 +172,17 @@ RiscOperators::get_modified_registers()
 }
 
 // FIXME[Robb P. Matzke 2014-01-07]: This is x86 specific.
+RegisterDescriptor
+RiscOperators::get_insn_pointer_register()
+{
+    const RegisterDictionary *dictionary = get_state()->get_register_state()->get_register_dictionary();
+    return *dictionary->lookup("eip");
+}
+
 SValuePtr
 RiscOperators::get_instruction_pointer()
 {
-    const RegisterDictionary *dictionary = get_state()->get_register_state()->get_register_dictionary();
-    RegisterDescriptor EIP = *dictionary->lookup("eip");
+    RegisterDescriptor EIP = get_insn_pointer_register();
     return SValue::promote(get_state()->get_register_state()->readRegister(EIP, this));
 }
 
@@ -254,12 +265,15 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
 void
 RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 {
-    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(latest_insn);
-    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(bb);
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+    using namespace SageInterface;
+
+    SgAsmBlock *bb = getEnclosingNode<SgAsmBlock>(latest_insn);
+    SgAsmFunction *func = getEnclosingNode<SgAsmFunction>(bb);
+    SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
     assert(interp!=NULL);                           // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instruction_map();
     SValuePtr eip = get_instruction_pointer();
+    rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
 
     // If EIP is a constant then it is one of the following cases:
     //    1. It points to an instruction that's in a different function than the last executed instruction, in which
@@ -268,12 +282,18 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
     if (eip->is_number()) {
         SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
-        SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst_insn);
+        SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
         if (func!=dst_func) {                       // one or both could be null
             std::string funcname = function_label(dst_func);
-            std::string ret_label = addr_label(latest_insn->get_address() + latest_insn->get_size());
-            o <<prefix() <<"call void " <<funcname <<"()\n"
-              <<prefix() <<"br label %" <<ret_label <<"\n";
+            o <<prefix() <<"call void " <<funcname <<"()\n";
+            rose_addr_t ret_addr = fallthrough_va;
+            SgAsmFunction *ret_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
+            if (ret_func!=dst_func) {
+                // The fall through address might be invalid or in a different function if the call never returns.
+                o <<prefix() <<"unreachable\n";
+            } else {
+                o <<prefix() <<"br label %" <<addr_label(ret_addr) <<"\n";
+            }
         } else {
             o <<prefix() <<"br label %" <<addr_label(eip->get_number()) <<"\n";
         }
@@ -283,17 +303,46 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     o <<prefix() <<"; register eip = " <<*eip <<"\n";
 
     // If EIP is a symbolic if-then-else ("ite") and both operands are constants then the binary has a conditional branch
-    // instruction (like an x86 "je", "jne", etc.) and we can emit an LLVM conditional "br" with true and false parts.
+    // instruction (like an x86 "je", "jne", etc.) and we can emit an LLVM conditional "br" with true and false parts. However,
+    // we must watch out for the case when the ROSE disassembler determined that the predicate is opaque and one of the target
+    // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
+    // use here.
     InternalNodePtr inode = eip->get_expression()->isInternalNode();
     if (inode && InsnSemanticsExpr::OP_ITE==inode->get_operator()) {
-        LeafNodePtr true_leaf = inode->child(1)->isLeafNode();
-        LeafNodePtr false_leaf = inode->child(2)->isLeafNode();
-        if (true_leaf!=NULL && true_leaf->is_known() && false_leaf!=NULL && false_leaf->is_known()) {
-            LeafNodePtr t1 = emit_expression(o, inode->child(0));
-            o <<prefix() <<"br i1 " <<llvm_term(t1)
-              <<", label %" <<addr_label(true_leaf->get_value())
-              <<", label %" <<addr_label(false_leaf->get_value()) <<"\n";
-            return;
+        LeafNodePtr leaf1 = inode->child(1)->isLeafNode();
+        LeafNodePtr leaf2 = inode->child(2)->isLeafNode();
+        if (leaf1!=NULL && leaf1->is_known() && leaf2!=NULL && leaf2->is_known()) {
+            rose_addr_t true_va = leaf1->get_value();
+            rose_addr_t false_va = leaf2->get_value();
+            if (false_va != fallthrough_va)
+                std::swap(true_va, false_va);
+            SgAsmFunction *true_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(true_va, NULL));
+            SgAsmFunction *false_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(false_va, NULL));
+            const SgAsmIntegerValuePtrList &succs = bb->get_successors();
+            std::vector<rose_addr_t> succs_va;
+            for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
+                succs_va.push_back((*si)->get_absolute_value());
+
+            if (succs.size()==2 && true_func==func && false_func==func &&
+                std::min(succs_va[0], succs_va[1])==std::min(true_va, false_va) &&
+                std::max(succs_va[0], succs_va[1])==std::max(true_va, false_va)) {
+                // This is a normal intra-function conditional branch that can be translated directly to an LLVM "br"
+                LeafNodePtr t1 = emit_expression(o, inode->child(0));
+                o <<prefix() <<"br i1 " <<llvm_term(t1)
+                  <<", label %" <<addr_label(true_va) <<", label %" <<addr_label(false_va) <<"\n";
+                return;
+            } else if (succs.size()==1 && (succs_va[0]==true_va || succs_va[0]==false_va) &&
+                       getEnclosingNode<SgAsmFunction>(insns.get_value_or(succs_va[0], NULL))==func) {
+                // An intra-function conditional branch with opaque predicate.
+                o <<prefix() <<"br label %" <<addr_label(succs_va[0]) <<"\n";
+                return;
+            } else if (true_func==func && false_func==func) {
+                // CFG succs info is fishy, but both values of the "ite" are valid intra-function blocks
+                LeafNodePtr t1 = emit_expression(o, inode->child(0));
+                o <<prefix() <<"br i1 " <<llvm_term(t1)
+                  <<", label %" <<addr_label(true_va) <<", label %" <<addr_label(false_va) <<"\n";
+                return;
+            }
         }
     }
 
@@ -310,12 +359,15 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // If this function is a thunk, then we need to treat it as an LLVM function call (because LLVM doesn't allow
     // inter-function branches).  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
     if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
-        std::vector<SgAsmInstruction*> func_insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+        std::vector<SgAsmInstruction*> func_insns = querySubTree<SgAsmInstruction>(func);
         if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
             (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
             LeafNodePtr t1 = emit_expression(o, eip);
-            o <<prefix() <<"call void()* " <<llvm_term(t1) <<"\n"
-              <<prefix() <<"ret void\n";
+            LeafNodePtr t2 = next_temporary(32);        // pointer to the function
+            o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
+              <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
+            o <<prefix() <<"call void " <<llvm_term(t2) <<"()\n";
+            o <<prefix() <<"ret void\n";
             return;
         }
     }
@@ -325,24 +377,35 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_call || insn_x86->get_kind() == x86_farcall) {
             LeafNodePtr t1 = emit_expression(o, eip);
+            LeafNodePtr t2 = next_temporary(32);        // pointer to the function
             std::string ret_label = addr_label(latest_insn->get_address() + latest_insn->get_size());
-            o <<prefix() <<"call void()* " <<llvm_term(t1) <<"\n"
-              <<prefix() <<"br label %" <<ret_label <<"\n";
+            o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
+              <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
+            o <<prefix() <<"call void " <<llvm_term(t2) <<"()\n";
+            o <<prefix() <<"br label %" <<ret_label <<"\n";
             return;
         }
     }
 
     // Catch-all: this must be an intra-function indirect branch.  LLVM requires us to enumerate all possible targets, but
-    // since we don't actually know them we must enumerate all basic blocks of the function.
+    // since we don't actually know them we must enumerate all basic blocks of the function.  Note that LLVM 2.5 does not have
+    // the "indirectbr" instruction, so we need to use the "switch" instruction.
     {
         LeafNodePtr t1 = emit_expression(o, eip);
-        o <<prefix() <<"indirectbr i8* " <<llvm_term(t1) <<" [";
-        size_t nblocks = 0;
+        std::string type = llvm_integer_type(t1->get_nbits());
+        std::string dflt_label = next_label();
+        o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            if (SageInterface::getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->is_first_in_block())
-                o <<(nblocks++ ? ", " : "") <<"label %" <<addr_label(ii->first);
+            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->is_first_in_block())
+                o <<" " <<type <<" " <<ii->first <<", label %" <<addr_label(ii->first);
         }
-        o <<"]\n";
+        o <<" ]\n";
+        {
+            Indent label_undent(this, -1);
+            o <<prefix() <<dflt_label <<":\n";
+        }
+        o <<prefix() <<"unreachable\n";
+        return;
     }
 }
 
@@ -428,17 +491,22 @@ RiscOperators::addr_label(rose_addr_t addr)
     return "L_" + StringUtility::addrToString(addr);
 }
 
+// Label for a function. Some ROSE functions don't have names. Sometimes two functions have the same name.  Therefore, we
+// generate the return value as a combination of unique address and optional, non-unique name.
 std::string
 RiscOperators::function_label(SgAsmFunction *func)
 {
+    assert(func!=NULL);
+    std::string retval = "L_" + StringUtility::addrToString(func->get_entry_va());
     std::string fname = func->get_name();
-    if (fname.empty())
-        fname = "L_" + StringUtility::addrToString(func->get_entry_va());
-    for (size_t i=0; i<fname.size(); ++i) {
-        if ('_'!=fname[i] && !isalnum(fname[i]))
-            fname[i] = '.';
+    if (!fname.empty())
+        retval += "_" + fname;
+
+    for (size_t i=0; i<retval.size(); ++i) {
+        if ('_'!=retval[i] && !isalnum(retval[i]))
+            retval[i] = '.';
     }
-    return "@" + fname;
+    return "@" + retval;
 }
 
 // Emit an LLVM instruction to zero-extend a value if necessary.  If the value is already the specified width then this is a
@@ -490,6 +558,9 @@ RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t n
     std::string t1_type = llvm_integer_type(t1->get_nbits());
     LeafNodePtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
+    assert(0!=t1_type.compare(t2_type));
+#endif
     o <<prefix() <<llvm_lvalue(t2) <<" = trunc " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
 }
@@ -536,7 +607,8 @@ RiscOperators::emit_signed_binary(std::ostream &o, const std::string &llvm_opera
 // Emits an LLVM binary operator.  The width of the result is the maximum width of the operands. The narrower of the two
 // operands is zero extended to the same width as the result.
 TreeNodePtr
-RiscOperators::emit_unsigned_binary(std::ostream &o, const std::string &llvm_operator, const TreeNodePtr &a, const TreeNodePtr &b)
+RiscOperators::emit_unsigned_binary(std::ostream &o, const std::string &llvm_operator,
+                                    const TreeNodePtr &a, const TreeNodePtr &b)
 {
     assert(a!=NULL && b!=NULL);
     size_t width = std::max(a->get_nbits(), b->get_nbits());
@@ -622,6 +694,50 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const TreeNodePtr &value, c
     return emit_binary(o, "or", t1, ones);
 }
 
+// Emits the LLVM equivalent of ROSE's OP_LSSB, which returns the zero-origin index of the least significant set bit. The return
+// value is zero if the least significant bit is set or if no bits are set.  LLVM doesn't have an instruction like this, but it
+// has a related instruction that counts the number of trailing zero bits (llvm.cttz.*).  We generate the following code for
+// the call emit_lssb(o, i32 %1):
+//    %2 = icmp eq i32 %1, 0                     ; is zero?
+//    %3 = call i32 @llvm.cttz.i32(i32 %1)       ; number of trailing zeros (not used if %1 is zero)
+//    %4 = select i1 %2, i32 0, i32 %3           ; result
+TreeNodePtr
+RiscOperators::emit_lssb(std::ostream &o, const TreeNodePtr &value)
+{
+    size_t width = value->get_nbits();
+    LeafNodePtr zero = LeafNode::create_integer(width, 0);
+    LeafNodePtr t1 = emit_expression(o, value);
+    TreeNodePtr t2 = emit_compare(o, "icmp eq", t1, zero);
+    LeafNodePtr t3 = next_temporary(width);
+    o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
+      <<" @llvm.cttz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
+    TreeNodePtr t4 = emit_ite(o, t2, zero, t3);
+    return t4;
+}
+
+// Emits the LLVM equivalent of ROSE's OP_MSSB, which returns the zero-origin index of the most significant set bit. The return
+// value is zero if the least significant bit is set or if no bits are set.  LLVM doesn't have an instruction like this, but it
+// has a related instruction that counts the number of leading zero bits (llvm.ctlz.*).  We generate the following code for
+// the call emit_mssb(o, i32 %1):
+//    %2 = icmp eq i32 %1, 0                     ; is zero?
+//    %3 = call i32 @llvm.ctlz.i32(i32 %1, i1 0) ; number of leading zeros (not used if %1 is zero)
+//    %4 = sub i32 31, %3                        ; result if value is non-zero
+//    %5 = select i1 %2, i32 0, i32 %4           ; final result
+TreeNodePtr
+RiscOperators::emit_mssb(std::ostream &o, const TreeNodePtr &value)
+{
+    size_t width = value->get_nbits();
+    LeafNodePtr zero = LeafNode::create_integer(width, 0);
+    LeafNodePtr t1 = emit_expression(o, value);
+    TreeNodePtr t2 = emit_compare(o, "icmp eq", t1, zero);
+    LeafNodePtr t3 = next_temporary(width);
+    o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
+      <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
+    TreeNodePtr t4 = emit_binary(o, "sub", LeafNode::create_integer(width, width-1), t3);
+    TreeNodePtr t5 = emit_ite(o, t2, zero, t4);
+    return t5;
+}
+
 // Emit LLVM instructions for an extract operator.  LLVM doesn't have a dedicated extract instruction, so we right shift
 // and truncate.
 TreeNodePtr
@@ -681,7 +797,7 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 }
 
 // Emits LLVM to compute a ratio.  LLVM requires that the numerator and denominator have the same width; ROSE only stipulates
-// that the return value has the same width as the denominator.
+// that the return value has the same width as the numerator.
 TreeNodePtr
 RiscOperators::emit_signed_divide(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
 {
@@ -689,11 +805,11 @@ RiscOperators::emit_signed_divide(std::ostream &o, const TreeNodePtr &numerator,
     TreeNodePtr t1 = emit_sign_extend(o, numerator, width);
     TreeNodePtr t2 = emit_sign_extend(o, denominator, width);
     TreeNodePtr t3 = emit_binary(o, "sdiv", t1, t2);
-    return emit_truncate(o, t3, denominator->get_nbits());
+    return emit_truncate(o, t3, numerator->get_nbits());
 }
 
 // Emits LLVM to compute a ratio.  LLVM requires that the numerator and denominator have the same width; ROSE only stipulates
-// that the return value has the same width as the denominator.
+// that the return value has the same width as the numerator.
 TreeNodePtr
 RiscOperators::emit_unsigned_divide(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
 {
@@ -701,7 +817,7 @@ RiscOperators::emit_unsigned_divide(std::ostream &o, const TreeNodePtr &numerato
     TreeNodePtr t1 = emit_zero_extend(o, numerator, width);
     TreeNodePtr t2 = emit_zero_extend(o, denominator, width);
     TreeNodePtr t3 = emit_binary(o, "udiv", t1, t2);
-    return emit_truncate(o, t3, denominator->get_nbits());
+    return emit_truncate(o, t3, numerator->get_nbits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
@@ -772,6 +888,24 @@ RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands
     return result;
 }
 
+// Rotate the bits of "value" by "amount" bits.  LLVM doesn't have a rotate instruction so we use left and right shifting and
+// bitwise OR.  If called like emit_rotate_right(o, i32 %1, i32 %2) the output will be:
+//     %3 = lshr i32 %1, %2     ; result low bits
+//     %4 = sub i32 32, %2      ; left shift amount
+//     %5 = shl i32 %1, %4      ; result high bits
+//     %6 = or i32 %3, %5       ; result
+TreeNodePtr
+RiscOperators::emit_rotate_right(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+{
+    TreeNodePtr t3 = emit_arithmetic_right_shift(o, value, amount);
+    TreeNodePtr t4 = emit_unsigned_binary(o, "sub",
+                                          LeafNode::create_integer(amount->get_nbits(), 32),
+                                          amount);
+    TreeNodePtr t5 = emit_left_shift(o, value, t4);
+    TreeNodePtr t6 = emit_unsigned_binary(o, "or", t3, t5);
+    return t6;
+}
+
 // Emits a comparison operation.  E.g., emit_compare(o, "icmp eq", %1, %2) will emit:
 //    %3 = icmp eq i32 %1, i32 %1; typeof(%3) == i1
 TreeNodePtr
@@ -793,36 +927,15 @@ RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNode
     assert(cond->get_nbits()==1);
     assert(a->get_nbits()==b->get_nbits());
 
-    // Condition
-    std::string true_label = next_label();
-    std::string false_label = next_label();
-    std::string end_label = next_label();
-    LeafNodePtr result = next_temporary(a->get_nbits());
-    std::string lvalue = llvm_lvalue(result);
-    TreeNodePtr t1 = emit_expression(o, cond);
-    o <<prefix() <<"br i1 " <<llvm_term(t1) <<", label %" <<true_label <<", label %" <<false_label <<"\n";
-
-    // True body
-    o <<true_label <<":\n";
-    {
-        Indent indent(this);
-        TreeNodePtr t2 = emit_expression(o, a);
-        o <<lvalue <<" = " <<llvm_term(t2) <<"\n";
-        o <<prefix() <<"br label %" <<end_label <<"\n";
-    }
-
-    // False body
-    o <<prefix() <<false_label <<":\n";
-    {
-        Indent indent(this);
-        TreeNodePtr t3 = emit_expression(o, b);
-        o <<lvalue <<" = " <<llvm_term(t3) <<"\n";
-        o <<prefix() <<"br label %" <<end_label <<"\n";
-    }
-
-    // End
-    o <<prefix() <<end_label <<":\n";
-    return result;
+    size_t width = a->get_nbits();
+    LeafNodePtr t1 = emit_expression(o, cond);
+    LeafNodePtr t2 = emit_expression(o, a);
+    LeafNodePtr t3 = emit_expression(o, b);
+    LeafNodePtr t4 = next_temporary(width);
+    o <<prefix() <<llvm_lvalue(t4) <<" = select i1 " <<llvm_term(t1)
+      <<", " <<llvm_integer_type(width) <<" " <<llvm_term(t2)
+      <<", " <<llvm_integer_type(width) <<" " <<llvm_term(t3) <<"\n";
+    return t4;
 }
 
 TreeNodePtr
@@ -842,9 +955,9 @@ RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t
     return t3;
 }
 
-// Reads a global variable. For instance, emit_global_read(o, "@ebp", 32) will produce the following LLVM:
-//   %1 = load i32* @ebp
-// and returns %1
+// Reads a global variable. For instance,
+//     emit_global_read(o, "@ebp", 32)
+//         %1 = load i32* @ebp ; return value
 TreeNodePtr
 RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, size_t nbits)
 {
@@ -945,6 +1058,14 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 assert(3==operands.size());
                 operator_result = emit_ite(o, operands[0], operands[1], operands[2]);
                 break;
+            case InsnSemanticsExpr::OP_LSSB:
+                assert(1==operands.size());
+                operator_result = emit_lssb(o, operands[0]);
+                break;
+            case InsnSemanticsExpr::OP_MSSB:
+                assert(1==operands.size());
+                operator_result = emit_mssb(o, operands[0]);
+                break;
             case InsnSemanticsExpr::OP_NE:
                 assert(2==operands.size());
                 operator_result = emit_compare(o, "icmp ne", operands[0], operands[1]);
@@ -959,6 +1080,10 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
             case InsnSemanticsExpr::OP_READ:
                 assert(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->get_nbits());
+                break;
+            case InsnSemanticsExpr::OP_ROR:
+                assert(2==operands.size());
+                operator_result = emit_rotate_right(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SDIV:
                 assert(2==operands.size());
@@ -1043,14 +1168,12 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->get_nbits(), 0));
                 break;
 
-            case InsnSemanticsExpr::OP_LSSB:
-            case InsnSemanticsExpr::OP_MSSB:
             case InsnSemanticsExpr::OP_NOOP:
             case InsnSemanticsExpr::OP_ROL:
-            case InsnSemanticsExpr::OP_ROR:
             case InsnSemanticsExpr::OP_WRITE:
-                assert(!"not implemented yet");
-                abort();
+                throw BaseSemantics::Exception("LLVM translation for " +
+                                               stringifyInsnSemanticsExprOperator(inode->get_operator()) +
+                                               " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
         }
@@ -1130,6 +1253,16 @@ void
 Transcoder::emitFilePrologue(std::ostream &o)
 {
     operators->emit_register_declarations(o, operators->get_important_registers());
+
+    // This function is apparently not declared like it should be.  Hopefully we only need these versions.
+    o <<"\n"
+      <<operators->prefix() <<"; These LLVM functions don't seem to be defined as advertised in documentation.\n"
+      <<operators->prefix() <<"declare i8  @llvm.ctlz.i8 (i8)\n"
+      <<operators->prefix() <<"declare i16 @llvm.ctlz.i16(i16)\n"
+      <<operators->prefix() <<"declare i32 @llvm.ctlz.i32(i32)\n"
+      <<operators->prefix() <<"declare i8  @llvm.cttz.i8 (i8)\n"
+      <<operators->prefix() <<"declare i16 @llvm.cttz.i16(i16)\n"
+      <<operators->prefix() <<"declare i32 @llvm.cttz.i32(i32)\n";
 }
 
 std::string
@@ -1184,7 +1317,6 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     if (!bb)
         return 0;
     size_t ninsns = 0;                                  // number of instructions emitted
-    RiscOperators::Indent indent(operators);
     RoseAst ast(bb);
     operators->reset();
     SgAsmInstruction *last_insn = NULL;
@@ -1196,7 +1328,24 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
             o <<operators->prefix() <<"; " <<StringUtility::addrToString(insn->get_address())
               <<": " <<unparseInstruction(insn) <<"\n";
             last_insn = insn;
-            dispatcher->processInstruction(insn);
+            try {
+                dispatcher->processInstruction(insn);
+            } catch (const BaseSemantics::Exception &e) {
+                if (quiet_errors) {
+                    // Try to make sure that the LLVM is still valid.  That means we need to make sure the instruction pointer
+                    // is a reasonable value otherwise we might try to branch to the failed instruction, which could be in the
+                    // middle of a basic block.  It's more likely that the fall-through address will be a valid basic block,
+                    // although not guaranteed.
+                    o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
+                    RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
+                    BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.get_nbits(),
+                                                                                 insn->get_address() + insn->get_size());
+                    operators->get_state()->get_register_state()->writeRegister(IP_REG, fallthrough_va, operators.get());
+                } else {
+                    throw;
+                }
+            }
+            
 #if 0 /*DEBUGGING [Robb P. Matzke 2014-01-14]*/
             std::ostringstream ss;
             ss <<*operators->get_state();
@@ -1244,7 +1393,7 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     // Therefore, we emit a no-op as the first basic block so that ROSE's first basic block becomes the second basic block for
     // LLVM.
     {
-        RiscOperators::Indent indentation(operators, 2);
+        RiscOperators::Indent insn_indentation(operators);
         std::string label = operators->addr_label(func->get_entry_va());
         o <<operators->prefix() <<"br label %" <<label <<"\n";
     }
@@ -1254,15 +1403,23 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     for (SgAsmStatementPtrList::const_iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
         SgAsmBlock *bb = isSgAsmBlock(*bbi);
         assert(bb!=NULL);
-        int ninsns = transcodeBasicBlock(bb, o);
-        if (ninsns>0)
+        if (emit_funcfrags || 0==(bb->get_reason() & SgAsmBlock::BLK_FRAGMENT)) {
+            int ninsns = transcodeBasicBlock(bb, o);
+            if (ninsns>0)
+                ++nbbs;
+        } else {
+            // We still must emit the basic block because we might need the address.  The RiscOperators don't have any
+            // mechanism for filtering out basic blocks and so might produce a reference to such a block.
+            o <<operators->prefix() <<operators->addr_label(bb->get_address()) <<":\n";
+            RiscOperators::Indent insn_indentation(operators);
+            o <<operators->prefix() <<"unreachable\n";
             ++nbbs;
+        }
     }
 
     // Function epilogue.  This is to handle ROSE functions that have no basic blocks--they still need to be valid functions in
     // LLVM.
     if (0==nbbs) {
-        RiscOperators::Indent label_indentation(operators);
         std::string label = operators->addr_label(func->get_entry_va());
         o <<"\n" <<operators->prefix() <<label <<"\n";
         {

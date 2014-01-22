@@ -43,7 +43,7 @@ private:
     RegisterStatePtr prev_regstate;                     // most recently emitted register state
     RegisterDescriptors important_registers;            // registers that should be emitted to LLVM
     TreeNodes  mem_writes;                              // memory write operations (OP_WRITE expressions)
-    size_t indent_level;                                // level of indentation
+    int indent_level;                                   // level of indentation (might be negative, but prefix() clips to zero
     std::string indent_string;                          // white space per indentation level
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,11 +117,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to control indentation of LLVM output
 public:
-    /** Increase indentation level by one. */
-    void indent(size_t nlevels=1) { indent_level += nlevels; }
-
-    /** Decrease indentation level by one. */
-    void undent(size_t nlevels=1) { indent_level -= std::min(indent_level, nlevels); }
+    /** Increase indentation by @p nlevels levels. Indentation is decreased if nlevels is negative. Returns the new indentation
+     *  level. It is permissible for the indentation to become negative, but prefix() always returns a non-negative amount of
+     *  space. */
+    int indent(int nlevels=1) { indent_level += nlevels; return nlevels; }
 
     /** Return indentation string. */
     std::string prefix() const;
@@ -130,16 +129,16 @@ public:
     struct Indent {
         RiscOperators *ops;
         RiscOperatorsPtr ops_ptr;
-        size_t nlevels;
-        explicit Indent(const RiscOperatorsPtr &ops_ptr, size_t nlevels=1): ops_ptr(ops_ptr), nlevels(nlevels) {
+        int nlevels;
+        explicit Indent(const RiscOperatorsPtr &ops_ptr, int nlevels=1): ops_ptr(ops_ptr), nlevels(nlevels) {
             ops = ops_ptr.get();
             ops->indent(nlevels);
         }
-        explicit Indent(RiscOperators *ops, size_t nlevels=1): ops(ops), nlevels(nlevels) {
+        explicit Indent(RiscOperators *ops, int nlevels=1): ops(ops), nlevels(nlevels) {
             ops->indent(nlevels);
         }
         ~Indent() {
-            ops->undent(nlevels);
+            ops->indent(-nlevels);
         }
     };
 
@@ -159,6 +158,9 @@ public:
 
     /** Return the list of important registers that have been modified since the last call to make_current(). */
     virtual RegisterDescriptors get_modified_registers();
+
+    /** Return the descriptor for the instruction pointer register. */
+    virtual RegisterDescriptor get_insn_pointer_register();
 
     /** Return the value of the instruction pointer. */
     virtual SValuePtr get_instruction_pointer();
@@ -302,6 +304,8 @@ protected:
     virtual TreeNodePtr emit_arithmetic_right_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
     virtual TreeNodePtr emit_left_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
     virtual TreeNodePtr emit_left_shift_ones(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
+    virtual TreeNodePtr emit_lssb(std::ostream&, const TreeNodePtr&);
+    virtual TreeNodePtr emit_mssb(std::ostream&, const TreeNodePtr&);
     virtual TreeNodePtr emit_extract(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &from, size_t result_nbits);
     virtual TreeNodePtr emit_invert(std::ostream&, const TreeNodePtr &value);
     virtual TreeNodePtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
@@ -312,6 +316,7 @@ protected:
     virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
     virtual TreeNodePtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
     virtual TreeNodePtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
+    virtual TreeNodePtr emit_rotate_right(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
     virtual TreeNodePtr emit_compare(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
     virtual TreeNodePtr emit_ite(std::ostream&, const TreeNodePtr &cond, const TreeNodePtr&, const TreeNodePtr&);
     virtual TreeNodePtr emit_memory_read(std::ostream&, const TreeNodePtr &address, size_t nbits);
@@ -327,9 +332,12 @@ class Transcoder {
 private:
     RiscOperatorsPtr operators;
     BaseSemantics::DispatcherPtr dispatcher;
+    bool emit_funcfrags;                                // emit BBs that aren't part of the CFG?
+    bool quiet_errors;                                  // catch exceptions and emit an LLVM comment instead?
 
 protected:
-    explicit Transcoder(const BaseSemantics::DispatcherPtr &dispatcher): dispatcher(dispatcher) {
+    explicit Transcoder(const BaseSemantics::DispatcherPtr &dispatcher)
+        : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
         operators = RiscOperators::promote(dispatcher->get_operators());
     }
 
@@ -348,6 +356,23 @@ public:
         BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
         return instance(dispatcher);
     }
+
+    /** Property to determine whether function fragments should be emitted. A function fragment is a basic block that belongs
+     *  to a function but doesn't participate in its control flow graph.  These fragments are usually added to ROSE functions
+     *  when ROSE finds valid instructions but can't figure out how that code is reached.  The default is to not emit
+     *  fragements since their control flow successors might be invalid, resulting in invalid LLVM branches.
+     *  @{ */
+    bool emitFunctionFragements() const { return emit_funcfrags; }
+    void emitFunctionFragements(bool b) { emit_funcfrags = b; }
+    /** @} */
+
+    /** Property to control what happens when a translation exception occurs.  If true, then exceptions from ROSE's instruction
+     *  semantics are caught and emitted as an LLVM comment starting with ";;ERROR: ".  This happens when ROSE has no semantics
+     *  defined for a particular instruction (such as floating point instructions as of Jan 2014).
+     * @{ */
+    bool quietErrors() const { return quiet_errors; }
+    void quietErrors(bool b) { quiet_errors = b; }
+    /** @} */
 
     /** Emit LLVM file prologue.
      * @{ */
