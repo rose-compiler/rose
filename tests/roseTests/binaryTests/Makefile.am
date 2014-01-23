@@ -10,6 +10,7 @@ EXTRA_DIST = \
 # Forward declarations
 TEST_TARGETS=
 noinst_PROGRAMS=
+bin_PROGRAMS=
 MOSTLYCLEANFILES=
 
 if USE_BINARY_ANALYSIS_TESTS
@@ -208,19 +209,6 @@ subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
-
-# Disassembles an executable according to various command-line switches.
-noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-#TEST_TARGETS += disassemble.passed assembler.passed
-TEST_TARGETS += disassemble.passed
-EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
-disassemble.passed: disassemble.conf disassemble
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
-#assembler.passed: assembler.conf disassemble
-#	@$(RTH_RUN) $< $@
-
 
 # Disassemble a file containing bare instructions
 noinst_PROGRAMS += disassembleBuffer
@@ -890,8 +878,6 @@ demo_testReadPastEOF: testReadPastEOF
 
 ###############################################################################################################################
 # Test various things for all our sample binaries
-
-include $(BINARY_SAMPLES)/Specimens.inc
 
 #--------------------------------------------------------------------------------
 parse_Specimens = $(any_exe_any_specimens)
