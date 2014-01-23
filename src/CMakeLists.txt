@@ -127,6 +127,7 @@ endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
 )
+install(TARGETS roseutil DESTINATION lib)
 
 if (enable-php)
   set( phpFrontend_SRC 

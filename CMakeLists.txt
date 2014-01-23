@@ -1061,6 +1061,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Set up RPATH so that our executables will be able to find their dependent
+# libraries using relative paths.
+set(origin "$ORIGIN")
+if (APPLE)
+  set(origin "@executable_path")
+endif()
+set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
+
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(demo)
@@ -1179,8 +1187,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 
 ########### install files ###############
 
-#install(FILES  rose_config.h DESTINATION ${INCLUDE_INSTALL_DIR} )
+# this has to remain the last subdirectory so that all the targets
+# are installed before bundle.cmake runs.
+add_subdirectory(cmake)
 
-
+# This include file defines how CPack should create our installers.
+include(cmake/ROSECPack.cmake)
 
 message(Status "Finished ...")
