@@ -1767,9 +1767,20 @@ SgProject::RunFrontend()
                   << "signal in SgFile::RunFrontend()"
                   << std::endl;
 
-              file->set_frontendErrorCode(100);
-              status_of_function =
-                  std::max(100, status_of_function);
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  status_of_function =
+                      std::max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
@@ -1786,7 +1797,18 @@ SgProject::RunFrontend()
               }
               catch(...)
               {
-                  file->set_frontendErrorCode(100);
+                  if (file != NULL)
+                  {
+                     file->set_frontendErrorCode(100);
+                  }
+                  else
+                  {
+                      std::cout
+                          << "[FATAL] "
+                          << "Unable to keep going due to an unrecoverable internal error"
+                          << std::endl;
+                      exit(1);
+                  }
 
                   if (ROSE::KeepGoing::g_keep_going)
                   {
@@ -2014,8 +2036,20 @@ SgProject::parse()
                   << "Configured to keep going after catching a signal in "
                   << "SgFile::secondaryPassOverSourceFile()"
                   << std::endl;
-              file->set_frontendErrorCode(-1);
-              errorCode = std::max(1, errorCode);
+
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  errorCode = std::max(100, errorCode);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
