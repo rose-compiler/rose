@@ -1470,12 +1470,24 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-#if 0
-     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
-#endif
-
-  // builds file list (or none if this is a link line)
-     processCommandLine(argv);
+    // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
+    // constructor. We can't set any error codes on SgProject since SgProject::parse
+    // is being called from the SgProject::SgProject constructor, meaning the SgProject
+    // object is not properly constructed yet.. The only thing we can do, then, if
+    // there is an error here in the commandline handling, is to halt the program.
+    if (KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL)
+    {
+        std::cout
+            << "[FATAL] "
+            << "Unrecoverable signal generated during commandline processing"
+            << std::endl;
+        exit(1);
+    }
+    else
+    {
+        // builds file list (or none if this is a link line)
+        processCommandLine(argv);
+    }
 
      int errorCode = 0;
 
@@ -5123,23 +5135,31 @@ SgProject::compileOutput()
 // case 2: compilation  for each file
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
-             {
-               SgFile & file = get_file(i);
-#if 0
-               printf ("In Project::compileOutput(%s): (in loop) get_file(%d).get_skipfinalCompileStep() = %s \n",compilerName,i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
-#endif
-            // printf ("In Project::compileOutput(): (TOP of loop) file = %d \n",i);
+          {
+              int localErrorCode = 0;
+              SgFile & file = get_file(i);
 
-            // DQ (8/13/2006): Only use the first file (I don't think this
-            // makes sense with multiple files specified on the commandline)!
-            // int localErrorCode = file.compileOutput(i, compilerName);
-            // int localErrorCode = file.compileOutput(0, compilerName);
-               int localErrorCode = file.compileOutput(0);
-               if (localErrorCode > errorCode)
-                    errorCode = localErrorCode;
+              if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
+              {
+                  std::cout
+                      << "[WARN] "
+                      << "Configured to keep going after catching a "
+                      << "signal in SgProject::compileOutput()"
+                      << std::endl;
 
-            // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
-             }
+                  localErrorCode = 100;
+                  file.set_backendCompilerErrorCode(localErrorCode);
+              }
+              else
+              {
+                  localErrorCode = file.compileOutput(0);
+              }
+
+              if (localErrorCode > errorCode)
+              {
+                  errorCode = localErrorCode;
+              }
+          }
 
        // case 3: linking at the project level
           if (! (get_Java_only()   ||
