@@ -1107,6 +1107,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageDeclaration:
+             {
+               name = "_java_package_declaration_";
+               const SgJavaPackageDeclaration* package_declaration = isSgJavaPackageDeclaration(declaration);
+               ROSE_ASSERT(package_declaration != NULL);
+               ROSE_ASSERT(package_declaration->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageDeclaration*>(package_declaration));
+               break;
+             }
+
            case V_SgJavaPackageStatement:
              {
                name = "_java_package_stmt_";
@@ -11406,18 +11416,30 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
 
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
-PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target,
-                const std::string & text,
-               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/)
-{
-    ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
-    PreprocessingInfo* result = NULL;
-    PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
-    result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
-    ROSE_ASSERT(result);
-    target->addToAttachedPreprocessingInfo(result);
-    return result;
-}
+PreprocessingInfo* 
+SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & text, PreprocessingInfo::RelativePositionType position /*=PreprocessingInfo::before*/)
+   {
+  // DQ (1/13/2014): This function needs a better mechanism than attaching text to the AST unparser as a CPP directive.
+
+     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
+     PreprocessingInfo* result = NULL;
+
+  // DQ (1/13/2014): It is a mistake to attach arbitrary test to the AST as a #define 
+  // (since we evaluate all #define CPP declarations to be a self-referential macro).
+  // For now I will make it a #if CPP declaration, since these are not evaluated internally.
+  // PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
+     PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorIfDeclaration;
+
+  // DQ (1/13/2014): Output a warning so that this can be fixed whereever it is used.
+     printf ("Warning: attachArbitraryText(): attaching arbitrary text to the AST as a #if declaration: text = %s \n",text.c_str());
+
+     result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
+     ROSE_ASSERT(result);
+
+     target->addToAttachedPreprocessingInfo(result);
+
+     return result;
+   }
 
 
 //!Check if a target node has MacroCall attached, if yes, replace them with expanded strings
