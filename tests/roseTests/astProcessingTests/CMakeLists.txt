@@ -16,15 +16,15 @@ foreach(specimen ${proFunSIG_SPECIMENS})
 endforeach()
 
 #-------------------------------------------------------------------------------
-add_executable(interproceduralCFG interproceduralCFG.C)
-target_link_libraries(interproceduralCFG ROSE_DLL EDG ${link_with_libraries})
+add_executable(astProcessingTestInterproceduralCFG interproceduralCFG.C)
+target_link_libraries(astProcessingTestInterproceduralCFG ROSE_DLL EDG ${link_with_libraries})
 
 set(interproceduralCFG_SPECIMENS test11.C test12.C test13.C test14.C)
 set(proFunSIG_SPECIMENS mf1.C mf3.C mf4.C mf5.C)
 foreach(specimen ${interproceduralCFG_SPECIMENS})
   add_test(
     NAME ipcfg_${specimen}
-    COMMAND interproceduralCFG ${CMAKE_CURRENT_SOURCE_DIR}/${specimen}
+    COMMAND astProcessingTestInterproceduralCFG ${CMAKE_CURRENT_SOURCE_DIR}/${specimen}
   )
 endforeach()
 

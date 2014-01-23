@@ -51,8 +51,6 @@ endif()
 foreach(tutorial ${tutorials})
   add_executable(${tutorial}Tutorial "${tutorial}.C")
   target_link_libraries(${tutorial}Tutorial ROSE_DLL ${Boost_LIBRARIES})
-  set_target_properties(${tutorial}Tutorial PROPERTIES RUNTIME_OUTPUT_NAME
-    ${tutorial})
   install(TARGETS ${tutorial}Tutorial DESTINATION bin)
 endforeach()
 
