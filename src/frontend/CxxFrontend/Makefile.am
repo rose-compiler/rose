@@ -97,8 +97,9 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 	touch EDG/libroseEDG.la
 
 installdir = ${datadir}
-install_DATA = \
-	EDG/EDG_@ROSE_EDG_MAJOR_VERSION_NUMBER@.@ROSE_EDG_MINOR_VERSION_NUMBER@/lib/predefined_macros.txt
+# Liao, 1/16/2014, this will break make distcheck since the file from EDG submodule will not be available in a distribution package
+#install_DATA = \
+#	EDG/EDG_@ROSE_EDG_MAJOR_VERSION_NUMBER@.@ROSE_EDG_MINOR_VERSION_NUMBER@/lib/predefined_macros.txt
 
 endif
 ###############################################################################################################################
