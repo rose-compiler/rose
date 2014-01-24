@@ -649,7 +649,9 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
 #else
                  // The ROSE AST needs to be fixed to handle more general expressions for bitfield widths (this does not effect the CFG).
                  // TODO: Change the data type of the bitfield data member in SgVariableDefinition.
-                    printf ("Member data bitfield widths need to be changed (in the ROSE IR) to support more general expressions (can't fix this original expression tree) \n");
+
+                 // DQ (1/20/2014): This has been done now.
+                 // printf ("Member data bitfield widths need to be changed (in the ROSE IR) to support more general expressions (can't fix this original expression tree) \n");
 #endif
 #if 0
                  // This case is not handled yet!

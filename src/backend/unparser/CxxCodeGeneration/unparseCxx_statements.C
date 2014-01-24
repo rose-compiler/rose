@@ -4475,8 +4475,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
                        }
 
+                 // DQ (1/22/2014): Added support for supressing generated names for un-named variables.
+                 // bool isAnonymousName = (string(decl_item->get_name()).substr(0,14) == "__anonymous_0x") && (classdecl_stmt->get_class_type() == SgClassDeclaration::e_union);
+                    bool isAnonymousName = (string(decl_item->get_name()).substr(0,14) == "__anonymous_0x");
+                 // bool isAnonymousName = false;
+#if 0
+                    printf ("In unparseVarDeclStmt(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
                  // DQ (10/10/2006): Only do name qualification for C++
-                    if (SageInterface::is_Cxx_language() == true)
+                 // if (SageInterface::is_Cxx_language() == true)
+                    if (isAnonymousName == false && SageInterface::is_Cxx_language() == true)
                        {
                          SgUnparse_Info ninfo_for_variable(ninfo);
 #if 0
@@ -4508,14 +4516,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                          if (nameQualifier.is_null() == false)
                             {
-                              curprint ( nameQualifier.str());
+                              curprint(nameQualifier.str());
                             }
                        }
 #if 0
                     printf ("Variable Name: tmp_name = %s \n",tmp_name.str());
 #endif
                  // Output the name of the variable...
-                    curprint(tmp_name.str());
+                 // curprint(tmp_name.str());
+                    if (isAnonymousName == false)
+                       {
+                         curprint(tmp_name.str());
+                       }
 
                  // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
@@ -4538,6 +4550,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                           curprint ( decl_item->get_register_name_string() );
                           curprint ( string("\")"));
                        }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In unparseVarDeclStmt(): (tmp_name.is_null() == true): variable Name: tmp_name = %s \n",tmp_name.str());
+#endif
                   }
 
             // ninfo2.set_isTypeSecondPart();
@@ -4797,7 +4815,12 @@ Unparse_ExprStmt::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // be generated for everything that could be shared.  So we should unparse something,
   // perhaps the variable declaration?
 
-     SgUnsignedLongVal *bitfield = vardefn_stmt->get_bitfield();
+  // DQ (1/20/2014): This has been changed to be a SgValueExp (required).  Plus as a 
+  // generated value expression we include the expression from which the value was 
+  // generated.  This is important where this is a constant expression generated from
+  // sizes of machine dependent types.
+  // SgUnsignedLongVal *bitfield = vardefn_stmt->get_bitfield();
+     SgValueExp* bitfield = vardefn_stmt->get_bitfield();
      if (bitfield != NULL)
         {
           curprint ( string(":"));
