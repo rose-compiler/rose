@@ -38,7 +38,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080480b4: Predecessor blocks: 0x080480a0, 0x080480b4
 0x080480b4: Dominator block: 0x080480a0
 0x080480b4: 83 c2 04                |...     |   add    edx, 0x04
-0x080480b7: 39 72 fc                |9r.     |   cmp    DWORD PTR ds:[edx + 0xfc<-0x04>], esi
+0x080480b7: 39 72 fc                |9r.     |   cmp    DWORD PTR ds:[edx + 0xfc<-4>], esi
 0x080480ba: 75 f8                   |u.      |   jne    0x080480b4<<Insn>>
 0x080480ba: Successor blocks: 0x080480b4, 0x080480bc
 
@@ -61,7 +61,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080480ca: Basic block reasons: graph-1
 0x080480ca: Predecessor blocks: 0x080480c2
 0x080480ca: Dominator block: 0x080480c2
-0x080480ca: 8b 7a fc                |.z.     |   mov    edi, DWORD PTR ds:[edx + 0xfc<-0x04>]
+0x080480ca: 8b 7a fc                |.z.     |   mov    edi, DWORD PTR ds:[edx + 0xfc<-4>]
 0x080480cd: 89 3d 40 c8 04 08       |.=@...  |   mov    DWORD PTR ds:[0x0804c840<.data+0x4c>], edi
 0x080480cd: Successor blocks: 0x080480d3
 
@@ -232,7 +232,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804818c: Dominator block: 0x08048180
 0x0804818c: 83 c4 10                |...     |   add    esp, 0x10
 0x0804818f: 04 30                   |.0      |   add    al, 0x30
-0x08048191: 88 47 ff                |.G.     |   mov    BYTE PTR ds:[edi + 0xff<-0x01>], al
+0x08048191: 88 47 ff                |.G.     |   mov    BYTE PTR ds:[edi + 0xff<-1>], al
 0x08048194: 4f                      |O       |   dec    edi
 0x08048195: 6a 00                   |j.      |   push   0x00
 0x08048197: 6a 0a                   |j.      |   push   0x0a
@@ -274,7 +274,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080481b5: Basic block reasons: entry point, graph-1
 0x080481b5: Predecessor blocks: 0x08048ea0<<Func>>, 0x08048ea9<<Func>>
 0x080481b5: 89 c1                   |..      |   mov    ecx, eax
-0x080481b7: 8d 40 d0                |.@.     |   lea    eax, [eax + 0xd0<-0x30>]
+0x080481b7: 8d 40 d0                |.@.     |   lea    eax, [eax + 0xd0<-48>]
 0x080481ba: 83 f8 09                |...     |   cmp    eax, 0x09
 0x080481bd: 89 c2                   |..      |   mov    edx, eax
 0x080481bf: 76 11                   |v.      |   jbe    0x080481d2<<Insn>>
@@ -284,8 +284,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080481c1: Predecessor blocks: 0x080481b5
 0x080481c1: Dominator block: 0x080481b5
 0x080481c1: 83 c9 20                |..      |   or     ecx, 0x20
-0x080481c4: 83 ca ff                |...     |   or     edx, 0xff<-0x01>
-0x080481c7: 8d 41 9f                |.A.     |   lea    eax, [ecx + 0x9f<-0x61>]
+0x080481c4: 83 ca ff                |...     |   or     edx, 0xff<-1>
+0x080481c7: 8d 41 9f                |.A.     |   lea    eax, [ecx + 0x9f<-97>]
 0x080481ca: 83 f8 05                |...     |   cmp    eax, 0x05
 0x080481cd: 77 03                   |w.      |   ja     0x080481d2<<Insn>>
 0x080481cd: Successor blocks: 0x080481cf, 0x080481d2
@@ -293,7 +293,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080481cf: Basic block reasons: graph-1
 0x080481cf: Predecessor blocks: 0x080481c1
 0x080481cf: Dominator block: 0x080481c1
-0x080481cf: 8d 51 a9                |.Q.     |   lea    edx, [ecx + 0xa9<-0x57>]
+0x080481cf: 8d 51 a9                |.Q.     |   lea    edx, [ecx + 0xa9<-87>]
 0x080481cf: Successor blocks: 0x080481d2
 
 0x080481d2: Basic block reasons: graph-1
@@ -378,7 +378,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804822e: Basic block reasons: graph-1
 0x0804822e: Predecessor blocks: 0x080481e8, 0x08048203, 0x0804821d
 0x0804822e: Dominator block: 0x080481e8
-0x0804822e: 83 ca ff                |...     |   or     edx, 0xff<-0x01>
+0x0804822e: 83 ca ff                |...     |   or     edx, 0xff<-1>
 0x0804822e: Successor blocks: 0x08048231
 
 0x08048231: Basic block reasons: graph-1
@@ -518,15 +518,15 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080482aa: 04 08                   |..      |   mov    DWORD PTR ds:[0x0804c864], 0x0804af44<<StaticData@0x0804af27>+0x1d>
 0x080482ac: 31 d2                   |1.      |   xor    edx, edx
 0x080482ae: 89 f8                   |..      |   mov    eax, edi
-0x080482b0: 8a 5e ff                |.^.     |   mov    bl, BYTE PTR ds:[esi + 0xff<-0x01>]
-0x080482b3: c6 46 ff 00             |.F..    |   mov    BYTE PTR ds:[esi + 0xff<-0x01>], 0x00
+0x080482b0: 8a 5e ff                |.^.     |   mov    bl, BYTE PTR ds:[esi + 0xff<-1>]
+0x080482b3: c6 46 ff 00             |.F..    |   mov    BYTE PTR ds:[esi + 0xff<-1>], 0x00
 0x080482b7: e8 7c ff ff ff          |.|...   |   call   0x08048238<<Func>>
 0x080482b7: Successor blocks: 0x08048238, 0x080482bc
 
 0x080482bc: Basic block reasons: graph-1
 0x080482bc: Predecessor blocks: 0x080482a2
 0x080482bc: Dominator block: 0x080482a2
-0x080482bc: 88 5e ff                |.^.     |   mov    BYTE PTR ds:[esi + 0xff<-0x01>], bl
+0x080482bc: 88 5e ff                |.^.     |   mov    BYTE PTR ds:[esi + 0xff<-1>], bl
 0x080482bf: eb 33                   |.3      |   jmp    0x080482f4<<Insn>>
 0x080482bf: Successor blocks: 0x080482f4
 
@@ -646,7 +646,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048341: Basic block reasons: graph-1
 0x08048341: Predecessor blocks: 0x0804833a
 0x08048341: Dominator block: 0x0804833a
-0x08048341: 80 7e ff 0a             |.~..    |   cmp    BYTE PTR ds:[esi + 0xff<-0x01>], 0x0a
+0x08048341: 80 7e ff 0a             |.~..    |   cmp    BYTE PTR ds:[esi + 0xff<-1>], 0x0a
 0x08048345: 75 42                   |uB      |   jne    0x08048389<<Insn>>
 0x08048345: Successor blocks: 0x08048347, 0x08048389
 
@@ -800,10 +800,10 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080483c7: Dominator block: 0x080483c1
 0x080483c7: 5a                      |Z       |   pop    edx
 0x080483c8: 83 c0 26                |..&     |   add    eax, 0x26
-0x080483cb: 83 e0 fc                |...     |   and    eax, 0xfc<-0x04>
+0x080483cb: 83 e0 fc                |...     |   and    eax, 0xfc<-4>
 0x080483ce: 29 c4                   |).      |   sub    esp, eax
 0x080483d0: 8d 74 24 0f             |.t$.    |   lea    esi, [esp + 0x0f]
-0x080483d4: 83 e6 f0                |...     |   and    esi, 0xf0<-0x10>
+0x080483d4: 83 e6 f0                |...     |   and    esi, 0xf0<-16>
 0x080483d7: 53                      |S       |   push   ebx
 0x080483d8: 56                      |V       |   push   esi
 0x080483d9: e8 0a 1a 00 00          |.....   |   call   0x08049de8<<Func>>
@@ -836,7 +836,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080483fe: Basic block reasons: graph-1
 0x080483fe: Predecessor blocks: 0x080483ba, 0x080483f6
 0x080483fe: Dominator block: 0x080483ba
-0x080483fe: 8d 65 f8                |.e.     |   lea    esp, [ebp + 0xf8<-0x08>]
+0x080483fe: 8d 65 f8                |.e.     |   lea    esp, [ebp + 0xf8<-8>]
 0x08048401: 5b                      |[       |   pop    ebx
 0x08048402: 5e                      |^       |   pop    esi
 0x08048403: 5d                      |]       |   pop    ebp
@@ -1211,7 +1211,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048556: Dominator block: 0x08048541
 0x08048556: 8b 44 24 0c             |.D$.    |   mov    eax, DWORD PTR ss:[esp + 0x0c]
 0x0804855a: 29 fd                   |).      |   sub    ebp, edi
-0x0804855c: 8d 44 28 ff             |.D(.    |   lea    eax, [eax + ebp + 0xff<-0x01>]
+0x0804855c: 8d 44 28 ff             |.D(.    |   lea    eax, [eax + ebp + 0xff<-1>]
 0x08048560: 8d 6f 01                |.o.     |   lea    ebp, [edi + 0x01]
 0x08048563: 89 44 24 0c             |.D$.    |   mov    DWORD PTR ss:[esp + 0x0c], eax
 0x08048567: eb 86                   |..      |   jmp    0x080484ef<<Insn>>
@@ -1261,7 +1261,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048599: Predecessor blocks: 0x08048584, 0x08048593
 0x08048599: Dominator block: 0x08048584
 0x08048599: c7 05 fc c7 04 08 96 01 |........|
-0x080485a1: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x00000196
+0x080485a1: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x00000196<406>
 0x080485a3: eb 13                   |..      |   jmp    0x080485b8<<Insn>>
 0x080485a3: Successor blocks: 0x080485b8
 
@@ -1286,7 +1286,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080485b8: Basic block reasons: graph-1
 0x080485b8: Predecessor blocks: 0x08048599, 0x080485b0
 0x080485b8: Dominator block: 0x08048569
-0x080485b8: 83 cd ff                |...     |   or     ebp, 0xff<-0x01>
+0x080485b8: 83 cd ff                |...     |   or     ebp, 0xff<-1>
 0x080485bb: e9 96 02 00 00          |.....   |   jmp    0x08048856<<Insn>>
 0x080485bb: Successor blocks: 0x08048856
 
@@ -1311,8 +1311,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080485d5: Predecessor blocks: 0x080485cb
 0x080485d5: Dominator block: 0x080485cb
 0x080485d5: a1 90 c8 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804c890]
-0x080485da: 25 00 f0 00 00          |%....   |   and    eax, 0x0000f000
-0x080485df: 3d 00 40 00 00          |=.@..   |   cmp    eax, 0x00004000
+0x080485da: 25 00 f0 00 00          |%....   |   and    eax, 0x0000f000<61440>
+0x080485df: 3d 00 40 00 00          |=.@..   |   cmp    eax, 0x00004000<16384>
 0x080485e4: 0f 84 62 02 00 00       |..b...  |   je     0x0804884c<<Insn>>
 0x080485e4: Successor blocks: 0x080485ea, 0x0804884c
 
@@ -1457,7 +1457,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804868a: Predecessor blocks: 0x08048680
 0x0804868a: Dominator block: 0x08048680
 0x0804868a: 8b 44 24 48             |.D$H    |   mov    eax, DWORD PTR ss:[esp + 0x48]
-0x0804868e: 2d 6c 07 00 00          |-l...   |   sub    eax, 0x0000076c
+0x0804868e: 2d 6c 07 00 00          |-l...   |   sub    eax, 0x0000076c<1900>
 0x08048693: 89 44 24 30             |.D$0    |   mov    DWORD PTR ss:[esp + 0x30], eax
 0x08048697: 59                      |Y       |   pop    ecx
 0x08048698: 5b                      |[       |   pop    ebx
@@ -1535,14 +1535,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080486ed: 8b 44 24 48             |.D$H    |   mov    eax, DWORD PTR ss:[esp + 0x48]
 0x080486f1: 5e                      |^       |   pop    esi
 0x080486f2: 5f                      |_       |   pop    edi
-0x080486f3: 3d e8 03 00 00          |=....   |   cmp    eax, 0x000003e8
+0x080486f3: 3d e8 03 00 00          |=....   |   cmp    eax, 0x000003e8<1000>
 0x080486f8: 76 07                   |v.      |   jbe    0x08048701<<Insn>>
 0x080486f8: Successor blocks: 0x080486fa, 0x08048701
 
 0x080486fa: Basic block reasons: graph-1
 0x080486fa: Predecessor blocks: 0x080486eb
 0x080486fa: Dominator block: 0x080486eb
-0x080486fa: 2d 6c 07 00 00          |-l...   |   sub    eax, 0x0000076c
+0x080486fa: 2d 6c 07 00 00          |-l...   |   sub    eax, 0x0000076c<1900>
 0x080486ff: eb 08                   |..      |   jmp    0x08048709<<Insn>>
 0x080486ff: Successor blocks: 0x08048709
 
@@ -1590,7 +1590,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048740: Predecessor blocks: 0x0804871e
 0x08048740: Dominator block: 0x0804871e
 0x08048740: 59                      |Y       |   pop    ecx
-0x08048741: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08048741: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08048744: 74 17                   |t.      |   je     0x0804875d<<Insn>>
 0x08048744: Successor blocks: 0x08048746, 0x0804875d
 
@@ -1605,7 +1605,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804874e: Predecessor blocks: 0x08048746
 0x0804874e: Dominator block: 0x08048746
 0x0804874e: c7 05 fc c7 04 08 30 01 |......0.|
-0x08048756: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x00000130
+0x08048756: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x00000130<304>
 0x08048758: e9 ef 00 00 00          |.....   |   jmp    0x0804884c<<Insn>>
 0x08048758: Successor blocks: 0x0804884c
 
@@ -1765,14 +1765,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048842: Predecessor blocks: 0x08048813, 0x08048828, 0x08048838, 0x0804883a
 0x08048842: Dominator block: 0x08048813
 0x08048842: c7 05 fc c7 04 08 a0 01 |........|
-0x0804884a: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x000001a0
+0x0804884a: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x000001a0<416>
 0x08048842: Successor blocks: 0x0804884c
 
 0x0804884c: Basic block reasons: graph-1
 0x0804884c: Predecessor blocks: 0x080485cb, 0x080485d5, 0x0804874e, 0x08048842
 0x0804884c: Dominator block: 0x080485cb
 0x0804884c: 55                      |U       |   push   ebp
-0x0804884d: 83 cd ff                |...     |   or     ebp, 0xff<-0x01>
+0x0804884d: 83 cd ff                |...     |   or     ebp, 0xff<-1>
 0x08048850: e8 0b 19 00 00          |.....   |   call   0x0804a160<<Func>>
 0x08048850: Successor blocks: 0x08048855, 0x0804a160<<Func>>
 
@@ -1826,7 +1826,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048879: Basic block reasons: graph-1
 0x08048879: Predecessor blocks: 0x08048874
 0x08048879: Dominator block: 0x08048874
-0x08048879: c6 44 33 ff 5f          |.D3._   |   mov    BYTE PTR ds:[ebx + esi + 0xff<-0x01>], 0x5f
+0x08048879: c6 44 33 ff 5f          |.D3._   |   mov    BYTE PTR ds:[ebx + esi + 0xff<-1>], 0x5f
 0x08048879: Successor blocks: 0x0804887e
 
 0x0804887e: Basic block reasons: graph-1
@@ -1838,7 +1838,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804887f: Basic block reasons: graph-1
 0x0804887f: Predecessor blocks: 0x08048860, 0x0804887e
 0x0804887f: Dominator block: 0x08048860
-0x0804887f: 8a 44 33 ff             |.D3.    |   mov    al, BYTE PTR ds:[ebx + esi + 0xff<-0x01>]
+0x0804887f: 8a 44 33 ff             |.D3.    |   mov    al, BYTE PTR ds:[ebx + esi + 0xff<-1>]
 0x08048883: 84 c0                   |..      |   test   al, al
 0x08048885: 75 e4                   |u.      |   jne    0x0804886b<<Insn>>
 0x08048885: Successor blocks: 0x0804886b, 0x08048887
@@ -2162,7 +2162,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048a32: 57                      |W       |   push   edi
 0x08048a33: 56                      |V       |   push   esi
 0x08048a34: 53                      |S       |   push   ebx
-0x08048a35: 81 ec 18 10 00 00       |......  |   sub    esp, 0x00001018
+0x08048a35: 81 ec 18 10 00 00       |......  |   sub    esp, 0x00001018<4120>
 0x08048a3b: 8b 35 74 c8 04 08       |.5t...  |   mov    esi, DWORD PTR ds:[0x0804c874]
 0x08048a41: 8b 1d 70 c8 04 08       |..p...  |   mov    ebx, DWORD PTR ds:[0x0804c870]
 0x08048a47: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
@@ -2171,9 +2171,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048a56: 89 f0                   |..      |   mov    eax, esi
 0x08048a58: 09 d8                   |..      |   or     eax, ebx
 0x08048a5a: c7 84 24 0c 10 00 00 01 |..$.....|
-0x08048a62: 00 00 00                |...     |   mov    DWORD PTR ss:[esp + 0x0000100c], 0x00000001
+0x08048a62: 00 00 00                |...     |   mov    DWORD PTR ss:[esp + 0x0000100c<4108>], 0x00000001
 0x08048a65: 66 c7 84 24 10 10 00 00 |f..$....|
-0x08048a6d: 04 00                   |..      |   mov    WORD PTR ss:[esp + 0x00001010], 0x0004
+0x08048a6d: 04 00                   |..      |   mov    WORD PTR ss:[esp + 0x00001010<4112>], 0x0004
 0x08048a6f: 74 10                   |t.      |   je     0x08048a81<<Insn>>
 0x08048a6f: Successor blocks: 0x08048a71, 0x08048a81
 
@@ -2208,7 +2208,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048a92: Basic block reasons: graph-1
 0x08048a92: Predecessor blocks: 0x08048b41, 0x08048b4c
 0x08048a92: Dominator block: 0x08048b41
-0x08048a92: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014]
+0x08048a92: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014<4116>]
 0x08048a99: 50                      |P       |   push   eax
 0x08048a9a: e8 01 17 00 00          |.....   |   call   0x0804a1a0<<Func>>
 0x08048a9a: Successor blocks: 0x08048a9f, 0x0804a1a0<<Func>>
@@ -2232,14 +2232,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048aaf: Basic block reasons: graph-1
 0x08048aaf: Predecessor blocks: 0x08048aad
 0x08048aaf: Dominator block: 0x08048aad
-0x08048aaf: 81 fe 00 10 00 00       |......  |   cmp    esi, 0x00001000
+0x08048aaf: 81 fe 00 10 00 00       |......  |   cmp    esi, 0x00001000<4096>
 0x08048ab5: 76 05                   |v.      |   jbe    0x08048abc<<Insn>>
 0x08048ab5: Successor blocks: 0x08048ab7, 0x08048abc
 
 0x08048ab7: Basic block reasons: graph-1
 0x08048ab7: Predecessor blocks: 0x08048aad, 0x08048aaf
 0x08048ab7: Dominator block: 0x08048aad
-0x08048ab7: b8 00 10 00 00          |.....   |   mov    eax, 0x00001000
+0x08048ab7: b8 00 10 00 00          |.....   |   mov    eax, 0x00001000<4096>
 0x08048ab7: Successor blocks: 0x08048abc
 
 0x08048abc: Basic block reasons: graph-1
@@ -2265,11 +2265,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ad6: Predecessor blocks: 0x08048b34
 0x08048ad6: Dominator block: 0x08048b34
 0x08048ad6: 8b 44 24 08             |.D$.    |   mov    eax, DWORD PTR ss:[esp + 0x08]
-0x08048ada: 2b 84 24 14 10 00 00    |+.$.... |   sub    eax, DWORD PTR ss:[esp + 0x00001014]
-0x08048ae1: 69 c0 e8 03 00 00       |i.....  |   imul   eax, eax, 0x000003e8
+0x08048ada: 2b 84 24 14 10 00 00    |+.$.... |   sub    eax, DWORD PTR ss:[esp + 0x00001014<4116>]
+0x08048ae1: 69 c0 e8 03 00 00       |i.....  |   imul   eax, eax, 0x000003e8<1000>
 0x08048ae7: 50                      |P       |   push   eax
 0x08048ae8: 6a 01                   |j.      |   push   0x01
-0x08048aea: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014]
+0x08048aea: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014<4116>]
 0x08048af1: 50                      |P       |   push   eax
 0x08048af2: e8 81 16 00 00          |.....   |   call   0x0804a178<<Func>>
 0x08048af2: Successor blocks: 0x08048af7, 0x0804a178<<Func>>
@@ -2278,7 +2278,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048af7: Predecessor blocks: 0x08048ad6
 0x08048af7: Dominator block: 0x08048ad6
 0x08048af7: 83 c4 0c                |...     |   add    esp, 0x0c
-0x08048afa: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08048afa: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08048afd: 74 5d                   |t]      |   je     0x08048b5c<<Insn>>
 0x08048afd: Successor blocks: 0x08048aff, 0x08048b5c
 
@@ -2293,7 +2293,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048b03: Predecessor blocks: 0x08048aff
 0x08048b03: Dominator block: 0x08048aff
 0x08048b03: 8b 54 24 08             |.T$.    |   mov    edx, DWORD PTR ss:[esp + 0x08]
-0x08048b07: 39 94 24 14 10 00 00    |9.$.... |   cmp    DWORD PTR ss:[esp + 0x00001014], edx
+0x08048b07: 39 94 24 14 10 00 00    |9.$.... |   cmp    DWORD PTR ss:[esp + 0x00001014<4116>], edx
 0x08048b0e: 7c 24                   ||$      |   jl     0x08048b34<<Insn>>
 0x08048b0e: Successor blocks: 0x08048b10, 0x08048b34
 
@@ -2325,7 +2325,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048b22: Dominator block: 0x08048b1b
 0x08048b22: 29 c5                   |).      |   sub    ebp, eax
 0x08048b24: 01 c3                   |..      |   add    ebx, eax
-0x08048b26: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014]
+0x08048b26: 8d 84 24 14 10 00 00    |..$.... |   lea    eax, [esp + 0x00001014<4116>]
 0x08048b2d: 50                      |P       |   push   eax
 0x08048b2e: e8 6d 16 00 00          |.m...   |   call   0x0804a1a0<<Func>>
 0x08048b2e: Successor blocks: 0x08048b33, 0x0804a1a0<<Func>>
@@ -2381,7 +2381,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048b57: Basic block reasons: graph-1
 0x08048b57: Predecessor blocks: 0x08048b1b
 0x08048b57: Dominator block: 0x08048b1b
-0x08048b57: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x08048b57: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x08048b5a: eb 05                   |..      |   jmp    0x08048b61<<Insn>>
 0x08048b5a: Successor blocks: 0x08048b61
 
@@ -2394,7 +2394,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048b61: Basic block reasons: graph-1
 0x08048b61: Predecessor blocks: 0x08048b55, 0x08048b57, 0x08048b5c
 0x08048b61: Dominator block: 0x08048b41
-0x08048b61: 81 c4 18 10 00 00       |......  |   add    esp, 0x00001018
+0x08048b61: 81 c4 18 10 00 00       |......  |   add    esp, 0x00001018<4120>
 0x08048b67: 5b                      |[       |   pop    ebx
 0x08048b68: 5e                      |^       |   pop    esi
 0x08048b69: 5f                      |_       |   pop    edi
@@ -2574,7 +2574,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049d67: Basic block reasons: graph-1
 0x08049d67: Predecessor blocks: 0x08049d2f, 0x08049d4e
 0x08049d67: Dominator block: 0x08049d2f
-0x08049d67: 83 ca ff                |...     |   or     edx, 0xff<-0x01>
+0x08049d67: 83 ca ff                |...     |   or     edx, 0xff<-1>
 0x08049d67: Successor blocks: 0x08049d6a
 
 0x08049d6a: Basic block reasons: graph-1
@@ -2686,7 +2686,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049dd3: Basic block reasons: graph-1
 0x08049dd3: Predecessor blocks: 0x08049dca
 0x08049dd3: Dominator block: 0x08049dca
-0x08049dd3: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x08049dd3: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x08049dd6: eb 0a                   |..      |   jmp    0x08049de2<<Insn>>
 0x08049dd6: Successor blocks: 0x08049de2
 
@@ -2860,7 +2860,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049e77: 88 d0                   |..      |   mov    al, dl
 0x08049e79: 04 30                   |.0      |   add    al, 0x30
 0x08049e7b: 89 ca                   |..      |   mov    edx, ecx
-0x08049e7d: 88 43 ff                |.C.     |   mov    BYTE PTR ds:[ebx + 0xff<-0x01>], al
+0x08049e7d: 88 43 ff                |.C.     |   mov    BYTE PTR ds:[ebx + 0xff<-1>], al
 0x08049e80: 4b                      |K       |   dec    ebx
 0x08049e80: Successor blocks: 0x08049e81
 
@@ -3055,7 +3055,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049f2d: Basic block reasons: graph-1
 0x08049f2d: Predecessor blocks: 0x08049f37
 0x08049f2d: Dominator block: 0x08049f37
-0x08049f2d: 8b 41 fc                |.A.     |   mov    eax, DWORD PTR ds:[ecx + 0xfc<-0x04>]
+0x08049f2d: 8b 41 fc                |.A.     |   mov    eax, DWORD PTR ds:[ecx + 0xfc<-4>]
 0x08049f30: 89 ca                   |..      |   mov    edx, ecx
 0x08049f32: 89 03                   |..      |   mov    DWORD PTR ds:[ebx], eax
 0x08049f34: 83 c3 04                |...     |   add    ebx, 0x04
@@ -3641,7 +3641,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a134: Basic block reasons: graph-1
 0x0804a134: Predecessor blocks: 0x0804a117
 0x0804a134: Dominator block: 0x0804a117
-0x0804a134: 83 f8 84                |...     |   cmp    eax, 0x84<-0x7c>
+0x0804a134: 83 f8 84                |...     |   cmp    eax, 0x84<-124>
 0x0804a137: 72 0e                   |r.      |   jb     0x0804a147<<Insn>>
 0x0804a137: Successor blocks: 0x0804a139, 0x0804a147
 
@@ -3657,7 +3657,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a142: Predecessor blocks: 0x0804a139
 0x0804a142: Dominator block: 0x0804a139
 0x0804a142: 89 18                   |..      |   mov    DWORD PTR ds:[eax], ebx
-0x0804a144: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x0804a144: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x0804a144: Successor blocks: 0x0804a147
 
 0x0804a147: Basic block reasons: graph-1
@@ -3670,7 +3670,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a14a: Successor blocks: unknown
 
 0x0804a14b: cd 80 c3                |...     | 3 bytes untyped data beginning at 0x0804a14b
-0x0804a14b: cd 80                   |..      | (data)   int    0x80
+0x0804a14b: cd 80                   |..      | (data)   int    0x80<-128>
 0x0804a14d: c3                      |.       | (data)   ret    
 
 0x0804a14e: 90 90                   |..      | 2-byte padding beginning at 0x0804a14e
@@ -3722,7 +3722,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804a168: Basic block reasons: entry point, graph-1
 0x0804a168: Predecessor blocks: 0x08049af7<<Func>>
-0x0804a168: b0 85                   |..      |   mov    al, 0x85<-0x7b>
+0x0804a168: b0 85                   |..      |   mov    al, 0x85<-123>
 0x0804a16a: e9 a8 ff ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804a16a: Successor blocks: 0x0804a117<<Func>>
 
@@ -3750,7 +3750,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804a178: Basic block reasons: entry point, graph-1
 0x0804a178: Predecessor blocks: 0x08048ad6<<Func>>, 0x08048c83<<Func>>, 0x08049941<<Func>>
-0x0804a178: b0 a8                   |..      |   mov    al, 0xa8<-0x58>
+0x0804a178: b0 a8                   |..      |   mov    al, 0xa8<-88>
 0x0804a17a: e9 98 ff ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804a17a: Successor blocks: 0x0804a117<<Func>>
 
@@ -3935,7 +3935,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a1fb: Basic block reasons: graph-1
 0x0804a1fb: Predecessor blocks: 0x0804a1da, 0x0804a1e8
 0x0804a1fb: Dominator block: 0x0804a1da
-0x0804a1fb: 83 ca ff                |...     |   or     edx, 0xff<-0x01>
+0x0804a1fb: 83 ca ff                |...     |   or     edx, 0xff<-1>
 0x0804a1fb: Successor blocks: 0x0804a1fe
 
 0x0804a1fe: Basic block reasons: graph-1
@@ -3964,7 +3964,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a20e: fc                      |.       |   cld    
 0x0804a20f: 89 fa                   |..      |   mov    edx, edi
 0x0804a211: 31 c0                   |1.      |   xor    eax, eax
-0x0804a213: 8d 48 ff                |.H.     |   lea    ecx, [eax + 0xff<-0x01>]
+0x0804a213: 8d 48 ff                |.H.     |   lea    ecx, [eax + 0xff<-1>]
 0x0804a216: f2 ae                   |..      |   repne_scasb 
 0x0804a218: f7 d1                   |..      |   not    ecx
 0x0804a21a: 49                      |I       |   dec    ecx
@@ -4044,7 +4044,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a250: Basic block reasons: entry point, graph-1
 0x0804a250: Predecessor blocks: 0x0804886b<<Func>>
 0x0804a250: 8b 54 24 04             |.T$.    |   mov    edx, DWORD PTR ss:[esp + 0x04]
-0x0804a254: 8d 42 f7                |.B.     |   lea    eax, [edx + 0xf7<-0x09>]
+0x0804a254: 8d 42 f7                |.B.     |   lea    eax, [edx + 0xf7<-9>]
 0x0804a257: 83 f8 04                |...     |   cmp    eax, 0x04
 0x0804a25a: 0f 96 c0                |...     |   setbe  al
 0x0804a25d: 83 fa 20                |..      |   cmp    edx, 0x20
@@ -4104,7 +4104,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a2a8: Basic block reasons: graph-1
 0x0804a2a8: Predecessor blocks: 0x0804a2a3
 0x0804a2a8: Dominator block: 0x0804a2a3
-0x0804a2a8: 83 ca ff                |...     |   or     edx, 0xff<-0x01>
+0x0804a2a8: 83 ca ff                |...     |   or     edx, 0xff<-1>
 0x0804a2ab: 89 d1                   |..      |   mov    ecx, edx
 0x0804a2ad: 83 38 26                |.8&     |   cmp    DWORD PTR ds:[eax], 0x26
 0x0804a2b0: 75 1b                   |u.      |   jne    0x0804a2cd<<Insn>>
@@ -4163,7 +4163,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a2dc: 89 e7                   |..      |   mov    edi, esp
 0x0804a2de: 8b 47 28                |.G(     |   mov    eax, DWORD PTR ds:[edi + 0x28]
 0x0804a2e1: 8b 57 2c                |.W,     |   mov    edx, DWORD PTR ds:[edi + 0x2c]
-0x0804a2e4: a9 ff 0f 00 00          |.....   |   test   eax, 0x00000fff
+0x0804a2e4: a9 ff 0f 00 00          |.....   |   test   eax, 0x00000fff<4095>
 0x0804a2e9: 75 39                   |u9      |   jne    0x0804a324<<Insn>>
 0x0804a2e9: Successor blocks: 0x0804a2eb, 0x0804a324
 
@@ -4185,8 +4185,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a2ff: 8b 77 20                |.w      |   mov    esi, DWORD PTR ds:[edi + 0x20]
 0x0804a302: 8b 7f 24                |..$     |   mov    edi, DWORD PTR ds:[edi + 0x24]
 0x0804a305: b8 c0 00 00 00          |.....   |   mov    eax, 0x000000c0
-0x0804a30a: cd 80                   |..      |   int    0x80 <mmap2>
-0x0804a30c: 83 f8 84                |...     |   cmp    eax, 0x84<-0x7c>
+0x0804a30a: cd 80                   |..      |   int    0x80<-128> <mmap2>
+0x0804a30c: 83 f8 84                |...     |   cmp    eax, 0x84<-124>
 0x0804a30f: 76 0e                   |v.      |   jbe    0x0804a31f<<Insn>>
 0x0804a30f: Successor blocks: 0x0804a311, 0x0804a31f
 
@@ -4207,7 +4207,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a31a: Predecessor blocks: 0x0804a313
 0x0804a31a: Dominator block: 0x0804a313
 0x0804a31a: 89 18                   |..      |   mov    DWORD PTR ds:[eax], ebx
-0x0804a31c: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x0804a31c: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x0804a31c: Successor blocks: 0x0804a31f
 
 0x0804a31f: Basic block reasons: graph-1
@@ -4238,7 +4238,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a32c: Basic block reasons: entry point, graph-1
 0x0804a32c: Predecessor blocks: 0x080485a5<<Func>>, 0x08049165<<Func>>
 0x0804a32c: 8b 44 24 08             |.D$.    |   mov    eax, DWORD PTR ss:[esp + 0x08]
-0x0804a330: 80 cc 80                |...     |   or     ah, 0x80
+0x0804a330: 80 cc 80                |...     |   or     ah, 0x80<-128>
 0x0804a333: 89 44 24 08             |.D$.    |   mov    DWORD PTR ss:[esp + 0x08], eax
 0x0804a337: e9 ec 07 00 00          |.....   |   jmp    0x0804ab28<<Func>>
 0x0804a337: Successor blocks: 0x0804ab28<<Func>>
@@ -4277,7 +4277,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a364: Predecessor blocks: 0x0804a358
 0x0804a364: Dominator block: 0x0804a358
 0x0804a364: 83 c4 10                |...     |   add    esp, 0x10
-0x0804a367: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x0804a367: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x0804a36a: 89 c3                   |..      |   mov    ebx, eax
 0x0804a36c: 75 16                   |u.      |   jne    0x0804a384<<Insn>>
 0x0804a36c: Successor blocks: 0x0804a36e, 0x0804a384
@@ -4342,7 +4342,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a3a8: Basic block reasons: graph-1
 0x0804a3a8: Predecessor blocks: 0x0804a3a3
 0x0804a3a8: Dominator block: 0x0804a3a3
-0x0804a3a8: 83 cb ff                |...     |   or     ebx, 0xff<-0x01>
+0x0804a3a8: 83 cb ff                |...     |   or     ebx, 0xff<-1>
 0x0804a3ab: c7 00 16 00 00 00       |......  |   mov    DWORD PTR ds:[eax], 0x00000016
 0x0804a3b1: eb 1f                   |..      |   jmp    0x0804a3d2<<Insn>>
 0x0804a3b1: Successor blocks: 0x0804a3d2
@@ -4479,7 +4479,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a430: Basic block reasons: graph-1
 0x0804a430: Predecessor blocks: 0x0804a40b, 0x0804a424
 0x0804a430: Dominator block: 0x0804a40b
-0x0804a430: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x0804a430: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x0804a430: Successor blocks: 0x0804a433
 
 0x0804a433: Basic block reasons: graph-1
@@ -4636,7 +4636,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048bc9: Basic block reasons: graph-1
 0x08048bc9: Predecessor blocks: 0x08048bc2
 0x08048bc9: Dominator block: 0x08048bc2
-0x08048bc9: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x08048bc9: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08048bcc: 50                      |P       |   push   eax
 0x08048bcd: 53                      |S       |   push   ebx
 0x08048bce: e8 15 15 00 00          |.....   |   call   0x0804a0e8<<Func>>
@@ -4654,9 +4654,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048bdf: Basic block reasons: graph-1
 0x08048bdf: Predecessor blocks: 0x08048bd3
 0x08048bdf: Dominator block: 0x08048bd3
-0x08048bdf: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x08048be2: 66 89 45 f2             |f.E.    |   mov    WORD PTR ss:[ebp + 0xf2<-0x0e>], ax
-0x08048be6: 8d 45 f2                |.E.     |   lea    eax, [ebp + 0xf2<-0x0e>]
+0x08048bdf: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x08048be2: 66 89 45 f2             |f.E.    |   mov    WORD PTR ss:[ebp + 0xf2<-14>], ax
+0x08048be6: 8d 45 f2                |.E.     |   lea    eax, [ebp + 0xf2<-14>]
 0x08048be9: 50                      |P       |   push   eax
 0x08048bea: 6a 01                   |j.      |   push   0x01
 0x08048bec: e8 9f 15 00 00          |.....   |   call   0x0804a190<<Func>>
@@ -4690,7 +4690,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048c0c: Basic block reasons: graph-1
 0x08048c0c: Predecessor blocks: 0x08048c05
 0x08048c0c: Dominator block: 0x08048c05
-0x08048c0c: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x08048c0c: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08048c0f: 50                      |P       |   push   eax
 0x08048c10: 53                      |S       |   push   ebx
 0x08048c11: e8 d2 14 00 00          |.....   |   call   0x0804a0e8<<Func>>
@@ -4708,7 +4708,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048c22: Basic block reasons: graph-1
 0x08048c22: Predecessor blocks: 0x08048c16
 0x08048c22: Dominator block: 0x08048c16
-0x08048c22: 0f b7 45 e8             |..E.    |   movzx  eax, WORD PTR ss:[ebp + 0xe8<-0x18>]
+0x08048c22: 0f b7 45 e8             |..E.    |   movzx  eax, WORD PTR ss:[ebp + 0xe8<-24>]
 0x08048c26: 50                      |P       |   push   eax
 0x08048c27: e8 6c 15 00 00          |.l...   |   call   0x0804a198<<Func>>
 0x08048c27: Successor blocks: 0x0804a198<<Func>>, 0x08048c2c
@@ -4750,11 +4750,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048c45: Basic block reasons: graph-1
 0x08048c45: Predecessor blocks: 0x08048c43, 0x08049b0d
 0x08048c45: Dominator block: 0x08048c43
-0x08048c45: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x08048c45: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08048c48: 31 f6                   |1.      |   xor    esi, esi
 0x08048c4a: 50                      |P       |   push   eax
 0x08048c4b: 31 ff                   |1.      |   xor    edi, edi
-0x08048c4d: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-0x00003428>]
+0x08048c4d: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-13352>]
 0x08048c53: c7 05 64 c8 04 08 00 00 |..d.....|
 0x08048c5b: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c864], 0x00000000
 0x08048c5d: e8 3e 15 00 00          |.>...   |   call   0x0804a1a0<<Func>>
@@ -4764,20 +4764,20 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048c62: Predecessor blocks: 0x08048c45
 0x08048c62: Dominator block: 0x08048c45
 0x08048c62: 59                      |Y       |   pop    ecx
-0x08048c63: c7 45 d8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-0x28>], 0x00000000
-0x08048c6a: 66 c7 45 dc 01 00       |f.E...  |   mov    WORD PTR ss:[ebp + 0xdc<-0x24>], 0x0001
+0x08048c63: c7 45 d8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x00000000
+0x08048c6a: 66 c7 45 dc 01 00       |f.E...  |   mov    WORD PTR ss:[ebp + 0xdc<-36>], 0x0001
 0x08048c70: c7 85 8c cb ff ff 00 00 |........|
-0x08048c78: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>], 0x00000000
+0x08048c78: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcb8c<-13428>], 0x00000000
 0x08048c7a: 83 c0 14                |...     |   add    eax, 0x14
-0x08048c7d: 89 85 90 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb90<-0x00003470>], eax
+0x08048c7d: 89 85 90 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb90<-13424>], eax
 0x08048c7d: Successor blocks: 0x08048c83
 
 0x08048c83: Basic block reasons: graph-1
 0x08048c83: Predecessor blocks: 0x08048c62, 0x08048d1a
 0x08048c83: Dominator block: 0x08048c62
-0x08048c83: 68 20 4e 00 00          |h N..   |   push   0x00004e20
+0x08048c83: 68 20 4e 00 00          |h N..   |   push   0x00004e20<20000>
 0x08048c88: 6a 01                   |j.      |   push   0x01
-0x08048c8a: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-0x28>]
+0x08048c8a: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-40>]
 0x08048c8d: 50                      |P       |   push   eax
 0x08048c8e: e8 e5 14 00 00          |.....   |   call   0x0804a178<<Func>>
 0x08048c8e: Successor blocks: 0x0804a178<<Func>>, 0x08048c93
@@ -4786,7 +4786,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048c93: Predecessor blocks: 0x08048c83
 0x08048c93: Dominator block: 0x08048c83
 0x08048c93: 83 c4 0c                |...     |   add    esp, 0x0c
-0x08048c96: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08048c96: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08048c99: 0f 84 20 10 00 00       |.. ...  |   je     0x08049cbf<<Insn>>
 0x08048c99: Successor blocks: 0x08048c9f, 0x08049cbf
 
@@ -4800,7 +4800,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ca3: Basic block reasons: graph-1
 0x08048ca3: Predecessor blocks: 0x08048c9f
 0x08048ca3: Dominator block: 0x08048c9f
-0x08048ca3: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x08048ca3: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08048ca6: 50                      |P       |   push   eax
 0x08048ca7: e8 f4 14 00 00          |.....   |   call   0x0804a1a0<<Func>>
 0x08048ca7: Successor blocks: 0x0804a1a0<<Func>>, 0x08048cac
@@ -4809,7 +4809,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048cac: Predecessor blocks: 0x08048ca3
 0x08048cac: Dominator block: 0x08048ca3
 0x08048cac: 5a                      |Z       |   pop    edx
-0x08048cad: 3b 85 90 cb ff ff       |;.....  |   cmp    eax, DWORD PTR ss:[ebp + 0xffffcb90<-0x00003470>]
+0x08048cad: 3b 85 90 cb ff ff       |;.....  |   cmp    eax, DWORD PTR ss:[ebp + 0xffffcb90<-13424>]
 0x08048cb3: 7c 65                   ||e      |   jl     0x08048d1a<<Insn>>
 0x08048cb3: Successor blocks: 0x08048cb5, 0x08048d1a
 
@@ -4822,8 +4822,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048cba: Basic block reasons: graph-1
 0x08048cba: Predecessor blocks: 0x08048c9f
 0x08048cba: Dominator block: 0x08048c9f
-0x08048cba: b8 fb 1f 00 00          |.....   |   mov    eax, 0x00001ffb
-0x08048cbf: 2b 85 8c cb ff ff       |+.....  |   sub    eax, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048cba: b8 fb 1f 00 00          |.....   |   mov    eax, 0x00001ffb<8187>
+0x08048cbf: 2b 85 8c cb ff ff       |+.....  |   sub    eax, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048cc5: 50                      |P       |   push   eax
 0x08048cc6: 53                      |S       |   push   ebx
 0x08048cc7: 6a 00                   |j.      |   push   0x00
@@ -4856,7 +4856,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ce9: Predecessor blocks: 0x08048ce0
 0x08048ce9: Dominator block: 0x08048ce0
 0x08048ce9: 89 da                   |..      |   mov    edx, ebx
-0x08048ceb: 89 45 e8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], eax
+0x08048ceb: 89 45 e8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], eax
 0x08048cee: 58                      |X       |   pop    eax
 0x08048cef: eb 1c                   |..      |   jmp    0x08048d0d<<Insn>>
 0x08048cef: Successor blocks: 0x08048d0d
@@ -4894,7 +4894,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d05: Basic block reasons: graph-1
 0x08048d05: Predecessor blocks: 0x08048cf1, 0x08048cfb, 0x08048cff
 0x08048d05: Dominator block: 0x08048cf1
-0x08048d05: ff 85 8c cb ff ff       |......  |   inc    DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048d05: ff 85 8c cb ff ff       |......  |   inc    DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048d0b: 43                      |C       |   inc    ebx
 0x08048d0c: 42                      |B       |   inc    edx
 0x08048d0c: Successor blocks: 0x08048d0d
@@ -4909,7 +4909,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d12: Basic block reasons: graph-1
 0x08048d12: Predecessor blocks: 0x08048d0d
 0x08048d12: Dominator block: 0x08048d0d
-0x08048d12: 39 b5 8c cb ff ff       |9.....  |   cmp    DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>], esi
+0x08048d12: 39 b5 8c cb ff ff       |9.....  |   cmp    DWORD PTR ss:[ebp + 0xffffcb8c<-13428>], esi
 0x08048d18: 7c d7                   ||.      |   jl     0x08048cf1<<Insn>>
 0x08048d18: Successor blocks: 0x08048cf1, 0x08048d1a
 
@@ -4923,7 +4923,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d23: Basic block reasons: graph-1
 0x08048d23: Predecessor blocks: 0x08048cff, 0x08048d0d, 0x08048d1a
 0x08048d23: Dominator block: 0x08048c9f
-0x08048d23: 83 bd 8c cb ff ff 09    |....... |   cmp    DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>], 0x09
+0x08048d23: 83 bd 8c cb ff ff 09    |....... |   cmp    DWORD PTR ss:[ebp + 0xffffcb8c<-13428>], 0x09
 0x08048d2a: 7f 14                   |..      |   jg     0x08048d40<<Insn>>
 0x08048d2a: Successor blocks: 0x08048d2c, 0x08048d40
 
@@ -4932,19 +4932,19 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d2c: Dominator block: 0x08048d23
 0x08048d2c: b9 36 b0 04 08          |.6...   |   mov    ecx, 0x0804b036<<StaticData@0x0804af27>+0x010f>
 0x08048d31: ba 76 b0 04 08          |.v...   |   mov    edx, 0x0804b076<<StaticData@0x0804af27>+0x014f>
-0x08048d36: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190
+0x08048d36: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190<400>
 0x08048d3b: e8 76 fc ff ff          |.v...   |   call   0x080489b6<<Func>>
 0x08048d3b: Successor blocks: 0x080489b6<<Func>>, 0x08048d40
 
 0x08048d40: Basic block reasons: graph-1
 0x08048d40: Predecessor blocks: 0x08048d23, 0x08048d2c
 0x08048d40: Dominator block: 0x08048d23
-0x08048d40: 8b 85 8c cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
-0x08048d46: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-0x00003428>]
+0x08048d40: 8b 85 8c cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
+0x08048d46: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-13352>]
 0x08048d4c: 6a 05                   |j.      |   push   0x05
 0x08048d4e: 68 82 b0 04 08          |h....   |   push   0x0804b082<<StaticData@0x0804af27>+0x015b>
 0x08048d53: 53                      |S       |   push   ebx
-0x08048d54: c6 84 05 d8 cb ff ff 00 |........|   mov    BYTE PTR ss:[ebp + eax + 0xffffcbd8<-0x00003428>], 0x00
+0x08048d54: c6 84 05 d8 cb ff ff 00 |........|   mov    BYTE PTR ss:[ebp + eax + 0xffffcbd8<-13352>], 0x00
 0x08048d5c: e8 df 17 00 00          |.....   |   call   0x0804a540<<Func>>
 0x08048d5c: Successor blocks: 0x08048d61, 0x0804a540<<Func>>
 
@@ -4959,7 +4959,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d68: Basic block reasons: graph-1
 0x08048d68: Predecessor blocks: 0x08048d61
 0x08048d68: Dominator block: 0x08048d61
-0x08048d68: 8d 85 dc cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbdc<-0x00003424>]
+0x08048d68: 8d 85 dc cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbdc<-13348>]
 0x08048d6e: c7 05 4c c9 04 08 01 00 |..L.....|
 0x08048d76: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c94c], 0x00000001
 0x08048d78: eb 24                   |.$      |   jmp    0x08048d9e<<Insn>>
@@ -4992,7 +4992,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048d98: Basic block reasons: graph-1
 0x08048d98: Predecessor blocks: 0x08048d8e, 0x08048db9
 0x08048d98: Dominator block: 0x08048d87
-0x08048d98: 8d 85 dd cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbdd<-0x00003423>]
+0x08048d98: 8d 85 dd cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbdd<-13347>]
 0x08048d98: Successor blocks: 0x08048d9e
 
 0x08048d9e: Basic block reasons: graph-1
@@ -5040,7 +5040,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048dd2: Dominator block: 0x08048db2
 0x08048dd2: b9 96 b0 04 08          |.....   |   mov    ecx, 0x0804b096<<StaticData@0x0804af27>+0x016f>
 0x08048dd7: ba 76 b0 04 08          |.v...   |   mov    edx, 0x0804b076<<StaticData@0x0804af27>+0x014f>
-0x08048ddc: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190
+0x08048ddc: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190<400>
 0x08048de1: e8 d0 fb ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08048de1: Successor blocks: 0x080489b6<<Func>>, 0x08048de6
 
@@ -5048,10 +5048,10 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048de6: Predecessor blocks: 0x08048d9e, 0x08048dd2
 0x08048de6: Dominator block: 0x08048d61
 0x08048de6: 8b 15 34 c9 04 08       |..4...  |   mov    edx, DWORD PTR ds:[0x0804c934]
-0x08048dec: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-0x00003428>]
+0x08048dec: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-13352>]
 0x08048df2: 6a 0d                   |j.      |   push   0x0d
 0x08048df4: 50                      |P       |   push   eax
-0x08048df5: 89 95 88 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb88<-0x00003478>], edx
+0x08048df5: 89 95 88 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb88<-13432>], edx
 0x08048dfb: e8 14 12 00 00          |.....   |   call   0x0804a014<<Func>>
 0x08048dfb: Successor blocks: 0x0804a014<<Func>>, 0x08048e00
 
@@ -5078,7 +5078,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048e18: Dominator block: 0x08048e0f
 0x08048e18: b9 c9 b0 04 08          |.....   |   mov    ecx, 0x0804b0c9<<StaticData@0x0804af27>+0x01a2>
 0x08048e1d: ba 76 b0 04 08          |.v...   |   mov    edx, 0x0804b076<<StaticData@0x0804af27>+0x014f>
-0x08048e22: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190
+0x08048e22: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190<400>
 0x08048e27: e8 8a fb ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08048e27: Successor blocks: 0x080489b6<<Func>>, 0x08048e2c
 
@@ -5107,7 +5107,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048e49: Dominator block: 0x08048e42
 0x08048e49: b9 02 b1 04 08          |.....   |   mov    ecx, 0x0804b102<<StaticData@0x0804af27>+0x01db>
 0x08048e4e: ba 76 b0 04 08          |.v...   |   mov    edx, 0x0804b076<<StaticData@0x0804af27>+0x014f>
-0x08048e53: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190
+0x08048e53: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190<400>
 0x08048e58: e8 59 fb ff ff          |.Y...   |   call   0x080489b6<<Func>>
 0x08048e58: Successor blocks: 0x080489b6<<Func>>, 0x08048e5d
 
@@ -5159,7 +5159,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ea9: Predecessor blocks: 0x08048ea0
 0x08048ea9: Dominator block: 0x08048ea0
 0x08048ea9: 8d 4e 02                |.N.     |   lea    ecx, [esi + 0x02]
-0x08048eac: 89 8d cc cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbcc<-0x00003434>], ecx
+0x08048eac: 89 8d cc cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbcc<-13364>], ecx
 0x08048eb2: 89 c7                   |..      |   mov    edi, eax
 0x08048eb4: 0f be 46 02             |..F.    |   movsx  eax, BYTE PTR ds:[esi + 0x02]
 0x08048eb8: e8 f8 f2 ff ff          |.....   |   call   0x080481b5<<Func>>
@@ -5187,7 +5187,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ec9: c0 e0 04                |...     |   shl    al, 0x04
 0x08048ecc: 00 d0                   |..      |   add    al, dl
 0x08048ece: 88 03                   |..      |   mov    BYTE PTR ds:[ebx], al
-0x08048ed0: 8b b5 cc cb ff ff       |......  |   mov    esi, DWORD PTR ss:[ebp + 0xffffcbcc<-0x00003434>]
+0x08048ed0: 8b b5 cc cb ff ff       |......  |   mov    esi, DWORD PTR ss:[ebp + 0xffffcbcc<-13364>]
 0x08048ed6: eb 07                   |..      |   jmp    0x08048edf<<Insn>>
 0x08048ed6: Successor blocks: 0x08048edf
 
@@ -5223,14 +5223,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048ef1: Basic block reasons: graph-1
 0x08048ef1: Predecessor blocks: 0x08048eec
 0x08048ef1: Dominator block: 0x08048eec
-0x08048ef1: 80 7b ff 3a             |.{.:    |   cmp    BYTE PTR ds:[ebx + 0xff<-0x01>], 0x3a
+0x08048ef1: 80 7b ff 3a             |.{.:    |   cmp    BYTE PTR ds:[ebx + 0xff<-1>], 0x3a
 0x08048ef5: 75 09                   |u.      |   jne    0x08048f00<<Insn>>
 0x08048ef5: Successor blocks: 0x08048ef7, 0x08048f00
 
 0x08048ef7: Basic block reasons: graph-1
 0x08048ef7: Predecessor blocks: 0x08048ef1
 0x08048ef7: Dominator block: 0x08048ef1
-0x08048ef7: 80 7b fe 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xfe<-0x02>], 0x2f
+0x08048ef7: 80 7b fe 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xfe<-2>], 0x2f
 0x08048efb: 75 03                   |u.      |   jne    0x08048f00<<Insn>>
 0x08048efb: Successor blocks: 0x08048efd, 0x08048f00
 
@@ -5257,7 +5257,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f09: Basic block reasons: graph-1
 0x08048f09: Predecessor blocks: 0x08048f04
 0x08048f09: Dominator block: 0x08048f04
-0x08048f09: 80 7b ff 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xff<-0x01>], 0x2f
+0x08048f09: 80 7b ff 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xff<-1>], 0x2f
 0x08048f0d: 75 13                   |u.      |   jne    0x08048f22<<Insn>>
 0x08048f0d: Successor blocks: 0x08048f0f, 0x08048f22
 
@@ -5279,7 +5279,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f19: Basic block reasons: graph-1
 0x08048f19: Predecessor blocks: 0x08048f14
 0x08048f19: Dominator block: 0x08048f14
-0x08048f19: 80 7b ff 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xff<-0x01>], 0x2f
+0x08048f19: 80 7b ff 2f             |.{./    |   cmp    BYTE PTR ds:[ebx + 0xff<-1>], 0x2f
 0x08048f1d: 75 03                   |u.      |   jne    0x08048f22<<Insn>>
 0x08048f1d: Successor blocks: 0x08048f1f, 0x08048f22
 
@@ -5308,9 +5308,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f2e: Predecessor blocks: 0x08048dc5, 0x08048e94, 0x08048f24
 0x08048f2e: Dominator block: 0x08048f24
 0x08048f2e: c6 03 00                |...     |   mov    BYTE PTR ds:[ebx], 0x00
-0x08048f31: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-0x00003428>]
+0x08048f31: 8d 9d d8 cb ff ff       |......  |   lea    ebx, [ebp + 0xffffcbd8<-13352>]
 0x08048f37: b9 34 b1 04 08          |.4...   |   mov    ecx, 0x0804b134<<StaticData@0x0804af27>+0x020d>
-0x08048f3c: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048f3c: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048f42: 89 d8                   |..      |   mov    eax, ebx
 0x08048f44: e8 b0 f3 ff ff          |.....   |   call   0x080482f9<<Func>>
 0x08048f44: Successor blocks: 0x080482f9<<Func>>, 0x08048f49
@@ -5331,7 +5331,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f52: Basic block reasons: graph-1
 0x08048f52: Predecessor blocks: 0x08048f49, 0x08048f4d
 0x08048f52: Dominator block: 0x08048f49
-0x08048f52: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048f52: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048f58: b9 3f b1 04 08          |.?...   |   mov    ecx, 0x0804b13f<<StaticData@0x0804af27>+0x0218>
 0x08048f5d: 89 d8                   |..      |   mov    eax, ebx
 0x08048f5f: e8 95 f3 ff ff          |.....   |   call   0x080482f9<<Func>>
@@ -5353,7 +5353,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f6d: Basic block reasons: graph-1
 0x08048f6d: Predecessor blocks: 0x08048f64, 0x08048f68
 0x08048f6d: Dominator block: 0x08048f64
-0x08048f6d: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048f6d: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048f73: b9 b0 af 04 08          |.....   |   mov    ecx, 0x0804afb0<<StaticData@0x0804af27>+0x89>
 0x08048f78: 89 d8                   |..      |   mov    eax, ebx
 0x08048f7a: e8 7a f3 ff ff          |.z...   |   call   0x080482f9<<Func>>
@@ -5375,7 +5375,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048f88: Basic block reasons: graph-1
 0x08048f88: Predecessor blocks: 0x08048f7f, 0x08048f83
 0x08048f88: Dominator block: 0x08048f7f
-0x08048f88: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08048f88: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08048f8e: 89 d8                   |..      |   mov    eax, ebx
 0x08048f90: b9 47 b1 04 08          |.G...   |   mov    ecx, 0x0804b147<<StaticData@0x0804af27>+0x0220>
 0x08048f95: e8 5f f3 ff ff          |._...   |   call   0x080482f9<<Func>>
@@ -5435,7 +5435,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048fce: Predecessor blocks: 0x08048fc8
 0x08048fce: Dominator block: 0x08048fc8
 0x08048fce: c7 05 60 c8 04 08 ff ff |..`.....|
-0x08048fd6: ff ff                   |..      |   mov    DWORD PTR ds:[0x0804c860], 0xffffffff<-0x00000001>
+0x08048fd6: ff ff                   |..      |   mov    DWORD PTR ds:[0x0804c860], 0xffffffff<-1>
 0x08048fce: Successor blocks: 0x08048fd8
 
 0x08048fd8: Basic block reasons: graph-1
@@ -5494,8 +5494,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049018: Basic block reasons: graph-1
 0x08049018: Predecessor blocks: 0x08049004, 0x0804900e
 0x08049018: Dominator block: 0x08049004
-0x08049018: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
-0x0804901e: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-0x00003428>]
+0x08049018: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
+0x0804901e: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-13352>]
 0x08049024: b9 7f b1 04 08          |.....   |   mov    ecx, 0x0804b17f<<StaticData@0x0804af27>+0x0258>
 0x08049029: e8 cb f2 ff ff          |.....   |   call   0x080482f9<<Func>>
 0x08049029: Successor blocks: 0x080482f9<<Func>>, 0x0804902e
@@ -5527,11 +5527,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049046: Predecessor blocks: 0x0804902e, 0x08049042
 0x08049046: Dominator block: 0x0804902e
 0x08049046: 8d 42 12                |.B.     |   lea    eax, [edx + 0x12]
-0x08049049: 83 e0 fc                |...     |   and    eax, 0xfc<-0x04>
+0x08049049: 83 e0 fc                |...     |   and    eax, 0xfc<-4>
 0x0804904c: 29 c4                   |).      |   sub    esp, eax
 0x0804904e: a1 f4 c7 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804c7f4<.data>]
 0x08049053: 8d 74 24 0f             |.t$.    |   lea    esi, [esp + 0x0f]
-0x08049057: 83 e6 f0                |...     |   and    esi, 0xf0<-0x10>
+0x08049057: 83 e6 f0                |...     |   and    esi, 0xf0<-16>
 0x0804905a: 85 c0                   |..      |   test   eax, eax
 0x0804905c: 75 6b                   |uk      |   jne    0x080490c9<<Insn>>
 0x0804905c: Successor blocks: 0x0804905e, 0x080490c9
@@ -5727,7 +5727,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049139: Dominator block: 0x0804914e
 0x08049139: b9 9b b1 04 08          |.....   |   mov    ecx, 0x0804b19b<<StaticData@0x0804af27>+0x0274>
 0x0804913e: ba 76 b0 04 08          |.v...   |   mov    edx, 0x0804b076<<StaticData@0x0804af27>+0x014f>
-0x08049143: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190
+0x08049143: b8 90 01 00 00          |.....   |   mov    eax, 0x00000190<400>
 0x08049148: e8 69 f8 ff ff          |.i...   |   call   0x080489b6<<Func>>
 0x08049148: Successor blocks: 0x080489b6<<Func>>, 0x0804914d
 
@@ -5781,7 +5781,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804917c: Predecessor blocks: 0x08049171
 0x0804917c: Dominator block: 0x08049171
 0x0804917c: c7 05 60 c8 04 08 ff ff |..`.....|
-0x08049184: ff ff                   |..      |   mov    DWORD PTR ds:[0x0804c860], 0xffffffff<-0x00000001>
+0x08049184: ff ff                   |..      |   mov    DWORD PTR ds:[0x0804c860], 0xffffffff<-1>
 0x0804917c: Successor blocks: 0x08049186
 
 0x08049186: Basic block reasons: graph-1
@@ -5802,8 +5802,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804919a: Basic block reasons: graph-1
 0x0804919a: Predecessor blocks: 0x08049191
 0x0804919a: Dominator block: 0x08049191
-0x0804919a: 68 00 04 00 00          |h....   |   push   0x00000400
-0x0804919f: 8d b5 d8 fb ff ff       |......  |   lea    esi, [ebp + 0xfffffbd8<-0x00000428>]
+0x0804919a: 68 00 04 00 00          |h....   |   push   0x00000400<1024>
+0x0804919f: 8d b5 d8 fb ff ff       |......  |   lea    esi, [ebp + 0xfffffbd8<-1064>]
 0x080491a5: 56                      |V       |   push   esi
 0x080491a6: ff 35 f4 c7 04 08       |.5....  |   push   DWORD PTR ds:[0x0804c7f4<.data>]
 0x080491ac: e8 cf 0f 00 00          |.....   |   call   0x0804a180<<Func>>
@@ -5827,16 +5827,16 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080491bf: Basic block reasons: graph-1
 0x080491bf: Predecessor blocks: 0x080491ba
 0x080491bf: Dominator block: 0x080491ba
-0x080491bf: 80 bd d8 fb ff ff 3d    |......= |   cmp    BYTE PTR ss:[ebp + 0xfffffbd8<-0x00000428>], 0x3d
+0x080491bf: 80 bd d8 fb ff ff 3d    |......= |   cmp    BYTE PTR ss:[ebp + 0xfffffbd8<-1064>], 0x3d
 0x080491c6: 75 10                   |u.      |   jne    0x080491d8<<Insn>>
 0x080491c6: Successor blocks: 0x080491c8, 0x080491d8
 
 0x080491c8: Basic block reasons: graph-1
 0x080491c8: Predecessor blocks: 0x080491bf
 0x080491c8: Dominator block: 0x080491bf
-0x080491c8: 8d 43 ff                |.C.     |   lea    eax, [ebx + 0xff<-0x01>]
+0x080491c8: 8d 43 ff                |.C.     |   lea    eax, [ebx + 0xff<-1>]
 0x080491cb: 50                      |P       |   push   eax
-0x080491cc: 8d 85 d9 fb ff ff       |......  |   lea    eax, [ebp + 0xfffffbd9<-0x00000427>]
+0x080491cc: 8d 85 d9 fb ff ff       |......  |   lea    eax, [ebp + 0xfffffbd9<-1063>]
 0x080491d2: 50                      |P       |   push   eax
 0x080491d3: e9 e3 09 00 00          |.....   |   jmp    0x08049bbb<<Insn>>
 0x080491d3: Successor blocks: 0x08049bbb
@@ -5906,7 +5906,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049215: Dominator block: 0x0804920f
 0x08049215: b9 d2 b1 04 08          |.....   |   mov    ecx, 0x0804b1d2<<StaticData@0x0804af27>+0x02ab>
 0x0804921a: ba 08 b2 04 08          |.....   |   mov    edx, 0x0804b208<<StaticData@0x0804af27>+0x02e1>
-0x0804921f: b8 94 01 00 00          |.....   |   mov    eax, 0x00000194
+0x0804921f: b8 94 01 00 00          |.....   |   mov    eax, 0x00000194<404>
 0x08049224: e8 8d f7 ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08049224: Successor blocks: 0x080489b6<<Func>>, 0x08049229
 
@@ -5942,11 +5942,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804924d: Dominator block: 0x08049247
 0x0804924d: 5b                      |[       |   pop    ebx
 0x0804924e: 83 c0 1e                |...     |   add    eax, 0x1e
-0x08049251: 83 e0 fc                |...     |   and    eax, 0xfc<-0x04>
+0x08049251: 83 e0 fc                |...     |   and    eax, 0xfc<-4>
 0x08049254: 29 c4                   |).      |   sub    esp, eax
 0x08049256: 8d 74 24 0f             |.t$.    |   lea    esi, [esp + 0x0f]
 0x0804925a: ff 35 34 c9 04 08       |.54...  |   push   DWORD PTR ds:[0x0804c934]
-0x08049260: 83 e6 f0                |...     |   and    esi, 0xf0<-0x10>
+0x08049260: 83 e6 f0                |...     |   and    esi, 0xf0<-16>
 0x08049263: 56                      |V       |   push   esi
 0x08049264: e8 7f 0b 00 00          |.....   |   call   0x08049de8<<Func>>
 0x08049264: Successor blocks: 0x08049de8<<Func>>, 0x08049269
@@ -5972,8 +5972,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049284: Predecessor blocks: 0x08049235, 0x08049277
 0x08049284: Dominator block: 0x08049235
 0x08049284: 8b 0d 34 c9 04 08       |..4...  |   mov    ecx, DWORD PTR ds:[0x0804c934]
-0x0804928a: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-0x00003428>]
-0x08049290: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x0804928a: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-13352>]
+0x08049290: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x08049296: 6a 01                   |j.      |   push   0x01
 0x08049298: e8 1e f2 ff ff          |.....   |   call   0x080484bb<<Func>>
 0x08049298: Successor blocks: 0x080484bb<<Func>>, 0x0804929d
@@ -5983,7 +5983,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804929d: Dominator block: 0x08049284
 0x0804929d: 59                      |Y       |   pop    ecx
 0x0804929e: 85 c0                   |..      |   test   eax, eax
-0x080492a0: 89 85 94 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>], eax
+0x080492a0: 89 85 94 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb94<-13420>], eax
 0x080492a6: 0f 88 84 08 00 00       |......  |   js     0x08049b30<<Insn>>
 0x080492a6: Successor blocks: 0x080492ac, 0x08049b30
 
@@ -5999,15 +5999,15 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080492b7: Dominator block: 0x080492ac
 0x080492b7: 8b 3d 64 c8 04 08       |.=d...  |   mov    edi, DWORD PTR ds:[0x0804c864]
 0x080492bd: 5a                      |Z       |   pop    edx
-0x080492be: 89 bd 98 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb98<-0x00003468>], edi
+0x080492be: 89 bd 98 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb98<-13416>], edi
 0x080492c4: 83 c0 16                |...     |   add    eax, 0x16
-0x080492c7: 83 e0 fc                |...     |   and    eax, 0xfc<-0x04>
+0x080492c7: 83 e0 fc                |...     |   and    eax, 0xfc<-4>
 0x080492ca: 29 c4                   |).      |   sub    esp, eax
 0x080492cc: a1 00 c8 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804c800<.data+0x0c>]
 0x080492d1: 8d 74 24 0f             |.t$.    |   lea    esi, [esp + 0x0f]
 0x080492d5: ff 35 34 c9 04 08       |.54...  |   push   DWORD PTR ds:[0x0804c934]
-0x080492db: 83 e6 f0                |...     |   and    esi, 0xf0<-0x10>
-0x080492de: 89 85 9c cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb9c<-0x00003464>], eax
+0x080492db: 83 e6 f0                |...     |   and    esi, 0xf0<-16>
+0x080492de: 89 85 9c cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb9c<-13412>], eax
 0x080492e4: 56                      |V       |   push   esi
 0x080492e5: e8 fe 0a 00 00          |.....   |   call   0x08049de8<<Func>>
 0x080492e5: Successor blocks: 0x08049de8<<Func>>, 0x080492ea
@@ -6027,7 +6027,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080492f3: Dominator block: 0x080492ea
 0x080492f3: 8d 3c 06                |.<.     |   lea    edi, [esi + eax]
 0x080492f6: 68 1d b2 04 08          |h....   |   push   0x0804b21d<<StaticData@0x0804af27>+0x02f6>
-0x080492fb: 8d 47 fc                |.G.     |   lea    eax, [edi + 0xfc<-0x04>]
+0x080492fb: 8d 47 fc                |.G.     |   lea    eax, [edi + 0xfc<-4>]
 0x080492fe: 50                      |P       |   push   eax
 0x080492ff: e8 ac 0c 00 00          |.....   |   call   0x08049fb0<<Func>>
 0x080492ff: Successor blocks: 0x08049fb0<<Func>>, 0x08049304
@@ -6044,7 +6044,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804930a: Basic block reasons: graph-1
 0x0804930a: Predecessor blocks: 0x08049304
 0x0804930a: Dominator block: 0x08049304
-0x0804930a: 8d 47 fd                |.G.     |   lea    eax, [edi + 0xfd<-0x03>]
+0x0804930a: 8d 47 fd                |.G.     |   lea    eax, [edi + 0xfd<-3>]
 0x0804930d: bf 01 00 00 00          |.....   |   mov    edi, 0x00000001
 0x08049312: 68 7c b4 04 08          |h|...   |   push   0x0804b47c<<StaticData@0x0804af27>+0x0555>
 0x08049317: 50                      |P       |   push   eax
@@ -6072,9 +6072,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804932f: Dominator block: 0x080492ea
 0x0804932f: 58                      |X       |   pop    eax
 0x08049330: 89 f1                   |..      |   mov    ecx, esi
-0x08049332: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-0x00003428>]
+0x08049332: 8d 85 d8 cb ff ff       |......  |   lea    eax, [ebp + 0xffffcbd8<-13352>]
 0x08049338: 5a                      |Z       |   pop    edx
-0x08049339: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-0x00003474>]
+0x08049339: 8b 95 8c cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb8c<-13428>]
 0x0804933f: 6a 00                   |j.      |   push   0x00
 0x08049341: e8 75 f1 ff ff          |.u...   |   call   0x080484bb<<Func>>
 0x08049341: Successor blocks: 0x080484bb<<Func>>, 0x08049346
@@ -6091,7 +6091,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804934d: Basic block reasons: graph-1
 0x0804934d: Predecessor blocks: 0x08049346
 0x0804934d: Dominator block: 0x08049346
-0x0804934d: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x0804934d: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x08049353: 89 35 34 c9 04 08       |.54...  |   mov    DWORD PTR ds:[0x0804c934], esi
 0x08049359: e8 02 0e 00 00          |.....   |   call   0x0804a160<<Func>>
 0x08049359: Successor blocks: 0x0804a160<<Func>>, 0x0804935e
@@ -6100,14 +6100,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804935e: Predecessor blocks: 0x0804934d
 0x0804935e: Dominator block: 0x0804934d
 0x0804935e: 59                      |Y       |   pop    ecx
-0x0804935f: 89 9d 94 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>], ebx
+0x0804935f: 89 9d 94 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcb94<-13420>], ebx
 0x08049365: eb 1c                   |..      |   jmp    0x08049383<<Insn>>
 0x08049365: Successor blocks: 0x08049383
 
 0x08049367: Basic block reasons: graph-1
 0x08049367: Predecessor blocks: 0x08049346
 0x08049367: Dominator block: 0x08049346
-0x08049367: 8b 95 98 cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb98<-0x00003468>]
+0x08049367: 8b 95 98 cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcb98<-13416>]
 0x0804936d: 85 ff                   |..      |   test   edi, edi
 0x0804936f: 89 15 64 c8 04 08       |..d...  |   mov    DWORD PTR ds:[0x0804c864], edx
 0x08049375: 74 0c                   |t.      |   je     0x08049383<<Insn>>
@@ -6116,7 +6116,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049377: Basic block reasons: graph-1
 0x08049377: Predecessor blocks: 0x08049367
 0x08049377: Dominator block: 0x08049367
-0x08049377: 8b 8d 9c cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcb9c<-0x00003464>]
+0x08049377: 8b 8d 9c cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcb9c<-13412>]
 0x0804937d: 89 0d 00 c8 04 08       |......  |   mov    DWORD PTR ds:[0x0804c800<.data+0x0c>], ecx
 0x0804937d: Successor blocks: 0x08049383
 
@@ -6197,7 +6197,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080493ff: Dominator block: 0x080493ef
 0x080493ff: a1 60 c8 04 08          |.`...   |   mov    eax, DWORD PTR ds:[0x0804c860]
 0x08049404: 83 c4 10                |...     |   add    esp, 0x10
-0x08049407: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08049407: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x0804940a: 74 05                   |t.      |   je     0x08049411<<Insn>>
 0x0804940a: Successor blocks: 0x0804940c, 0x08049411
 
@@ -6371,7 +6371,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804952d: Predecessor blocks: 0x0804951a
 0x0804952d: Dominator block: 0x0804951a
 0x0804952d: 8b 46 14                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x14]
-0x08049530: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c
+0x08049530: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c<1900>
 0x08049535: 99                      |.       |   cdq    
 0x08049536: f7 fb                   |..      |   idiv   ebx
 0x08049538: 89 c2                   |..      |   mov    edx, eax
@@ -6383,7 +6383,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049544: Predecessor blocks: 0x0804952d
 0x08049544: Dominator block: 0x0804952d
 0x08049544: 8b 46 14                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x14]
-0x08049547: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c
+0x08049547: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c<1900>
 0x0804954c: 99                      |.       |   cdq    
 0x0804954d: f7 fb                   |..      |   idiv   ebx
 0x0804954f: a1 04 c8 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804c804<.data+0x10>]
@@ -6503,8 +6503,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049627: Dominator block: 0x08049617
 0x08049627: a1 78 c8 04 08          |.x...   |   mov    eax, DWORD PTR ds:[0x0804c878]
 0x0804962c: 8b 15 7c c8 04 08       |..|...  |   mov    edx, DWORD PTR ds:[0x0804c87c]
-0x08049632: 83 c0 ff                |...     |   add    eax, 0xff<-0x01>
-0x08049635: 83 d2 ff                |...     |   adc    edx, 0xff<-0x01>
+0x08049632: 83 c0 ff                |...     |   add    eax, 0xff<-1>
+0x08049635: 83 d2 ff                |...     |   adc    edx, 0xff<-1>
 0x08049638: 52                      |R       |   push   edx
 0x08049639: 50                      |P       |   push   eax
 0x0804963a: ff 35 04 c8 04 08       |.5....  |   push   DWORD PTR ds:[0x0804c804<.data+0x10>]
@@ -6592,7 +6592,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080496d3: Basic block reasons: graph-1
 0x080496d3: Predecessor blocks: 0x080496d1
 0x080496d3: Dominator block: 0x080496d1
-0x080496d3: 81 fe ff 0f 00 00       |......  |   cmp    esi, 0x00000fff
+0x080496d3: 81 fe ff 0f 00 00       |......  |   cmp    esi, 0x00000fff<4095>
 0x080496d9: 77 4b                   |wK      |   ja     0x08049726<<Insn>>
 0x080496d9: Successor blocks: 0x080496db, 0x08049726
 
@@ -6610,7 +6610,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080496e1: 6a 00                   |j.      |   push   0x00
 0x080496e3: 52                      |R       |   push   edx
 0x080496e4: 50                      |P       |   push   eax
-0x080496e5: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x080496e5: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x080496eb: e8 7c 0b 00 00          |.|...   |   call   0x0804a26c<<Func>>
 0x080496eb: Successor blocks: 0x0804a26c<<Func>>, 0x080496f0
 
@@ -6624,9 +6624,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080496f3: Predecessor blocks: 0x080496db, 0x080496f0
 0x080496f3: Dominator block: 0x080496db
 0x080496f3: 56                      |V       |   push   esi
-0x080496f4: 8d 9d d8 eb ff ff       |......  |   lea    ebx, [ebp + 0xffffebd8<-0x00001428>]
+0x080496f4: 8d 9d d8 eb ff ff       |......  |   lea    ebx, [ebp + 0xffffebd8<-5160>]
 0x080496fa: 53                      |S       |   push   ebx
-0x080496fb: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x080496fb: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x08049701: e8 82 0a 00 00          |.....   |   call   0x0804a188<<Func>>
 0x08049701: Successor blocks: 0x0804a188<<Func>>, 0x08049706
 
@@ -6657,14 +6657,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049726: Predecessor blocks: 0x080496a7, 0x080496d3
 0x08049726: Dominator block: 0x080496a7
 0x08049726: 6a 04                   |j.      |   push   0x04
-0x08049728: 89 45 e0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe0<-0x20>], eax
-0x0804972b: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-0x14>]
+0x08049728: 89 45 e0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe0<-32>], eax
+0x0804972b: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-20>]
 0x0804972e: 50                      |P       |   push   eax
 0x0804972f: 6a 03                   |j.      |   push   0x03
 0x08049731: 6a 06                   |j.      |   push   0x06
 0x08049733: 6a 01                   |j.      |   push   0x01
-0x08049735: 89 55 e4                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe4<-0x1c>], edx
-0x08049738: c7 45 ec 01 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xec<-0x14>], 0x00000001
+0x08049735: 89 55 e4                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe4<-28>], edx
+0x08049738: c7 45 ec 01 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xec<-20>], 0x00000001
 0x0804973f: e8 98 0c 00 00          |.....   |   call   0x0804a3dc<<Func>>
 0x0804973f: Successor blocks: 0x0804a3dc<<Func>>, 0x08049744
 
@@ -6691,8 +6691,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049774: Predecessor blocks: 0x08049759, 0x08049a9f
 0x08049774: Dominator block: 0x08049759
 0x08049774: 83 fe 00                |...     |   cmp    esi, 0x00
-0x08049777: 89 9d a0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba0<-0x00003460>], ebx
-0x0804977d: 89 b5 a4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba4<-0x0000345c>], esi
+0x08049777: 89 9d a0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba0<-13408>], ebx
+0x0804977d: 89 b5 a4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba4<-13404>], esi
 0x08049783: 7c 1e                   ||.      |   jl     0x080497a3<<Insn>>
 0x08049783: Successor blocks: 0x08049785, 0x080497a3
 
@@ -6713,18 +6713,18 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804978f: Predecessor blocks: 0x08049785, 0x08049787
 0x0804978f: Dominator block: 0x08049785
 0x0804978f: c7 85 a0 cb ff ff 00 00 |........|
-0x08049797: 00 80                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcba0<-0x00003460>], 0x80000000
+0x08049797: 00 80                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcba0<-13408>], 0x80000000
 0x08049799: c7 85 a4 cb ff ff 00 00 |........|
-0x080497a1: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcba4<-0x0000345c>], 0x00000000
+0x080497a1: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcba4<-13404>], 0x00000000
 0x08049799: Successor blocks: 0x080497a3
 
 0x080497a3: Basic block reasons: graph-1
 0x080497a3: Predecessor blocks: 0x08049774, 0x08049787, 0x0804978f
 0x080497a3: Dominator block: 0x08049774
-0x080497a3: ff b5 a0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcba0<-0x00003460>]
-0x080497a9: 8d 45 e0                |.E.     |   lea    eax, [ebp + 0xe0<-0x20>]
+0x080497a3: ff b5 a0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcba0<-13408>]
+0x080497a9: 8d 45 e0                |.E.     |   lea    eax, [ebp + 0xe0<-32>]
 0x080497ac: 50                      |P       |   push   eax
-0x080497ad: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x080497ad: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x080497b3: 6a 01                   |j.      |   push   0x01
 0x080497b5: e8 82 0b 00 00          |.....   |   call   0x0804a33c<<Func>>
 0x080497b5: Successor blocks: 0x0804a33c<<Func>>, 0x080497ba
@@ -6744,13 +6744,13 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080497c9: 8b 15 74 c8 04 08       |..t...  |   mov    edx, DWORD PTR ds:[0x0804c874]
 0x080497cf: 8b 1d 78 c8 04 08       |..x...  |   mov    ebx, DWORD PTR ds:[0x0804c878]
 0x080497d5: 8b 35 7c c8 04 08       |.5|...  |   mov    esi, DWORD PTR ds:[0x0804c87c]
-0x080497db: 89 85 c4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc4<-0x0000343c>], eax
-0x080497e1: 25 00 f0 ff ff          |%....   |   and    eax, 0xfffff000<-0x00001000>
-0x080497e6: 89 85 b8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>], eax
-0x080497ec: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x080497f2: 89 95 bc cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>], edx
-0x080497f8: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
-0x080497fe: 89 95 c8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc8<-0x00003438>], edx
+0x080497db: 89 85 c4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc4<-13372>], eax
+0x080497e1: 25 00 f0 ff ff          |%....   |   and    eax, 0xfffff000<-4096>
+0x080497e6: 89 85 b8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb8<-13384>], eax
+0x080497ec: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x080497f2: 89 95 bc cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbbc<-13380>], edx
+0x080497f8: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
+0x080497fe: 89 95 c8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc8<-13368>], edx
 0x08049804: 83 fe 00                |...     |   cmp    esi, 0x00
 0x08049807: 7c 11                   ||.      |   jl     0x0804981a<<Insn>>
 0x08049807: Successor blocks: 0x08049809, 0x0804981a
@@ -6778,9 +6778,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804981a: Basic block reasons: graph-1
 0x0804981a: Predecessor blocks: 0x080497c4, 0x0804980b, 0x08049813
 0x0804981a: Dominator block: 0x080497c4
-0x0804981a: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
-0x08049820: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x08049826: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x0804981a: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
+0x08049820: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x08049826: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x0804982c: 6a 02                   |j.      |   push   0x02
 0x0804982e: 6a 01                   |j.      |   push   0x01
 0x08049830: 53                      |S       |   push   ebx
@@ -6792,7 +6792,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049838: Predecessor blocks: 0x0804981a
 0x08049838: Dominator block: 0x0804981a
 0x08049838: 83 c4 1c                |...     |   add    esp, 0x1c
-0x0804983b: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x0804983b: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x0804983e: 0f 85 9f 00 00 00       |......  |   jne    0x080498e3<<Insn>>
 0x0804983e: Successor blocks: 0x08049844, 0x080498e3
 
@@ -6806,8 +6806,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049851: Basic block reasons: graph-1
 0x08049851: Predecessor blocks: 0x08049844
 0x08049851: Dominator block: 0x08049844
-0x08049851: 8b 95 bc cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
-0x08049857: 0b 95 b8 cb ff ff       |......  |   or     edx, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
+0x08049851: 8b 95 bc cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
+0x08049857: 0b 95 b8 cb ff ff       |......  |   or     edx, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
 0x0804985d: 0f 84 41 02 00 00       |..A...  |   je     0x08049aa4<<Insn>>
 0x0804985d: Successor blocks: 0x08049863, 0x08049aa4
 
@@ -6817,18 +6817,18 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049863: a1 70 c8 04 08          |.p...   |   mov    eax, DWORD PTR ds:[0x0804c870]
 0x08049868: 8b 15 74 c8 04 08       |..t...  |   mov    edx, DWORD PTR ds:[0x0804c874]
 0x0804986e: c7 85 bc cb ff ff 00 00 |........|
-0x08049876: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>], 0x00000000
+0x08049876: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcbbc<-13380>], 0x00000000
 0x08049878: 8b 1d 78 c8 04 08       |..x...  |   mov    ebx, DWORD PTR ds:[0x0804c878]
-0x0804987e: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
+0x0804987e: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
 0x08049884: 8b 35 7c c8 04 08       |.5|...  |   mov    esi, DWORD PTR ds:[0x0804c87c]
-0x0804988a: 89 95 d4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbd4<-0x0000342c>], edx
+0x0804988a: 89 95 d4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbd4<-13356>], edx
 0x08049890: 0f b7 d0                |...     |   movzx  edx, ax
-0x08049893: 89 95 b8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>], edx
-0x08049899: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x0804989f: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x080498a5: 89 85 d0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbd0<-0x00003430>], eax
-0x080498ab: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
-0x080498b1: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
+0x08049893: 89 95 b8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb8<-13384>], edx
+0x08049899: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x0804989f: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x080498a5: 89 85 d0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbd0<-13360>], eax
+0x080498ab: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
+0x080498b1: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
 0x080498b7: 6a 02                   |j.      |   push   0x02
 0x080498b9: 6a 01                   |j.      |   push   0x01
 0x080498bb: 53                      |S       |   push   ebx
@@ -6840,40 +6840,40 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080498c3: Predecessor blocks: 0x08049863
 0x080498c3: Dominator block: 0x08049863
 0x080498c3: 83 c4 1c                |...     |   add    esp, 0x1c
-0x080498c6: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x080498c6: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x080498c9: 0f 84 d5 01 00 00       |......  |   je     0x08049aa4<<Insn>>
 0x080498c9: Successor blocks: 0x080498cf, 0x08049aa4
 
 0x080498cf: Basic block reasons: graph-1
 0x080498cf: Predecessor blocks: 0x080498c3
 0x080498cf: Dominator block: 0x080498c3
-0x080498cf: 8b 8d d0 cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcbd0<-0x00003430>]
-0x080498d5: 2b 8d b8 cb ff ff       |+.....  |   sub    ecx, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x080498db: 89 8d b4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>], ecx
+0x080498cf: 8b 8d d0 cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcbd0<-13360>]
+0x080498d5: 2b 8d b8 cb ff ff       |+.....  |   sub    ecx, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x080498db: 89 8d b4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-13388>], ecx
 0x080498e1: eb 12                   |..      |   jmp    0x080498f5<<Insn>>
 0x080498e1: Successor blocks: 0x080498f5
 
 0x080498e3: Basic block reasons: graph-1
 0x080498e3: Predecessor blocks: 0x08049838
 0x080498e3: Dominator block: 0x08049838
-0x080498e3: 8b bd c4 cb ff ff       |......  |   mov    edi, DWORD PTR ss:[ebp + 0xffffcbc4<-0x0000343c>]
-0x080498e9: 2b bd b8 cb ff ff       |+.....  |   sub    edi, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x080498ef: 89 bd b4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>], edi
+0x080498e3: 8b bd c4 cb ff ff       |......  |   mov    edi, DWORD PTR ss:[ebp + 0xffffcbc4<-13372>]
+0x080498e9: 2b bd b8 cb ff ff       |+.....  |   sub    edi, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x080498ef: 89 bd b4 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-13388>], edi
 0x080498ef: Successor blocks: 0x080498f5
 
 0x080498f5: Basic block reasons: graph-1
 0x080498f5: Predecessor blocks: 0x080498cf, 0x080498e3
 0x080498f5: Dominator block: 0x08049838
-0x080498f5: 89 85 b0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb0<-0x00003450>], eax
-0x080498fb: c7 45 d8 01 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-0x28>], 0x00000001
-0x08049902: 66 c7 45 dc 04 00       |f.E...  |   mov    WORD PTR ss:[ebp + 0xdc<-0x24>], 0x0004
+0x080498f5: 89 85 b0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb0<-13392>], eax
+0x080498fb: c7 45 d8 01 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x00000001
+0x08049902: 66 c7 45 dc 04 00       |f.E...  |   mov    WORD PTR ss:[ebp + 0xdc<-36>], 0x0004
 0x08049908: e9 59 01 00 00          |.Y...   |   jmp    0x08049a66<<Insn>>
 0x08049908: Successor blocks: 0x08049a66
 
 0x0804990d: Basic block reasons: graph-1
 0x0804990d: Predecessor blocks: 0x08049a66, 0x08049a7f
 0x0804990d: Dominator block: 0x08049a66
-0x0804990d: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x0804990d: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08049910: 89 df                   |..      |   mov    edi, ebx
 0x08049912: 50                      |P       |   push   eax
 0x08049913: e8 88 08 00 00          |.....   |   call   0x0804a1a0<<Func>>
@@ -6882,25 +6882,25 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049918: Basic block reasons: graph-1
 0x08049918: Predecessor blocks: 0x0804990d
 0x08049918: Dominator block: 0x0804990d
-0x08049918: 2b bd b4 cb ff ff       |+.....  |   sub    edi, DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>]
-0x0804991e: 89 9d c0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc0<-0x00003440>], ebx
+0x08049918: 2b bd b4 cb ff ff       |+.....  |   sub    edi, DWORD PTR ss:[ebp + 0xffffcbb4<-13388>]
+0x0804991e: 89 9d c0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbc0<-13376>], ebx
 0x08049924: 83 c0 14                |...     |   add    eax, 0x14
-0x08049927: 89 85 a8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba8<-0x00003458>], eax
-0x0804992d: 8b 85 b0 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcbb0<-0x00003450>]
-0x08049933: 03 85 b4 cb ff ff       |......  |   add    eax, DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>]
-0x08049939: 89 85 ac cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbac<-0x00003454>], eax
+0x08049927: 89 85 a8 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcba8<-13400>], eax
+0x0804992d: 8b 85 b0 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcbb0<-13392>]
+0x08049933: 03 85 b4 cb ff ff       |......  |   add    eax, DWORD PTR ss:[ebp + 0xffffcbb4<-13388>]
+0x08049939: 89 85 ac cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbac<-13396>], eax
 0x0804993f: eb 65                   |.e      |   jmp    0x080499a6<<Insn>>
 0x0804993f: Successor blocks: 0x080499a6
 
 0x08049941: Basic block reasons: graph-1
 0x08049941: Predecessor blocks: 0x080499a7
 0x08049941: Dominator block: 0x080499a7
-0x08049941: 8b 85 a8 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcba8<-0x00003458>]
-0x08049947: 2b 45 e8                |+E.     |   sub    eax, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x0804994a: 69 c0 e8 03 00 00       |i.....  |   imul   eax, eax, 0x000003e8
+0x08049941: 8b 85 a8 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcba8<-13400>]
+0x08049947: 2b 45 e8                |+E.     |   sub    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x0804994a: 69 c0 e8 03 00 00       |i.....  |   imul   eax, eax, 0x000003e8<1000>
 0x08049950: 50                      |P       |   push   eax
 0x08049951: 6a 01                   |j.      |   push   0x01
-0x08049953: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-0x28>]
+0x08049953: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-40>]
 0x08049956: 50                      |P       |   push   eax
 0x08049957: e8 1c 08 00 00          |.....   |   call   0x0804a178<<Func>>
 0x08049957: Successor blocks: 0x0804a178<<Func>>, 0x0804995c
@@ -6909,7 +6909,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804995c: Predecessor blocks: 0x08049941
 0x0804995c: Dominator block: 0x08049941
 0x0804995c: 83 c4 0c                |...     |   add    esp, 0x0c
-0x0804995f: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x0804995f: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08049962: 0f 84 57 03 00 00       |..W...  |   je     0x08049cbf<<Insn>>
 0x08049962: Successor blocks: 0x08049968, 0x08049cbf
 
@@ -6923,8 +6923,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804996c: Basic block reasons: graph-1
 0x0804996c: Predecessor blocks: 0x08049968
 0x0804996c: Dominator block: 0x08049968
-0x0804996c: 8b 95 a8 cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcba8<-0x00003458>]
-0x08049972: 39 55 e8                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-0x18>], edx
+0x0804996c: 8b 95 a8 cb ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xffffcba8<-13400>]
+0x08049972: 39 55 e8                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-24>], edx
 0x08049975: 7c 30                   ||0      |   jl     0x080499a7<<Insn>>
 0x08049975: Successor blocks: 0x08049977, 0x080499a7
 
@@ -6938,7 +6938,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804997c: Predecessor blocks: 0x08049968
 0x0804997c: Dominator block: 0x08049968
 0x0804997c: 57                      |W       |   push   edi
-0x0804997d: ff b5 ac cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbac<-0x00003454>]
+0x0804997d: ff b5 ac cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbac<-13396>]
 0x08049983: 6a 01                   |j.      |   push   0x01
 0x08049985: e8 1e 08 00 00          |.....   |   call   0x0804a1a8<<Func>>
 0x08049985: Successor blocks: 0x0804a1a8<<Func>>, 0x0804998a
@@ -6955,8 +6955,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049995: Predecessor blocks: 0x0804998a
 0x08049995: Dominator block: 0x0804998a
 0x08049995: 29 c7                   |).      |   sub    edi, eax
-0x08049997: 01 85 ac cb ff ff       |......  |   add    DWORD PTR ss:[ebp + 0xffffcbac<-0x00003454>], eax
-0x0804999d: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x08049997: 01 85 ac cb ff ff       |......  |   add    DWORD PTR ss:[ebp + 0xffffcbac<-13396>], eax
+0x0804999d: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x080499a0: 50                      |P       |   push   eax
 0x080499a1: e8 fa 07 00 00          |.....   |   call   0x0804a1a0<<Func>>
 0x080499a1: Successor blocks: 0x0804a1a0<<Func>>, 0x080499a6
@@ -6977,20 +6977,20 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080499ab: Basic block reasons: graph-1
 0x080499ab: Predecessor blocks: 0x080499a7
 0x080499ab: Dominator block: 0x080499a7
-0x080499ab: 8b 8d b4 cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>]
+0x080499ab: 8b 8d b4 cb ff ff       |......  |   mov    ecx, DWORD PTR ss:[ebp + 0xffffcbb4<-13388>]
 0x080499b1: 89 d8                   |..      |   mov    eax, ebx
 0x080499b3: 89 f2                   |..      |   mov    edx, esi
-0x080499b5: ff b5 c0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbc0<-0x00003440>]
+0x080499b5: ff b5 c0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbc0<-13376>]
 0x080499bb: c7 85 80 cb ff ff 00 00 |........|
-0x080499c3: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcb80<-0x00003480>], 0x00000000
-0x080499c5: 89 8d 7c cb ff ff       |..|...  |   mov    DWORD PTR ss:[ebp + 0xffffcb7c<-0x00003484>], ecx
-0x080499cb: 2b 85 7c cb ff ff       |+.|...  |   sub    eax, DWORD PTR ss:[ebp + 0xffffcb7c<-0x00003484>]
-0x080499d1: ff b5 b0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb0<-0x00003450>]
-0x080499d7: 1b 95 80 cb ff ff       |......  |   sbb    edx, DWORD PTR ss:[ebp + 0xffffcb80<-0x00003480>]
+0x080499c3: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcb80<-13440>], 0x00000000
+0x080499c5: 89 8d 7c cb ff ff       |..|...  |   mov    DWORD PTR ss:[ebp + 0xffffcb7c<-13444>], ecx
+0x080499cb: 2b 85 7c cb ff ff       |+.|...  |   sub    eax, DWORD PTR ss:[ebp + 0xffffcb7c<-13444>]
+0x080499d1: ff b5 b0 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb0<-13392>]
+0x080499d7: 1b 95 80 cb ff ff       |......  |   sbb    edx, DWORD PTR ss:[ebp + 0xffffcb80<-13440>]
 0x080499dd: 01 05 70 c8 04 08       |..p...  |   add    DWORD PTR ds:[0x0804c870], eax
 0x080499e3: 11 15 74 c8 04 08       |..t...  |   adc    DWORD PTR ds:[0x0804c874], edx
-0x080499e9: 01 9d b8 cb ff ff       |......  |   add    DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>], ebx
-0x080499ef: 11 b5 bc cb ff ff       |......  |   adc    DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>], esi
+0x080499e9: 01 9d b8 cb ff ff       |......  |   add    DWORD PTR ss:[ebp + 0xffffcbb8<-13384>], ebx
+0x080499ef: 11 b5 bc cb ff ff       |......  |   adc    DWORD PTR ss:[ebp + 0xffffcbbc<-13380>], esi
 0x080499f5: e8 76 07 00 00          |.v...   |   call   0x0804a170<<Func>>
 0x080499f5: Successor blocks: 0x0804a170<<Func>>, 0x080499fa
 
@@ -6998,9 +6998,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x080499fa: Predecessor blocks: 0x080499ab
 0x080499fa: Dominator block: 0x080499ab
 0x080499fa: 8b 1d 78 c8 04 08       |..x...  |   mov    ebx, DWORD PTR ds:[0x0804c878]
-0x08049a00: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
+0x08049a00: 2b 9d b8 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
 0x08049a06: 8b 35 7c c8 04 08       |.5|...  |   mov    esi, DWORD PTR ds:[0x0804c87c]
-0x08049a0c: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
+0x08049a0c: 1b b5 bc cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
 0x08049a12: 5f                      |_       |   pop    edi
 0x08049a13: 89 f2                   |..      |   mov    edx, esi
 0x08049a15: 09 da                   |..      |   or     edx, ebx
@@ -7038,9 +7038,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049a30: Basic block reasons: graph-1
 0x08049a30: Predecessor blocks: 0x08049a1a, 0x08049a21, 0x08049a29
 0x08049a30: Dominator block: 0x08049a1a
-0x08049a30: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-0x00003444>]
-0x08049a36: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-0x00003448>]
-0x08049a3c: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x08049a30: ff b5 bc cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbbc<-13380>]
+0x08049a36: ff b5 b8 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcbb8<-13384>]
+0x08049a3c: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x08049a42: 6a 01                   |j.      |   push   0x01
 0x08049a44: 6a 01                   |j.      |   push   0x01
 0x08049a46: 53                      |S       |   push   ebx
@@ -7052,21 +7052,21 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049a4e: Predecessor blocks: 0x08049a30
 0x08049a4e: Dominator block: 0x08049a30
 0x08049a4e: 83 c4 1c                |...     |   add    esp, 0x1c
-0x08049a51: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08049a51: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08049a54: 74 4e                   |tN      |   je     0x08049aa4<<Insn>>
 0x08049a54: Successor blocks: 0x08049a56, 0x08049aa4
 
 0x08049a56: Basic block reasons: graph-1
 0x08049a56: Predecessor blocks: 0x08049a4e
 0x08049a56: Dominator block: 0x08049a4e
-0x08049a56: 89 85 b0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb0<-0x00003450>], eax
+0x08049a56: 89 85 b0 cb ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xffffcbb0<-13392>], eax
 0x08049a56: Successor blocks: 0x08049a5c
 
 0x08049a5c: Basic block reasons: graph-1
 0x08049a5c: Predecessor blocks: 0x080499fa, 0x08049a56
 0x08049a5c: Dominator block: 0x080499fa
 0x08049a5c: c7 85 b4 cb ff ff 00 00 |........|
-0x08049a64: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-0x0000344c>], 0x00000000
+0x08049a64: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xffffcbb4<-13388>], 0x00000000
 0x08049a5c: Successor blocks: 0x08049a66
 
 0x08049a66: Basic block reasons: graph-1
@@ -7100,8 +7100,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049a8d: Basic block reasons: graph-1
 0x08049a8d: Predecessor blocks: 0x080497ba
 0x08049a8d: Dominator block: 0x080497ba
-0x08049a8d: 2b 9d a0 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcba0<-0x00003460>]
-0x08049a93: 1b b5 a4 cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcba4<-0x0000345c>]
+0x08049a8d: 2b 9d a0 cb ff ff       |+.....  |   sub    ebx, DWORD PTR ss:[ebp + 0xffffcba0<-13408>]
+0x08049a93: 1b b5 a4 cb ff ff       |......  |   sbb    esi, DWORD PTR ss:[ebp + 0xffffcba4<-13404>]
 0x08049a99: 89 f1                   |..      |   mov    ecx, esi
 0x08049a9b: 09 d9                   |..      |   or     ecx, ebx
 0x08049a9d: 74 1c                   |t.      |   je     0x08049abb<<Insn>>
@@ -7116,14 +7116,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049aa4: Basic block reasons: graph-1
 0x08049aa4: Predecessor blocks: 0x08049844, 0x08049851, 0x080498c3, 0x08049a4e
 0x08049aa4: Dominator block: 0x08049838
-0x08049aa4: 8b 85 94 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x08049aa4: 8b 85 94 cb ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x08049aaa: e8 82 ef ff ff          |.....   |   call   0x08048a31<<Func>>
 0x08049aaa: Successor blocks: 0x08048a31<<Func>>, 0x08049aaf
 
 0x08049aaf: Basic block reasons: graph-1
 0x08049aaf: Predecessor blocks: 0x08049aa4
 0x08049aaf: Dominator block: 0x08049aa4
-0x08049aaf: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x08049aaf: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x08049ab2: 74 61                   |ta      |   je     0x08049b15<<Insn>>
 0x08049ab2: Successor blocks: 0x08049ab4, 0x08049b15
 
@@ -7145,12 +7145,12 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049ac4: Predecessor blocks: 0x08049abb
 0x08049ac4: Dominator block: 0x08049abb
 0x08049ac4: 6a 04                   |j.      |   push   0x04
-0x08049ac6: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-0x14>]
+0x08049ac6: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-20>]
 0x08049ac9: 50                      |P       |   push   eax
 0x08049aca: 6a 03                   |j.      |   push   0x03
 0x08049acc: 6a 06                   |j.      |   push   0x06
 0x08049ace: 6a 01                   |j.      |   push   0x01
-0x08049ad0: c7 45 ec 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xec<-0x14>], 0x00000000
+0x08049ad0: c7 45 ec 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xec<-20>], 0x00000000
 0x08049ad7: e8 00 09 00 00          |.....   |   call   0x0804a3dc<<Func>>
 0x08049ad7: Successor blocks: 0x0804a3dc<<Func>>, 0x08049adc
 
@@ -7170,7 +7170,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049aec: Basic block reasons: graph-1
 0x08049aec: Predecessor blocks: 0x08049adf
 0x08049aec: Dominator block: 0x08049adf
-0x08049aec: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-0x0000346c>]
+0x08049aec: ff b5 94 cb ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xffffcb94<-13420>]
 0x08049af2: e8 69 06 00 00          |.i...   |   call   0x0804a160<<Func>>
 0x08049af2: Successor blocks: 0x0804a160<<Func>>, 0x08049af7
 
@@ -7199,7 +7199,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b15: Predecessor blocks: 0x08048baf, 0x08048bd3, 0x08048bf1, 0x08048c16, 0x08048c2f, 0x0804998a, 0x08049aaf
 0x08049b15: Dominator block: 0x08048b94
 0x08049b15: c7 05 fc c7 04 08 f4 01 |........|
-0x08049b1d: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x000001f4
+0x08049b1d: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x000001f4<500>
 0x08049b1f: e9 87 01 00 00          |.....   |   jmp    0x08049cab<<Insn>>
 0x08049b1f: Successor blocks: 0x08049cab
 
@@ -7220,7 +7220,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b30: Predecessor blocks: 0x0804929d, 0x08049b2f
 0x08049b30: Dominator block: 0x0804929d
 0x08049b30: a1 fc c7 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804c7fc<.data+8>]
-0x08049b35: 3d 96 01 00 00          |=....   |   cmp    eax, 0x00000196
+0x08049b35: 3d 96 01 00 00          |=....   |   cmp    eax, 0x00000196<406>
 0x08049b3a: 0f 84 2f 01 00 00       |../...  |   je     0x08049c6f<<Insn>>
 0x08049b3a: Successor blocks: 0x08049b40, 0x08049c6f
 
@@ -7233,14 +7233,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b42: Basic block reasons: graph-1
 0x08049b42: Predecessor blocks: 0x08049b40
 0x08049b42: Dominator block: 0x08049b40
-0x08049b42: 3d 30 01 00 00          |=0...   |   cmp    eax, 0x00000130
+0x08049b42: 3d 30 01 00 00          |=0...   |   cmp    eax, 0x00000130<304>
 0x08049b47: 0f 84 4a 01 00 00       |..J...  |   je     0x08049c97<<Insn>>
 0x08049b47: Successor blocks: 0x08049b4d, 0x08049c97
 
 0x08049b4d: Basic block reasons: graph-1
 0x08049b4d: Predecessor blocks: 0x08049b42
 0x08049b4d: Dominator block: 0x08049b42
-0x08049b4d: 3d 94 01 00 00          |=....   |   cmp    eax, 0x00000194
+0x08049b4d: 3d 94 01 00 00          |=....   |   cmp    eax, 0x00000194<404>
 0x08049b52: 0f 85 67 01 00 00       |..g...  |   jne    0x08049cbf<<Insn>>
 0x08049b52: Successor blocks: 0x08049b58, 0x08049cbf
 
@@ -7249,7 +7249,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b58: Dominator block: 0x08049b4d
 0x08049b58: eb 1b                   |..      |   jmp    0x08049b75<<Insn>>
 0x08049b75: 8b 15 34 c9 04 08       |..4...  |   mov    edx, DWORD PTR ds:[0x0804c934]
-0x08049b7b: 83 c9 ff                |...     |   or     ecx, 0xff<-0x01>
+0x08049b7b: 83 c9 ff                |...     |   or     ecx, 0xff<-1>
 0x08049b7e: 31 c0                   |1.      |   xor    eax, eax
 0x08049b80: fc                      |.       |   cld    
 0x08049b81: 89 d7                   |..      |   mov    edi, edx
@@ -7257,7 +7257,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b85: 89 d7                   |..      |   mov    edi, edx
 0x08049b87: f7 d1                   |..      |   not    ecx
 0x08049b89: 83 c1 13                |...     |   add    ecx, 0x13
-0x08049b8c: 83 e1 fc                |...     |   and    ecx, 0xfc<-0x04>
+0x08049b8c: 83 e1 fc                |...     |   and    ecx, 0xfc<-4>
 0x08049b8f: 29 cc                   |).      |   sub    esp, ecx
 0x08049b91: eb 01                   |..      |   jmp    0x08049b94<<Insn>>
 0x08049b91: Successor blocks: 0x08049b94
@@ -7265,14 +7265,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b5a: Basic block reasons: graph-1
 0x08049b5a: Predecessor blocks: 0x08049b40
 0x08049b5a: Dominator block: 0x08049b40
-0x08049b5a: 3d a0 01 00 00          |=....   |   cmp    eax, 0x000001a0
+0x08049b5a: 3d a0 01 00 00          |=....   |   cmp    eax, 0x000001a0<416>
 0x08049b5f: 0f 84 1e 01 00 00       |......  |   je     0x08049c83<<Insn>>
 0x08049b5f: Successor blocks: 0x08049b65, 0x08049c83
 
 0x08049b65: Basic block reasons: graph-1
 0x08049b65: Predecessor blocks: 0x08049b5a
 0x08049b65: Dominator block: 0x08049b5a
-0x08049b65: 3d f4 01 00 00          |=....   |   cmp    eax, 0x000001f4
+0x08049b65: 3d f4 01 00 00          |=....   |   cmp    eax, 0x000001f4<500>
 0x08049b6a: 0f 85 4f 01 00 00       |..O...  |   jne    0x08049cbf<<Insn>>
 0x08049b6a: Successor blocks: 0x08049b70, 0x08049cbf
 
@@ -7298,8 +7298,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049b99: Basic block reasons: graph-1
 0x08049b99: Predecessor blocks: 0x08049b94
 0x08049b99: Dominator block: 0x08049b94
-0x08049b99: 68 ff 03 00 00          |h....   |   push   0x000003ff
-0x08049b9e: 8d b5 d8 fb ff ff       |......  |   lea    esi, [ebp + 0xfffffbd8<-0x00000428>]
+0x08049b99: 68 ff 03 00 00          |h....   |   push   0x000003ff<1023>
+0x08049b9e: 8d b5 d8 fb ff ff       |......  |   lea    esi, [ebp + 0xfffffbd8<-1064>]
 0x08049ba4: 56                      |V       |   push   esi
 0x08049ba5: 57                      |W       |   push   edi
 0x08049ba6: e8 d5 05 00 00          |.....   |   call   0x0804a180<<Func>>
@@ -7346,7 +7346,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049bc9: 68 29 b0 04 08          |h)...   |   push   0x0804b029<<StaticData@0x0804af27>+0x0102>
 0x08049bce: ff 35 04 c8 04 08       |.5....  |   push   DWORD PTR ds:[0x0804c804<.data+0x10>]
 0x08049bd4: c7 05 fc c7 04 08 2d 01 |......-.|
-0x08049bdc: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x0000012d
+0x08049bdc: 00 00                   |..      |   mov    DWORD PTR ds:[0x0804c7fc<.data+8>], 0x0000012d<301>
 0x08049bde: e8 e9 00 00 00          |.....   |   call   0x08049ccc<<Func>>
 0x08049bde: Successor blocks: 0x08049ccc<<Func>>, 0x08049be3
 
@@ -7391,7 +7391,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049c0f: Basic block reasons: graph-1
 0x08049c0f: Predecessor blocks: 0x08049c08
 0x08049c0f: Dominator block: 0x08049c08
-0x08049c0f: 8b 9d 88 cb ff ff       |......  |   mov    ebx, DWORD PTR ss:[ebp + 0xffffcb88<-0x00003478>]
+0x08049c0f: 8b 9d 88 cb ff ff       |......  |   mov    ebx, DWORD PTR ss:[ebp + 0xffffcb88<-13432>]
 0x08049c15: e8 4a e8 ff ff          |.J...   |   call   0x08048464<<Func>>
 0x08049c15: Successor blocks: 0x08048464<<Func>>, 0x08049c1a
 
@@ -7478,7 +7478,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049c5b: Dominator block: 0x08049c3c
 0x08049c5b: b9 51 b3 04 08          |.Q...   |   mov    ecx, 0x0804b351<<StaticData@0x0804af27>+0x042a>
 0x08049c60: ba 08 b2 04 08          |.....   |   mov    edx, 0x0804b208<<StaticData@0x0804af27>+0x02e1>
-0x08049c65: b8 94 01 00 00          |.....   |   mov    eax, 0x00000194
+0x08049c65: b8 94 01 00 00          |.....   |   mov    eax, 0x00000194<404>
 0x08049c6a: e8 47 ed ff ff          |.G...   |   call   0x080489b6<<Func>>
 0x08049c6a: Successor blocks: 0x080489b6<<Func>>, 0x08049c6f
 
@@ -7487,7 +7487,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049c6f: Dominator block: 0x08049b30
 0x08049c6f: b9 84 b3 04 08          |.....   |   mov    ecx, 0x0804b384<<StaticData@0x0804af27>+0x045d>
 0x08049c74: ba bb b3 04 08          |.....   |   mov    edx, 0x0804b3bb<<StaticData@0x0804af27>+0x0494>
-0x08049c79: b8 96 01 00 00          |.....   |   mov    eax, 0x00000196
+0x08049c79: b8 96 01 00 00          |.....   |   mov    eax, 0x00000196<406>
 0x08049c7e: e8 33 ed ff ff          |.3...   |   call   0x080489b6<<Func>>
 0x08049c7e: Successor blocks: 0x080489b6<<Func>>, 0x08049c83
 
@@ -7496,7 +7496,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049c83: Dominator block: 0x08049b30
 0x08049c83: b9 2d b0 04 08          |.-...   |   mov    ecx, 0x0804b02d<<StaticData@0x0804af27>+0x0106>
 0x08049c88: ba ca b3 04 08          |.....   |   mov    edx, 0x0804b3ca<<StaticData@0x0804af27>+0x04a3>
-0x08049c8d: b8 a0 01 00 00          |.....   |   mov    eax, 0x000001a0
+0x08049c8d: b8 a0 01 00 00          |.....   |   mov    eax, 0x000001a0<416>
 0x08049c92: e8 1f ed ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08049c92: Successor blocks: 0x080489b6<<Func>>, 0x08049c97
 
@@ -7505,7 +7505,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049c97: Dominator block: 0x08049b30
 0x08049c97: b9 2d b0 04 08          |.-...   |   mov    ecx, 0x0804b02d<<StaticData@0x0804af27>+0x0106>
 0x08049c9c: ba ea b3 04 08          |.....   |   mov    edx, 0x0804b3ea<<StaticData@0x0804af27>+0x04c3>
-0x08049ca1: b8 30 01 00 00          |.0...   |   mov    eax, 0x00000130
+0x08049ca1: b8 30 01 00 00          |.0...   |   mov    eax, 0x00000130<304>
 0x08049ca6: e8 0b ed ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08049ca6: Successor blocks: 0x080489b6<<Func>>, 0x08049cab
 
@@ -7514,14 +7514,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08049cab: Dominator block: 0x08048b94
 0x08049cab: b9 2d b0 04 08          |.-...   |   mov    ecx, 0x0804b02d<<StaticData@0x0804af27>+0x0106>
 0x08049cb0: ba f6 b3 04 08          |.....   |   mov    edx, 0x0804b3f6<<StaticData@0x0804af27>+0x04cf>
-0x08049cb5: b8 f4 01 00 00          |.....   |   mov    eax, 0x000001f4
+0x08049cb5: b8 f4 01 00 00          |.....   |   mov    eax, 0x000001f4<500>
 0x08049cba: e8 f7 ec ff ff          |.....   |   call   0x080489b6<<Func>>
 0x08049cba: Successor blocks: 0x080489b6<<Func>>, 0x08049cbf
 
 0x08049cbf: Basic block reasons: graph-1
 0x08049cbf: Predecessor blocks: 0x08048c93, 0x08048cb5, 0x08048cce, 0x08048cda, 0x0804995c, 0x08049977, 0x08049ab4, 0x08049b4d, 0x08049b65, 0x08049cab
 0x08049cbf: Dominator block: 0x08048b94
-0x08049cbf: 8d 65 f4                |.e.     |   lea    esp, [ebp + 0xf4<-0x0c>]
+0x08049cbf: 8d 65 f4                |.e.     |   lea    esp, [ebp + 0xf4<-12>]
 0x08049cc2: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
 0x08049cc7: 5b                      |[       |   pop    ebx
 0x08049cc8: 5e                      |^       |   pop    esi
@@ -7578,7 +7578,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x08048b6f: 57                      |W       |   push   edi
 0x08048b70: 56                      |V       |   push   esi
 0x08048b71: 53                      |S       |   push   ebx
-0x08048b72: 81 ec 78 34 00 00       |..x4..  |   sub    esp, 0x00003478
+0x08048b72: 81 ec 78 34 00 00       |..x4..  |   sub    esp, 0x00003478<13432>
 0x08048b78: 83 7d 08 01             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x01
 0x08048b7c: 7e 0c                   |~.      |   jle    0x08048b8a<<Insn>>
 0x08048b7c: Successor blocks: 0x08048b7e, 0x08048b8a
@@ -7726,7 +7726,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a559: Predecessor blocks: 0x0804a551
 0x0804a559: Dominator block: 0x0804a551
 0x0804a559: 0f be 06                |...     |   movsx  eax, BYTE PTR ds:[esi]
-0x0804a55c: 8d 50 bf                |.P.     |   lea    edx, [eax + 0xbf<-0x41>]
+0x0804a55c: 8d 50 bf                |.P.     |   lea    edx, [eax + 0xbf<-65>]
 0x0804a55f: 83 fa 19                |...     |   cmp    edx, 0x19
 0x0804a562: 77 03                   |w.      |   ja     0x0804a567<<Insn>>
 0x0804a562: Successor blocks: 0x0804a564, 0x0804a567
@@ -7734,14 +7734,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a564: Basic block reasons: graph-1
 0x0804a564: Predecessor blocks: 0x0804a559
 0x0804a564: Dominator block: 0x0804a559
-0x0804a564: 8d 50 df                |.P.     |   lea    edx, [eax + 0xdf<-0x21>]
+0x0804a564: 8d 50 df                |.P.     |   lea    edx, [eax + 0xdf<-33>]
 0x0804a564: Successor blocks: 0x0804a567
 
 0x0804a567: Basic block reasons: graph-1
 0x0804a567: Predecessor blocks: 0x0804a559, 0x0804a564
 0x0804a567: Dominator block: 0x0804a559
 0x0804a567: 0f be 0b                |...     |   movsx  ecx, BYTE PTR ds:[ebx]
-0x0804a56a: 8d 41 bf                |.A.     |   lea    eax, [ecx + 0xbf<-0x41>]
+0x0804a56a: 8d 41 bf                |.A.     |   lea    eax, [ecx + 0xbf<-65>]
 0x0804a56d: 83 f8 19                |...     |   cmp    eax, 0x19
 0x0804a570: 77 03                   |w.      |   ja     0x0804a575<<Insn>>
 0x0804a570: Successor blocks: 0x0804a572, 0x0804a575
@@ -7749,7 +7749,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a572: Basic block reasons: graph-1
 0x0804a572: Predecessor blocks: 0x0804a567
 0x0804a572: Dominator block: 0x0804a567
-0x0804a572: 8d 41 df                |.A.     |   lea    eax, [ecx + 0xdf<-0x21>]
+0x0804a572: 8d 41 df                |.A.     |   lea    eax, [ecx + 0xdf<-33>]
 0x0804a572: Successor blocks: 0x0804a575
 
 0x0804a575: Basic block reasons: graph-1
@@ -7762,7 +7762,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a579: Basic block reasons: graph-1
 0x0804a579: Predecessor blocks: 0x0804a575
 0x0804a579: Dominator block: 0x0804a575
-0x0804a579: 83 fa bf                |...     |   cmp    edx, 0xbf<-0x41>
+0x0804a579: 83 fa bf                |...     |   cmp    edx, 0xbf<-65>
 0x0804a57c: 74 04                   |t.      |   je     0x0804a582<<Insn>>
 0x0804a57c: Successor blocks: 0x0804a57e, 0x0804a582
 
@@ -7855,7 +7855,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a5b3: 57                      |W       |   push   edi
 0x0804a5b4: 88 d0                   |..      |   mov    al, dl
 0x0804a5b6: 56                      |V       |   push   esi
-0x0804a5b7: 83 c9 ff                |...     |   or     ecx, 0xff<-0x01>
+0x0804a5b7: 83 c9 ff                |...     |   or     ecx, 0xff<-1>
 0x0804a5ba: 53                      |S       |   push   ebx
 0x0804a5bb: 8b 6c 24 18             |.l$.    |   mov    ebp, DWORD PTR ss:[esp + 0x18]
 0x0804a5bf: fc                      |.       |   cld    
@@ -7864,12 +7864,12 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a5c6: f2 ae                   |..      |   repne_scasb 
 0x0804a5c8: 89 df                   |..      |   mov    edi, ebx
 0x0804a5ca: 89 ce                   |..      |   mov    esi, ecx
-0x0804a5cc: 83 c9 ff                |...     |   or     ecx, 0xff<-0x01>
+0x0804a5cc: 83 c9 ff                |...     |   or     ecx, 0xff<-1>
 0x0804a5cf: f2 ae                   |..      |   repne_scasb 
 0x0804a5d1: f7 d6                   |..      |   not    esi
 0x0804a5d3: 4e                      |N       |   dec    esi
 0x0804a5d4: f7 d1                   |..      |   not    ecx
-0x0804a5d6: 8d 51 ff                |.Q.     |   lea    edx, [ecx + 0xff<-0x01>]
+0x0804a5d6: 8d 51 ff                |.Q.     |   lea    edx, [ecx + 0xff<-1>]
 0x0804a5d9: 74 21                   |t!      |   je     0x0804a5fc<<Insn>>
 0x0804a5fc: 89 df                   |..      |   mov    edi, ebx
 0x0804a5fe: eb 08                   |..      |   jmp    0x0804a608<<Insn>>
@@ -7918,7 +7918,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a610: Basic block reasons: entry point, graph-1
 0x0804a610: Predecessor blocks: 0x08049121<<Func>>
 0x0804a610: 8b 54 24 04             |.T$.    |   mov    edx, DWORD PTR ss:[esp + 0x04]
-0x0804a614: 8d 42 bf                |.B.     |   lea    eax, [edx + 0xbf<-0x41>]
+0x0804a614: 8d 42 bf                |.B.     |   lea    eax, [edx + 0xbf<-65>]
 0x0804a617: 83 f8 19                |...     |   cmp    eax, 0x19
 0x0804a61a: 77 03                   |w.      |   ja     0x0804a61f<<Insn>>
 0x0804a61a: Successor blocks: 0x0804a61c, 0x0804a61f
@@ -7985,7 +7985,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a660: 99                      |.       |   cdq    
 0x0804a661: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
 0x0804a664: f7 ff                   |..      |   idiv   edi
-0x0804a666: 66 bf b2 07             |f...    |   mov    di, 0x07b2
+0x0804a666: 66 bf b2 07             |f...    |   mov    di, 0x07b2<1970>
 0x0804a66a: 89 56 04                |.V.     |   mov    DWORD PTR ds:[esi + 0x04], edx
 0x0804a66d: ba 07 00 00 00          |.....   |   mov    edx, 0x00000007
 0x0804a672: 89 46 08                |.F.     |   mov    DWORD PTR ds:[esi + 0x08], eax
@@ -8009,7 +8009,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a686: 5a                      |Z       |   pop    edx
 0x0804a687: 83 f8 01                |...     |   cmp    eax, 0x01
 0x0804a68a: 19 c0                   |..      |   sbb    eax, eax
-0x0804a68c: 05 6e 01 00 00          |.n...   |   add    eax, 0x0000016e
+0x0804a68c: 05 6e 01 00 00          |.n...   |   add    eax, 0x0000016e<366>
 0x0804a691: 39 c3                   |9.      |   cmp    ebx, eax
 0x0804a693: 7c 05                   ||.      |   jl     0x0804a69a<<Insn>>
 0x0804a693: Successor blocks: 0x0804a695, 0x0804a69a
@@ -8025,7 +8025,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a69a: Basic block reasons: graph-1
 0x0804a69a: Predecessor blocks: 0x0804a686
 0x0804a69a: Dominator block: 0x0804a686
-0x0804a69a: 8d 87 94 f8 ff ff       |......  |   lea    eax, [edi + 0xfffff894<-0x0000076c>]
+0x0804a69a: 8d 87 94 f8 ff ff       |......  |   lea    eax, [edi + 0xfffff894<-1900>]
 0x0804a6a0: 89 46 14                |.F.     |   mov    DWORD PTR ds:[esi + 0x14], eax
 0x0804a6a3: 89 5e 1c                |.^.     |   mov    DWORD PTR ds:[esi + 0x1c], ebx
 0x0804a6a6: c7 46 0c 01 00 00 00    |.F..... |   mov    DWORD PTR ds:[esi + 0x0c], 0x00000001
@@ -8292,7 +8292,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a7aa: Predecessor blocks: 0x0804a7a7
 0x0804a7aa: Dominator block: 0x0804a7a7
 0x0804a7aa: 8b 46 14                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x14]
-0x0804a7ad: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c
+0x0804a7ad: 05 6c 07 00 00          |.l...   |   add    eax, 0x0000076c<1900>
 0x0804a7b2: 50                      |P       |   push   eax
 0x0804a7b3: e8 40 ff ff ff          |.@...   |   call   0x0804a6f8<<Func>>
 0x0804a7b3: Successor blocks: 0x0804a6f8<<Func>>, 0x0804a7b8
@@ -8350,7 +8350,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a7f7: Predecessor blocks: 0x0804a7bd, 0x0804a7e7
 0x0804a7f7: Dominator block: 0x0804a7e7
 0x0804a7f7: 8b 6e 14                |.n.     |   mov    ebp, DWORD PTR ds:[esi + 0x14]
-0x0804a7fa: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x0804a7fa: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x0804a7fd: 83 fd 45                |..E     |   cmp    ebp, 0x45
 0x0804a800: 0f 8e 98 00 00 00       |......  |   jle    0x0804a89e<<Insn>>
 0x0804a800: Successor blocks: 0x0804a806, 0x0804a89e
@@ -8358,13 +8358,13 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a806: Basic block reasons: graph-1
 0x0804a806: Predecessor blocks: 0x0804a7f7
 0x0804a806: Dominator block: 0x0804a7f7
-0x0804a806: 8d 43 bb                |.C.     |   lea    eax, [ebx + 0xbb<-0x45>]
+0x0804a806: 8d 43 bb                |.C.     |   lea    eax, [ebx + 0xbb<-69>]
 0x0804a809: ba 04 00 00 00          |.....   |   mov    edx, 0x00000004
 0x0804a80e: 89 d7                   |..      |   mov    edi, edx
 0x0804a810: 99                      |.       |   cdq    
 0x0804a811: f7 ff                   |..      |   idiv   edi
-0x0804a813: 8d 4b ba                |.K.     |   lea    ecx, [ebx + 0xba<-0x46>]
-0x0804a816: 69 c9 6d 01 00 00       |i.m...  |   imul   ecx, ecx, 0x0000016d
+0x0804a813: 8d 4b ba                |.K.     |   lea    ecx, [ebx + 0xba<-70>]
+0x0804a816: 69 c9 6d 01 00 00       |i.m...  |   imul   ecx, ecx, 0x0000016d<365>
 0x0804a81c: 81 eb c9 00 00 00       |......  |   sub    ebx, 0x000000c9
 0x0804a822: 8d 3c 01                |.<.     |   lea    edi, [ecx + eax]
 0x0804a825: 78 26                   |x&      |   js     0x0804a84d<<Insn>>
@@ -8395,8 +8395,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a841: Predecessor blocks: 0x0804a827, 0x0804a83f
 0x0804a841: Dominator block: 0x0804a827
 0x0804a841: c1 fb 02                |...     |   sar    ebx, 0x02
-0x0804a844: 6b c3 fd                |k..     |   imul   eax, ebx, 0xfd<-0x03>
-0x0804a847: 8d 7c 07 ff             |.|..    |   lea    edi, [edi + eax + 0xff<-0x01>]
+0x0804a844: 6b c3 fd                |k..     |   imul   eax, ebx, 0xfd<-3>
+0x0804a847: 8d 7c 07 ff             |.|..    |   lea    edi, [edi + eax + 0xff<-1>]
 0x0804a84b: 29 cf                   |).      |   sub    edi, ecx
 0x0804a84b: Successor blocks: 0x0804a84d
 
@@ -8405,7 +8405,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a84d: Dominator block: 0x0804a806
 0x0804a84d: 8b 46 10                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x10]
 0x0804a850: 0f bf 9c 00 6e b7 04 08 |....n...|   movsx  ebx, WORD PTR ds:[eax + eax + 0x0804b76e<<StaticData@0x0804af27>+0x0847>]
-0x0804a858: 8d 85 6c 07 00 00       |..l...  |   lea    eax, [ebp + 0x0000076c]
+0x0804a858: 8d 85 6c 07 00 00       |..l...  |   lea    eax, [ebp + 0x0000076c<1900>]
 0x0804a85e: 03 5e 0c                |.^.     |   add    ebx, DWORD PTR ds:[esi + 0x0c]
 0x0804a861: 50                      |P       |   push   eax
 0x0804a862: e8 91 fe ff ff          |.....   |   call   0x0804a6f8<<Func>>
@@ -8419,7 +8419,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a86a: 83 7e 10 01             |.~..    |   cmp    DWORD PTR ds:[esi + 0x10], 0x01
 0x0804a86e: 0f 9f c2                |...     |   setg   dl
 0x0804a871: 21 c2                   |!.      |   and    edx, eax
-0x0804a873: 8d 5c 13 ff             |.\..    |   lea    ebx, [ebx + edx + 0xff<-0x01>]
+0x0804a873: 8d 5c 13 ff             |.\..    |   lea    ebx, [ebx + edx + 0xff<-1>]
 0x0804a877: ba 07 00 00 00          |.....   |   mov    edx, 0x00000007
 0x0804a87c: 89 5e 1c                |.^.     |   mov    DWORD PTR ds:[esi + 0x1c], ebx
 0x0804a87f: 8d 1c 1f                |...     |   lea    ebx, [edi + ebx]
@@ -8613,7 +8613,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a997: 8d 54 b5 00             |.T..    |   lea    edx, [ebp + esi*0x04 + 0x00]
 0x0804a99b: 8b 4c 24 28             |.L$(    |   mov    ecx, DWORD PTR ss:[esp + 0x28]
 0x0804a99f: 8d 04 32                |..2     |   lea    eax, [edx + esi]
-0x0804a9a2: 0f b6 54 3a ff          |..T:.   |   movzx  edx, BYTE PTR ds:[edx + edi + 0xff<-0x01>]
+0x0804a9a2: 0f b6 54 3a ff          |..T:.   |   movzx  edx, BYTE PTR ds:[edx + edi + 0xff<-1>]
 0x0804a9a7: 6b d2 06                |k..     |   imul   edx, edx, 0x06
 0x0804a9aa: 01 d0                   |..      |   add    eax, edx
 0x0804a9ac: 0f b6 50 04             |..P.    |   movzx  edx, BYTE PTR ds:[eax + 0x04]
@@ -8640,7 +8640,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804a9db: Predecessor blocks: 0x0804aa1b
 0x0804a9db: Dominator block: 0x0804aa1b
 0x0804a9db: 8b 54 24 0c             |.T$.    |   mov    edx, DWORD PTR ss:[esp + 0x0c]
-0x0804a9df: 0f b6 44 15 ff          |..D..   |   movzx  eax, BYTE PTR ss:[ebp + edx + 0xff<-0x01>]
+0x0804a9df: 0f b6 44 15 ff          |..D..   |   movzx  eax, BYTE PTR ss:[ebp + edx + 0xff<-1>]
 0x0804a9e4: 6b c0 06                |k..     |   imul   eax, eax, 0x06
 0x0804a9e7: 03 44 24 04             |.D$.    |   add    eax, DWORD PTR ss:[esp + 0x04]
 0x0804a9eb: e8 b4 fe ff ff          |.....   |   call   0x0804a8a4<<Func>>
@@ -8689,7 +8689,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804aa1b: Basic block reasons: graph-1
 0x0804aa1b: Predecessor blocks: 0x0804a952, 0x0804aa13
 0x0804aa1b: Dominator block: 0x0804a952
-0x0804aa1b: 8d 46 ff                |.F.     |   lea    eax, [esi + 0xff<-0x01>]
+0x0804aa1b: 8d 46 ff                |.F.     |   lea    eax, [esi + 0xff<-1>]
 0x0804aa1e: 39 c5                   |9.      |   cmp    ebp, eax
 0x0804aa20: 7c b9                   ||.      |   jl     0x0804a9db<<Insn>>
 0x0804aa20: Successor blocks: 0x0804a9db, 0x0804aa22
@@ -8875,7 +8875,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804aaf0: Basic block reasons: entry point, graph-1
 0x0804aaf0: Predecessor blocks: 0x0804a1b8<<Func>>
-0x0804aaf0: b0 c5                   |..      |   mov    al, 0xc5<-0x3b>
+0x0804aaf0: b0 c5                   |..      |   mov    al, 0xc5<-59>
 0x0804aaf2: e9 20 f6 ff ff          |. ...   |   jmp    0x0804a117<<Func>>
 0x0804aaf2: Successor blocks: 0x0804a117<<Func>>
 
@@ -8901,7 +8901,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ab00: Basic block reasons: entry point, graph-1
 0x0804ab00: Predecessor blocks: 0x0804a26c<<Func>>
-0x0804ab00: b0 8c                   |..      |   mov    al, 0x8c<-0x74>
+0x0804ab00: b0 8c                   |..      |   mov    al, 0x8c<-116>
 0x0804ab02: e9 10 f6 ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804ab02: Successor blocks: 0x0804a117<<Func>>
 
@@ -8949,7 +8949,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ab20: Basic block reasons: entry point, graph-1
 0x0804ab20: Predecessor blocks: 0x0804a43c<<Func>>
-0x0804ab20: b0 a2                   |..      |   mov    al, 0xa2<-0x5e>
+0x0804ab20: b0 a2                   |..      |   mov    al, 0xa2<-94>
 0x0804ab22: e9 f0 f5 ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804ab22: Successor blocks: 0x0804a117<<Func>>
 
@@ -8977,7 +8977,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ab30: Basic block reasons: entry point, graph-1
 0x0804ab30: Predecessor blocks: 0x0804a358<<Func>>
-0x0804ab30: b0 ef                   |..      |   mov    al, 0xef<-0x11>
+0x0804ab30: b0 ef                   |..      |   mov    al, 0xef<-17>
 0x0804ab32: e9 e0 f5 ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804ab32: Successor blocks: 0x0804a117<<Func>>
 
@@ -8990,7 +8990,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ab38: Basic block reasons: entry point, graph-1
 0x0804ab38: Predecessor blocks: 0x0804a3b3<<Func>>
-0x0804ab38: b0 bb                   |..      |   mov    al, 0xbb<-0x45>
+0x0804ab38: b0 bb                   |..      |   mov    al, 0xbb<-69>
 0x0804ab3a: e9 d8 f5 ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804ab3a: Successor blocks: 0x0804a117<<Func>>
 
@@ -9062,7 +9062,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ab91: 83 ec 24                |..$     |   sub    esp, 0x24
 0x0804ab94: 8b 03                   |..      |   mov    eax, DWORD PTR ds:[ebx]
 0x0804ab96: 8d 4c 24 0f             |.L$.    |   lea    ecx, [esp + 0x0f]
-0x0804ab9a: 83 e1 f0                |...     |   and    ecx, 0xf0<-0x10>
+0x0804ab9a: 83 e1 f0                |...     |   and    ecx, 0xf0<-16>
 0x0804ab9d: 89 ce                   |..      |   mov    esi, ecx
 0x0804ab9f: 89 01                   |..      |   mov    DWORD PTR ds:[ecx], eax
 0x0804aba1: 89 d0                   |..      |   mov    eax, edx
@@ -9102,7 +9102,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804abd7: Basic block reasons: graph-1
 0x0804abd7: Predecessor blocks: 0x0804abc9
 0x0804abd7: Dominator block: 0x0804abc9
-0x0804abd7: 8d 65 f8                |.e.     |   lea    esp, [ebp + 0xf8<-0x08>]
+0x0804abd7: 8d 65 f8                |.e.     |   lea    esp, [ebp + 0xf8<-8>]
 0x0804abda: 5b                      |[       |   pop    ebx
 0x0804abdb: 5e                      |^       |   pop    esi
 0x0804abdc: 5d                      |]       |   pop    ebp
@@ -9135,7 +9135,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804abf4: Predecessor blocks: 0x0804abef
 0x0804abf4: Dominator block: 0x0804abef
 0x0804abf4: c7 00 16 00 00 00       |......  |   mov    DWORD PTR ds:[eax], 0x00000016
-0x0804abfa: 83 c8 ff                |...     |   or     eax, 0xff<-0x01>
+0x0804abfa: 83 c8 ff                |...     |   or     eax, 0xff<-1>
 0x0804abfd: eb 14                   |..      |   jmp    0x0804ac13<<Insn>>
 0x0804abfd: Successor blocks: 0x0804ac13
 
@@ -9180,7 +9180,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ac30: Basic block reasons: entry point, graph-2
 0x0804ac30: b8 ad 00 00 00          |.....   |   mov    eax, 0x000000ad
-0x0804ac35: cd 80                   |..      |   int    0x80 <rt_sigreturn>
+0x0804ac35: cd 80                   |..      |   int    0x80<-128> <rt_sigreturn>
 0x0804ac37: f4                      |.       |   hlt    
 0x0804ac37: Successor blocks: none
 
@@ -9188,7 +9188,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ac40: f4                      |.       | 9 bytes untyped data beginning at 0x0804ac38
 0x0804ac38: 58                      |X       | (data)   pop    eax
 0x0804ac39: b8 77 00 00 00          |.w...   | (data)   mov    eax, 0x00000077
-0x0804ac3e: cd 80                   |..      | (data)   int    0x80
+0x0804ac3e: cd 80                   |..      | (data)   int    0x80<-128>
 0x0804ac40: f4                      |.       | (data)   hlt    
 
 0x0804ac41: 90 90 90                |...     | 3-byte padding beginning at 0x0804ac41
@@ -9199,7 +9199,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 0x0804ac44: Basic block reasons: entry point, graph-1
 0x0804ac44: Predecessor blocks: 0x0804abc9<<Func>>
-0x0804ac44: b0 ae                   |..      |   mov    al, 0xae<-0x52>
+0x0804ac44: b0 ae                   |..      |   mov    al, 0xae<-82>
 0x0804ac46: e9 cc f4 ff ff          |.....   |   jmp    0x0804a117<<Func>>
 0x0804ac46: Successor blocks: 0x0804a117<<Func>>
 
@@ -9217,16 +9217,16 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ac55: 83 ec 28                |..(     |   sub    esp, 0x28
 0x0804ac58: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
 0x0804ac5b: 8b 55 14                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0x14]
-0x0804ac5e: c7 45 d8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-0x28>], 0x00000000
-0x0804ac65: c7 45 dc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xdc<-0x24>], 0x00000000
-0x0804ac6c: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], eax
+0x0804ac5e: c7 45 d8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x00000000
+0x0804ac65: c7 45 dc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xdc<-36>], 0x00000000
+0x0804ac6c: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
 0x0804ac6f: 89 c1                   |..      |   mov    ecx, eax
 0x0804ac71: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
 0x0804ac74: 89 d7                   |..      |   mov    edi, edx
 0x0804ac76: 8b 55 0c                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0x0c]
 0x0804ac79: 85 ff                   |..      |   test   edi, edi
-0x0804ac7b: 89 45 ec                |.E.     |   mov    DWORD PTR ss:[ebp + 0xec<-0x14>], eax
-0x0804ac7e: 89 55 e8                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], edx
+0x0804ac7b: 89 45 ec                |.E.     |   mov    DWORD PTR ss:[ebp + 0xec<-20>], eax
+0x0804ac7e: 89 55 e8                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], edx
 0x0804ac81: 75 30                   |u0      |   jne    0x0804acb3<<Insn>>
 0x0804ac81: Successor blocks: 0x0804ac83, 0x0804acb3
 
@@ -9265,10 +9265,10 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804aca0: Basic block reasons: graph-1
 0x0804aca0: Predecessor blocks: 0x0804ac8b, 0x0804ac93, 0x0804ad1b, 0x0804ad2c, 0x0804ad50, 0x0804ad70, 0x0804ad89
 0x0804aca0: Dominator block: 0x0804ac50
-0x0804aca0: 89 4d d8                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd8<-0x28>], ecx
-0x0804aca3: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-0x24>], eax
-0x0804aca6: 8b 45 d8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xd8<-0x28>]
-0x0804aca9: 8b 55 dc                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xdc<-0x24>]
+0x0804aca0: 89 4d d8                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd8<-40>], ecx
+0x0804aca3: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-36>], eax
+0x0804aca6: 8b 45 d8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xd8<-40>]
+0x0804aca9: 8b 55 dc                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xdc<-36>]
 0x0804acac: 83 c4 28                |..(     |   add    esp, 0x28
 0x0804acaf: 5e                      |^       |   pop    esi
 0x0804acb0: 5f                      |_       |   pop    edi
@@ -9279,7 +9279,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804acb3: Basic block reasons: graph-1
 0x0804acb3: Predecessor blocks: 0x0804ac50
 0x0804acb3: Dominator block: 0x0804ac50
-0x0804acb3: 3b 7d e8                |;}.     |   cmp    edi, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804acb3: 3b 7d e8                |;}.     |   cmp    edi, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804acb6: 0f 87 94 00 00 00       |......  |   ja     0x0804ad50<<Insn>>
 0x0804acb6: Successor blocks: 0x0804acbc, 0x0804ad50
 
@@ -9288,40 +9288,40 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804acbc: Dominator block: 0x0804acb3
 0x0804acbc: 0f bd c7                |...     |   bsr    eax, edi
 0x0804acbf: 83 f0 1f                |...     |   xor    eax, 0x1f
-0x0804acc2: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-0x1c>], eax
+0x0804acc2: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-28>], eax
 0x0804acc5: 74 7c                   |t|      |   je     0x0804ad43<<Insn>>
 0x0804acc5: Successor blocks: 0x0804acc7, 0x0804ad43
 
 0x0804acc7: Basic block reasons: graph-1
 0x0804acc7: Predecessor blocks: 0x0804acbc
 0x0804acc7: Dominator block: 0x0804acbc
-0x0804acc7: 8b 55 e4                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804acc7: 8b 55 e4                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe4<-28>]
 0x0804acca: b8 20 00 00 00          |. ...   |   mov    eax, 0x00000020
-0x0804accf: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
-0x0804acd3: 8b 75 f4                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0804accf: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
+0x0804acd3: 8b 75 f4                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xf4<-12>]
 0x0804acd6: 29 d0                   |).      |   sub    eax, edx
 0x0804acd8: 89 fa                   |..      |   mov    edx, edi
-0x0804acda: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x0804acda: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 0x0804acdd: d3 e2                   |..      |   shl    edx, cl
-0x0804acdf: 8b 45 f4                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
-0x0804ace2: 0f b6 4d f0             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xf0<-0x10>]
+0x0804acdf: 8b 45 f4                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
+0x0804ace2: 0f b6 4d f0             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xf0<-16>]
 0x0804ace6: 89 d7                   |..      |   mov    edi, edx
-0x0804ace8: 8b 55 ec                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x0804ace8: 8b 55 ec                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xec<-20>]
 0x0804aceb: d3 e8                   |..      |   shr    eax, cl
-0x0804aced: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804aced: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804acf1: 09 c7                   |..      |   or     edi, eax
-0x0804acf3: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804acf3: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804acf6: d3 e6                   |..      |   shl    esi, cl
 0x0804acf8: d3 e0                   |..      |   shl    eax, cl
-0x0804acfa: 0f b6 4d f0             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xf0<-0x10>]
+0x0804acfa: 0f b6 4d f0             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xf0<-16>]
 0x0804acfe: d3 ea                   |..      |   shr    edx, cl
 0x0804ad00: 09 d0                   |..      |   or     eax, edx
-0x0804ad02: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x0804ad05: 89 45 d4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], eax
+0x0804ad02: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x0804ad05: 89 45 d4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], eax
 0x0804ad08: d3 ea                   |..      |   shr    edx, cl
 0x0804ad0a: f7 f7                   |..      |   div    edi
 0x0804ad0c: 89 d7                   |..      |   mov    edi, edx
-0x0804ad0e: 89 45 d0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], eax
+0x0804ad0e: 89 45 d0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], eax
 0x0804ad11: f7 e6                   |..      |   mul    esi
 0x0804ad13: 39 d7                   |9.      |   cmp    edi, edx
 0x0804ad15: 89 c6                   |..      |   mov    esi, eax
@@ -9337,7 +9337,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad1b: Basic block reasons: graph-1
 0x0804ad1b: Predecessor blocks: 0x0804ad19, 0x0804ad7c
 0x0804ad1b: Dominator block: 0x0804ad19
-0x0804ad1b: 8b 4d d0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xd0<-0x30>]
+0x0804ad1b: 8b 4d d0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xd0<-48>]
 0x0804ad1e: 31 c0                   |1.      |   xor    eax, eax
 0x0804ad20: e9 7b ff ff ff          |.{...   |   jmp    0x0804aca0<<Insn>>
 0x0804ad20: Successor blocks: 0x0804aca0
@@ -9345,7 +9345,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad25: Basic block reasons: graph-1
 0x0804ad25: Predecessor blocks: 0x0804ac83
 0x0804ad25: Dominator block: 0x0804ac83
-0x0804ad25: 8b 75 f4                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0804ad25: 8b 75 f4                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xf4<-12>]
 0x0804ad28: 85 f6                   |..      |   test   esi, esi
 0x0804ad2a: 74 34                   |t4      |   je     0x0804ad60<<Insn>>
 0x0804ad2a: Successor blocks: 0x0804ad2c, 0x0804ad60
@@ -9353,11 +9353,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad2c: Basic block reasons: graph-1
 0x0804ad2c: Predecessor blocks: 0x0804ad25, 0x0804ad60
 0x0804ad2c: Dominator block: 0x0804ad25
-0x0804ad2c: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804ad2c: 8b 45 e8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804ad2f: 89 fa                   |..      |   mov    edx, edi
 0x0804ad31: f7 f1                   |..      |   div    ecx
 0x0804ad33: 89 c6                   |..      |   mov    esi, eax
-0x0804ad35: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x0804ad35: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-20>]
 0x0804ad38: f7 f1                   |..      |   div    ecx
 0x0804ad3a: 89 c1                   |..      |   mov    ecx, eax
 0x0804ad3c: 89 f0                   |..      |   mov    eax, esi
@@ -9367,15 +9367,15 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad43: Basic block reasons: graph-1
 0x0804ad43: Predecessor blocks: 0x0804acbc
 0x0804ad43: Dominator block: 0x0804acbc
-0x0804ad43: 3b 7d e8                |;}.     |   cmp    edi, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804ad43: 3b 7d e8                |;}.     |   cmp    edi, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804ad46: 72 28                   |r(      |   jb     0x0804ad70<<Insn>>
 0x0804ad46: Successor blocks: 0x0804ad48, 0x0804ad70
 
 0x0804ad48: Basic block reasons: graph-1
 0x0804ad48: Predecessor blocks: 0x0804ad43
 0x0804ad48: Dominator block: 0x0804ad43
-0x0804ad48: 8b 55 ec                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xec<-0x14>]
-0x0804ad4b: 39 55 f4                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xf4<-0x0c>], edx
+0x0804ad48: 8b 55 ec                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xec<-20>]
+0x0804ad4b: 39 55 f4                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xf4<-12>], edx
 0x0804ad4e: 76 20                   |v       |   jbe    0x0804ad70<<Insn>>
 0x0804ad4e: Successor blocks: 0x0804ad50, 0x0804ad70
 
@@ -9396,7 +9396,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad60: Dominator block: 0x0804ad25
 0x0804ad60: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
 0x0804ad65: 31 d2                   |1.      |   xor    edx, edx
-0x0804ad67: f7 75 f4                |.u.     |   div    DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0804ad67: f7 75 f4                |.u.     |   div    DWORD PTR ss:[ebp + 0xf4<-12>]
 0x0804ad6a: 89 c1                   |..      |   mov    ecx, eax
 0x0804ad6c: eb be                   |..      |   jmp    0x0804ad2c<<Insn>>
 0x0804ad6c: Successor blocks: 0x0804ad2c
@@ -9416,8 +9416,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad7c: Basic block reasons: graph-1
 0x0804ad7c: Predecessor blocks: 0x0804ad19
 0x0804ad7c: Dominator block: 0x0804ad19
-0x0804ad7c: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-0x14>]
-0x0804ad7f: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804ad7c: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-20>]
+0x0804ad7f: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804ad83: d3 e0                   |..      |   shl    eax, cl
 0x0804ad85: 39 f0                   |9.      |   cmp    eax, esi
 0x0804ad87: 73 92                   |s.      |   jae    0x0804ad1b<<Insn>>
@@ -9426,7 +9426,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ad89: Basic block reasons: graph-1
 0x0804ad89: Predecessor blocks: 0x0804acc7, 0x0804ad7c
 0x0804ad89: Dominator block: 0x0804acc7
-0x0804ad89: 8b 4d d0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xd0<-0x30>]
+0x0804ad89: 8b 4d d0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xd0<-48>]
 0x0804ad8c: 31 c0                   |1.      |   xor    eax, eax
 0x0804ad8e: 49                      |I       |   dec    ecx
 0x0804ad8f: e9 0c ff ff ff          |.....   |   jmp    0x0804aca0<<Insn>>
@@ -9450,13 +9450,13 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804adae: 8b 75 08                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0x08]
 0x0804adb1: 8b 7d 0c                |.}.     |   mov    edi, DWORD PTR ss:[ebp + 0x0c]
 0x0804adb4: 85 d2                   |..      |   test   edx, edx
-0x0804adb6: c7 45 d0 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], 0x00000000
+0x0804adb6: c7 45 d0 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], 0x00000000
 0x0804adbd: 89 c1                   |..      |   mov    ecx, eax
-0x0804adbf: c7 45 d4 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], 0x00000000
-0x0804adc6: 89 45 ec                |.E.     |   mov    DWORD PTR ss:[ebp + 0xec<-0x14>], eax
-0x0804adc9: 89 55 e8                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], edx
-0x0804adcc: 89 75 f0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], esi
-0x0804adcf: 89 7d e0                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe0<-0x20>], edi
+0x0804adbf: c7 45 d4 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], 0x00000000
+0x0804adc6: 89 45 ec                |.E.     |   mov    DWORD PTR ss:[ebp + 0xec<-20>], eax
+0x0804adc9: 89 55 e8                |.U.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], edx
+0x0804adcc: 89 75 f0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], esi
+0x0804adcf: 89 7d e0                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe0<-32>], edi
 0x0804add2: 75 1c                   |u.      |   jne    0x0804adf0<<Insn>>
 0x0804add2: Successor blocks: 0x0804add4, 0x0804adf0
 
@@ -9478,8 +9478,8 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ade2: Basic block reasons: graph-1
 0x0804ade2: Predecessor blocks: 0x0804adde, 0x0804aeb9
 0x0804ade2: Dominator block: 0x0804add4
-0x0804ade2: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], edx
-0x0804ade5: c7 45 d4 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], 0x00000000
+0x0804ade2: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], edx
+0x0804ade5: c7 45 d4 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], 0x00000000
 0x0804adec: eb 12                   |..      |   jmp    0x0804ae00<<Insn>>
 0x0804adec: Successor blocks: 0x0804ae00
 
@@ -9490,24 +9490,24 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804adf0: Basic block reasons: graph-1
 0x0804adf0: Predecessor blocks: 0x0804ada0, 0x0804adee
 0x0804adf0: Dominator block: 0x0804ada0
-0x0804adf0: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804adf3: 39 4d e8                |9M.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-0x18>], ecx
+0x0804adf0: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804adf3: 39 4d e8                |9M.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-24>], ecx
 0x0804adf6: 76 18                   |v.      |   jbe    0x0804ae10<<Insn>>
 0x0804adf6: Successor blocks: 0x0804adf8, 0x0804ae10
 
 0x0804adf8: Basic block reasons: graph-1
 0x0804adf8: Predecessor blocks: 0x0804adf0
 0x0804adf8: Dominator block: 0x0804adf0
-0x0804adf8: 89 75 d0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], esi
-0x0804adfb: 89 7d d4                |.}.     |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], edi
+0x0804adf8: 89 75 d0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], esi
+0x0804adfb: 89 7d d4                |.}.     |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], edi
 0x0804adfe: 89 f6                   |..      |   mov    esi, esi
 0x0804adfe: Successor blocks: 0x0804ae00
 
 0x0804ae00: Basic block reasons: graph-1
 0x0804ae00: Predecessor blocks: 0x0804ade2, 0x0804adf8, 0x0804ae86, 0x0804aef0
 0x0804ae00: Dominator block: 0x0804ada0
-0x0804ae00: 8b 45 d0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xd0<-0x30>]
-0x0804ae03: 8b 55 d4                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xd4<-0x2c>]
+0x0804ae00: 8b 45 d0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xd0<-48>]
+0x0804ae03: 8b 55 d4                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xd4<-44>]
 0x0804ae06: 83 c4 30                |..0     |   add    esp, 0x30
 0x0804ae09: 5e                      |^       |   pop    esi
 0x0804ae0a: 5f                      |_       |   pop    edi
@@ -9522,46 +9522,46 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ae10: Basic block reasons: graph-1
 0x0804ae10: Predecessor blocks: 0x0804adf0, 0x0804ae0d
 0x0804ae10: Dominator block: 0x0804adf0
-0x0804ae10: 0f bd 45 e8             |..E.    |   bsr    eax, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804ae10: 0f bd 45 e8             |..E.    |   bsr    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804ae14: 83 f0 1f                |...     |   xor    eax, 0x1f
-0x0804ae17: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-0x24>], eax
+0x0804ae17: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-36>], eax
 0x0804ae1a: 0f 84 c0 00 00 00       |......  |   je     0x0804aee0<<Insn>>
 0x0804ae1a: Successor blocks: 0x0804ae20, 0x0804aee0
 
 0x0804ae20: Basic block reasons: graph-1
 0x0804ae20: Predecessor blocks: 0x0804ae10
 0x0804ae20: Dominator block: 0x0804ae10
-0x0804ae20: 8b 55 dc                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xdc<-0x24>]
+0x0804ae20: 8b 55 dc                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xdc<-36>]
 0x0804ae23: b8 20 00 00 00          |. ...   |   mov    eax, 0x00000020
-0x0804ae28: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-0x24>]
-0x0804ae2c: 8b 75 ec                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xec<-0x14>]
-0x0804ae2f: 8b 7d f0                |.}.     |   mov    edi, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x0804ae28: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-36>]
+0x0804ae2c: 8b 75 ec                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xec<-20>]
+0x0804ae2f: 8b 7d f0                |.}.     |   mov    edi, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x0804ae32: 29 d0                   |).      |   sub    eax, edx
-0x0804ae34: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x0804ae37: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-0x1c>], eax
-0x0804ae3a: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x0804ae34: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x0804ae37: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-28>], eax
+0x0804ae3a: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-20>]
 0x0804ae3d: d3 e2                   |..      |   shl    edx, cl
-0x0804ae3f: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804ae3f: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804ae43: d3 e8                   |..      |   shr    eax, cl
-0x0804ae45: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-0x24>]
+0x0804ae45: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-36>]
 0x0804ae49: 09 c2                   |..      |   or     edx, eax
-0x0804ae4b: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804ae4e: 89 55 f4                |.U.     |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], edx
-0x0804ae51: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x0804ae4b: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804ae4e: 89 55 f4                |.U.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], edx
+0x0804ae51: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x0804ae54: d3 e6                   |..      |   shl    esi, cl
 0x0804ae56: d3 e0                   |..      |   shl    eax, cl
-0x0804ae58: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804ae58: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804ae5c: d3 ea                   |..      |   shr    edx, cl
-0x0804ae5e: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-0x24>]
+0x0804ae5e: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-36>]
 0x0804ae62: 09 d0                   |..      |   or     eax, edx
-0x0804ae64: 8b 55 e0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe0<-0x20>]
+0x0804ae64: 8b 55 e0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe0<-32>]
 0x0804ae67: d3 e7                   |..      |   shl    edi, cl
-0x0804ae69: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804ae69: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804ae6d: d3 ea                   |..      |   shr    edx, cl
-0x0804ae6f: f7 75 f4                |.u.     |   div    DWORD PTR ss:[ebp + 0xf4<-0x0c>]
-0x0804ae72: 89 55 cc                |.U.     |   mov    DWORD PTR ss:[ebp + 0xcc<-0x34>], edx
+0x0804ae6f: f7 75 f4                |.u.     |   div    DWORD PTR ss:[ebp + 0xf4<-12>]
+0x0804ae72: 89 55 cc                |.U.     |   mov    DWORD PTR ss:[ebp + 0xcc<-52>], edx
 0x0804ae75: f7 e6                   |..      |   mul    esi
-0x0804ae77: 39 55 cc                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xcc<-0x34>], edx
+0x0804ae77: 39 55 cc                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xcc<-52>], edx
 0x0804ae7a: 0f 82 9d 00 00 00       |......  |   jb     0x0804af1d<<Insn>>
 0x0804ae7a: Successor blocks: 0x0804ae80, 0x0804af1d
 
@@ -9574,28 +9574,28 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804ae86: Basic block reasons: graph-1
 0x0804ae86: Predecessor blocks: 0x0804ae80, 0x0804af15, 0x0804af1d
 0x0804ae86: Dominator block: 0x0804ae20
-0x0804ae86: 8b 4d cc                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xcc<-0x34>]
+0x0804ae86: 8b 4d cc                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xcc<-52>]
 0x0804ae89: 29 c7                   |).      |   sub    edi, eax
 0x0804ae8b: 19 d1                   |..      |   sbb    ecx, edx
-0x0804ae8d: 89 4d cc                |.M.     |   mov    DWORD PTR ss:[ebp + 0xcc<-0x34>], ecx
+0x0804ae8d: 89 4d cc                |.M.     |   mov    DWORD PTR ss:[ebp + 0xcc<-52>], ecx
 0x0804ae90: 89 ca                   |..      |   mov    edx, ecx
-0x0804ae92: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-0x1c>]
+0x0804ae92: 0f b6 4d e4             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xe4<-28>]
 0x0804ae96: 89 f8                   |..      |   mov    eax, edi
 0x0804ae98: d3 e2                   |..      |   shl    edx, cl
-0x0804ae9a: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-0x24>]
+0x0804ae9a: 0f b6 4d dc             |..M.    |   movzx  ecx, BYTE PTR ss:[ebp + 0xdc<-36>]
 0x0804ae9e: d3 e8                   |..      |   shr    eax, cl
 0x0804aea0: 09 c2                   |..      |   or     edx, eax
-0x0804aea2: 8b 45 cc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xcc<-0x34>]
-0x0804aea5: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], edx
+0x0804aea2: 8b 45 cc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xcc<-52>]
+0x0804aea5: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], edx
 0x0804aea8: d3 e8                   |..      |   shr    eax, cl
-0x0804aeaa: 89 45 d4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], eax
+0x0804aeaa: 89 45 d4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], eax
 0x0804aead: e9 4e ff ff ff          |.N...   |   jmp    0x0804ae00<<Insn>>
 0x0804aead: Successor blocks: 0x0804ae00
 
 0x0804aeb2: Basic block reasons: graph-1
 0x0804aeb2: Predecessor blocks: 0x0804add4
 0x0804aeb2: Dominator block: 0x0804add4
-0x0804aeb2: 8b 75 ec                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x0804aeb2: 8b 75 ec                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xec<-20>]
 0x0804aeb5: 85 f6                   |..      |   test   esi, esi
 0x0804aeb7: 74 17                   |t.      |   je     0x0804aed0<<Insn>>
 0x0804aeb7: Successor blocks: 0x0804aeb9, 0x0804aed0
@@ -9603,10 +9603,10 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804aeb9: Basic block reasons: graph-1
 0x0804aeb9: Predecessor blocks: 0x0804aeb2, 0x0804aed0
 0x0804aeb9: Dominator block: 0x0804aeb2
-0x0804aeb9: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804aebc: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x0804aeb9: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804aebc: 8b 55 e8                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xe8<-24>]
 0x0804aebf: f7 f1                   |..      |   div    ecx
-0x0804aec1: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x0804aec1: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x0804aec4: f7 f1                   |..      |   div    ecx
 0x0804aec6: e9 17 ff ff ff          |.....   |   jmp    0x0804ade2<<Insn>>
 0x0804aec6: Successor blocks: 0x0804ade2
@@ -9621,7 +9621,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804aed0: Dominator block: 0x0804aeb2
 0x0804aed0: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
 0x0804aed5: 31 d2                   |1.      |   xor    edx, edx
-0x0804aed7: f7 75 ec                |.u.     |   div    DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x0804aed7: f7 75 ec                |.u.     |   div    DWORD PTR ss:[ebp + 0xec<-20>]
 0x0804aeda: 89 c1                   |..      |   mov    ecx, eax
 0x0804aedc: eb db                   |..      |   jmp    0x0804aeb9<<Insn>>
 0x0804aedc: Successor blocks: 0x0804aeb9
@@ -9633,38 +9633,38 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804aee0: Basic block reasons: graph-1
 0x0804aee0: Predecessor blocks: 0x0804ae10, 0x0804aede
 0x0804aee0: Dominator block: 0x0804ae10
-0x0804aee0: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804aee3: 39 45 e8                |9E.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-0x18>], eax
+0x0804aee0: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804aee3: 39 45 e8                |9E.     |   cmp    DWORD PTR ss:[ebp + 0xe8<-24>], eax
 0x0804aee6: 72 19                   |r.      |   jb     0x0804af01<<Insn>>
 0x0804aee6: Successor blocks: 0x0804aee8, 0x0804af01
 
 0x0804aee8: Basic block reasons: graph-1
 0x0804aee8: Predecessor blocks: 0x0804aee0
 0x0804aee8: Dominator block: 0x0804aee0
-0x0804aee8: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
-0x0804aeeb: 39 55 ec                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xec<-0x14>], edx
+0x0804aee8: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x0804aeeb: 39 55 ec                |9U.     |   cmp    DWORD PTR ss:[ebp + 0xec<-20>], edx
 0x0804aeee: 76 11                   |v.      |   jbe    0x0804af01<<Insn>>
 0x0804aeee: Successor blocks: 0x0804aef0, 0x0804af01
 
 0x0804aef0: Basic block reasons: graph-1
 0x0804aef0: Predecessor blocks: 0x0804aee8, 0x0804af01
 0x0804aef0: Dominator block: 0x0804aee0
-0x0804aef0: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
-0x0804aef3: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804aef6: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], edx
-0x0804aef9: 89 4d d4                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd4<-0x2c>], ecx
+0x0804aef0: 8b 55 f0                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x0804aef3: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804aef6: 89 55 d0                |.U.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], edx
+0x0804aef9: 89 4d d4                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd4<-44>], ecx
 0x0804aefc: e9 ff fe ff ff          |.....   |   jmp    0x0804ae00<<Insn>>
 0x0804aefc: Successor blocks: 0x0804ae00
 
 0x0804af01: Basic block reasons: graph-1
 0x0804af01: Predecessor blocks: 0x0804aee0, 0x0804aee8
 0x0804af01: Dominator block: 0x0804aee0
-0x0804af01: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0804af04: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-0x10>]
-0x0804af07: 2b 45 ec                |+E.     |   sub    eax, DWORD PTR ss:[ebp + 0xec<-0x14>]
-0x0804af0a: 1b 4d e8                |.M.     |   sbb    ecx, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x0804af0d: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
-0x0804af10: 89 4d e0                |.M.     |   mov    DWORD PTR ss:[ebp + 0xe0<-0x20>], ecx
+0x0804af01: 8b 4d e0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0804af04: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x0804af07: 2b 45 ec                |+E.     |   sub    eax, DWORD PTR ss:[ebp + 0xec<-20>]
+0x0804af0a: 1b 4d e8                |.M.     |   sbb    ecx, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x0804af0d: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x0804af10: 89 4d e0                |.M.     |   mov    DWORD PTR ss:[ebp + 0xe0<-32>], ecx
 0x0804af13: eb db                   |..      |   jmp    0x0804aef0<<Insn>>
 0x0804af13: Successor blocks: 0x0804aef0
 
@@ -9679,7 +9679,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804af1d: Predecessor blocks: 0x0804ae20, 0x0804af15
 0x0804af1d: Dominator block: 0x0804ae20
 0x0804af1d: 29 f0                   |).      |   sub    eax, esi
-0x0804af1f: 1b 55 f4                |.U.     |   sbb    edx, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0804af1f: 1b 55 f4                |.U.     |   sbb    edx, DWORD PTR ss:[ebp + 0xf4<-12>]
 0x0804af22: e9 5f ff ff ff          |._...   |   jmp    0x0804ae86<<Insn>>
 0x0804af22: Successor blocks: 0x0804ae86
 
@@ -10708,7 +10708,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b36a: 6f                      |o       | (data)   outsd  
 0x0804b36b: 20 73 75                | su     | (data)   and    BYTE PTR ds:[ebx + 0x75], dh
 0x0804b36e: 63 68 20                |ch      | (data)   arpl   WORD PTR ds:[eax + 0x20], bp
-0x0804b371: 66 69 6c 65 20 6f 72    |file or | (data)   imul   bp, WORD PTR ss:[ebp + 0x20], 0x726f
+0x0804b371: 66 69 6c 65 20 6f 72    |file or | (data)   imul   bp, WORD PTR ss:[ebp + 0x20], 0x726f<29295>
 0x0804b378: 20 64 69 72             | dir    | (data)   and    BYTE PTR ds:[ecx + ebp*0x02 + 0x72], ah
 0x0804b37c: 65 63 74 6f 72          |ector   | (data)   arpl   WORD PTR gs:[edi + ebp*0x02 + 0x72], si
 0x0804b381: 79 2e                   |y.      | (data)   jns    0x0804b3b1
@@ -10862,7 +10862,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b517: 78 79                   |xy      | (data)   js     0x0804b592
 0x0804b519: 2d 61 75 74 6f          |-auto   | (data)   sub    eax, 0x6f747561
 0x0804b51e: 63 6f 6e                |con     | (data)   arpl   WORD PTR ds:[edi + 0x6e], bp
-0x0804b521: 66 69 67 00 73 69       |fig.si  | (data)   imul   sp, WORD PTR ds:[edi + 0x00], 0x6973
+0x0804b521: 66 69 67 00 73 69       |fig.si  | (data)   imul   sp, WORD PTR ds:[edi + 0x00], 0x6973<26995>
 0x0804b527: 67 00 61 70             |g.ap    | (data)   add    BYTE PTR ds:[bx + di + 0x0070], ah
 0x0804b52b: 70 6c                   |pl      | (data)   jo     0x0804b599
 0x0804b52d: 69 63 61 74 69 6f 6e    |ication | (data)   imul   esp, DWORD PTR ds:[ebx + 0x61], 0x6e6f6974
@@ -11016,11 +11016,11 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b679: b4 04                   |..      | (data)   mov    ah, 0x04
 0x0804b67b: 08 30                   |.0      | (data)   or     BYTE PTR ds:[eax], dh
 0x0804b67d: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b67f: 08 42 b4                |.B.     | (data)   or     BYTE PTR ds:[edx + 0xb4<-0x4c>], al
+0x0804b67f: 08 42 b4                |.B.     | (data)   or     BYTE PTR ds:[edx + 0xb4<-76>], al
 0x0804b682: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b684: 45                      |E       | (data)   inc    ebp
 0x0804b685: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b687: 08 68 b4                |.h.     | (data)   or     BYTE PTR ds:[eax + 0xb4<-0x4c>], ch
+0x0804b687: 08 68 b4                |.h.     | (data)   or     BYTE PTR ds:[eax + 0xb4<-76>], ch
 0x0804b68a: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b68c: 5c                      |\       | (data)   pop    esp
 0x0804b68d: b4 04                   |..      | (data)   mov    ah, 0x04
@@ -11028,24 +11028,24 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b691: b2 04                   |..      | (data)   mov    dl, 0x04
 0x0804b693: 08 6c b4 04             |.l..    | (data)   or     BYTE PTR ss:[esp + esi*0x04 + 0x04], ch
 0x0804b697: 08 7c b4 04             |.|..    | (data)   or     BYTE PTR ss:[esp + esi*0x04 + 0x04], bh
-0x0804b69b: 08 76 b4                |.v.     | (data)   or     BYTE PTR ds:[esi + 0xb4<-0x4c>], dh
+0x0804b69b: 08 76 b4                |.v.     | (data)   or     BYTE PTR ds:[esi + 0xb4<-76>], dh
 0x0804b69e: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b6a0: 86 b4 04 08 80 b4 04    |....... | (data)   xchg   BYTE PTR ss:[esp + eax + 0x04b48008], dh
-0x0804b6a7: 08 8b b4 04 08 80       |......  | (data)   or     BYTE PTR ds:[ebx + 0x800804b4<-0x7ff7fb4c>], cl
+0x0804b6a7: 08 8b b4 04 08 80       |......  | (data)   or     BYTE PTR ds:[ebx + 0x800804b4], cl
 0x0804b6ad: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6af: 08 90 b4 04 08 80       |......  | (data)   or     BYTE PTR ds:[eax + 0x800804b4<-0x7ff7fb4c>], dl
+0x0804b6af: 08 90 b4 04 08 80       |......  | (data)   or     BYTE PTR ds:[eax + 0x800804b4], dl
 0x0804b6b5: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6b7: 08 9a b4 04 08 94       |......  | (data)   or     BYTE PTR ds:[edx + 0x940804b4<-0x6bf7fb4c>], bl
+0x0804b6b7: 08 9a b4 04 08 94       |......  | (data)   or     BYTE PTR ds:[edx + 0x940804b4], bl
 0x0804b6bd: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6bf: 08 9f b4 04 08 94       |......  | (data)   or     BYTE PTR ds:[edi + 0x940804b4<-0x6bf7fb4c>], bl
+0x0804b6bf: 08 9f b4 04 08 94       |......  | (data)   or     BYTE PTR ds:[edi + 0x940804b4], bl
 0x0804b6c5: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6c7: 08 a3 b4 04 08 a7       |......  | (data)   or     BYTE PTR ds:[ebx + 0xa70804b4<-0x58f7fb4c>], ah
+0x0804b6c7: 08 a3 b4 04 08 a7       |......  | (data)   or     BYTE PTR ds:[ebx + 0xa70804b4], ah
 0x0804b6cd: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6cf: 08 b7 b4 04 08 bb       |......  | (data)   or     BYTE PTR ds:[edi + 0xbb0804b4<-0x44f7fb4c>], dh
+0x0804b6cf: 08 b7 b4 04 08 bb       |......  | (data)   or     BYTE PTR ds:[edi + 0xbb0804b4], dh
 0x0804b6d5: b4 04                   |..      | (data)   mov    ah, 0x04
 0x0804b6d7: 08 cb                   |..      | (data)   or     bl, cl
 0x0804b6d9: b4 04                   |..      | (data)   mov    ah, 0x04
-0x0804b6db: 08 bb b4 04 08 ce       |......  | (data)   or     BYTE PTR ds:[ebx + 0xce0804b4<-0x31f7fb4c>], bh
+0x0804b6db: 08 bb b4 04 08 ce       |......  | (data)   or     BYTE PTR ds:[ebx + 0xce0804b4], bh
 0x0804b6e1: b4 04                   |..      | (data)   mov    ah, 0x04
 0x0804b6e3: 08 d2                   |..      | (data)   or     dl, dl
 0x0804b6e5: b4 04                   |..      | (data)   mov    ah, 0x04
@@ -11064,26 +11064,26 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b6ff: 08 25 b5 04 08 29       |.%...)  | (data)   or     BYTE PTR ds:[0x290804b5], ah
 0x0804b705: b5 04                   |..      | (data)   mov    ch, 0x04
 0x0804b707: 08 54 b5 04             |.T..    | (data)   or     BYTE PTR ss:[ebp + esi*0x04 + 0x04], dl
-0x0804b70b: 08 43 b5                |.C.     | (data)   or     BYTE PTR ds:[ebx + 0xb5<-0x4b>], al
+0x0804b70b: 08 43 b5                |.C.     | (data)   or     BYTE PTR ds:[ebx + 0xb5<-75>], al
 0x0804b70e: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b710: 5c                      |\       | (data)   pop    esp
 0x0804b711: b5 04                   |..      | (data)   mov    ch, 0x04
-0x0804b713: 08 49 af                |.I.     | (data)   or     BYTE PTR ds:[ecx + 0xaf<-0x51>], cl
+0x0804b713: 08 49 af                |.I.     | (data)   or     BYTE PTR ds:[ecx + 0xaf<-81>], cl
 0x0804b716: 04 08                   |..      | (data)   add    al, 0x08
-0x0804b718: 62 b5 04 08 65 b5       |b...e.  | (data)   bound  esi, DWORD PTR ss:[ebp + 0xb5650804<-0x4a9af7fc>]
+0x0804b718: 62 b5 04 08 65 b5       |b...e.  | (data)   bound  esi, DWORD PTR ss:[ebp + 0xb5650804]
 0x0804b71e: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b721: b5 04                   |..      | (data)   mov    ch, 0x04
-0x0804b723: 08 7e b5                |.~.     | (data)   or     BYTE PTR ds:[esi + 0xb5<-0x4b>], bh
+0x0804b723: 08 7e b5                |.~.     | (data)   or     BYTE PTR ds:[esi + 0xb5<-75>], bh
 0x0804b726: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b728: 9c                      |.       | (data)   pushfd 
 0x0804b729: b5 04                   |..      | (data)   mov    ch, 0x04
-0x0804b72b: 08 90 b5 04 08 a0       |......  | (data)   or     BYTE PTR ds:[eax + 0xa00804b5<-0x5ff7fb4b>], dl
+0x0804b72b: 08 90 b5 04 08 a0       |......  | (data)   or     BYTE PTR ds:[eax + 0xa00804b5], dl
 0x0804b731: b5 04                   |..      | (data)   mov    ch, 0x04
-0x0804b733: 08 a4 b5 04 08 a9 b5    |....... | (data)   or     BYTE PTR ss:[ebp + esi*0x04 + 0xb5a90804<-0x4a56f7fc>], ah
+0x0804b733: 08 a4 b5 04 08 a9 b5    |....... | (data)   or     BYTE PTR ss:[ebp + esi*0x04 + 0xb5a90804], ah
 0x0804b73a: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b73c: a4                      |.       | (data)   movsb  
 0x0804b73d: b5 04                   |..      | (data)   mov    ch, 0x04
-0x0804b73f: 08 ad b5 04 08 b1       |......  | (data)   or     BYTE PTR ss:[ebp + 0xb10804b5<-0x4ef7fb4b>], ch
+0x0804b73f: 08 ad b5 04 08 b1       |......  | (data)   or     BYTE PTR ss:[ebp + 0xb10804b5], ch
 0x0804b745: b5 04                   |..      | (data)   mov    ch, 0x04
 0x0804b747: 08 c1                   |..      | (data)   or     cl, al
 0x0804b749: b5 04                   |..      | (data)   mov    ch, 0x04
@@ -11111,7 +11111,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b773: 00 5a 00                |.Z.     | (data)   add    BYTE PTR ds:[edx + 0x00], bl
 0x0804b776: 78 00                   |x.      | (data)   js     0x0804b778
 0x0804b778: 97                      |.       | (data)   xchg   edi, eax
-0x0804b779: 00 b5 00 d4 00 f3       |......  | (data)   add    BYTE PTR ss:[ebp + 0xf300d400<-0x0cff2c00>], dh
+0x0804b779: 00 b5 00 d4 00 f3       |......  | (data)   add    BYTE PTR ss:[ebp + 0xf300d400], dh
 0x0804b77f: 00 11                   |..      | (data)   add    BYTE PTR ds:[ecx], dl
 0x0804b781: 01 30                   |.0      | (data)   add    DWORD PTR ds:[eax], esi
 0x0804b783: 01 4e 01                |.N.     | (data)   add    DWORD PTR ds:[esi + 0x01], ecx
@@ -11136,7 +11136,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b7a9: 7c 08                   ||.      | (data)   jl     0x0804b7b3
 0x0804b7ab: 01 1b                   |..      | (data)   add    DWORD PTR ds:[ebx], ebx
 0x0804b7ad: 0c 04                   |..      | (data)   or     al, 0x04
-0x0804b7af: 04 88                   |..      | (data)   add    al, 0x88<-0x78>
+0x0804b7af: 04 88                   |..      | (data)   add    al, 0x88<-120>
 0x0804b7b1: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x0804b7b3: 00 1c 00                |...     | (data)   add    BYTE PTR ds:[eax + eax], bl
 0x0804b7b6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11166,14 +11166,14 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b7f1: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x0804b7f3: 00 0c b4                |...     | (data)   add    BYTE PTR ss:[esp + esi*0x04], cl
 0x0804b7f6: 04 08                   |..      | (data)   add    al, 0x08
-0x0804b7f8: 0c b4                   |..      | (data)   or     al, 0xb4<-0x4c>
+0x0804b7f8: 0c b4                   |..      | (data)   or     al, 0xb4<-76>
 0x0804b7fa: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b7fc: 94                      |.       | (data)   xchg   esp, eax
 0x0804b7fd: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x0804b7ff: 00 0e                   |..      | (data)   add    BYTE PTR ds:[esi], cl
 0x0804b801: b4 04                   |..      | (data)   mov    ah, 0x04
 0x0804b803: 08 08                   |..      | (data)   or     BYTE PTR ds:[eax], cl
-0x0804b805: c8 04 08 60             |...`    | (data)   enter  0x0804, 0x60
+0x0804b805: c8 04 08 60             |...`    | (data)   enter  0x0804<2052>, 0x60
 0x0804b809: c9                      |.       | (data)   leave  
 0x0804b80a: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b80c: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11184,9 +11184,9 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b816: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b818: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x0804b81a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804b81c: a8 a1                   |..      | (data)   test   al, 0xa1<-0x5f>
+0x0804b81c: a8 a1                   |..      | (data)   test   al, 0xa1<-95>
 0x0804b81e: 04 08                   |..      | (data)   add    al, 0x08
-0x0804b820: 24 c8                   |$.      | (data)   and    al, 0xc8<-0x38>
+0x0804b820: 24 c8                   |$.      | (data)   and    al, 0xc8<-56>
 0x0804b822: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b824: 60                      |`       | (data)   pushad 
 0x0804b825: e9 04 08 00 00          |.....   | (data)   jmp    0x0804c02e
@@ -11197,7 +11197,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b832: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b834: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
 0x0804b836: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804b838: a8 a1                   |..      | (data)   test   al, 0xa1<-0x5f>
+0x0804b838: a8 a1                   |..      | (data)   test   al, 0xa1<-95>
 0x0804b83a: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b83c: 20 00                   | .      | (data)   and    BYTE PTR ds:[eax], al
 0x0804b83e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11206,7 +11206,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b846: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b848: 97                      |.       | (data)   xchg   edi, eax
 0x0804b849: b7 04                   |..      | (data)   mov    bh, 0x04
-0x0804b84b: 08 97 b7 04 08 ff       |......  | (data)   or     BYTE PTR ds:[edi + 0xff0804b7<-0x00f7fb49>], dl
+0x0804b84b: 08 97 b7 04 08 ff       |......  | (data)   or     BYTE PTR ds:[edi + 0xff0804b7], dl
 0x0804b853: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
 0x0804b855: ff 0a                   |..      | (data)   dec    DWORD PTR ds:[edx]
 0x0804b857: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11256,7 +11256,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b8b5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b8b7: 00 06                   |..      | (data)   add    BYTE PTR ds:[esi], al
 0x0804b8b9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804b8bb: 00 a0 80 04 08 a0       |......  | (data)   add    BYTE PTR ds:[eax + 0xa0080480<-0x5ff7fb80>], ah
+0x0804b8bb: 00 a0 80 04 08 a0       |......  | (data)   add    BYTE PTR ds:[eax + 0xa0080480], ah
 0x0804b8c1: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b8c3: 00 87 2e 00 00 00       |......  | (data)   add    BYTE PTR ds:[edi + 0x0000002e], al
 0x0804b8c9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11272,7 +11272,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b8dd: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b8df: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x0804b8e1: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804b8e3: 00 40 af                |.@.     | (data)   add    BYTE PTR ds:[eax + 0xaf<-0x51>], al
+0x0804b8e3: 00 40 af                |.@.     | (data)   add    BYTE PTR ds:[eax + 0xaf<-81>], al
 0x0804b8e6: 04 08                   |..      | (data)   add    al, 0x08
 0x0804b8e8: 40                      |@       | (data)   inc    eax
 0x0804b8e9: 2f                      |/       | (data)   das    
@@ -11312,7 +11312,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b930: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x0804b932: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b934: f4                      |.       | (data)   hlt    
-0x0804b935: c7 04 08 f4 37 00 00    |....7.. | (data)   mov    DWORD PTR ds:[eax + ecx], 0x000037f4
+0x0804b935: c7 04 08 f4 37 00 00    |....7.. | (data)   mov    DWORD PTR ds:[eax + ecx], 0x000037f4<14324>
 0x0804b93c: 64 00 00                |d..     | (data)   add    BYTE PTR fs:[eax], al
 0x0804b93f: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b941: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -11329,7 +11329,7 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 0x0804b958: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x0804b95a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804b95c: 60                      |`       | (data)   pushad 
-0x0804b95d: c8 04 08 58             |...X    | (data)   enter  0x0804, 0x58
+0x0804b95d: c8 04 08 58             |...X    | (data)   enter  0x0804<2052>, 0x58
 0x0804b961: 38 00                   |8.      | (data)   cmp    BYTE PTR ds:[eax], al
 0x0804b963: 00 08                   |..      | (data)   add    BYTE PTR ds:[eax], cl
 0x0804b965: 41                      |A       | (data)   inc    ecx

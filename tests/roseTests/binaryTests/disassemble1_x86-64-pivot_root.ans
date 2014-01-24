@@ -132,7 +132,7 @@ disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 0x004004d3: 49 89 d1                |I..     |   mov    r9, rdx
 0x004004d6: 5e                      |^       |   pop    rsi
 0x004004d7: 48 89 e2                |H..     |   mov    rdx, rsp
-0x004004da: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-0x10>
+0x004004da: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-16>
 0x004004de: 50                      |P       |   push   rax
 0x004004df: 54                      |T       |   push   rsp
 0x004004e0: 49 c7 c0 50 06 40 00    |I..P.@. |   mov    r8, 0x00400650<<StaticData@0x00400646>+0x0a>
@@ -392,10 +392,10 @@ disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 0x004005f0: This function calls 0x00400468
 
 0x004005f0: Basic block reasons: entry point, graph-2
-0x004005f0: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-0x18>], rbx
-0x004005f5: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-0x08>], r12
+0x004005f0: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
+0x004005f5: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
 0x004005fa: 4c 8d 25 bf 01 10 00    |L.%.... |   lea    r12, [rip + 0x00000000001001bf]
-0x00400601: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-0x10>], rbp
+0x00400601: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
 0x00400606: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x0040060a: 31 db                   |1.      |   xor    ebx, ebx
 0x0040060c: e8 57 fe ff ff          |.W...   |   call   0x0000000000400468<<Func>>
@@ -459,12 +459,12 @@ disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 0x0040065f: 48 29 e8                |H).     | (data)   sub    rax, rbp
 0x00400662: 53                      |S       | (data)   push   rbx
 0x00400663: 48 c1 f8 03             |H...    | (data)   sar    rax, 0x03
-0x00400667: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-0x01>]
+0x00400667: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x0040066b: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x0040066f: eb 07                   |..      | (data)   jmp    0x0000000000400678
 0x00400671: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
 0x00400675: 48 ff cb                |H..     | (data)   dec    rbx
-0x00400678: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-0x01>
+0x00400678: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x0040067c: 75 f3                   |u.      | (data)   jne    0x0000000000400671
 0x0040067e: 48 83 c4 08             |H...    | (data)   add    rsp, 0x08
 0x00400682: 5b                      |[       | (data)   pop    rbx
@@ -512,7 +512,7 @@ disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 0x004006b9: Basic block reasons: graph-2
 0x004006b9: Predecessor blocks: 0x004006a7, 0x004006b6
 0x004006b9: Dominator block: 0x004006a7
-0x004006b9: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-0x01>
+0x004006b9: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-1>
 0x004006bd: 75 f1                   |u.      |   jne    0x00000000004006b0<<Insn>>
 0x004006bd: Successor blocks: 0x004006b0, 0x004006bf
 

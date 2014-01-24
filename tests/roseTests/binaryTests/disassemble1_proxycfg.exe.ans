@@ -57,15 +57,15 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001186: 57                      |W       |   push   edi
 0x01001187: 8b 7d 08                |.}.     |   mov    edi, DWORD PTR ss:[ebp + 0x08]
 0x0100118a: 33 f6                   |3.      |   xor    esi, esi
-0x0100118c: 81 ff e0 2e 00 00       |......  |   cmp    edi, 0x00002ee0
-0x01001192: 89 75 fc                |.u.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], esi
+0x0100118c: 81 ff e0 2e 00 00       |......  |   cmp    edi, 0x00002ee0<12000>
+0x01001192: 89 75 fc                |.u.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], esi
 0x01001195: 76 34                   |v4      |   jbe    0x010011cb<<Insn>>
 0x01001195: Successor blocks: 0x01001197, 0x010011cb
 
 0x01001197: Basic block reasons: graph-1
 0x01001197: Predecessor blocks: 0x01001181
 0x01001197: Dominator block: 0x01001181
-0x01001197: 81 ff 98 2f 00 00       |.../..  |   cmp    edi, 0x00002f98
+0x01001197: 81 ff 98 2f 00 00       |.../..  |   cmp    edi, 0x00002f98<12184>
 0x0100119d: 77 2c                   |w,      |   ja     0x010011cb<<Insn>>
 0x0100119d: Successor blocks: 0x0100119f, 0x010011cb
 
@@ -97,12 +97,12 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010011bb: Dominator block: 0x0100119f
 0x010011bb: 56                      |V       |   push   esi
 0x010011bc: 56                      |V       |   push   esi
-0x010011bd: 8d 4d fc                |.M.     |   lea    ecx, [ebp + 0xfc<-0x04>]
+0x010011bd: 8d 4d fc                |.M.     |   lea    ecx, [ebp + 0xfc<-4>]
 0x010011c0: 51                      |Q       |   push   ecx
 0x010011c1: 56                      |V       |   push   esi
 0x010011c2: 57                      |W       |   push   edi
 0x010011c3: 50                      |P       |   push   eax
-0x010011c4: 68 00 0b 00 00          |h....   |   push   0x00000b00
+0x010011c4: 68 00 0b 00 00          |h....   |   push   0x00000b00<2816>
 0x010011c9: eb 0e                   |..      |   jmp    0x010011d9<<Insn>>
 0x010011c9: Successor blocks: 0x010011d9
 
@@ -111,12 +111,12 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010011cb: Dominator block: 0x01001181
 0x010011cb: 56                      |V       |   push   esi
 0x010011cc: 56                      |V       |   push   esi
-0x010011cd: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-0x04>]
+0x010011cd: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-4>]
 0x010011d0: 50                      |P       |   push   eax
 0x010011d1: 56                      |V       |   push   esi
 0x010011d2: 57                      |W       |   push   edi
 0x010011d3: 56                      |V       |   push   esi
-0x010011d4: 68 00 13 00 00          |h....   |   push   0x00001300
+0x010011d4: 68 00 13 00 00          |h....   |   push   0x00001300<4864>
 0x010011d4: Successor blocks: 0x010011d9
 
 0x010011d9: Basic block reasons: graph-1
@@ -135,7 +135,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010011e3: Basic block reasons: graph-1
 0x010011e3: Predecessor blocks: 0x010011df
 0x010011e3: Dominator block: 0x010011df
-0x010011e3: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x010011e3: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x010011e6: 3b c6                   |;.      |   cmp    eax, esi
 0x010011e8: 75 05                   |u.      |   jne    0x010011ef<<Insn>>
 0x010011e8: Successor blocks: 0x010011ea, 0x010011ef
@@ -181,18 +181,18 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010011ff: 83 ec 1c                |...     |   sub    esp, 0x1c
 0x01001202: 56                      |V       |   push   esi
 0x01001203: 8d 45 0c                |.E.     |   lea    eax, [ebp + 0x0c]
-0x01001206: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], eax
+0x01001206: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
 0x01001209: 33 f6                   |3.      |   xor    esi, esi
-0x0100120b: 8d 45 f8                |.E.     |   lea    eax, [ebp + 0xf8<-0x08>]
+0x0100120b: 8d 45 f8                |.E.     |   lea    eax, [ebp + 0xf8<-8>]
 0x0100120e: 50                      |P       |   push   eax
 0x0100120f: 56                      |V       |   push   esi
-0x01001210: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-0x04>]
+0x01001210: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-4>]
 0x01001213: 50                      |P       |   push   eax
 0x01001214: 56                      |V       |   push   esi
 0x01001215: ff 75 08                |.u.     |   push   DWORD PTR ss:[ebp + 0x08]
-0x01001218: 89 75 fc                |.u.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], esi
+0x01001218: 89 75 fc                |.u.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], esi
 0x0100121b: 56                      |V       |   push   esi
-0x0100121c: 68 00 09 00 00          |h....   |   push   0x00000900
+0x0100121c: 68 00 09 00 00          |h....   |   push   0x00000900<2304>
 0x01001221: ff 15 48 41 00 01       |..HA..  |   call   DWORD PTR ds:[0x01004148<IAT+0x3c>]
 0x01001221: Successor blocks: 0x01001227, unknown
 
@@ -200,14 +200,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001227: Predecessor blocks: 0x010011fc
 0x01001227: Dominator block: 0x010011fc
 0x01001227: 3b c6                   |;.      |   cmp    eax, esi
-0x01001229: 89 75 f8                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], esi
+0x01001229: 89 75 f8                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], esi
 0x0100122c: 0f 84 a9 00 00 00       |......  |   je     0x010012db<<Insn>>
 0x0100122c: Successor blocks: 0x01001232, 0x010012db
 
 0x01001232: Basic block reasons: graph-1
 0x01001232: Predecessor blocks: 0x01001227
 0x01001232: Dominator block: 0x01001227
-0x01001232: 39 75 fc                |9u.     |   cmp    DWORD PTR ss:[ebp + 0xfc<-0x04>], esi
+0x01001232: 39 75 fc                |9u.     |   cmp    DWORD PTR ss:[ebp + 0xfc<-4>], esi
 0x01001235: 0f 84 a0 00 00 00       |......  |   je     0x010012db<<Insn>>
 0x01001235: Successor blocks: 0x0100123b, 0x010012db
 
@@ -215,7 +215,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100123b: Predecessor blocks: 0x01001232
 0x0100123b: Dominator block: 0x01001232
 0x0100123b: 57                      |W       |   push   edi
-0x0100123c: 6a f5                   |j.      |   push   0xf5<-0x0b>
+0x0100123c: 6a f5                   |j.      |   push   0xf5<-11>
 0x0100123e: ff 15 30 41 00 01       |..0A..  |   call   DWORD PTR ds:[0x01004130<IAT+0x24>]
 0x0100123e: Successor blocks: 0x01001244, unknown
 
@@ -224,7 +224,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001244: Dominator block: 0x0100123b
 0x01001244: 8b f8                   |..      |   mov    edi, eax
 0x01001246: 57                      |W       |   push   edi
-0x01001247: 89 7d e8                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], edi
+0x01001247: 89 7d e8                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], edi
 0x0100124a: ff 15 34 41 00 01       |..4A..  |   call   DWORD PTR ds:[0x01004134<IAT+0x28>]
 0x0100124a: Successor blocks: 0x01001250, unknown
 
@@ -238,7 +238,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001254: Basic block reasons: graph-1
 0x01001254: Predecessor blocks: 0x01001250
 0x01001254: Dominator block: 0x01001250
-0x01001254: 8d 45 e4                |.E.     |   lea    eax, [ebp + 0xe4<-0x1c>]
+0x01001254: 8d 45 e4                |.E.     |   lea    eax, [ebp + 0xe4<-28>]
 0x01001257: 50                      |P       |   push   eax
 0x01001258: 57                      |W       |   push   edi
 0x01001259: ff 15 38 41 00 01       |..8A..  |   call   DWORD PTR ds:[0x01004138<IAT+0x2c>]
@@ -255,9 +255,9 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001263: Predecessor blocks: 0x0100125f
 0x01001263: Dominator block: 0x0100125f
 0x01001263: 56                      |V       |   push   esi
-0x01001264: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-0x14>]
+0x01001264: 8d 45 ec                |.E.     |   lea    eax, [ebp + 0xec<-20>]
 0x01001267: 50                      |P       |   push   eax
-0x01001268: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x01001268: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x0100126b: ff 15 a4 41 00 01       |...A..  |   call   DWORD PTR ds:[0x010041a4<IAT+0x98>]
 0x0100126b: Successor blocks: 0x01001271, unknown
 
@@ -266,7 +266,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001271: Dominator block: 0x01001263
 0x01001271: 59                      |Y       |   pop    ecx
 0x01001272: 50                      |P       |   push   eax
-0x01001273: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x01001273: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x01001276: 57                      |W       |   push   edi
 0x01001277: ff 15 3c 41 00 01       |..<A..  |   call   DWORD PTR ds:[0x0100413c<IAT+0x30>]
 0x01001277: Successor blocks: 0x0100127d, unknown
@@ -286,8 +286,8 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001287: 56                      |V       |   push   esi
 0x01001288: 56                      |V       |   push   esi
 0x01001289: 56                      |V       |   push   esi
-0x0100128a: 6a ff                   |j.      |   push   0xff<-0x01>
-0x0100128c: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x0100128a: 6a ff                   |j.      |   push   0xff<-1>
+0x0100128c: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x0100128f: 56                      |V       |   push   esi
 0x01001290: ff d7                   |..      |   call   edi
 0x01001290: Successor blocks: 0x01001292
@@ -304,7 +304,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100129b: Predecessor blocks: 0x01001292
 0x0100129b: Dominator block: 0x01001292
 0x0100129b: 50                      |P       |   push   eax
-0x0100129c: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x0100129c: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 0x0100129f: e8 5c 06 00 00          |.\...   |   call   0x01001900<<Func>>
 0x0100129f: Successor blocks: 0x010012a4, 0x01001900<<Func>>
 
@@ -313,7 +313,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010012a4: Dominator block: 0x0100129b
 0x010012a4: 3b c6                   |;.      |   cmp    eax, esi
 0x010012a6: 59                      |Y       |   pop    ecx
-0x010012a7: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], eax
+0x010012a7: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
 0x010012aa: 74 2d                   |t-      |   je     0x010012d9<<Insn>>
 0x010012aa: Successor blocks: 0x010012ac, 0x010012d9
 
@@ -322,10 +322,10 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010012ac: Dominator block: 0x010012a4
 0x010012ac: 56                      |V       |   push   esi
 0x010012ad: 56                      |V       |   push   esi
-0x010012ae: ff 75 f0                |.u.     |   push   DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x010012ae: ff 75 f0                |.u.     |   push   DWORD PTR ss:[ebp + 0xf0<-16>]
 0x010012b1: 50                      |P       |   push   eax
-0x010012b2: 6a ff                   |j.      |   push   0xff<-0x01>
-0x010012b4: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x010012b2: 6a ff                   |j.      |   push   0xff<-1>
+0x010012b4: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x010012b7: 56                      |V       |   push   esi
 0x010012b8: ff d7                   |..      |   call   edi
 0x010012b8: Successor blocks: 0x010012ba, unknown
@@ -341,19 +341,19 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010012bd: Predecessor blocks: 0x010012ba
 0x010012bd: Dominator block: 0x010012ba
 0x010012bd: 56                      |V       |   push   esi
-0x010012be: 8d 4d ec                |.M.     |   lea    ecx, [ebp + 0xec<-0x14>]
+0x010012be: 8d 4d ec                |.M.     |   lea    ecx, [ebp + 0xec<-20>]
 0x010012c1: 51                      |Q       |   push   ecx
 0x010012c2: 48                      |H       |   dec    eax
 0x010012c3: 50                      |P       |   push   eax
-0x010012c4: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-0x0c>]
-0x010012c7: ff 75 e8                |.u.     |   push   DWORD PTR ss:[ebp + 0xe8<-0x18>]
+0x010012c4: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-12>]
+0x010012c7: ff 75 e8                |.u.     |   push   DWORD PTR ss:[ebp + 0xe8<-24>]
 0x010012ca: ff 15 14 41 00 01       |...A..  |   call   DWORD PTR ds:[0x01004114<IAT+8>]
 0x010012ca: Successor blocks: 0x010012d0, unknown
 
 0x010012d0: Basic block reasons: graph-1
 0x010012d0: Predecessor blocks: 0x010012bd
 0x010012d0: Dominator block: 0x010012bd
-0x010012d0: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x010012d0: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-12>]
 0x010012d3: e8 1c 06 00 00          |.....   |   call   0x010018f4<<Func>>
 0x010012d3: Successor blocks: 0x010012d8, 0x010018f4<<Func>>
 
@@ -425,7 +425,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010012fb: 8b 35 2c 41 00 01       |.5,A..  |   mov    esi, DWORD PTR ds:[0x0100412c<IAT+0x20>]
 0x01001301: 57                      |W       |   push   edi
 0x01001302: 57                      |W       |   push   edi
-0x01001303: 6a ff                   |j.      |   push   0xff<-0x01>
+0x01001303: 6a ff                   |j.      |   push   0xff<-1>
 0x01001305: ff 75 08                |.u.     |   push   DWORD PTR ss:[ebp + 0x08]
 0x01001308: 57                      |W       |   push   edi
 0x01001309: 57                      |W       |   push   edi
@@ -464,7 +464,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001326: Dominator block: 0x01001317
 0x01001326: 53                      |S       |   push   ebx
 0x01001327: 50                      |P       |   push   eax
-0x01001328: 6a ff                   |j.      |   push   0xff<-0x01>
+0x01001328: 6a ff                   |j.      |   push   0xff<-1>
 0x0100132a: ff 75 08                |.u.     |   push   DWORD PTR ss:[ebp + 0x08]
 0x0100132d: 57                      |W       |   push   edi
 0x0100132e: 57                      |W       |   push   edi
@@ -693,7 +693,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010013f9: 8b 75 08                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0x08]
 0x010013fc: 57                      |W       |   push   edi
 0x010013fd: 33 c0                   |3.      |   xor    eax, eax
-0x010013ff: 8d 7d f4                |.}.     |   lea    edi, [ebp + 0xf4<-0x0c>]
+0x010013ff: 8d 7d f4                |.}.     |   lea    edi, [ebp + 0xf4<-12>]
 0x01001402: ab                      |.       |   stosd  
 0x01001403: ab                      |.       |   stosd  
 0x01001404: ab                      |.       |   stosd  
@@ -723,7 +723,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100141c: Basic block reasons: graph-1
 0x0100141c: Predecessor blocks: 0x010013f2, 0x0100140c, 0x01001410
 0x0100141c: Dominator block: 0x010013f2
-0x0100141c: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], eax
+0x0100141c: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
 0x0100141f: 8b 46 04                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x04]
 0x01001422: 85 c0                   |..      |   test   eax, eax
 0x01001424: 74 10                   |t.      |   je     0x01001436<<Insn>>
@@ -732,7 +732,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001426: Basic block reasons: graph-1
 0x01001426: Predecessor blocks: 0x0100141c
 0x01001426: Dominator block: 0x0100141c
-0x01001426: 8d 4d f8                |.M.     |   lea    ecx, [ebp + 0xf8<-0x08>]
+0x01001426: 8d 4d f8                |.M.     |   lea    ecx, [ebp + 0xf8<-8>]
 0x01001429: 51                      |Q       |   push   ecx
 0x0100142a: 50                      |P       |   push   eax
 0x0100142b: e8 b3 fe ff ff          |.....   |   call   0x010012e3<<Func>>
@@ -757,7 +757,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100143d: Basic block reasons: graph-1
 0x0100143d: Predecessor blocks: 0x01001436
 0x0100143d: Dominator block: 0x01001436
-0x0100143d: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-0x04>]
+0x0100143d: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-4>]
 0x01001440: 50                      |P       |   push   eax
 0x01001441: 56                      |V       |   push   esi
 0x01001442: e8 9c fe ff ff          |.....   |   call   0x010012e3<<Func>>
@@ -774,7 +774,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100144d: Basic block reasons: graph-1
 0x0100144d: Predecessor blocks: 0x01001436, 0x01001447
 0x0100144d: Dominator block: 0x01001436
-0x0100144d: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-0x0c>]
+0x0100144d: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-12>]
 0x01001450: 50                      |P       |   push   eax
 0x01001451: 33 ff                   |3.      |   xor    edi, edi
 0x01001453: ff 15 54 41 00 01       |..TA..  |   call   DWORD PTR ds:[0x01004154<IAT+0x48>]
@@ -802,14 +802,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001466: Basic block reasons: graph-1
 0x01001466: Predecessor blocks: 0x01001430, 0x01001447, 0x01001459, 0x01001464
 0x01001466: Dominator block: 0x0100141c
-0x01001466: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00
+0x01001466: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00
 0x0100146a: 74 09                   |t.      |   je     0x01001475<<Insn>>
 0x0100146a: Successor blocks: 0x0100146c, 0x01001475
 
 0x0100146c: Basic block reasons: graph-1
 0x0100146c: Predecessor blocks: 0x01001466
 0x0100146c: Dominator block: 0x01001466
-0x0100146c: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x0100146c: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-8>]
 0x0100146f: e8 80 04 00 00          |.....   |   call   0x010018f4<<Func>>
 0x0100146f: Successor blocks: 0x01001474, 0x010018f4<<Func>>
 
@@ -822,14 +822,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001475: Basic block reasons: graph-1
 0x01001475: Predecessor blocks: 0x01001466, 0x01001474
 0x01001475: Dominator block: 0x01001466
-0x01001475: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00
+0x01001475: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00
 0x01001479: 74 09                   |t.      |   je     0x01001484<<Insn>>
 0x01001479: Successor blocks: 0x0100147b, 0x01001484
 
 0x0100147b: Basic block reasons: graph-1
 0x0100147b: Predecessor blocks: 0x01001475
 0x0100147b: Dominator block: 0x01001475
-0x0100147b: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x0100147b: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x0100147e: e8 71 04 00 00          |.q...   |   call   0x010018f4<<Func>>
 0x0100147e: Successor blocks: 0x01001483, 0x010018f4<<Func>>
 
@@ -875,17 +875,17 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001499: 33 c0                   |3.      |   xor    eax, eax
 0x0100149b: 56                      |V       |   push   esi
 0x0100149c: 57                      |W       |   push   edi
-0x0100149d: 8d 7d f4                |.}.     |   lea    edi, [ebp + 0xf4<-0x0c>]
+0x0100149d: 8d 7d f4                |.}.     |   lea    edi, [ebp + 0xf4<-12>]
 0x010014a0: ab                      |.       |   stosd  
 0x010014a1: ab                      |.       |   stosd  
 0x010014a2: ab                      |.       |   stosd  
 0x010014a3: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x010014a6: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], eax
+0x010014a6: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
 0x010014a9: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x010014ac: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], eax
+0x010014ac: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
 0x010014af: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x010014b2: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x010014b5: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-0x0c>]
+0x010014b2: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x010014b5: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-12>]
 0x010014b8: 50                      |P       |   push   eax
 0x010014b9: e8 32 ff ff ff          |.2...   |   call   0x010013f0<<Func>>
 0x010014b9: Successor blocks: 0x010013f0<<Func>>, 0x010014be
@@ -924,7 +924,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010014d5: Dominator block: 0x010014ca
 0x010014d5: 50                      |P       |   push   eax
 0x010014d6: 57                      |W       |   push   edi
-0x010014d7: 68 15 27 00 00          |h.'..   |   push   0x00002715
+0x010014d7: 68 15 27 00 00          |h.'..   |   push   0x00002715<10005>
 0x010014dc: e8 19 fd ff ff          |.....   |   call   0x010011fa<<Func>>
 0x010014dc: Successor blocks: 0x010011fa<<Func>>, 0x010014e1
 
@@ -952,7 +952,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010014f1: Basic block reasons: graph-1
 0x010014f1: Predecessor blocks: 0x010014be
 0x010014f1: Dominator block: 0x010014be
-0x010014f1: 68 14 27 00 00          |h.'..   |   push   0x00002714
+0x010014f1: 68 14 27 00 00          |h.'..   |   push   0x00002714<10004>
 0x010014f6: e8 ff fc ff ff          |.....   |   call   0x010011fa<<Func>>
 0x010014f6: Successor blocks: 0x010011fa<<Func>>, 0x010014fb
 
@@ -994,7 +994,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100150c: 8b ec                   |..      |   mov    ebp, esp
 0x0100150e: 83 ec 0c                |...     |   sub    esp, 0x0c
 0x01001511: 56                      |V       |   push   esi
-0x01001512: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-0x0c>]
+0x01001512: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-12>]
 0x01001515: 50                      |P       |   push   eax
 0x01001516: ff 15 50 41 00 01       |..PA..  |   call   DWORD PTR ds:[0x01004150<IAT+0x44>]
 0x01001516: Successor blocks: 0x0100151c, unknown
@@ -1040,7 +1040,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100153b: Dominator block: 0x01001530
 0x0100153b: 50                      |P       |   push   eax
 0x0100153c: 57                      |W       |   push   edi
-0x0100153d: 68 16 27 00 00          |h.'..   |   push   0x00002716
+0x0100153d: 68 16 27 00 00          |h.'..   |   push   0x00002716<10006>
 0x01001542: e8 b3 fc ff ff          |.....   |   call   0x010011fa<<Func>>
 0x01001542: Successor blocks: 0x010011fa<<Func>>, 0x01001547
 
@@ -1070,14 +1070,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100155f: Predecessor blocks: 0x0100151c
 0x0100155f: Dominator block: 0x0100151c
 0x0100155f: 68 30 10 00 01          |h0...   |   push   0x01001030
-0x01001564: 68 17 27 00 00          |h.'..   |   push   0x00002717
+0x01001564: 68 17 27 00 00          |h.'..   |   push   0x00002717<10007>
 0x01001569: e8 8c fc ff ff          |.....   |   call   0x010011fa<<Func>>
 0x01001569: Successor blocks: 0x010011fa<<Func>>, 0x0100156e
 
 0x0100156e: Basic block reasons: graph-1
 0x0100156e: Predecessor blocks: 0x0100155f
 0x0100156e: Dominator block: 0x0100155f
-0x0100156e: 8b 45 f4                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0100156e: 8b 45 f4                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
 0x01001571: 48                      |H       |   dec    eax
 0x01001572: 59                      |Y       |   pop    ecx
 0x01001573: 59                      |Y       |   pop    ecx
@@ -1095,22 +1095,22 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100157a: Basic block reasons: graph-1
 0x0100157a: Predecessor blocks: 0x01001576
 0x0100157a: Dominator block: 0x01001576
-0x0100157a: 68 1d 27 00 00          |h.'..   |   push   0x0000271d
+0x0100157a: 68 1d 27 00 00          |h.'..   |   push   0x0000271d<10013>
 0x0100157f: eb 43                   |.C      |   jmp    0x010015c4<<Insn>>
 0x0100157f: Successor blocks: 0x010015c4
 
 0x01001581: Basic block reasons: graph-1
 0x01001581: Predecessor blocks: 0x01001576
 0x01001581: Dominator block: 0x01001576
-0x01001581: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00
+0x01001581: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00
 0x01001585: 74 10                   |t.      |   je     0x01001597<<Insn>>
 0x01001585: Successor blocks: 0x01001587, 0x01001597
 
 0x01001587: Basic block reasons: graph-1
 0x01001587: Predecessor blocks: 0x01001581
 0x01001587: Dominator block: 0x01001581
-0x01001587: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-0x08>]
-0x0100158a: 68 19 27 00 00          |h.'..   |   push   0x00002719
+0x01001587: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-8>]
+0x0100158a: 68 19 27 00 00          |h.'..   |   push   0x00002719<10009>
 0x0100158f: e8 66 fc ff ff          |.f...   |   call   0x010011fa<<Func>>
 0x0100158f: Successor blocks: 0x010011fa<<Func>>, 0x01001594
 
@@ -1124,14 +1124,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001597: Basic block reasons: graph-1
 0x01001597: Predecessor blocks: 0x01001581
 0x01001597: Dominator block: 0x01001581
-0x01001597: 68 1a 27 00 00          |h.'..   |   push   0x0000271a
+0x01001597: 68 1a 27 00 00          |h.'..   |   push   0x0000271a<10010>
 0x0100159c: e8 59 fc ff ff          |.Y...   |   call   0x010011fa<<Func>>
 0x0100159c: Successor blocks: 0x010011fa<<Func>>, 0x010015a1
 
 0x010015a1: Basic block reasons: graph-1
 0x010015a1: Predecessor blocks: 0x01001594, 0x01001597
 0x010015a1: Dominator block: 0x01001581
-0x010015a1: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00
+0x010015a1: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00
 0x010015a5: 59                      |Y       |   pop    ecx
 0x010015a6: 74 10                   |t.      |   je     0x010015b8<<Insn>>
 0x010015a6: Successor blocks: 0x010015a8, 0x010015b8
@@ -1139,8 +1139,8 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010015a8: Basic block reasons: graph-1
 0x010015a8: Predecessor blocks: 0x010015a1
 0x010015a8: Dominator block: 0x010015a1
-0x010015a8: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
-0x010015ab: 68 1b 27 00 00          |h.'..   |   push   0x0000271b
+0x010015a8: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
+0x010015ab: 68 1b 27 00 00          |h.'..   |   push   0x0000271b<10011>
 0x010015b0: e8 45 fc ff ff          |.E...   |   call   0x010011fa<<Func>>
 0x010015b0: Successor blocks: 0x010011fa<<Func>>, 0x010015b5
 
@@ -1154,14 +1154,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010015b8: Basic block reasons: graph-1
 0x010015b8: Predecessor blocks: 0x010015a1
 0x010015b8: Dominator block: 0x010015a1
-0x010015b8: 68 1c 27 00 00          |h.'..   |   push   0x0000271c
+0x010015b8: 68 1c 27 00 00          |h.'..   |   push   0x0000271c<10012>
 0x010015bd: eb 05                   |..      |   jmp    0x010015c4<<Insn>>
 0x010015bd: Successor blocks: 0x010015c4
 
 0x010015bf: Basic block reasons: graph-1
 0x010015bf: Predecessor blocks: 0x0100156e
 0x010015bf: Dominator block: 0x0100156e
-0x010015bf: 68 18 27 00 00          |h.'..   |   push   0x00002718
+0x010015bf: 68 18 27 00 00          |h.'..   |   push   0x00002718<10008>
 0x010015bf: Successor blocks: 0x010015c4
 
 0x010015c4: Basic block reasons: graph-1
@@ -1173,7 +1173,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010015c9: Basic block reasons: graph-1
 0x010015c9: Predecessor blocks: 0x010015b5, 0x010015c4
 0x010015c9: Dominator block: 0x0100156e
-0x010015c9: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00
+0x010015c9: 83 7d f8 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00
 0x010015cd: 8b 35 1c 41 00 01       |.5.A..  |   mov    esi, DWORD PTR ds:[0x0100411c<IAT+0x10>]
 0x010015d3: 59                      |Y       |   pop    ecx
 0x010015d4: 74 05                   |t.      |   je     0x010015db<<Insn>>
@@ -1182,21 +1182,21 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010015d6: Basic block reasons: graph-1
 0x010015d6: Predecessor blocks: 0x010015c9
 0x010015d6: Dominator block: 0x010015c9
-0x010015d6: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x010015d6: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-8>]
 0x010015d9: ff d6                   |..      |   call   esi
 0x010015d9: Successor blocks: 0x010015db, unknown
 
 0x010015db: Basic block reasons: graph-1
 0x010015db: Predecessor blocks: 0x010015c9, 0x010015d6
 0x010015db: Dominator block: 0x010015c9
-0x010015db: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00
+0x010015db: 83 7d fc 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00
 0x010015df: 74 05                   |t.      |   je     0x010015e6<<Insn>>
 0x010015df: Successor blocks: 0x010015e1, 0x010015e6
 
 0x010015e1: Basic block reasons: graph-1
 0x010015e1: Predecessor blocks: 0x010015db
 0x010015e1: Dominator block: 0x010015db
-0x010015e1: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x010015e1: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
 0x010015e4: ff d6                   |..      |   call   esi
 0x010015e4: Successor blocks: 0x010015e6, unknown
 
@@ -1234,14 +1234,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010015f0: 55                      |U       |   push   ebp
 0x010015f1: 8b ec                   |..      |   mov    ebp, esp
 0x010015f3: 83 ec 10                |...     |   sub    esp, 0x10
-0x010015f6: 68 10 27 00 00          |h.'..   |   push   0x00002710
+0x010015f6: 68 10 27 00 00          |h.'..   |   push   0x00002710<10000>
 0x010015fb: e8 fa fb ff ff          |.....   |   call   0x010011fa<<Func>>
 0x010015fb: Successor blocks: 0x010011fa<<Func>>, 0x01001600
 
 0x01001600: Basic block reasons: graph-1
 0x01001600: Predecessor blocks: 0x010015f0
 0x01001600: Dominator block: 0x010015f0
-0x01001600: c7 04 24 11 27 00 00    |..$.'.. |   mov    DWORD PTR ss:[esp], 0x00002711
+0x01001600: c7 04 24 11 27 00 00    |..$.'.. |   mov    DWORD PTR ss:[esp], 0x00002711<10001>
 0x01001607: e8 ee fb ff ff          |.....   |   call   0x010011fa<<Func>>
 0x01001607: Successor blocks: 0x010011fa<<Func>>, 0x0100160c
 
@@ -1249,7 +1249,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100160c: Predecessor blocks: 0x01001600
 0x0100160c: Dominator block: 0x01001600
 0x0100160c: 59                      |Y       |   pop    ecx
-0x0100160d: 8d 45 f0                |.E.     |   lea    eax, [ebp + 0xf0<-0x10>]
+0x0100160d: 8d 45 f0                |.E.     |   lea    eax, [ebp + 0xf0<-16>]
 0x01001610: 50                      |P       |   push   eax
 0x01001611: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
 0x01001614: 83 c0 04                |...     |   add    eax, 0x04
@@ -1263,7 +1263,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001622: Basic block reasons: graph-1
 0x01001622: Predecessor blocks: 0x0100160c
 0x01001622: Dominator block: 0x0100160c
-0x01001622: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x01001622: 8b 45 f0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x01001625: 83 f8 01                |...     |   cmp    eax, 0x01
 0x01001628: 74 61                   |ta      |   je     0x0100168b<<Insn>>
 0x01001628: Successor blocks: 0x0100162a, 0x0100168b
@@ -1330,7 +1330,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001654: Dominator block: 0x01001649
 0x01001654: 50                      |P       |   push   eax
 0x01001655: 57                      |W       |   push   edi
-0x01001656: 68 13 27 00 00          |h.'..   |   push   0x00002713
+0x01001656: 68 13 27 00 00          |h.'..   |   push   0x00002713<10003>
 0x0100165b: e8 9a fb ff ff          |.....   |   call   0x010011fa<<Func>>
 0x0100165b: Successor blocks: 0x010011fa<<Func>>, 0x01001660
 
@@ -1378,7 +1378,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100167e: Basic block reasons: graph-1
 0x0100167e: Predecessor blocks: 0x0100162f, 0x01001631
 0x0100167e: Dominator block: 0x0100162f
-0x0100167e: 68 12 27 00 00          |h.'..   |   push   0x00002712
+0x0100167e: 68 12 27 00 00          |h.'..   |   push   0x00002712<10002>
 0x01001683: e8 72 fb ff ff          |.r...   |   call   0x010011fa<<Func>>
 0x01001683: Successor blocks: 0x010011fa<<Func>>, 0x01001688
 
@@ -1392,9 +1392,9 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100168b: Basic block reasons: graph-1
 0x0100168b: Predecessor blocks: 0x01001622
 0x0100168b: Dominator block: 0x01001622
-0x0100168b: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-0x04>]
-0x0100168e: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-0x08>]
-0x01001691: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x0100168b: ff 75 fc                |.u.     |   push   DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0100168e: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-8>]
+0x01001691: ff 75 f4                |.u.     |   push   DWORD PTR ss:[ebp + 0xf4<-12>]
 0x01001694: e8 f8 fd ff ff          |.....   |   call   0x01001491<<Func>>
 0x01001694: Successor blocks: 0x01001491<<Func>>, 0x01001699
 
@@ -1441,7 +1441,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010016ae: 55                      |U       |   push   ebp
 0x010016af: 8b ec                   |..      |   mov    ebp, esp
 0x010016b1: 83 ec 18                |...     |   sub    esp, 0x18
-0x010016b4: 83 65 ec 00             |.e..    |   and    DWORD PTR ss:[ebp + 0xec<-0x14>], 0x00
+0x010016b4: 83 65 ec 00             |.e..    |   and    DWORD PTR ss:[ebp + 0xec<-20>], 0x00
 0x010016b8: 56                      |V       |   push   esi
 0x010016b9: 57                      |W       |   push   edi
 0x010016ba: 6a 14                   |j.      |   push   0x14
@@ -1449,9 +1449,9 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010016bd: 6a 03                   |j.      |   push   0x03
 0x010016bf: 5e                      |^       |   pop    esi
 0x010016c0: 6a 24                   |j$      |   push   0x24
-0x010016c2: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x010016c5: 89 45 e8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], eax
-0x010016c8: 89 75 f0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], esi
+0x010016c2: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x010016c5: 89 45 e8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], eax
+0x010016c8: 89 75 f0                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], esi
 0x010016cb: e8 30 02 00 00          |.0...   |   call   0x01001900<<Func>>
 0x010016cb: Successor blocks: 0x010016d0, 0x01001900<<Func>>
 
@@ -1461,7 +1461,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010016d0: 8b f8                   |..      |   mov    edi, eax
 0x010016d2: 85 ff                   |..      |   test   edi, edi
 0x010016d4: 59                      |Y       |   pop    ecx
-0x010016d5: 89 7d f8                |.}.     |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], edi
+0x010016d5: 89 7d f8                |.}.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], edi
 0x010016d8: 75 08                   |u.      |   jne    0x010016e2<<Insn>>
 0x010016d8: Successor blocks: 0x010016da, 0x010016e2
 
@@ -1480,15 +1480,15 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010016e4: 33 c0                   |3.      |   xor    eax, eax
 0x010016e6: 59                      |Y       |   pop    ecx
 0x010016e7: f3 ab                   |..      |   rep_stosd 
-0x010016e9: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x010016e9: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x010016ec: c7 00 01 00 00 00       |......  |   mov    DWORD PTR ds:[eax], 0x00000001
-0x010016f2: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x010016f2: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x010016f5: c7 40 0c 02 00 00 00    |.@..... |   mov    DWORD PTR ds:[eax + 0x0c], 0x00000002
-0x010016fc: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x010016fc: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x010016ff: 89 70 18                |.p.     |   mov    DWORD PTR ds:[eax + 0x18], esi
-0x01001702: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-0x04>]
+0x01001702: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-4>]
 0x01001705: 50                      |P       |   push   eax
-0x01001706: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-0x18>]
+0x01001706: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x01001709: 50                      |P       |   push   eax
 0x0100170a: 6a 4b                   |jK      |   push   0x4b
 0x0100170c: 6a 00                   |j.      |   push   0x00
@@ -1517,7 +1517,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001720: Basic block reasons: graph-1
 0x01001720: Predecessor blocks: 0x01001714
 0x01001720: Dominator block: 0x01001714
-0x01001720: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x01001720: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x01001723: ff 70 1c                |.p.     |   push   DWORD PTR ds:[eax + 0x1c]
 0x01001726: ff 70 10                |.p.     |   push   DWORD PTR ds:[eax + 0x10]
 0x01001729: ff 70 04                |.p.     |   push   DWORD PTR ds:[eax + 0x04]
@@ -1528,7 +1528,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001731: Predecessor blocks: 0x0100171e, 0x01001720
 0x01001731: Dominator block: 0x01001714
 0x01001731: 8b f8                   |..      |   mov    edi, eax
-0x01001733: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x01001733: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x01001736: 85 c0                   |..      |   test   eax, eax
 0x01001738: 74 13                   |t.      |   je     0x0100174d<<Insn>>
 0x01001738: Successor blocks: 0x0100173a, 0x0100174d
@@ -1544,7 +1544,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001745: Basic block reasons: graph-1
 0x01001745: Predecessor blocks: 0x0100173a
 0x01001745: Dominator block: 0x0100173a
-0x01001745: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x01001745: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x01001748: ff 70 1c                |.p.     |   push   DWORD PTR ds:[eax + 0x1c]
 0x0100174b: ff d6                   |..      |   call   esi
 0x0100174b: Successor blocks: 0x0100174d, unknown
@@ -1552,14 +1552,14 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100174d: Basic block reasons: graph-1
 0x0100174d: Predecessor blocks: 0x01001731, 0x01001745
 0x0100174d: Dominator block: 0x01001731
-0x0100174d: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x0100174d: ff 75 f8                |.u.     |   push   DWORD PTR ss:[ebp + 0xf8<-8>]
 0x01001750: e8 9f 01 00 00          |.....   |   call   0x010018f4<<Func>>
 0x01001750: Successor blocks: 0x01001755, 0x010018f4<<Func>>
 
 0x01001755: Basic block reasons: graph-1
 0x01001755: Predecessor blocks: 0x0100174d
 0x01001755: Dominator block: 0x0100174d
-0x01001755: 81 ff e9 2e 00 00       |......  |   cmp    edi, 0x00002ee9
+0x01001755: 81 ff e9 2e 00 00       |......  |   cmp    edi, 0x00002ee9<12009>
 0x0100175b: 59                      |Y       |   pop    ecx
 0x0100175c: 75 0b                   |u.      |   jne    0x01001769<<Insn>>
 0x0100175c: Successor blocks: 0x0100175e, 0x01001769
@@ -1567,7 +1567,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100175e: Basic block reasons: graph-1
 0x0100175e: Predecessor blocks: 0x01001755
 0x0100175e: Dominator block: 0x01001755
-0x0100175e: 68 1e 27 00 00          |h.'..   |   push   0x0000271e
+0x0100175e: 68 1e 27 00 00          |h.'..   |   push   0x0000271e<10014>
 0x01001763: e8 92 fa ff ff          |.....   |   call   0x010011fa<<Func>>
 0x01001763: Successor blocks: 0x010011fa<<Func>>, 0x01001768
 
@@ -1621,7 +1621,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001789: Basic block reasons: graph-1
 0x01001789: Predecessor blocks: 0x01001780
 0x01001789: Dominator block: 0x01001780
-0x01001789: 66 81 38 4d 5a          |f.8MZ   |   cmp    WORD PTR ds:[eax], 0x5a4d
+0x01001789: 66 81 38 4d 5a          |f.8MZ   |   cmp    WORD PTR ds:[eax], 0x5a4d<23117>
 0x0100178e: 75 1f                   |u.      |   jne    0x010017af<<Insn>>
 0x0100178e: Successor blocks: 0x01001790, 0x010017af
 
@@ -1630,7 +1630,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001790: Dominator block: 0x01001789
 0x01001790: 8b 48 3c                |.H<     |   mov    ecx, DWORD PTR ds:[eax + 0x3c]
 0x01001793: 03 c8                   |..      |   add    ecx, eax
-0x01001795: 81 39 50 45 00 00       |.9PE..  |   cmp    DWORD PTR ds:[ecx], 0x00004550
+0x01001795: 81 39 50 45 00 00       |.9PE..  |   cmp    DWORD PTR ds:[ecx], 0x00004550<17744>
 0x0100179b: 75 12                   |u.      |   jne    0x010017af<<Insn>>
 0x0100179b: Successor blocks: 0x0100179d, 0x010017af
 
@@ -1638,21 +1638,21 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100179d: Predecessor blocks: 0x01001790
 0x0100179d: Dominator block: 0x01001790
 0x0100179d: 0f b7 41 18             |..A.    |   movzx  eax, WORD PTR ds:[ecx + 0x18]
-0x010017a1: 3d 0b 01 00 00          |=....   |   cmp    eax, 0x0000010b
+0x010017a1: 3d 0b 01 00 00          |=....   |   cmp    eax, 0x0000010b<267>
 0x010017a6: 74 1f                   |t.      |   je     0x010017c7<<Insn>>
 0x010017a6: Successor blocks: 0x010017a8, 0x010017c7
 
 0x010017a8: Basic block reasons: graph-1
 0x010017a8: Predecessor blocks: 0x0100179d
 0x010017a8: Dominator block: 0x0100179d
-0x010017a8: 3d 0b 02 00 00          |=....   |   cmp    eax, 0x0000020b
+0x010017a8: 3d 0b 02 00 00          |=....   |   cmp    eax, 0x0000020b<523>
 0x010017ad: 74 05                   |t.      |   je     0x010017b4<<Insn>>
 0x010017ad: Successor blocks: 0x010017af, 0x010017b4
 
 0x010017af: Basic block reasons: graph-1
 0x010017af: Predecessor blocks: 0x01001789, 0x01001790, 0x010017a8, 0x010017b4, 0x010017c7
 0x010017af: Dominator block: 0x01001789
-0x010017af: 89 7d e4                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe4<-0x1c>], edi
+0x010017af: 89 7d e4                |.}.     |   mov    DWORD PTR ss:[ebp + 0xe4<-28>], edi
 0x010017b2: eb 27                   |.'      |   jmp    0x010017db<<Insn>>
 0x010017b2: Successor blocks: 0x010017db
 
@@ -1689,13 +1689,13 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010017d5: Predecessor blocks: 0x010017bd, 0x010017cd
 0x010017d5: Dominator block: 0x0100179d
 0x010017d5: 0f 95 c0                |...     |   setne  al
-0x010017d8: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-0x1c>], eax
+0x010017d8: 89 45 e4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xe4<-28>], eax
 0x010017d8: Successor blocks: 0x010017db
 
 0x010017db: Basic block reasons: graph-1
 0x010017db: Predecessor blocks: 0x010017af, 0x010017d5
 0x010017db: Dominator block: 0x01001789
-0x010017db: 89 7d fc                |.}.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], edi
+0x010017db: 89 7d fc                |.}.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], edi
 0x010017de: 6a 01                   |j.      |   push   0x01
 0x010017e0: ff 15 6c 41 00 01       |..lA..  |   call   DWORD PTR ds:[0x0100416c<IAT+0x60>]
 0x010017e0: Successor blocks: 0x010017e6, unknown
@@ -1704,8 +1704,8 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010017e6: Predecessor blocks: 0x010017db
 0x010017e6: Dominator block: 0x010017db
 0x010017e6: 59                      |Y       |   pop    ecx
-0x010017e7: 83 0d 14 20 00 01 ff    |... ... |   or     DWORD PTR ds:[0x01002014<.bss+0x14>], 0xff<-0x01>
-0x010017ee: 83 0d 18 20 00 01 ff    |... ... |   or     DWORD PTR ds:[0x01002018<.bss+0x18>], 0xff<-0x01>
+0x010017e7: 83 0d 14 20 00 01 ff    |... ... |   or     DWORD PTR ds:[0x01002014<.bss+0x14>], 0xff<-1>
+0x010017ee: 83 0d 18 20 00 01 ff    |... ... |   or     DWORD PTR ds:[0x01002018<.bss+0x18>], 0xff<-1>
 0x010017f5: ff 15 70 41 00 01       |..pA..  |   call   DWORD PTR ds:[0x01004170<IAT+0x64>]
 0x010017f5: Successor blocks: 0x010017fb, unknown
 
@@ -1766,15 +1766,15 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100184a: Predecessor blocks: 0x0100183b
 0x0100184a: Dominator block: 0x0100183b
 0x0100184a: a1 08 20 00 01          |.. ..   |   mov    eax, DWORD PTR ds:[0x01002008<.bss+8>]
-0x0100184f: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-0x24>], eax
-0x01001852: 8d 45 dc                |.E.     |   lea    eax, [ebp + 0xdc<-0x24>]
+0x0100184f: 89 45 dc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xdc<-36>], eax
+0x01001852: 8d 45 dc                |.E.     |   lea    eax, [ebp + 0xdc<-36>]
 0x01001855: 50                      |P       |   push   eax
 0x01001856: ff 35 04 20 00 01       |.5. ..  |   push   DWORD PTR ds:[0x01002004<.bss+4>]
-0x0100185c: 8d 45 e0                |.E.     |   lea    eax, [ebp + 0xe0<-0x20>]
+0x0100185c: 8d 45 e0                |.E.     |   lea    eax, [ebp + 0xe0<-32>]
 0x0100185f: 50                      |P       |   push   eax
-0x01001860: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-0x28>]
+0x01001860: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-40>]
 0x01001863: 50                      |P       |   push   eax
-0x01001864: 8d 45 d4                |.E.     |   lea    eax, [ebp + 0xd4<-0x2c>]
+0x01001864: 8d 45 d4                |.E.     |   lea    eax, [ebp + 0xd4<-44>]
 0x01001867: 50                      |P       |   push   eax
 0x01001868: ff 15 80 41 00 01       |...A..  |   call   DWORD PTR ds:[0x01004180<IAT+0x74>]
 0x01001868: Successor blocks: 0x0100186e, unknown
@@ -1782,7 +1782,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100186e: Basic block reasons: graph-1
 0x0100186e: Predecessor blocks: 0x0100184a
 0x0100186e: Dominator block: 0x0100184a
-0x0100186e: 89 45 cc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xcc<-0x34>], eax
+0x0100186e: 89 45 cc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xcc<-52>], eax
 0x01001871: 68 04 10 00 01          |h....   |   push   0x01001004
 0x01001876: 68 00 10 00 01          |h....   |   push   0x01001000
 0x0100187b: e8 98 00 00 00          |.....   |   call   0x01001918<<Func>>
@@ -1791,12 +1791,12 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001880: Basic block reasons: graph-1
 0x01001880: Predecessor blocks: 0x0100186e
 0x01001880: Dominator block: 0x0100186e
-0x01001880: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-0x20>]
+0x01001880: 8b 45 e0                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xe0<-32>]
 0x01001883: 8b 0d 84 41 00 01       |...A..  |   mov    ecx, DWORD PTR ds:[0x01004184<IAT+0x78>]
 0x01001889: 89 01                   |..      |   mov    DWORD PTR ds:[ecx], eax
-0x0100188b: ff 75 e0                |.u.     |   push   DWORD PTR ss:[ebp + 0xe0<-0x20>]
-0x0100188e: ff 75 d8                |.u.     |   push   DWORD PTR ss:[ebp + 0xd8<-0x28>]
-0x01001891: ff 75 d4                |.u.     |   push   DWORD PTR ss:[ebp + 0xd4<-0x2c>]
+0x0100188b: ff 75 e0                |.u.     |   push   DWORD PTR ss:[ebp + 0xe0<-32>]
+0x0100188e: ff 75 d8                |.u.     |   push   DWORD PTR ss:[ebp + 0xd8<-40>]
+0x01001891: ff 75 d4                |.u.     |   push   DWORD PTR ss:[ebp + 0xd4<-44>]
 0x01001894: e8 55 fd ff ff          |.U...   |   call   0x010015ee<<Func>>
 0x01001894: Successor blocks: 0x010015ee<<Func>>, 0x01001899
 
@@ -1805,8 +1805,8 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x01001899: Dominator block: 0x01001880
 0x01001899: 83 c4 30                |..0     |   add    esp, 0x30
 0x0100189c: 8b f0                   |..      |   mov    esi, eax
-0x0100189e: 89 75 c8                |.u.     |   mov    DWORD PTR ss:[ebp + 0xc8<-0x38>], esi
-0x010018a1: 39 7d e4                |9}.     |   cmp    DWORD PTR ss:[ebp + 0xe4<-0x1c>], edi
+0x0100189e: 89 75 c8                |.u.     |   mov    DWORD PTR ss:[ebp + 0xc8<-56>], esi
+0x010018a1: 39 7d e4                |9}.     |   cmp    DWORD PTR ss:[ebp + 0xe4<-28>], edi
 0x010018a4: 75 07                   |u.      |   jne    0x010018ad<<Insn>>
 0x010018a4: Successor blocks: 0x010018a6, 0x010018ad
 
@@ -1827,16 +1827,16 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010018b3: Predecessor blocks: 0x010018ad
 0x010018b3: Dominator block: 0x010018ad
 0x010018b3: eb 2d                   |.-      |   jmp    0x010018e2<<Insn>>
-0x010018e2: 83 4d fc ff             |.M..    |   or     DWORD PTR ss:[ebp + 0xfc<-0x04>], 0xff<-0x01>
+0x010018e2: 83 4d fc ff             |.M..    |   or     DWORD PTR ss:[ebp + 0xfc<-4>], 0xff<-1>
 0x010018e6: 8b c6                   |..      |   mov    eax, esi
 0x010018e8: e8 92 00 00 00          |.....   |   call   0x0100197f<<Func>>
 0x010018e8: Successor blocks: 0x010018ed, 0x0100197f<<Func>>
 
 0x010018b5: Basic block reasons: fragment, CFG head; 69% code likelihood
-0x010018b5: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-0x14>]
+0x010018b5: 8b 45 ec                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xec<-20>]
 0x010018b8: 8b 08                   |..      |   mov    ecx, DWORD PTR ds:[eax]
 0x010018ba: 8b 09                   |..      |   mov    ecx, DWORD PTR ds:[ecx]
-0x010018bc: 89 4d d0                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd0<-0x30>], ecx
+0x010018bc: 89 4d d0                |.M.     |   mov    DWORD PTR ss:[ebp + 0xd0<-48>], ecx
 0x010018bf: 50                      |P       |   push   eax
 0x010018c0: 51                      |Q       |   push   ecx
 0x010018c1: e8 46 00 00 00          |.F...   |   call   0x0100190c<<Func>>
@@ -1850,9 +1850,9 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x010018c8: Successor blocks: unknown
 
 0x010018c9: Basic block reasons: fragment, CFG head; 69% code likelihood
-0x010018c9: 8b 65 e8                |.e.     |   mov    esp, DWORD PTR ss:[ebp + 0xe8<-0x18>]
-0x010018cc: 8b 75 d0                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xd0<-0x30>]
-0x010018cf: 83 7d e4 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xe4<-0x1c>], 0x00
+0x010018c9: 8b 65 e8                |.e.     |   mov    esp, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x010018cc: 8b 75 d0                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0xd0<-48>]
+0x010018cf: 83 7d e4 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0xe4<-28>], 0x00
 0x010018d3: 75 07                   |u.      |   jne    0x010018dc<<Insn>>
 0x010018d3: Successor blocks: 0x010018d5, 0x010018dc
 
@@ -1966,13 +1966,13 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 0x0100195e: 53                      |S       |   push   ebx
 0x0100195f: 56                      |V       |   push   esi
 0x01001960: 57                      |W       |   push   edi
-0x01001961: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
-0x01001964: 89 65 e8                |.e.     |   mov    DWORD PTR ss:[ebp + 0xe8<-0x18>], esp
+0x01001961: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
+0x01001964: 89 65 e8                |.e.     |   mov    DWORD PTR ss:[ebp + 0xe8<-24>], esp
 0x01001967: 50                      |P       |   push   eax
-0x01001968: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
-0x0100196b: c7 45 fc ff ff ff ff    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0xffffffff<-0x00000001>
-0x01001972: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], eax
-0x01001975: 8d 45 f0                |.E.     |   lea    eax, [ebp + 0xf0<-0x10>]
+0x01001968: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0100196b: c7 45 fc ff ff ff ff    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0xffffffff<-1>
+0x01001972: 89 45 f8                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
+0x01001975: 8d 45 f0                |.E.     |   lea    eax, [ebp + 0xf0<-16>]
 0x01001978: 64 a3 00 00 00 00       |d.....  |   mov    DWORD PTR fs:[0x00000000], eax
 0x0100197e: c3                      |.       |   ret    
 0x0100197e: Successor blocks: unknown
@@ -1982,7 +1982,7 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 
 0x0100197f: Basic block reasons: entry point, graph-1
 0x0100197f: Predecessor blocks: 0x010018b3<<Func>>
-0x0100197f: 8b 4d f0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x0100197f: 8b 4d f0                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x01001982: 64 89 0d 00 00 00 00    |d...... |   mov    DWORD PTR fs:[0x00000000], ecx
 0x01001989: 59                      |Y       |   pop    ecx
 0x0100198a: 5f                      |_       |   pop    edi

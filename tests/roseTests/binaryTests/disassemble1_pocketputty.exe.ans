@@ -22,15 +22,15 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000ad8fc: 01 60 a0 e1             |.`..    |   moval  r6, r1
 0x000ad900: 02 50 a0 e1             |.P..    |   moval  r5, r2
 0x000ad904: 03 40 a0 e1             |.@..    |   moval  r4, r3
-0x000ad908: 12 00 00 eb             |....    |   blal   0x000ad958
+0x000ad908: 12 00 00 eb             |....    |   blal   0xad958
 0x000ad958: 04 e0 2d e5             |..-.    |   stral  r14, [r13, #-4]!
 0x000ad95c: 20 10 9f e5             | ...    |   ldral  r1, [r15, #+32]
 0x000ad960: 18 00 9f e5             |....    |   ldral  r0, [r15, #+24]
-0x000ad964: 07 00 00 eb             |....    |   blal   0x000ad988
+0x000ad964: 07 00 00 eb             |....    |   blal   0xad988
 0x000ad988: 30 40 2d e9             |0@-.    |   stmaldb r13, {r4, r5, r14}
 0x000ad98c: 00 50 a0 e1             |.P..    |   moval  r5, r0
 0x000ad990: 01 40 a0 e1             |.@..    |   moval  r4, r1
-0x000ad994: 04 00 00 ea             |....    |   bal    0x000ad9ac
+0x000ad994: 04 00 00 ea             |....    |   bal    0xad9ac
 0x000ad994: Successor blocks: 0x000ad9ac
 
 0x000ad90c: 04 30 a0 e1 05 20 a0 e1 |.0... ..|
@@ -47,27 +47,27 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000ad910: 05 20 a0 e1             |. ..    | (data)   moval  r2, r5
 0x000ad914: 06 10 a0 e1             |....    | (data)   moval  r1, r6
 0x000ad918: 07 00 a0 e1             |....    | (data)   moval  r0, r7
-0x000ad91c: 37 db ff eb             |7...    | (data)   blal   0x000a4600
+0x000ad91c: 37 db ff eb             |7...    | (data)   blal   0xa4600
 0x000ad920: 00 40 a0 e1             |.@..    | (data)   moval  r4, r0
 0x000ad924: 20 40 0b e5             | @..    | (data)   stral  r4, [r11, #-32]
-0x000ad928: 01 00 00 ea             |....    | (data)   bal    0x000ad934
+0x000ad928: 01 00 00 ea             |....    | (data)   bal    0xad934
 0x000ad92c: 00 40 a0 e1             |.@..    | (data)   moval  r4, r0
-0x000ad930: 20 00 00 eb             | ...    | (data)   blal   0x000ad9b8
+0x000ad930: 20 00 00 eb             | ...    | (data)   blal   0xad9b8
 0x000ad934: 04 00 a0 e1             |....    | (data)   moval  r0, r4
-0x000ad938: 1e 00 00 eb             |....    | (data)   blal   0x000ad9b8
+0x000ad938: 1e 00 00 eb             |....    | (data)   blal   0xad9b8
 0x000ad93c: f0 a8 1b e9             |....    | (data)   ldmaldb r11, {r4, r5, r6, r7, r11, r13, r15}
 0x000ad940: 04 e0 2d e5             |..-.    | (data)   stral  r14, [r13, #-4]!
 0x000ad944: 00 10 a0 e1             |....    | (data)   moval  r1, r0
 0x000ad948: 00 00 91 e5             |....    | (data)   ldral  r0, [r1, #+0]
 0x000ad94c: 00 00 90 e5             |....    | (data)   ldral  r0, [r0, #+0]
-0x000ad950: 5b 00 00 eb             |[...    | (data)   blal   0x000adac4
+0x000ad950: 5b 00 00 eb             |[...    | (data)   blal   0xadac4
 0x000ad954: 00 80 bd e8             |....    | (data)   ldmalia r13, {r15}
 
 0x000ad968: Basic block reasons: fragment, CFG head; 50% code likelihood
 0x000ad968: 0c 10 9f e5             |....    |   ldral  r1, [r15, #+12]
 0x000ad96c: 04 00 9f e5             |....    |   ldral  r0, [r15, #+4]
 0x000ad970: 00 40 bd e8             |.@..    |   ldmalia r13, {r14}
-0x000ad974: 03 00 00 ea             |....    |   bal    0x000ad988
+0x000ad974: 03 00 00 ea             |....    |   bal    0xad988
 0x000ad974: Successor blocks: none
 
 0x000ad978: Basic block reasons: fragment, CFG head; 50% code likelihood
@@ -91,7 +91,7 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000ad9ac: Predecessor blocks: 0x000ad8e8, 0x000ad998
 0x000ad9ac: Dominator block: 0x000ad8e8
 0x000ad9ac: 04 00 55 e1             |..U.    |   cmpal  r5, r4
-0x000ad9b0: f8 ff ff 3a             |...:    |   blo    0x000ad998
+0x000ad9b0: f8 ff ff 3a             |...:    |   blo    0xad998
 0x000ad9b0: Successor blocks: 0x000ad998, 0x000ad9b4
 
 0x000ad9b4: Basic block reasons: graph-1
@@ -175,7 +175,7 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000adbf8: 00 00 00 00 00 00 00 00 |........| 584 bytes untyped data beginning at 0x000ad9b8
 0x000ad9b8: 00 20 a0 e3             |. ..    | (data)   moval  r2, #0
 0x000ad9bc: 00 10 a0 e3             |....    | (data)   moval  r1, #0
-0x000ad9c0: ff ff ff ea             |....    | (data)   bal    0x000ad9c4
+0x000ad9c0: ff ff ff ea             |....    | (data)   bal    0xad9c4
 0x000ad9c4: f0 41 2d e9             |.A-.    | (data)   stmaldb r13, {r4, r5, r6, r7, r8, r14}
 0x000ad9c8: 00 80 a0 e1             |....    | (data)   moval  r8, r0
 0x000ad9cc: 01 30 a0 e1             |.0..    | (data)   moval  r3, r1
@@ -185,35 +185,35 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000ad9dc: 40 0c a0 e1             |@...    | (data)   moval  r0, r0, asr #24
 0x000ad9e0: 00 00 c1 e5             |....    | (data)   stralb r0, [r1, #+0]
 0x000ad9e4: 00 00 53 e3             |..S.    | (data)   cmpal  r3, #0
-0x000ad9e8: 18 00 00 1a             |....    | (data)   bne    0x000ada50
+0x000ad9e8: 18 00 00 1a             |....    | (data)   bne    0xada50
 0x000ad9ec: 9c 60 9f e5             |.`..    | (data)   ldral  r6, [r15, #+156]
 0x000ad9f0: 00 10 96 e5             |....    | (data)   ldral  r1, [r6, #+0]
 0x000ad9f4: 00 00 51 e3             |..Q.    | (data)   cmpal  r1, #0
-0x000ad9f8: 11 00 00 0a             |....    | (data)   beq    0x000ada44
+0x000ad9f8: 11 00 00 0a             |....    | (data)   beq    0xada44
 0x000ad9fc: 88 50 9f e5             |.P..    | (data)   ldral  r5, [r15, #+136]
 0x000ada00: 00 00 95 e5             |....    | (data)   ldral  r0, [r5, #+0]
 0x000ada04: 04 40 40 e2             |.@@.    | (data)   subal  r4, r0, #4
-0x000ada08: 06 00 00 ea             |....    | (data)   bal    0x000ada28
+0x000ada08: 06 00 00 ea             |....    | (data)   bal    0xada28
 0x000ada0c: 00 00 94 e5             |....    | (data)   ldral  r0, [r4, #+0]
 0x000ada10: 00 00 50 e3             |..P.    | (data)   cmpal  r0, #0
-0x000ada14: 02 00 00 0a             |....    | (data)   beq    0x000ada24
+0x000ada14: 02 00 00 0a             |....    | (data)   beq    0xada24
 0x000ada18: 0f e0 a0 e1             |....    | (data)   moval  r14, r15
 0x000ada1c: 00 f0 a0 e1             |....    | (data)   moval  r15, r0
 0x000ada20: 00 10 96 e5             |....    | (data)   ldral  r1, [r6, #+0]
 0x000ada24: 04 40 44 e2             |.@D.    | (data)   subal  r4, r4, #4
 0x000ada28: 01 00 54 e1             |..T.    | (data)   cmpal  r4, r1
-0x000ada2c: f6 ff ff 2a             |...*    | (data)   bhs    0x000ada0c
+0x000ada2c: f6 ff ff 2a             |...*    | (data)   bhs    0xada0c
 0x000ada30: 01 00 a0 e1             |....    | (data)   moval  r0, r1
-0x000ada34: a1 fe ff eb             |....    | (data)   blal   0x000ad4c0
+0x000ada34: a1 fe ff eb             |....    | (data)   blal   0xad4c0
 0x000ada38: 00 30 a0 e3             |.0..    | (data)   moval  r3, #0
 0x000ada3c: 00 30 85 e5             |.0..    | (data)   stral  r3, [r5, #+0]
 0x000ada40: 00 30 86 e5             |.0..    | (data)   stral  r3, [r6, #+0]
 0x000ada44: 3c 10 9f e5             |<...    | (data)   ldral  r1, [r15, #+60]
 0x000ada48: 34 00 9f e5             |4...    | (data)   ldral  r0, [r15, #+52]
-0x000ada4c: cd ff ff eb             |....    | (data)   blal   0x000ad988
+0x000ada4c: cd ff ff eb             |....    | (data)   blal   0xad988
 0x000ada50: 28 10 9f e5             |(...    | (data)   ldral  r1, [r15, #+40]
 0x000ada54: 20 00 9f e5             | ...    | (data)   ldral  r0, [r15, #+32]
-0x000ada58: ca ff ff eb             |....    | (data)   blal   0x000ad988
+0x000ada58: ca ff ff eb             |....    | (data)   blal   0xad988
 0x000ada5c: 00 00 57 e3             |..W.    | (data)   cmpal  r7, #0
 0x000ada60: 10 20 9f 05             |. ..    | (data)   ldreq  r2, [r15, #+16]
 0x000ada64: 08 10 a0 01             |....    | (data)   moveq  r1, r8
@@ -230,15 +230,15 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 0x000ada94: 90 60 0d 00             |.`..    | (data)   muleq  r13, r0, r0
 0x000ada98: 00 20 a0 e3             |. ..    | (data)   moval  r2, #0
 0x000ada9c: 01 10 a0 e3             |....    | (data)   moval  r1, #1
-0x000adaa0: c7 ff ff ea             |....    | (data)   bal    0x000ad9c4
+0x000adaa0: c7 ff ff ea             |....    | (data)   bal    0xad9c4
 0x000adaa4: 01 20 a0 e3             |. ..    | (data)   moval  r2, #1
 0x000adaa8: 00 10 a0 e3             |....    | (data)   moval  r1, #0
 0x000adaac: 00 00 a0 e3             |....    | (data)   moval  r0, #0
-0x000adab0: c3 ff ff ea             |....    | (data)   bal    0x000ad9c4
+0x000adab0: c3 ff ff ea             |....    | (data)   bal    0xad9c4
 0x000adab4: 01 20 a0 e3             |. ..    | (data)   moval  r2, #1
 0x000adab8: 01 10 a0 e3             |....    | (data)   moval  r1, #1
 0x000adabc: 00 00 a0 e3             |....    | (data)   moval  r0, #0
-0x000adac0: bf ff ff ea             |....    | (data)   bal    0x000ad9c4
+0x000adac0: bf ff ff ea             |....    | (data)   bal    0xad9c4
 0x000adac4: 00 c0 9f e5             |....    | (data)   ldral  r12, [r15, #+0]
 0x000adac8: 00 f0 9c e5             |....    | (data)   ldral  r15, [r12, #+0]
 0x000adacc: a4 c3 0b 00             |....    | (data)   andeq  r12, r11, r4, lsr #7

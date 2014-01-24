@@ -212,7 +212,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x004006a3: 49 89 d1                |I..     |   mov    r9, rdx
 0x004006a6: 5e                      |^       |   pop    rsi
 0x004006a7: 48 89 e2                |H..     |   mov    rdx, rsp
-0x004006aa: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-0x10>
+0x004006aa: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-16>
 0x004006ae: 50                      |P       |   push   rax
 0x004006af: 54                      |T       |   push   rsp
 0x004006b0: 49 c7 c0 a0 08 40 00    |I....@. |   mov    r8, 0x004008a0<<StaticData@0x00400896>+0x0a>
@@ -522,7 +522,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400803: Basic block reasons: graph-1
 0x00400803: Predecessor blocks: 0x004007d7
 0x00400803: Dominator block: 0x004007d7
-0x00400803: bf ef cd ab 89          |.....   |   mov    edi, 0x89abcdef<-0x76543211>
+0x00400803: bf ef cd ab 89          |.....   |   mov    edi, 0x89abcdef
 0x00400803: Successor blocks: 0x00400808
 
 0x00400808: Basic block reasons: graph-1
@@ -579,10 +579,10 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400840: This function calls 0x004005d8
 
 0x00400840: Basic block reasons: entry point, graph-2
-0x00400840: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-0x18>], rbx
-0x00400845: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-0x08>], r12
+0x00400840: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
+0x00400845: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
 0x0040084a: 4c 8d 25 57 02 10 00    |L.%W... |   lea    r12, [rip + 0x0000000000100257]
-0x00400851: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-0x10>], rbp
+0x00400851: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
 0x00400856: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x0040085a: 31 db                   |1.      |   xor    ebx, ebx
 0x0040085c: e8 77 fd ff ff          |.w...   |   call   0x00000000004005d8<<Func>>
@@ -646,12 +646,12 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x004008af: 48 29 e8                |H).     | (data)   sub    rax, rbp
 0x004008b2: 53                      |S       | (data)   push   rbx
 0x004008b3: 48 c1 f8 03             |H...    | (data)   sar    rax, 0x03
-0x004008b7: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-0x01>]
+0x004008b7: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x004008bb: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x004008bf: eb 07                   |..      | (data)   jmp    0x00000000004008c8
 0x004008c1: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
 0x004008c5: 48 ff cb                |H..     | (data)   dec    rbx
-0x004008c8: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-0x01>
+0x004008c8: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x004008cc: 75 f3                   |u.      | (data)   jne    0x00000000004008c1
 0x004008ce: 48 83 c4 08             |H...    | (data)   add    rsp, 0x08
 0x004008d2: 5b                      |[       | (data)   pop    rbx
@@ -700,7 +700,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400909: Basic block reasons: graph-2
 0x00400909: Predecessor blocks: 0x004008f7, 0x00400906
 0x00400909: Dominator block: 0x004008f7
-0x00400909: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-0x01>
+0x00400909: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-1>
 0x0040090d: 75 f1                   |u.      |   jne    0x0000000000400900<<Insn>>
 0x0040090d: Successor blocks: 0x00400900, 0x0040090f
 
@@ -1014,11 +1014,11 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x004009c8: 04 00                   |..      | (data)   add    al, 0x00
 0x004009ca: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x004009cc: a0 fd ff ff 48 00 00 00 |....H...|
-0x004009d4: 70                      |p       | (data)   mov    al, BYTE PTR ds:[0x7000000048fffffd]
+0x004009d4: 70                      |p       | (data)   mov    al, BYTE PTR ds:[0x7000000048fffffd<8070450533472665597>]
 0x004009d7: ff 70 00                |.p.     | (data)   push   QWORD PTR ds:[rax + 0x00]
 0x004009da: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009dc: 80 fe ff                |...     | (data)   cmp    dh, 0xff<-0x01>
-0x004009df: ff a0 00 00 00 e0       |......  | (data)   jmp    QWORD PTR ds:[rax + 0xe0000000<-0x20000000>]
+0x004009dc: 80 fe ff                |...     | (data)   cmp    dh, 0xff<-1>
+0x004009df: ff a0 00 00 00 e0       |......  | (data)   jmp    QWORD PTR ds:[rax + 0xe0000000]
 0x004009e7: ff c0                   |..      | (data)   inc    eax
 0x004009e9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x004009eb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
@@ -1072,7 +1072,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400a68: d8 fd                   |..      | (data)   fdivr  st(0), st(5)
 0x00400a6b: ff 56 00                |.V.     | (data)   call   QWORD PTR ds:[rsi + 0x00]
 0x00400a6e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a70: 00 4a 8c                |.J.     | (data)   add    BYTE PTR ds:[rdx + 0x8c<-0x74>], cl
+0x00400a70: 00 4a 8c                |.J.     | (data)   add    BYTE PTR ds:[rdx + 0x8c<-116>], cl
 0x00400a73: 02 83 04 50 0e 20       |...P.   | (data)   add    al, BYTE PTR ds:[rbx + 0x200e5004]
 0x00400a79: 86 03                   |..      | (data)   xchg   BYTE PTR ds:[rbx], al
 0x00400a7b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
@@ -1143,7 +1143,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400b21: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400b23: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400b25: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b27: 00 90 02 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004002], dl
+0x00400b27: 00 90 02 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004002<16386>], dl
 0x00400b2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400b2f: 00 0a                   |..      | (data)   add    BYTE PTR ds:[rdx], cl
 0x00400b31: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
@@ -1200,7 +1200,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400ba1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ba3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ba5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ba7: 00 b8 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004], bh
+0x00400ba7: 00 b8 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004<16388>], bh
 0x00400bad: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400baf: 00 08                   |..      | (data)   add    BYTE PTR ds:[rax], cl
 0x00400bb1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
@@ -1221,7 +1221,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400bcf: 00 fe                   |..      | (data)   add    dh, bh
 0x00400bd2: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
 0x00400bd5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bd7: 00 98 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004], bl
+0x00400bd7: 00 98 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004<16388>], bl
 0x00400bdd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400bdf: 00 ff                   |..      | (data)   add    bh, bh
 0x00400be2: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
@@ -1253,7 +1253,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400c1f: 00 f8                   |..      | (data)   add    al, bh
 0x00400c22: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
 0x00400c25: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c27: 00 b0 0d 50 00 00       |...P..  | (data)   add    BYTE PTR ds:[rax + 0x0000500d], dh
+0x00400c27: 00 b0 0d 50 00 00       |...P..  | (data)   add    BYTE PTR ds:[rax + 0x0000500d<20493>], dh
 0x00400c2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400c2f: 00 f6                   |..      | (data)   add    dh, dh
 0x00400c31: fd                      |.       | (data)   std    
@@ -1299,11 +1299,11 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400c8c: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
 0x00400c8e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400c90: d0 08                   |..      | (data)   ror    BYTE PTR ds:[rax], 0x01
-0x00400c92: bc 06 30 00 00          |..0..   | (data)   mov    esp, 0x00003006
+0x00400c92: bc 06 30 00 00          |..0..   | (data)   mov    esp, 0x00003006<12294>
 0x00400c97: 00 f0                   |..      | (data)   add    al, dh
 0x00400c99: 84 b4 06 30 00 00 00    |...0... | (data)   test   BYTE PTR ds:[rsi + rax + 0x00000030], dh
 0x00400ca0: 90                      |.       | (data)   nop    
-0x00400ca1: 88 b5 06 30 00 00       |...0..  | (data)   mov    BYTE PTR ds:[rbp + 0x00003006], dh
+0x00400ca1: 88 b5 06 30 00 00       |...0..  | (data)   mov    BYTE PTR ds:[rbp + 0x00003006<12294>], dh
 0x00400ca7: 00 70 56                |.pV     | (data)   add    BYTE PTR ds:[rax + 0x56], dh
 0x00400caa: b2 06                   |..      | (data)   mov    dl, 0x06
 0x00400cac: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
@@ -1443,7 +1443,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400e1a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e1c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e1e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e20: b8 ff ff ff ff          |.....   | (data)   mov    eax, 0xffffffff<-0x00000001>
+0x00400e20: b8 ff ff ff ff          |.....   | (data)   mov    eax, 0xffffffff<-1>
 0x00400e27: ff 30                   |.0      | (data)   push   QWORD PTR ds:[rax]
 0x00400e29: ee                      |.       | (data)   out    dx, al
 0x00400e2a: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
@@ -1453,7 +1453,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400e32: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e34: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e36: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e38: c0 ff ff                |...     | (data)   sar    bh, 0xff<-0x01>
+0x00400e38: c0 ff ff                |...     | (data)   sar    bh, 0xff<-1>
 0x00400e3f: ff 80 ee d2 06 30       |.....0  | (data)   inc    DWORD PTR ds:[rax + 0x3006d2ee]
 0x00400e45: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e47: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
@@ -1487,7 +1487,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400e92: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e94: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400e96: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e98: b0 ff                   |..      | (data)   mov    al, 0xff<-0x01>
+0x00400e98: b0 ff                   |..      | (data)   mov    al, 0xff<-1>
 0x00400e9f: ff 20                   |.       | (data)   jmp    QWORD PTR ds:[rax]
 0x00400ea1: ef                      |.       | (data)   out    dx, eax
 0x00400ea2: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
@@ -1514,20 +1514,20 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400edb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400edd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400edf: 00 f0                   |..      | (data)   add    al, dh
-0x00400ee1: b5 b6                   |..      | (data)   mov    ch, 0xb6<-0x4a>
+0x00400ee1: b5 b6                   |..      | (data)   mov    ch, 0xb6<-74>
 0x00400ee4: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
 0x00400ee6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ee8: c0 4f d1 05             |.O..    | (data)   ror    BYTE PTR ds:[rdi + 0xd1<-0x2f>], 0x05
+0x00400ee8: c0 4f d1 05             |.O..    | (data)   ror    BYTE PTR ds:[rdi + 0xd1<-47>], 0x05
 0x00400eec: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
 0x00400eee: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ef1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ef3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ef5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400ef7: 00 c0                   |..      | (data)   add    al, al
-0x00400ef9: b2 b6                   |..      | (data)   mov    dl, 0xb6<-0x4a>
+0x00400ef9: b2 b6                   |..      | (data)   mov    dl, 0xb6<-74>
 0x00400efc: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
 0x00400efe: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f00: c8 4f d1 05             |.O..    | (data)   enter  0xd14f<-0x2eb1>, 0x05
+0x00400f00: c8 4f d1 05             |.O..    | (data)   enter  0xd14f<-11953>, 0x05
 0x00400f04: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
 0x00400f06: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400f09: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
@@ -1553,7 +1553,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400f40: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400f42: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400f44: ee                      |.       | (data)   out    dx, al
-0x00400f45: d3 73 dc                |.s.     | (data)   shl    DWORD PTR ds:[rbx + 0xdc<-0x24>], cl
+0x00400f45: d3 73 dc                |.s.     | (data)   shl    DWORD PTR ds:[rbx + 0xdc<-36>], cl
 0x00400f48: 7f 45                   |.E      | (data)   jg     0x0000000000400f8f
 0x00400f4a: 4c 46 02 01             |LF..    | (data)   add    r8b, BYTE PTR ds:[rcx]
 0x00400f4e: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
@@ -1564,7 +1564,7 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 0x00400f58: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[rax]
 0x00400f5a: 3e 00 01                |>..     | (data)   add    BYTE PTR ds:[rcx], al
 0x00400f5d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f5f: 00 a0 06 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004006], ah
+0x00400f5f: 00 a0 06 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004006<16390>], ah
 0x00400f65: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
 0x00400f67: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[rax + 0x00], al
 0x00400f6a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al

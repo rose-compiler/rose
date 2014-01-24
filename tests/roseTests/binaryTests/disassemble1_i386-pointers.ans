@@ -36,8 +36,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804827c: 83 ec 04                |...     |   sub    esp, 0x04
 0x0804827f: e8 00 00 00 00          |.....   |   call   0x08048284<<Insn>>
 0x08048284: 5b                      |[       |   pop    ebx
-0x08048285: 81 c3 48 15 00 00       |..H...  |   add    ebx, 0x00001548
-0x0804828b: 8b 93 fc ff ff ff       |......  |   mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x08048285: 81 c3 48 15 00 00       |..H...  |   add    ebx, 0x00001548<5448>
+0x0804828b: 8b 93 fc ff ff ff       |......  |   mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 0x08048291: 85 d2                   |..      |   test   edx, edx
 0x08048293: 74 05                   |t.      |   je     0x0804829a<<Insn>>
 0x08048293: Successor blocks: 0x08048295, 0x0804829a
@@ -116,7 +116,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080482e0: 31 ed                   |1.      |   xor    ebp, ebp
 0x080482e2: 5e                      |^       |   pop    esi
 0x080482e3: 89 e1                   |..      |   mov    ecx, esp
-0x080482e5: 83 e4 f0                |...     |   and    esp, 0xf0<-0x10>
+0x080482e5: 83 e4 f0                |...     |   and    esp, 0xf0<-16>
 0x080482e8: 50                      |P       |   push   eax
 0x080482e9: 54                      |T       |   push   esp
 0x080482ea: 52                      |R       |   push   edx
@@ -354,8 +354,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080483f7: 89 e5                   |..      |   mov    ebp, esp
 0x080483f9: 83 ec 10                |...     |   sub    esp, 0x10
 0x080483fc: a1 ec 97 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080497ec<.data+0x0c>]
-0x08048401: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x08048404: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x08048401: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x08048404: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x08048407: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
 0x08048409: c9                      |.       |   leave  
 0x0804840a: c3                      |.       |   ret    
@@ -462,8 +462,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048469: 89 e5                   |..      |   mov    ebp, esp
 0x0804846b: 83 ec 10                |...     |   sub    esp, 0x10
 0x0804846e: a1 f8 97 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080497f8<.data+0x18>]
-0x08048473: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x08048476: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x08048473: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x08048476: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x08048479: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
 0x0804847b: c9                      |.       |   leave  
 0x0804847c: c3                      |.       |   ret    
@@ -528,8 +528,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080484ad: 55                      |U       |   push   ebp
 0x080484ae: 89 e5                   |..      |   mov    ebp, esp
 0x080484b0: 83 ec 28                |..(     |   sub    esp, 0x28
-0x080484b3: c7 45 f4 64 00 00 00    |.E.d... |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], 0x00000064
-0x080484ba: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-0x0c>]
+0x080484b3: c7 45 f4 64 00 00 00    |.E.d... |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], 0x00000064
+0x080484ba: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-12>]
 0x080484bd: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
 0x080484c0: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
 0x080484c3: ff d0                   |..      |   call   eax
@@ -674,8 +674,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048531: Basic block reasons: graph-1
 0x08048531: Predecessor blocks: 0x08048529, 0x0804852e
 0x08048531: Dominator block: 0x0804851d
-0x08048531: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x08048534: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x08048531: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x08048534: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x08048537: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
 0x08048539: c9                      |.       |   leave  
 0x0804853a: c3                      |.       |   ret    
@@ -688,8 +688,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804853b: 55                      |U       |   push   ebp
 0x0804853c: 89 e5                   |..      |   mov    ebp, esp
 0x0804853e: 83 ec 10                |...     |   sub    esp, 0x10
-0x08048541: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00000000
-0x08048548: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00000000
+0x08048541: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
+0x08048548: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
 0x0804854f: eb 0c                   |..      |   jmp    0x0804855d<<Insn>>
 0x0804854f: Successor blocks: 0x0804855d
 
@@ -698,14 +698,14 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048551: Dominator block: 0x0804855d
 0x08048551: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
 0x08048554: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
-0x08048556: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x08048559: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x01
+0x08048556: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x08048559: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
 0x08048559: Successor blocks: 0x0804855d
 
 0x0804855d: Basic block reasons: graph-1
 0x0804855d: Predecessor blocks: 0x0804853b, 0x08048551
 0x0804855d: Dominator block: 0x0804853b
-0x0804855d: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x0804855d: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x08048560: 3b 45 08                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x08]
 0x08048563: 7c ec                   ||.      |   jl     0x08048551<<Insn>>
 0x08048563: Successor blocks: 0x08048551, 0x08048565
@@ -713,7 +713,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048565: Basic block reasons: graph-1
 0x08048565: Predecessor blocks: 0x0804855d
 0x08048565: Dominator block: 0x0804855d
-0x08048565: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x08048565: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x08048568: c9                      |.       |   leave  
 0x08048569: c3                      |.       |   ret    
 0x08048569: Successor blocks: unknown
@@ -725,15 +725,15 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804856a: 55                      |U       |   push   ebp
 0x0804856b: 89 e5                   |..      |   mov    ebp, esp
 0x0804856d: 83 ec 10                |...     |   sub    esp, 0x10
-0x08048570: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00000000
-0x08048577: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00000000
+0x08048570: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
+0x08048577: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
 0x0804857e: eb 1d                   |..      |   jmp    0x0804859d<<Insn>>
 0x0804857e: Successor blocks: 0x0804859d
 
 0x08048580: Basic block reasons: graph-1
 0x08048580: Predecessor blocks: 0x0804859d
 0x08048580: Dominator block: 0x0804859d
-0x08048580: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x08048580: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x08048583: 83 e0 01                |...     |   and    eax, 0x01
 0x08048586: 84 c0                   |..      |   test   al, al
 0x08048588: 74 07                   |t.      |   je     0x08048591<<Insn>>
@@ -757,14 +757,14 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048596: Basic block reasons: graph-1
 0x08048596: Predecessor blocks: 0x0804858a, 0x08048591
 0x08048596: Dominator block: 0x08048580
-0x08048596: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
-0x08048599: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x01
+0x08048596: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x08048599: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
 0x08048599: Successor blocks: 0x0804859d
 
 0x0804859d: Basic block reasons: graph-1
 0x0804859d: Predecessor blocks: 0x0804856a, 0x08048596
 0x0804859d: Dominator block: 0x0804856a
-0x0804859d: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x0804859d: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x080485a0: 3b 45 08                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x08]
 0x080485a3: 7c db                   ||.      |   jl     0x08048580<<Insn>>
 0x080485a3: Successor blocks: 0x08048580, 0x080485a5
@@ -772,7 +772,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485a5: Basic block reasons: graph-1
 0x080485a5: Predecessor blocks: 0x0804859d
 0x080485a5: Dominator block: 0x0804859d
-0x080485a5: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x080485a5: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x080485a8: c9                      |.       |   leave  
 0x080485a9: c3                      |.       |   ret    
 0x080485a9: Successor blocks: unknown
@@ -784,15 +784,15 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485aa: 55                      |U       |   push   ebp
 0x080485ab: 89 e5                   |..      |   mov    ebp, esp
 0x080485ad: 83 ec 10                |...     |   sub    esp, 0x10
-0x080485b0: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00000000
-0x080485b7: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00000000
+0x080485b0: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
+0x080485b7: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
 0x080485be: eb 20                   |.       |   jmp    0x080485e0<<Insn>>
 0x080485be: Successor blocks: 0x080485e0
 
 0x080485c0: Basic block reasons: graph-1
 0x080485c0: Predecessor blocks: 0x080485e0
 0x080485c0: Dominator block: 0x080485e0
-0x080485c0: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x080485c0: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x080485c3: 83 e0 01                |...     |   and    eax, 0x01
 0x080485c6: 84 c0                   |..      |   test   al, al
 0x080485c8: 74 0a                   |t.      |   je     0x080485d4<<Insn>>
@@ -803,7 +803,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485ca: Dominator block: 0x080485c0
 0x080485ca: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
 0x080485cd: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
-0x080485cf: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
+0x080485cf: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-4>], eax
 0x080485d2: eb 08                   |..      |   jmp    0x080485dc<<Insn>>
 0x080485d2: Successor blocks: 0x080485dc
 
@@ -812,19 +812,19 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485d4: Dominator block: 0x080485c0
 0x080485d4: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
 0x080485d7: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
-0x080485d9: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
+0x080485d9: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-4>], eax
 0x080485d9: Successor blocks: 0x080485dc
 
 0x080485dc: Basic block reasons: graph-1
 0x080485dc: Predecessor blocks: 0x080485ca, 0x080485d4
 0x080485dc: Dominator block: 0x080485c0
-0x080485dc: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x01
+0x080485dc: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
 0x080485dc: Successor blocks: 0x080485e0
 
 0x080485e0: Basic block reasons: graph-1
 0x080485e0: Predecessor blocks: 0x080485aa, 0x080485dc
 0x080485e0: Dominator block: 0x080485aa
-0x080485e0: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x080485e0: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
 0x080485e3: 3b 45 08                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x08]
 0x080485e6: 7c d8                   ||.      |   jl     0x080485c0<<Insn>>
 0x080485e6: Successor blocks: 0x080485c0, 0x080485e8
@@ -832,7 +832,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485e8: Basic block reasons: graph-1
 0x080485e8: Predecessor blocks: 0x080485e0
 0x080485e8: Dominator block: 0x080485e0
-0x080485e8: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x080485e8: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x080485eb: c9                      |.       |   leave  
 0x080485ec: c3                      |.       |   ret    
 0x080485ec: Successor blocks: unknown
@@ -844,7 +844,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080485ed: 55                      |U       |   push   ebp
 0x080485ee: 89 e5                   |..      |   mov    ebp, esp
 0x080485f0: 83 ec 10                |...     |   sub    esp, 0x10
-0x080485f3: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00000000
+0x080485f3: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
 0x080485fa: 83 7d 08 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x00
 0x080485fe: 75 08                   |u.      |   jne    0x08048608<<Insn>>
 0x080485fe: Successor blocks: 0x08048600, 0x08048608
@@ -853,7 +853,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048600: Predecessor blocks: 0x080485ed
 0x08048600: Dominator block: 0x080485ed
 0x08048600: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x08048603: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
+0x08048603: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
 0x08048606: eb 06                   |..      |   jmp    0x0804860e<<Insn>>
 0x08048606: Successor blocks: 0x0804860e
 
@@ -861,13 +861,13 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048608: Predecessor blocks: 0x080485ed
 0x08048608: Dominator block: 0x080485ed
 0x08048608: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x0804860b: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
+0x0804860b: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
 0x0804860b: Successor blocks: 0x0804860e
 
 0x0804860e: Basic block reasons: graph-1
 0x0804860e: Predecessor blocks: 0x08048600, 0x08048608
 0x0804860e: Dominator block: 0x080485ed
-0x0804860e: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x0804860e: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
 0x08048611: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
 0x08048613: c9                      |.       |   leave  
 0x08048614: c3                      |.       |   ret    
@@ -908,7 +908,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804863b: Basic block reasons: graph-1
 0x0804863b: Predecessor blocks: 0x08048630
 0x0804863b: Dominator block: 0x08048630
-0x0804863b: 81 c3 91 11 00 00       |......  |   add    ebx, 0x00001191
+0x0804863b: 81 c3 91 11 00 00       |......  |   add    ebx, 0x00001191<4497>
 0x08048641: 83 ec 1c                |...     |   sub    esp, 0x1c
 0x08048644: e8 2f fc ff ff          |./...   |   call   0x08048278<_init>
 0x08048644: Successor blocks: 0x08048278<_init>, 0x08048649
@@ -916,8 +916,8 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048649: Basic block reasons: graph-1
 0x08048649: Predecessor blocks: 0x0804863b
 0x08048649: Dominator block: 0x0804863b
-0x08048649: 8d bb 18 ff ff ff       |......  |   lea    edi, [ebx + 0xffffff18<-0x000000e8>]
-0x0804864f: 8d 83 18 ff ff ff       |......  |   lea    eax, [ebx + 0xffffff18<-0x000000e8>]
+0x08048649: 8d bb 18 ff ff ff       |......  |   lea    edi, [ebx + 0xffffff18<-232>]
+0x0804864f: 8d 83 18 ff ff ff       |......  |   lea    eax, [ebx + 0xffffff18<-232>]
 0x08048655: 29 c7                   |).      |   sub    edi, eax
 0x08048657: c1 ff 02                |...     |   sar    edi, 0x02
 0x0804865a: 85 ff                   |..      |   test   edi, edi
@@ -938,7 +938,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804866a: 89 44 24 04             |.D$.    |   mov    DWORD PTR ss:[esp + 0x04], eax
 0x0804866e: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
 0x08048671: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
-0x08048674: ff 94 b3 18 ff ff ff    |....... |   call   DWORD PTR ds:[ebx + esi*0x04 + 0xffffff18<-0x000000e8>]
+0x08048674: ff 94 b3 18 ff ff ff    |....... |   call   DWORD PTR ds:[ebx + esi*0x04 + 0xffffff18<-232>]
 0x08048674: Successor blocks: 0x0804867b, unknown
 
 0x0804867b: Basic block reasons: fragment, CFG head; 77% code likelihood
@@ -969,7 +969,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048693: 53                      |S       |   push   ebx
 0x08048694: 83 ec 04                |...     |   sub    esp, 0x04
 0x08048697: a1 e4 96 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080496e4<.ctors>]
-0x0804869c: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x0804869c: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x0804869f: 74 13                   |t.      |   je     0x080486b4<<Insn>>
 0x0804869f: Successor blocks: 0x080486a1, 0x080486b4
 
@@ -991,7 +991,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080486ad: Predecessor blocks: 0x080486a8
 0x080486ad: Dominator block: 0x080486a8
 0x080486ad: 8b 03                   |..      |   mov    eax, DWORD PTR ds:[ebx]
-0x080486af: 83 f8 ff                |...     |   cmp    eax, 0xff<-0x01>
+0x080486af: 83 f8 ff                |...     |   cmp    eax, 0xff<-1>
 0x080486b2: 75 f4                   |u.      |   jne    0x080486a8<<Insn>>
 0x080486b2: Successor blocks: 0x080486a8, 0x080486b4
 
@@ -1017,7 +1017,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080486c0: 83 ec 04                |...     |   sub    esp, 0x04
 0x080486c3: e8 00 00 00 00          |.....   |   call   0x080486c8<<Insn>>
 0x080486c8: 5b                      |[       |   pop    ebx
-0x080486c9: 81 c3 04 11 00 00       |......  |   add    ebx, 0x00001104
+0x080486c9: 81 c3 04 11 00 00       |......  |   add    ebx, 0x00001104<4356>
 0x080486cf: e8 3c fc ff ff          |.<...   |   call   0x08048310<__do_global_dtors_aux>
 0x080486cf: Successor blocks: 0x08048310<__do_global_dtors_aux>, 0x080486d4
 
@@ -1344,7 +1344,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048702: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048704: 78 82                   |x.      | (data)   js     0x08048688
 0x08048706: 04 08                   |..      | (data)   add    al, 0x08
-0x08048708: 0d 00 00 00 bc          |.....   | (data)   or     eax, 0xbc000000<-0x44000000>
+0x08048708: 0d 00 00 00 bc          |.....   | (data)   or     eax, 0xbc000000
 0x0804870d: 86 04 08                |...     | (data)   xchg   BYTE PTR ds:[eax + ecx], al
 0x08048710: 04 00                   |..      | (data)   add    al, 0x00
 0x08048712: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1353,7 +1353,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804871c: 90                      |.       | (data)   nop    
 0x0804871d: 81 04 08 05 00 00 00    |....... | (data)   add    DWORD PTR ds:[eax + ecx], 0x00000005
 0x08048724: f0 81 04 08 06 00 00 00 |........| (data)   lock add DWORD PTR ds:[eax + ecx], 0x00000006
-0x0804872c: b0 81                   |..      | (data)   mov    al, 0x81<-0x7f>
+0x0804872c: b0 81                   |..      | (data)   mov    al, 0x81<-127>
 0x0804872e: 04 08                   |..      | (data)   add    al, 0x08
 0x08048730: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
 0x08048732: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1380,7 +1380,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804875e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048760: 17                      |.       | (data)   pop    ss
 0x08048761: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048763: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], ch
+0x08048763: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], ch
 0x08048766: 04 08                   |..      | (data)   add    al, 0x08
 0x08048768: 11 00                   |..      | (data)   adc    DWORD PTR ds:[eax], eax
 0x0804876a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1395,7 +1395,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804877d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804877f: 00 fe                   |..      | (data)   add    dh, bh
 0x08048782: ff 6f 40                |.o@     | (data)   farJmp DWORD PTR ds:[edi + 0x40]
-0x08048785: 82 04 08 ff             |....    | (data)   add    BYTE PTR ds:[eax + ecx], 0xff<-0x01>
+0x08048785: 82 04 08 ff             |....    | (data)   add    BYTE PTR ds:[eax + ecx], 0xff<-1>
 0x0804878a: ff 6f 01                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0x01]
 0x0804878d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804878f: 00 f0                   |..      | (data)   add    al, dh
@@ -1433,7 +1433,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080487d2: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x080487d4: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x080487d6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x080487d8: be 82 04 08 ce          |.....   | (data)   mov    esi, 0xce080482<-0x31f7fb7e>
+0x080487d8: be 82 04 08 ce          |.....   | (data)   mov    esi, 0xce080482
 0x080487dd: 82 04 08 00             |....    | (data)   add    BYTE PTR ds:[eax + ecx], 0x00
 0x080487e1: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x080487e3: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1522,7 +1522,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080488a8: 2e 69 6e 69 74 00 2e 74 |.init..t| (data)   imul   ebp, DWORD PTR cs:[esi + 0x69], 0x742e0074
 0x080488b0: 65 78 74                |ext     | (data)   js     0x08048927
 0x080488b3: 00 2e                   |..      | (data)   add    BYTE PTR ds:[esi], ch
-0x080488b5: 66 69 6e 69 00 2e       |fini..  | (data)   imul   bp, WORD PTR ds:[esi + 0x69], 0x2e00
+0x080488b5: 66 69 6e 69 00 2e       |fini..  | (data)   imul   bp, WORD PTR ds:[esi + 0x69], 0x2e00<11776>
 0x080488bb: 72 6f                   |ro      | (data)   jb     0x0804892c
 0x080488bd: 64 61                   |da      | (data)   popad  
 0x080488bf: 74 61                   |ta      | (data)   je     0x08048922
@@ -1582,7 +1582,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x0804893a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804893c: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
 0x0804893e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048940: 14 81                   |..      | (data)   adc    al, 0x81<-0x7f>
+0x08048940: 14 81                   |..      | (data)   adc    al, 0x81<-127>
 0x08048942: 04 08                   |..      | (data)   add    al, 0x08
 0x08048944: 14 01                   |..      | (data)   adc    al, 0x01
 0x08048946: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1603,7 +1603,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048963: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x08048965: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048967: 00 28                   |.(      | (data)   add    BYTE PTR ds:[eax], ch
-0x08048969: 81 04 08 28 01 00 00    |...(... | (data)   add    DWORD PTR ds:[eax + ecx], 0x00000128
+0x08048969: 81 04 08 28 01 00 00    |...(... | (data)   add    DWORD PTR ds:[eax + ecx], 0x00000128<296>
 0x08048970: 20 00                   | .      | (data)   and    BYTE PTR ds:[eax], al
 0x08048972: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048974: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1620,7 +1620,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048989: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x0804898b: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x0804898d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804898f: 00 48 81                |.H.     | (data)   add    BYTE PTR ds:[eax + 0x81<-0x7f>], cl
+0x0804898f: 00 48 81                |.H.     | (data)   add    BYTE PTR ds:[eax + 0x81<-127>], cl
 0x08048992: 04 08                   |..      | (data)   add    al, 0x08
 0x08048994: 48                      |H       | (data)   dec    eax
 0x08048995: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
@@ -1655,7 +1655,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x080489d7: 00 f6                   |..      | (data)   add    dh, dh
 0x080489da: ff 6f 02                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0x02]
 0x080489dd: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x080489df: 00 90 81 04 08 90       |......  | (data)   add    BYTE PTR ds:[eax + 0x90080481<-0x6ff7fb7f>], dl
+0x080489df: 00 90 81 04 08 90       |......  | (data)   add    BYTE PTR ds:[eax + 0x90080481], dl
 0x080489e5: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x080489e7: 00 20                   |.       | (data)   add    BYTE PTR ds:[eax], ah
 0x080489e9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1673,7 +1673,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048a01: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048a03: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x08048a05: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048a07: 00 b0 81 04 08 b0       |......  | (data)   add    BYTE PTR ds:[eax + 0xb0080481<-0x4ff7fb7f>], dh
+0x08048a07: 00 b0 81 04 08 b0       |......  | (data)   add    BYTE PTR ds:[eax + 0xb0080481], dh
 0x08048a0d: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x08048a0f: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[eax + 0x00], al
 0x08048a12: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1692,7 +1692,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048a2b: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x08048a2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048a2f: 00 f0                   |..      | (data)   add    al, dh
-0x08048a31: 81 04 08 f0 01 00 00    |....... | (data)   add    DWORD PTR ds:[eax + ecx], 0x000001f0
+0x08048a31: 81 04 08 f0 01 00 00    |....... | (data)   add    DWORD PTR ds:[eax + ecx], 0x000001f0<496>
 0x08048a38: 45                      |E       | (data)   inc    ebp
 0x08048a39: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048a3b: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1724,7 +1724,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048a76: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048a7a: ff 6f 02                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0x02]
 0x08048a7d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048a7f: 00 40 82                |.@.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], al
+0x08048a7f: 00 40 82                |.@.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], al
 0x08048a82: 04 08                   |..      | (data)   add    al, 0x08
 0x08048a84: 40                      |@       | (data)   inc    eax
 0x08048a85: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
@@ -1762,7 +1762,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048ac9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048acb: 00 02                   |..      | (data)   add    BYTE PTR ds:[edx], al
 0x08048acd: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048acf: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], ch
+0x08048acf: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], ch
 0x08048ad2: 04 08                   |..      | (data)   add    al, 0x08
 0x08048ad4: 68 02 00 00 10          |h....   | (data)   push   0x10000002
 0x08048ad9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1776,7 +1776,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048af2: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048af4: 06                      |.       | (data)   push   es
 0x08048af5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048af7: 00 78 82                |.x.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], bh
+0x08048af7: 00 78 82                |.x.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], bh
 0x08048afa: 04 08                   |..      | (data)   add    al, 0x08
 0x08048afc: 78 02                   |x.      | (data)   js     0x08048b00
 0x08048afe: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1796,7 +1796,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048b1a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048b1c: 06                      |.       | (data)   push   es
 0x08048b1d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048b1f: 00 a8 82 04 08 a8       |......  | (data)   add    BYTE PTR ds:[eax + 0xa8080482<-0x57f7fb7e>], ch
+0x08048b1f: 00 a8 82 04 08 a8       |......  | (data)   add    BYTE PTR ds:[eax + 0xa8080482], ch
 0x08048b25: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
 0x08048b27: 00 30                   |.0      | (data)   add    BYTE PTR ds:[eax], dh
 0x08048b29: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -1815,7 +1815,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048b43: 00 06                   |..      | (data)   add    BYTE PTR ds:[esi], al
 0x08048b45: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048b47: 00 e0                   |..      | (data)   add    al, ah
-0x08048b49: 82 04 08 e0             |....    | (data)   add    BYTE PTR ds:[eax + ecx], 0xe0<-0x20>
+0x08048b49: 82 04 08 e0             |....    | (data)   add    BYTE PTR ds:[eax + ecx], 0xe0<-32>
 0x08048b4d: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
 0x08048b4f: 00 dc                   |..      | (data)   add    ah, bl
 0x08048b51: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
@@ -1889,7 +1889,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048be2: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048be4: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x08048be6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048be8: e4 96                   |..      | (data)   in     al, 0x96<-0x6a>
+0x08048be8: e4 96                   |..      | (data)   in     al, 0x96<-106>
 0x08048bea: 04 08                   |..      | (data)   add    al, 0x08
 0x08048bec: e4 06                   |..      | (data)   in     al, 0x06
 0x08048bee: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2133,7 +2133,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048dca: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048dcc: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048dce: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048dd0: 14 81                   |..      | (data)   adc    al, 0x81<-0x7f>
+0x08048dd0: 14 81                   |..      | (data)   adc    al, 0x81<-127>
 0x08048dd2: 04 08                   |..      | (data)   add    al, 0x08
 0x08048dd4: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048dd6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2141,7 +2141,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048dda: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
 0x08048ddc: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048dde: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048de0: 28 81 04 08 00 00       |(.....  | (data)   sub    BYTE PTR ds:[ecx + 0x00000804], al
+0x08048de0: 28 81 04 08 00 00       |(.....  | (data)   sub    BYTE PTR ds:[ecx + 0x00000804<2052>], al
 0x08048de6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048de8: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x08048dea: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
@@ -2182,7 +2182,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048e49: 00 08                   |..      | (data)   add    BYTE PTR ds:[eax], cl
 0x08048e4b: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e4d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048e4f: 00 40 82                |.@.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], al
+0x08048e4f: 00 40 82                |.@.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], al
 0x08048e52: 04 08                   |..      | (data)   add    al, 0x08
 0x08048e54: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e56: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2197,7 +2197,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048e69: 00 0a                   |..      | (data)   add    BYTE PTR ds:[edx], cl
 0x08048e6b: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e6d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048e6f: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-0x7e>], ch
+0x08048e6f: 00 68 82                |.h.     | (data)   add    BYTE PTR ds:[eax + 0x82<-126>], ch
 0x08048e72: 04 08                   |..      | (data)   add    al, 0x08
 0x08048e74: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e76: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2213,7 +2213,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048e8a: 0c 00                   |..      | (data)   or     al, 0x00
 0x08048e8c: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e8e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048e90: a8 82                   |..      | (data)   test   al, 0x82<-0x7e>
+0x08048e90: a8 82                   |..      | (data)   test   al, 0x82<-126>
 0x08048e92: 04 08                   |..      | (data)   add    al, 0x08
 0x08048e94: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048e96: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2226,7 +2226,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048ea9: 00 0e                   |..      | (data)   add    BYTE PTR ds:[esi], cl
 0x08048eab: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048ead: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048eaf: 00 bc 86 04 08 00 00    |....... | (data)   add    BYTE PTR ds:[esi + eax*0x04 + 0x00000804], bh
+0x08048eaf: 00 bc 86 04 08 00 00    |....... | (data)   add    BYTE PTR ds:[esi + eax*0x04 + 0x00000804<2052>], bh
 0x08048eb6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048eb8: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x08048eba: 0f 00 00                |...     | (data)   sldt   WORD PTR ds:[eax]
@@ -2247,7 +2247,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048eda: 11 00                   |..      | (data)   adc    DWORD PTR ds:[eax], eax
 0x08048edc: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048ede: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048ee0: e4 96                   |..      | (data)   in     al, 0x96<-0x6a>
+0x08048ee0: e4 96                   |..      | (data)   in     al, 0x96<-106>
 0x08048ee2: 04 08                   |..      | (data)   add    al, 0x08
 0x08048ee4: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048ee6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
@@ -2307,7 +2307,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048f4a: 18 00                   |..      | (data)   sbb    BYTE PTR ds:[eax], al
 0x08048f4c: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048f4e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048f50: 00 98 04 08 00 00       |......  | (data)   add    BYTE PTR ds:[eax + 0x00000804], bl
+0x08048f50: 00 98 04 08 00 00       |......  | (data)   add    BYTE PTR ds:[eax + 0x00000804<2052>], bl
 0x08048f56: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048f58: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
 0x08048f5a: 19 00                   |..      | (data)   sbb    DWORD PTR ds:[eax], eax
@@ -2329,7 +2329,7 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 0x08048f7a: f1                      |.       | (data)   int1   
 0x08048f7b: ff 0c 00                |...     | (data)   dec    DWORD PTR ds:[eax + eax]
 0x08048f7e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08048f80: e4 96                   |..      | (data)   in     al, 0x96<-0x6a>
+0x08048f80: e4 96                   |..      | (data)   in     al, 0x96<-106>
 0x08048f82: 04 08                   |..      | (data)   add    al, 0x08
 0x08048f84: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
 0x08048f86: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al

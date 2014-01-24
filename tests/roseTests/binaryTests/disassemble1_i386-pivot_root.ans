@@ -89,7 +89,7 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x08048354: 31 ed                   |1.      |   xor    ebp, ebp
 0x08048356: 5e                      |^       |   pop    esi
 0x08048357: 89 e1                   |..      |   mov    ecx, esp
-0x08048359: 83 e4 f0                |...     |   and    esp, 0xf0<-0x10>
+0x08048359: 83 e4 f0                |...     |   and    esp, 0xf0<-16>
 0x0804835c: 50                      |P       |   push   eax
 0x0804835d: 54                      |T       |   push   esp
 0x0804835e: 52                      |R       |   push   edx
@@ -118,9 +118,9 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x0804837b: 53                      |S       |   push   ebx
 0x0804837c: e8 00 00 00 00          |.....   |   call   0x08048381<<Insn>>
 0x08048381: 5b                      |[       |   pop    ebx
-0x08048382: 81 c3 d3 12 00 00       |......  |   add    ebx, 0x000012d3
+0x08048382: 81 c3 d3 12 00 00       |......  |   add    ebx, 0x000012d3<4819>
 0x08048388: 52                      |R       |   push   edx
-0x08048389: 8b 83 fc ff ff ff       |......  |   mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x08048389: 8b 83 fc ff ff ff       |......  |   mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 0x0804838f: 85 c0                   |..      |   test   eax, eax
 0x08048391: 74 02                   |t.      |   je     0x08048395<<Insn>>
 0x08048391: Successor blocks: 0x08048393, 0x08048395
@@ -228,7 +228,7 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x080483fc: 55                      |U       |   push   ebp
 0x080483fd: 89 e5                   |..      |   mov    ebp, esp
 0x080483ff: 83 ec 18                |...     |   sub    esp, 0x18
-0x08048402: 83 e4 f0                |...     |   and    esp, 0xf0<-0x10>
+0x08048402: 83 e4 f0                |...     |   and    esp, 0xf0<-16>
 0x08048405: 8b 55 0c                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0x0c]
 0x08048408: 83 ec 10                |...     |   sub    esp, 0x10
 0x0804840b: 83 7d 08 03             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x03
@@ -325,11 +325,11 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x0804846e: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x08048471: e8 00 00 00 00          |.....   | (data)   call   0x08048476
 0x08048476: 5b                      |[       | (data)   pop    ebx
-0x08048477: 81 c3 de 11 00 00       |......  | (data)   add    ebx, 0x000011de
+0x08048477: 81 c3 de 11 00 00       |......  | (data)   add    ebx, 0x000011de<4574>
 0x0804847d: e8 6a fe ff ff          |.j...   | (data)   call   0x080482ec
-0x08048482: 8d 83 20 ff ff ff       |.. ...  | (data)   lea    eax, [ebx + 0xffffff20<-0x000000e0>]
-0x08048488: 8d 93 20 ff ff ff       |.. ...  | (data)   lea    edx, [ebx + 0xffffff20<-0x000000e0>]
-0x0804848e: 89 45 f0                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x08048482: 8d 83 20 ff ff ff       |.. ...  | (data)   lea    eax, [ebx + 0xffffff20<-224>]
+0x08048488: 8d 93 20 ff ff ff       |.. ...  | (data)   lea    edx, [ebx + 0xffffff20<-224>]
+0x0804848e: 89 45 f0                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 0x08048491: 29 d0                   |).      | (data)   sub    eax, edx
 0x08048493: 31 f6                   |1.      | (data)   xor    esi, esi
 0x08048495: c1 f8 02                |...     | (data)   sar    eax, 0x02
@@ -338,7 +338,7 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x0804849c: 89 d7                   |..      | (data)   mov    edi, edx
 0x0804849e: 89 f6                   |..      | (data)   mov    esi, esi
 0x080484a0: ff 14 b2                |...     | (data)   call   DWORD PTR ds:[edx + esi*0x04]
-0x080484a3: 8b 4d f0                |.M.     | (data)   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x080484a3: 8b 4d f0                |.M.     | (data)   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
 0x080484a6: 29 f9                   |).      | (data)   sub    ecx, edi
 0x080484a8: 46                      |F       | (data)   inc    esi
 0x080484a9: c1 f9 02                |...     | (data)   sar    ecx, 0x02
@@ -359,18 +359,18 @@ disassembled 3479 instructions and 78 failures (use --show-bad to see errors)
 0x080484c1: 53                      |S       | (data)   push   ebx
 0x080484c2: e8 00 00 00 00          |.....   | (data)   call   0x080484c7
 0x080484c7: 5b                      |[       | (data)   pop    ebx
-0x080484c8: 81 c3 8d 11 00 00       |......  | (data)   add    ebx, 0x0000118d
-0x080484ce: 8d 83 20 ff ff ff       |.. ...  | (data)   lea    eax, [ebx + 0xffffff20<-0x000000e0>]
-0x080484d4: 8d bb 20 ff ff ff       |.. ...  | (data)   lea    edi, [ebx + 0xffffff20<-0x000000e0>]
+0x080484c8: 81 c3 8d 11 00 00       |......  | (data)   add    ebx, 0x0000118d<4493>
+0x080484ce: 8d 83 20 ff ff ff       |.. ...  | (data)   lea    eax, [ebx + 0xffffff20<-224>]
+0x080484d4: 8d bb 20 ff ff ff       |.. ...  | (data)   lea    edi, [ebx + 0xffffff20<-224>]
 0x080484da: 29 f8                   |).      | (data)   sub    eax, edi
 0x080484dc: c1 f8 02                |...     | (data)   sar    eax, 0x02
 0x080484df: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
-0x080484e2: 8d 70 ff                |.p.     | (data)   lea    esi, [eax + 0xff<-0x01>]
+0x080484e2: 8d 70 ff                |.p.     | (data)   lea    esi, [eax + 0xff<-1>]
 0x080484e5: eb 05                   |..      | (data)   jmp    0x080484ec
 0x080484e7: 90                      |.       | (data)   nop    
 0x080484e8: ff 14 b7                |...     | (data)   call   DWORD PTR ds:[edi + esi*0x04]
 0x080484eb: 4e                      |N       | (data)   dec    esi
-0x080484ec: 83 fe ff                |...     | (data)   cmp    esi, 0xff<-0x01>
+0x080484ec: 83 fe ff                |...     | (data)   cmp    esi, 0xff<-1>
 0x080484ef: 75 f7                   |u.      | (data)   jne    0x080484e8
 0x080484f1: e8 2e 00 00 00          |.....   | (data)   call   0x08048524
 0x080484f6: 83 c4 0c                |...     | (data)   add    esp, 0x0c

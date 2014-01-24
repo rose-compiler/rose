@@ -157,7 +157,7 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 0x00400523: 49 89 d1                |I..     |   mov    r9, rdx
 0x00400526: 5e                      |^       |   pop    rsi
 0x00400527: 48 89 e2                |H..     |   mov    rdx, rsp
-0x0040052a: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-0x10>
+0x0040052a: 48 83 e4 f0             |H...    |   and    rsp, 0xf0<-16>
 0x0040052e: 50                      |P       |   push   rax
 0x0040052f: 54                      |T       |   push   rsp
 0x00400530: 49 c7 c0 c0 06 40 00    |I....@. |   mov    r8, 0x004006c0<<StaticData@0x004006b6>+0x0a>
@@ -347,8 +347,8 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 0x004005e0: Function does not return to caller.
 
 0x004005e0: Basic block reasons: entry point, graph-1
-0x004005e0: 48 89 5c 24 f0          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-0x10>], rbx
-0x004005e5: 48 89 6c 24 f8          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-0x08>], rbp
+0x004005e0: 48 89 5c 24 f0          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbx
+0x004005e5: 48 89 6c 24 f8          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], rbp
 0x004005ea: 31 f6                   |1.      |   xor    esi, esi
 0x004005ec: 48 81 ec 98 00 00 00    |H...... |   sub    rsp, 0x00000098
 0x004005f3: 31 c0                   |1.      |   xor    eax, eax
@@ -433,10 +433,10 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 0x00400660: This function calls 0x00400498
 
 0x00400660: Basic block reasons: entry point, graph-2
-0x00400660: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-0x18>], rbx
-0x00400665: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-0x08>], r12
+0x00400660: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
+0x00400665: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
 0x0040066a: 4c 8d 25 d7 01 10 00    |L.%.... |   lea    r12, [rip + 0x00000000001001d7]
-0x00400671: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-0x10>], rbp
+0x00400671: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
 0x00400676: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x0040067a: 31 db                   |1.      |   xor    ebx, ebx
 0x0040067c: e8 17 fe ff ff          |.....   |   call   0x0000000000400498<<Func>>
@@ -500,12 +500,12 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 0x004006cf: 48 29 e8                |H).     | (data)   sub    rax, rbp
 0x004006d2: 53                      |S       | (data)   push   rbx
 0x004006d3: 48 c1 f8 03             |H...    | (data)   sar    rax, 0x03
-0x004006d7: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-0x01>]
+0x004006d7: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x004006db: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x004006df: eb 07                   |..      | (data)   jmp    0x00000000004006e8
 0x004006e1: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
 0x004006e5: 48 ff cb                |H..     | (data)   dec    rbx
-0x004006e8: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-0x01>
+0x004006e8: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x004006ec: 75 f3                   |u.      | (data)   jne    0x00000000004006e1
 0x004006ee: 48 83 c4 08             |H...    | (data)   add    rsp, 0x08
 0x004006f2: 5b                      |[       | (data)   pop    rbx
@@ -553,7 +553,7 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 0x00400729: Basic block reasons: graph-2
 0x00400729: Predecessor blocks: 0x00400717, 0x00400726
 0x00400729: Dominator block: 0x00400717
-0x00400729: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-0x01>
+0x00400729: 48 83 f8 ff             |H...    |   cmp    rax, 0xff<-1>
 0x0040072d: 75 f1                   |u.      |   jne    0x0000000000400720<<Insn>>
 0x0040072d: Successor blocks: 0x00400720, 0x0040072f
 
