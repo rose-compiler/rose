@@ -316,6 +316,7 @@ protected:
     virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
     virtual TreeNodePtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
     virtual TreeNodePtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
+    virtual TreeNodePtr emit_rotate_left(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
     virtual TreeNodePtr emit_rotate_right(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
     virtual TreeNodePtr emit_compare(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
     virtual TreeNodePtr emit_ite(std::ostream&, const TreeNodePtr &cond, const TreeNodePtr&, const TreeNodePtr&);

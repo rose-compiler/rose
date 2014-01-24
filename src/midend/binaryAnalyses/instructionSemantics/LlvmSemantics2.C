@@ -889,6 +889,24 @@ RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands
 }
 
 // Rotate the bits of "value" by "amount" bits.  LLVM doesn't have a rotate instruction so we use left and right shifting and
+// bitwise OR.  If called like emit_rotate_left(o, i32 %1, i32 %2) the output will be:
+//     %3 = shl i32 %1, %2      ; result high bits
+//     %4 = sub i32 32, %2      ; right shift amount
+//     %5 = lshr i32 %1, %4     ; result low bits
+//     %6 = or i32 %3, %5       ; result
+TreeNodePtr
+RiscOperators::emit_rotate_left(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+{
+    TreeNodePtr t3 = emit_left_shift(o, value, amount);
+    TreeNodePtr t4 = emit_unsigned_binary(o, "sub",
+                                          LeafNode::create_integer(amount->get_nbits(), 32),
+                                          amount);
+    TreeNodePtr t5 = emit_arithmetic_right_shift(o, value, t4);
+    TreeNodePtr t6 = emit_unsigned_binary(o, "or", t3, t5);
+    return t6;
+}
+
+// Rotate the bits of "value" by "amount" bits.  LLVM doesn't have a rotate instruction so we use left and right shifting and
 // bitwise OR.  If called like emit_rotate_right(o, i32 %1, i32 %2) the output will be:
 //     %3 = lshr i32 %1, %2     ; result low bits
 //     %4 = sub i32 32, %2      ; left shift amount
@@ -1081,6 +1099,10 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 assert(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->get_nbits());
                 break;
+            case InsnSemanticsExpr::OP_ROL:
+                assert(2==operands.size());
+                operator_result = emit_rotate_left(o, operands[1], operands[0]);
+                break;
             case InsnSemanticsExpr::OP_ROR:
                 assert(2==operands.size());
                 operator_result = emit_rotate_right(o, operands[1], operands[0]);
@@ -1169,7 +1191,6 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 break;
 
             case InsnSemanticsExpr::OP_NOOP:
-            case InsnSemanticsExpr::OP_ROL:
             case InsnSemanticsExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
                                                stringifyInsnSemanticsExprOperator(inode->get_operator()) +
@@ -1199,7 +1220,8 @@ RiscOperators::add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to)
         rewrites.erase(from->hash());
     } else {
         rewrites.insert(std::make_pair(from->hash(), to));
-        add_variable(to);
+        if (to->is_variable())
+            add_variable(to);
     }
 }
 
