@@ -418,6 +418,23 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_37.c \
      test2014_38.c \
      test2014_39.c \
+     test2014_40.c \
+     test2014_41.c \
+     test2014_42.c \
+     test2014_43.c \
+     test2014_44.c \
+     test2014_46.c \
+     test2014_47.c \
+     test2014_48.c \
+     test2014_49.c \
+     test2014_50.c \
+     test2014_51.c \
+     test2014_52.c \
+     test2014_53.c \
+     test2014_55.c \
+     test2014_56.c \
+     test2014_57.c \
+     test2014_58.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -431,10 +448,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      constants.c
 
 # DQ (1/5/2014): Some failing test codes:
-#     test2014_03.c  demonstrates nested functions (not supported in EDG).
-#     test2014_10.c  demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation.
-#     test2014_11.c  (simpler case of test2014_10.c.
-#     test2014_29.c  This is the test of function prototypes without parameters used for functions with parametes (C only).
+#     test2014_03.c  (demonstrates nested functions (not supported in EDG))
+#     test2014_10.c  (demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation)
+#     test2014_11.c  (simpler case of test2014_10.c)
+#     test2014_45.c  (inconsitant function declarations, but consistant through typedefs)
+#     test2014_54.c  (old-stype C function parameters in wrong order, appears to be legal C but a problem for ROSE)
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 
@@ -682,6 +700,10 @@ test_tokenMapping:
 #	rm -f test2003_12.c.mapping.passed
 #	@$(MAKE) test2003_12.c.mapping.passed
 	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+
+# DQ (1/19/2014): Test the use of the gnu "-S" option.
+test_gnu_S_option:
+	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/CompileTests/C_tests/test2014_41.c
 
 
 # Liao 11/19/2009

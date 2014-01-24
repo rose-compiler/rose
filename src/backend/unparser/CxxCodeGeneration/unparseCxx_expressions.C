@@ -1549,6 +1549,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 void
 Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
 
+
 void
 Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -1605,6 +1606,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           nameQualifier = var_ref->get_qualified_name_prefix();
         }
 
+  // DQ (1/22/2014): Adding support for generated names used in un-named variables.
+     bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+     printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+
+#if 0
   // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
@@ -1612,8 +1620,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
 #endif
-          curprint ( nameQualifier.str());
+          curprint(nameQualifier.str());
         }
+#else
+     curprint(nameQualifier.str());
+#endif
 
   // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
   // curprint (  var_ref->get_symbol()->get_name().str());
@@ -1626,7 +1637,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-          curprint (var_ref->get_symbol()->get_name().str());
+       // curprint (var_ref->get_symbol()->get_name().str());
+          if (isAnonymousName == false)
+             {
+               curprint (var_ref->get_symbol()->get_name().str());
+             }
         }
 
 #if 0
