@@ -1,7 +1,0 @@
-
-export GANG_LIST="1 2 4 8 16"
-export WORKER_LIST="4 8 16 32 64"
-export VECTOR_LIST="1 2 4 8 16"
-
-export SIZE_LIST="20 23 27 30 35 39 44 50 57 64 72 81 90 101 113 126 140"
-
