@@ -369,6 +369,55 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_98.c \
      test2013_99.c \
      test2013_100.c \
+     test2013_101.c \
+     test2013_102.c \
+     test2013_103.c \
+     test2013_104.c \
+     test2013_105.c \
+     test2013_106.c \
+     test2013_107.c \
+     test2013_108.c \
+     test2013_109.c \
+     test2013_110.c \
+     test2013_111.c \
+     test2013_112.c \
+     test2013_113.c \
+     test2014_01.c \
+     test2014_02.c \
+     test2014_04.c \
+     test2014_05.c \
+     test2014_06.c \
+     test2014_07.c \
+     test2014_08.c \
+     test2014_09.c \
+     test2014_12.c \
+     test2014_13.c \
+     test2014_14.c \
+     test2014_15.c \
+     test2014_16.c \
+     test2014_17.c \
+     test2014_18.c \
+     test2014_19.c \
+     test2014_20.c \
+     test2014_21.c \
+     test2014_22.c \
+     test2014_23.c \
+     test2014_24.c \
+     test2014_25.c \
+     test2014_26.c \
+     test2014_27.c \
+     test2014_28.c \
+     test2014_29.c \
+     test2014_30.c \
+     test2014_31.c \
+     test2014_32.c \
+     test2014_33.c \
+     test2014_34.c \
+     test2014_35.c \
+     test2014_36.c \
+     test2014_37.c \
+     test2014_38.c \
+     test2014_39.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -380,6 +429,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_11.c \
      test2010_14.c \
      constants.c
+
+# DQ (1/5/2014): Some failing test codes:
+#     test2014_03.c  demonstrates nested functions (not supported in EDG).
+#     test2014_10.c  demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation.
+#     test2014_11.c  (simpler case of test2014_10.c.
+#     test2014_29.c  This is the test of function prototypes without parameters used for functions with parametes (C only).
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 

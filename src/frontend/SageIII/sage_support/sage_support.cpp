@@ -805,8 +805,17 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
-       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
+#if 0
+          printf ("In determineFileType(): filenameExtension = %s \n",filenameExtension.c_str());
        // ROSE_ASSERT(false);
+#endif
+
+       // DQ (1/8/2014): We need to handle the case of "/dev/null" being used as an input filename.
+          if (filenameExtension == "/dev/null")
+             {
+               printf ("Warning: detected use of /dev/null as input filename: not yet supported (exiting with 0 exit code) \n");
+               exit(0);
+             }
 
        // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
        // file->set_requires_C_preprocessor(true);
@@ -846,7 +855,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                           //if the command line includes "-D" options
                           ! getProject()->get_macroSpecifierList().empty()
 #if 0
-// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
+            // SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
                        ||
                           //if the command line includes "-I" options
                           ! getProject()->get_includeDirectorySpecifierList().empty()
@@ -1399,7 +1408,7 @@ void
 SgFile::runFrontend(int & nextErrorCode)
 {
   // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the 
-  // invocation of the fronend on each SgFile IR node.
+  // invocation of the frontend on each SgFile IR node.
 
 #if 0
      printf ("************************ \n");
@@ -1461,12 +1470,24 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-#if 0
-     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
-#endif
-
-  // builds file list (or none if this is a link line)
-     processCommandLine(argv);
+    // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
+    // constructor. We can't set any error codes on SgProject since SgProject::parse
+    // is being called from the SgProject::SgProject constructor, meaning the SgProject
+    // object is not properly constructed yet.. The only thing we can do, then, if
+    // there is an error here in the commandline handling, is to halt the program.
+    if (KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL)
+    {
+        std::cout
+            << "[FATAL] "
+            << "Unrecoverable signal generated during commandline processing"
+            << std::endl;
+        exit(1);
+    }
+    else
+    {
+        // builds file list (or none if this is a link line)
+        processCommandLine(argv);
+    }
 
      int errorCode = 0;
 
@@ -1746,9 +1767,20 @@ SgProject::RunFrontend()
                   << "signal in SgFile::RunFrontend()"
                   << std::endl;
 
-              file->set_frontendErrorCode(100);
-              status_of_function =
-                  std::max(100, status_of_function);
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  status_of_function =
+                      std::max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
@@ -1765,7 +1797,18 @@ SgProject::RunFrontend()
               }
               catch(...)
               {
-                  file->set_frontendErrorCode(100);
+                  if (file != NULL)
+                  {
+                     file->set_frontendErrorCode(100);
+                  }
+                  else
+                  {
+                      std::cout
+                          << "[FATAL] "
+                          << "Unable to keep going due to an unrecoverable internal error"
+                          << std::endl;
+                      exit(1);
+                  }
 
                   if (ROSE::KeepGoing::g_keep_going)
                   {
@@ -1993,8 +2036,20 @@ SgProject::parse()
                   << "Configured to keep going after catching a signal in "
                   << "SgFile::secondaryPassOverSourceFile()"
                   << std::endl;
-              file->set_frontendErrorCode(-1);
-              errorCode = std::max(1, errorCode);
+
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  errorCode = std::max(100, errorCode);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
@@ -5114,23 +5169,31 @@ SgProject::compileOutput()
 // case 2: compilation  for each file
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
-             {
-               SgFile & file = get_file(i);
-#if 0
-               printf ("In Project::compileOutput(%s): (in loop) get_file(%d).get_skipfinalCompileStep() = %s \n",compilerName,i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
-#endif
-            // printf ("In Project::compileOutput(): (TOP of loop) file = %d \n",i);
+          {
+              int localErrorCode = 0;
+              SgFile & file = get_file(i);
 
-            // DQ (8/13/2006): Only use the first file (I don't think this
-            // makes sense with multiple files specified on the commandline)!
-            // int localErrorCode = file.compileOutput(i, compilerName);
-            // int localErrorCode = file.compileOutput(0, compilerName);
-               int localErrorCode = file.compileOutput(0);
-               if (localErrorCode > errorCode)
-                    errorCode = localErrorCode;
+              if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
+              {
+                  std::cout
+                      << "[WARN] "
+                      << "Configured to keep going after catching a "
+                      << "signal in SgProject::compileOutput()"
+                      << std::endl;
 
-            // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
-             }
+                  localErrorCode = 100;
+                  file.set_backendCompilerErrorCode(localErrorCode);
+              }
+              else
+              {
+                  localErrorCode = file.compileOutput(0);
+              }
+
+              if (localErrorCode > errorCode)
+              {
+                  errorCode = localErrorCode;
+              }
+          }
 
        // case 3: linking at the project level
           if (! (get_Java_only()   ||

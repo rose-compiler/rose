@@ -529,7 +529,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C					\
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f				\
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C inputloopCollapsing.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C \
+       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

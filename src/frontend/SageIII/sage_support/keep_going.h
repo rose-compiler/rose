@@ -24,6 +24,13 @@ typedef void(*SignalHandlerFunction)(int);
 // Public API
 //-----------------------------------------------------------------------------
 #ifndef _MSC_VER
+    #define KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL                                \
+      (                                                                         \
+          ROSE::KeepGoing::g_keep_going &&                                      \
+          ROSE::KeepGoing::set_signal_handler(                                  \
+              &ROSE::KeepGoing::Frontend::Commandline::SignalHandler) &&        \
+          sigsetjmp(ROSE::KeepGoing::Frontend::Commandline::jmp_target, 0) != 0 \
+      )
     #define KEEP_GOING_CAUGHT_FRONTEND_SIGNAL                         \
       (                                                               \
           ROSE::KeepGoing::g_keep_going &&                            \
@@ -45,6 +52,13 @@ typedef void(*SignalHandlerFunction)(int);
               &ROSE::KeepGoing::Backend::Unparser::SignalHandler) &&        \
           sigsetjmp(ROSE::KeepGoing::Backend::Unparser::jmp_target, 0) != 0 \
       )
+    #define KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL                       \
+      (                                                                     \
+          ROSE::KeepGoing::g_keep_going &&                                  \
+          ROSE::KeepGoing::set_signal_handler(                              \
+              &ROSE::KeepGoing::Backend::Compiler::SignalHandler) &&        \
+          sigsetjmp(ROSE::KeepGoing::Backend::Compiler::jmp_target, 0) != 0 \
+      )
 #else //_MSC_VER
     // TOO1 (2013/12/30): See setjmp/longjmp for implementation details:
     //
@@ -53,9 +67,11 @@ typedef void(*SignalHandlerFunction)(int);
     //    See:
     //                     http://stackoverflow.com/questions/8934879/how-to-handle-sigabrt-signal
     //
+    #define KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL false
     #define KEEP_GOING_CAUGHT_FRONTEND_SIGNAL false
     #define KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL false
     #define KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL false
+    #define KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL false
 #endif //_MSC_VER
 
 //-----------------------------------------------------------------------------
@@ -68,6 +84,13 @@ namespace Frontend {
   extern sigjmp_buf jmp_target;
 #endif //_MSC_VER
   void SignalHandler(int sig);
+
+  namespace Commandline {
+    #ifndef _MSC_VER
+      extern sigjmp_buf jmp_target;
+    #endif //_MSC_VER
+    void SignalHandler(int sig);
+  }// ::ROSE::KeepGoing::Frontend::Commandline
 
   namespace SecondaryPass {
     #ifndef _MSC_VER
@@ -84,6 +107,14 @@ namespace Unparser {
   #endif //_MSC_VER
   void SignalHandler(int sig);
 }// ::ROSE::KeepGoing::Backend::Unparser
+
+namespace Compiler {
+  #ifndef _MSC_VER
+    extern sigjmp_buf jmp_target;
+  #endif //_MSC_VER
+  void SignalHandler(int sig);
+}// ::ROSE::KeepGoing::Backend::Compiler
+
 }// ::ROSE::KeepGoing::Backend
 }// ::ROSE::KeepGoing
 }// ::ROSE
