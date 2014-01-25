@@ -27,6 +27,9 @@ Grammar::setUpNodes ()
   // Liao 11/1/2010, move SgInitializedName to SgLocatedNode
      NEW_TERMINAL_MACRO (InitializedName, "InitializedName", "InitializedNameTag" );
 
+  // DQ(1/13/2014): Added Java support for JavaMemberValuePair
+     NEW_TERMINAL_MACRO (JavaMemberValuePair, "JavaMemberValuePair", "JavaMemberValuePairTag" );
+
 #if USE_OMP_IR_NODES  // Liao, 5/30/2009 add nodes for OpenMP Clauses, 
  // they have source position info and should be traversed
      // add all terminals first, then bottom-up traverse class hierarchy to define non-terminals
@@ -163,6 +166,7 @@ Grammar::setUpNodes ()
          "UntypedNode", "UntypedNodeTag", false);
 
 
+  // DQ(1/13/2014): Added Java support for JavaMemberValuePair
   // DQ (11/26/2013): Added UntypedNode to be derived from LocatedNodeSupport.
   // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
@@ -171,7 +175,10 @@ Grammar::setUpNodes ()
   // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+  // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+
+
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -719,6 +726,14 @@ Grammar::setUpNodes ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ(1/13/2014): Added Java support for JavaMemberValuePair
+     JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");
+     JavaMemberValuePair.setDataPrototype("SgName","name", "= NULL",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaMemberValuePair.setDataPrototype("SgExpression*","value", "= NULL",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -821,6 +836,10 @@ Grammar::setUpNodes ()
           printf ("NOT ADDING SPECIAL X VERSION SOURCE CODE!!! \n");
         }
 #endif
+
+
+  // DQ(1/13/2014): Added Java support for JavaMemberValuePair
+     JavaMemberValuePair.setFunctionSource ("SOURCE_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");
 
 
   // ***********************************************************************
