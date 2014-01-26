@@ -99,6 +99,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseDeleteOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseThisNode                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSuperNode               (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseClassNode               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseScopeOp                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseForDeclOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseTypeRef                 (SgExpression* expr, SgUnparse_Info& info);  
@@ -255,9 +256,11 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
           void unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info);
 
-          void unparseMarkerAnnotation(SgExpression *, SgUnparse_Info& info);
-          void unparseSingleMemberAnnotation(SgExpression *, SgUnparse_Info& info);
-          void unparseNormalAnnotation(SgExpression *, SgUnparse_Info& info);
+          void unparseJavaMarkerAnnotation(SgExpression *, SgUnparse_Info& info);
+          void unparseJavaSingleMemberAnnotation(SgExpression *, SgUnparse_Info& info);
+          void unparseJavaNormalAnnotation(SgExpression *, SgUnparse_Info& info);
+
+          void unparseJavaTypeExpression(SgExpression *, SgUnparse_Info& info);
    };
 
 #endif

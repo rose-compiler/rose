@@ -29,10 +29,11 @@ extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgType *containing_type, SgTemplateParameterPtrList *);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgType *containing_type, SgTemplateParameterPtrList *);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
+extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType *, SgType *);
 
 string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
@@ -41,12 +42,15 @@ bool isImportedType(SgClassType *);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
-//string getFullyQualifiedName(SgClassDefinition *);
 string getFullyQualifiedTypeName(SgClassType *);
+string getParameters(SgJavaParameterizedType *);
+string getUnqualifiedTypeName(SgJavaParameterizedType *);
 string getFullyQualifiedTypeName(SgJavaParameterizedType *);
+string getFullyQualifiedTypeName(SgJavaQualifiedType *);
 bool hasConflicts(SgClassDeclaration *class_declaration);
 string getTypeName(SgClassType *class_type);
 string getTypeName(SgJavaParameterizedType *parm_type);
+string getTypeName(SgJavaQualifiedType *);
 string getTypeName(SgType *);
 
 //
@@ -99,11 +103,11 @@ public:
 //
 class AstParameterizedTypeAttribute : public AstAttribute {
 private:
-    SgClassType *rawType;
+    SgNamedType *rawType;
     list<SgJavaParameterizedType *> parameterizedTypes;
 
 public:
-    AstParameterizedTypeAttribute(SgClassType *rawType_) : rawType(rawType_) {}
+    AstParameterizedTypeAttribute(SgNamedType *rawType_) : rawType(rawType_) {}
 
     bool argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr);
     SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr);
@@ -482,10 +486,11 @@ SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
 SgJavaPackageDeclaration *findPackageDeclaration(SgName &);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
+// TODO: Remove this !!!
+//SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
+//SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
+//SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
+//SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 
 list<SgName> generateQualifierList (const SgName &classNameWithQualification);
 
@@ -507,8 +512,10 @@ SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensio
 //! Support to get current class scope.
 SgClassDefinition *getCurrentTypeDefinition();
 
+// TODO: Remove this !!!
+//SgClassSymbol *lookupParameterTypeByName(const SgName &name);
+
 //! Support for identification of symbols using simple names in a given scope.
-SgClassSymbol *lookupParameterTypeByName(const SgName &name);
 SgClassSymbol *lookupUniqueSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
 void lookupAllSimpleNameTypesInClass(list<SgClassSymbol *>&, const SgName &name, SgClassDefinition *classDefinition);
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
@@ -519,8 +526,9 @@ SgVariableSymbol *lookupVariableByName(const SgName &name);
 //! Support for identification of label symbols using simple names.
 SgJavaLabelSymbol *lookupLabelByName(const SgName &name);
 
+// TODO: Remove this !!!
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
-SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
+//SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
 
 // ***********************************************************
 //  Template Definitions (required to be in the header files)
