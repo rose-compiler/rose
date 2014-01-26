@@ -1324,6 +1324,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
 
 #if 0
      printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+     curprint(string("\n /*    unparseExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -2397,14 +2398,28 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
        // test2005_09.C demonstrates this bug!
           if (isSgPointerDerefExp(expr) != NULL)
              {
-               curprint (" ");
+               curprint(" ");
              }
-          curprint ( info.get_operator_name());
+          curprint(info.get_operator_name());
         }
 
 #if 0
      printf ("In unparseUnaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
 #endif
+
+  // DQ (1/25/2014): Added support to avoid unparsing "- -5" as "--5".
+     SgValueExp* valueExp = isSgValueExp(unary_op->get_operand());
+     SgMinusOp* minus_op = isSgMinusOp(unary_op);
+     if (minus_op != NULL && valueExp != NULL)
+        {
+       // We need to make sure we don't unparse: "- -5" as "--5".
+       // I think we need an isNegative() query function so that we could refine this test to only apply to negative literals.
+#if 0
+          printf ("We need to make sure we don't unparse: \"- -5\" as \"--5\" \n");
+#endif
+          curprint(" ");
+        }
+
 #if 0
      curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
@@ -2413,9 +2428,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
      curprint ("\n /* DONE: Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
 
-     if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op) 
-        { 
-          curprint (  info.get_operator_name()); 
+     if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op)
+        {
+          curprint(info.get_operator_name());
         }
 
      info.unset_nested_expression();
@@ -2451,7 +2466,20 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
                   {
                     bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
 #if 0
-                    printf ("In isDotExprWithAnonymousUnion(): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
+                    printf ("In isDotExprWithAnonymousUnion(): (hidden in SgBinaryOp): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
+#endif
+                    returnValue = isAnonymousName;
+                  }
+             }
+            else
+             {
+            // The other case we have to handle is that the lhs is a SgVarRefExp to an un-named variable.  See test2014_152.C.
+               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
+               if (varRefExp != NULL)
+                  {
+                    bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+                    printf ("In isDotExprWithAnonymousUnion(): (hidden directly in the lhs operand): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
 #endif
                     returnValue = isAnonymousName;
                   }
@@ -5286,6 +5314,13 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgConcatenationOp:
               return e_assoc_left;
 
+       // DQ (1/25/2014): This is not really defined for unary operators, but it does not make sense to output the warning below either.
+          case V_SgMinusOp:
+          case V_SgUnaryAddOp:
+             {
+               return e_assoc_none;
+             }
+          
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.

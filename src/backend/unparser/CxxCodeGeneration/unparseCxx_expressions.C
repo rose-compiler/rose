@@ -2773,8 +2773,16 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
         {
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
-               curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
+               curprint("L");
+
+       // curprint("\"" + str_val->get_value() + "\"");
+          string s = string("\"") + str_val->get_value() + string("\"");
+#if 0
+          printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
+#endif
+          curprint(s);
         }
 #endif
 #endif
