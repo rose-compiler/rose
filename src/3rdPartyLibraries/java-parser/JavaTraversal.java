@@ -266,28 +266,10 @@ static int totalUnits = 0;
 
         // Filter out ROSE specific options.
         args = filterCommandline(args);
-// TODO: Remove this !
-//for (int i = 0; i < args.length; i++)
-//System.out.println("args[" + i + "] = " + args[i]);
 
         //
         // Generate all necessary classfiles if no errors are detected
         //
-//TODO: Remove this !
-/*
-        Main main = compile(args);
-        if (main.globalErrorsCount > 0) { // errors were detected?
-            System.out.flush();
-            System.err.flush();
-
-            System.err.println();
-            System.err.println();
-            System.err.println("ECJ front-end errors detected in input java program");
-            System.exit(1);
-        }
-        
-        main = generateAst(args); // get compiler to generate AST.
-*/
         Main main = generateAst(args); // get compiler to generate AST.
         if (main.globalErrorsCount > 0) { // errors were detected?
             System.out.flush();
@@ -311,17 +293,6 @@ static int totalUnits = 0;
 
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
-
-            //
-            // What is the class path for these compilation units?
-            //
-            String classpath = "";
-            for (int i = 0; i < args.length; i++) {
-                if (args[i].equals("-classpath") || args[i].equals("-cp")) {
-                    classpath = args[i+1];
-                    break;
-                }
-            }
 
             //
             // To process the source files that were specified by the user iterate up to
@@ -367,7 +338,7 @@ System.out.println("   " + new String(unit.getFileName()));
             //
             //
             try {
-                java_parser_support = new JavaParserSupport(classpath, verboseLevel);
+                java_parser_support = new JavaParserSupport(verboseLevel);
                 java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
             }
             catch (Exception e) {

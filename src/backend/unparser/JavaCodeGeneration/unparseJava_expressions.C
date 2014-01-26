@@ -77,6 +77,7 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
         case THIS_NODE:               { unparseThisNode(expr, info); break; }
         case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
+        case CLASS_NODE:              { unparseClassNode(expr, info); break; }
 
         case TYPE_REF:                { unparseTypeRef(expr, info); break; }
         case EXPR_INIT:               { unparseExprInit(expr, info); break; }
@@ -88,9 +89,11 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
         case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
 
-        case V_SgJavaMarkerAnnotation:       { unparseMarkerAnnotation(expr, info); break; }
-        case V_SgJavaSingleMemberAnnotation: { unparseSingleMemberAnnotation(expr, info); break; }
-        case V_SgJavaNormalAnnotation:       { unparseNormalAnnotation(expr, info); break; }
+        case V_SgJavaMarkerAnnotation:       { unparseJavaMarkerAnnotation(expr, info); break; }
+        case V_SgJavaSingleMemberAnnotation: { unparseJavaSingleMemberAnnotation(expr, info); break; }
+        case V_SgJavaNormalAnnotation:       { unparseJavaNormalAnnotation(expr, info); break; }
+
+        case V_SgJavaTypeExpression:         { unparseJavaTypeExpression(expr, info); break; }
 
 
         default: {
@@ -1095,7 +1098,7 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
 
      if (unp->opt.get_this_opt()) // Checks options to determine whether to print "this"  
         {
-          curprint (this_node -> attributeExists("class") ? "class" : "this"); 
+          curprint ("this"); 
         }
    }
 
@@ -1105,6 +1108,14 @@ Unparse_Java::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
 
     ROSE_ASSERT(super_node != NULL);
     curprint ("super"); 
+}
+
+void
+Unparse_Java::unparseClassNode(SgExpression* expr, SgUnparse_Info& info) {
+    SgClassExp* class_node = isSgClassExp(expr);
+
+    ROSE_ASSERT(class_node != NULL);
+    curprint ("class"); 
 }
 
 void
@@ -1472,7 +1483,7 @@ void Unparse_Java::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
 
 
 void 
-Unparse_Java::unparseMarkerAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+Unparse_Java::unparseJavaMarkerAnnotation(SgExpression *expr, SgUnparse_Info& info) {
     SgJavaMarkerAnnotation *marker_annotation = isSgJavaMarkerAnnotation(expr);
     // SgClassType *type = isSgClassType(marker_annotation -> get_type());
     // ROSE_ASSERT(type);
@@ -1485,7 +1496,7 @@ Unparse_Java::unparseMarkerAnnotation(SgExpression *expr, SgUnparse_Info& info) 
 }
 
 void
-Unparse_Java::unparseSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
     SgJavaSingleMemberAnnotation *single_member_annotation = isSgJavaSingleMemberAnnotation(expr);
     // SgClassType *type = isSgClassType(single_member_annotation -> get_type());
     // ROSE_ASSERT(type);
@@ -1502,7 +1513,7 @@ Unparse_Java::unparseSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& 
 }
 
 void
-Unparse_Java::unparseNormalAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+Unparse_Java::unparseJavaNormalAnnotation(SgExpression *expr, SgUnparse_Info& info) {
     SgJavaNormalAnnotation *normal_annotation = isSgJavaNormalAnnotation(expr);
     // SgClassType *type = isSgClassType(normal_annotation -> get_type());
     // ROSE_ASSERT(type);
@@ -1525,4 +1536,13 @@ Unparse_Java::unparseNormalAnnotation(SgExpression *expr, SgUnparse_Info& info) 
         unparseExpression(pair -> get_value(), info);
     }
     curprint(")");
+}
+
+
+void
+Unparse_Java::unparseJavaTypeExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
+    AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
 }
