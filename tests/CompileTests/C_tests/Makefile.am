@@ -435,6 +435,16 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_56.c \
      test2014_57.c \
      test2014_58.c \
+     test2014_60.c \
+     test2014_62.c \
+     test2014_63.c \
+     test2014_64.c \
+     test2014_65.c \
+     test2014_66.c \
+     test2014_67.c \
+     test2014_68.c \
+     test2014_69.c \
+     test2014_70.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -453,6 +463,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 #     test2014_11.c  (simpler case of test2014_10.c)
 #     test2014_45.c  (inconsitant function declarations, but consistant through typedefs)
 #     test2014_54.c  (old-stype C function parameters in wrong order, appears to be legal C but a problem for ROSE)
+#     test2014_59.c  (complex macro handling where variables are named using the __LINE__ macro)
+#     test2014_61.c  (example of assigned goto (gnu extension))
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 
