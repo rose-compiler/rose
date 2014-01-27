@@ -86,7 +86,7 @@ if (HAVE_SYS_TIME_H)
   )
 
   #-----------------------------------------------------------------------------
-  add_executable(ff3 tf3.C.maintest.)
+  add_executable(ff3 tf3.C.maintest.C)
   target_link_libraries(ff3 ROSE_DLL EDG ${link_with_libraries})
 
   add_test(
