@@ -1,5 +1,10 @@
 #include"rose.h"
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#define sleep Sleep
+#endif
+
 // #include <unistd.h>
 // #include "AstPerformance.h"
 // Fix suggested by Brian White (to allow "sleep()" to be defined)

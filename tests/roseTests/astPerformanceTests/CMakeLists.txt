@@ -27,7 +27,7 @@ endif()
 ################################################################################
 # astThreadedCreation -- creates/deletes nodes with lots of threads
 ################################################################################
-if (enable-binary-analysis)
+if (enable-binary-analysis AND HAVE_PTHREAD_H)
   add_executable(astThreadedCreation astThreadedCreation.C)
   target_link_libraries(astThreadedCreation ROSE_DLL EDG ${link_with_libraries})
 
