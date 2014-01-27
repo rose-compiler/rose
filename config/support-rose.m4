@@ -1801,6 +1801,7 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
