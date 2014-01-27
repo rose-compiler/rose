@@ -854,15 +854,15 @@ endif(NOT BISON_FOUND)
 
 
 if (NOT WIN32)
-find_library(M_LIB m)
-find_library(RT_LIB rt)
+  find_library(M_LIB m)
+  find_library(RT_LIB rt)
 endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
-set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
 else (NOT WIN32)
-set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib )
+  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib )
 endif (NOT WIN32)
 
 # Check compilers and version numbers, Liao 11/25/2009

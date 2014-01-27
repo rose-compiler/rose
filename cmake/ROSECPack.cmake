@@ -42,7 +42,7 @@ endif()
 # -------------------------------------------------------------------------
 # Install ROSE
 # -------------------------------------------------------------------------
-set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_CURRENT_BINARY_DIR};ROSE;Runtime;/")
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_CURRENT_BINARY_DIR};ROSE;ALL;/")
 
 include (InstallRequiredSystemLibraries)
 include(CPack)
