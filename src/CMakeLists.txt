@@ -878,6 +878,13 @@ if(enable-rosehpct)
     )
 endif()
 
+# Liao, 1/27/2014,roseExtensions_SRC defined before is conditionalized by
+# enable rose hpct, which is not desired since there are other subdirs under
+# roseExtensions. 
+set(failsafe_SRC
+  ${CMAKE_SOURCE_DIR}/roseExtensions/failSafe/failSafePragma.C 
+ )
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -937,6 +944,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
+ ${failsafe_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}
