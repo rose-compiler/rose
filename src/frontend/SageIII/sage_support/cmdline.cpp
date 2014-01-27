@@ -244,6 +244,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
           // Darwin options
           argument == "-dylib_file" ||                      // -dylib_file <something>:<something>
+          argument == "-framework"  ||                      // -iframeworkdir (see man page for Apple GCC)
 
           // ROSE options
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
@@ -327,6 +328,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:dotgraph:typeFilter" ||
           argument == "-rose:dotgraph:variableDeclarationFilter" ||
           argument == "-rose:dotgraph:noFilter" ||
+
+       // DQ (1/8/2014): We need the "-x" option which takes a single option to specify the language "c" or "c++".
+       // This is required where within the "git" build system the input file is "/dev/null" which does not have
+       // a suffix from which to compute the associated language.
+          argument == "-x" ||
           false)
         {
           result = true;
@@ -482,7 +488,7 @@ incrementPosition:
 
      if (SgProject::get_verbose() > 1)
         {
-          printf ("sourceFileList = = %s \n",StringUtility::listToString(sourceFileList).c_str());
+          printf ("sourceFileList = %s \n",StringUtility::listToString(sourceFileList).c_str());
           printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
         }
 
@@ -659,6 +665,56 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      SageSupport::Cmdline::ProcessKeepGoing(this, local_commandLineArgumentList);
 
   //
+  // Standard compiler options (allows specification of language -x option to just run compiler without /dev/null as input file)
+  //
+  // DQ (1/8/2014): This configuration is used by the git application to specify the C language with the input file is /dev/null.
+  // This is a slightly bizare corner case of our command line processing.
+     string tempLanguageSpecificationName;
+     optionCount = sla(local_commandLineArgumentList, "-", "($)^", "x", &tempLanguageSpecificationName, 1);
+     if (optionCount > 0)
+        {
+       // Make our own copy of the language specification name string
+       // p_language_specification = tempLanguageSpecificationName;
+       // printf ("option -x <option> found language_specification = %s \n",p_language_specification.c_str());
+          printf ("option -x <option> found language_specification = %s \n",tempLanguageSpecificationName.c_str());
+
+       //    -x <language>  Specify the language of the following input files
+       //                   Permissible languages include: c c++ assembler none
+       //                   'none' means revert to the default behavior of
+       //                   guessing the language based on the file's extension
+
+          if (tempLanguageSpecificationName == "c")
+             {
+               set_C_only(true);
+             }
+            else
+             {
+               if (tempLanguageSpecificationName == "c++")
+                  {
+                    set_Cxx_only(true);
+                  }
+                 else
+                  {
+                    if (tempLanguageSpecificationName == "none")
+                       {
+                      // Language specification is set using filename specification (nothing to do here).
+                       }
+                      else
+                       {
+                         printf ("Error: -x <option> implementation in ROSE only permits specification of \"c\" or \"c++\" or \"none\" as supported languages \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+          
+
+#if 0
+          printf ("Exiting as a test in SgProject::processCommandLine() \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  //
   // Standard compiler options (allows alternative -E option to just run CPP)
   //
   // if ( CommandlineProcessing::isOption(argc,argv,"-","(E)",false) == true )
@@ -677,7 +733,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("Option -c found (compile only)! \n");
           set_compileOnly(true);
         }
-
 
   // DQ (4/7/2010): This is useful when using ROSE translators as a linker, this permits the SgProject
   // to know what backend compiler to call to do the linking.  This is required when there are no SgFile
@@ -1100,6 +1155,36 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                 {
                     std::cout << "[INFO] [Cmdline] "
                               << "Processing -dylib_file: argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
+
+        // TOO1 (01/22/2014):
+        // (Darwin linker) -framework dir
+        if (argv[i].compare("-framework") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -framework"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -framework");
+            }
+            else
+            {
+                // TODO: Save framework argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -framework argument="
                               << "'" << argv[i] << "'"
                               << std::endl;
                 }

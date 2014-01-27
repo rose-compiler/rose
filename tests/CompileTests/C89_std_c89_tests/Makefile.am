@@ -142,8 +142,8 @@ $(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
-
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def c-common.def \
+# builtin-types.def, Liao, 1/15/2014, no reference to this file at all. remove it from the list
+EXTRA_DIST = $(ALL_TESTCODES) c-common.def \
              predict.def test2010_15.h test2013_05.h test2013_06.h
 
 copyFiles:
