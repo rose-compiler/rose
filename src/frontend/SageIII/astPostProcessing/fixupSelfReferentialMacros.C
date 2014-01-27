@@ -133,6 +133,49 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
              }
         }
 
+#if 0
+  // DQ (12/30/2013): Comments and CPP directives have not yet been attached to the AST, so we can't process them here.
+
+  // SgLocatedNode* locatedNode = isSgLocatedNode(node);
+  // if (locatedNode != NULL)
+     SgStatement* stmt = isSgStatement(node);
+     if (stmt != NULL)
+        {
+       // Find all #define statements and look for self referencing macros
+
+          int numberOfComments = -1;
+          if (stmt->getAttachedPreprocessingInfo() != NULL)
+               numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+
+          std::string s = std::string(" --- startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
+             + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
+             + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
+             + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
+             + " #comments = "    + StringUtility::numberToString(numberOfComments)
+             + " \n ";
+
+          AttachedPreprocessingInfoType* comments = stmt->getAttachedPreprocessingInfo();
+
+          if (comments != NULL)
+             {
+               printf ("Found attached comments (at %p of type: %s): \n",stmt,stmt->class_name().c_str());
+               AttachedPreprocessingInfoType::iterator i;
+               for (i = comments->begin(); i != comments->end(); i++)
+                  {
+                    ROSE_ASSERT ( (*i) != NULL );
+                    printf ("          Attached Comment (relativePosition=%s): %s\n",
+                         ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                         (*i)->getString().c_str());
+                    printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+                    (*i)->get_file_info()->display("comment/directive location");
+                  }
+             }
+            else
+             {
+               printf ("No attached comments (at %p of type: %s): \n",stmt,stmt->class_name().c_str());
+             }
+        }
+#endif
    }
 
 

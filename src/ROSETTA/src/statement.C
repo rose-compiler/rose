@@ -1034,8 +1034,13 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/18/2014): Add support for old-style C function prototypes without function parameters (K&R style)
+     FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1080,6 +1085,8 @@ Grammar::setUpStatements ()
   // DQ (1/17/2006): Removed since it was not properly initialized or ever used (hold over from CC++ days)
   // FunctionDefinition.setDataPrototype ( "int","par_flag", "= 0",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      MemberFunctionDeclaration.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MemberFunctionDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );

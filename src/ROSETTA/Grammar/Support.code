@@ -723,7 +723,7 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__always_inline__          = 22,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__nothrow__                = 23,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
-               
+
             // TV (04/08/2010): Support for CUDA functions modifiers
                e_cuda_device                 = 25, /*!< CUDA device function */
                e_cuda_kernel                 = 26, /*!< CUDA kernel */
@@ -4283,8 +4283,14 @@ HEADER_INITIALIZED_NAME_START
                e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
-            // Packed was same value than weakref
+
+            // DQ (12/30/2013): Added support fo packing for variables (e.g. field values), instead of just there types.
+            // Also, fixed bug where packed was same enum value as weakref
                e_gnu_attribute__packed__                 = 7,/*!< GNU specific attribute for (GNU extension) */
+
+            // DQ (1/6/2014): Added support for GNU noreturn attribute
+               e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
+
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4328,6 +4334,17 @@ HEADER_INITIALIZED_NAME_START
           bool isGnuAttributeWeakReference() const;
           void setGnuAttributeWeakReference();
           void unsetGnuAttributeWeakReference();
+
+       // DQ (12/30/2013): Added support fo packing for variables (e.g. field values), instead of just there types.
+       // The differences are represented in test codes: test2013_104.c and test2013_113.c.
+          bool isGnuAttributePacked() const;
+          void setGnuAttributePacked();
+          void unsetGnuAttributePacked();
+
+       // DQ (1/6/2014): Added support for noreturn attribute on function parameters (appies only for function pointers used as function parameters).
+          bool isGnuAttributeNoReturn() const;
+          void setGnuAttributeNoReturn();
+          void unsetGnuAttributeNoReturn();
 
           void post_construction_initialization();
 
@@ -4440,6 +4457,9 @@ HEADER_INITIALIZED_NAME_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (12/16/2013): Added support for name qualification on SgInitializedName for use in preinitialization lists.
+          SgName get_qualified_name_prefix() const;
 
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
@@ -10303,6 +10323,31 @@ SgInitializedName::get_qualified_name() const
      return returnName;
    }
 
+
+SgName
+SgInitializedName::get_qualified_name_prefix() const
+   {
+  // DQ (12/16/2013): Added support for name qualification on SgInitializedName for use in preinitialization lists.
+
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgInitializedName*>(this));
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+#if 0
+          printf ("In SgInitializedName::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+        }
+
+#if 0
+     printf ("In SgInitializedName::get_qualified_name_prefix(): nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#endif
+
+     return nameQualifier;
+   }
+
+ 
 SgName
 SgInitializedName::get_qualified_name_prefix_for_type() const
    {
@@ -11007,6 +11052,17 @@ bool SgInitializedName::isGnuAttributeWeakReference() const { return checkBit(e_
 void SgInitializedName::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__); }
 void SgInitializedName::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__); }
 
+// DQ (12/30/2013): Added support for packing on variables (instead of just on the types).
+bool SgInitializedName::isGnuAttributePacked() const  { return checkBit(e_gnu_attribute__packed__); }
+void SgInitializedName::setGnuAttributePacked()       { setBit(e_gnu_attribute__packed__); }
+void SgInitializedName::unsetGnuAttributePacked()     { unsetBit(e_gnu_attribute__packed__); }
+
+// DQ (12/30/2013): Added support for packing on variables (instead of just on the types).
+bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_attribute__noreturn__); }
+void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
+void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
+
+
 SOURCE_INITIALIZED_NAME_END
 
 
@@ -11547,6 +11603,7 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
    {
 #if 0
      printf ("In Sg_File_Info::operator=(): get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->class_name().c_str() : "null");
+     printf ("In Sg_File_Info::operator=(): this = %p &X = %p \n",this,&X);
 #endif
 
      p_file_id                = X.p_file_id;
@@ -12074,6 +12131,9 @@ Sg_File_Info::get_file_id () const
              }
 #else
        // Older (previous) code
+
+#error "DEAD CODE!"
+
           if ( isCompilerGenerated() == true )
              {
             // returnValue = undefinedValue;
@@ -12117,6 +12177,13 @@ Sg_File_Info::get_physical_file_id() const
 
   // Match the behavior (transformation, compiler generated, etc.) of the p_file_id.
      int file_id = get_file_id();
+
+     // PHL (01/06/2014) use get_line for Fortran frontend
+     if (SageInterface::is_Fortran_language() )
+     {
+       return file_id;
+     }
+
      if (file_id < 0)
           return_physical_file_id = file_id;
        else
@@ -12680,6 +12747,10 @@ bool
 Sg_File_Info::isCompilerGenerated() const
    {
      assert(this != NULL);
+#if 0
+     printf ("In Sg_File_Info::isCompilerGenerated(): this = %p \n",this);
+#endif
+
      return (p_classificationBitField & e_compiler_generated);
    }
 
@@ -12687,6 +12758,11 @@ void
 Sg_File_Info::setCompilerGenerated()
    {
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::setCompilerGenerated(): this = %p \n",this);
+#endif
+
      p_classificationBitField |= e_compiler_generated;
    }
 
@@ -12726,6 +12802,11 @@ Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed()
   // Make sure that both bits are set!
   // setCompilerGenerated();
      assert(this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed(): this = %p \n",this);
+#endif
+
      p_classificationBitField |= e_output_in_code_generation;
    }
 
