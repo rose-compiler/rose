@@ -336,6 +336,12 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (1/20/2014): Adding support for gnu's -undefined option.
           argument == "-u" ||
           argument == "-undefined" ||
+
+       // DQ (1/26/2014): Support for usage such as -version-info 8:9:8
+          argument == "-version-info" ||
+
+       // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
+          argument == "-MM" ||
           false)
         {
           result = true;
@@ -751,6 +757,38 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
           if ( SgProject::get_verbose() >= 1 )
                printf ("-undefined option specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -MM option to ROSE command line.
+     string stringOptionForMakeDepenenceFile;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(MM)",stringOptionForMakeDepenenceFile,true) == true )
+        {
+          printf ("Found -MM dependence information option specified on command line: stringOptionForMakeDepenenceFile = %s \n",stringOptionForMakeDepenenceFile.c_str());
+
+       // p_dependenceFilename = stringOptionForMakeDepenenceFile;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-MM dependence file specification specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -version-info option to ROSE command line.
+     string stringOptionForVersionSpecification;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(version-info)",stringOptionForVersionSpecification,true) == true )
+        {
+          printf ("Found -version-info option specified on command line: stringOptionForVersionSpecification = %s \n",stringOptionForVersionSpecification.c_str());
+
+       // p_gnuOptionForVersionSpecification = stringOptionForVersionSpecification;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-version-info option specified on command line (for SgFile)\n");
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -1629,6 +1667,10 @@ SgFile::usage ( int status )
 "                             in generated source\n"
 "     -S                      gnu option trivial\n"
 "     -u (-undefined)         gnu option trivial\n"
+"     -version-info <name>    gnu option trivial (option not passed on to linker yet, \n"
+"                             incomplete implementation)\n"
+"     -MM <filename>          gnu Makefile dependence generation (option not passed \n"
+"                             on to compiler yet, incomplete implementation)\n"
 "\n"
 "Informative output:\n"
 "     -rose:help, --help, -help, --h\n"
@@ -3436,6 +3478,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
+
+  // DQ (1/26/2014): Remove this from being output to the backend compiler.
+  // This also likely means that we are not passing it on to the backend (linker).
+  // At the moment, this fixes a problem where the version number is being treated as a file
+  // and causing ROSE to crash in the command line handling.
+     char* version_string = NULL;
+     optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))

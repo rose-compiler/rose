@@ -5092,7 +5092,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(aggr_init != NULL);
 
 #if 0
-  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
+  // DQ (1/26/2014): This would not be as portabile of a solution, but it is more robus in other ways. So this is a compromize.
+  // DQ (9/11/2013): It is a better solution to always unparse the ggregate attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
@@ -5166,7 +5167,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
+
 #if 0
   // DQ (7/27/2013): Commented this out since we do need it now that we support the compound literals.
      if (aggr_init->get_need_explicit_braces())
