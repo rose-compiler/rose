@@ -30,35 +30,17 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
  *
  *  We use the amd64 architecture if no register dictionary is specified because, since it's backward compatible with the 8086,
  *  it contains definitions for all the registers from older architectures. */
-std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
-    using namespace StringUtility;
+std::string unparseX86Register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     if (!registers)
         registers = RegisterDictionary::dictionary_amd64();
     std::string name = registers->lookup(reg);
-    if (name.empty()) {
-        static bool dumped_dict = false;
-        Stream warn(Diagnostics::log[WARN]);
-        warn <<"unparseX86Register(" <<reg <<"): warning: register descriptor not found in dictionary.\n";
-        if (!dumped_dict) {
-            warn <<"  This warning is caused by instructions using registers that don't have names in the\n"
-                 <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
-                 <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
-                 <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
-                 <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
-                 <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
-                 <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
-                 <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
-                 <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
-                 <<"  register, and \"d\" is the number of significant bits.\n";
-            dumped_dict = true;
-        }
-        return (std::string("BAD_REGISTER(") +
-                numberToString(reg.get_major()) + "." +
-                numberToString(reg.get_minor()) + "." +
-                numberToString(reg.get_offset()) + "." +
-                numberToString(reg.get_nbits()) + ")");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, reg, registers);
     return name;
+}
+
+std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
+    return unparseX86Register(NULL, reg, registers);
 }
 
 static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labels)
@@ -131,8 +113,9 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
 
         case V_SgAsmx86RegisterReferenceExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
-            result = unparseX86Register(rr->get_descriptor(), registers);
+            result = unparseX86Register(insn, rr->get_descriptor(), registers);
             break;
         }
 

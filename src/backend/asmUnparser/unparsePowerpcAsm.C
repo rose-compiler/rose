@@ -22,35 +22,14 @@ using namespace rose::Diagnostics;
 /****************************************************
  * resolve expression
  ****************************************************/
-static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc, const RegisterDictionary *registers)
+static std::string unparsePowerpcRegister(SgAsmInstruction *insn, const RegisterDescriptor &rdesc,
+                                          const RegisterDictionary *registers)
 {
     if (!registers)
         registers = RegisterDictionary::dictionary_powerpc();
     std::string name = registers->lookup(rdesc);
-    if (name.empty()) {
-        static bool dumped_dict = false;
-        Stream warn(Diagnostics::log[WARN]);
-        warn <<"unparsePowerpcRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
-        if (!dumped_dict) {
-            warn <<"  This warning is caused by instructions using registers that don't have names in the\n"
-                 <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
-                 <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
-                 <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
-                 <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
-                 <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
-                 <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
-                 <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
-                 <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
-                 <<"  register, and \"d\" is the number of significant bits.\n";
-            dumped_dict = true;
-        }
-        using namespace StringUtility;
-        return (std::string("BAD_REGISTER(") +
-                numberToString(rdesc.get_major()) + "." +
-                numberToString(rdesc.get_minor()) + "." +
-                numberToString(rdesc.get_offset()) + "." +
-                numberToString(rdesc.get_nbits()) + ")");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, rdesc, registers);
     return name;
 }
 
@@ -90,8 +69,9 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             break;
         }
         case V_SgAsmPowerpcRegisterReferenceExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
             SgAsmPowerpcRegisterReferenceExpression* rr = isSgAsmPowerpcRegisterReferenceExpression(expr);
-            result = unparsePowerpcRegister(rr->get_descriptor(), registers);
+            result = unparsePowerpcRegister(insn, rr->get_descriptor(), registers);
             break;
         }
         case V_SgAsmByteValueExpression:
