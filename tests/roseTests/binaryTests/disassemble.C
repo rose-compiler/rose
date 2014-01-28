@@ -33,11 +33,6 @@ Description:\n\
     to HTML with the generate_html script found in tests/roseTests/binaryTests.\n\
     The default is to not generate these dot files.\n\
 \n\
-  --debug-disassembler\n\
-  --no-debug-disassembler\n\
-    Causes the disassembler to spew (or not) diagnostics to standard error.\n\
-    This is intended for ROSE developers. The default is to not spew.\n\
-\n\
   --debug-partitioner\n\
   --no-debug-partitioner\n\
     Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
@@ -45,8 +40,7 @@ Description:\n\
 \n\
   --debug\n\
   --no-debug\n\
-    Convenience switch that turns on (or off) the --debug-disassembler\n\
-    and --debug-partitioner switches.\n\
+    Alias for --debug-partitioner and --no-debug-partitioner.\n\
 \n\
   --disassemble\n\
     Call the disassembler explicitly, using the instruction search flags\n\
@@ -796,7 +790,7 @@ int
 main(int argc, char *argv[]) 
 {
     bool show_bad = false;
-    bool do_debug_disassembler=false, do_debug_partitioner=false;
+    bool do_debug_partitioner=false;
     bool do_reassemble = false;
     bool do_ast_dot = false;
     bool do_cfg_dot = false;
@@ -994,15 +988,9 @@ main(int argc, char *argv[])
             }
             reserved.insert(Extent(va, size));
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
-            do_debug_disassembler = true;
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug")) {
-            do_debug_disassembler = false;
             do_debug_partitioner = false;
-        } else if (!strcmp(argv[i], "--debug-disassembler")) {
-            do_debug_disassembler = true;
-        } else if (!strcmp(argv[i], "--no-debug-disassembler")) {
-            do_debug_disassembler = false;
         } else if (!strcmp(argv[i], "--debug-partitioner")) {
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
@@ -1201,8 +1189,6 @@ main(int argc, char *argv[])
      * above, but they're also available via SgFile::get_disassemblerSearchHeuristics() if we called frontend(). */
     disassembler->set_search(disassembler_search);
     disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
-    if (do_debug_disassembler)
-        disassembler->set_debug(stderr);
 
     /* What kind of memory can be disassembled, as specified by the --protection switch. */
     disassembler->set_protection(protection);
