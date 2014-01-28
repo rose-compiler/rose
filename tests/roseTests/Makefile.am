@@ -46,6 +46,7 @@ if !USING_XTENSA_BACKEND_COMPILER
 if !ROSE_USE_INSURE
    SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
 endif
+# DQ (1/28/2014): Commented out astFileIO tests (now uncommented).
    SUBDIRS += astFileIOTests 
 if !ROSE_USE_INSURE
    SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests

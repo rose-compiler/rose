@@ -236,16 +236,22 @@ void removeConstantFoldedValue( SgNode* node )
      printf ("Processing the array types and bitfields \n");
      printf ("**************************************** \n");
 #endif
-
+     
+     {
+     TimingPerformance timer1 ("Fixup Constant Folded Values (catch all expresions via memory pool traversal):");
   // DQ (9/17/2011): Use a traversal over the memory pool so that we can catch all 
   // expressions, even those not in the AST traversal such as those in array types.
      RemoveConstantFoldedValueViaParent astFixupTraversal_2;
      astFixupTraversal_2.traverseMemoryPool();
-
+     }
+     
   // DQ (10/12/2012): Turn on the verification that expression trees have been removed...previously commented out.
 #if 1
+     {
+     TimingPerformance timer1 ("Fixup Constant Folded Values (verifyFixup):");
      VerifyOriginalExpressionTreesSetToNull verifyFixup;
      verifyFixup.traverseMemoryPool();
+     }
 #endif
    }
 

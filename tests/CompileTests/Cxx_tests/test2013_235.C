@@ -16,6 +16,6 @@
 // runs fine and with the 4.2.4 compiler it compiles fine as well (optimized 
 // and unoptimized).  I have to look into this in more depth next week.  Then
 // I will turn it back on.  We still have other Boost specific tests.
-#if 0
+#if 1
 #include <boost/graph/adjacency_list.hpp>
 #endif
