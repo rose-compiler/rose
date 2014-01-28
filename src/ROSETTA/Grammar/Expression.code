@@ -1449,6 +1449,12 @@ HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 HEADER_JAVA_ANNOTATION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
 HEADER_JAVA_ANNOTATION_END
 
 HEADER_JAVA_MARKER_ANNOTATION_START
@@ -1466,6 +1472,12 @@ HEADER_JAVA_NORMAL_ANNOTATION_START
 HEADER_JAVA_NORMAL_ANNOTATION_END
 
 HEADER_JAVA_TYPE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
 HEADER_JAVA_TYPE_EXPRESSION_END
 
 
