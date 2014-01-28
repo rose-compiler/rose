@@ -501,6 +501,19 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   * \author Markus Schordan
   * \date 2012.
  */
+int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
+  int counter=0;
+  for(EStateSet::iterator i=begin();i!=end();++i) {
+    if((*i).isConst(vid))
+      counter++;
+  }
+  return counter;
+} 
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string Transition::toString() const {
   string s1=source->toString();
   string s2=edge.toString();
@@ -969,6 +982,39 @@ string EState::toHTML() const {
   ss <<","<<nl<<" io="<<io.toString();
   ss<<")"<<nl;
   return ss.str();
+}
+
+bool EState::isConst(VariableIdMapping* vim) const {
+  const PState* ps=pstate();
+  const ConstraintSet* cs=constraints();
+  ROSE_ASSERT(ps);
+  ROSE_ASSERT(cs);
+  if(option_debug_mode) cout<<"DEBUG: PState:"<<ps<<" : "<<ps->toString(vim)<<endl;
+  for(PState::const_iterator i=ps->begin();i!=ps->end();++i) {
+    VariableId varId=(*i).first;
+    if(option_debug_mode) cout<<"varId:"<<varId.toString()<<"/"<<vim->variableName(varId)<<":";
+    // the following two variables are special variables that are not considered to contribute to const-ness in an EState
+    if(vim->variableName(varId)=="__PRETTY_FUNCTION__"||vim->variableName(varId)=="stderr") {
+      if(option_debug_mode) cout<<"filt-const ";
+      continue;
+    }
+
+    if(ps->varIsConst(varId)) {
+      if(option_debug_mode) cout<<"const ";
+      continue;
+    } else {
+      if(option_debug_mode) cout<<"non-const ";
+      // variable non-const in PState (i.e. top/bot) -> need to investigate constraints
+      if(!cs->varConstIntLatticeValue(varId).isConstInt()) {
+        if(option_debug_mode) cout<<" cs:non-const; \n";
+        return false;
+      } else {
+        if(option_debug_mode) cout<<" cs:const; ";
+      }
+    }
+  }
+  if(option_debug_mode) cout<<endl;
+  return true;
 }
 
 /*! 

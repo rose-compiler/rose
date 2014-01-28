@@ -142,6 +142,18 @@ void rdAnalysis(SgProject* root) {
   root->unparse(0,0);
 }
 
+void printRoseInfo(SgProject* project) {
+  project->display("PROJECT NODE");
+  int fileNum=project->numberOfFiles();
+  for(int i=0;i<fileNum;i++) {
+    std::stringstream ss;
+    SgFile* file=(*project)[i];
+    ROSE_ASSERT(file);
+    ss<<"FILE NODE Nr. "<<i;
+    file->display(ss.str());
+  }
+}
+
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
   VariableIdMapping variableIdMapping;
@@ -174,6 +186,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()
       ("help,h", "produce this help message.")
       ("rose-help", "show help for compiler frontend options.")
+      ("ast-file-node-display", "show project and file node dumps (using display()).")
       ("version,v", "display the version.")
       ("stats", "display code statistics.")
       ("rdanalysis", "perform reaching definitions analysis.")
@@ -241,6 +254,10 @@ int main(int argc, char* argv[]) {
 
   if(option_stats) {
     printCodeStatistics(root);
+  }
+
+  if(args.count("ast-file-node-display")) {
+    printRoseInfo(root);
   }
 
   cout<<"STATUS: computing variableid mapping"<<endl;

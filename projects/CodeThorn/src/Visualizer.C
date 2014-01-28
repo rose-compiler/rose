@@ -206,12 +206,17 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
     string textcolor="black";
     string bgcolor="lightgrey";
 
+    if((*j)->isConst(variableIdMapping)) bgcolor="mediumpurple2";
     if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
     if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
     if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
 
     if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
-    if((*j)->io.isFailedAssertIO()) {bgcolor="black";textcolor="red";}
+    if((*j)->io.isFailedAssertIO()) {
+      bgcolor="black";textcolor="red";
+      // FAILEDASSERTVIS
+      continue;
+    }
 
     // check for start state
     if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
@@ -247,7 +252,10 @@ string Visualizer::transitionGraphToDot() {
   stringstream ss;
   ss<<"node [shape=box style=filled color=lightgrey];"<<endl;
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
+    // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
+    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
     ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
     ss <<"["<<(*j).edge.typesToString()<<"]";
@@ -367,7 +375,10 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j).source;
     const EState* target=(*j).target;
-    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
+    // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
+    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
     ss <<"->";

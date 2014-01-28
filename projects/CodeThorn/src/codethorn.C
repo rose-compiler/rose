@@ -801,6 +801,8 @@ int main( int argc, char * argv[] ) {
   cout << "Number of stdoutconst-estates  : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST))<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
+  cout << "Number of const estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()))<<color("white")<<endl;
+
   cout << "=============================================================="<<endl;
   cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
   cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
@@ -846,6 +848,8 @@ int main( int argc, char * argv[] ) {
         <<eStateSetLoadFactor<<", "
         <<constraintSetsLoadFactor<<endl;
     text<<"threads,"<<numberOfThreadsToUse<<endl;
+    //    text<<"abstract-and-const-states,"
+    //    <<"";
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }

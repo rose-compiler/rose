@@ -127,6 +127,7 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
   * \author Markus Schordan
   * \date 2012.
  */
+
 class EState {
  public:
  EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
@@ -148,6 +149,10 @@ class EState {
   InputOutput::OpType ioOp(Labeler*) const;
   // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
   AType::ConstIntLattice determineUniqueIOValue() const;
+  /* Predicate that determines whether all variables can be determined to be bound to a constant value.
+     This function uses the entire PState and all available constraints to determine constness.
+   */
+  bool isConst(VariableIdMapping* vid) const;
  private:
   Label _label;
   const PState* _pstate;
@@ -207,6 +212,7 @@ class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
   EStateId estateId(const EState estate) const;
   string estateIdString(const EState* estate) const;
   int numberOfIoTypeEStates(InputOutput::OpType) const;
+  int numberOfConstEStates(VariableIdMapping* vid) const;
  private:
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
