@@ -2,6 +2,11 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
+using namespace rose;                                   // temporary until this API lives inside the "rose" name space
+using namespace rose::Diagnostics;
+
+Sawyer::Message::Facility AsmUnparser::log;
+
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
  *  result in a meaningful basic block.  For instance, consider the following block:
@@ -58,6 +63,16 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     }
     
     return retval;
+}
+
+// class method
+void AsmUnparser::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        log = Sawyer::Message::Facility("AsmUnparser", Diagnostics::destination);
+        Diagnostics::facilities.insert(log);
+    }
 }
 
 void
