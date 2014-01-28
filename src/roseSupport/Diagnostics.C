@@ -1,6 +1,7 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
 #include "Assert.h"                                     // Sawyer::Assert
+#include "AsmUnparser.h"                                // rose::AsmUnparser
 #include "BinaryLoader.h"                               // rose::BinaryLoader
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::Disassembler
@@ -28,6 +29,7 @@ void initialize() {
         BinaryLoader::initDiagnostics();
         Disassembler::initDiagnostics();
         Partitioner::initDiagnostics();
+        AsmUnparser::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
         facilities.control("none, >=info");

@@ -923,7 +923,12 @@ public:
     virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
     /** @} */
 
+public:
+    static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */
+
 protected:
+    static Sawyer::Message::Facility log;               /**< Diagnostic messages. */
+    
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
         ROSE_Callbacks::List<UnparserCallback> pre;                     /**< Callbacks invoked before 'unparse' callbacks. */
