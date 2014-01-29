@@ -16,18 +16,17 @@ class SgNode;
 
 namespace FailSafe
 {
-
   // Entry point for all FAIL-SAFE related handling, including parsing, AST construction and translation.
-  void process_failsafe_directives (SgSourceFile *sageFilePtr);
+  void process_fail_safe_directives (SgSourceFile *sageFilePtr);
 
   //! Parse failsafe directives and generate/attach attributes
   // TODO
 
   // FAIL-SAFE construct name list
   // All directive and clause types are listed so they are accessible uniformly
-  enum failsafe_construct_enum
+  enum fail_safe_enum
   {
-    e_unknow = 0,
+    e_unknown = 0,
 
     //1. Directives
     e_region, 
@@ -37,7 +36,6 @@ namespace FailSafe
     e_double_redundancy,
     e_triple_redundancy,
     e_save,
-
    
    // 2. Clauses
    e_assert, 
@@ -66,15 +64,15 @@ namespace FailSafe
    // TODO : bits
    
    e_not_failsafe // not a FAIL-SAFE construct
-  }; // end fail_safe_construct_enum
+  }; // end fail_safe_enum
 
 
   //! Help convert FailSafe construct to string 
-  std::string toString (failsafe_construct_enum fs_type);
+  std::string toString (fail_safe_enum fs_type);
 
 
   // follow the OmpAttribute declared in OmpAttribute.h
-  class ROSE_DLL_API FailSafeAttribute
+  class ROSE_DLL_API Attribute
   {
     private:
       //! The associated SgNode for this attribute, could be SgPragmaDeclaration or other nodes
@@ -83,51 +81,51 @@ namespace FailSafe
       PreprocessingInfo* pinfo;
 
       //!Directive information: type 
-      enum fail_safe_construct_enum  fs_type;
+      enum fail_safe_enum  fs_type;
 
       //! Clause information 
       // vector is used to preserve the order of clauses in the directive
       // map is used to fast query if a clause exists or not
       // Some clauses are allowed to appear more than once, merge the content into the first occurrence in our implementation
-      std::vector<fail_safe_construct_enum> clauses;
-      std::map<fail_safe_construct_enum,bool> clause_map; 
+      std::vector<fail_safe_enum> clauses;
+      std::map<fail_safe_enum,bool> clause_map; 
 
       //! Variable list appearing within some directives and clauses
       // We use a pair of (variable_name, SgNode) for each variable
       // TODO Can a variable show up in more than more clauses?
-      std::map<omp_construct_enum, std::vector<std::pair<std::string,SgNode* > > > variable_lists;
+      std::map<fail_safe_enum, std::vector<std::pair<std::string,SgNode* > > > variable_lists;
       // A reverse map from a variable to the clauses the variable appears
-      std::map<std::string, std::vector<omp_construct_enum> > var_clauses;
+      std::map<std::string, std::vector<fail_safe_enum> > var_clauses;
 
       // Expressions 
       // e.g. assert (exp)
-      std::map<fail_safe_construct_enum, std::pair<std::string, SgExpression*> > expressions;
+      std::map<fail_safe_enum, std::pair<std::string, SgExpression*> > expressions;
 
       // Values for some clauses
-      bool hasSpecifier;  // indicate if pre or post appears, if so, the value is set by specifier
-      fail_safe_construct_enum specifier;  // pre or post
-      fail_safe_construct_enum error_type; // error_type for error()
-      fail_safe_construct_enum voilation_type; // tolerated violation type  for tolerate ()
+      bool bSpecifier;  // indicate if pre or post appears, if so, the value is set by specifier
+      fail_safe_enum specifier;  // pre or post
+      fail_safe_enum error_type; // error_type for error()
+      fail_safe_enum violation_type; // tolerated violation type  for tolerate ()
 
       // prepare for named assertion regions so we don't use label
-      bool hasName;
+      bool bName;
       std::string name;
 
       void init(); // initialized internal data
 
       //! Convert entire directives and clauses to string
-      std::string toFailSafeString(omp_construct_enum omp_type);
+      std::string toFailSafeString(fail_safe_enum fs_type);
       //! Convert a variable list to x,y,z ,without parenthesis.
       std::string toFailSafeString(std::vector<std::pair<std::string,SgNode* > >);
 
       //! Private constructors to enforce the use of a builder function instead
-      FailSafeAttribute()
+      Attribute()
       {
         mNode = NULL; 
         fs_type = e_unknown;
         init();
       }
-      FailSafeAttribute (fail_safe_construct_enum fstype, sgNode* mynode): mNode(mynode),fs_type (fstype)
+      Attribute (fail_safe_enum fstype, SgNode* mynode): mNode(mynode),fs_type (fstype)
     {
       init();  
     } 
@@ -142,87 +140,90 @@ namespace FailSafe
       void setNode(SgNode* n) { mNode= n;};
 
       //!------------directive type-------
-      void setDirectiveType(fail_safe_construct_enum fstype){ assert (isDirective(fstype)); fs_type = fstype;}
-      fail_safe_construct_enum getDirectiveType() {return fs_type;}
+      void setDirectiveType(fail_safe_enum fstype){ assert (isDirective(fstype)); fs_type = fstype;}
+      bool isDirective (fail_safe_enum fstype);
+      fail_safe_enum getDirectiveType() {return fs_type;}
 
       //!-----------clauses -------------
-      void addClause(fail_safe_construct_enum clause_type);
+      void addClause(fail_safe_enum clause_type);
       //! Check if a directive has a clause of the specified type
-      bool hasClause(fail_safe_construct_enum clause_type);
+      bool hasClause(fail_safe_enum clause_type);
+      //! If a construct is a clause
+      bool isClause(fail_safe_enum clause_type);
 
       //! Get all existing clauses
-      std::vector<fail_safe_construct_enum> getClauses() { return clauses;};
+      std::vector<fail_safe_enum> getClauses() { return clauses;};
 
       //!-------------variable list --------------
       //! Add a variable into a variable list of a construct ,return the symbol of the variable added, if possible   
-      SgVariableSymbol* addVariable(fail_safe_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
+      SgVariableSymbol* addVariable(fail_safe_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
       //! Check if a variable list is associated with a construct
-      bool hasVariableList(fail_safe_construct_enum);
+      bool hasVariableList(fail_safe_enum);
       //! Get the variable list associated with a construct
-      std::vector<std::pair<std::string,SgNode* > > getVariableList(omp_construct_enum);
+      std::vector<std::pair<std::string,SgNode* > > getVariableList(fail_safe_enum);
 
       //! Find the relevant clauses for a variable
-      std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
+      std::vector<enum fail_safe_enum> get_clauses(const std::string& variable);
 
       //!----------expressions -------------------
       //! Add an expression to a clause
-      void addExpression(fail_safe_construct_enum targetConstruct, const std::string& expString, SgExpression*    sgexp=NULL);
+      void addExpression(fail_safe_enum targetConstruct, const std::string& expString, SgExpression*    sgexp=NULL);
       //! Get expression of a clause
-      std::pair<std::string, SgExpression*> getExpression(fail_safe_construct_enum targetConstruct);
+      std::pair<std::string, SgExpression*> getExpression(fail_safe_enum targetConstruct);
 
       //!--------values for some clauses ----------
-      void setSpecifier (fail_safe_construct_enum value);
-      bool hasSpecifier () {return hasSpecifier; }
-      fail_safe_construct_enum getSpecifier () {return specifier; };
+      void setSpecifier (fail_safe_enum value);
+      bool hasSpecifier () {return bSpecifier; }
+      fail_safe_enum getSpecifier () {return specifier; };
 
-      void setErrorType (fail_safe_construct_enum value);
-      fail_safe_construct_enum getErrorType( return error_type; );
+      void setErrorType (fail_safe_enum value);
+      fail_safe_enum getErrorType() { return error_type; };
 
-      void setViolationType(fail_safe_construct_enum value);
-      fail_safe_construct_enum getViolationType() {return violation_type;};
+      void setViolationType(fail_safe_enum value);
+      fail_safe_enum getViolationType() {return violation_type;};
 
       //! Check if a variable is inside a variable list of a clause/directive.
-      bool isInConstruct(const std::string & variable, enum fail_safe_construct_enum);
+      bool isInConstruct(const std::string & variable, enum fail_safe_enum);
 
       void setName (const std::string & name);
-      std::string getName (return name; );
-      bool isNamed () {return hasName; };
+      std::string getName() {return name; };
+      bool isNamed () {return bName; };
 
       //! Convert back to a legal pragma string
       std::string toFailSafeString();
-  } // end class FailSafeAttribute
+      friend Attribute * buildAttribute (fail_safe_enum fstype, SgNode* node);
+  }; // end class Attribute
   
-  friend FailSafeAttribute * buildAttribute (fail_safe_construct_enum fstype, SgNode* node);
+  // A builder function
+  Attribute * buildAttribute (fail_safe_enum fstype, SgNode* node);
 
-  class ROSE_DLL_API AttributeList :public AstAttribute
+  class ROSE_DLL_API AttributeList : public AstAttribute
   {
     public:
-      std::vector<FailSafeAttribute*> attriList;
+      std::vector<Attribute*> attriList;
       // Restore to legal failsafe directive strings
-      std::string toOpenMPString();
-      // Pretty print for debugging purpose
-      void print();
+      std::string toFailSafeString();
       ~AttributeList();
   };
  
   //! Check if a construct is a directive or a clause
-  bool isDirective (fail_safe_construct_enum input);
-  bool isClause (fail_safe_construct_enum input);
+  bool isDirective (fail_safe_enum input);
+  bool isClause (fail_safe_enum input);
 
    // Add attribute to a SgNode
-   ROSE_DLL_API void addAttribute(FailSafeAttribute* attribute, SgNode* node);
+   ROSE_DLL_API void addAttribute(Attribute* attribute, SgNode* node);
 
    //! Get Attribute from a SgNode, return NULL if not found
-   ROSE_DLL_API FailSafeAttributeList* getAttributeList(SgNode* node);
+   ROSE_DLL_API AttributeList* getAttributeList(SgNode* node);
 
    //! Get the first Attribute from a SgNode, return NULL if not found
-   FailSafeAttribute* getAttribute(SgNode* node);
+   Attribute* getAttribute(SgNode* node);
     
    //! Remove OmpAttribute from a SgNode
-   ROSE_DLL_API void removeAttribute(FailSafeAttribute* attribute, SgNode* node);
+   ROSE_DLL_API void removeAttribute(Attribute* attribute, SgNode* node);
 
-   //! Get enum from a pragma attached with FailSafeAttribute
-   fail_safe_construct_enum getConstructEnum(SgPragmaDeclaration* decl);
+   //! Get enum from a pragma attached with Attribute
+   fail_safe_enum getConstructEnum(SgPragmaDeclaration* decl);
 
 
 } //end namespace FailSafe
