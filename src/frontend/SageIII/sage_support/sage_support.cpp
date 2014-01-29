@@ -2582,7 +2582,7 @@ SgFile::secondaryPassOverSourceFile()
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
-  // This pass collects extra information about the soruce file thay may not have
+  // This pass collects extra information about the source file that may not have
   // been available from previous tools that operated on the file. For example:
   //    1) EDG ignores comments and so we collect the whole token stream in this phase.
   //    2) OFP ignores comments similarly to EDG and so we collect the whole token stream.
