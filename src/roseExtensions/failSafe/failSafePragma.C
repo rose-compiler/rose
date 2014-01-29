@@ -6,7 +6,7 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-string FailSafe::toString(failsafe_construct_enum fs_type)
+string FailSafe::toString(fail_safe_enum fs_type)
 {
   string result; 
   switch (fs_type)
@@ -36,10 +36,10 @@ string FailSafe::toString(failsafe_construct_enum fs_type)
      case e_type_ET2:   result = "ET2"; break;
   
      
-     case e_type_NaN:   result = "NaN"; break;
-     case e_type_SECDED:   result = "SECDED"; break;
-     case e_type_SEGFAULT:   result = "SEGFAULT"; break;
-     case e_type_ANY:   result = "ANY"; break;
+     case e_violation_NaN:   result = "NaN"; break;
+     case e_violation_SECDED:   result = "SECDED"; break;
+     case e_violation_SEGFAULT:   result = "SEGFAULT"; break;
+     case e_violation_ANY:   result = "ANY"; break;
   
      default: 
        cerr<<"Error: unhandled failsafe construct within FailSafe::toString()."<<endl;
@@ -49,13 +49,13 @@ string FailSafe::toString(failsafe_construct_enum fs_type)
   return result; 
 }
 
-bool FailSafe::isDirective (failsafe_construct_enum fs_type)
+bool FailSafe::isDirective (fail_safe_enum fs_type)
 {
-  boll result = false;
+  bool result = false;
   switch (fs_type)
   {
     case e_region:
-    case e_e_status_predicate:
+    case e_status_predicate:
     case e_data_predicate:
     case e_tolerance:
     case e_double_redundancy:
@@ -70,9 +70,9 @@ bool FailSafe::isDirective (failsafe_construct_enum fs_type)
   return result;
 }
 
-bool FailSafe::isClause(failsafe_construct_enum fs_type)
+bool FailSafe::isClause(fail_safe_enum fs_type)
 {
-  boll result = false;
+  bool result = false;
   switch (fs_type)
   {
     case e_assert:
@@ -89,7 +89,7 @@ bool FailSafe::isClause(failsafe_construct_enum fs_type)
   }
   return result;
 }
-void FailSafe::process_failsafe_directives (SgSourceFile *sageFilePtr)
+void FailSafe::process_fail_safe_directives (SgSourceFile *sageFilePtr)
 {
   if (SgProject::get_verbose() > 1)
   {
@@ -105,98 +105,98 @@ void FailSafe::process_failsafe_directives (SgSourceFile *sageFilePtr)
 
 }
 
-void FailSafe::FailSafeAttribute::init()
+void FailSafe::Attribute::init()
 {
-  hasSpecifier = false;
-  hasName = false;
+  bSpecifier = false;
+  bName = false;
 }
 
-FailSafeAttribute * FailSafe::buildAttribute (fail_safe_construct_enum fstype, SgNode* node)
+FailSafe::Attribute * FailSafe::buildAttribute (FailSafe::fail_safe_enum fstype, SgNode* node)
 {
-  FailSafeAttribute* result = new FailSafeAttribute (fstype, node);
+  Attribute* result = new Attribute (fstype, node);
   ROSE_ASSERT (result);
   return result;
 }
 
-void FailSafe::addAttribute (FailSafeAttribute* attribute, SgNode* node)
+void FailSafe::addAttribute (FailSafe::Attribute* attribute, SgNode* node)
 {
   ROSE_ASSERT(node);
   ROSE_ASSERT(attribute);
   SgLocatedNode * lnode = isSgLocatedNode(node);
   ROSE_ASSERT (lnode != NULL);
 
-  FailSafeAttribute* cur_list = getAttributeList (node);
+  AttributeList* cur_list = getAttributeList (node);
   if (! cur_list)
   {
     cur_list = new AttributeList();
-    node->addNewAttribute("FailSafeAttributeList",cur_list);
+    node->addNewAttribute("AttributeList",cur_list);
   }
 
   cur_list->attriList.push_back(attribute);
 }
 
 //! Remove Attribute from a SgNode's attributeList
-void FailSafe::removepAttribute(FailSafeAttribute* attribute, SgNode* node)
+void FailSafe::removeAttribute(FailSafe::Attribute* attribute, SgNode* node)
 {
   ROSE_ASSERT(node);
   ROSE_ASSERT(attribute);
   ROSE_ASSERT (attribute->getNode() == node);
 
-  OmpAttributeList* cur_list =  getAttributeList(node);
+  AttributeList* cur_list =  getAttributeList(node);
   ROSE_ASSERT (cur_list != NULL);
   (cur_list->attriList);
-  vector <FailSafeAttribute* >::iterator h_pos = find ((cur_list->attriList).begin(), (cur_list->attriList).end(), attribute);
+  vector <Attribute* >::iterator h_pos = find ((cur_list->attriList).begin(), (cur_list->attriList).end(), attribute);
   ROSE_ASSERT (h_pos != (cur_list->attriList).end());
   (cur_list->attriList).erase (h_pos);
   if ((cur_list->attriList).size() ==0)
   {
     delete cur_list;
-    node->removeAttribute("FailSafeAttributeList");
+    node->removeAttribute("AttributeList");
   }
 }
 
 //! get omp enum from an OpenMP pragma attached with OmpAttribute
-fail_safe_construct_enum FailSafe::getConstructEnum(SgPragmaDeclaration* decl)
+FailSafe::fail_safe_enum FailSafe::getConstructEnum(SgPragmaDeclaration* decl)
 {
   ROSE_ASSERT (decl != NULL);
   AttributeList* oattlist= getAttributeList(decl);
   ROSE_ASSERT (oattlist != NULL) ;
-  vector <FailSafeAttribute* > ompattlist = oattlist->attriList;
+  vector <Attribute* > ompattlist = oattlist->attriList;
   // There should be only one Attribute attached to each pragma
   ROSE_ASSERT (ompattlist.size() == 1) ;
-  vector <FailSafeAttribute* >::iterator i = ompattlist.begin();
-  FailSafeAttribute* oa = *i;
-  fail_safe_construct_enum fs_type= oa->getDirectiveType();
+  vector <Attribute* >::iterator i = ompattlist.begin();
+  Attribute* oa = *i;
+  fail_safe_enum fs_type= oa->getDirectiveType();
   //   The first attribute should always be the directive type
   ROSE_ASSERT(isDirective(fs_type));
   return fs_type;
 }
 
 //! Get Attribute from a SgNode
-AttributeList* FailSafe::getAttributeList(SgNode* node)
+FailSafe::AttributeList* FailSafe::getAttributeList(SgNode* node)
 {
   AttributeList* result = NULL;
-  AstAttribute* astattribute=node->getAttribute("FailSafeAttributeList");
+  AstAttribute* astattribute=node->getAttribute("AttributeList");
   if (astattribute)
     result = dynamic_cast<AttributeList* > (astattribute);
   return result;
 }
 
 //! Get the first Attribute from a SgNode, return NULL if not found
-FailSafeAttribute* FailSafe::getAttribute(SgNode* node)
+FailSafe::Attribute* FailSafe::getAttribute(SgNode* node)
 {
   ROSE_ASSERT (node != NULL );
-  FailSafeAttribute* result = NULL;
+  Attribute* result = NULL;
   AttributeList* oattlist= getAttributeList(node);
   if (oattlist)
   {
-    vector <FailSafeAttribute* > ompattlist = oattlist->attriList;
+    vector <Attribute* > ompattlist = oattlist->attriList;
     result = ompattlist[0];
   }
   return result;
 }
 
-void FailSafe::Attribute::addClause(fail_safe_construct_enum clause_type)
+void FailSafe::Attribute::addClause(fail_safe_enum clause_type)
 { 
   if (isClause(clause_type))
   {
@@ -227,7 +227,7 @@ SgPragmaDeclaration* FailSafe::Attribute::getPragmaDeclaration()
   return result;
 }
 
-SgVariableSymbol* FailSafe::Attribute::addVariable(fail_safe_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
+SgVariableSymbol* FailSafe::Attribute::addVariable(fail_safe_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
 {
   SgVariableSymbol* symbol = NULL;
 
@@ -270,76 +270,76 @@ SgVariableSymbol* FailSafe::Attribute::addVariable(fail_safe_construct_enum targ
 //! Set name for named critical section
 void FailSafe::Attribute::setName(const std::string & varname)
 {
-  hasName = true;
+  bName = true;
   name = varname;
 }
 
 //! Expression 
-void FailSafe::Attribute::addExpression(fail_safe_construct_enum targetConstruct, const std::string& expString, SgExpression* sgexp/* =NULL */)
+void FailSafe::Attribute::addExpression(fail_safe_enum targetConstruct, const std::string& expString, SgExpression* sgexp/* =NULL */)
 {
   expressions[targetConstruct]=make_pair(expString,sgexp);
   if (sgexp!=NULL)
     sgexp->set_parent(mNode); // a little hack here, we not yet extend the SgPragmaDeclaration to have expression children.
 }
 
-std::pair<std::string, SgExpression*> FailSafe::Attribute::getExpression(fail_safe_construct_enum targetConstruct)
+std::pair<std::string, SgExpression*> FailSafe::Attribute::getExpression(fail_safe_enum targetConstruct)
 {
   return expressions[targetConstruct];
 }
 
-void FailSafe::setSpecifier (fail_safe_construct_enum valuex)
+void FailSafe::Attribute::setSpecifier (FailSafe::fail_safe_enum valuex)
 {
   switch (valuex)
   { 
     case e_pre:
     case e_post:
-      hasSpecifier = true;
+      bSpecifier = true;
       specifier = valuex;
       break;
     default: 
-     cerr<<"FailSafe::setSpecifier() Illegal specifier value:"<<valuex<<endl
-     ROSE_ASSERT(false)
+     cerr<<"FailSafe::setSpecifier() Illegal specifier value:"<<valuex<<endl;
+     ROSE_ASSERT(false);
   }
 }
 
-void FailSafe::setErrorType(fail_safe_construct_enum valuex)
+void FailSafe::Attribute::setErrorType(FailSafe::fail_safe_enum valuex)
 {
   switch (valuex)
   { 
-    case e_ET1:
-    case e_ET2:
+    case e_type_ET1:
+    case e_type_ET2:
       error_type= valuex;
       break;
     default: 
-     cerr<<"FailSafe::setErrorType() Illegal value:"<<valuex<<endl
-     ROSE_ASSERT(false)
+     cerr<<"FailSafe::setErrorType() Illegal value:"<<valuex<<endl;
+     ROSE_ASSERT(false);
   }
 }
 
-void FailSafe::setViolationType(fail_safe_construct_enum valuex)
+void FailSafe::Attribute::setViolationType(FailSafe::fail_safe_enum valuex)
 {
   switch (valuex)
   { 
-    case e_NaN:
-    case e_SECDED:
-    case e_SEGFAULT:
-    case e_ANY:
+    case e_violation_NaN:
+    case e_violation_SECDED:
+    case e_violation_SEGFAULT:
+    case e_violation_ANY:
       violation_type= valuex;
       break;
     default: 
-     cerr<<"FailSafe::setViolationType() Illegal value:"<<valuex<<endl
-     ROSE_ASSERT(false)
+     cerr<<"FailSafe::setViolationType() Illegal value:"<<valuex<<endl;
+     ROSE_ASSERT(false);
   }
 }
 
   //! Find the relevant clauses for a variable 
-std::vector<enum omp_construct_enum>
+std::vector<enum FailSafe::fail_safe_enum>
     FailSafe::Attribute::get_clauses(const std::string& variable)
 {
   return var_clauses[variable];
 }
 
-bool FailSafe::Attribute::hasClause(fail_safe_construct_enum fs_type)
+bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
 {
   bool result = false;
   if (isClause(fs_type))
@@ -353,12 +353,12 @@ bool FailSafe::Attribute::hasClause(fail_safe_construct_enum fs_type)
 }
 
   //Judge if a name is in a clause's variable list: like save(x,y,z), 
-  bool FailSafe::Attribute::isInConstruct(const string & varName, enum fail_safe_construct_enum fstype)
+  bool FailSafe::Attribute::isInConstruct(const string & varName, enum FailSafe::fail_safe_enum fstype)
   {
     bool result =false;
     ROSE_ASSERT(varName.size()!= 0);
-    vector <fail_safe_construct_enum> construct_vec = get_clauses(varName);
-    vector <fail_safe_construct_enum>::iterator iter;
+    vector <fail_safe_enum> construct_vec = get_clauses(varName);
+    vector <fail_safe_enum>::iterator iter;
     iter = find (construct_vec.begin(), construct_vec.end(),fstype);
     if (iter != construct_vec.end())
       result = true;
@@ -368,7 +368,7 @@ bool FailSafe::Attribute::hasClause(fail_safe_construct_enum fs_type)
 //! Convert directives and clauses to string 
   // Top down recursive conversion: directive ,directive-optional stuff, 
   // then clauses one by one, plus clause-optional stuff
-  std::string FailSafe::FailSafeAttribute::toFailSafeString(fail_safe_construct_enum fs_type)
+  std::string FailSafe::Attribute::toFailSafeString(FailSafe::fail_safe_enum fs_type)
   { 
     string result;
     //Directives ------------------
@@ -394,12 +394,12 @@ bool FailSafe::Attribute::hasClause(fail_safe_construct_enum fs_type)
         }
      }
     } // end if directive
-    else if () // TODO: handle clauses one by one
+    // else if () // TODO: handle clauses one by one
 
     return result;
   }
   //! Convert a variable list to x,y,z ,without parenthesis.
-  std::string FailSafe::FailSafeAttribute::toOpenMPString(std::vector<std::pair<std::string,SgNode* > >var_list)
+  std::string FailSafe::Attribute::toFailSafeString(std::vector<std::pair<std::string,SgNode* > >var_list)
   {
     string result;
     std::vector<std::pair<std::string,SgNode* > >::iterator iter;
@@ -432,23 +432,23 @@ bool FailSafe::Attribute::hasClause(fail_safe_construct_enum fs_type)
 
 //! Get the variable list associated with a construct
   std::vector<std::pair<std::string,SgNode* > >
-FailSafe::FailSafeAttribute::getVariableList(fail_safe_construct_enum targetConstruct)
+FailSafe::Attribute::getVariableList(FailSafe::fail_safe_enum targetConstruct)
 {
-  std::vector<std::pair<std::string,SgNode* > > * result = new std::vector<std::pair<std::string,SgNode* > >;
+//  std::vector<std::pair<std::string,SgNode* > > * result = new std::vector<std::pair<std::string,SgNode* > >;
   return variable_lists[targetConstruct];
 }
 
 
-  // interface to convert FailSafeAttribute to FailSafe string format, different from FailSafeAttribute::toString()
-  std::string FailSafe::FailSafeAttribute::toFailSafeString()
+  // interface to convert Attribute to FailSafe string format, different from Attribute::toString()
+  std::string FailSafe::Attribute::toFailSafeString()
   {
     string result; // Should not add "#pragma ", which is automatically generated by SgPragmaDeclaration
     // Convert directive first
     result += toFailSafeString(fs_type);
 
     // Convert clauses then
-    vector<fail_safe_construct_enum> clause_vector = getClauses();
-    vector<fail_safe_construct_enum>::iterator iter;
+    vector<fail_safe_enum> clause_vector = getClauses();
+    vector<fail_safe_enum>::iterator iter;
     for (iter=clause_vector.begin();iter!=clause_vector.end();iter++)
     {
       if (iter==clause_vector.begin())
@@ -463,21 +463,21 @@ FailSafe::FailSafeAttribute::getVariableList(fail_safe_construct_enum targetCons
 std::string FailSafe::AttributeList::toFailSafeString()
 {
   string result;
-  std::vector<FailSafeAttribute*>::const_iterator citer;
+  std::vector<Attribute*>::const_iterator citer;
   for (citer= attriList.begin(); citer != attriList.end(); citer++)
   {
-    FailSafeAttribute* attribute = *citer;
+    Attribute* attribute = *citer;
     result += attribute->toFailSafeString();
   }
   return result;
 }
 
-FailSafe::AttributeList::~FailSafe::AttributeList()
+FailSafe::AttributeList::~AttributeList()
 {
-  std::vector<FailSafeAttribute*>::const_iterator citer;
+  std::vector<Attribute*>::const_iterator citer;
   for (citer= attriList.begin(); citer != attriList.end(); citer++)
   {
-    FailSafeAttribute* attribute = *citer;
+    Attribute* attribute = *citer;
     delete attribute;
   }
 }
