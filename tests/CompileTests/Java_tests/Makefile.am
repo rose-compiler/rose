@@ -431,7 +431,7 @@ $(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneratio
 	@echo "Test using Java 1.4 version support."
 	$(testTranslator) -rose:java:source 1.4 -rose:java:target 1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 	@echo "Test DOT file graph generation (default) version support."
-	$(testGraphGeneration) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+#	$(testGraphGeneration) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 # Tests that pass all but the final compilation using the backend compiler (javac)
 $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
