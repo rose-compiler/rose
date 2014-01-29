@@ -21,14 +21,186 @@ usage(int exit_status)
     exit(exit_status);
 }
 
-struct Switches {
-    std::string input_file_name;                // non-empty means read coords from a file instead of stdin
-};
-static Switches opt;
+static struct Switches {
+    std::string input_file_name;                        // non-empty means read coords from a file instead of stdin
+} opt;
+
 
 enum Dimension { DIM_X=0, DIM_Y=1, DIM_NONE=2 };
 
-typedef std::pair<size_t, size_t> SizePair;
+Dimension opposite(Dimension dim) {
+    assert(DIM_X==dim || DIM_Y==dim);
+    return DIM_X==dim ? DIM_Y : DIM_X;
+}
+
+struct Point {
+    int val[2];
+    Point(int x, int y) {
+        val[DIM_X] = x;
+        val[DIM_Y] = y;
+    }
+};
+
+typedef std::pair<size_t, size_t> IdxRange;
+
+// Stores a list of unsorted points, and also stores two sets of indirections to those points: one for sorting by X values
+// and another for sorting by Y values.  This allows us to simultaneously sort in two orders.  The order of the points themselves
+// are never adjusted after inserting them.
+class Points {
+    std::vector<Point> points_;
+    std::vector<size_t> indirect_[2];                   // indirection for sorted X and Y values
+public:
+    size_t size() const {
+        assert(points_.size()==indirect_[DIM_X].size());
+        assert(points_.size()==indirect_[DIM_Y].size());
+        return points_.size();
+    }
+
+    // Insert another point into this container
+    void insert(const Point &point) {
+        assert(points_.size()==indirect_[DIM_X].size());
+        assert(points_.size()==indirect_[DIM_Y].size());
+        indirect_[DIM_X].push_back(points_.size());
+        indirect_[DIM_Y].push_back(points_.size());
+        points_.push_back(point);
+    }
+
+    // Get a point by an indirect index
+    const Point& get(Dimension sortDimension, size_t idx) const {
+        assert(DIM_X==sortDimension || DIM_Y==sortDimension);
+        assert(idx<indirect_[sortDimension].size());
+        idx = indirect_[sortDimension][idx];
+        assert(idx<points_.size());
+        return points_[idx];
+    }
+
+    // Get an X or Y value by indirect index
+    int get(Dimension sortDimension, size_t idx, Dimension selectDimension) const {
+        return get(sortDimension, idx).val[selectDimension];
+    }
+
+    // Swap two points by indirection.  This moves the indirection but not the points.
+    void swap(Dimension sortDimension, size_t idx1, size_t idx2) {
+        assert(DIM_X==sortDimension || DIM_Y==sortDimension);
+        assert(idx1<indirect_[sortDimension].size() && idx2<indirect_[sortDimension].size());
+        std::swap(indirect_[sortDimension][idx1], indirect_[sortDimension][idx2]);
+    }
+
+    // Make the opposite dimension's indirection point to the same points as the specified dimension for the given range.
+    void regroup(Dimension keepDimension, const IdxRange &range) {
+        Dimension moveDimension = opposite(keepDimension);
+        for (size_t i=range.first; i<range.second; ++i)
+            indirect_[moveDimension][i] = indirect_[keepDimension][i];
+    }
+
+    // Return field widths for dump(). The first value is the field width for indices, the second for values.
+    std::pair<size_t, size_t> fieldWidth(const IdxRange &range) const {
+        if (range.first >= range.second)
+            return std::pair<size_t, size_t>(0, 0);
+        int maxval = std::max(points_[range.first].val[DIM_X], points_[range.first].val[DIM_Y]);
+        for (size_t i=range.first+1; i<range.second; ++i)
+            maxval = std::max(maxval, std::max(points_[i].val[DIM_X], points_[i].val[DIM_Y]));
+        std::ostringstream maxval_ss;
+        maxval_ss <<maxval;
+        size_t maxval_w = maxval_ss.str().size();
+        std::ostringstream maxidx_ss;
+        maxidx_ss <<(points_.size()-1);
+        size_t maxidx_w = maxidx_ss.str().size();
+        return std::make_pair(maxidx_w, maxval_w);
+    }
+
+    // Dump data for debugging.
+    void dump(std::ostream &o, const IdxRange &range, const std::string &prefix) {
+        dump(o, range, fieldWidth(range), prefix);
+    }
+    void dump(std::ostream &o, const IdxRange &range, const std::pair<size_t, size_t> width, const std::string &prefix) {
+        size_t idxwidth = width.first;
+        size_t valwidth = width.second;
+        for (size_t i=range.first; i<range.second; ++i) {
+            o <<prefix
+              <<std::setw(idxwidth) <<i <<": ("
+              <<std::setw(valwidth) <<points_[i].val[DIM_X] <<", "
+              <<std::setw(valwidth) <<points_[i].val[DIM_Y]
+              <<")    "
+              <<std::setw(idxwidth) <<indirect_[DIM_X][i] <<": ("
+              <<std::setw(valwidth) <<points_[indirect_[DIM_X][i]].val[DIM_X] <<", "
+              <<std::setw(valwidth) <<points_[indirect_[DIM_X][i]].val[DIM_Y]
+              <<")    "
+              <<std::setw(idxwidth) <<indirect_[DIM_Y][i] <<": ("
+              <<std::setw(valwidth) <<points_[indirect_[DIM_Y][i]].val[DIM_X] <<", "
+              <<std::setw(valwidth) <<points_[indirect_[DIM_Y][i]].val[DIM_Y]
+              <<")\n";
+        }
+    }
+};
+
+// Partition a range of points around a pivot value specified by index and return the new index of the pivot value. All values
+// to the left of the pivot index will be less than the pivot value.
+static size_t partition(Points &points, Dimension dim, const IdxRange &range, size_t pivotIdx) {
+    assert(range.first<range.second);                   // cannot be empty
+    assert(pivotIdx>=range.first && pivotIdx<range.second);
+    int pivotValue = points.get(dim, pivotIdx, dim);
+    points.swap(dim, pivotIdx, range.second-1);         // move pivot element to the end
+    size_t storeIdx = range.first;
+    for (size_t i=range.first; i<range.second-1; ++i) {
+        if (points.get(dim, i, dim) < pivotValue)
+            points.swap(dim, i, storeIdx++);
+    }
+    points.swap(dim, range.second-1, storeIdx);         // move pivot to its final place
+    return storeIdx;
+}
+
+#if 0 /* [Robb P. Matzke 2014-01-28]: currently unused */
+// Return the Nth smallest value within the specified range of values
+static const Point& select(Points &points, Dimension dim, IdxRange range, size_t nth) {
+    assert(range.first < range.second);                 // range cannot be empty
+    size_t rangeSize = range.second - range.first;
+    assert(nth < rangeSize);                            // nth is zero-origin
+    while (rangeSize > 1) {
+        size_t pivotIdx = range.first + random() % rangeSize;
+        pivotIdx = partition(points, dim, range, pivotIdx); // the pivot value is now in its final position
+        if (nth == pivotIdx) {
+            return points.get(dim, nth);
+        } else if (nth < pivotIdx) {
+            range.second = pivotIdx;
+        } else {
+            range.first = pivotIdx + 1;
+        }
+        rangeSize = range.second - range.first;
+    }
+    return points.get(dim, nth);
+}
+#endif
+
+// Sort the points in the specified range according to one dimension
+static void quicksort(Points &points, Dimension dim, const IdxRange &range) {
+    if (range.first + 1 >= range.second)
+        return;                                         // nothing to sort
+    size_t rangeSize = range.second - range.first;
+    size_t pivotIdx = range.first + random() % rangeSize;
+    pivotIdx = partition(points, dim, range, pivotIdx);
+    IdxRange left(range.first, pivotIdx);               // excludes pivot point
+    IdxRange right(pivotIdx+1, range.second);           // excludes pivot point
+    if (left.second-left.first > right.second-right.first)
+        std::swap(left, right);                         // make left range the smaller one
+    quicksort(points, dim, left);
+    quicksort(points, dim, right);                      // so tail recursion is the larger one
+}
+
+// Count the number of unique values within a sorted range
+static size_t nUnique(const Points &points, Dimension dim, const IdxRange &range) {
+    if (range.first == range.second)
+        return 0;
+    size_t retval = 1;
+    int prevValue = points.get(dim, range.first, dim);
+    for (size_t i=range.first+1; i<range.second; ++i) {
+        int nextValue = points.get(dim, i, dim);
+        if (nextValue != prevValue)
+            ++retval;
+        prevValue = nextValue;
+    }
+    return retval;
+}
 
 // Given a vector V of monotonically increasing integers of size N>0, choose an index i such that
 //    V[j] < V[i] for all j < i    (i is at a boundary between two values of the vector)
@@ -40,161 +212,134 @@ typedef std::pair<size_t, size_t> SizePair;
 // Returns 3 since lo is closer to the midpoint than hi.  This allows the vector to be partitioned into two parts each
 // containing distinct values and being as close as possible in size, namely:
 //    V1 = (3, 4, 4)  V2 = (5, 5, 5, 5, 5, 5, 5, 5, 6)
-static size_t
-median_idx(std::vector<int> v)
-{
-    assert(!v.empty());
-    size_t mid = v.size() / 2;                          // middle:  0 <= mid < N
-    size_t lo = mid;                                    // lower boundary: 0 <= lo <= mid
-    while (lo>0 && v[lo-1]==v[mid]) --lo;
-    size_t hi = mid+1;                                  // upper boundary: mid < hi <= N
-    while (hi+1<v.size() && v[hi+1]==v[mid]) ++hi;
-    return mid-lo < hi-mid ? lo : hi;                   // the boundary closest to the center
+static size_t medianIdx(const Points &points, Dimension dim, const IdxRange &range) {
+    assert(range.first < range.second);                 // range cannot be empty
+    size_t rangeSize = range.second - range.first;
+    size_t midIdx = range.first + rangeSize / 2;        // middle:  range.first <= midIdx < range.second
+    int midValue = points.get(dim, midIdx, dim);
+    size_t loIdx = midIdx;                              // lower boundary: range.first <= loIdx <= midIdx
+    while (loIdx>range.first && points.get(dim, loIdx-1, dim)==midValue)
+        --loIdx;
+    size_t hiIdx = midIdx+1;                            // upper boundary: midIdx < hi <= range.second
+    while (hiIdx+1<range.second && points.get(dim, hiIdx+1, dim)==midValue)
+        ++hiIdx;
+    size_t retval = midIdx-loIdx < hiIdx-midIdx ? loIdx : hiIdx; // the boundary closest to the center
+    assert(retval >= range.first && retval < range.second);
+    return retval;
 }
 
-// Used to sort 'data' without actually reordering its members.  Instead, an index-to-data is sorted.
-struct IndexedSort {
-    const std::vector<int> &data;
-    IndexedSort(const std::vector<int> &data): data(data) {}
-    bool operator()(size_t idx_a, size_t idx_b) {
-        assert(idx_a<data.size() && idx_b<data.size());
-        return data[idx_a] < data[idx_b];
-    }
-};
-
-// Coordinates as parallel arrays
-class CoordSet {
-private:
-    std::vector<int> coords_x_, coords_y_;      // parallel arrays for 2d points
-    Dimension is_sorted_;                       // is one of the dimensions sorted?
-private: // cached items
-    mutable bool ndistinct_valid_;
-    mutable SizePair ndistinct_;                // valid only when ndistinct_valid_ is true
+class WorkItem {
+    Points *points_;
+    IdxRange range_;
+    size_t nUnique_[2];                                 // number of unique values in each dimension
 public:
-    CoordSet(): is_sorted_(DIM_NONE), ndistinct_valid_(false) {}
-
-    size_t size() const {
-        return coords_x_.size();
-    }
-
-    bool empty() const {
-        assert(coords_x_.size()==coords_y_.size());
-        return coords_x_.empty();
+    // needed for std::priority_queue but not actually used
+    WorkItem(): points_(NULL), range_(-1, -1) {
+        nUnique_[DIM_X] = nUnique_[DIM_Y] = -1;
     }
     
-    void insert(int x, int y) {
-        assert(coords_x_.size()==coords_y_.size());
-        coords_x_.push_back(x);
-        coords_y_.push_back(y);
-        ndistinct_valid_ = false;
-        is_sorted_ = DIM_NONE;
+    // Construct a new work item for the entire vector of points
+    explicit WorkItem(Points &points): points_(&points) {
+        range_ = IdxRange(0, points_->size());
+        quicksort(*points_, DIM_X, range_);
+        quicksort(*points_, DIM_Y, range_);
+        nUnique_[DIM_X] = nUnique(*points_, DIM_X, range_);
+        nUnique_[DIM_Y] = nUnique(*points_, DIM_Y, range_);
     }
 
-    const SizePair& ndistinct() const {
-        if (!ndistinct_valid_) {
-            ndistinct_ = SizePair(ndistinct(coords_x_), ndistinct(coords_y_));
-            ndistinct_valid_ = true;
-        }
-        return ndistinct_;
+    // Construct a  new work item when one of the dimensions is already sorted
+    WorkItem(Points &points, const IdxRange &range, Dimension sortedDim): points_(&points), range_(range) {
+        assert(range_.first <= range_.second);
+        Dimension unsortedDim = opposite(sortedDim);
+        quicksort(*points_, unsortedDim, range_);
+#ifndef NDEBUG
+        for (size_t i=range_.first+1; i<range_.second; ++i)
+            assert(points_->get(sortedDim, i-1, sortedDim) <= points_->get(sortedDim, i, sortedDim));
+#endif
+        nUnique_[DIM_X] = nUnique(*points_, DIM_X, range_);
+        nUnique_[DIM_Y] = nUnique(*points_, DIM_Y, range_);
     }
 
-    bool multiple() const {     // true if this CoordSet has more than one distinct point
-        const SizePair &sp = ndistinct();
-        return sp.first>1 || sp.second>1;
+    // Comparison for queue based on number of unique items in either dimension
+    bool operator<(const WorkItem &other) const {
+        assert(points_!=NULL);
+        return std::max(nUnique_[DIM_X], nUnique_[DIM_Y]) < std::max(other.nUnique_[DIM_X], other.nUnique_[DIM_Y]);
     }
 
-    const std::vector<int>& operator[](size_t dimension) const {
-        assert(dimension<2);
-        return DIM_X==dimension ? coords_x_ : coords_y_;
+    // Return true if this work item can be split in two
+    bool canSplit() const {
+        assert(points_!=NULL);
+        return nUnique_[DIM_X] > 1 || nUnique_[DIM_Y] > 1;
     }
 
-    bool operator<(const CoordSet &other) const {
-        const SizePair &sp1 = ndistinct();
-        const SizePair &sp2 = other.ndistinct();
-        return std::max(sp1.first, sp1.second) < std::max(sp2.first, sp2.second);
+    // Return the dimension that would give the best split.
+    Dimension bestSplitDimension() const {
+        assert(canSplit());
+        return nUnique_[DIM_X] > nUnique_[DIM_Y] ? DIM_X : DIM_Y;
     }
 
-    void sort(Dimension dimension) {
-        if (is_sorted_!=dimension) {
-            // Perform the sort on one dimension, but do not yet change the order of the coordinate vector
-            std::vector<size_t> index; 
-            for (size_t i=0; i<coords_x_.size(); ++i)
-                index.push_back(i);
-            IndexedSort index_cmp(DIM_X==dimension ? coords_x_ : coords_y_);
-            std::sort(index.begin(), index.end(), index_cmp);
-
-            // Now change the order of both coordinate vectors
-            std::vector<int> x=coords_x_, y=coords_y_;
-            for (size_t i=0; i<index.size(); ++i) {
-                coords_x_[i] = x[index[i]];
-                coords_y_[i] = y[index[i]];
-            }
-            is_sorted_ = dimension;
-        }
-    }
-    
-    void split(size_t split_point, CoordSet &other/*out*/) {
-        assert(other.empty());
-        split(split_point, coords_x_, other.coords_x_);
-        split(split_point, coords_y_, other.coords_y_);
-        other.is_sorted_ = is_sorted_;
-        ndistinct_valid_ = false;
+    // Split this work item into two along the dimension that has the most unique values.  This item is modified in place to
+    // become the left part and the right part is returned.  Both parts will have at least one point.
+    WorkItem split() {
+        assert(points_!=NULL);
+        Dimension splitDim = bestSplitDimension();
+        Dimension otherDim = opposite(splitDim);
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-01-29]*/
+        std::cerr <<"splitting [" <<range_.first <<"," <<range_.second <<"] on the " <<(splitDim==DIM_X?"X":"Y") <<" axis\n";
+#endif
+        points_->regroup(splitDim, range_);                 // regroup the other dimension to correspond to splitDim
+        size_t idx = medianIdx(*points_, splitDim, range_); // split point
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-01-29]*/
+        std::cerr <<"  at index " <<idx <<"\n";
+#endif
+        IdxRange right(idx, range_.second);                 // range for the return value
+        range_.second = idx;                                // our range is the left part, excluding idx
+        quicksort(*points_, otherDim, range_);              // other dimension is unsorted because of the regroup() above
+        nUnique_[DIM_X] = nUnique(*points_, DIM_X, range_); // the range changed, so we need to recompute the
+        nUnique_[DIM_Y] = nUnique(*points_, DIM_Y, range_); // ...number of unique values in each dimension
+        return WorkItem(*points_, right, splitDim);
     }
 
-    // Prints some header comments followed by all the coordinates.  Additionally, notation is printed after a coordinate
-    // pair to indicate the last time a value appears (X and Y are treated as a single stream of values for this purpose).
+    // Emit list for debugging
+    void dump(std::ostream &o) const { dump(o, points_->fieldWidth(range_)); }
+    void dump(std::ostream &o, const std::pair<size_t, size_t> &width) const {
+        o <<"  has " <<StringUtility::plural(nUnique_[DIM_X], "unique X values")
+          <<" and " <<StringUtility::plural(nUnique_[DIM_Y], "unique Y values") <<"\n";
+        points_->dump(o, range_, width, "  ");
+    }
+
+    // Emit list of points for output
     void print(std::ostream &o) const {
-        o <<"# coord set contains " <<coords_x_.size() <<" point" <<(1==coords_x_.size()?"":"s") <<"\n"
-          <<"# " <<plural(ndistinct().first, "distinct X values") <<"\n"
-          <<"# " <<plural(ndistinct().second, "distinct Y values") <<"\n";
-
-        std::map<int, size_t> last_time;
-        for (size_t i=coords_x_.size(); i>0; --i) {
-            last_time.insert(std::make_pair(coords_x_[i-1], i-1));
-            last_time.insert(std::make_pair(coords_y_[i-1], i-1));
+        assert(points_!=NULL);
+        o <<"## CUT ##\n";
+        for (size_t i=range_.first; i<range_.second; ++i) {
+            const Point &point = points_->get(DIM_X, i);
+            o <<point.val[DIM_X] <<" " <<point.val[DIM_Y] <<"\n";
         }
-
-        for (size_t i=0; i<coords_x_.size(); ++i) {
-            o <<coords_x_[i] <<" " <<coords_y_[i] <<"\n";
-            if (last_time[coords_x_[i]]==i)
-                o <<"##LAST " <<coords_x_[i] <<"\n";
-            if (coords_y_[i]!=coords_x_[i] && last_time[coords_y_[i]]==i) {
-                o <<"##LAST " <<coords_y_[i] <<"\n";
-            }
-        }
-    }
-
-private:
-    static size_t ndistinct(const std::vector<int> &v) {
-        std::set<int> s;
-        for (std::vector<int>::const_iterator vi=v.begin(); vi!=v.end(); ++vi)
-            s.insert(*vi);
-        return s.size();
-    }
-
-    static void split(size_t split_point, std::vector<int> &lo/*in,out*/, std::vector<int> &hi/*out*/) {
-        assert(split_point<=lo.size());
-        assert(hi.empty());
-        hi.insert(hi.end(), &lo[0]+split_point, &lo[0]+lo.size());
-        lo.resize(split_point);
     }
 };
 
-typedef std::priority_queue<CoordSet> CoordSets;
-
-std::ostream& operator<<(std::ostream &o, const CoordSet &x) 
-{
-    x.print(o);
+static std::ostream& operator<<(std::ostream &o, const WorkItem &item) {
+    item.print(o);
     return o;
 }
 
+typedef std::priority_queue<WorkItem> Worklist;
 
+static void dumpWorkList(Worklist workList) {
+    std::cerr <<"\n\n";
+    size_t i = 0;
+    while (!workList.empty()) {
+        std::cerr <<"Worklist #" <<i <<"\n";
+        const WorkItem &work = workList.top();
+        work.dump(std::cerr);
+        workList.pop();
+        ++i;
+    }
+}
 
-
-
-static void
-load_worklist(const std::string &input_name, FILE *f, CoordSet &coords)
-{
+// Read points from the fiel and append them to POINTS
+static void loadPoints(const std::string &input_name, FILE *f, Points &points /*out*/) {
     char *line = NULL;
     size_t line_sz = 0, line_num = 0;
     while (rose_getline(&line, &line_sz, f)>0) {
@@ -206,28 +351,28 @@ load_worklist(const std::string &input_name, FILE *f, CoordSet &coords)
             continue; // blank line
 
         errno = 0;
-        int func1_id = strtol(s, &rest, 0);
+        int x = strtol(s, &rest, 0);
         if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func1_id expected\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: x value expected\n";
             exit(1);
         }
         s = rest;
 
         errno = 0;
-        int func2_id = strtol(s, &rest, 0);
+        int y = strtol(s, &rest, 0);
         if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func2_id expected\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: y value expected\n";
             exit(1);
         }
         s = rest;
 
         while (isspace(*s)) ++s;
         if (*s) {
-            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after func2_id\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after y value\n";
             exit(1);
         }
 
-        coords.insert(func1_id, func2_id);
+        points.insert(Point(x, y));
     }
 }
 
@@ -273,65 +418,48 @@ main(int argc, char *argv[])
     }
 
     // Read function pairs (2d coordinates) from standard input or the file.
-    CoordSet all_coords;
+    Points points;
     if (opt.input_file_name.empty()) {
-        std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
-        load_worklist("stdin", stdin, all_coords);
+        std::cerr <<argv0 <<": reading points from stdin...\n";
+        loadPoints("stdin", stdin, points);
     } else {
         FILE *in = fopen(opt.input_file_name.c_str(), "r");
         if (NULL==in) {
             std::cerr <<argv0 <<": " <<strerror(errno) <<": " <<opt.input_file_name <<"\n";
             exit(1);
         }
-        load_worklist(opt.input_file_name, in, all_coords);
+        loadPoints(opt.input_file_name, in, points);
         fclose(in);
     }
-    size_t npairs = all_coords.size();
-    std::cerr <<argv0 <<": work list has " <<npairs <<" function pair" <<(1==npairs?"":"s") <<"\n";
+    std::cerr <<argv0 <<": read " <<StringUtility::plural(points.size(), "points") <<"\n";
 
-    CoordSets coordsets;
-    if (all_coords.multiple()) {
-        coordsets.push(all_coords);
-    } else {
-        std::cout <<"## CUT ##\n" <<all_coords;
-    }
+    Worklist worklist;
+    worklist.push(WorkItem(points));
+    size_t nemitted = 0;                                // number of work items already emitted to std::cout
 
-    // Repeatedly divide the coordinate set with the most distinct X or Y values.  We use this metric rather than pure size of
-    // the coordinate set because we're trying to minimize the amount of information that 32-func-similarity (and similar
-    // tools) need to download from the database, and we're assuming that they're able to cache what they download.
-    for (size_t i=1; i<nparts && !coordsets.empty(); ++i) {
-        CoordSet coords = coordsets.top();
-        coordsets.pop();
-        SizePair sizepair = coords.ndistinct();
-
-        // Decide where to split either the X coordinates or the Y coordinates, depending on which has more values.
-        Dimension dimension = sizepair.first > sizepair.second ? DIM_X : DIM_Y;
-        coords.sort(dimension);
-        size_t split_point = median_idx(coords[dimension]);
-        assert(split_point>0 && split_point<coords.size()); // otherwise it wouldn't split
-
-        // Split the coordinate arrays at the desired position.
-        CoordSet coords2;
-        coords.split(split_point, coords2);
-
-        // Insert the two smaller sets if they can be split more, otherwise print them
-        if (coords.multiple()) {
-            coordsets.push(coords);
+    // Repeatedly split the list of points until we've split enough or we can't split more
+    while (nemitted + worklist.size() < nparts && !worklist.empty()) {
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-01-29]*/
+        dumpWorkList(worklist);
+#endif
+        WorkItem item1 = worklist.top();
+        worklist.pop();
+        if (item1.canSplit()) {
+            WorkItem item2 = item1.split();
+            worklist.push(item1);
+            worklist.push(item2);
         } else {
-            std::cout <<"## CUT ##\n" <<coords <<"\n";
-        }
-        if (coords2.multiple()) {
-            coordsets.push(coords2);
-        } else {
-            std::cout <<"## CUT ##\n" <<coords2 <<"\n";
+            std::cout <<item1;
+            ++nemitted;
         }
     }
 
-    // Emit all the other coordinate sets
-    while (!coordsets.empty()) {
-        std::cout <<"## CUT ##\n" <<coordsets.top();
-        coordsets.pop();
+    // Emit all remaining sets
+    while (!worklist.empty()) {
+        std::cout <<worklist.top();
+        worklist.pop();
+        ++nemitted;
     }
-    
+
     return 0;
 }
