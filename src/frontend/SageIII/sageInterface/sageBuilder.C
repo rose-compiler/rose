@@ -5451,6 +5451,22 @@ SgSuperExp* SageBuilder::buildSuperExp_nfi(SgClassSymbol* sym)
   return result;
 }
 
+SgClassExp* SageBuilder::buildClassExp(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp_nfi(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgTupleExp*
 SageBuilder::buildTupleExp(SgExpression * elt1, SgExpression* elt2, SgExpression* elt3, SgExpression* elt4, SgExpression* elt5, SgExpression* elt6, SgExpression* elt7, SgExpression* elt8, SgExpression* elt9, SgExpression* elt10)
 {
