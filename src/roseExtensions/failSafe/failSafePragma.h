@@ -70,6 +70,9 @@ namespace FailSafe
   //! Help convert FailSafe construct to string 
   std::string toString (fail_safe_enum fs_type);
 
+  //! Check if a construct is a directive or a clause
+  ROSE_DLL_API bool isDirective (fail_safe_enum input);
+  ROSE_DLL_API bool isClause (fail_safe_enum input);
 
   // follow the OmpAttribute declared in OmpAttribute.h
   class ROSE_DLL_API Attribute
@@ -140,16 +143,13 @@ namespace FailSafe
       void setNode(SgNode* n) { mNode= n;};
 
       //!------------directive type-------
-      void setDirectiveType(fail_safe_enum fstype){ assert (isDirective(fstype)); fs_type = fstype;}
-      bool isDirective (fail_safe_enum fstype);
+      void setDirectiveType(fail_safe_enum fstype){ assert (FailSafe::isDirective(fstype)); fs_type = fstype;}
       fail_safe_enum getDirectiveType() {return fs_type;}
 
       //!-----------clauses -------------
       void addClause(fail_safe_enum clause_type);
       //! Check if a directive has a clause of the specified type
       bool hasClause(fail_safe_enum clause_type);
-      //! If a construct is a clause
-      bool isClause(fail_safe_enum clause_type);
 
       //! Get all existing clauses
       std::vector<fail_safe_enum> getClauses() { return clauses;};
@@ -206,9 +206,6 @@ namespace FailSafe
       ~AttributeList();
   };
  
-  //! Check if a construct is a directive or a clause
-  bool isDirective (fail_safe_enum input);
-  bool isClause (fail_safe_enum input);
 
    // Add attribute to a SgNode
    ROSE_DLL_API void addAttribute(Attribute* attribute, SgNode* node);

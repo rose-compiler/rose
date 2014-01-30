@@ -438,6 +438,13 @@ FailSafe::Attribute::getVariableList(FailSafe::fail_safe_enum targetConstruct)
   return variable_lists[targetConstruct];
 }
 
+  //! Check if a variable list is associated with a construct
+  bool FailSafe::Attribute::hasVariableList(fail_safe_enum fs_type)
+  {
+    vector<std::pair<std::string,SgNode* > > var_list = variable_lists[fs_type];
+    return (var_list.size()!=0);
+  }
+
 
   // interface to convert Attribute to FailSafe string format, different from Attribute::toString()
   std::string FailSafe::Attribute::toFailSafeString()
