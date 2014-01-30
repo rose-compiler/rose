@@ -2553,9 +2553,20 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
                   << "signal in Unparser::unparseFile()"
                   << std::endl;
 
-              file->set_unparserErrorCode(-1);
-              status_of_function =
-                  max(1, status_of_function);
+              if (file != NULL)
+              {
+                  file->set_unparserErrorCode(100);
+                  status_of_function =
+                      max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
       #else
       if (false) {}

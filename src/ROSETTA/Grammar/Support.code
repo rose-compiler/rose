@@ -12177,6 +12177,13 @@ Sg_File_Info::get_physical_file_id() const
 
   // Match the behavior (transformation, compiler generated, etc.) of the p_file_id.
      int file_id = get_file_id();
+
+     // PHL (01/06/2014) use get_line for Fortran frontend
+     if (SageInterface::is_Fortran_language() )
+     {
+       return file_id;
+     }
+
      if (file_id < 0)
           return_physical_file_id = file_id;
        else
