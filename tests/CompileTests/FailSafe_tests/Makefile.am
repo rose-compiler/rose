@@ -17,7 +17,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 TESTCODE_CURRENTLY_FAILING = 
 
-ROSE_FLAGS = #-rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave 
+ROSE_FLAGS = -rose:failsafe #--edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave 
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 

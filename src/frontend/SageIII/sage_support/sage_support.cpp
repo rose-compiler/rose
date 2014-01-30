@@ -2666,7 +2666,8 @@ SgFile::secondaryPassOverSourceFile()
                processOpenMP(sourceFile);
 #endif
                // Liao, 1/29/2014, handle failsafe pragmas for resilience work
-               FailSafe::process_fail_safe_directives (sourceFile); 
+               if (sourceFile->get_failsafe())
+                 FailSafe::process_fail_safe_directives (sourceFile); 
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)

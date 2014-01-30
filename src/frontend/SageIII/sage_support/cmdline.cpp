@@ -1545,6 +1545,8 @@ SgFile::usage ( int status )
 "     -rose:binary, -rose:binary_only\n"
 "                             assume input file is for binary analysis (this avoids\n"
 "                             ambiguity when ROSE might want to assume linking instead)\n"
+"     -rose:FailSafe, -rose:failsafe\n"
+"                             Enable experimental processing of resilience directives defined by FAIL-SAFE annotation language specification.\n"
 "     -rose:astMerge          merge ASTs from different files\n"
 "     -rose:astMergeCommandFile FILE\n"
 "                             filename where compiler command lines are stored\n"
@@ -2647,6 +2649,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        }
      }
 
+  // Liao, 1/30/2014
+  // recognize -rose:failsafe option to turn on handling of failsafe directives for resilience work
+     set_failsafe(false);
+     ROSE_ASSERT (get_failsafe() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(FailSafe|failsafe)",true) == true )
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("FailSafe option specified \n");
+       set_failsafe(true);
+      //side effect for enabling failsafe, define the macro as required
+       // argv.push_back("-D_FAILSAFE");
+     }
+
   //
   // strict ANSI/ISO mode option
   //
@@ -3228,6 +3243,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(FailSafe|failsafe)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_warnings)",1);
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
