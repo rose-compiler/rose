@@ -5,6 +5,12 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
+using namespace AstFromString;
+
+namespace FailSafe{
+  // an internal data structure to avoid redundant AST traversal to find failsafe pragmas
+  static std::list<SgPragmaDeclaration* > pragma_list;
+}
 
 string FailSafe::toString(fail_safe_enum fs_type)
 {
@@ -98,7 +104,7 @@ void FailSafe::process_fail_safe_directives (SgSourceFile *sageFilePtr)
   ROSE_ASSERT(sageFilePtr != NULL);
   
   //1. Parse directives and generate attribute information
-
+   parse_directives_to_attributes(sageFilePtr);
   //2. Build dedicate AST nodes for failsafe directives 
 
   //3. Translate failsafe AST nodes 
@@ -129,7 +135,7 @@ void FailSafe::addAttribute (FailSafe::Attribute* attribute, SgNode* node)
   if (! cur_list)
   {
     cur_list = new AttributeList();
-    node->addNewAttribute("AttributeList",cur_list);
+    node->addNewAttribute("FailSafeAttributeList",cur_list);
   }
 
   cur_list->attriList.push_back(attribute);
@@ -151,7 +157,7 @@ void FailSafe::removeAttribute(FailSafe::Attribute* attribute, SgNode* node)
   if ((cur_list->attriList).size() ==0)
   {
     delete cur_list;
-    node->removeAttribute("AttributeList");
+    node->removeAttribute("FailSafeAttributeList");
   }
 }
 
@@ -176,7 +182,7 @@ FailSafe::fail_safe_enum FailSafe::getConstructEnum(SgPragmaDeclaration* decl)
 FailSafe::AttributeList* FailSafe::getAttributeList(SgNode* node)
 {
   AttributeList* result = NULL;
-  AstAttribute* astattribute=node->getAttribute("AttributeList");
+  AstAttribute* astattribute=node->getAttribute("FailSafeAttributeList");
   if (astattribute)
     result = dynamic_cast<AttributeList* > (astattribute);
   return result;
@@ -491,3 +497,92 @@ FailSafe::AttributeList::~AttributeList()
 
 
 //TODO  bool isDirectiveWithBody(omp_construct_enum omp_type
+
+
+//! Parse failsafe directives and generate/attach attributes
+// follow the code in void attachOmpAttributeInfo(SgSourceFile *sageFilePtr) of ompAstConstruction.cpp
+void FailSafe::parse_directives_to_attributes(SgSourceFile* sageFilePtr)
+{
+  ROSE_ASSERT(sageFilePtr != NULL);
+  //TODO check language extension flag for turning on this support
+  //if (sageFilePtr->get_failsafe() == false) return
+
+  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()|
+    sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
+  {
+     //TODO handle Fortran later
+  }
+  else
+  {
+    // For C/C++, search pragma declarations for failsafe directives
+      std::vector <SgNode*> all_pragmas = NodeQuery::querySubTree (sageFilePtr, V_SgPragmaDeclaration);
+      std::vector<SgNode*>::iterator iter;
+      for(iter=all_pragmas.begin();iter!=all_pragmas.end();iter++)
+      {
+        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
+        ROSE_ASSERT(pragmaDeclaration != NULL);
+        SageInterface::replaceMacroCallsWithExpandedStrings(pragmaDeclaration);
+        string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+        istringstream istr(pragmaString);
+        std::string key;
+        istr >> key;
+        if (key == "failsafe")
+        {
+          FailSafe::AttributeList * previous = FailSafe::getAttributeList (pragmaDeclaration);
+          FailSafe::pragma_list.push_back(pragmaDeclaration);
+          if (previous == NULL)
+          {
+             FailSafe::Attribute* attribute = parse_fail_safe_directive(pragmaDeclaration);
+             FailSafe::addAttribute(attribute, pragmaDeclaration);
+          } // end if NULL
+        } // end if key is failsafe
+
+       } // end  for all_pragmas   
+  } // end if 
+}
+
+//! A recursive descendent parser for the pragma string
+// Follow the example of projects/pragmaParsing/hcpragma.C
+FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* pragmaDecl)
+{
+  Attribute* result = NULL;
+  
+  assert (pragmaDecl != NULL);
+  assert (pragmaDecl->get_pragma() != NULL);
+  string pragmaString = pragmaDecl->get_pragma()->get_pragma();
+  // make sure it is side effect free
+  const char* old_char = c_char;
+  SgNode* old_node = c_sgnode;
+
+  c_sgnode = getNextStatement(pragmaDecl);
+  assert (c_sgnode != NULL);
+    
+  c_char = pragmaString.c_str();
+
+  // start real parsing
+  if (afs_match_substr("failsafe"))
+  {
+     if (afs_match_substr("region"))
+     {
+       result = buildAttribute(e_region, pragmaDecl); 
+     }
+     else
+     {
+       cerr<<"Error: FailSafe::parse_fail_safe_directive() expect keyword failsafe but facing:"<< c_char<<endl;
+       ROSE_ASSERT (false);
+     }
+     
+  }
+  else
+  {
+    cerr<<"Error: FailSafe::parse_fail_safe_directive() expect keyword failsafe but facing:"<< c_char <<endl;
+    ROSE_ASSERT (false);
+  } 
+
+  // undo side effects
+  c_char = old_char;
+  c_sgnode = old_node;
+  ROSE_ASSERT (result != NULL);
+  return result;
+
+}

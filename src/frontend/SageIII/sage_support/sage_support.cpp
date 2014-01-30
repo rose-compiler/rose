@@ -10,6 +10,7 @@
 #include "sage_support.h"
 #include "dwarfSupport.h"
 #include "keep_going.h"
+#include "failSafePragma.h"
 
 #include <algorithm>
 
@@ -2586,7 +2587,7 @@ SgFile::secondaryPassOverSourceFile()
   // been available from previous tools that operated on the file. For example:
   //    1) EDG ignores comments and so we collect the whole token stream in this phase.
   //    2) OFP ignores comments similarly to EDG and so we collect the whole token stream.
-  //    3) Binary disassemblily ignores the binary format so we collect this information
+  //    3) Binary disassembly ignores the binary format so we collect this information
   //       about the structure of the ELF binary separately.
   // For source code (C,C++,Fortran) we collect the whole token stream, for example:
   //    1) Comments
@@ -2664,6 +2665,8 @@ SgFile::secondaryPassOverSourceFile()
             // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
 #endif
+               // Liao, 1/29/2014, handle failsafe pragmas for resilience work
+               FailSafe::process_fail_safe_directives (sourceFile); 
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)

@@ -16,11 +16,15 @@ class SgNode;
 
 namespace FailSafe
 {
+  class Attribute;
   // Entry point for all FAIL-SAFE related handling, including parsing, AST construction and translation.
   void process_fail_safe_directives (SgSourceFile *sageFilePtr);
 
   //! Parse failsafe directives and generate/attach attributes
-  // TODO
+  void parse_directives_to_attributes(SgSourceFile* fptr);
+
+  //! Parse a single directive and return the generated attribute 
+   Attribute* parse_fail_safe_directive(SgPragmaDeclaration*);
 
   // FAIL-SAFE construct name list
   // All directive and clause types are listed so they are accessible uniformly
