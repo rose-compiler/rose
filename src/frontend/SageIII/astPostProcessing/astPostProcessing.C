@@ -336,7 +336,21 @@ void postProcessingSupport (SgNode* node)
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
 #if 1
+       // DQ (1/28/2014): This is mostly neeed for C++ so that name qualification will be handled on 
+       // the original expression trees.  This function replaces the constant folded values with the
+       // original expression trees so that the support for them is seamless.
+       // resetConstantFoldedValues(node);  Avoiding this function for C dramatically improves the 
+       // performance on the C application "wireshark" but does not make much difference elsewhere.
+       // Since it is not required for C we can just skip it.
+#if 0
+          if (SageInterface::is_Cxx_language() == true)
+             {
+               resetConstantFoldedValues(node);
+             }
+#else
+       // DQ (1/28/2014): I think we might require this for the OMP support to work (testing).
           resetConstantFoldedValues(node);
+#endif
 #else
        // DQ (10/11/2012): This is helpful to allow us to see both expression trees in the AST for debugging.
           printf ("Skipping AST Postprocessing resetConstantFoldedValues() \n");

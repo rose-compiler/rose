@@ -1988,6 +1988,9 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
           if (gnu_regparm_value > 0)
              {
                string s = StringUtility::numberToString(gnu_regparm_value);
+#if 1
+               printf ("Output __attribute__((regparm(%s))) for function = %p = %s = %s \n",s.c_str(),functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
                curprint(" __attribute__((regparm(");
                curprint(s);
 

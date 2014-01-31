@@ -5102,6 +5102,48 @@ SgProject::compileOutput()
 
      std::string compilerName;
 
+  // DQ (1/19/2014): Adding support for gnu "-S" option.
+     if (get_stop_after_compilation_do_not_assemble_file() == true)
+        {
+       // DQ (1/19/2014): Handle special case (issue a single compile command for all files using the "-S" option).
+          vector<string> argv = get_originalCommandLineArgumentList();
+
+       // strip out any rose options before passing the command line.
+          SgFile::stripRoseCommandLineOptions( argv );
+
+       // strip out edg specific options that would cause an error in the backend linker (compiler).
+          SgFile::stripEdgCommandLineOptions( argv );
+
+          vector<string> originalCommandLine = argv;
+          ROSE_ASSERT (!originalCommandLine.empty());
+
+          string & compilerNameString = originalCommandLine[0];
+          if (get_C_only() == true)
+             {
+               compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
+             }
+            else
+             {
+               printf ("Error: GNU \"-S\" option is not supported for more than the C language in ROSE at present! \n");
+               ROSE_ASSERT(false);
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+          if ( SgProject::get_verbose() > 0 )
+             {
+               printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(originalCommandLine).c_str());
+             }
+
+          errorCode = systemFromVector(originalCommandLine);
+
+          return errorCode + linkingReturnVal;
+        }
+     
+
      if (numberOfFiles() == 0)
         {
        // printf ("Note in SgProject::compileOutput(%s): numberOfFiles() == 0 \n",compilerName.c_str());
