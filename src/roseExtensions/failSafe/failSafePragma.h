@@ -78,7 +78,7 @@ namespace FailSafe
   ROSE_DLL_API bool isDirective (fail_safe_enum input);
   ROSE_DLL_API bool isClause (fail_safe_enum input);
 
-  // follow the OmpAttribute declared in OmpAttribute.h
+  // follow the example OmpAttribute declared in OmpAttribute.h
   class ROSE_DLL_API Attribute
   {
     private:
@@ -120,7 +120,8 @@ namespace FailSafe
 
       void init(); // initialized internal data
 
-      //! Convert entire directives and clauses to string
+      //! Convert individual directives and clauses associated with this attribute to string
+      // Called internally by the external public toFailSafeString() function
       std::string toFailSafeString(fail_safe_enum fs_type);
       //! Convert a variable list to x,y,z ,without parenthesis.
       std::string toFailSafeString(std::vector<std::pair<std::string,SgNode* > >);
@@ -195,6 +196,9 @@ namespace FailSafe
 
       //! Convert back to a legal pragma string
       std::string toFailSafeString();
+      //! Just another name of toFailSafeString();
+      std::string toString() {return toFailSafeString(); };
+
       friend Attribute * buildAttribute (fail_safe_enum fstype, SgNode* node);
   }; // end class Attribute
   
@@ -207,6 +211,8 @@ namespace FailSafe
       std::vector<Attribute*> attriList;
       // Restore to legal failsafe directive strings
       std::string toFailSafeString();
+      //! another name to toFailSafeString()
+      std::string toString() { return toFailSafeString();} ;
       ~AttributeList();
   };
  
