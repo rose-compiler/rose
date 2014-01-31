@@ -43,8 +43,9 @@ namespace FailSafe
    
    // 2. Clauses
    e_assert, 
-   e_specifier, 
+   e_specifier, // have to use this clause to preserve the order of clauses being parsed
    e_region_reference, 
+   e_error,
    e_violation,
    e_recover,
 
@@ -112,6 +113,9 @@ namespace FailSafe
       fail_safe_enum specifier;  // pre or post
       fail_safe_enum error_type; // error_type for error()
       fail_safe_enum violation_type; // tolerated violation type  for tolerate ()
+
+      SgNode* recovery_func; // reference to the recovery_func, should be SgFunctionRefExp
+      SgNode* arg_list; // argument list passed to the recovery function, should be SgExprListExp
 
       // prepare for named assertion regions so we don't use label
       bool bName;
@@ -184,6 +188,12 @@ namespace FailSafe
 
       void setViolationType(fail_safe_enum value);
       fail_safe_enum getViolationType() {return violation_type;};
+
+      void setRecoveryFunc(SgNode* f) {recovery_func = f;};
+      SgNode* getRecoveryFunc () {return recovery_func;} ;
+
+      void setRecoveryArgList (SgNode* l) {arg_list = l;};
+      SgNode* getRecoveryArgList () {return arg_list; }
 
       //! Check if a variable is inside a variable list of a clause/directive.
       bool isInConstruct(const std::string & variable, enum fail_safe_enum);

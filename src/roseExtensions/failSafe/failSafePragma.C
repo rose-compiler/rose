@@ -32,6 +32,7 @@ string FailSafe::toString(fail_safe_enum fs_type)
      case e_region_reference:   result = "in"; break;
      case e_violation:   result = "violation"; break;
      case e_recover:   result = "recover"; break;
+     case e_error:   result = "error"; break;
      
      // special valued clause: 
      case e_pre:   result = "pre"; break;
@@ -83,6 +84,7 @@ bool FailSafe::isClause(fail_safe_enum fs_type)
   {
     case e_assert:
     case e_specifier:
+    case e_error:
     case e_region_reference:
     case e_violation:
     case e_recover:
@@ -412,6 +414,20 @@ bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
      {
         result += FailSafe::toString (specifier);
      }
+     else if (in_type == e_error)
+     {
+        result += " error(";
+        result +=  FailSafe::toString (getErrorType() );
+        result += ") ";
+     }
+     else if (in_type == e_recover)
+     {
+         result += " recover(";
+         result += isSgFunctionRefExp(getRecoveryFunc())->unparseToString();
+         result += ",";
+         result += isSgExprListExp(getRecoveryArgList())->unparseToString();
+        result += ") ";
+     }
      else
      {
        cerr<<"Error. Unhandled enum type in FailSafe::Attribute::toFailSafeString (intype):"<<in_type<<endl;
@@ -589,6 +605,130 @@ static bool afs_match_assert (SgExpression** e1)
   return true;
 }
 
+//! Internal helper function to match error(error_type), no side effects if no match is found
+static bool afs_match_error(FailSafe::fail_safe_enum* etype)
+{
+  if (!afs_match_substr("error"))
+    return false;
+
+  if (!afs_match_char('('))
+  {
+    printf ("Error: expecting ( after parsing error \n");
+    assert (false);
+  }
+
+  //parse error_type
+  //TODO: use real type names later
+  if (afs_match_substr("ET1"))
+    *etype = FailSafe::e_type_ET1; 
+  else if (afs_match_substr("ET2"))  
+    *etype = FailSafe::e_type_ET1; 
+  else
+  {
+    printf ("Error: expecting error_type after parsing error( \n");
+    assert (false);
+  }  
+
+  if (!afs_match_char(')'))
+  {
+    printf ("Error: expecting ) after parsing assert(ETYPE \n");
+    assert (false);
+  }
+  return true;
+}
+
+//! Internal helper function to match recover (Func,para1,para2), no side effects if no match is found
+static bool afs_match_recover(FailSafe::Attribute *result)
+{
+  SgFunctionRefExp * func_ref = NULL; 
+  SgExprListExp* arg_list = NULL; 
+
+  if (!afs_match_substr("recover"))
+    return false;
+
+  if (!afs_match_char('('))
+  {
+    printf ("Error: expecting ( after parsing recover \n");
+    assert (false);
+  }
+
+  //parse function name 
+  if (afs_match_identifier())
+  {
+    ROSE_ASSERT(isSgFunctionRefExp(c_parsed_node)); // expect a function ref expression here
+    func_ref = isSgFunctionRefExp(c_parsed_node); 
+    if (!afs_match_char(','))
+    {
+      printf ("Error: expecting ( after parsing recover \n");
+      assert (false);
+    }
+    // actual parameter list
+    if (afs_match_argument_expression_list())
+    {
+      ROSE_ASSERT(isSgExprListExp(c_parsed_node));
+      arg_list = isSgExprListExp(c_parsed_node); 
+    }  
+  }
+  else
+  {
+    printf ("Error: expecting a function name after parsing recover ( \n");
+    assert (false);
+  }  
+
+  if (!afs_match_char(')'))
+  {
+    printf ("Error: expecting ) after parsing recover (func, .. \n");
+    assert (false);
+  }
+  // save parsed information to result only when completing the whole thing
+  result->addClause (FailSafe::e_recover);
+  result->setRecoveryFunc(func_ref);
+  func_ref->set_parent( c_sgnode); // set a fake parent here to enable correct unparsing
+  result->setRecoveryArgList(arg_list);
+  return true;
+}
+
+//! Match the part from assert to the rest for either status or data predicate
+// assert-clause specifier_opt region-reference-clause_opt error-classification_opt recovery-specification_opt 
+static bool afs_match_predicate_and_more (FailSafe::Attribute * result)
+{
+  // try to match assert (exp)  clause
+  SgExpression * assert_exp = NULL; 
+  if (afs_match_assert(&assert_exp))
+  {
+    result->addClause (FailSafe::e_assert);
+    result->addExpression(FailSafe::e_assert, assert_exp->unparseToString(), assert_exp);
+    // match optional specifier clause
+    if (afs_match_substr("pre"))
+    {
+      result->addClause(FailSafe::e_specifier);
+      result->setSpecifierValue (FailSafe::e_pre);
+    }
+    else if (afs_match_substr("post"))
+    {
+      result->addClause(FailSafe::e_specifier);
+      result->setSpecifierValue (FailSafe::e_post);
+    }  
+
+    //match optional region-reference-clause
+    //TODO, list of labels
+
+    // match error-classification-clause
+    FailSafe::fail_safe_enum etype;
+    if (afs_match_error (& etype))
+    {
+      result->addClause (FailSafe::e_error);
+      result->setErrorType(etype);
+    }
+    // match optional recovery clause
+    afs_match_recover (result);
+  }
+  else
+    return false;
+
+  return true; 
+}
+
 
 //! A recursive descendent parser for the pragma string
 // Follow the example of projects/pragmaParsing/hcpragma.C
@@ -604,6 +744,10 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
   SgNode* old_node = c_sgnode;
 
   c_sgnode = getNextStatement(pragmaDecl);
+  //A pragma can show up in front of the structured block affected 
+  // or follow declarations it relies on (as data predicate)
+  if (c_sgnode == NULL);
+    c_sgnode = pragmaDecl; // use the pragma as the anchor AST to enable scope search
   assert (c_sgnode != NULL);
     
   c_char = pragmaString.c_str();
@@ -618,37 +762,20 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
      else if (afs_match_substr("status")) 
      {
        result = buildAttribute(e_status_predicate, pragmaDecl); 
-       // try to match assert (exp)  clause
-       SgExpression * assert_exp = NULL; 
-       if (afs_match_assert(&assert_exp))
+       if (!afs_match_predicate_and_more (result))
        {
-         result->addClause (FailSafe::e_assert);
-         result->addExpression(FailSafe::e_assert, assert_exp->unparseToString(), assert_exp);
-        // match optional specifier clause
-        if (afs_match_substr("pre"))
-         {
-           result->addClause(FailSafe::e_specifier);
-           result->setSpecifierValue (e_pre);
-         }
-         else if (afs_match_substr("post"))
-         {
-           result->addClause(FailSafe::e_specifier);
-           result->setSpecifierValue (e_post);
-         }  
-
-         //match optional region-reference-clause
-         //TODO, list of labels
-         // match error-classification-clause
-       }
-       else
-       {
-         cerr<<"Error: FailSafe::parse_fail_safe_directive() expect assert() but facing:"<< c_char<<endl;
+         cerr<<"Error: FailSafe::parse_fail_safe_directive() expect status assert() etc. but facing:"<< c_char<<endl;
          ROSE_ASSERT (false);
        }
-    }
+     }
      else if (afs_match_substr("data")) 
      {
        result = buildAttribute(e_data_predicate, pragmaDecl); 
+       if (!afs_match_predicate_and_more (result))
+       {
+         cerr<<"Error: FailSafe::parse_fail_safe_directive() expect data assert() etc. but facing:"<< c_char<<endl;
+         ROSE_ASSERT (false);
+       }
      }
      else if (afs_match_substr("tolerance") ) 
      {

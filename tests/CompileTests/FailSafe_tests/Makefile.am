@@ -12,11 +12,13 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
-	assertion_region.c \ 
-	status_predicate.c
+	assertion_region.c \
+	status_predicate.c \
+	data_predicate.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING = \
+	data_predicate_macro.c
 
 ROSE_FLAGS = -rose:failsafe #--edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave 
 # used to find omp.h, added it as one of  rose headers

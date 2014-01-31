@@ -9,7 +9,7 @@ void foo(int U)
 
   int x, y, z;
   x = f0(y);
-#pragma failsafe status assert (x < U) pre error (ET3) recover (R3,x,y,U)  
+#pragma failsafe status assert (x < U) pre error (ET1) recover (R3,x,y,U)  
 L1: z = g(x);
 
 }
