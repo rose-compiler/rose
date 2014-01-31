@@ -71,7 +71,7 @@ class JavaParser implements Callable<Boolean> {
     public static native void cactionMethodDeclarationHeader(String name, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final, boolean java_is_synchronized, boolean java_is_public, boolean java_is_protected, boolean java_is_private, boolean java_is_strictfp, int numberOfTypeParameters, int numArguments, int numThrows, JavaToken jToken);
     public static native void cactionMethodDeclarationEnd(int num_annotations, int num_statements, JavaToken jToken);
     public static native void cactionTypeParameterReference(String package_name, String type_name, int method_index, String type_parameter_name, JavaToken jToken);
-    public static native void cactionArgumentTypeParameterReference(String package_name, String type_name, int method_index, String type_parameter_name, JavaToken jToken);
+//    public static native void cactionArgumentTypeParameterReference(String package_name, String type_name, int method_index, String type_parameter_name, JavaToken jToken);
     public static native void cactionTypeReference(String package_name, String type_name, JavaToken jToken);
     public static native void cactionQualifiedTypeReference(String package_name, String type_name, JavaToken jToken);
     public static native void cactionArgument(String argumentName, JavaToken jToken);
@@ -207,8 +207,8 @@ class JavaParser implements Callable<Boolean> {
     public static native void cactionUpdateClassSupportEnd(String className, boolean has_super_class, int num_interfaces, int num_class_members, JavaToken jToken);
     public static native void cactionBuildInnerTypeSupport(String package_name, String type_name, JavaToken jToken);
     public static native void cactionUpdateInnerTypeSupport(String package_name, String type_name, JavaToken jToken);
-    public static native void cactionBuildArgumentSupport(String name, boolean is_var_args, boolean is_final, JavaToken jToken);
-    public static native void cactionUpdateArgumentSupport(int j, String argument_name, boolean is_var_args, boolean is_final, JavaToken jToken);
+    public static native void cactionBuildArgumentSupport(String name, String argument_type_name, boolean is_var_args, boolean is_final, JavaToken jToken);
+    public static native void cactionUpdateArgumentSupport(int j, String argument_name, String argument_type_name, boolean is_var_args, boolean is_final, JavaToken jToken);
     public static native void cactionBuildMethodSupportStart(String methodName, int method_index, JavaToken method_loc);
     public static native void cactionUpdateMethodSupportStart(String method_name, int method_index, int num_formal_parameters, JavaToken jToken);
     public static native void cactionBuildMethodSupportEnd(String methodName, int method_index, boolean is_constructor, boolean is_abstract, boolean is_native, int num_type_parameters, int num_arguments, boolean is_compiler_generated, JavaToken method_loc, JavaToken args_loc);

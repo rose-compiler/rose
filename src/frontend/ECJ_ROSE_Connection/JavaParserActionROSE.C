@@ -522,6 +522,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         SgType *type = isSgType(*extension);
         ROSE_ASSERT(type);
         attribute -> addNode(type);
+getTypeName(type); // TODO: this is here temporarily to check whether or not this file needs to be fully qualified in this file.
     }
 
     class_definition -> setAttribute("extensions", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
@@ -684,8 +685,8 @@ cout.flush();
     ROSE_ASSERT(super_type_list.size() == num_super_types);
     std::list<SgNode *> extension_list;
     for (int i = 0; i < num_super_types; i++) {
-        SgNamedType *type = (SgNamedType *) astJavaComponentStack.popType();
-        extension_list.push_front(type);
+         SgNamedType *type = (SgNamedType *) astJavaComponentStack.popType();
+         extension_list.push_front(type);
 // TODO: Remove this!
 /*
         SgClassType *class_type = isSgClassType(type);
@@ -700,12 +701,12 @@ cout.flush();
                                                                                           : qualified_type -> get_declaration()) -> get_definingDeclaration());
 */
         SgClassDeclaration *super_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
-
+ 
         ROSE_ASSERT(super_declaration);
         SgBaseClass *base_class =  super_type_list[i];
         base_class -> set_base_class(super_declaration);
         if (SgProject::get_verbose() > 2) {
-            cerr << "(2) Adding super type "
+            cerr << "(2) Updating super type "
                  << getTypeName(type)
                  << " ["
                  << i
@@ -716,6 +717,9 @@ cout.flush();
         }
     }
 
+    //
+    //
+    //
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
     ROSE_ASSERT(attribute);
 // TODO: Remove this!
@@ -933,7 +937,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_var_args, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, jclass, jstring java_argument_name, jstring java_argument_type_name, jboolean java_is_var_args, jboolean java_is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Build argument support\n");
 
@@ -941,7 +945,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, 
 //    SgFunctionDefinition *method_definition = isSgFunctionDefinition(astJavaScopeStack.top());
 //    ROSE_ASSERT(method_definition);
 
-    SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
+    SgName argument_name = convertJavaStringToCxxString(env, java_argument_name),
+           argument_type_name = convertJavaStringToCxxString(env, java_argument_type_name);
     bool is_final = java_is_final;
     bool is_var_args = java_is_var_args;
 
@@ -1012,7 +1017,7 @@ cout.flush();
         SgType *element_type = array_type -> get_base_type();
 
         initialized_name -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
-        initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(element_type) + "..."));
+        initialized_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(element_type) + "..."));
     }
     else {
 // TODO: Remove this
@@ -1020,11 +1025,15 @@ cout.flush();
 cout << "Processing parameter type ("
      << argument_type -> class_name()
      << ") "
-     << getTypeName(argument_type)
+     << argument_type_name // getTypeName(argument_type)
+     << " for argument "
+     << argument_name.getString()
+     << " file is "
+     << (::currentSourceFile == NULL ? " null" : " set") 
 << endl;
 cout.flush();
 */
-       initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
+      initialized_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(argument_type)));
     }
 
 // TODO: Remove this
@@ -1045,11 +1054,12 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateArgumentSupport(JNIEnv *env, jclass, jint argument_index, jstring java_argument_name, jboolean is_var_args, jboolean is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateArgumentSupport(JNIEnv *env, jclass, jint argument_index, jstring java_argument_name, jstring java_argument_type_name, jboolean is_var_args, jboolean is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Update argument support\n");
 
-    SgName arg_name = convertJavaStringToCxxString(env, java_argument_name);
+    SgName argument_name = convertJavaStringToCxxString(env, java_argument_name),
+           argument_type_name = convertJavaStringToCxxString(env, java_argument_type_name);
 
     SgFunctionDefinition *method_definition = isSgFunctionDefinition(astJavaScopeStack.top());
 // TODO: Remove this!
@@ -1076,7 +1086,7 @@ cout << "Argument "
      << " of method "
      << method_definition -> get_declaration() -> get_name().getString()
      << ": "
-     << arg_name.getString()
+     << argument_name.getString()
      << " replacing "
      << initialized_name -> get_name().getString()
      << " has location: "  
@@ -1113,11 +1123,11 @@ cout << "Updating  argument type to "
      << endl;
 cout.flush();
 */
-    SgVariableDeclaration *alias_declaration = SageBuilder::buildVariableDeclaration(arg_name, argument_type, NULL, method_definition);
+    SgVariableDeclaration *alias_declaration = SageBuilder::buildVariableDeclaration(argument_name, argument_type, NULL, method_definition);
     ROSE_ASSERT(alias_declaration);
     alias_declaration -> set_parent(method_definition);
     ROSE_ASSERT(alias_declaration -> get_scope() != NULL);
-    SgInitializedName *alias_name = alias_declaration -> get_decl_item(arg_name);
+    SgInitializedName *alias_name = alias_declaration -> get_decl_item(argument_name);
     ROSE_ASSERT(alias_name);
     ROSE_ASSERT(alias_name -> get_scope() != NULL);
 
@@ -1152,11 +1162,11 @@ cout.flush();
         SgType *element_type = array_type -> get_base_type();
 
         alias_name -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
-        alias_name -> setAttribute("type", new AstRegExAttribute(getTypeName(element_type) + "..."));
+        alias_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(element_type) + "..."));
     }
     else {
         ROSE_ASSERT(! initialized_name -> attributeExists("var_args"));
-        alias_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
+        alias_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(argument_type)));
     }
 
 // TODO: Remove this old code... Replaced by the code above.
@@ -1172,7 +1182,7 @@ cout.flush();
 */
 
     SgAliasSymbol *aliasSymbol = new SgAliasSymbol(initialized_name -> search_for_symbol_from_symbol_table());
-    method_definition -> insert_symbol(arg_name, aliasSymbol);
+    method_definition -> insert_symbol(argument_name, aliasSymbol);
     initialized_name -> setAttribute("real_name", new AstSgNodeAttribute(alias_name));
 
     astJavaComponentStack.push(alias_name);
@@ -1183,9 +1193,9 @@ if (method_definition -> get_declaration() -> get_name().getString().compare("an
 cout << "Remapping the type of argument " << argument_index <<  " of method analyzeMethod from " << getTypeName(initialized_name -> get_type()) << " to " << getTypeName(alias_name -> get_type()) << endl;
 cout.flush();
 }
-variable_symbol = lookupVariableByName(arg_name);
+variable_symbol = lookupVariableByName(argument_name);
 ROSE_ASSERT(variable_symbol);
-cout << "Found variable " << variable_symbol -> get_name().getString() << " by looking up " << arg_name << endl;
+cout << "Found variable " << variable_symbol -> get_name().getString() << " by looking up " << argument_name << endl;
 cout.flush();
 */
 
@@ -1969,6 +1979,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationError(JN
         printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
 
     string error_message = convertJavaStringToCxxString(env, java_error_message);
+cout << "ECJ Error: "
+     << error_message
+     << endl;
+cout.flush();
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
@@ -2673,6 +2687,16 @@ cout.flush();
     method_declaration -> setAttribute("type", new AstRegExAttribute(method_declaration -> attributeExists("alternate-return-type") // TODO: This is here to bypass a bug!!!  See Java_JavaParser_cactionUpdateMethodSupportStart.
                                                                            ? ((AstRegExAttribute *) method_declaration -> getAttribute("alternate-return-type")) -> expression
                                                                            : getTypeName(method_declaration -> get_type() -> get_return_type())));
+/*
+cout << "The return type for method "
+     << name.getString()
+     << " is ("
+     << method_declaration -> get_type() -> get_return_type() -> class_name()
+     << ") "
+     << getTypeName(method_declaration -> get_type() -> get_return_type())
+<< endl;
+cout.flush();
+*/
     ROSE_ASSERT(method_declaration -> attributeExists("type"));
     astJavaScopeStack.push(type_space);
     astJavaScopeStack.push(method_definition);
@@ -2888,7 +2912,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
 }
 
 
-
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside cactionArgumentTypeParameterReference\n");
@@ -2899,7 +2923,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentTypeParameterReference(JNI
 // TODO: Remove this
 //cout << "Here 8" << endl;
 //cout.flush();
-    SgType *enclosing_type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+SgType *enclosing_type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 *//*);
     ROSE_ASSERT(enclosing_type);
 // TODO: Remove this !!!
 /*
@@ -2912,8 +2936,10 @@ cout << "Looking for type parameter "
 << endl;
 cout.flush();
 */
+/*
     SgClassDeclaration *class_declaration = isSgClassDeclaration(enclosing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration);
+*/
     /*
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     ROSE_ASSERT(class_definition);
@@ -2957,6 +2983,7 @@ ROSE_ASSERT(class_definition);
     // 
     //  Since this function is only called for raw parameters, we should only look for the parameter type in question in the enclosing type.
     // 
+/*
     AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
     ROSE_ASSERT(type_space_attribute);
     SgScopeStatement *type_space = (SgScopeStatement *) type_space_attribute -> getNode();
@@ -2992,6 +3019,7 @@ cout.flush();
     if (SgProject::get_verbose() > 0)
         printf ("Exiting cactionArgumentTypeParameterReference\n");
 }
+*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject jToken) {
@@ -4746,8 +4774,9 @@ cout.flush();
 // TODO: Remove this !
 
 if (! variable_symbol) {
-  cout << "Could not find variable " << field_name.getString()
-       << " in type " << getTypeName(receiver_type)
+  cout << "Could not find variable \"" << field_name.getString()
+       << "\" in type: " << declaration -> get_qualified_name().getString() // getTypeName(receiver_type)
+       << " in file " << ::currentSourceFile -> getFileName()
        << endl;
   cout.flush();
 }

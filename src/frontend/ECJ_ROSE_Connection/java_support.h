@@ -37,8 +37,12 @@ extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType 
 
 string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
+bool isVisibleSimpleTypeName(SgNamedType *);
 bool isConflictingType(string, SgClassType *);
 bool isImportedType(SgClassType *);
+
+bool mustBeFullyQualified(SgClassType *class_type);
+string markAndGetQualifiedTypeName(SgClassType *class_type);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
