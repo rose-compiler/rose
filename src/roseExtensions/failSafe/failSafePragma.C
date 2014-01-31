@@ -371,36 +371,49 @@ bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
     return result;
   }
 
-//! Convert directives and clauses to string 
-  // Top down recursive conversion: directive ,directive-optional stuff, 
-  // then clauses one by one, plus clause-optional stuff
-  std::string FailSafe::Attribute::toFailSafeString(FailSafe::fail_safe_enum fs_type)
+//! Convert individual directives and clauses to string 
+// This is called by FailSafe::Attribute::toFailSafeString() 
+// Note that the input parameter may be totally different from the directive type of the current attribute!
+  std::string FailSafe::Attribute::toFailSafeString( FailSafe::fail_safe_enum in_type)
   { 
     string result;
     //Directives ------------------
-    if (isDirective(fs_type))
+    if (isDirective(in_type))
     {
       //common string for all directives
       // region, status, data, tolerance, double/triple_redundancy, save, 
-      result += toString(fs_type);
+      result += FailSafe::toString(in_type);
 
       // extra stuff associated with a directive, but not clauses
-     if (fs_type == e_region) //TODO prepare for named region later
+      if (in_type == e_region) //TODO prepare for named region later
+      {
+        if (isNamed())
+          result+=" ("+ getName()+")";
+      }
+      else
+        if (in_type == e_save)
+        {
+          if(hasVariableList(in_type))
+          {
+            string varListString = toFailSafeString(getVariableList(in_type));
+            result+=" (" + varListString + ")";
+          }
+        }
+    } // end if directive
+     else if (in_type == e_assert) // handle clauses one by one
      {
-       if (isNamed())
-         result+=" ("+ getName()+")";
+        result += FailSafe::toString(in_type);
+        SgExpression* exp = getExpression(FailSafe::e_assert).second;
+        ROSE_ASSERT (exp != NULL);
+        result += " (";
+        result += exp->unparseToString();
+        result += ") ";
      }
      else
-     if (fs_type == e_save)
      {
-       if(hasVariableList(fs_type))
-        {
-          string varListString = toFailSafeString(getVariableList(fs_type));
-          result+=" (" + varListString + ")";
-        }
+       cerr<<"Error. Unhandled enum type in FailSafe::Attribute::toFailSafeString (intype):"<<in_type<<endl;
+       ROSE_ASSERT (false);
      }
-    } // end if directive
-    // else if () // TODO: handle clauses one by one
 
     return result;
   }
@@ -541,6 +554,39 @@ void FailSafe::parse_directives_to_attributes(SgSourceFile* sageFilePtr)
   } // end if 
 }
 
+
+//! Internal helper function to match assert(expression), no side effects if no match is found
+static bool afs_match_assert (SgExpression** e1)
+{
+  if (!afs_match_substr("assert"))
+    return false;
+
+  if (!afs_match_char('('))
+  {
+    printf ("Error: expecting ( after parsing assert \n");
+    assert (false);
+  }
+  // mandatory expression
+  if (!afs_match_assignment_expression())
+  {
+    printf ("Error: expecting an expression after parsing assert(\n");
+    assert (false);
+  }
+
+  // retrieve the obtained expression AST piece
+  assert (c_parsed_node != NULL);
+  assert (isSgExpression(c_parsed_node) != NULL);
+  *e1 = isSgExpression(c_parsed_node);
+
+  if (!afs_match_char(')'))
+  {
+    printf ("Error: expecting ) after parsing assert(exp \n");
+    assert (false);
+  }
+  return true;
+}
+
+
 //! A recursive descendent parser for the pragma string
 // Follow the example of projects/pragmaParsing/hcpragma.C
 FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* pragmaDecl)
@@ -565,6 +611,37 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
      if (afs_match_substr("region"))
      {
        result = buildAttribute(e_region, pragmaDecl); 
+     }
+     else if (afs_match_substr("status")) 
+     {
+       result = buildAttribute(e_status_predicate, pragmaDecl); 
+       // try to match assert (exp)  clause
+       SgExpression * assert_exp = NULL; 
+       if (afs_match_assert(&assert_exp))
+       {
+         result->addClause (FailSafe::e_assert);
+         result->addExpression(FailSafe::e_assert, assert_exp->unparseToString(), assert_exp);
+       }
+    }
+     else if (afs_match_substr("data")) 
+     {
+       result = buildAttribute(e_data_predicate, pragmaDecl); 
+     }
+     else if (afs_match_substr("tolerance") ) 
+     {
+       result = buildAttribute(e_tolerance, pragmaDecl); 
+     }
+     else if (afs_match_substr("double_redundancy")) 
+     {
+       result = buildAttribute(e_double_redundancy, pragmaDecl); 
+     }
+     else if (afs_match_substr("triple_redundancy")) 
+     {
+       result = buildAttribute(e_triple_redundancy, pragmaDecl); 
+     }
+     else if (afs_match_substr("save")) 
+     {
+       result = buildAttribute(e_save, pragmaDecl); 
      }
      else
      {

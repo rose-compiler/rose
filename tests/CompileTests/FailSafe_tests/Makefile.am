@@ -12,7 +12,8 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
-	assertion_region.c 
+	assertion_region.c \ 
+	status_predicate.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 TESTCODE_CURRENTLY_FAILING = 
