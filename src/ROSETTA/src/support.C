@@ -1251,6 +1251,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "unparse_tokens", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/30/2014): Support testing of unparsing using tokens with synthetic marking of 
+  // statements to be transformations.  This is used the test the transition steps between
+  // unparsing from the AST vs. the token stream.
+     File.setDataPrototype ("int", "unparse_tokens_testing", "= 0",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 1
   // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
   // This testing is useful but interferes with performance testing using HPCToolKit.

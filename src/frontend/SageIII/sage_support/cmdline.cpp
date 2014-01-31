@@ -340,6 +340,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (1/26/2014): Support for usage such as -version-info 8:9:8
           argument == "-version-info" ||
 
+       // DQ (1/30/2014): Support for usage such as -rose:unparse_tokens_testing 4
+          argument == "-rose:unparse_tokens_testing" ||
+
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
           argument == "-MM" ||
           false)
@@ -2029,7 +2032,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
   //
   // DQ (11/20/2010): Added token handling support.
-  // Turn on the output of the tokens from the parser (only applies to Fortran support).
+  // Turn on the output of the tokens from the parser (only applies to C and Fortran support).
   //
      set_unparse_tokens(false);
      ROSE_ASSERT (get_unparse_tokens() == false);
@@ -2038,6 +2041,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse tokens mode ON \n");
           set_unparse_tokens(true);
+        }
+
+  //
+  // DQ (1/30/2014): Added more token handling support (internal testing).
+  //
+     set_unparse_tokens_testing(0);
+     ROSE_ASSERT (get_unparse_tokens_testing() == 0);
+     int integerOptionForUnparseTokensTesting = 0;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(unparse_tokens_testing)",integerOptionForUnparseTokensTesting,true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse tokens testing mode ON: integerOptionForUnparseTokensTesting = %d \n",integerOptionForUnparseTokensTesting);
+          set_unparse_tokens_testing(integerOptionForUnparseTokensTesting);
         }
 
   //
@@ -3330,7 +3346,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
+
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
+     int integerOption_token_tests = 0;
+     optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
+
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
@@ -3484,7 +3504,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // At the moment, this fixes a problem where the version number is being treated as a file
   // and causing ROSE to crash in the command line handling.
      char* version_string = NULL;
-     optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
+  // optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
+     optionCount = sla(argv, "-", "($)^", "(version-info)",version_string,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -4945,11 +4966,13 @@ if (get_C_only() ||
        // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
           compilerNameString.push_back("-DUSE_ROSE");
 
+       // DQ (1/29/2014): I think this still makes since when we want to make sure that the this is code that might be
+       // special to the backend (e.g. #undef <some macros>).  So make this active once again.
        // DQ (9/14/2013): We need to at times distinguish between the use of USE_ROSE and that this is the backend compilation.
        // This allows for code to be placed into input source code to ROSE and preserved (oops, this would not work since
        // any code in the macro that was not active in the frontend would not survive to be put into the generated code for
        // the backend).  I don't think there is a way to not see code in the front-end, yet see it in the backend.
-       // compilerNameString.push_back("-DUSE_ROSE_BACKEND");
+          compilerNameString.push_back("-DUSE_ROSE_BACKEND");
 
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering

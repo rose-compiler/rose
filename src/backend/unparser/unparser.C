@@ -320,7 +320,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
                                   file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
                                   file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
-
+#endif
+#if 0
      file->display("file: Unparser::unparseFile");
 #endif
 
@@ -639,8 +640,14 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
   // Note that these are the SgToken IR nodes and we have generated a token stream via the type: LexTokenStreamType.
   // ROSE_ASSERT(file->get_token_list().empty() == true);
-     ROSE_ASSERT(file->get_token_list().empty() == false);
 
+
+  // ROSE_ASSERT(file->get_token_list().empty() == false);
+     if (file->get_token_list().empty() == true)
+        {
+          printf ("Warning: unparseFileUsingTokenStream(): In no tokens found \n");
+          return;
+        }
 #if 0
      ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
      ROSE_ASSERT(currentListOfAttributes != NULL);
