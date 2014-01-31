@@ -333,6 +333,16 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // This is required where within the "git" build system the input file is "/dev/null" which does not have
        // a suffix from which to compute the associated language.
           argument == "-x" ||
+
+       // DQ (1/20/2014): Adding support for gnu's -undefined option.
+          argument == "-u" ||
+          argument == "-undefined" ||
+
+       // DQ (1/26/2014): Support for usage such as -version-info 8:9:8
+          argument == "-version-info" ||
+
+       // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
+          argument == "-MM" ||
           false)
         {
           result = true;
@@ -722,6 +732,80 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
           p_C_PreprocessorOnly = true;
+        }
+
+  // DQ (1/19/2014): Adding support for gnu "-S" option, which means:
+  // Stop after the stage of compilation proper; do not assemble. The output is in the form of an assembler code file for each non-assembler input file specified.
+  // By default, the assembler file name for a source file is made by replacing the suffix .c, .i, etc., with .s.
+  // Input files that don't require compilation are ignored.
+  //
+  // Standard compiler options (allows alternative -S option to just run gcc directly)
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(S)",false) == true )
+        {
+       // printf ("/* option -S found (just run backend compiler with -S to gcc) */ \n");
+          p_stop_after_compilation_do_not_assemble_file = true;
+        }
+
+  // DQ (1/20/2014): Adding support for gnu -undefined option to ROSE command line.
+  // -u SYMBOL, --undefined SYMBOL    Start with undefined reference to SYMBOL
+     string stringOptionForUndefinedSymbol;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(u|undefined)",stringOptionForUndefinedSymbol,true) == true )
+        {
+          printf ("Found -u -undefined option specified on command line: stringOptionForUndefinedSymbol = %s \n",stringOptionForUndefinedSymbol.c_str());
+
+          p_gnuOptionForUndefinedSymbol = stringOptionForUndefinedSymbol;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-undefined option specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -MM option to ROSE command line.
+     string stringOptionForMakeDepenenceFile;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(MM)",stringOptionForMakeDepenenceFile,true) == true )
+        {
+          printf ("Found -MM dependence information option specified on command line: stringOptionForMakeDepenenceFile = %s \n",stringOptionForMakeDepenenceFile.c_str());
+
+       // p_dependenceFilename = stringOptionForMakeDepenenceFile;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-MM dependence file specification specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -version-info option to ROSE command line.
+     string stringOptionForVersionSpecification;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(version-info)",stringOptionForVersionSpecification,true) == true )
+        {
+          printf ("Found -version-info option specified on command line: stringOptionForVersionSpecification = %s \n",stringOptionForVersionSpecification.c_str());
+
+       // p_gnuOptionForVersionSpecification = stringOptionForVersionSpecification;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-version-info option specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/20/2014): Adding support for "-m32" option for 32-bit mode on 64-bit systems.
+  // The 32-bit environment sets int, long and pointer to 32 bits.
+  // The 64-bit environment sets int to 32 bits and long and pointer to 64 bits (ROSE does not support the -m64 command line option).
+  //
+  // Standard compiler options (allows alternative -m32 option)
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(m32)",false) == true )
+        {
+          printf ("detected use of -m32 mode (will be passed to backend compiler) */ \n");
+          p_mode_32_bit = true;
         }
 
   //
@@ -1612,6 +1696,12 @@ SgFile::usage ( int status )
 "     -fno-implicit-inline-templates\n"
 "                             disable output of inlined template instantiations\n"
 "                             in generated source\n"
+"     -S                      gnu option trivial\n"
+"     -u (-undefined)         gnu option trivial\n"
+"     -version-info <name>    gnu option trivial (option not passed on to linker yet, \n"
+"                             incomplete implementation)\n"
+"     -MM <filename>          gnu Makefile dependence generation (option not passed \n"
+"                             on to compiler yet, incomplete implementation)\n"
 "\n"
 "Informative output:\n"
 "     -rose:help, --help, -help, --h\n"
@@ -3140,6 +3230,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           ROSE_ASSERT(project->get_C_PreprocessorOnly() == true);
         }
 
+  // DQ (1/19/2014): This option "-S" is required for some build systems (e.g. valgrind).
+  //
+  // Standard compiler options (allows alternative -S option to just run with gcc)
+  //
+     if ( CommandlineProcessing::isOption(argv,"-","(S)",true) == true )
+        {
+       // printf ("/* option -S found (just run backend compiler with -S to call gcc) */ \n");
+          p_useBackendOnly = true;
+       // p_skip_buildHigherLevelGrammars  = true;
+          p_disable_edg_backend  = true; // This variable should be called frontend NOT backend???
+          p_skip_transformation  = true;
+          p_skip_unparse         = true;
+          p_skipfinalCompileStep = false;
+
+       // DQ (8/22/2009): Verify that this was set when the command line was processed at the SgProject level.
+          SgProject* project = this->get_project();
+          ROSE_ASSERT(project != NULL);
+          ROSE_ASSERT(project->get_stop_after_compilation_do_not_assemble_file() == true);
+        }
+
   //
   // Standard compiler options (allows alternative -H option to just output header file info)
   //
@@ -3153,6 +3263,24 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           p_skip_unparse         = true;
           p_skipfinalCompileStep = false;
         }
+
+#if 0
+  // DQ (1/20/2014): This option is only be be processed global (in SgProject support) and not on a file by file basis (SgFile support).
+  // DQ (1/20/2014): Adding support for gnu -undefined option to ROSE command line.
+  // -u SYMBOL, --undefined SYMBOL    Start with undefined reference to SYMBOL
+     string stringOptionForUndefinedSymbol;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-","(u|undefined)",stringOptionForUndefinedSymbol,true) == true )
+        {
+          printf ("Found -u -undefined option specified on command line: stringOptionForUndefinedSymbol = %s \n",stringOptionForUndefinedSymbol.c_str());
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-undefined option specified on command line (for SgFile)\n");
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
   //
   // negative_test option: allows passing all tests to be treated as an error!
@@ -3381,6 +3509,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
+
+  // DQ (1/26/2014): Remove this from being output to the backend compiler.
+  // This also likely means that we are not passing it on to the backend (linker).
+  // At the moment, this fixes a problem where the version number is being treated as a file
+  // and causing ROSE to crash in the command line handling.
+     char* version_string = NULL;
+     optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -3757,6 +3892,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
+
+  // DQ (1.20/2014): Adding support for -m32 and associated macro to ROSE to force size_t to be defined to be 32-bit instead of 64-bit.
+     if (project->get_mode_32_bit() == true)
+        {
+          printf ("Setting ROSE_M32BIT mode! \n");
+
+          roseSpecificDefs.push_back("-DROSE_M32BIT");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      for (unsigned int i=1; i < argv.size(); i++)

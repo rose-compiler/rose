@@ -120,7 +120,6 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
- test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -158,7 +157,6 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
- test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
@@ -216,13 +214,11 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
- test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
- test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -263,7 +259,6 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
- test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
@@ -271,10 +266,8 @@ test2005_33.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
- test2005_39.C \
 test2005_40.C \
 test2005_41.C \
- test2005_42.C \
 test2005_43.C \
 test2005_44.C \
 test2005_45.C \
@@ -312,7 +305,6 @@ test2005_78.C \
 test2005_79.C \
 test2005_80.C \
 test2005_81.C \
- test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -322,12 +314,10 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
- test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
@@ -352,11 +342,6 @@ test2005_124.C \
 test2005_125.C \
 test2005_126.C \
 test2005_127.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
-test2005_133.C \
 test2005_134.C \
 test2005_135.C \
 test2005_136.C \
@@ -398,7 +383,6 @@ test2005_176.C \
 test2005_177.C \
 test2005_178.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_184.C \
 test2005_185.C \
@@ -434,7 +418,6 @@ test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
@@ -475,7 +458,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -602,7 +584,6 @@ test2007_133.C \
 test2007_135.C \
 test2007_137.C \
 test2007_140.C \
-test2007_141.C \
    test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -660,7 +641,6 @@ test2009_27.C \
 test2009_28.C \
 test2009_30.C \
 test2009_39.C \
-test2009_40.C \
 test2009_42.C \
 test2010_03.C \
 test2010_04.C \
@@ -671,7 +651,6 @@ test2010_19.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
-test2011_06.C \
 test2011_07.C \
 test2011_19.C \
 test2011_20.C \
@@ -797,12 +776,40 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
-inputBug327.C \
 test2005_09.C \
 test2005_104.C \
-test2010_24.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
+
+# DQ (1/28/2014): Failing test (likely due to new nodes in AST 
+# from construction of expression trees from costants).
+# test2005_42.C (fails with gnu g++ 4.2.4 compiler)
+# test2004_35.C (fails with gnu 4.4.5 compiler, passes with g++ 4.2.4)
+
+# These all faile with g++ 4.4.5, but pass with g++ 4.2.4
+NEW_COMPILER_4_4_5_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
+ test2004_35.C \
+ test2004_77.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_28.C \
+ test2005_39.C \
+ test2005_82.C \
+ test2005_93.C \
+ test2005_98.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_132.C \
+ test2005_133.C \
+ test2005_181.C \
+ test2006_20.C \
+ test2006_79.C \
+ test2007_141.C \
+ test2009_40.C \
+ test2011_06.C \
+ inputBug327.C\
+ test2010_24.C 
 
 
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.

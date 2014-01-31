@@ -1810,6 +1810,18 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "unparse_in_same_directory_as_input_file", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/19/2014): This option "-S" is required for some build systems (e.g. valgrind).
+     Project.setDataPrototype("bool", "stop_after_compilation_do_not_assemble_file", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/20/2014): This option "-u" or "-undefined" is required for some build systems (e.g. valgrind).
+     Project.setDataPrototype("std::string", "gnuOptionForUndefinedSymbol", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
+     Project.setDataPrototype("bool", "mode_32_bit", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);

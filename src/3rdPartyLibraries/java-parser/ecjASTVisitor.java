@@ -76,7 +76,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                     this.unitInfo.createJavaToken(type));
         }
         else
-*/        	
+*/        
         if (MethodHeaderDelimiters.containsKey(node)) {
             AbstractMethodDeclaration abstract_method = MethodHeaderDelimiters.get(node);
             if (abstract_method instanceof ConstructorDeclaration) {
@@ -758,7 +758,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.setupClass(base_type, this.unitInfo);
         }
         
-        javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node), false /* is_formal_parameter_type_mapping */);
+        javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node));
         JavaParser.cactionArrayTypeReference(node.dimensions(),
                                              this.unitInfo.createJavaToken(node));
 
@@ -792,7 +792,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.setupClass(base_type, this.unitInfo);
         }
 
-        javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node), false /* is_formal_parameter_type_mapping */);
+        javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node));
         JavaParser.cactionArrayTypeReference(node.dimensions(),
                                              this.unitInfo.createJavaToken(node));
 
@@ -1514,6 +1514,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FieldReference, BlockScope)");
 
+        javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1526,7 +1527,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, BlockScope)");
 
-        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node), false /* is_formal_parameter_type_mapping */); // push the receiver type
+        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
         JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1538,6 +1539,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FieldReference, ClassScope)");
 
+        javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1550,7 +1552,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, ClassScope)");
 
-        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node), false /* is_formal_parameter_type_mapping */); // push the receiver type
+        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
         JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1975,7 +1977,7 @@ javaParserSupport.getMethodKey(node.binding) +
                                          this.unitInfo.createJavaToken(node));
 */
 
-        javaParserSupport.generateAndPushType(node.actualReceiverType.erasure(), this.unitInfo, this.unitInfo.createJavaToken(node), false /* is_formal_parameter_type_mapping */); // push the receiver type
+        javaParserSupport.generateAndPushType(node.actualReceiverType.erasure(), this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
         JavaParser.cactionMessageSendEnd(node.binding.isStatic(),
                                          (! node.receiver.isImplicitThis()),
                                          javaParserSupport.getPackageName(node.binding.declaringClass),
@@ -1993,9 +1995,11 @@ javaParserSupport.getMethodKey(node.binding) +
 
     /**
      * 
+     * 
      * @param method_binding
      * @param location
      */
+/*    
     private void pushRawMethodParameterTypes(MethodBinding method_binding, JavaToken location) {
         String qualified_name = javaParserSupport.getCanonicalName(method_binding.declaringClass);
 
@@ -2006,10 +2010,11 @@ javaParserSupport.getMethodKey(node.binding) +
         TypeBinding parameter_types[] = method_binding.parameters;
         for (int i = 0; i < parameter_types.length; i++) {
             TypeBinding parameter_type_binding = parameter_types[i];
-            javaParserSupport.generateAndPushType(parameter_type_binding, this.unitInfo, location, true /* is_formal_parameter_type_mapping */);
+            javaParserSupport.generateAndPushType(parameter_type_binding, this.unitInfo, location, true // is_formal_parameter_type_mapping
+                                                 );
         }
     }
-
+*/
 /*
     public void processRawParameters(MethodBinding method_binding) {
         TypeBinding parameter_types[] = method_binding.parameters;
@@ -2165,10 +2170,16 @@ javaParserSupport.getMethodKey(node.binding) +
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering exit(NormalAnnotation, BlockScope)");
 
-        if (node.type != null && node.memberValuePairs != null) {
-            JavaParser.cactionNormalAnnotationEnd(node.memberValuePairs.length, this.unitInfo.createJavaToken(node));
+        if (node.type != null) {
+            JavaParser.cactionNormalAnnotationEnd((node.memberValuePairs != null ? node.memberValuePairs.length : 0), this.unitInfo.createJavaToken(node));
         }
-        else assert(node.type == null && node.memberValuePairs == null);
+        else {
+System.out.println("In file " + this.unitInfo.fileName + " I found a normal annotation with " +
+(node.type == null ? " no type " : " a type ") + "and" + 
+(node.memberValuePairs == null ? " no member value pairs" : (node.memberValuePairs.length + " member value pairs.")));
+System.out.flush();
+//            assert(node.memberValuePairs == null);
+        }
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(NormalAnnotation, BlockScope)");

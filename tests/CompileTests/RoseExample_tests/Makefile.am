@@ -219,6 +219,7 @@ check-local:
 	@echo "*******************************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o rose_*.[cC] *.dot
 	rm -rf QMTest
 	rm -rf measure_* database_* *.hpcstruct
+	rm -f *.passed *.failed
