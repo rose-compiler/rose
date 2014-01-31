@@ -164,7 +164,7 @@ split_worklist_1d () {
 # that have approximately the same number of points but which minimize the length of the perimeter.
 split_worklist_2d () {
     local nprocs="$1" njobs="${2-64}"
-    $BLDDIR/31-split-2dworklist $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
+    $BLDDIR/31-split-2dworklist --threads=$nprocs $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
     rm $worklist
     echo $worklist-[a-z][a-z]
 }
