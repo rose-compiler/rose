@@ -82,6 +82,7 @@ bool FailSafe::isClause(fail_safe_enum fs_type)
   switch (fs_type)
   {
     case e_assert:
+    case e_specifier:
     case e_region_reference:
     case e_violation:
     case e_recover:
@@ -113,7 +114,6 @@ void FailSafe::process_fail_safe_directives (SgSourceFile *sageFilePtr)
 
 void FailSafe::Attribute::init()
 {
-  bSpecifier = false;
   bName = false;
 }
 
@@ -293,13 +293,12 @@ std::pair<std::string, SgExpression*> FailSafe::Attribute::getExpression(fail_sa
   return expressions[targetConstruct];
 }
 
-void FailSafe::Attribute::setSpecifier (FailSafe::fail_safe_enum valuex)
+void FailSafe::Attribute::setSpecifierValue (FailSafe::fail_safe_enum valuex)
 {
   switch (valuex)
   { 
     case e_pre:
     case e_post:
-      bSpecifier = true;
       specifier = valuex;
       break;
     default: 
@@ -408,6 +407,10 @@ bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
         result += " (";
         result += exp->unparseToString();
         result += ") ";
+     }
+     else if (in_type == e_specifier)
+     {
+        result += FailSafe::toString (specifier);
      }
      else
      {
@@ -621,6 +624,26 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
        {
          result->addClause (FailSafe::e_assert);
          result->addExpression(FailSafe::e_assert, assert_exp->unparseToString(), assert_exp);
+        // match optional specifier clause
+        if (afs_match_substr("pre"))
+         {
+           result->addClause(FailSafe::e_specifier);
+           result->setSpecifierValue (e_pre);
+         }
+         else if (afs_match_substr("post"))
+         {
+           result->addClause(FailSafe::e_specifier);
+           result->setSpecifierValue (e_post);
+         }  
+
+         //match optional region-reference-clause
+         //TODO, list of labels
+         // match error-classification-clause
+       }
+       else
+       {
+         cerr<<"Error: FailSafe::parse_fail_safe_directive() expect assert() but facing:"<< c_char<<endl;
+         ROSE_ASSERT (false);
        }
     }
      else if (afs_match_substr("data")) 

@@ -43,7 +43,7 @@ namespace FailSafe
    
    // 2. Clauses
    e_assert, 
-//   e_specifier, 
+   e_specifier, 
    e_region_reference, 
    e_violation,
    e_recover,
@@ -109,7 +109,6 @@ namespace FailSafe
       std::map<fail_safe_enum, std::pair<std::string, SgExpression*> > expressions;
 
       // Values for some clauses
-      bool bSpecifier;  // indicate if pre or post appears, if so, the value is set by specifier
       fail_safe_enum specifier;  // pre or post
       fail_safe_enum error_type; // error_type for error()
       fail_safe_enum violation_type; // tolerated violation type  for tolerate ()
@@ -177,9 +176,8 @@ namespace FailSafe
       std::pair<std::string, SgExpression*> getExpression(fail_safe_enum targetConstruct);
 
       //!--------values for some clauses ----------
-      void setSpecifier (fail_safe_enum value);
-      bool hasSpecifier () {return bSpecifier; }
-      fail_safe_enum getSpecifier () {return specifier; };
+      void setSpecifierValue (fail_safe_enum value);
+      fail_safe_enum getSpecifierValue () {return specifier; };
 
       void setErrorType (fail_safe_enum value);
       fail_safe_enum getErrorType() { return error_type; };
