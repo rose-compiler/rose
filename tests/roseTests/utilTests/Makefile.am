@@ -55,6 +55,16 @@ TEST_TARGETS += directorySupport.passed
 directorySupport.passed: tests.conf directorySupport $(__minimal_input_code)
 	@$(RTH_RUN) CMD=./directorySupport ARGS="-c -rose:verbose 0 $(__minimal_input_code)" $< $@
 
+# Tests for parallel sorting
+noinst_PROGRAMS += testSort
+testSort_SOURCES = testSort.C
+testSort_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testSort.passed
+EXTRA_DIST += testSort.conf
+testSort.passed: testSort.conf testSort
+	@$(RTH_RUN) TITLE="various parallel sorting [$@]" CMD="$$(pwd)/testSort"  $< $@
+
+
 check-local: $(TEST_TARGETS)
 
 clean-local:
@@ -65,11 +75,3 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
-
-
-
-
-
-
-
-
