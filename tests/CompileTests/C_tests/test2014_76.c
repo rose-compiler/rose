@@ -1,3 +1,8 @@
+// We see in an application that both of these are decleared, but it is not
+// clear how this could be legal code.  In the application the 2nd is commented
+// out when using ROSE.  But we still don't understand the error in the context
+// of the applicaiton.
+
 enum
   {
     DT_UNKNOWN = 0,
@@ -11,6 +16,8 @@ enum
     DT_WHT = 14
   };
 
+#if 0
+// This can't be declared if the previous un-named enum was declared (using the same enum values).
 enum gluster_entry_types {
  DT_UNKNOWN = 0,
  DT_FIFO = 1,
@@ -22,5 +29,6 @@ enum gluster_entry_types {
  DT_SOCK = 12,
  DT_WHT = 14
 };
+#endif
 
 

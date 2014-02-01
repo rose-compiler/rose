@@ -1824,6 +1824,20 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "mode_32_bit", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/31/2014): Added optimization for a few wireshark files. This post-processing is 
+  // not required for C, but is only usefule for C++ (name qualification).  Still it is 
+  // only a performance problem on a handfull of files in wireshark application. So we
+  // need to provide an option to supress.  This is currently being investigated further.
+  // not that this option is inconsistant with OpenMP usage, but not a problem for any
+  // other C code (the C++ aspect of this could also be fixed). This is related to a 
+  // problem when the original expression trees were a part of the AST traversal, but 
+  // this issue was fixed in 2012 (or so). There is as a result, less need for this
+  // post-processing phase, except that it appears to be relied upon by the OpenMP and 
+  // C++ support (both of which can be fixed).
+     Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);

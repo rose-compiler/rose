@@ -1345,8 +1345,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_projectSpecificDatabaseFile = projectSpecificDatabaseFileParamater;
         }
 
-
-
   // DQ (8/29/2006): Added support for accumulation of performance data into CSV data file (for later processing to build performance graphs)
      std::string compilationPerformanceFilenameParameter;
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
@@ -1355,6 +1353,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("-rose:compilationPerformanceFile = %s \n",compilationPerformanceFilenameParameter.c_str());
           p_compilationPerformanceFile = compilationPerformanceFilenameParameter;
         }
+
+  // DQ (1/30/2014): Added support to supress constant folding post-processing step (a performance problem on specific file of large applications).
+     set_suppressConstantFoldingPostProcessing(false);
+     ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(suppressConstantFoldingPostProcessing)",true) == true )
+        {
+          printf ("Using -rose:suppressConstantFoldingPostProcessing \n");
+          p_suppressConstantFoldingPostProcessing = true;
+          ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == true);
+        }
+
 
 #if 0
      printf ("Leaving SgProject::processCommandLine() \n");
