@@ -3,6 +3,7 @@
 #include "utilities/utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
+#include <iostream>
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -19,7 +20,13 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 		//TODO: We don't support resolving multiple definitions yet.
 		return results;
 	}
-	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
+
+        // MS:
+        //	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
+        if(definitions.size()==0) {
+          std::cout<<"WARNING: variable without RDs."<<std::endl;
+          return results; // return empty vector
+        }
 
 	SgNode* reachingDefinition = definitions.begin()->second;
 
@@ -170,7 +177,7 @@ vector<SgExpression*> RedefineValueRestorer::handleAssignOp(VariableRenaming::Va
 	ROSE_ASSERT(isSgAssignOp(reachingDefinition) || isSgInitializedName(reachingDefinition));
 	vector<SgExpression*> results;
 
-	SgExpression* definitionExpression;
+	SgExpression* definitionExpression=0; // MS
 	if (SgAssignOp * assignOp = isSgAssignOp(reachingDefinition))
 	{
 		//Check that this assign op is for the same variable
@@ -207,6 +214,9 @@ vector<SgExpression*> RedefineValueRestorer::handleAssignOp(VariableRenaming::Va
 			return results;
 		}
 	}
+
+        // MS
+        ROSE_ASSERT(definitionExpression);
 
 	//Ok, so the variable was previously defined by assignment to initExpression.
 	//Now we need to see if we can re-execute that expression
