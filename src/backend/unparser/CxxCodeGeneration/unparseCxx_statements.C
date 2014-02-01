@@ -5875,9 +5875,20 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
      ROSE_ASSERT(case_stmt != NULL);
 
-     curprint ( string("case "));
+     curprint("case ");
+
      unparseExpression(case_stmt->get_key(), info);
-     curprint ( string(":"));
+
+  // DQ (1/31/2014): Adding support for gnu case range extension.
+     if (case_stmt->get_key_range_end() != NULL)
+        {
+       // Note that the spaces on each side of the "..." are required to avoid interpretation 
+       // of the case range as a floating point number by the gnu parser.
+          curprint(" ... ");
+          unparseExpression(case_stmt->get_key_range_end(), info);
+        }
+
+     curprint(":");
 
   // if(case_stmt->get_body())
      if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
