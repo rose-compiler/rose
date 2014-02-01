@@ -4991,8 +4991,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           //
           // If we are processing Java, ...
           //
-          if (get_Java_only() == true)
-             {
+          if (get_Java_only() == true) {
               //
               // Report if an error detected only while compilng the output file?
               //
@@ -5018,22 +5017,23 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               else if (this -> get_frontendErrorCode()                != 0 ||
                        this -> get_project() -> get_midendErrorCode() != 0 ||
                        this -> get_unparserErrorCode()                != 0 ||
-                       this -> get_backendCompilerErrorCode()         != 0)
-                 {
+                       this -> get_backendCompilerErrorCode()         != 0) {
                   cout << "ERROR compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-              else
-                 {
+              }
+              else {
                   cout << "SUCCESS compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-             }
+              }
+
+              this -> set_backendCompilerErrorCode(0); // keep going !!!
+              this -> set_javacErrorCode(0); // keep going !!!
           }
+         }
        else
         {
           if ( get_verbose() > 1 )

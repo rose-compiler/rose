@@ -35,7 +35,8 @@ class JavaParser implements Callable<Boolean> {
     // add any required IR nodes as needed.
 
     // -------------------------------------------------------------------------------------------
-    public static native void cactionInsertImportedPackage(String package_name, JavaToken jToken);
+    public static native void cactionInsertImportedPackageOnDemand(String package_name, JavaToken jToken);
+    public static native void cactionInsertImportedTypeOnDemand(String package_name, String type_name, JavaToken jToken);
     public static native void cactionInsertImportedType(String package_name, String type_name, JavaToken jToken);
     public static native void cactionPushPackage(String package_name, JavaToken jToken);
     public static native void cactionUpdatePushPackage(String package_name, JavaToken jToken);

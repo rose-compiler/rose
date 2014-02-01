@@ -386,7 +386,7 @@ e.printStackTrace();
         //
         // If there is a package statement, process it.
         //
-        JavaParser.cactionInsertImportedPackage(unit_info.packageName, unit_info.createJavaToken(unit));
+        JavaParser.cactionInsertImportedPackageOnDemand(unit_info.packageName, unit_info.createJavaToken(unit));
 
         for (int i = 0, max = unit.scope.imports.length; i < max; i++){
             ImportBinding import_binding = unit.scope.imports[i];
@@ -395,12 +395,14 @@ e.printStackTrace();
             String import_name = new String(CharOperation.concatWith(import_binding.compoundName, '.'));
             Binding binding = unit.scope.getImport(import_binding.compoundName, import_binding.onDemand, import_binding.isStatic());
             if (binding instanceof PackageBinding) {
-                JavaParser.cactionInsertImportedPackage(import_name, location);
+                JavaParser.cactionInsertImportedPackageOnDemand(import_name, location);
             }
             else if (binding instanceof ReferenceBinding) {
                 ReferenceBinding type_binding = (ReferenceBinding) binding;
                 setupClass(type_binding, unit_info);
-                JavaParser.cactionInsertImportedType(getPackageName(type_binding), getTypeName(type_binding), location);
+                if (import_binding.onDemand)
+                     JavaParser.cactionInsertImportedTypeOnDemand(getPackageName(type_binding), getTypeName(type_binding), location);
+                else JavaParser.cactionInsertImportedType(getPackageName(type_binding), getTypeName(type_binding), location);
             }
             else if (binding instanceof FieldBinding) {
                 FieldBinding field_binding = (FieldBinding) binding;

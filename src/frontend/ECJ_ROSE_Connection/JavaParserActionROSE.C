@@ -1583,23 +1583,52 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTest(JNIEnv *env, jclass) {
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedPackage(JNIEnv *env, jclass, jstring java_package_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedPackageOnDemand(JNIEnv *env, jclass, jstring java_package_name, jobject jToken) {
     SgName package_name = convertJavaStringToCxxString(env, java_package_name);
     SgClassDefinition *package = findOrInsertPackage(package_name, env, jToken);
     ROSE_ASSERT(package);
 
     ROSE_ASSERT(::currentSourceFile != NULL);
-    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_packages");
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand");
     if (attribute == NULL) { // if not yet allocated then allocate it!
         attribute = new AstSgNodeListAttribute();
-        ::currentSourceFile -> setAttribute("imported_packages", attribute);
+        ::currentSourceFile -> setAttribute("import_on_demand", attribute);
     }
     attribute -> addNode(package);
 // TODO: Remove this!
-//cout << "Importing package " << package -> get_qualified_name().getString() << " to file " << ::currentSourceFile -> getFileName()
+//cout << "Importing on-demandpackage " << package -> get_qualified_name().getString() << " to file " << ::currentSourceFile -> getFileName()
 //<< endl;
 //cout.flush();
 }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedTypeOnDemand(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject jToken) {
+    SgName package_name = convertJavaStringToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
+
+// TODO: Remove this
+//cout << "Here 3" << endl;
+//cout.flush();
+    SgNamedType *type = (SgNamedType *) lookupTypeByName(package_name, type_name, 0);
+    ROSE_ASSERT(type);
+    SgClassDeclaration *class_declaration = (SgClassDeclaration *) type -> getAssociatedDeclaration() -> get_definingDeclaration();
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition);
+
+    ROSE_ASSERT(::currentSourceFile != NULL);
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand");
+    if (attribute == NULL) { // if not yet allocated then allocate it!
+        attribute = new AstSgNodeListAttribute();
+        ::currentSourceFile -> setAttribute("import_on_demand", attribute);
+    }
+    attribute -> addNode(class_definition);
+// TODO: Remove this!
+//cout << "Importing on-demand type " << type -> get_qualified_name().getString() << " to file " << ::currentSourceFile -> getFileName()
+//<< endl;
+//cout.flush();
+}
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedType(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject jToken) {
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
