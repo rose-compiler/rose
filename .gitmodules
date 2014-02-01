@@ -3,4 +3,4 @@
 	url = rose-dev@rosecompiler1.llnl.gov:rose/edg4x/edg.git
 [submodule "projects/vulnerabilitySeeding"]
 	path = projects/vulnerabilitySeeding
-	url =  ssh://charles4@tuxblue6/nfs/casc/overture/ROSE/git/vulnerabilitySeeding.git
+	url = rose-dev@rosecompiler1.llnl.gov:rose/vulnerabilitySeeding.git
