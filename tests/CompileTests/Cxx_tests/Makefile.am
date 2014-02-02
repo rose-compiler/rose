@@ -62,7 +62,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_02.C \
    test2014_03.C \
    test2014_04.C \
-   test2014_05.C
+   test2014_05.C \
+   test2014_06.C
 
 # Current problem test codes:
 #  test2013_262.C 

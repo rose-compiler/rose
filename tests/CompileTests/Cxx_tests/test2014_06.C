@@ -1,3 +1,4 @@
+// This is C_tests/test2014_81.c, makeing a C++ test code from it.
 // The only ROSE bug required to be fixed to support processing of 2.5 million line Wireshark appliction.
 // The issue was demonstrated twice in the wireshark appliction.
 
@@ -9,7 +10,6 @@
 // be an unsigned long integer for C/C++.
 
 extern int array[];  // The assertion fails in ROSE at the processing of this secondary declaration.
-extern int array[2];  // The assertion fails in ROSE at the processing of this secondary declaration.
 
 // The array bound must be declared an an enum value after the secondary array declaration.
 enum EnumType

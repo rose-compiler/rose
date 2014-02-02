@@ -4286,6 +4286,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo_for_type.set_SkipClassSpecifier();
                   }
 
+            // DQ (2/2/2014): Adding support to supress the output of the array bound in secondary array typed variable declarations.
+               if (decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true)
+                  {
+                    ninfo_for_type.set_supressArrayBound();
+#if 0
+                    printf ("In unparseVarDeclStmt(): decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true: calling ninfo_for_type.set_supressArrayBound() \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
             // printf ("After isNameOnly() test: ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
 
             // DQ (8/23/2006): This was used to specify global qualification separately from the more general name 
