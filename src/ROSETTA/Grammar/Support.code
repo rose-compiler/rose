@@ -5865,6 +5865,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (4/13/2013): Added support to unparse code using overloaded operator names or operator syntax (to match the input code).
                b_prefixOperator = 45, /*!< Part of support to unparse code using overloaded operator names or operator syntax (to match the input code); this marks prefix operators to be unparsed before the LHS s output. */
 
+            // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+               b_supressArrayBound = 46, /*!< Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax for secondary (prototype) declarations (e.g. int array[];). */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6104,6 +6107,12 @@ HEADER_UNPARSE_INFO_START
           bool isPrefixOperator() const;
           void set_prefixOperator();
           void unset_prefixOperator();
+
+       // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+          bool supressArrayBound() const;
+          void set_supressArrayBound();
+          void unset_supressArrayBound();
+
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -16699,6 +16708,17 @@ void
 SgUnparse_Info::unset_prefixOperator()
    { unsetBit(b_prefixOperator); }
 
+// DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+bool SgUnparse_Info::supressArrayBound() const
+   { return checkBit(b_supressArrayBound); }
+
+void SgUnparse_Info::set_supressArrayBound()
+   { setBit(b_supressArrayBound); }
+
+void SgUnparse_Info::unset_supressArrayBound()
+   { unsetBit(b_supressArrayBound); }
+
+
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
@@ -16780,6 +16800,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("SkipQualifiedNames                     = %s \n",( SkipQualifiedNames() == true ) ? "true" : "false");
      printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
+     printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
