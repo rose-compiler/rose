@@ -244,6 +244,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
           // Darwin options
           argument == "-dylib_file" ||                      // -dylib_file <something>:<something>
+          argument == "-framework"  ||                      // -iframeworkdir (see man page for Apple GCC)
 
           // ROSE options
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
@@ -1243,6 +1244,36 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                 {
                     std::cout << "[INFO] [Cmdline] "
                               << "Processing -dylib_file: argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
+
+        // TOO1 (01/22/2014):
+        // (Darwin linker) -framework dir
+        if (argv[i].compare("-framework") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -framework"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -framework");
+            }
+            else
+            {
+                // TODO: Save framework argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -framework argument="
                               << "'" << argv[i] << "'"
                               << std::endl;
                 }

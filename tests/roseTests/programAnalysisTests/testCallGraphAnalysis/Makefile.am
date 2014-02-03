@@ -45,7 +45,7 @@ test01 test01.passed: testCG $(Test01SpecimenSource) $(Test01SpecimenHeaders)
 	    CMD="./testCG --edg:no_warnings -I. -I$(Test01SpecimenDir) $(Test01SpecimenSource) -o Callgraph" \
 	    $(top_srcdir)/scripts/test_exit_status $@
 
-EXTRA_DIST += test01.conf $(Test01SpecimenDir)
+EXTRA_DIST += $(Test01SpecimenDir) # test01.conf
 MOSTLYCLEANFILES += Callgraph.cg.dmp Callgraph.dot main.ti
 
 #------------------------------------------------------------------------------------------------------------------------

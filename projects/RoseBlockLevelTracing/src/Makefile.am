@@ -22,7 +22,7 @@ RoseTraceReader_SOURCES=\
 RoseMultiTraceCommonPathFinder_SOURCES=\
 	RoseMultiTraceCommonPathFinder.C
 
-RoseCommonPathToSgNodeMapper=\
+RoseCommonPathToSgNodeMapper_SOURCES=\
 	RoseCommonPathToSgNodeMapper.C
 
 RoseBlockLevelTracing_INPUTS = \

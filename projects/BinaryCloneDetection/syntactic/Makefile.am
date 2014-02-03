@@ -1,17 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS =  gui
 bin_PROGRAMS =
+
+# Liao 1/15/2014. Move this file outside of conditinoals since automake will scan _SOURCES unconditionally for dependencies
+# which will bring in SyntacticSchema.C into the distribution package.
 MOSTLYCLEANFILES =
-
-if ROSE_USE_SQLITE_DATABASE
-
-# FIXME: We should not have to depend on all of SSL just to compute MD5 sums.  We should be using libgcrypt instead. This
-# would also avoid the SSL/Java conflict mentioned in the ROSE manual. [RPM 2013-04-11]
-if ROSE_USE_SSL_SUPPORT
-
-INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
-
 MOSTLYCLEANFILES += SyntacticSchema.C
 SyntacticSchema.C: SchemaDrop.sql SchemaCreate.sql
 	@echo "  GEN     $@"
@@ -21,6 +14,16 @@ SyntacticSchema.C: SchemaDrop.sql SchemaCreate.sql
 	@echo "const char *syntactic_schema_create ="				>>$@
 	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$(srcdir)/SchemaCreate.sql	>>$@
 	@echo ';'								>>$@
+
+
+if ROSE_USE_SQLITE_DATABASE
+
+# FIXME: We should not have to depend on all of SSL just to compute MD5 sums.  We should be using libgcrypt instead. This
+# would also avoid the SSL/Java conflict mentioned in the ROSE manual. [RPM 2013-04-11]
+if ROSE_USE_SSL_SUPPORT
+
+INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 # (Re)creates the tables for syntactic clone detection
 bin_PROGRAMS += createSchema
