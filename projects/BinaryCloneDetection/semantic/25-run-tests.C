@@ -790,8 +790,10 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
         for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
             std::string name = (*si)->get_name()->get_string();
             if ((*si)->is_mapped() && (0==name.compare(".got.plt") || 0==name.compare("Import Address Table"))) {
-                if (opt.verbosity >= EFFUSIVE)
+                if (opt.verbosity >= EFFUSIVE) {
                     std::cerr <<argv0 <<":   for " <<name <<" of " <<filename_for_header(*hi) <<"\n";
+                    SgAsmExecutableFileFormat::hexdump(std::cerr, (*si)->get_mapped_actual_va(), "   ", (*si)->get_data());
+                }
                 rose_addr_t base_va = (*si)->get_mapped_actual_va();
                 size_t nbytes = (*si)->get_mapped_size();
                 size_t nwords = nbytes / 4;
