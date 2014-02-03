@@ -71,8 +71,7 @@ else
 # We use the edg-generate-sig script to choose the best version from a list of available versions.  If there's a version
 # number (SHA1) already stored in the bincompat-sig file in the top of the source tree then edg-generate-sig will use
 # that rather than doing a bunch of git commands.
-#EDGBIN_SIGNATURE:=$(shell $(top_srcdir)/scripts/edg-generate-sig --find --progress)
-EDGBIN_SIGNATURE:=45af39ac03c6aeea969c0ba01a8494de29d3e94e
+EDGBIN_SIGNATURE:=$(shell $(top_srcdir)/scripts/edg-generate-sig --find --progress)
 EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 all-am: EDG/libroseEDG.la
