@@ -16,4 +16,6 @@ install(FILES  transformationSupport.h
                utility_functions.h
 	       threadSupport.h
                IncludeDirective.h
+	       Combinatorics.h
+	       Diagnostics.h
 	DESTINATION ${INCLUDE_INSTALL_DIR})
