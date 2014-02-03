@@ -1798,6 +1798,11 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
 #endif
 #if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
+     printf ("Inside of SageBuilder::buildFunctionType() (activate test for return_type): return_type = %p = %s \n",return_type,return_type->class_name().c_str());
+#endif
+#if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
      if (isSgFunctionType(return_type) != NULL)
         { 
        // Liao 12/14/2012. This is not true for some functions (e.g. findFunctionUsingDlopen() on top of dlopen()) returning a function type
@@ -1805,6 +1810,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
           ROSE_ASSERT(false);
         }
 #endif
+
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
@@ -5446,6 +5452,22 @@ SgSuperExp* SageBuilder::buildSuperExp(SgClassSymbol* sym)
 SgSuperExp* SageBuilder::buildSuperExp_nfi(SgClassSymbol* sym)
 {
   SgSuperExp* result = new SgSuperExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp_nfi(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
