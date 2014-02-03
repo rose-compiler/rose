@@ -3281,15 +3281,6 @@ Partitioner::merge_function_fragments()
             fragment_index[gnum].push_back(fi->second);
         }
     }
-#if 0 /* DEBUGGING [RPM 2012-04-18] */
-    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
-    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
-        fprintf(stderr, "  group-%zu:", gnum);
-        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
-            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
-        fprintf(stderr, "\n");
-    }
-#endif
             
     /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
      * the fragment group has a single predecessor. */
