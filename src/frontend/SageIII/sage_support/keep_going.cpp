@@ -96,6 +96,27 @@ namespace Frontend {
   }// ::ROSE::KeepGoing::Frontend::SecondaryPass
 }// ::ROSE::KeepGoing::Frontend
 
+namespace Midend {
+  #ifndef _MSC_VER
+    sigjmp_buf jmp_target;
+  #endif //_MSC_VER
+  void SignalHandler(int sig)
+  {
+      std::cout
+          << "[WARN] "
+          << "Caught signal="
+          << "'" << sig << "' "
+          << "during midend processing"
+          << std::endl;
+
+      #ifndef _MSC_VER
+          siglongjmp(Midend::jmp_target, -1);
+      #else
+          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+      #endif //_MSC_VER
+  }
+}// ::ROSE::KeepGoing::Midend
+
 namespace Backend {
 namespace Unparser {
   #ifndef _MSC_VER
