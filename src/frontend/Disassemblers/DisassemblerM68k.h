@@ -17,6 +17,8 @@ public:
     virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) /*override*/;
     virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
 
+    typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
+
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction and returns a
      *  SgAsmM68kInstruction. These functors are allocated and inserted into a list. When an instruction is to be
@@ -95,6 +97,10 @@ public:
      * specified size measured in bits. The @p ext_offset indicates how many instruction extension words have already been
      * consumed. */
     SgAsmExpression *makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext_offset);
+
+    /** Create an offset width pair from an extension word.  The extension word contains an offset and width expression each of
+     *  which is either a 5-bit unsigned integer or a data register number. This is used by various bit field instructions. */
+    ExpressionPair makeOffsetWidthPair(unsigned extension_word);
 
 #if 0
     /** Determines the effective address mode for a 6-bit modreg value. The @p nbits is used only to distinguish between

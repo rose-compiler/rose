@@ -189,12 +189,26 @@ enum M68kInstructionKind {
     m68k_bvs,                           /**< Branch overflow set */
     m68k_bchg,                          /**< Test a bit and change */
     m68k_bclr,                          /**< Test a bit and clear */
+    m68k_bfchg,                         /**< Test bit field and change */
+    m68k_bfclr,                         /**< Test bit field and clear */
+    m68k_bfexts,                        /**< Extract bit field signed */
+    m68k_bfextu,                        /**< Extract bit field unsigned */
+    m68k_bfffo,                         /**< Find first one in bit field */
+    m68k_bfins,                         /**< Insert bit field */
+    m68k_bfset,                         /**< Test bit field and set */
+    m68k_bftst,                         /**< Test bit field */
     m68k_bitrev,                        /**< Bit reverse register */
+    m68k_bkpt,                          /**< Breakpoint */
     m68k_bra,                           /**< Branch always */
     m68k_bset,                          /**< Test a bit and set */
     m68k_bsr,                           /**< Branch to subroutine */
     m68k_btst,                          /**< Test a bit */
     m68k_byterev,                       /**< Byte reverse register */
+    m68k_callm,                         /**< Call module */
+    m68k_cas,                           /**< Compare and swap with operand */
+    m68k_cas2,                          /**< Compare and swap with operands */
+    m68k_chk,                           /**< Check register against bounds */
+    m68k_chk2,                          /**< Check register against bounds */
     m68k_clr,                           /**< Clear an operand */
     m68k_cmp,                           /**< Compare */
     m68k_cmpa,                          /**< Compare address */
