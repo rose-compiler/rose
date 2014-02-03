@@ -263,6 +263,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
+          argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
@@ -2980,8 +2981,8 @@ SgFile::usage ( int status )
 "                               Higher values generate more output (can be\n"
 "                               applied to individual files and to the project\n"
 "                               separately).\n"
-"     -rose:log=WHAT\n"
-"                             Control diagnostic output. See '-rose:log=help' for\n"
+"     -rose:log WHAT\n"
+"                             Control diagnostic output. See '-rose:log help' for\n"
 "                             more information.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
@@ -3245,46 +3246,58 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
-  // Event logging.  We need the --rose:log=WHAT (or -rose:log=WHAT) command-line switches in the order they appear,
-  // which seems to mean that we need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function,
-  // and the sla code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its
-  // macro-hidden API.
+  // Event logging.  We need the '-rose:log WHAT' command-line switches in the order they appear, which seems to mean that we
+  // need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function, and the sla code in sla++.C
+  // is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API, specifically the part
+  // about being able to return an array of values.
   //
      Diagnostics::initialize();                         // this maybe should go somewhere else?
-     static const std::string removalString = "-rose:log=REMOVE_ME";
+     static const std::string removalString = "-rose:log (REMOVE_ME)";
      for (size_t i=0; i<argv.size(); ++i) {
-         if (0==strncmp(argv[i].c_str(), "-rose:log=", 10) || 0==strncmp(argv[i].c_str(), "--rose:log=", 11)) {
-             std::string switchValue = argv[i].substr(argv[i].find('=')+1);
-             if (0==switchValue.compare("help")) {
-                 std::cerr <<"The -rose:log=WHAT switch accepts two values for WHAT. If WHAT is the word \"list\"\n"
-                           <<"then the list of event logging facilities is printed along with an indication of\n"
-                           <<"which streams are enabled and disabled for each facility.  Otherwise, WHAT should be\n"
-                           <<"a specification of the streams to be enabled and/or disabled.  The full language is\n"
-                           <<"documented in the doxygen description for Sawyer::Message::Facilities::control().\n"
-                           <<"Briefly, it is a comma-separated list of message importance levels to enable or the\n"
-                           <<"word \"all\" or \"none\".  A level preceded by a bang (!) disables that level. A list\n"
-                           <<"of levels can be enclosed in parentheses and preceded by a facility name to control\n"
-                           <<"levels of a single facility.  For example, to enable tracing messages for all of ROSE,\n"
-                           <<"and to enable debugging messages from the disassembler, and to disable informational\n"
-                           <<"messages from the disassembler say \"-rose:log='trace, disassembler(debug, !info)'\".\n"
-                           <<"You'll likely need to quote the switch to prevent the shell from barfing.\n";
-             } else if (0==switchValue.compare("list")) {
-                 std::cout <<"ROSE logging facilities are configured as follows:\n";
-                 std::ostringstream ss;
-                 Diagnostics::facilities.print(ss);
-                 std::cout <<StringUtility::prefixLines(ss.str(), "    ")
-                           <<"Where the letters signifying enabled streams are: (D)ebug, (T)race, (W)here,\n"
-                           <<"(I)nfo, (W)arning, (E)rror, (F)atal. A hyphen means that the corresponding stream\n"
-                           <<"is disabled.  See \"-rose:log=help\" for usage information.\n";
-             } else {
-                 std::string errmesg = Diagnostics::facilities.control(switchValue);
-                 if (!errmesg.empty()) {
-                     Diagnostics::log[Sawyer::Message::ERROR] <<errmesg <<"\n";
-                     Diagnostics::log[Sawyer::Message::ERROR] <<"See \"-rose:log=help\" for usage information.\n";
-                 }
+         std::string switchValue;
+         if (0==strncmp(argv[i].c_str(), "-rose:log=", 10)) {
+             switchValue = argv[i].substr(10);
+             argv[i] = removalString;
+         } else if (0==strncmp(argv[i].c_str(), "--rose:log=", 11)) {
+             switchValue = argv[i].substr(11);
+             argv[i] = removalString;
+         } else if ((0==strcmp(argv[i].c_str(), "-rose:log") || 0==strcmp(argv[i].c_str(), "--rose:log")) &&
+                    i+1 < argv.size()) {
+             argv[i] = removalString;
+             switchValue = argv[++i];
+             argv[i] = removalString;
+         } else {
+             continue;
+         }
+
+         if (0==switchValue.compare("help")) {
+             std::cerr <<"The -rose:log=WHAT switch accepts two values for WHAT. If WHAT is the word \"list\"\n"
+                       <<"then the list of event logging facilities is printed along with an indication of\n"
+                       <<"which streams are enabled and disabled for each facility.  Otherwise, WHAT should be\n"
+                       <<"a specification of the streams to be enabled and/or disabled.  The full language is\n"
+                       <<"documented in the doxygen description for Sawyer::Message::Facilities::control().\n"
+                       <<"Briefly, it is a comma-separated list of message importance levels to enable or the\n"
+                       <<"word \"all\" or \"none\".  A level preceded by a bang (!) disables that level. A list\n"
+                       <<"of levels can be enclosed in parentheses and preceded by a facility name to control\n"
+                       <<"levels of a single facility.  For example, to enable tracing messages for all of ROSE,\n"
+                       <<"and to enable debugging messages from the disassembler, and to disable informational\n"
+                       <<"messages from the disassembler say \"-rose:log='trace, disassembler(debug, !info)'\".\n"
+                       <<"You'll likely need to quote the switch to prevent the shell from barfing.\n";
+         } else if (0==switchValue.compare("list")) {
+             std::cout <<"ROSE logging facilities are configured as follows:\n";
+             std::ostringstream ss;
+             Diagnostics::facilities.print(ss);
+             std::cout <<StringUtility::prefixLines(ss.str(), "    ")
+                       <<"Where the letters signifying enabled streams are: (D)ebug, (T)race, (W)here,\n"
+                       <<"(I)nfo, (W)arning, (E)rror, (F)atal. A hyphen means that the corresponding stream\n"
+                       <<"is disabled.  See \"-rose:log=help\" for usage information.\n";
+         } else {
+             std::string errmesg = Diagnostics::facilities.control(switchValue);
+             if (!errmesg.empty()) {
+                 Diagnostics::log[Sawyer::Message::ERROR] <<errmesg <<"\n";
+                 Diagnostics::log[Sawyer::Message::ERROR] <<"See \"-rose:log=help\" for usage information.\n";
              }
          }
-         argv[i] = "-rose:log";                         // so we can remove these easily
      }
      argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
      
