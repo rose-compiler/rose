@@ -164,6 +164,9 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7 = \
+	14.20.3.try-with-resources/TryWithResources001.java
+
 # Later we will move these tests to the gcjTestSuite subdirectory.
 GCJ_TESTCODES_REQUIRED_TO_PASS = \
 anfi.java \
@@ -408,6 +411,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRE
 # Tests for Java generics
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
 
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
+
 
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -444,6 +449,11 @@ $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator)
 $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+
+# Tests requiring Java 1.7 that should pass.
+$(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects): $(testTranslator)
+	@echo "Test using Java 1.7 version support."
+	$(testTranslator) -rose:java:source 1.7 -rose:java:target 1.7 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 
 
@@ -530,6 +540,7 @@ check-local: extraTests
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
