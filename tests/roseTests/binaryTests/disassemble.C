@@ -33,15 +33,6 @@ Description:\n\
     to HTML with the generate_html script found in tests/roseTests/binaryTests.\n\
     The default is to not generate these dot files.\n\
 \n\
-  --debug-partitioner\n\
-  --no-debug-partitioner\n\
-    Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
-    error.  This is intended for ROSE developers. The default is to not spew.\n\
-\n\
-  --debug\n\
-  --no-debug\n\
-    Alias for --debug-partitioner and --no-debug-partitioner.\n\
-\n\
   --disassemble\n\
     Call the disassembler explicitly, using the instruction search flags\n\
     specified with the -rose:disassembler_search switch.  Without this\n\
@@ -790,7 +781,6 @@ int
 main(int argc, char *argv[]) 
 {
     bool show_bad = false;
-    bool do_debug_partitioner=false;
     bool do_reassemble = false;
     bool do_ast_dot = false;
     bool do_cfg_dot = false;
@@ -987,14 +977,6 @@ main(int argc, char *argv[])
                 exit(1);
             }
             reserved.insert(Extent(va, size));
-        } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
-            do_debug_partitioner = true;
-        } else if (!strcmp(argv[i], "--no-debug")) {
-            do_debug_partitioner = false;
-        } else if (!strcmp(argv[i], "--debug-partitioner")) {
-            do_debug_partitioner = true;
-        } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
-            do_debug_partitioner = false;
         } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
             do_quiet = true;
         } else if (!strcmp(argv[i], "--no-quiet")) {
@@ -1199,8 +1181,6 @@ main(int argc, char *argv[])
      * frontend(). */
     Partitioner *partitioner = new Partitioner();
     partitioner->set_search(partitioner_search);
-    if (do_debug_partitioner)
-        partitioner->set_debug(stderr);
     if (partitioner_config) {
         try {
             partitioner->load_config(partitioner_config);

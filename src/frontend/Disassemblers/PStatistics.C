@@ -624,7 +624,7 @@ Partitioner::count_registers(const InstructionMap &insns, double *mean_ptr, doub
             SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node);
             if (rre) {
                 size_t nbits = rre->get_descriptor().get_nbits();
-                double v = log((double)nbits) / M_LN2;
+                double v = ::log((double)nbits) / M_LN2;
                 sum += do_variance ? (v-mean)*(v-mean) : v;
                 ++n;
             }

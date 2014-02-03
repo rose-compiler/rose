@@ -1,9 +1,10 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
 #include "Assert.h"                                     // Sawyer::Assert
+#include "BinaryLoader.h"                               // rose::BinaryLoader
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::Disassembler
-#include "BinaryLoader.h"                               // rose::BinaryLoader
+#include "Partitioner.h"                                // rose::Partitioner
 
 namespace rose {
 namespace Diagnostics {
@@ -26,6 +27,7 @@ void initialize() {
         // Register logging facilities from other software layers
         BinaryLoader::initDiagnostics();
         Disassembler::initDiagnostics();
+        Partitioner::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
         facilities.control("none, >=info");
