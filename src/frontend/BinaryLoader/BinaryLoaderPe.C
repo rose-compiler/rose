@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "BinaryLoaderPe.h"
+#include "Diagnostics.h"
 #include "MemoryMap.h"
 
 /* This binary loader can handle all PE files. */
@@ -23,7 +24,7 @@ BinaryLoaderPe::get_remap_sections(SgAsmGenericHeader *header)
     std::map<int, SgAsmGenericSection*> candidates;
     for (size_t i=0; i<sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
-            ROSE_ASSERT(candidates.find(sections[i]->get_id())==candidates.end());
+            ASSERT_require(candidates.find(sections[i]->get_id())==candidates.end());
             candidates.insert(std::make_pair(sections[i]->get_id(), sections[i]));
         }
     }
@@ -45,7 +46,7 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
 {
     SgAsmGenericHeader *header = isSgAsmPEFileHeader(section);
     if (!header) header = section->get_header();
-    ROSE_ASSERT(header!=NULL);
+    ASSERT_not_null(header);
 
     if (!section->is_mapped())
         return CONTRIBUTE_NONE;
