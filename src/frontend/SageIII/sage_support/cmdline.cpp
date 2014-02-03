@@ -806,7 +806,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   //
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(m32)",false) == true )
         {
-          printf ("detected use of -m32 mode (will be passed to backend compiler) */ \n");
+#if 0
+          printf ("detected use of -m32 mode (will be passed to backend compiler) \n");
+#endif
           p_mode_32_bit = true;
         }
 
@@ -3895,8 +3897,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1.20/2014): Adding support for -m32 and associated macro to ROSE to force size_t to be defined to be 32-bit instead of 64-bit.
      if (project->get_mode_32_bit() == true)
         {
+#if 0
           printf ("Setting ROSE_M32BIT mode! \n");
-
+#endif
           roseSpecificDefs.push_back("-DROSE_M32BIT");
 #if 0
           printf ("Exiting as a test! \n");
