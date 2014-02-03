@@ -17,6 +17,8 @@
 #include <math.h>
 #include <stdarg.h>
 
+using namespace rose;
+
 /* See header file for full documentation. */
 
 std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)

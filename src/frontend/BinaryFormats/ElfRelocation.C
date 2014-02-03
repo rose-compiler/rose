@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Constructor adds the new entry to the relocation table. */
 void
 SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
