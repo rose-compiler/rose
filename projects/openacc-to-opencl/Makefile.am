@@ -1,7 +1,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS=tests modules
+SUBDIRS=modules
 
 bin_PROGRAMS=openacc-to-opencl
 

@@ -75,13 +75,15 @@ void ModelBuilder::add(Model::model_t & model, SgNamespaceSymbol * namespace_sym
   if (nsp_defn != NULL) {
     SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
     assert(nsp_decl != NULL);
-    SgNamespaceSymbol * parent_namespace_symbol = nsp_decl->get_symbol_from_symbol_table();
+    SgNamespaceSymbol * parent_namespace_symbol = isSgNamespaceSymbol(nsp_decl->get_symbol_from_symbol_table());
     assert(parent_namespace_symbol != NULL);
     if (model.lookup_namespace_by(parent_namespace_symbol) == NULL) 
       add(model, parent_namespace_symbol);
+    assert(false); /// \todo build  elem to insert
   }
   else {
-    assert(is || isSgGlobal(scope))
+    assert(isSgGlobal(scope));
+    assert(false); /// \todo build  elem to insert
   }
 }
 
