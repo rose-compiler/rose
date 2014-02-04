@@ -407,7 +407,9 @@ e.printStackTrace();
             else if (binding instanceof FieldBinding) {
                 FieldBinding field_binding = (FieldBinding) binding;
                 ReferenceBinding type_binding = field_binding.declaringClass;
-                setupClass(type_binding, unit_info);
+                preprocessClass(type_binding, unit_info);
+                generateAndPushType(type_binding, unit_info, location);
+                JavaParser.cactionInsertImportedStaticField(new String(field_binding.name), location);
             }
         }
 
@@ -431,6 +433,10 @@ e.printStackTrace();
                     }
                     else if ((processed_object instanceof TypeDeclaration) || // a previous source was found?
                              (! new String(((ReferenceBinding) processed_object).getFileName()).equals(new String(node.binding.getFileName())))) {
+//                             (! ((processed_object instanceof BinaryTypeBinding) || 
+//                                 (new String(((SourceTypeBinding) processed_object).getFileName()).equals(new String(node.binding.getFileName())))))) {
+System.out.println("*** The processed object is of type " + processed_object.getClass().getCanonicalName());
+
                         throw new DuplicateTypeException("Invalid attempt to redefine the type " + getCanonicalName(node.binding) + 
                                                          " is in file " + new String(node.compilationResult.fileName) +
                                                          ".  The prior definition is in file " + new String(((ReferenceBinding) processed_object).getFileName()));
@@ -523,14 +529,7 @@ e.printStackTrace();
     void processQualifiedNameReference(QualifiedNameReference node, Scope scope, UnitInfo unit_info) {
         JavaToken jToken = unit_info.createJavaToken(node);
 
-/*
-StringBuffer output = new StringBuffer(); 
-for (int i = 0; i < node.tokens.length; i++) {
-if (i > 0) output.append('.');
-    output.append(node.tokens[i]);
-}
-System.out.println("Testing Qualified Name Reference : " + output.toString());
-*/
+//System.out.println("Testing Qualified Name Reference : " + node.print(0, new StringBuffer()).toString());
 
         Binding binding = scope.getPackage(node.tokens);
         PackageBinding package_binding = (binding == null || (! (binding instanceof PackageBinding)) ? null : (PackageBinding) binding);
@@ -543,6 +542,19 @@ System.out.println("The first name is: " + new String(node.tokens[first_type_ind
 System.out.println("The first type index is: " + first_type_index);
 System.out.println("The first field index is: " + first_field_index);
 */
+        //
+        // If there are other bindings associated with this qualified name reference, preprocess them.
+        //
+        if (node.otherBindings != null) {
+            assert(node.otherBindings.length == node.tokens.length - node.indexOfFirstFieldBinding);
+            for (int i = 0; i < node.otherBindings.length; i++) {
+                preprocessClass(node.otherBindings[i].type, unit_info);
+            }
+        }
+
+        //
+        // If the first name is a type, compute its type binding. 
+        //
         ReferenceBinding type_binding = (first_field_index == 0
                                               ? null
                                               : package_binding == null
@@ -565,9 +577,15 @@ System.out.println("The first field index is: " + first_field_index);
                 preprocessClass(type_binding, unit_info);
                 JavaParser.cactionQualifiedTypeReference(getPackageName(type_binding), getTypeName(type_binding), unit_info.getDefaultLocation());
             }
+            
+            assert(node.otherGenericCasts == null); // TODO: we are NOT able to assert this!!! Need to copy code from below here...
+
             for (int i = index; i < node.tokens.length; i++) {
-                String field = new String(node.tokens[i]);
-                JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field, jToken);
+                String field_name = new String(node.tokens[i]);
+
+//System.out.println("Field reference 3" + (node.otherGenericCasts != null ? " with generic casts" : ""));
+
+                JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field_name, jToken);
             }
         }
         else {
@@ -576,15 +594,22 @@ System.out.println("The first field index is: " + first_field_index);
             //
             // Preprocess the type of the fields in the qualified name
             //
-            preprocessClass(((VariableBinding) node.binding).type, unit_info);
-            if (node.otherBindings != null) {
-                for (int i = 0; i < node.otherBindings.length; i++) {
-                    preprocessClass(node.otherBindings[i].type, unit_info);
+            VariableBinding variable_binding = (VariableBinding) node.binding;
+            preprocessClass(variable_binding.type, unit_info);
+        	String field_name = new String(node.tokens[first_field_index]);
+            JavaParser.cactionSingleNameReference("", "", field_name, jToken);
+            for (int i = first_field_index + 1, j = 0; i < node.tokens.length; i++, j++) {
+            	field_name = new String(node.tokens[i]);
+
+//System.out.println("Field reference 4" + (node.otherGenericCasts != null ? " with generic casts" : ""));
+                if (node.otherGenericCasts != null && j > 0 && node.otherGenericCasts[j - 1] != null) {
+// System.out.println("Field " + field_name + " has type: " + node.otherGenericCasts[j - 1].debugName() + " (" + (j - 1) + ")");
+                	generateAndPushType(node.otherGenericCasts[j - 1], unit_info, jToken);
+                    JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, jToken);
                 }
-            }
-            JavaParser.cactionSingleNameReference("", "", new String(node.tokens[first_field_index]), jToken);
-            for (int i = first_field_index + 1; i < node.tokens.length; i++) {
-                JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, new String(node.tokens[i]), jToken);
+                else {
+                    JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field_name, jToken);
+                }
             }
         }
     }
@@ -1241,7 +1266,7 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
         assert(binding != null);
         String qualified_name = getCanonicalName(binding);
 //System.out.println("Traversing Reference Binding for " + qualified_name);
-        
+
         classProcessed.put(qualified_name, binding);
 
         JavaToken location = unit_info.getDefaultLocation(); 
@@ -1271,7 +1296,7 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
 
                 String type_parameter_name = new String(type_variable.sourceName);
                 if (verboseLevel > 2)
-                    System.out.println("    Type Parameter Support added for " + type_parameter_name);         
+                    System.out.println("Type Parameter Support added for " + type_parameter_name);         
                 JavaParser.cactionBuildParameterSupport(type_parameter_name, location);
             }
         }
@@ -1383,7 +1408,7 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                     generateAndPushType(field_binding.type, unit_info, location);
 
                     if (verboseLevel > 2)
-                        System.out.println("    Build the data member (field) for name = " + new String(field_binding.name));
+                        System.out.println("(ReferenceBinding) Build the data member (field) for name = " + new String(field_binding.name));
 
                     JavaParser.cactionBuildFieldSupport(new String(field_binding.name), location);
                     num_class_members++;
@@ -1419,7 +1444,7 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                 String method_name = getMethodName(method_binding);
 
                 if (verboseLevel > 2)
-                    System.out.println("    Build the data member (method) for name = " + method_name);
+                    System.out.println("(ReferenceBinding)  Build the data member (method) for name = " + method_name);
 
                 method_index++; // calculate token index for this method or constructor.
                 setMethodIndex(method_binding, method_index);
@@ -1701,7 +1726,7 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                     generateAndPushType(field.binding.type, unit_info, field_location);
 
                     if (verboseLevel > 2)
-                        System.out.println("Build the data member (field) for name = " + new String(field.name));
+                        System.out.println("(TypeDeclaration) Build the data member (field) for name = " + new String(field.name));
 
                     JavaParser.cactionBuildFieldSupport(new String(field.name), field_location);
                 }
