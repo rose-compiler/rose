@@ -6487,7 +6487,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclas
         for (int i = 0; i < num_resources; i++) {
             SgVariableDeclaration *local_declaration = isSgVariableDeclaration(astJavaComponentStack.popStatement());
             ROSE_ASSERT(local_declaration);
-            attribute -> setNode(local_declaration, i);
+            attribute -> setNode(
+                local_declaration,
+                // TOO1 (2/3/2014) Unparse in the correct order (essentially, FIFO)
+                // See tests/CompileTests/Java_tests/14.20.3.try-with-resources/TryWithResources001.java
+                ((num_resources - 1) - i));
         }
         try_statement -> setAttribute("resources", attribute);
     }
