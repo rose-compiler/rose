@@ -165,14 +165,15 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7 = \
-     Test_1_7_binary_literals.java \
-     Test_1_7_Exceptions.java \
-     Test_1_7_non_reifiable_formal_parameters.java \
-     Test_1_7_strings_in_switch_statement.java \
-     Test_1_7_try_with_resources_statement.java \
-     Test_1_7_type_inference_for_generic_instance_creation.java \
-     Test_1_7_underscores_in_numeric_literal.java \
-     Test_1_7_warnings_and_errors_for_non_reifiable_parameters.java
+	Test_1_7_binary_literals.java \
+	Test_1_7_Exceptions.java \
+	Test_1_7_non_reifiable_formal_parameters.java \
+	Test_1_7_strings_in_switch_statement.java \
+	Test_1_7_try_with_resources_statement.java \
+	Test_1_7_type_inference_for_generic_instance_creation.java \
+	Test_1_7_underscores_in_numeric_literal.java \
+	Test_1_7_warnings_and_errors_for_non_reifiable_parameters.java \
+	14.20.3.try-with-resources/TryWithResources001.java
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
 GCJ_TESTCODES_REQUIRED_TO_PASS = \
@@ -417,6 +418,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRE
 
 # Tests for Java generics
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
+
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
 
 
