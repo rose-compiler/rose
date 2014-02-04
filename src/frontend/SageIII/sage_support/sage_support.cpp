@@ -3868,7 +3868,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-     if (this -> get_package() != NULL) { // Has this file been processed already? If so, ignore it.
+     if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
      }
 
@@ -4093,7 +4093,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Setup the classpath and append the classes folder ecj outputs its temporary files to
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath + ":" + ecjDestDir);
+         frontEndCommandLine.push_back(classpath); //  + ":" + ecjDestDir);
 
          frontEndCommandLine.push_back("-sourcepath");
          frontEndCommandLine.push_back(sourcepath);
@@ -5030,8 +5030,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   cout.flush();
               }
 
+              this -> set_javacErrorCode(0);           // keep going !!!
+              this -> set_frontendErrorCode(0);        // keep going !!!
+              this -> set_unparserErrorCode(0);        // keep going !!!
               this -> set_backendCompilerErrorCode(0); // keep going !!!
-              this -> set_javacErrorCode(0); // keep going !!!
           }
          }
        else

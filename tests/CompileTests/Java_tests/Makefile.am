@@ -164,6 +164,16 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7 = \
+     Test_1_7_binary_literals.java \
+     Test_1_7_Exceptions.java \
+     Test_1_7_non_reifiable_formal_parameters.java \
+     Test_1_7_strings_in_switch_statement.java \
+     Test_1_7_try_with_resources_statement.java \
+     Test_1_7_type_inference_for_generic_instance_creation.java \
+     Test_1_7_underscores_in_numeric_literal.java \
+     Test_1_7_warnings_and_errors_for_non_reifiable_parameters.java
+
 # Later we will move these tests to the gcjTestSuite subdirectory.
 GCJ_TESTCODES_REQUIRED_TO_PASS = \
 anfi.java \
@@ -407,6 +417,7 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRE
 
 # Tests for Java generics
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
 
 
 
@@ -445,11 +456,10 @@ $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTr
 	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
-
-
-
-
-
+# Tests requiring Java 1.7 that should pass.
+$(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.7 version support."
+	$(testTranslator) -rose:java:source 1.7 -rose:java:target 1.7 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
@@ -474,7 +484,7 @@ testJavaTraversal:
 graphWithFileInfo: ../../testGraphGeneration
 #	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/test2011_39.java
 
-testGenerics: $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
+testGenerics: $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
 
 workingJava:
 	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
@@ -530,6 +540,7 @@ check-local: extraTests
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
