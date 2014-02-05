@@ -309,22 +309,76 @@ analyze_data(SqlDatabase::TransactionPtr tx)
 		    );
 
 
+    {
     //all functions that is not a stub function for a dynamic library call 
-    int num_functions    = tx->statement("select count(*) from semantic_functions where name NOT LIKE '%@plt'")->execute_int(); 
-    int num_cg_syscalls  = tx->statement("select count(*) from syscalls_cg_accumulate; ")->execute_int();
-    int num_rg_syscalls  = tx->statement("select count(*) from syscalls_rg_accumulate; ")->execute_int();
-    int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller")->execute_int();
+   
+
+
+    std::cout << "\n\n\n################# COMPARING ALL FUNCTIONS \n\n";
+	
+    int num_functions    = tx->statement("select count(*) from functions_rg_accumulate where name NOT LIKE '%@plt'")->execute_int(); 
+    int num_cg_syscalls  = tx->statement("select count(*) from syscalls_cg_accumulate where name NOT LIKE '%@plt'; ")->execute_int();
+    int num_rg_syscalls  = tx->statement("select count(*) from syscalls_rg_accumulate where name NOT LIKE '%@plt'; ")->execute_int();
+    int path_calls       = tx->statement("select count(distinct fio.caller_id) from syscalls_made as sm join semantic_fio_calls as fio on fio.callee_id = sm.caller join semantic_functions as sf on fio.caller_id=sf.id where sf.name not like '%@plt'")->execute_int();
+    int total_num_functions = tx->statement("select count(*) from semantic_functions where name not like '%@plt'")->execute_int();
+
 
 
     std::cout << std::fixed << std::setprecision(2);
-    std::cout << "num functions:   "                 << num_functions   << std::endl;
+    std::cout << "num functions with calls:   "       << num_functions   << std::endl;
+    std::cout << "num functions:   "                  << total_num_functions   << std::endl;
+
     std::cout << "num callgraph syscalls: "          << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
     std::cout << "num reachability graph syscalls: " << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
     std::cout << "path calls: "                      << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
 
+    }
+
+    {
+
+            std::cout << "\n\n\n################# COMPARING FUNCTIONS WITH CALLS\n\n";
+	    int num_functions    = tx->statement("select count(distinct caller) from functions_rg_accumulate where name NOT LIKE '%@plt'")->execute_int(); 
+	    int num_cg_syscalls  = tx->statement("select count(distinct caller) from syscalls_cg_accumulate where name NOT LIKE '%@plt'; ")->execute_int();
+	    int num_rg_syscalls  = tx->statement("select count(distinct caller) from syscalls_rg_accumulate where name NOT LIKE '%@plt'; ")->execute_int();
+	    int path_calls       = tx->statement("select count(distinct fio.caller_id) from semantic_fio_calls as fio join syscalls_made as sm on fio.callee_id = sm.caller join semantic_functions as sf on sf.id=fio.caller_id where sf.name not like '%@plt'")->execute_int();
+
+	    int total_num_functions = tx->statement("select count(*) from semantic_functions where name not like '%@plt'")->execute_int();
 
 
 
+	    std::cout << std::fixed << std::setprecision(2);
+	    std::cout << "num functions with calls:   "       << num_functions   << std::endl;
+	    std::cout << "num functions:   "                  << total_num_functions   << std::endl;
+	    std::cout << "fraction of functions with calls: " << 100.0*num_functions/total_num_functions << std::endl;
+	    std::cout << "num callgraph syscalls: "           << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
+	    std::cout << "num reachability graph syscalls: "  << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
+	    std::cout << "path calls: "                       << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
+
+    }
+
+
+
+    {
+
+            std::cout << "\n\n\n################# COMPARING FUNCTIONS WITH CALLS WITH MORE THAN 100 INSTRUCTIONS\n\n";
+	    int num_functions    = tx->statement("select count(distinct fr.caller) from functions_rg_accumulate as fr join semantic_functions as sf on sf.id=fr.caller where sf.name NOT LIKE '%@plt' and sf.ninsns >=100 ")->execute_int(); 
+	    int num_cg_syscalls  = tx->statement("select count(distinct sc.caller) from syscalls_cg_accumulate as sc join semantic_functions as sf on sf.id=sc.caller where sf.name NOT LIKE '%@plt' and sf.ninsns >=100; ")->execute_int();
+	    int num_rg_syscalls  = tx->statement("select count(distinct sr.caller) from syscalls_rg_accumulate as sr join semantic_functions as sf on sf.id=sr.caller where sf.name NOT LIKE '%@plt' and sf.ninsns >= 100; ")->execute_int();
+	    int path_calls       = tx->statement("select count(distinct fio.caller_id) from semantic_fio_calls as fio join syscalls_made as sm on fio.callee_id = sm.caller join semantic_functions as sf on sf.id=fio.caller_id where sf.name not like '%@plt' and sf.ninsns >= 100")->execute_int();
+
+	    int total_num_functions = tx->statement("select count(*) from semantic_functions where ninsns >= 100 and name not like '%@plt'")->execute_int();
+
+
+
+	    std::cout << std::fixed << std::setprecision(2);
+	    std::cout << "num functions with calls:   "       << num_functions   << std::endl;
+	    std::cout << "num functions:   "                  << total_num_functions   << std::endl;
+	    std::cout << "fraction of functions with calls: " << 100.0*num_functions/total_num_functions << std::endl;
+	    std::cout << "num callgraph syscalls: "           << num_cg_syscalls << " fraction " << 100*((double) num_cg_syscalls/num_functions) << std::endl;
+	    std::cout << "num reachability graph syscalls: "  << num_rg_syscalls << " fraction " << 100*((double) num_rg_syscalls/num_functions) << std::endl;
+	    std::cout << "path calls: "                       << path_calls      << " fraction " << 100*((double) path_calls/num_functions)      << std::endl; 
+
+    }
 
 
  tx->statement("drop table IF EXISTS syscall_statistics;");
