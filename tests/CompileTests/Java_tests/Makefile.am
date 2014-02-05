@@ -369,7 +369,7 @@ tp.java \
 update_outer.java \
 utf8concat.java \
 utilTest.java \
-verify.java
+verify.java 
 
 GCJ_TESTCODE_CURRENTLY_FAILING = \
    PR35020.java \
@@ -408,8 +408,6 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRE
 # Tests for Java generics
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
 
-
-
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 testTranslator=../../testTranslator
@@ -444,6 +442,7 @@ $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator)
 $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+
 
 
 
