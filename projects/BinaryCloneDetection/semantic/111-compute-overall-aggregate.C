@@ -373,7 +373,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       " specificity_mean double precision, specificity_standard_deviation double precision, "
       " precision_min double precision, precision_max double precision, "
       " precision_mean double precision, precision_standard_deviation double precision, "
-      " fscore double precision, fscore_min double precision, fscore_max double precision, fscore_standard_deviation double precision "
+      " fscore_mean double precision, fscore_min double precision, fscore_max double precision, fscore_standard_deviation double precision "
       " );");
 
 
@@ -383,7 +383,7 @@ compute_resilience_to_optimization(SqlDatabase::TransactionPtr r_transaction)
       // 4              5                 6                 7
       "specificity_min, specificity_max, specificity_mean, specificity_standard_deviation, "
       // 8              9                 10          11
-      "precision_min, precision_max, precision_mean, precision_standard_deviation, fscore, fscore_min, fscore_max, fscore_standard_deviation)"
+      "precision_min, precision_max, precision_mean, precision_standard_deviation, fscore_mean, fscore_min, fscore_max, fscore_standard_deviation)"
       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 
@@ -581,9 +581,13 @@ int main(int argc, char *argv[])
         recalls(cur_recall);
         specificity(cur_specificity);
         precision(cur_precision);
+
+        std::string full_db_name   = *m_it;
+        std::string cur_db_prefix  = it->first;
+        std::string cur_db_group = full_db_name.substr(full_db_name.size()-5, 5);
   
-	per_insert_stmt->bind(0, it->first);
-	per_insert_stmt->bind(1, *m_it); 
+	per_insert_stmt->bind(0, cur_db_group);
+	per_insert_stmt->bind(1, it->first); 
 	per_insert_stmt->bind(2, cur_precision);  
 	per_insert_stmt->bind(3, cur_specificity);  
 	per_insert_stmt->bind(4, cur_recall);  
