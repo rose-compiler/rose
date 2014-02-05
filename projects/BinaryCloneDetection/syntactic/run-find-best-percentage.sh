@@ -162,8 +162,7 @@ do
                                      --window-size=$window_size \
                                      --stride=$stride -- $SEARCH_DIR || exit 1
 
-      execute $BLDDIR/110_compute_aggregate --threshold=$threshold \ 
-                                            --prefix=$prefix || exit 1
+      execute $BLDDIR/110_compute_aggregate --threshold=$threshold --prefix=$prefix || exit 1
 
       #compute recall, precision etc total over all dbs
       recall=`psql $results_db_name -t -c "select recall from overall_rates limit 1" | tr "\\n"  " " `
