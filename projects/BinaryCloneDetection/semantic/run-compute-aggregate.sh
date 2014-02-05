@@ -45,7 +45,7 @@ execute () {
 parallelism () {
     local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
     nprocs=$[nprocs-1]
-
+    nprocs=32
     echo $nprocs
 }
 
@@ -66,6 +66,8 @@ cg_threshold=""
 path_threshold=""
 min_insns=""
 max_cluster_size=""
+euclidean_threshold=""
+hamming_threshold=""
 
 while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
     arg="$1"; shift
@@ -84,6 +86,12 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
 	    ;;
 	--path-threshold=*)
 	    path_threshold=${arg#--path-threshold=}
+	    ;;
+ 	--hamming-threshold=*)
+	    hamming_threshold=${arg#--hamming-threshold=}
+	    ;;
+       	--euclidean-threshold=*)
+	    euclidean_threshold=${arg#--euclidean-threshold=}
 	    ;;
 	--min-insns=*)
 	    min_insns=${arg#--min-insns=}
@@ -123,6 +131,18 @@ if [ "12$path_threshold" = "12" ]; then
     usage 0
 fi
 
+if [ "12$hamming_threshold" = "12" ]; then
+    echo "Please provide a hamming threshold" 
+    usage 0
+fi
+
+if [ "12$euclidean_threshold" = "12" ]; then
+    echo "Please provide a euclidean threshold" 
+    usage 0
+fi
+
+
+
 if [ "12$min_insns" = "12" ]; then
     echo "Please provide a min insns threshold" 
     usage 0
@@ -136,7 +156,7 @@ fi
 
 
 
-cg_computation_flags="--sem-threshold=$sem_threshold --cg-threshold=$cg_threshold --path-threshold=$path_threshold --min-insns=$min_insns --max-cluster-size=$max_cluster_size"
+cg_computation_flags="--sem-threshold=$sem_threshold --cg-threshold=$cg_threshold --path-threshold=$path_threshold --min-insns=$min_insns --hamming-threshold=$hamming_threshold --euclidean-threshold=$euclidean_threshold --max-cluster-size=$max_cluster_size"
 
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
