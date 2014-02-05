@@ -72,6 +72,11 @@ noinst_PROGRAMS += 32-func-similarity
 32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 33-optimize-weights
+33_optimize_weights_SOURCES = 33-optimize-weights.C
+33_optimize_weights_CPPFLAGS = $(ROSE_INCLUDES)
+33_optimize_weights_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 80-89: database maintenance
 noinst_PROGRAMS += 85-delete
