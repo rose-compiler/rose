@@ -271,14 +271,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // Support for java options
-          argument == "-rose:java:cp" ||
-          argument == "-rose:java:classpath" ||
-          argument == "-rose:java:sourcepath" ||
-          argument == "-rose:java:d" ||
-          argument == "-rose:java:ds" ||
-          argument == "-rose:java:source" ||
-          argument == "-rose:java:target" ||
-          argument == "-rose:java:encoding" ||
+          SageSupport::Cmdline::Java::OptionRequiresArgument(argument) ||
 
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
@@ -854,52 +847,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_Fortran_only(true);
         }
 
-  // DQ (10/11/2010): Adding initial Java support.
-     set_Java_only(false);
-     ROSE_ASSERT (get_Java_only() == false);
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(j|J|java|Java)",true) == true )
-        {
-          if ( SgProject::get_verbose() > 0 )
-               printf ("In SgProject: Java only mode ON \n");
-          set_Java_only(true);
-
-       // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
-          set_compileOnly(true);
-        }
-
-     string javaRosePrefix = "-rose:java:";
-     // Java classpath option support
-     string javaTmpParameter;
-     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(cp|classpath)", javaTmpParameter, true) == true) {
-         // Parse and register the java classpath in the project
-         std::list<std::string> cpList = StringUtility::tokenize(javaTmpParameter, ':');
-         set_Java_classpath(cpList);
-     }
-     // Java sourcepath option support
-     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(sourcepath)", javaTmpParameter, true) == true) {
-         // Parse and register the java sourcepath in the project
-         std::list<std::string> cpList = StringUtility::tokenize(javaTmpParameter, ':');
-         set_Java_sourcepath(cpList);
-     }
-     // Java destination dir option support
-     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(d)", javaTmpParameter, true) == true) {
-         set_Java_destdir(javaTmpParameter);
-     }
-
-     // Java destination source dir option support
-     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(ds)", javaTmpParameter, true) == true) {
-         set_Java_source_destdir(javaTmpParameter);
-     }
-
-#ifdef ROSE_JAVA_SUPPORT
-     // Enable remoteDebug of the spawned JVM
-     // This is defined in jserver.C, had to rely on that because there's no way
-     // to access the command line arguments from there.
-     extern bool roseJavaRemoteDebug;
-     roseJavaRemoteDebug = CommandlineProcessing::isOption(local_commandLineArgumentList, javaRosePrefix,"(remoteDebug)", true);
-
-#endif
-
 #if 0
      printf ("In SgProject: before processing option: (get_wave() == %s) \n",get_wave() ? "true" : "false");
 #endif
@@ -924,6 +871,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_openmp_linking(true);
         }
 
+      SageSupport::Cmdline::Java::Process(this, local_commandLineArgumentList);
       SageSupport::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
@@ -1481,6 +1429,291 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
 
 //------------------------------------------------------------------------------
 //                                  Java
+//------------------------------------------------------------------------------
+
+bool
+SageSupport::Cmdline::Java::
+OptionRequiresArgument (const std::string& option)
+{
+  return
+      // Javac Options
+      option == "-classpath"                ||
+      option == "-cp"                       ||
+      option == "-sourcepath"               ||
+      option == "-d"                        ||
+      // ROSE Options
+      option == "-rose:java:cp"             ||
+      option == "-rose:java:classpath"      ||
+      option == "-rose:java:sourcepath"     ||
+      option == "-rose:java:d"              ||
+      option == "-rose:java:ds"             ||
+      option == "-rose:java:source"         ||
+      option == "-rose:java:target"         ||
+      option == "-rose:java:encoding";
+}// Cmdline:Java:::OptionRequiresArgument
+
+void
+SageSupport::Cmdline::Java::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java commandline options" << std::endl;
+
+  ProcessJavaOnly(project, argv);
+  ProcessClasspath(project, argv);
+  ProcessSourcepath(project, argv);
+  ProcessDestdir(project, argv);
+  ProcessSourceDestdir(project, argv);
+  ProcessRemoteDebug(project, argv);
+}
+
+void
+SageSupport::Cmdline::Java::
+ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
+{
+  bool is_java_only =
+      CommandlineProcessing::isOption(
+          argv,
+          Java::option_prefix,
+          "",
+          true);
+
+  if (is_java_only)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Turning on Java only mode" << std::endl;
+
+      // Java code is only compiled, not linked as is C/C++ and Fortran.
+      project->set_compileOnly(true);
+      project->set_Java_only(true);
+  }
+}
+
+void
+SageSupport::Cmdline::Java::
+ProcessClasspath (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string classpath = "";
+
+  bool has_java_classpath =
+      // -rose:java:classpath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "classpath",
+          classpath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:cp
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "cp",
+          classpath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -classpath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "",
+          "classpath",
+          classpath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -cp
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "",
+          "cp",
+          classpath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_classpath)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java classpath option" << std::endl;
+
+      // Parse and register the Java classpath in the project
+      std::list<std::string> classpath_list =
+          StringUtility::tokenize(classpath, ':');
+      project->set_Java_classpath(classpath_list);
+
+      // Sanity check: Check existence of paths in Classpath
+      BOOST_FOREACH(std::string path, classpath_list)
+      {
+          bool path_exists = boost::filesystem::exists(path);
+          if (!path_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid path specified in -classpath; path does not exist: "
+                  << "'" << path << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_classpath
+}// Cmdline::Java::ProcessClasspath
+
+void
+SageSupport::Cmdline::Java::
+ProcessSourcepath (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string sourcepath = "";
+
+  bool has_java_sourcepath =
+      // -rose:java:sourcepath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "sourcepath",
+          sourcepath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -sourcepath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "",
+          "sourcepath",
+          sourcepath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_sourcepath)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java sourcepath option" << std::endl;
+
+      // Parse and register the Java sourcepath in the project
+      std::list<std::string> sourcepath_list =
+          StringUtility::tokenize(sourcepath, ':');
+      project->set_Java_sourcepath(sourcepath_list);
+
+      // Sanity check: Check existence of paths in sourcepath
+      BOOST_FOREACH(std::string path, sourcepath_list)
+      {
+          bool path_exists = boost::filesystem::exists(path);
+          if (!path_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid path specified in -sourcepath; path does not exist: "
+                  << "'" << path << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_sourcepath
+}// Cmdline::Java::ProcessSourcepath
+
+void
+SageSupport::Cmdline::Java::
+ProcessDestdir (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string destdir = "";
+
+  bool has_java_destdir =
+      // -rose:java:d
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "destdir",
+          destdir,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -d
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "",
+          "d",
+          destdir,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_destdir)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java destdir option" << std::endl;
+
+      project->set_Java_destdir(destdir);
+
+      // Sanity check: Check existence of destdir path
+      {
+          bool directory_exists = boost::filesystem::is_directory(destdir);
+          if (!directory_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid -destdir directory path; path does not exist: "
+                  << "'" << destdir << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_destdir
+}// Cmdline::Java::ProcessDestdir
+
+void
+SageSupport::Cmdline::Java::
+ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string source_destdir = "";
+
+  bool has_java_source_destdir =
+      // -rose:java:ds
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "ds",
+          source_destdir,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_source_destdir)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing ROSE-Java source destdir option" << std::endl;
+
+      project->set_Java_source_destdir(source_destdir);
+
+      // Sanity check: Check existence of source destdir path
+      {
+          bool directory_exists = boost::filesystem::is_directory(source_destdir);
+          if (!directory_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid source destdir directory path; path does not exist: "
+                  << "'" << source_destdir << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_source_destdir
+}// Cmdline::Java::ProcessSourceDestdir
+
+void
+SageSupport::Cmdline::Java::
+ProcessRemoteDebug (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_java_remote_debug =
+      // -rose:java:remoteDebug
+      CommandlineProcessing::isOption(
+          argv,
+          Java::option_prefix,
+          "remoteDebug",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_remote_debug)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java remote debugging option" << std::endl;
+
+      #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+          // This is defined in src/frontend/OpenFortranParser_SAGE_Connection/jserver.C,
+          // and there is no way to access the command line arguments from there.
+          extern bool roseJavaRemoteDebug;
+          roseJavaRemoteDebug = true;
+      #else
+          std::cout
+              << "[WARN] "
+              << "JVM remote debugging will not be enabled since ROSE-Java "
+              << "support is turned off"
+              << std::endl;
+      #endif
+  }// has_java_remote_debug
+}// Cmdline::Java::ProcessRemoteDebug
+
+//------------------------------------------------------------------------------
+//                                  X10
 //------------------------------------------------------------------------------
 
 void
@@ -3588,21 +3821,24 @@ SgFile::stripFortranCommandLineOptions ( vector<string> & argv )
 
 void
 SgFile::stripJavaCommandLineOptions ( vector<string> & argv )
-   {
-     // Need to rewrite rose:java-prefixed options before handing them to the backend.
-     string javaRosePrefix = "-rose:java:";
-     Rose_STL_Container<string> rose_java_options =
-                 CommandlineProcessing::generateOptionWithNameParameterList(argv, javaRosePrefix, "-");
-     for (Rose_STL_Container<string>::iterator i = rose_java_options.begin(); i != rose_java_options.end(); ++i)
-       {
-         if (*i == "-ds") {
-           // Removes -ds as javac wouldn't know what to do with it.
-           i++;
-         } else {
-           argv.push_back(*i);
-         }
-       }
-   }
+{
+  // Need to rewrite rose:java-prefixed options before handing them to the backend.
+  string javaRosePrefix = "-rose:java:";
+  Rose_STL_Container<string> rose_java_options =
+           CommandlineProcessing::generateOptionWithNameParameterList(argv, javaRosePrefix, "-");
+  for (Rose_STL_Container<string>::iterator i = rose_java_options.begin(); i != rose_java_options.end(); ++i)
+  {
+      if (*i == "-ds")
+      {
+          // Removes -ds as javac wouldn't know what to do with it.
+          i++;
+      }
+      else
+      {
+          argv.push_back(*i);
+      }
+  }
+}
 
 Rose_STL_Container<string>
 CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_Container<string> & argList, string inputPrefix )
