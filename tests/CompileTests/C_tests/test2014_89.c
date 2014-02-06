@@ -1,14 +1,11 @@
-int mode[2], bits[2];
+// Test for allignment attribute (reported to be missing in output code, 2/6/2014)
 
-void foobar(int x, int y)
-   {
-  // int dmode, mode[2], bits[2];
-     int len, ch, ret;
-     int dmode, mode[2], bits[2];
-     int *ch0, *ch1;
-     int i, t, t2;
+#include <stdio.h>
 
-     bits[0] = 16;
-     bits[1] = 32;
-   }
+int main() {
+    int x __attribute__((aligned(64)));
+    fprintf (stderr, "alignment: %zu\n", ((size_t) &x % 64));
+
+    return 0;
+}
 
