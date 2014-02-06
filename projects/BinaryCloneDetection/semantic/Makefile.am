@@ -112,6 +112,14 @@ noinst_PROGRAMS += 99-grants
 99_grants_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
+# Utilities
+
+noinst_PROGRAMS += largestFunction
+largestFunction_SOURCES = largestFunction.C
+largestFunction_CPPFLAGS = $(ROSE_INCLUDES)
+largestFunction_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
 builtins.so: builtins-string.c builtins-stdio.c
 	$(CC) $(CFLAGS32) -Wall -fPIC -shared -o $@ $<
