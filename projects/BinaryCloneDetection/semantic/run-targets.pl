@@ -102,7 +102,7 @@ sub select_pairs {
 	    }
 	}
     }
-    print "generated ", 0+@pairs, " function pairs\n";
+    print "generated ", 0+@pairs, " function pairs", ($symmetric?" pruned by symmetry":""), "\n";
     return @pairs;
 }
 
