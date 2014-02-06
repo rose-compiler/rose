@@ -1868,6 +1868,11 @@ SgFile::usage ( int status )
 "                             to compile the generated file exactly the same as the \n"
 "                             input would have been compiled (following original header file \n"
 "                             source path lookup rules precisely (this is rarely required)). \n"
+"     -rose:suppressConstantFoldingPostProcessing\n"
+"                             Optimization to avoid postprocessing phase in C code only\n"
+"                             This option has only shown an effect on the 2.5 million line\n"
+"                             wireshark application\n"
+"                             (not presently compatable with OpenMP or C++ code)\n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -3548,6 +3553,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      char* version_string = NULL;
   // optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
      optionCount = sla(argv, "-", "($)^", "(version-info)",version_string,1);
+
+  // DQ (2/5/2014): Remove this option from the command line that will be handed to the backend compiler (typically GNU gcc or g++).
+     optionCount = sla(argv, "-rose:", "($)", "(suppressConstantFoldingPostProcessing)",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))

@@ -10383,7 +10383,8 @@ SgInitializedName::get_qualified_name_prefix_for_type() const
 
      return nameQualifier;
    }
- 
+
+
 void
 SgInitializedName::post_construction_initialization()
    {
@@ -10434,6 +10435,14 @@ SgInitializedName::post_construction_initialization()
      p_shapeDeferred          = false;
      p_initializationDeferred = false;
      p_protected_declaration  = false;
+
+  // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+     p_name_qualification_length_for_type = 0;
+     p_type_elaboration_required_for_type = false;
+     p_global_qualification_required_for_type = false;
+
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+     p_hasArrayTypeWithEmptyBracketSyntax = false;
 
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
@@ -10576,6 +10585,15 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_shapeDeferred          = ptr.p_shapeDeferred;
      p_initializationDeferred = ptr.p_initializationDeferred;
      p_protected_declaration  = ptr.p_protected_declaration;
+
+  // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+     p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
+     p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
+     p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+
+
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+     p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
    }
 
 SgInitializedName&
@@ -10661,6 +10679,14 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
           p_isCoArray                             = ptr.p_isCoArray;
+
+       // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+          p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
+          p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
+          p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+
+       // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+          p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
         }
        else
         {

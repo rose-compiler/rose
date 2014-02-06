@@ -4290,7 +4290,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true)
                   {
                     ninfo_for_type.set_supressArrayBound();
-#if 0
+#if 1
                     printf ("In unparseVarDeclStmt(): decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true: calling ninfo_for_type.set_supressArrayBound() \n");
 #endif
 #if 0

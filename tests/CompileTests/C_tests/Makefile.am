@@ -458,6 +458,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_85.c \
      test2014_86.c \
      test2014_87.c \
+     test2014_88.c \
+     test2014_89.c \
      math.c \
      complex_01.c \
      stdio.c \

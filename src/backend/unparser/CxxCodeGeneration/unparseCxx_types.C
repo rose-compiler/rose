@@ -2692,7 +2692,9 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                  // DQ (1/9/2014): These should have been setup to be the same.
                     ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
-
+#if 0
+                    printf ("In unparseArrayType(): ninfo2.supressArrayBound()  = %s \n",(ninfo2.supressArrayBound() == true) ? "true" : "false");
+#endif
                  // DQ (2/2/2014): Allow the array bound to be subressed (e.g. in secondary declarations of array variable using "[]" syntax.
                  // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                     if (ninfo2.supressArrayBound() == false)
