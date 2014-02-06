@@ -754,3 +754,11 @@ SgJavaPackageDeclaration
 SgJavaPackageStatement
 SgJavaImportStatementList
 SgJavaClassDeclarationList
+SgJavaMemberValuePair
+SgJavaAnnotation
+SgJavaMarkerAnnotation
+SgJavaSingleMemberAnnotation
+SgJavaNormalAnnotation
+SgJavaTypeExpression
+SgJavaQualifiedType
+SgClassExp

@@ -424,6 +424,10 @@ WARN_LOGFILE           =
 #       listed explicitly here (we can't add "*.C" to FILE_PATTERNS because
 #       doing so creates *lots* of doxygen entries for undocumented stuff).
 
+# DQ (1/10/2014): Removed these files to permit doxygen to be run directly from docs/Rose directory.
+#                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_4.7/documentation.docs		     
+#                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C			     
+
 INPUT                  =										     \
                          @top_pwd@/rose.docs								     \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs				     \

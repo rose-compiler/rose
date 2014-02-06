@@ -10498,7 +10498,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     if (namespaceDefinition != NULL)
                        {
                          associatedScope = namespaceDefinition->get_global_definition();
-
+#error "DEAD CODE!"
                          printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
                               initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
                        }
@@ -10524,6 +10524,31 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     initName->set_prev_decl_item(prev_decl);
 
                ROSE_ASSERT(initName->get_prev_decl_item() != initName);
+#if 0
+            // DQ (1/25/2014): We need to make sure that the variable is not initialzed twice.
+            // The selection of where to do the initialization is however important.
+            // ROSE_ASSERT(initName->get_prev_decl_item() != NULL);
+               if (initName->get_prev_decl_item() != NULL)
+                  {
+                 // Check if get_prev_decl_item() is marked extern, and if so don't let it be marked with an initializer.
+                 // We might also want to check is this is in a class, marked const, etc.
+                    if (initName->get_prev_decl_item()->get_initializer() != NULL && initName->get_initializer() != NULL)
+                       {
+#if 1
+                         printf ("In SageInterface::fixVariableDeclaration(): (initName->get_prev_decl_item()->get_init() != NULL): variable initialized twice! \n");
+#endif
+                         ROSE_ASSERT(initName->get_prev_decl_item()->get_initializer() != initName->get_initializer());
+
+                      // DQ (1/25/2014): If the first variable was initialized, then reset the second one to NULL.
+                         initName->set_initializer(NULL);
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#endif
+               
              } //end if
         } //end for
 
@@ -11416,18 +11441,30 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
 
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
-PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target,
-                const std::string & text,
-               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/)
-{
-    ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
-    PreprocessingInfo* result = NULL;
-    PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
-    result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
-    ROSE_ASSERT(result);
-    target->addToAttachedPreprocessingInfo(result);
-    return result;
-}
+PreprocessingInfo* 
+SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & text, PreprocessingInfo::RelativePositionType position /*=PreprocessingInfo::before*/)
+   {
+  // DQ (1/13/2014): This function needs a better mechanism than attaching text to the AST unparser as a CPP directive.
+
+     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
+     PreprocessingInfo* result = NULL;
+
+  // DQ (1/13/2014): It is a mistake to attach arbitrary test to the AST as a #define 
+  // (since we evaluate all #define CPP declarations to be a self-referential macro).
+  // For now I will make it a #if CPP declaration, since these are not evaluated internally.
+  // PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
+     PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorIfDeclaration;
+
+  // DQ (1/13/2014): Output a warning so that this can be fixed whereever it is used.
+     printf ("Warning: attachArbitraryText(): attaching arbitrary text to the AST as a #if declaration: text = %s \n",text.c_str());
+
+     result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
+     ROSE_ASSERT(result);
+
+     target->addToAttachedPreprocessingInfo(result);
+
+     return result;
+   }
 
 
 //!Check if a target node has MacroCall attached, if yes, replace them with expanded strings
