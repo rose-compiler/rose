@@ -20,8 +20,8 @@
 #include <stdarg.h>
 
 using namespace rose;
-using namespace rose:Diagnostics;
-using namespace rose:StringUtility;
+using namespace rose::Diagnostics;
+using namespace StringUtility;
 
 /* See header file for full documentation. */
 
