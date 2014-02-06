@@ -1669,10 +1669,13 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
      short alignmentValue = initializedName->get_gnu_attribute_alignment();
      if (alignmentValue >= 0)
         {
+#if 0
+          curprint(" /* alignment attribute on SgInitializedName */ ");
+#endif
        // curprint( " __attribute__((align(N)))");
-           curprint( " __attribute__((align(");
-           curprint(StringUtility::numberToString((int)alignmentValue));
-           curprint("))) ");
+          curprint( " __attribute__((align(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint("))) ");
         }
    }
 
@@ -1758,6 +1761,9 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      if (alignmentValue >= 0)
         {
+#if 0
+          curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
+#endif
        // curprint(" __attribute__((align(N)))");
           curprint(" __attribute__((align(");
           curprint(StringUtility::numberToString((int)alignmentValue));

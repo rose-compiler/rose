@@ -321,7 +321,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
      if (storage.isAsm())
         {
-          curprint("asm ");
+       // DQ (2/6/2014): Fix to support GNU gcc.
+       // curprint("asm ");
+          curprint("__asm__ ");
         }
 
   // TV (05/06/2010): CUDA storage modifiers
@@ -2778,7 +2780,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printf ("storage.isAsm() = %s \n",storage.isAsm() ? "true" : "false");
           if (storage.isAsm() == true)
              {
-               curprint("asm ");
+            // DQ (2/6/2014): Modified to support gcc.
+            // curprint("asm ");
+               curprint("__asm__ ");
              }
 
 #if 0
@@ -3001,10 +3005,12 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (1/25/2009): Function can be defined using asm function names. The name is held as a string.
           if (funcdecl_stmt->get_asm_name().empty() == false)
              {
+            // DQ (2/6/2014): Fix to support GNU gcc.
             // an asm ("<function name>") is in use
-               curprint ( string(" asm (\""));
-               curprint ( funcdecl_stmt->get_asm_name() );
-               curprint ( string("\")"));
+            // curprint ( string(" asm (\""));
+               curprint(" __asm__ (\"");
+               curprint( funcdecl_stmt->get_asm_name() );
+               curprint( string("\")"));
              }
 
           if (funcdecl_stmt->isForward() && !ninfo.SkipSemiColon())
@@ -4440,8 +4446,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (12/31/2013): review this in light of change to support type attributres directly.
                printf ("Inside of unparseVarDeclStmt: calling printAttributes(decl_item,info): Find out what what sorts of gnu attributes this causes to be put out! \n");
 #endif
+            // DQ (2/6/2014): Move this to be after the name is output.
             // DQ (8/31/2013): Added support for missing attributes.
-               unp->u_sage->printAttributes(decl_item,info);
+            // unp->u_sage->printAttributes(decl_item,info);
 
             // DQ (12/30/2013): Adding support to seperate how packing is handled when attached to the type of a variable vs. the variable directly.
                if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
@@ -4594,6 +4601,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (7/31/2006): I think that we can simplify to just this code.
             // unp->u_type->unparseType(tmp_type, ninfo2);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
+
+            // DQ (2/6/2014): Move this to be after the name is output.
+            // DQ (8/31/2013): Added support for missing attributes.
+               unp->u_sage->printAttributes(decl_item,info);
 
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
