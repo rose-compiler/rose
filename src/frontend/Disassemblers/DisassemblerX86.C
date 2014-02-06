@@ -16,6 +16,7 @@
 
 #include <sstream>
 
+using namespace rose;
 
 /* See header file for full documentation. */
 
