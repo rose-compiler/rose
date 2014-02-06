@@ -357,6 +357,11 @@ HEADER_JAVA_PARAMETERIZED_TYPE_START
 HEADER_JAVA_PARAMETERIZED_TYPE_END
 
 
+HEADER_JAVA_QUALIFIED_TYPE_START
+          SgJavaQualifiedType ( const SgJavaQualifiedType & X );
+HEADER_JAVA_QUALIFIED_TYPE_END
+
+
 HEADER_JAVA_WILDCARD_TYPE_START
           SgJavaWildcardType ( const SgJavaWildcardType & X );
 HEADER_JAVA_WILDCARD_TYPE_END
@@ -2896,16 +2901,83 @@ $CLASSNAME::get_mangled(void) const
              }
 */
              mangled_name = get_raw_type() -> get_mangled();
-             SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
-             for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
-                 mangled_name += "_";
-                 mangled_name += (*i) -> get_type() -> get_mangled();
+             if (get_type_list() != NULL) {
+                 SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+                 for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                     mangled_name += "_";
+                     mangled_name += (*i) -> get_type() -> get_mangled();
+                 }
              }
         }
 
      return mangled_name;
    }
 SOURCE_JAVA_PARAMETERIZED_TYPE_END
+
+
+SOURCE_JAVA_QUALIFIED_TYPE_START
+SgJavaQualifiedType::SgJavaQualifiedType ( const SgJavaQualifiedType & X )
+   : SgNamedType(X)
+   {
+   }
+
+
+SgName
+SgJavaQualifiedType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+  // if (get_name().get_length() != 0) // not anonymous
+     if (get_name().is_null() == false) // not anonymous
+        {
+ // TODO: Remove this !
+ /*
+          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
+       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+          if (class_decl != NULL)
+             {
+            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
+               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
+               if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
+#if 0
+                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
+#endif
+#if 0
+                    printf ("Need to get the mangled names of the template arguments \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // This is for just a simple SgClassDeclaration.
+                    mangled_name = class_decl->get_mangled_name();
+                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+                  }
+             }
+*/
+             mangled_name = get_parent_type() -> get_mangled();
+             mangled_name += "_";
+             mangled_name += get_type() -> get_mangled();
+        }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_QUALIFIED_TYPE_END
 
 
 SOURCE_JAVA_WILDCARD_TYPE_START
@@ -2928,6 +3000,9 @@ SgJavaWildcardType::get_mangled (void) const
      SgName mangled_name;
      mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
                   << get_name().str() // name of wildcard type is "?"
+                  << (this -> get_has_extends() ? "_extends_" : "")
+                  << (this -> get_has_super() ? "_super_" : "")
+                  << (! this -> get_is_unbound() ? this -> get_bound_type() -> get_mangled() : "")
                   << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
 
 #if 0
@@ -5436,6 +5511,23 @@ SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optio
    }
 
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaQualifiedType*
+SgJavaQualifiedType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_START

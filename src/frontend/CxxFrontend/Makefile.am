@@ -97,6 +97,9 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 	touch EDG/libroseEDG.la
 
 installdir = ${datadir}
+# TOO1 (1/31/2014) This is required by installed translators. Otherwise, error 'invalid EDG_BASE directory' occurs at runtime.
+#                  We will need to figure out what the correct solution for distributions will be in the future.
+# Liao (1/16/2014) This will break make distcheck since the file from EDG submodule will not be available in a distribution package
 install_DATA = \
 	EDG/EDG_@ROSE_EDG_MAJOR_VERSION_NUMBER@.@ROSE_EDG_MINOR_VERSION_NUMBER@/lib/predefined_macros.txt
 
