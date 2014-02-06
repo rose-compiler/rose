@@ -10,6 +10,7 @@ use strict;
 my $dry_run = 1;      # Set true if you only want to see what would have been done.
 my $dropdb = 1;       # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
 my $max_pairs = 5;    # Maximum number of pairs to run, selected at random.
+my $per_program = 1;  # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1; # If true, then pairs of functions must be the same program (e.g., both "egrep")
 my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was selected.
 
@@ -108,13 +109,31 @@ sub select_pairs {
 # Select up to N values uniformly random. None of the returned values are duplicates (unless they were duplicated in
 # the original list).
 sub select_random {
-    my($n, $aref) = @_;
+    my($n, @array) = @_;
     my @retval;
-    while ($n-- > 0 && @$aref > 0) {
-	my $idx = int rand(scalar @$aref);
-	push @retval, splice @$aref, $idx, 1;
+    while ($n-- > 0 && @array > 0) {
+	my $idx = int rand(scalar @array);
+	push @retval, splice @array, $idx, 1;
     }
-    print "selected ", 0+@retval, " pairs at random; discarded ", 0+@$aref, " pairs\n";
+    return @retval;
+}
+
+# Select up to N values uniformly for each program name.  For any given pair of specimens (a,b), we use a_program as the
+# program name (a_program=b_program anyway when $same_program is true).
+sub select_random_per_program {
+    my($n, @pairs) = @_;
+
+    # Partition list of all pairs into lists according to $a->{program}
+    my %perprog;
+    for my $pair (@pairs) {
+	my $a = $pair->[0];
+	$perprog{$a->{program}} ||= [];
+	push @{$perprog{$a->{program}}}, $pair;
+    }
+   
+    # Select N randomly from each list
+    my @retval;
+    push @retval, select_random $n, @$_ for values %perprog;
     return @retval;
 }
 
@@ -143,7 +162,7 @@ print "loaded information for ", 0+@specimens, " specimens.\n";
 ###############################################################################################################################
 
 
-if (1) {
+if (0) {
 
     print "\n*** Examples from Andreas ***\n";
 
@@ -207,7 +226,20 @@ if (1) {
 ###############################################################################################################################
 ###############################################################################################################################
 
-for my $pair (select_random $max_pairs, [select_pairs \@specimens, \&selection_predicate]) {
+# Generate a list of pairs over which to run
+my @pairs = select_pairs \@specimens, \&selection_predicate;
+if (defined $max_pairs) {
+    if ($per_program) {
+	@pairs = select_random_per_program $max_pairs, @pairs;
+	print "selected up to $max_pairs pairs for each program; ", 0+@pairs, " pairs in total\n";
+    } else {
+	@pairs = select_random $max_pairs, @pairs;
+	print "selected ", 0+@pairs, " pairs at random\n";
+    }
+}
+
+# Run the analysis for each pair
+for my $pair (@pairs) {
     my $a = $pair->[0];
     my $b = $pair->[1];
 
