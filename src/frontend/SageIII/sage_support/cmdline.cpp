@@ -1408,6 +1408,13 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
 
 void
 SageSupport::Cmdline::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  Cmdline::Java::StripRoseOptions(argv);
+}// Cmdline::StripRoseOptions
+
+void
+SageSupport::Cmdline::
 ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
 {
   bool keep_going =
@@ -1449,8 +1456,30 @@ OptionRequiresArgument (const std::string& option)
       option == "-rose:java:ds"             ||
       option == "-rose:java:source"         ||
       option == "-rose:java:target"         ||
-      option == "-rose:java:encoding";
+      option == "-rose:java:encoding"       ||
+      option == "-rose:java:ecj:jvm_options";
 }// Cmdline:Java:::OptionRequiresArgument
+
+void
+SageSupport::Cmdline::Java::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  std::string argument;
+
+  sla(argv, "-rose:", "($)", "(j|J|java|Java)",1);
+
+  // Options taking an argument
+  sla(argv, "-rose:java:cp", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:classpath", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:sourcepath", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:d", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:ds", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:source", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:target", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  sla(argv, "-rose:java:encoding", "", "", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  Cmdline::Java::Ecj::StripRoseOptions(argv);
+}// Cmdline::Java::StripRoseOptions
 
 void
 SageSupport::Cmdline::Java::
@@ -1465,6 +1494,7 @@ Process (SgProject* project, std::vector<std::string>& argv)
   ProcessDestdir(project, argv);
   ProcessSourceDestdir(project, argv);
   ProcessRemoteDebug(project, argv);
+  Cmdline::Java::Ecj::Process(project, argv);
 }
 
 void
@@ -1711,6 +1741,72 @@ ProcessRemoteDebug (SgProject* project, std::vector<std::string>& argv)
       #endif
   }// has_java_remote_debug
 }// Cmdline::Java::ProcessRemoteDebug
+
+void
+SageSupport::Cmdline::Java::Ecj::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  std::cout
+      << "[INFO] "
+      << "Stripping ROSE Java ECJ commandline options"
+      << std::endl;
+
+  std::string argument;
+
+  // Options taking an argument
+  // sla (argv, "-rose:java:ecj:", "(jvm_options)", &argument, Cmdline::REMOVE_OPTION_FROM_ARGV);
+  CommandlineProcessing::isOptionWithParameter(
+      argv,
+      "-rose:java:ecj:",
+      "jvm_options",
+      argument,
+      Cmdline::REMOVE_OPTION_FROM_ARGV);
+}// Cmdline::Java::StripRoseOptions
+
+void
+SageSupport::Cmdline::Java::Ecj::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java's ECJ frontend commandline options" << std::endl;
+
+  ProcessJvmOptions(project, argv);
+}
+
+void
+SageSupport::Cmdline::Java::Ecj::
+ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java's ECJ frontend JVM commandline options" << std::endl;
+
+  std::string ecj_jvm_options = "";
+
+  bool has_ecj_jvm_options =
+      // -rose:java:ecj:jvm_options
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "ecj:jvm_options",
+          ecj_jvm_options,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_ecj_jvm_options)
+  {
+      if (SgProject::get_verbose() > 1)
+      {
+          std::cout
+              << "[INFO] Processing ECJ JVM options: "
+              << "'" << ecj_jvm_options << "'"
+              << std::endl;
+      }
+
+      std::list<std::string> ecj_jvm_options_list =
+          StringUtility::tokenize(ecj_jvm_options, ' ');
+
+      project->set_Java_ecj_jvm_options(ecj_jvm_options_list);
+  }// has_ecj_jvm_options
+}// Cmdline::Java::ProcessJvmOptions
 
 //------------------------------------------------------------------------------
 //                                  X10
@@ -3530,6 +3626,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_negative_test(true);
         }
 
+      // TOO1 (2/11/2014): Add initial Java CLI refactoring with Cmdline::StripRoseOptions.
+      SageSupport::Cmdline::StripRoseOptions(argv);
+
 #if 1
   //
   // We have processed all rose supported command line options.
@@ -3605,8 +3704,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
+  // TOO1 (2/140/2014): Refactor into SageSupport::Cmdline::Java namespace
   // DQ (10/12/2010): Added support for Java
-     optionCount = sla(argv, "-rose:", "($)", "(j|J|java|Java)",1);
+     SageSupport::Cmdline::Java::StripRoseOptions(argv);
+     optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
      optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);

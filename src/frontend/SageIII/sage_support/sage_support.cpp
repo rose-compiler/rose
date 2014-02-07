@@ -4097,6 +4097,17 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
          frontEndCommandLine.push_back("-sourcepath");
          frontEndCommandLine.push_back(sourcepath);
 
+        // TOO1 (2/10/2014): Add -Xss to increase ECJ's JVM stack size
+        {
+            std::list<std::string> jvm_options =
+                get_project()->get_Java_ecj_jvm_options();
+
+            frontEndCommandLine.insert(
+                frontEndCommandLine.end(),
+                jvm_options.begin(),
+                jvm_options.end());
+        }
+
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
 
