@@ -638,6 +638,13 @@ public:
      *  some object are affected. */
     virtual void fixup_pointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
+    /** Called by frontend() to disassemble an entire interpretation. Disassembles the specified interpretation using
+     *  configuration settings from the ROSE command-line and then links the resulting SgAsmBlock into the AST.  The
+     *  disassembly is partitioner-driven.
+     *
+     *  See also: Disassembler::disassembleInterpratation(), which does Disassembler-driven disassembly. */
+    static void disassembleInterpretation(SgAsmInterpretation*);
+
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects
      **************************************************************************************************************************/
