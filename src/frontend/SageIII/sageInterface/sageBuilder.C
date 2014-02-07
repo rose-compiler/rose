@@ -580,8 +580,10 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                break;
              }
 
+       // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
        // I forget why we needed this case...
+          case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
           case V_SgClassDeclaration:
@@ -671,8 +673,10 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
                break;
              }
 
+       // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
        // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
+          case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
           case V_SgClassDeclaration:
@@ -1794,6 +1798,11 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
 #endif
 #if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
+     printf ("Inside of SageBuilder::buildFunctionType() (activate test for return_type): return_type = %p = %s \n",return_type,return_type->class_name().c_str());
+#endif
+#if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
      if (isSgFunctionType(return_type) != NULL)
         { 
        // Liao 12/14/2012. This is not true for some functions (e.g. findFunctionUsingDlopen() on top of dlopen()) returning a function type
@@ -1801,6 +1810,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
           ROSE_ASSERT(false);
         }
 #endif
+
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
@@ -4012,6 +4022,10 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
         {
           ROSE_ASSERT(first_nondefining_declaration != NULL);
 
+       // DQ (12/27/20134): Added these to permit testing earlier than in the buildDefiningFunctionDeclaration_T() function.
+          ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
           result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,first_nondefining_declaration, NULL);
         }
 #endif
@@ -4750,8 +4764,16 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
        else
         {
           nondefiningDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+#if 0
+       // DQ (11/20/2013): We should not be appending the nondefiningDeclaration to the scope.  This was added a few months ago.
+       // This was a mistake/misunderstanding with Laio about the semantics of the buildDefiningFunctionDeclaration() 
+       // function.  Building a function should not have a side-effect on the AST (though clearly it can build new 
+       // subtrees, the AST is not modified until the result of the buildDefiningFunctionDeclaration() is explicitly 
+       // added (it should also not add the nondefiningDeclaration).  Additionally this code was not consistant with
+       // the associated fortran function to build defining function declaration.
           if (scope != NULL)
-            appendStatement(nondefiningDeclaration, scope);
+               appendStatement(nondefiningDeclaration, scope);
+#endif
         }
 
   // DQ (8/23/2013): Added assertions.
@@ -5430,6 +5452,22 @@ SgSuperExp* SageBuilder::buildSuperExp(SgClassSymbol* sym)
 SgSuperExp* SageBuilder::buildSuperExp_nfi(SgClassSymbol* sym)
 {
   SgSuperExp* result = new SgSuperExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp_nfi(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
@@ -10429,6 +10467,21 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // mysymbol = scope->lookup_class_symbol(name);
        // mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments);
           mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments,templateArgumentsList);
+
+#if 0
+       // DQ (11/21/2013): Added test based on debugging session with Philippe.
+       // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+          if (mysymbol != NULL)
+             {
+               SgClassDeclaration* symbol_declaration = isSgClassDeclaration(mysymbol->get_declaration());
+               ROSE_ASSERT(symbol_declaration != NULL);
+               ROSE_ASSERT(symbol_declaration->get_scope() == scope);
+
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): Testing scope->get_symbol_table()->exists(mysymbol) == true (expensive) \n");
+
+               ROSE_ASSERT(scope->get_symbol_table()->exists(mysymbol) == true);
+             }
+#endif
         }
        else
         {
@@ -10701,6 +10754,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
+
+            // DQ (11/21/2013): Added test based on debugging session with Philippe.
+               ROSE_ASSERT(nondefdecl->get_scope() == scope);
              }
             else
              {

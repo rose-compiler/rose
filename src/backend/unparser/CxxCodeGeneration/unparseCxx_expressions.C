@@ -39,7 +39,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 #if 0
      printf ("In C/C++ Unparse_ExprStmt::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
-     curprint ( string("\n /*    unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
+     curprint(string("\n /*    unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
      switch (expr->variant())
@@ -1483,6 +1483,9 @@ Unparse_ExprStmt::unparseStatementExpression (SgExpression* expr, SgUnparse_Info
   // (so they are exceptions, see test2007_51.C).
      info2.unset_SkipClassDefinition();
 
+  // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+     info2.unset_SkipEnumDefinition();
+
      curprint ( "(");
      unparseStatement(statement,info2);
      curprint ( ")");
@@ -1522,15 +1525,30 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
    {
      SgUnparse_Info newinfo(info);
      newinfo.set_operator_name(op);
+
 #if 0
-     curprint ( string("\n /* Inside of unparseBinaryOperator(") + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
+     curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
+
+#if 0
+     printf ("In unparseBinaryOperator(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseBinaryOperator(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      unparseBinaryExpr(expr, newinfo);
+
+#if 0
+     curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
+#endif
    }
 
 
 void
 Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
+
 
 void
 Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
@@ -1588,6 +1606,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           nameQualifier = var_ref->get_qualified_name_prefix();
         }
 
+  // DQ (1/22/2014): Adding support for generated names used in un-named variables.
+     bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+     printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+
+#if 0
   // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
@@ -1595,8 +1620,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
 #endif
-          curprint ( nameQualifier.str());
+          curprint(nameQualifier.str());
         }
+#else
+     curprint(nameQualifier.str());
+#endif
 
   // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
   // curprint (  var_ref->get_symbol()->get_name().str());
@@ -1609,7 +1637,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-          curprint (var_ref->get_symbol()->get_name().str());
+       // curprint (var_ref->get_symbol()->get_name().str());
+          if (isAnonymousName == false)
+             {
+               curprint (var_ref->get_symbol()->get_name().str());
+             }
         }
 
 #if 0
@@ -1997,10 +2029,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
    {
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
+#define MFuncRefSupport_DEBUG 0
+
      T* mfunc_ref = dynamic_cast<T*>(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): expr = %p = %s \n",expr,expr->class_name().c_str());
 #endif
 
@@ -2009,7 +2043,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol()->get_declaration();
      ROSE_ASSERT (mfd != NULL);
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("mfunc_ref->get_symbol()->get_name() = %s \n",mfunc_ref->get_symbol()->get_name().str());
      printf ("mfunc_ref->get_symbol()->get_declaration()->get_name() = %s \n",mfunc_ref->get_symbol()->get_declaration()->get_name().str());
 #endif
@@ -2027,10 +2061,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
           uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
         }
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): uses_operator_syntax = %s \n",uses_operator_syntax ? "true" : "false");
 #endif
-#if 0
+#if MFuncRefSupport_DEBUG
      curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 
@@ -2044,7 +2078,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      SgClassDeclaration* decl;
      decl = cdef->get_declaration();
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
 #endif
 #if 0
@@ -2067,7 +2101,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // DQ (6/4/2011): Support for output of generated string for type (used where name 
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToFunction = info.get_reference_node_for_qualification();
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): nodeReferenceToFunction = %p \n",nodeReferenceToFunction);
 #endif
      if (nodeReferenceToFunction != NULL)
@@ -2157,7 +2191,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #if 0
      printf ("In unparseMFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
 #endif
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): functionNameString = %s \n",functionNameString.c_str());
 #endif
 
@@ -2191,7 +2225,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
      bool print_colons = false;
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
 #endif
 
@@ -2253,10 +2287,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
      string full_function_name = func_name;
 
-#if 0
+#if MFuncRefSupport_DEBUG
      curprint ( "\n /* Inside of unparseMFuncRef (after name qualification) func_name = " + func_name + " */ \n");
 #endif
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
 
      printf ("unp->opt.get_overload_opt()                            = %s \n",(unp->opt.get_overload_opt() == true) ? "true" : "false");
@@ -2279,7 +2313,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
              }
         }
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): func_name after processing to remove >> references = %s \n",func_name.c_str());
 #endif
 
@@ -2292,7 +2326,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         {
           func_name = func_name.substr(8);
         }
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("func_name after processing to extract operator substring = %s \n",func_name.c_str());
 #endif
 
@@ -2333,13 +2367,13 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
        else
         {
-#if 0
+#if MFuncRefSupport_DEBUG
           printf ("Case of unparsing a member function which is NOT short form of \"operator[]\" (i.e. \"[]\") funct_name = %s \n",func_name.c_str());
 #endif
        // Make sure that the member function name does not include "()" (this prevents "operator()()" from being output)
           if (func_name != "()")
              {
-#if 0
+#if MFuncRefSupport_DEBUG
                printf ("Case of unparsing a member function which is NOT \"operator()\" \n");
                curprint ("/* Case of unparsing a member function which is NOT \"operator()\" */ \n");
 #endif
@@ -2368,12 +2402,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                     functionCall = isSgFunctionCallExp(arrowExpression->get_parent());
                   }
 
-#if 0
+#if MFuncRefSupport_DEBUG
                curprint (string("/* In unparseMFuncRefSupport(): (functionCall != NULL) && (uses_operator_syntax == false) = ") + (((functionCall != NULL) && (uses_operator_syntax == false)) ? "true" : "false") + " */ \n");
                curprint (string("/* In unparseMFuncRefSupport(): (functionCall != NULL) = ") + ((functionCall != NULL) ? "true" : "false") + " */ \n");
                curprint (string("/* In unparseMFuncRefSupport(): uses_operator_syntax   = ") + (uses_operator_syntax   ? "true" : "false") + " */ \n");
 #endif
-#if 0
+#if MFuncRefSupport_DEBUG
                printf ("In unparseMFuncRefSupport(): functionCall = %p uses_operator_syntax = %s \n",functionCall,uses_operator_syntax ? "true" : "false");
 #endif
             // if (functionCall != NULL)
@@ -2547,9 +2581,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                  // operator name since it is best done by the binary operator handling (e.g. unparseBinaryExpr()).
                     if ( uses_operator_syntax == false )
                        {
-#if 0
+#if MFuncRefSupport_DEBUG
                          printf ("In unparseMFuncRefSupport(): function name IS output \n");
-                      // curprint("/* In unparseMFuncRefSupport(): function name IS output */ \n");
+                         curprint("/* In unparseMFuncRefSupport(): function name IS output */ \n");
 #endif
 #if 0
 #error "DEAD CODE!"
@@ -2606,14 +2640,24 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                        }
                       else
                        {
-#if 0
-                         printf ("In unparseMFuncRefSupport(): function name is NOT output \n");
+#if MFuncRefSupport_DEBUG
+                         printf ("In unparseMFuncRefSupport(): function name is NOT output: full_function_name = %s \n",full_function_name.c_str());
                          curprint("/* In unparseMFuncRefSupport(): function name is NOT output */ \n");
 #endif
+#if MFuncRefSupport_DEBUG
+                         printf ("In unparseMFuncRefSupport(): mfd->get_args().size() = %zu \n",mfd->get_args().size());
+#endif
+                      // DQ (11/17/2013): We need to distinguish between unary and binary overloaded operators (for member 
+                      // functions a unary operator has zero arguments, and a binary operator has a single argument).
+                         bool is_unary_operator = (mfd->get_args().size() == 0);
+#if MFuncRefSupport_DEBUG
+                         printf ("In unparseMFuncRefSupport(): is_unary_operator = %s \n",is_unary_operator ? "true" : "false");
+#endif
                       // These operators require special handling since they are prefix operators when unparsed using operator syntax.
-                         if (full_function_name != "operator*" && full_function_name != "operator&")
+                      // if (full_function_name != "operator*" && full_function_name != "operator&")
+                         if ( (is_unary_operator == false) || (is_unary_operator == true && full_function_name != "operator*" && full_function_name != "operator&"))
                             {
-#if 0
+#if MFuncRefSupport_DEBUG
                               printf ("In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output \n");
                               curprint("/* In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output */ \n");
 #endif
@@ -2621,7 +2665,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                             }
                            else
                             {
-#if 0
+#if MFuncRefSupport_DEBUG
                               printf ("info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
 #endif
                               if (info.isPrefixOperator() == true)
@@ -2630,7 +2674,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                                  }
                                 else
                                  {
-#if 0
+#if MFuncRefSupport_DEBUG
                                    printf ("In unparseMFuncRefSupport(): function name is NOT output for prefix operator \n");
                                    curprint("/* In unparseMFuncRefSupport(): function name is NOT output for prefix operator */ \n");
 #endif
@@ -2650,7 +2694,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
              }
             else
              {
-            // printf ("Case of unparsing a member function which is \"operator()\" \n");
+#if MFuncRefSupport_DEBUG
+               printf ("Case of unparsing a member function which is \"operator()\" \n");
+#endif
              }
 #if 0
        // curprint ( mfunc_ref->get_symbol()->get_name();
@@ -2662,10 +2708,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
        // End of old code (not yet intended properly).
         }
 
-#if 0
+#if MFuncRefSupport_DEBUG
      printf ("Leaving unparseMFuncRefSupport \n");
 #endif
-#if 0
+#if MFuncRefSupport_DEBUG
      curprint ("\n/* leaving unparseMFuncRefSupport */ \n");
 #endif
    }
@@ -2727,8 +2773,16 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
         {
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
-               curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
+               curprint("L");
+
+       // curprint("\"" + str_val->get_value() + "\"");
+          string s = string("\"") + str_val->get_value() + string("\"");
+#if 0
+          printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
+#endif
+          curprint(s);
         }
 #endif
 #endif
@@ -3205,10 +3259,20 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      printf ("func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
 #endif
 #if 0
+  // DQ (11/16/2013): This need not be a SgFunctionRefExp.
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call->get_function());
-     ROSE_ASSERT(func_ref != NULL);
-     ROSE_ASSERT(func_ref->get_symbol() != NULL);
-     printf ("Function name = %s \n",func_ref->get_symbol()->get_name().str());
+  // ROSE_ASSERT(func_ref != NULL);
+  // ROSE_ASSERT(func_ref->get_symbol() != NULL);
+  // printf ("Function name = %s \n",func_ref->get_symbol()->get_name().str());
+     if (func_ref != NULL)
+        {
+          ROSE_ASSERT(func_ref->get_symbol() != NULL);
+          printf ("Function name = %s \n",func_ref->get_symbol()->get_name().str());
+        }
+       else
+        {
+       // If this is not a SgFunctionRefExp, then look for a member function reference via a SgDotExp or SgArrowExp.
+        }
 #endif
 #if 0
      printf ("isBinaryOperator(func_call->get_function())     = %s \n",unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
@@ -3234,10 +3298,11 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
           ROSE_ASSERT(binaryOperator != NULL);
 
           SgExpression* lhs = binaryOperator->get_lhs_operand();
-       // printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
           SgExpression* rhs = binaryOperator->get_rhs_operand();
-       // printf ("rhs = %p = %s \n",rhs,rhs->class_name().c_str());
-
+#if 0
+          printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+          printf ("rhs = %p = %s \n",rhs,rhs->class_name().c_str());
+#endif
           SgMemberFunctionRefExp* memberFunctionRef = isSgMemberFunctionRefExp(rhs);
           if (memberFunctionRef != NULL)
              {
@@ -3440,10 +3505,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                info.set_nested_expression();
              }
 #if 0
-          printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->sage_class_name());
+          printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->class_name().c_str());
           curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
 #endif
-
        //
        // Unparse the function first.
        //
@@ -4147,6 +4211,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      cast_op->get_file_info()->display("In unparseCastOp(): debug");
 #endif
 
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info newinfo(info);
      newinfo.unset_PrintName();
      newinfo.unset_isTypeFirstPart();
@@ -4452,6 +4524,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (6/21/2011): Added support for name qualification.
      info.set_reference_node_for_qualification(cast_op->get_operand());
      ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      unparseExpression(cast_op->get_operand(), info); 
 
@@ -4974,7 +5054,9 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
                  // Then the comment is in between the start of the construct and the end of the construct.
                     if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                        {
+#if 0
                          printf ("Found cpp include directive \n");
+#endif
                          returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
@@ -5010,7 +5092,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(aggr_init != NULL);
 
 #if 0
-  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
+  // DQ (1/26/2014): This would not be as portabile of a solution, but it is more robus in other ways. So this is a compromize.
+  // DQ (9/11/2013): It is a better solution to always unparse the ggregate attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
@@ -5048,6 +5131,15 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
                newinfo.unset_SkipClassDefinition();
+
+            // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+               newinfo.unset_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
              }
             else
              {
@@ -5075,7 +5167,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
+
 #if 0
   // DQ (7/27/2013): Commented this out since we do need it now that we support the compound literals.
      if (aggr_init->get_need_explicit_braces())
@@ -5853,6 +5948,14 @@ Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
 
      ROSE_ASSERT (operand != NULL);
      ROSE_ASSERT (type != NULL);
+
+#if 0
+     printf ("In unparseVarArgOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarArgOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      curprint ( "va_arg(");
      unparseExpression(operand,info);

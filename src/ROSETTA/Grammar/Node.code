@@ -560,7 +560,7 @@ typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
 typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 
 // TOO1 (5/16/2013)
-typedef Rose_STL_Container<SgJavaPackageStatement*> SgJavaPackageStatementPtrList;
+typedef Rose_STL_Container<SgJavaPackageDeclaration*> SgJavaPackageDeclarationPtrList;
 
 // DQ (6/12/2013): Added to support use in Java support (in SgSourceFile).
 typedef Rose_STL_Container<SgJavaImportStatement*> SgJavaImportStatementPtrList;
@@ -598,10 +598,14 @@ typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
 typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrList;
 typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
+// DQ (1/13/2014): Added support for Java annotations.
+typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
+typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;
-
+class FrontierNode;
+class PreviousAndNextNodeData;
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
