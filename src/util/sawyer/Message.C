@@ -775,8 +775,12 @@ void Facility::initStreams(const DestinationPtr &destination) {
 Stream& Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
-    if ((size_t)imp>=streams_.size() || NULL==streams_[imp])
+    if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
+        // If you're looking at this line in a debugger, it's probably because you haven't called
+        // Sawyer::Message::initializeLibrary().  ROSE USERS: Sawyer initialization happens in
+        // rose::Diagnostics::initialize().
         throw std::runtime_error("stream " + stringifyImportance(imp) + " is not initialized yet");
+    }
     return *streams_[imp];
 }
 
