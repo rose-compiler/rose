@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=3comp_
+DB_PREFIX=obfuscations_
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=no
@@ -22,12 +22,12 @@ CREATE_DB=yes
 
 
 # Settings for running the analysis (see $(srcdir)/run-analysis.sh for documentation)
-generate_inputs_flags='--ngroups=3 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
-add_functions_flags='--signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
+generate_inputs_flags='--ngroups=5 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+add_functions_flags='--signature-components=total_for_variant'
 get_pending_tests_flags='--size=2'
 run_tests_nprocs=''
 run_tests_job_multiplier='1'
-run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant,operand_total,ops_for_variant,specific_op,operand_pair'
+run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant'
 func_similarity_worklist_flags='--delete'
 func_similarity_flags='--ignore-faults --ogroup=valueset-jaccard --aggregate=minimum'
 

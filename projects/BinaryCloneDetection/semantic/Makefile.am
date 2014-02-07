@@ -160,6 +160,12 @@ noinst_PROGRAMS += 119_create_graphs
 119_create_graphs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
+# Utilities
+
+noinst_PROGRAMS += largestFunction
+largestFunction_SOURCES = largestFunction.C
+largestFunction_CPPFLAGS = $(ROSE_INCLUDES)
+largestFunction_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
