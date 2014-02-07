@@ -1514,7 +1514,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FieldReference, BlockScope)");
 
-        javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
+        javaParserSupport.preprocessClass((node.genericCast != null ? node.genericCast : node.actualReceiverType), this.unitInfo);       	
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1527,8 +1527,13 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, BlockScope)");
 
-        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
-        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), this.unitInfo.createJavaToken(node));
+        javaParserSupport.generateAndPushType((/*node.genericCast != null ? node.genericCast : */ node.actualReceiverType), this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
+        String field_name = new String(node.token);
+        
+//System.out.println("Field reference 1; " + (node.genericCast != null ? ("generic cast: " + node.genericCast.debugName() + "; "): "") + "receiver type: " + 
+//		           node.actualReceiverType.debugName() + "; binding type: " + node.binding.type.debugName());
+
+        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, BlockScope)");
@@ -1539,7 +1544,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FieldReference, ClassScope)");
 
-        javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
+        javaParserSupport.preprocessClass((node.genericCast != null ? node.genericCast : node.actualReceiverType), this.unitInfo);
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1552,8 +1557,12 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, ClassScope)");
 
-        javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
-        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), this.unitInfo.createJavaToken(node));
+        javaParserSupport.generateAndPushType((/*node.genericCast != null ? node.genericCast : */node.actualReceiverType), this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
+        String field_name = new String(node.token);
+
+//System.out.println("Field reference 2" + (node.genericCast != null ? " with generic cast" : ""));
+
+        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(FieldReference, BlockScope)");
@@ -1743,7 +1752,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         //
         // Do not use node.source() for the string representation of this integer because it yields an incorrect result for -2147483648
         //
-        JavaParser.cactionIntLiteral(node.constant.intValue(), "" + node.constant.intValue(), this.unitInfo.createJavaToken(node));
+        JavaParser.cactionIntLiteral(node.constant.intValue(), new String(node.source()), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(IntLiteral, BlockScope)");
@@ -1789,22 +1798,44 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(LocalDeclaration, BlockScope)");
 
-        // Do Nothing 
+        //
+        // We have to visit the LocalDeclaration node here in case the variable we are declaring 
+        // is used in the initialization.  We bumped into this corner case in the Apache Lucene
+        // application...
+        //
+        //        int x = x;
+        //
+        if (node.annotations != null) {
+            for (int i = 0, annotationsLength = node.annotations.length; i < annotationsLength; i++) {
+                node.annotations[i].traverse(this, scope);
+            }
+        }
+        node.type.traverse(this, scope);
+
+        JavaParser.cactionLocalDeclaration(node.annotations == null ? 0 : node.annotations.length,
+        		                           new String(node.name),
+                                           node.binding != null && node.binding.isFinal(),
+                                           this.unitInfo.createJavaToken(node));
+
+        //
+        // Now we can process the initialization even if it uses the variable we just declared.
+        //
+        if (node.initialization != null) {
+            node.initialization.traverse(this, scope);
+        }
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(LocalDeclaration, BlockScope)");
 
-        return true;
+        return false;
     }
 
     public void exit(LocalDeclaration node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(LocalDeclaration, BlockScope)");
 
-        JavaParser.cactionLocalDeclarationEnd(node.annotations == null ? 0 : node.annotations.length,
-                                              new String(node.name),
+        JavaParser.cactionLocalDeclarationEnd(new String(node.name),
                                               node.initialization != null,
-                                              node.binding != null && node.binding.isFinal(),
                                               this.unitInfo.createJavaToken(node));
     }
 

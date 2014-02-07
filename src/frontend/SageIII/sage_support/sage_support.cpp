@@ -522,8 +522,7 @@ bool roseInstallPrefix(std::string& result) {
       return false;
     } else {
       // the translator must locate in the installation_tree/lib
-      // TODO what about lib64??
-       if (libdirBasename != "lib")
+       if (libdirBasename != "lib" && libdirBasename != "lib64")
           {
             printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
           }
@@ -3868,7 +3867,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-     if (this -> get_package() != NULL) { // Has this file been processed already? If so, ignore it.
+     if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
      }
 
@@ -4093,7 +4092,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Setup the classpath and append the classes folder ecj outputs its temporary files to
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath + ":" + ecjDestDir);
+         frontEndCommandLine.push_back(classpath); //  + ":" + ecjDestDir);
 
          frontEndCommandLine.push_back("-sourcepath");
          frontEndCommandLine.push_back(sourcepath);
@@ -4991,8 +4990,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           //
           // If we are processing Java, ...
           //
-          if (get_Java_only() == true)
-             {
+          if (get_Java_only() == true) {
               //
               // Report if an error detected only while compilng the output file?
               //
@@ -5018,22 +5016,25 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               else if (this -> get_frontendErrorCode()                != 0 ||
                        this -> get_project() -> get_midendErrorCode() != 0 ||
                        this -> get_unparserErrorCode()                != 0 ||
-                       this -> get_backendCompilerErrorCode()         != 0)
-                 {
+                       this -> get_backendCompilerErrorCode()         != 0) {
                   cout << "ERROR compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-              else
-                 {
+              }
+              else {
                   cout << "SUCCESS compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-             }
+              }
+
+              this -> set_javacErrorCode(0);           // keep going !!!
+              this -> set_frontendErrorCode(0);        // keep going !!!
+              this -> set_unparserErrorCode(0);        // keep going !!!
+              this -> set_backendCompilerErrorCode(0); // keep going !!!
           }
+         }
        else
         {
           if ( get_verbose() > 1 )
