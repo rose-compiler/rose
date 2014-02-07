@@ -1705,10 +1705,6 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
              {
             // curprint(" /* from printAttributesForType(SgDeclarationStatement*) */ __attribute__((packed))");
                curprint(" __attribute__((packed))");
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
         }
 
@@ -1721,10 +1717,19 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
           if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
              {
                curprint(" __attribute__((noreturn))");
+             }
+
+       // DQ (2/7/2014): attribute set using: decl->get_functionModifier().set_gnu_attribute_named_alias(alias_name);
+          if (functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias().empty() == false)
+             {
+               string alias = functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias();
 #if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               printf ("Detected alias attribute: alias = %s \n",alias.c_str());
 #endif
+            // curprint(" __attribute__((noreturn))");
+               curprint(" __attribute__((alias(\"");
+               curprint(alias);
+               curprint("\")))");
              }
         }
    }
