@@ -234,57 +234,20 @@ class_symbol = NULL; // Ignore this error !!!?
 }
 
 
-// TODO: Remove this !!!
-/*
-//
-// Initially, found_atype is set to true if a file with the name in question is visible locally.
-//
-bool isConflictingType(string simple_name, SgClassType *found_type) {
-// TODO: Remove this !!!
-//if(found_type){
-//cout << "The type " << found_type -> get_qualified_name().getString() << " is visible locally" << endl;
-//cout.flush();
-//}
-    if (::currentSourceFile != NULL) { // We are processing a source file
-        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_types");
-        if (attribute) {
-            for (int i = 0; i < attribute -> size(); i++) {
-                SgClassType *imported_type = isSgClassType(attribute -> getNode(i));
-                ROSE_ASSERT(imported_type);
-                if (imported_type -> get_name().getString() == simple_name) { // definitely an imported type
-// TODO: Remove this !!!
-//cout << "Found imported type " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                    if (found_type && found_type != imported_type) { // a second hit?
-// TODO: Remove this !!!
-//cout << "Found Conflicting types: " << found_type -> get_qualified_name().getString() << "  AND  " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                        return true;
-                    }
-                    found_type = imported_type;
-                }
-            }
-        }
-
-        attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_packages");
-        if (attribute) {
-            for (int i = 0; i < attribute -> size(); i++) {
-                SgClassDefinition *on_demand_package_definition = isSgClassDefinition(attribute -> getNode(i));
-                ROSE_ASSERT(on_demand_package_definition);
-                SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_package_definition, simple_name);
+bool isImportedTypeOnDemand(AstSgNodeListAttribute *attribute, SgClassDefinition *containing_definition, SgClassType *class_type) {
+    if (attribute) {
+        for (int i = 0; i < attribute -> size(); i++) {
+            SgClassDefinition *on_demand_definition = isSgClassDefinition(attribute -> getNode(i));
+            ROSE_ASSERT(on_demand_definition);
+            if (containing_definition == on_demand_definition) {
+                SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_definition, class_type -> get_name());
                 if (class_symbol) { // an on-demand imported type?
 // TODO: Remove this !!!
-//cout << "Found on-demand imported type " << isSgClassType(class_symbol -> get_type()) -> get_qualified_name().getString() << endl;
+//cout << "Type " << class_type -> get_qualified_name().getString() << " is imported on demand in file " << ::currentSourceFile -> getFileName() << endl;
+//ROSE_ASSERT(isSgClassType(class_symbol -> get_type()));
 //cout.flush();
-                    SgClassType *imported_type = isSgClassType(class_symbol -> get_type());
-                    ROSE_ASSERT(imported_type);
-                    if (found_type && found_type != imported_type) { // a second hit?
-// TODO: Remove this !!!
-//cout << "Found Conflicting types: " << found_type -> get_qualified_name().getString() << "  AND  " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                        return true;
-                    }
-                    found_type = imported_type;
+                    ROSE_ASSERT(class_symbol -> get_type() == class_type);
+                    return true;
                 }
             }
         }
@@ -292,15 +255,13 @@ bool isConflictingType(string simple_name, SgClassType *found_type) {
 
     return false;
 }
-*/
-
 
 bool isImportedType(SgClassType *class_type) {
     if (::currentSourceFile != NULL) { // We are processing a source file
-        SgClassDeclaration *new_class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
-        ROSE_ASSERT(new_class_declaration);
-        SgClassDefinition *new_package_definition = isSgClassDefinition(new_class_declaration -> get_parent());
-        if (new_package_definition) { // The type in question is enclosed in a package or it's an inner type
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgClassDefinition *containing_definition = isSgClassDefinition(class_declaration -> get_parent());
+        if (containing_definition) { // The type in question is enclosed in a package or a type (class member type)
             AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_types");
             if (attribute) {
                 for (int i = 0; i < attribute -> size(); i++) {
@@ -316,24 +277,11 @@ bool isImportedType(SgClassType *class_type) {
                 }
             }
 
-            attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_packages");
-            if (attribute) {
-                for (int i = 0; i < attribute -> size(); i++) {
-                    SgClassDefinition *on_demand_package_definition = isSgClassDefinition(attribute -> getNode(i));
-                    ROSE_ASSERT(on_demand_package_definition);
-                    if (new_package_definition == on_demand_package_definition) {
-                        SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_package_definition, class_type -> get_name());
-                        if (class_symbol) { // an on-demand imported type?
-// TODO: Remove this !!!
-//cout << "Type " << class_type -> get_qualified_name().getString() << " is imported on demand in file " << ::currentSourceFile -> getFileName() << endl;
-//ROSE_ASSERT(isSgClassType(class_symbol -> get_type()));
-//cout.flush();
-                            ROSE_ASSERT(class_symbol -> get_type() == class_type);
-                            return true;
-                        }
-                    }
-                }
+            if (isImportedTypeOnDemand((AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_packages"), containing_definition, class_type)) {
+                return true;
             }
+
+            return isImportedTypeOnDemand((AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_types"), containing_definition, class_type);
         }
     }
 
@@ -2022,8 +1970,6 @@ cout.flush();
 //
 void lookupAllSimpleNameTypesInClass(list<SgClassSymbol *> &class_list, const SgName &name, SgClassDefinition *class_definition) {
     ROSE_ASSERT(class_definition);
-    ROSE_ASSERT(class_definition -> get_declaration());
-
     SgClassSymbol *class_symbol = lookupClassSymbolInScope(class_definition, name);
     if (class_symbol) {
         class_list.push_back(class_symbol);
@@ -2040,7 +1986,7 @@ cout << "Symbol " << name.getString() << " was found in scope " << class_definit
 cout.flush();
 }
 */
-        return; // if the class exists in a class it hides the name in its super classes
+        return; // if the type is an inner type in this scope then it hides the name in any super classes
     }
 
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
@@ -2080,13 +2026,12 @@ SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDef
 SgVariableSymbol *lookupVariableByName(const SgName &name) {
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    SgSymbol *symbol = NULL;
-
     //
     // Iterate over the scope stack... At each point, look to see if the variable is there.
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
+    SgSymbol *symbol = NULL;
     for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && i != astJavaScopeStack.end(); i++) {
         if ((*i) == ::globalScope) // ignore the global scope... It may appear in the middle of the stack for inner classes...
             continue;
@@ -2097,7 +2042,36 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
                    // lookup_variable_symbol() should have been called in place of the more general lookup_symbol() function.
                    // : (*i) -> lookup_symbol(name));
                       : (*i) -> lookup_variable_symbol(name));
-   }
+    }
+
+    //
+    // If we still have not found the name, check to see if it is a static field that can be imported on-demand.
+    //
+    if (symbol == NULL && ::currentSourceFile != NULL) { // We are processing a source file
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_fields");
+        if (attribute) {
+            for (int i = 0; i < attribute -> size(); i++) {
+                SgVariableSymbol *variable_symbol = isSgVariableSymbol(attribute -> getNode(i));
+                ROSE_ASSERT(variable_symbol);
+                if (variable_symbol -> get_name().getString().compare(name.getString()) == 0) {
+                    return variable_symbol;
+                }
+            }
+        }
+
+        attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_types");
+        if (attribute) {
+            for (int i = 0; i < attribute -> size(); i++) {
+                SgClassDefinition *on_demand_definition = isSgClassDefinition(attribute -> getNode(i));
+                ROSE_ASSERT(on_demand_definition);
+                SgVariableSymbol *variable_symbol = on_demand_definition -> lookup_variable_symbol(name);
+                if (variable_symbol) {
+                    return variable_symbol;
+                }
+            }
+        }
+    }
+
 
     return isSgVariableSymbol(symbol);
 }
@@ -2194,6 +2168,7 @@ cout.flush();
             SgClassDeclaration *class_declaration = isSgClassDeclaration(class_definition -> get_declaration());
             ROSE_ASSERT(class_declaration);
             if (class_declaration -> get_explicit_interface() || class_declaration -> get_explicit_enum() || class_declaration -> get_declarationModifier().get_storageModifier().isStatic()) {
+// TODO: Remove this!
 /*
 cout << "I encountered a static region: "
      << class_declaration -> get_qualified_name().getString()
@@ -2203,7 +2178,25 @@ cout << "I encountered a static region: "
      << local_class_symbols.size()
      << endl;
 cout.flush();
+cout << "Here is the stack: " << endl;
+for (std::list<SgScopeStatement*>::iterator e = astJavaScopeStack.begin(); e != astJavaScopeStack.end(); e++) {
+cout << "    "
+<< (isSgClassDefinition(*e) ? isSgClassDefinition(*e) -> get_qualified_name().getString()
+                            : isSgFunctionDefinition(*e) ? (isSgFunctionDefinition(*e) -> get_declaration() -> get_name().getString() + "(...)")
+                                                         : (*e) -> class_name())
+<< " ("
+<< ((unsigned long) (*e))
+<< ")"
+<< endl;
+cout.flush();
+}
 */
+                SgClassSymbol *class_symbol = NULL;
+                if (class_declaration -> get_name().getString().compare(type_name.getString()) == 0) {
+                    class_symbol = isSgClassSymbol(class_declaration -> search_for_symbol_from_symbol_table());
+                    ROSE_ASSERT(class_symbol);
+                    local_class_symbols.push_back(class_symbol);
+                }
                 break;
             }
         }
@@ -2225,6 +2218,17 @@ cout.flush();
             SgFunctionDefinition *method_definition = isSgFunctionDefinition(*i);
             if (method_definition) {
                 if (local_class_symbols.size() > 0) { // if we've reached a method header and at least one type was found, we're done!
+// TODO: Remove this!
+/*
+cout << "Am I here !? ... exiting at "
+  << method_definition -> get_declaration() -> get_name().getString() << " with "
+  << local_class_symbols.size()
+  << " instances of type "
+  << type_name.getString()
+  << " found ?"
+  << endl;
+cout.flush();
+*/
                     break;
                 }
 
@@ -2237,6 +2241,7 @@ cout.flush();
                     ROSE_ASSERT(type_space);
                     class_symbol = lookupClassSymbolInScope(type_space, type_name);
                     if (class_symbol) {
+// TODO: Remove this!
 /*
 cout << "Looking for " << type_name.getString() << " in " << method_definition -> get_declaration() -> get_name().getString() << endl;
 cout.flush();
@@ -2319,6 +2324,13 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         list<SgClassSymbol *> local_class_symbols;
         if (package_name.getString().size() == 0 && qualifiedTypeName.size() == 1) { // No package?  Check to see if this is a local type.
             SgName short_name = *name;
+// TODO: Remove this!
+/*
+cout << "Checking for local type "
+     << (*name).getString()
+     << endl;
+cout.flush();
+*/
             lookupLocalTypeSymbols(local_class_symbols, short_name);
         }
         SgClassSymbol *class_symbol = (local_class_symbols.size() == 1 ? local_class_symbols.front() : NULL);
@@ -2355,9 +2367,12 @@ cout.flush();
             }
 
 // TODO: Remove this!!!
-/*
+
 if (! class_symbol){
-cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() << endl;
+cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() 
+     << " in file "
+     << (::currentSourceFile ? ::currentSourceFile  -> getFileName(): "???")
+<< endl;
 cout.flush();
 cout << "Here is the stack: " << endl;
 for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); i != astJavaScopeStack.end(); i++) {
@@ -2372,7 +2387,7 @@ cout << "    "
 cout.flush();
 }
 }
-*/
+
             ROSE_ASSERT(class_symbol);
 
             for (name++; name != qualifiedTypeName.end(); name++) {
