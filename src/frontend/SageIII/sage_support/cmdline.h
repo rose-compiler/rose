@@ -27,7 +27,7 @@ namespace Cmdline {
   makeSysIncludeList(const Rose_STL_Container<string> &dirs,
                      Rose_STL_Container<string> &result);
 
-  //! Convert <tt>-I &lt;path&gt;</tt> to <tt>-I&lt;path&gt;</tt>
+  //! Convert `-I <path>` to `-I<path>`
   //
   // TOO1 (11/21/2013): Current CLI handling assumes that there is no space
   // between the -I option and its <path> option. That is,
@@ -44,6 +44,9 @@ namespace Cmdline {
   NormalizeIncludePathOptions (std::vector<std::string>& argv);
 
   void
+  StripRoseOptions (std::vector<std::string>& argv);
+
+  void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
   namespace Java {
@@ -53,6 +56,9 @@ namespace Cmdline {
      */
     bool
     OptionRequiresArgument (const std::string& option);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
 
     /** Process all Java commandline options.
      */
@@ -155,6 +161,19 @@ namespace Cmdline {
      */
     void
     ProcessRemoteDebug (SgProject* project, std::vector<std::string>& argv);
+
+    namespace Ecj {
+      void
+      StripRoseOptions (std::vector<std::string>& argv);
+
+      void
+      Process (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:java:ecj:jvm_options
+       */
+      void
+      ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
+    }
   } // namespace SageSupport::Cmdline::Java
 
   namespace X10 {
