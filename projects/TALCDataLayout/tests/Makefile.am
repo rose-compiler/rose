@@ -6,7 +6,7 @@ bin_PROGRAMS =
 MOSTLYCLEANFILES =
 
 # Tests
-TEST_DIR = $(srcdir)/tests
+TEST_DIR = $(srcdir)
 meta_SPECIMEN = $(TEST_DIR)/Meta1 \
 		$(TEST_DIR)/Meta2 \
 		$(TEST_DIR)/Meta3

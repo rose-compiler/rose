@@ -50,7 +50,7 @@ public:
 
     void assert_args(I insn, A args, size_t nargs) {
         if (args.size()!=nargs) {
-            std::string mesg = "instruction must have " + StringUtility::numberToString(nargs) + "argument" + (1==nargs?"":"s");
+            std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
             throw BaseSemantics::Exception(mesg, insn);
         }
     }
@@ -811,7 +811,7 @@ struct IP_movzx: P {
 // Unsigned multiply
 struct IP_mul: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
+        assert_args(insn, args, 1);
         size_t nbits = asm_type_width(args[0]->get_type());
         RegisterDescriptor reg0 = d->REG_AX; reg0.set_nbits(nbits);
         RegisterDescriptor reg1 = d->REG_DX; reg1.set_nbits(nbits);
@@ -1186,7 +1186,20 @@ struct IP_xor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = ops->xor_(d->read(args[0], nbits), d->read(args[1], nbits));
+        BaseSemantics::SValuePtr result;
+
+        // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
+        if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
+            RegisterDescriptor r1 = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
+            RegisterDescriptor r2 = isSgAsmRegisterReferenceExpression(args[1])->get_descriptor();
+            if (r1==r2)
+                result = ops->number_(nbits, 0);
+        }
+
+        // The non-idiomatic behavior
+        if (result==NULL)
+            result = ops->xor_(d->read(args[0], nbits), d->read(args[1], nbits));
+
         d->setFlagsForResult(result);
         d->write(args[0], result);
         ops->writeRegister(d->REG_OF, ops->boolean_(false));

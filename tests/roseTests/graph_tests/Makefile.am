@@ -37,7 +37,7 @@ TEST_TARGETS += $(graph_test_1_test_targets)
 $(graph_test_1_test_targets): graph_test_1_%.passed: % graph_test_1
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_1 $(graph_test_1_flags) -c $<" \
+		CMD="$$(pwd)/graph_test_1 $(graph_test_1_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 TEST_TARGETS += graph_test_1.passed
@@ -90,7 +90,7 @@ graph_test_4.passed: inputCode_main.C graph_test_4
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_4 $<" \
+		CMD="$$(pwd)/graph_test_4 $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ graph_test_5.passed: inputCode_main.C graph_test_5
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_5 $<" \
+		CMD="$$(pwd)/graph_test_5 $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ graph_test_6a.passed: inputCode_main.C graph_test_6
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_6 $<" \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 TEST_TARGETS += graph_test_6b.passed
@@ -128,7 +128,7 @@ graph_test_6b.passed: $(top_srcdir)/binaries/samples/x86-64-ctrlaltdel graph_tes
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_6 $<" \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 TEST_TARGETS += graph_test_6c.passed
@@ -136,7 +136,7 @@ graph_test_6c.passed: $(top_srcdir)/binaries/samples/pocketputty.exe graph_test_
 	@$(RTH_RUN) \
 		DISABLED="not automatically tested by original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_6 $<" \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ $(qm_test_targets): qm_%.passed: %
 	@$(RTH_RUN) \
 		DISABLED="commented out in original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$(qm_script) f rose.RoseTest $$(pwd)/main NULL $(ROSE_FLAGS) -c $<" \
+		CMD="$(qm_script) f rose.RoseTest $$(pwd)/main NULL $(ROSE_FLAGS) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 QMTEST_Objects = $(qm_specimens:.C=.o)

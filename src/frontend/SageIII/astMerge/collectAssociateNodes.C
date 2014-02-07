@@ -299,6 +299,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTemplateType:
 
        // These are primative types
+          case V_SgJavaWildcardType:
           case V_SgTypeBool:
           case V_SgTypeChar:
           case V_SgTypeComplex:
@@ -454,6 +455,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
      ROSE_ASSERT(finalDeleteSet.find(node) == finalDeleteSet.end());
 
      if (isSgExpression(node) != NULL)
+        {
+          return;
+        }
+
+     if (isSgJavaMemberValuePair(node) != NULL)
         {
           return;
         }
@@ -1179,6 +1185,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (9/1/2012): The template class declaration is derived from the SgClassDeclaration.
           case V_SgTemplateClassDeclaration:
 
+          case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
        // DQ (2/10/2007): Added case for SgTemplateInstantiationDecl
@@ -1979,6 +1986,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
        // DQ (4/16/2011): Added support for another IR node.
           case V_SgJavaImportStatement:
+          case V_SgJavaPackageStatement:
 
        // DQ (11/16/2007): Added support for another IR node.
           case V_SgFortranDo:
@@ -2036,6 +2044,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgNullifyStatement:
 
        // Ignore these scope statements since they are not yet shared
+          case V_SgScopeStatement:
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:
           case V_SgForStatement:
@@ -2098,6 +2107,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 
        // Ignore these SgType cases since we handle types directly, via the addAssociatedNodes() function
+          case V_SgJavaWildcardType:
           case V_SgFunctionType:
           case V_SgMemberFunctionType:
           case V_SgTypeUnknown:

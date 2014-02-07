@@ -7,6 +7,8 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
+std::ostream& operator<<(std::ostream &o, const BinaryLoaderElf::VersionedSymbol &x) { x.print(o); return o; }
+
 /* This binary loader can handle all ELF files. */
 bool
 BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
@@ -52,19 +54,28 @@ BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
 rose_addr_t
 BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
+    static const size_t maximum_alignment = 8192;
 
-    /* Find the minimum address desired by the sections to be mapped */
+    // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
         min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
-    /* Minimum address at which to map */
-    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), 4096);
+    // Minimum address at which to map
+    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), maximum_alignment);
 
-    /* If the minimum preferred virtual address is less than the floor of the mapping area then we should add the difference
-     * to the base virtual address, effectively moving the preferred mapping of all the sections up by that difference. */
-    return min_preferred_va<map_base_va ? map_base_va-min_preferred_va : header->get_base_va();
+    // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
+    // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
+    if (min_preferred_va < map_base_va) {
+        size_t min_preferred_page = min_preferred_va / maximum_alignment;
+        if (map_base_va < min_preferred_page * maximum_alignment)
+            return 0;
+        return map_base_va - min_preferred_page*maximum_alignment;
+    }
+
+    // No need to rebase
+    return header->get_base_va();
 }
 
 BinaryLoader::MappingContribution
@@ -243,7 +254,8 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
          * Manual 1-10 under SHT_SYMTAB and SHT_DYNSYM: ...SHT_DYNSYM section holds a minimal set of dynamic linking symbols.
          * FIXME: Technically, the dynsym may be omitted, and we should truly use the .dynamic section's DT_SYMTAB entry(ies) */
         SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_section_by_name(".dynsym"));
-        if (!dynsym) continue;
+        if (!dynsym)
+            continue;
         ROSE_ASSERT(dynsym->get_section_entry());
         ROSE_ASSERT(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
 
@@ -301,11 +313,8 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
         }
     }
     if (get_debug()) {
-        for (SymbolMap::const_iterator bmi=p_symbols.begin(); bmi!=p_symbols.end(); ++bmi) {
-            const std::string name = bmi->first;
-            const SymbolMapEntry &entry = bmi->second;
-            fprintf(get_debug(), "  %s\n", entry.get_vsymbol().get_versioned_name().c_str());
-        }
+        fprintf(get_debug(), "BinaryLoaderElf: master symbol table:\n");
+        p_symbols.dump(get_debug(), "  ");
     }
 }
 
@@ -313,10 +322,10 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 void
 BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*override*/
 {
-    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     build_master_symbol_table(interp);
 
+    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(NULL != elfHeader);
@@ -431,6 +440,43 @@ BinaryLoaderElf::VersionedSymbol::get_versioned_name() const
     return name;
 }
 
+void
+BinaryLoaderElf::VersionedSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sVersionedSymbol[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sVersionedSymbol.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", get_name().c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "version", get_version().c_str());
+    fprintf(f, "%s%-*s =%s%s%s%s\n", p, w, "attributes",
+            is_local()?" local":"",
+            is_hidden()?" hidden":"",
+            is_reference()?" reference":"",
+            is_base_definition()?" basedef":"");
+    if (p_symbol)
+        p_symbol->dump(f, p, -1);
+    if (p_version_entry)
+        p_version_entry->dump(f, p, -1);
+    if (p_version_def)
+        p_version_def->dump(f, p, -1);
+    if (p_version_need)
+        p_version_need->dump(f, p, -1);
+}
+
+void
+BinaryLoaderElf::VersionedSymbol::print(std::ostream &o) const
+{
+    o <<"<" <<get_versioned_name() <<"> "
+      <<(is_local() ? " local" : "")
+      <<(is_hidden() ? " hidden" : "")
+      <<(is_reference() ? " reference" : "")
+      <<(is_base_definition() ? " base" : "");
+}
+
 /*========================================================================================================================
  * SymbolMapEntry methods
  *======================================================================================================================== */
@@ -443,14 +489,19 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
     if (NULL == version.get_version_need())
         return get_base_version();
 
+    // Look for a return value that has the correct version.
     std::string neededVersion = version.get_version_need()->get_name()->get_string();
     for (size_t i=0; i<p_versions.size(); ++i) {
-        SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def();
-        if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
-            return p_versions[i];
+        if (SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def()) {
+            const SgAsmElfSymverDefinedAuxPtrList &defaux_list = def->get_entries()->get_entries();
+            assert(!defaux_list.empty() && defaux_list[0]!=NULL);
+            if (0==defaux_list[0]->get_name()->get_string().compare(neededVersion))
+                return p_versions[i];
+        }
     }
-    assert(!"TODO, handle cases where input uses versioning, but definition does not");
-    abort();
+
+    // If the defined symbols don't have versions, then return them instead.
+    return get_base_version();
 }
 
 void
@@ -458,10 +509,14 @@ BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol)
 {
 #ifndef _MSC_VER
     if (vsymbol.is_base_definition()) {
-        /* There can be only one "base" version. */
-        ROSE_ASSERT(p_versions.empty() || false == get_vsymbol().is_base_definition());
-        p_versions.push_back(p_versions.front()); /* swap the front to the back */
-        p_versions[0] = vsymbol;
+        // There can be only one "base" version, so if one already exists, move it to the end of the list (vector) and insert
+        // our new base version at the beginning.
+        if (!p_versions.empty()) {
+            p_versions.push_back(p_versions.front());
+            p_versions[0] = vsymbol;
+        } else {
+            p_versions.push_back(vsymbol);
+        }
     } else {
         p_versions.push_back(vsymbol);
     }
@@ -516,6 +571,15 @@ BinaryLoaderElf::SymbolMapEntry::merge(const SymbolMapEntry& newEntry)
     }
 }
 
+void
+BinaryLoaderElf::SymbolMapEntry::dump(FILE *f, const char *prefix) const
+{
+    for (size_t i=0; i<p_versions.size(); ++i) {
+        const VersionedSymbol &vsym = p_versions[i];
+        vsym.dump(f, prefix, i);
+    }
+}
+
 /*========================================================================================================================
  * SymbolMap methods
  *======================================================================================================================== */
@@ -536,6 +600,15 @@ BinaryLoaderElf::SymbolMap::lookup(std::string name, std::string version) const
         return lookup(name);
     } else {
         return lookup(name + "("  + version + ")");
+    }
+}
+
+void
+BinaryLoaderElf::SymbolMap::dump(FILE *f, const char *prefix) const
+{
+    for (const_iterator i=begin(); i!=end(); ++i) {
+        std::string p = std::string(prefix) + "SymbolMap[" + i->first + "].";
+        i->second.dump(f, p.c_str());
     }
 }
 
@@ -666,6 +739,35 @@ BinaryLoaderElf::SymverResolver::get_versioned_symbol(SgAsmElfSymbol* symbol) co
     return *(iter->second);
 }
 
+void
+BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sSymverResolver[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sSymverResolver.", prefix);
+    }
+
+    for (SymbolVersionDefinitionMap::const_iterator si=p_symbolVersionDefMap.begin(); si!=p_symbolVersionDefMap.end(); ++si) {
+        uint16_t id = si->first;
+        SgAsmElfSymverDefinedEntry *def = si->second;
+        def->dump(f, p, id);
+    }
+    for (SymbolVersionNeededMap::const_iterator si=p_symbolVersionNeedMap.begin(); si!=p_symbolVersionNeedMap.end(); ++si) {
+        uint16_t id = si->first;
+        SgAsmElfSymverNeededAux *need = si->second;
+        need->dump(f, p, id);
+    }
+    size_t i=0;
+    for (VersionedSymbolMap::const_iterator si=p_versionedSymbolMap.begin(); si!=p_versionedSymbolMap.end(); ++si, ++i) {
+        SgAsmElfSymbol *sym = si->first;
+        VersionedSymbol *vsym = si->second;
+        std::string pp = std::string(p)+"versionedSymbol["+StringUtility::numberToString(i)+"].";
+        assert(sym == vsym->get_symbol());
+        vsym->dump(f, pp.c_str(), -1); // sym is printed as part of this
+    }
+}
 
 /*========================================================================================================================
  * Relocation fixup information methods. Names all begin with "fixup_info_".
@@ -697,19 +799,17 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
     /* Find the defining versioned symbol associated with the relocation symbol. */
     SgAsmElfSymbol *retval = NULL;
     std::string symbol_name = reloc_vsym.get_name();
-    const SymbolMapEntry *symbol_entry = p_symbols.lookup(symbol_name);
-    if (!symbol_entry) {
-        retval = NULL;
-    } else {
+    if (const SymbolMapEntry *symbol_entry = p_symbols.lookup(symbol_name)) {
         VersionedSymbol source_vsym = symbol_entry->get_vsymbol(reloc_vsym);
         if (source_vsym.is_reference()) {
             if (get_debug()) fprintf(get_debug(), "    reference symbol is being treated as undefined\n");
         } else if (is_local && reloc_vsym.get_section()->get_header()!=source_vsym.get_section()->get_header()) {
             if (get_debug()) fprintf(get_debug(), "    hidden/local symbol is being treated as undefined\n");
         } else {
+            if (get_debug()) fprintf(get_debug(), "    using definition %s\n", source_vsym.get_versioned_name().c_str());
             retval = source_vsym.get_symbol();
-            ROSE_ASSERT(retval!=NULL);
-            ROSE_ASSERT(0 != retval->get_st_shndx());/* test an assumption [MCB] */
+            assert(retval!=NULL);
+            assert(0 != retval->get_st_shndx());/* test an assumption [MCB] */
         }
     }
 
@@ -1067,6 +1167,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
     
     SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
     ROSE_ASSERT(NULL != linkedSymbolSection);
+    assert(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
     SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
     ROSE_ASSERT(NULL != relocSymbol);
     if (get_debug()) {

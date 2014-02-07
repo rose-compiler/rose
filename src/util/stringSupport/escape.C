@@ -6,7 +6,8 @@
 
 std::string escapeString(const std::string & s) {
   std::string result;
-  for (size_t i = 0; i < s.length(); ++i) {
+  for (size_t i = 0; i < s.length(); ++i) 
+  {
     switch (s[i]) {
       case '\\': 
         result += "\\\\";

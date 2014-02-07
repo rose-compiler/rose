@@ -133,6 +133,8 @@ struct Switches {
     PolicyParams params;
 };
 
+static Switches opt;
+
 struct WorkItem {
     WorkItem(): specimen_id(-1), func_id(-1), igroup_id(-1) {}
     WorkItem(int specimen_id, int func_id, int igroup_id): specimen_id(specimen_id), func_id(func_id), igroup_id(igroup_id) {}
@@ -224,7 +226,7 @@ load_worklist(const std::string &filename, FILE *f)
 // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
 // function input should consume a pointer or an integer from the input value set.
 static PointerDetector *
-detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Switches &opt)
+detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids)
 {
     if (!opt.pointers)
         return NULL;
@@ -681,6 +683,19 @@ add_builtin_functions(NameSet &names/*in,out*/)
     names.insert("ynl");
 }
 
+// Returns the file header for the specified virtual address if possible
+SgAsmGenericHeader *
+header_for_va(SgAsmInterpretation *interp, rose_addr_t va)
+{
+    assert(interp!=NULL);
+    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+    for (size_t i=0; i<hdrs.size(); ++i) {
+        if (hdrs[i]->get_best_section_by_va(va, false))
+            return hdrs[i];
+    }
+    return NULL;
+}
+
 // Returns (mostly) virtual addresses in the .got.plt (ELF) or IAT (PE) sections.
 //
 // Finds all functions whose first instruction is an indirect jump, and returns the memory address through which the jump
@@ -691,11 +706,15 @@ add_builtin_functions(NameSet &names/*in,out*/)
 static Disassembler::AddressSet
 get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names)
 {
+    if (opt.verbosity >= EFFUSIVE)
+        std::cerr <<argv0 <<": finding import indirection addresses (.got.plt, etc)\n";
+
     struct T1: AstSimpleProcessing {
         std::map<SgAsmFunction*, rose_addr_t> gotplt_addr;      // return value; address in .got.plt for each function
+        SgAsmInterpretation *interp;
         SgAsmFunction *func;    // current function, but only if we haven't seen it's entry instruction yet
 
-        T1(): func(NULL) {}
+        T1(SgAsmInterpretation *interp): interp(interp), func(NULL) {}
 
         void visit(SgNode *node) {
             if (SgAsmFunction *f = isSgAsmFunction(node)) {
@@ -703,23 +722,55 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
             } else if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
                 SgAsmFunction *f = func; func = NULL;
                 const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
-                if (f && x86_jmp==insn->get_kind() && args.size()==1) {
-                    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
-                    SgAsmIntegerValueExpression *val = isSgAsmIntegerValueExpression(mre ? mre->get_address() : NULL);
-                    if (val)
-                        gotplt_addr[f] = val->get_absolute_value();
+                if (!f || x86_jmp!=insn->get_kind() || 1!=args.size())
+                    return;
+                SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+                if (!mre)
+                    return;
+                if (opt.verbosity>=EFFUSIVE) {
+                    std::cerr <<argv0 <<":   thunk at " <<StringUtility::addrToString(insn->get_address())
+                              <<" \"" <<f->get_name() <<"\"";
+                }
+                if (SgAsmIntegerValueExpression *val = isSgAsmIntegerValueExpression(mre->get_address())) {
+                    // Thunk is of the form:  jmp [ADDRESS]
+                    gotplt_addr[f] = val->get_absolute_value();
+                    if (opt.verbosity>=EFFUSIVE) {
+                        std::cerr <<" form 1 through mem["
+                                  <<StringUtility::addrToString(val->get_absolute_value()) <<"]\n";
+                    }
+                } else if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address())) {
+                    SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(add->get_lhs());
+                    SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(add->get_rhs());
+                    if (!reg && !offset)
+                        return;
+                    // Thunk is of the form:  jmp [ebx + OFFSET] where ebx is the address of the .got.plt section
+                    SgAsmGenericHeader *hdr = header_for_va(interp, insn->get_address());
+                    SgAsmGenericSection *gotplt = hdr ? hdr->get_section_by_name(".got.plt") : NULL;
+                    if (!gotplt || !gotplt->is_mapped())
+                        return;
+                    rose_addr_t va = gotplt->get_mapped_actual_va() + offset->get_absolute_value();
+                    gotplt_addr[f] = va;
+                    if (opt.verbosity>=EFFUSIVE)
+                        std::cerr <<" form 2 through mem[" <<StringUtility::addrToString(va) <<"]\n";
+                } else if (opt.verbosity>=EFFUSIVE) {
+                    std::cerr <<" unknown form: " <<unparseInstruction(insn) <<"\n";
                 }
             }
         }
-    } t1;
+    } t1(interp);
     t1.traverse(interp, preorder);
 
+    if (opt.verbosity>=EFFUSIVE)
+        std::cerr <<argv0 <<": adding these import indirection addresses to the whitelist:\n";
     Disassembler::AddressSet retval;
     for (std::map<SgAsmFunction*, rose_addr_t>::iterator i=t1.gotplt_addr.begin(); i!=t1.gotplt_addr.end(); ++i) {
         std::string name = i->first->get_name();
         name = StringUtility::split("@", name, 2)[0];
-        if (whitelist_names.find(name)!=whitelist_names.end())
+        if (whitelist_names.find(name)!=whitelist_names.end()) {
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<argv0 <<":   " <<StringUtility::addrToString(i->second) <<" for " <<name <<"\n";
             retval.insert(i->second);
+        }
     }
     return retval;
 }
@@ -738,12 +789,20 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                           MemoryMap *ro_map/*in,out*/, rose_addr_t special_value,
                           const Disassembler::AddressSet &whitelist_imports, Disassembler::AddressSet &whitelist_exports/*out*/)
 {
+    uint32_t special_value_le;
+    ByteOrder::host_to_le(special_value, &special_value_le);
+    if (opt.verbosity>=EFFUSIVE)
+        std::cerr <<argv0 <<": adjusting .got.plt etc. entries:\n";
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
         const SgAsmGenericSectionPtrList &sections = (*hi)->get_sections()->get_sections();
         for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
             std::string name = (*si)->get_name()->get_string();
             if ((*si)->is_mapped() && (0==name.compare(".got.plt") || 0==name.compare("Import Address Table"))) {
+                if (opt.verbosity >= EFFUSIVE) {
+                    std::cerr <<argv0 <<":   for " <<name <<" of " <<filename_for_header(*hi) <<"\n";
+                    SgAsmExecutableFileFormat::hexdump(std::cerr, (*si)->get_mapped_actual_va(), "   ", (*si)->get_data());
+                }
                 rose_addr_t base_va = (*si)->get_mapped_actual_va();
                 size_t nbytes = (*si)->get_mapped_size();
                 size_t nwords = nbytes / 4;
@@ -754,23 +813,46 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                     for (size_t i=0; i<nwords; ++i) {
                         rose_addr_t entry_va = base_va + 4*i;
                         rose_addr_t call_va = ByteOrder::le_to_host(buf[i]);
-                        if (NULL==insns.get_instruction(call_va) || CALL_NONE==follow_calls) {
-                            // Never try to call a function if there's no instruction there
-                            buf[i] = special_value;
+                        if (opt.verbosity >= EFFUSIVE) {
+                            std::cerr <<argv0 <<":     mem[" <<StringUtility::addrToString(entry_va) <<"] = "
+                                      <<StringUtility::addrToString(call_va);
+                        }
+                        if (CALL_NONE==follow_calls) {
+                            buf[i] = special_value_le;
                             ++nchanges;
+                            if (opt.verbosity >= EFFUSIVE)
+                                std::cerr <<" changed to do-not-call: CALL_NONE mode\n";
+                        } else if (NULL==insns.get_instruction(call_va)) {
+                            // Never try to call a function if there's no instruction there
+                            buf[i] = special_value_le;
+                            ++nchanges;
+                            if (opt.verbosity >= EFFUSIVE)
+                                std::cerr <<" changed to do-not-call: no insn at " <<StringUtility::addrToString(call_va) <<"\n";
                         } else if (whitelist_imports.find(entry_va)!=whitelist_imports.end()) {
                             // Allow white-listed functions to be called (and remember their addresses)
                             whitelist_exports.insert(call_va);
+                            if (opt.verbosity >= EFFUSIVE)
+                                std::cerr <<" unchanged: this is a whitelisted import\n";
                         } else if (CALL_BUILTIN==follow_calls) {
                             // Don't call dynamically-linked functions that are not white-listed
-                            buf[i] = special_value;
+                            buf[i] = special_value_le;
                             ++nchanges;
+                            if (opt.verbosity >= EFFUSIVE)
+                                std::cerr <<" changed to do-not-call: CALL_BUILTIN mode\n";
+                        } else if (opt.verbosity >= EFFUSIVE) {
+                            std::cerr <<" unchanged\n";
                         }
                     }
                     if (nchanges>0) {
+                        if (opt.verbosity >= EFFUSIVE) {
+                            std::cerr <<argv0 <<":     writing " <<StringUtility::plural(nbytes, "bytes")
+                                      <<" at " <<StringUtility::addrToString(base_va) <<"\n";
+                        }
                         MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->insert(Extent(base_va, nbytes), MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                                                   "analysis-mapped dynlink addresses"));
+                        ro_map->erase(Extent(base_va, nbytes));
+                        ro_map->insert(Extent(base_va, nbytes),
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
+                                                          "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }
@@ -783,7 +865,7 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 // Analyze a single function by running it with the specified inputs and collecting its outputs. */
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
-          const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
+          const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers,
           const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs)
 {
@@ -871,7 +953,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
 // Commit everything and return a new transaction
 static SqlDatabase::TransactionPtr
-checkpoint(const SqlDatabase::TransactionPtr &tx, Switches &opt, OutputGroups &ogroups, Tracer &tracer,
+checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer,
            InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
            Progress &progress, size_t ntests_ran, int64_t cmd_id)
 {
@@ -931,7 +1013,6 @@ main(int argc, char *argv[])
     }
 
     // Parse command-line switches
-    Switches opt;
     int argno = 1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
         if (!strcmp(argv[argno], "--")) {
@@ -1228,9 +1309,6 @@ main(int argc, char *argv[])
         }
 
         // Find the function to test
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-29]*/
-        std::cerr <<"func_id=" <<work.func_id <<"\r";
-#endif
         IdFunctionMap::iterator func_found = functions.find(work.func_id);
         assert(func_found!=functions.end());
         SgAsmFunction *func = func_found->second;
@@ -1253,13 +1331,17 @@ main(int argc, char *argv[])
             whitelist_exports.clear(); // imports are addresses of import table slots; exports are functions
             overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, &ro_map, GOTPLT_VALUE,
                                       whitelist_imports, whitelist_exports/*out*/);
+            if (opt.verbosity>=EFFUSIVE) {
+                std::cerr <<argv0 <<": memory map for SgAsmInterpretation:\n";
+                interp->get_map()->dump(std::cerr, argv0+":   ");
+            }
         }
         
         // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
         // it here we only need to do it for functions that are actually tested.
         PointerDetectors::iterator ip = pointers.find(func);
         if (ip==pointers.end())
-            ip = pointers.insert(std::make_pair(func, detect_pointers(func, function_ids, opt))).first;
+            ip = pointers.insert(std::make_pair(func, detect_pointers(func, function_ids))).first;
         assert(ip!=pointers.end());
 
         // Run the test
@@ -1270,7 +1352,7 @@ main(int argc, char *argv[])
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
-        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
+        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, entry2id,
                                        whitelist_exports, funcinfo, insn_coverage, dynamic_cg, consumed_inputs);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
@@ -1374,8 +1456,7 @@ main(int argc, char *argv[])
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
             if (!opt.dry_run)
-                tx = checkpoint(tx, opt, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs,
-                                progress, ntests_ran, cmd_id);
+                tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, progress, ntests_ran, cmd_id);
             last_checkpoint = time(NULL);
         }
         if (do_exit) {
@@ -1403,8 +1484,7 @@ main(int argc, char *argv[])
 
     // Cleanup
     if (!tx->is_terminated() && !opt.dry_run)
-        tx = checkpoint(tx, opt, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs,
-                        progress, ntests_ran, cmd_id);
+        tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, progress, ntests_ran, cmd_id);
     progress.clear();
 
     return 0;

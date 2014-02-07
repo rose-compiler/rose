@@ -64,7 +64,7 @@ public:
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
  *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
- *  instructions that were used to define the value.  This provides a framework for some simple forms of def-use
+ *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
  *  @section Unk_Uinit Unknown versus Uninitialized Values
@@ -554,7 +554,7 @@ public:
     // Dynamic pointer casts
 public:
     /** Run-time promotion of a base RiscOperators pointer to symbolic operators. This is a checked conversion--it
-     *  will fail if @p from does not point to a SymbolicSemantics::RiscOperators object. */
+     *  will fail if @p x does not point to a SymbolicSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         assert(retval!=NULL);
@@ -566,14 +566,14 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        if (compute_usedef)
+        if (compute_usedef && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        if (compute_usedef)
+        if (compute_usedef && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }

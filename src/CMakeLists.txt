@@ -100,25 +100,26 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
+      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
       ${CMAKE_SOURCE_DIR}/src/util/support/BitVectorRepr.C
-#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/CommandOptions.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -156,6 +157,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/manglingSupport.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/sage_support.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/cmdline.cpp
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/keep_going.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_scopes.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_symbols.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 
@@ -170,6 +172,8 @@ set( sage3_SRC
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/omplexer.ll
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/Utf8.C
+
    )
 
 add_definitions(-DPOET_VERSION="1.03.06")
@@ -727,6 +731,8 @@ set( libastTokenStream_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/linearizeAST.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/unparseMacro.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/tokenStreamMapping.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/frontierDetection.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/previousAndNextNode.C
    )
 
 
@@ -978,7 +984,7 @@ add_custom_target(
 
 add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
 generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
@@ -988,6 +994,7 @@ set(LINK_FILES
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
+   libX10Traversal
 )
 
 if (have_EDG_source OR NOT WIN32)
@@ -1050,7 +1057,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL ${edg_lib} ${link_with_libraries}
     )
 
 ########### install files ###############

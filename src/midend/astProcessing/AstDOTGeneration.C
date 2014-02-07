@@ -133,121 +133,129 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
      return ia;
    }
 
-#if 1
 
 void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
-{
+   {
   //*****
   // Nodes and edges can be annotated with additional information. This information is in
   // the form of additional nodes and edges. These is added to the output on a per-node basis.
 
+  // DQ (11/17/2013): Added assertion.
+     ROSE_ASSERT(node != NULL);
+
+#if 1
+     printf ("In AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
   // DQ (7/4/2008): Support for edges specified in AST attributes
-  AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
-  if (astAttributeContainer != NULL)
-  {
-    // Loop over all the attributes at this IR node
-    for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
-    {
-      // std::string name = i->first;
-      AstAttribute* attribute = i->second;
-      ROSE_ASSERT(attribute != NULL);
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+       // Loop over all the attributes at this IR node
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
 
-      // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
-      // printf ("Calling attribute->additionalNodeInfo() \n");
-      std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
-      // printf ("nodeList.size() = %lu \n",nodeList.size());
+            // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
+#if 1
+               printf ("Calling attribute->additionalNodeInfo() \n");
+#endif
+               std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
+#if 1
+               printf ("nodeList.size() = %lu \n",nodeList.size());
+#endif
+               for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
+                  {
+                    SgNode* nodePtr   = i_node->nodePtr;
+                    string nodelabel  = i_node->label;
+                    string nodeoption = i_node->options;
+#if 1
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
+#endif
+                 // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
+                 // dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
+                    dotrep.addNode( nodePtr, nodelabel, nodeoption );
+                  }
+#if 1
+               printf ("Calling attribute->additionalEdgeInfo() \n");
+#endif
+               std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
+#if 1
+               printf ("edgeList.size() = %lu \n",edgeList.size());
+#endif
+               for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
+                  {
+                    string edgelabel  = i_edge->label;
+                    string edgeoption = i_edge->options;
+#if 1
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
+#endif
+                    dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
+                  }
+             }
+        }
+#if 1
+     printf ("Leaving AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+   }
 
-      for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
-      {
-        SgNode* nodePtr   = i_node->nodePtr;
-        string nodelabel  = i_node->label;
-        string nodeoption = i_node->options;
-        // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
-        // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
-//        dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
-        dotrep.addNode( nodePtr, nodelabel, nodeoption );
-
-      }
-
-      // printf ("Calling attribute->additionalEdgeInfo() \n");
-      std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
-      // printf ("edgeList.size() = %lu \n",edgeList.size());
-      for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
-      {
-        string edgelabel  = i_edge->label;
-        string edgeoption = i_edge->options;
-        // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
-        dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
-      }
-    }
-  }
-}
 
 void
 AstDOTGeneration::writeIncidenceGraphToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename)
-{
+   {
+  // Output all nodes
+     rose_graph_integer_node_hash_map & nodes = graph->get_node_index_to_node_map ();
 
-  //Output all nodes
-  rose_graph_integer_node_hash_map & nodes =
-    graph->get_node_index_to_node_map ();
+     for( rose_graph_integer_node_hash_map::iterator it = nodes.begin(); it != nodes.end(); ++it )
+        {
+          SgGraphNode* node = it->second;
 
+          if( commentOutNodeInGraph(node) == false )
+             {
+               string nodeoption;
+               string nodelabel=string("\\n")+node->get_name();
 
-  for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
-      it != nodes.end(); ++it )
-  {
-    SgGraphNode* node = it->second;
+               nodelabel += additionalNodeInfo(node);
 
-    if( commentOutNodeInGraph(node) == false )
-    {
-      string nodeoption;
-      string nodelabel=string("\\n")+node->get_name();
+               string additionalOptions = additionalNodeOptions(node);
 
-      nodelabel += additionalNodeInfo(node);
+               string x;
+               string y;
+               x += additionalOptions;
 
-      string additionalOptions = additionalNodeOptions(node);
+               nodeoption += additionalOptions;
 
-      string x;
-      string y;
-      x += additionalOptions;
+            // dotrep.addNode(node,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
+               dotrep.addNode(node,nodelabel,nodeoption);
 
-      nodeoption += additionalOptions;
+               addAdditionalNodesAndEdges(node);
+             }
+        }
 
-     //dotrep.addNode(node,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
-      dotrep.addNode(node,nodelabel,nodeoption);
+  // Output edges
+     rose_graph_integer_edge_hash_multimap & outEdges = graph->get_node_index_to_edge_multimap_edgesOut ();
 
-      addAdditionalNodesAndEdges(node);
+     for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin(); outEdgeIt != outEdges.end(); ++outEdgeIt )
+        {
+       // if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
+          SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+          ROSE_ASSERT(graphEdge!=NULL);
 
-    };
-  }
+          if ( commentOutNodeInGraph(graphEdge) == false )
+             {
+               string edgelabel=string("\\n")+graphEdge->get_name();
 
-  //Output edges
-  rose_graph_integer_edge_hash_multimap & outEdges = graph->get_node_index_to_edge_multimap_edgesOut ();
+               string edgeoption = additionalEdgeOptions(graphEdge->get_from(),graphEdge->get_to(),edgelabel);
+               dotrep.addEdge(graphEdge->get_from(),edgelabel,graphEdge->get_to(),edgeoption + "dir=forward");
+               addAdditionalNodesAndEdges(graphEdge);
+             }
 
-  for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
-      outEdgeIt != outEdges.end(); ++outEdgeIt )
-  {
-    //if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
-    SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
-    ROSE_ASSERT(graphEdge!=NULL);
+        }
 
-    if( commentOutNodeInGraph(graphEdge) == false )
-    {
-
-      string edgelabel=string("\\n")+graphEdge->get_name();
-
-      string edgeoption = additionalEdgeOptions(graphEdge->get_from(),graphEdge->get_to(),edgelabel);
-      dotrep.addEdge(graphEdge->get_from(),edgelabel,graphEdge->get_to(),edgeoption + "dir=forward");
-      addAdditionalNodesAndEdges(graphEdge);
-
-    }
-
-  }
-
-  dotrep.writeToFileAsGraph(filename);
-
-}
-
-#endif
+     dotrep.writeToFileAsGraph(filename);
+   }
 
 
 DOTSynthesizedAttribute
@@ -329,8 +337,19 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (varRefExp != NULL)
         {
           SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (variableSymbol == NULL)
+             {
+               printf ("WARNING: variableSymbol == NULL: varRefExp = %p \n",varRefExp);
+             }
           ROSE_ASSERT(variableSymbol != NULL);
-          string name = variableSymbol->get_name();
+
+          string name = "unknown";
+          if (variableSymbol != NULL)
+             {
+               name = variableSymbol->get_name();
+             }
           nodelabel += string("\\n name = ") + name;
         }
 
@@ -1004,6 +1023,9 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
+#if 0
+          printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer = %p for node = %p = %s \n",astAttributeContainer,node,node->class_name().c_str());
+#endif
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
             // std::string name = i->first;
@@ -1012,6 +1034,12 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
 
                ss << attribute->additionalNodeOptions();
              }
+        }
+       else
+        {
+#if 0
+          printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer == NULL for node = %p = %s \n",node,node->class_name().c_str());
+#endif
         }
 
      return ss.str();

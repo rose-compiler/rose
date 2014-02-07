@@ -1938,9 +1938,6 @@ projects/dataStructureGraphing/Makefile
 projects/extractMPISkeleton/Makefile
 projects/extractMPISkeleton/src/Makefile
 projects/extractMPISkeleton/tests/Makefile
-projects/haskellport/Makefile
-projects/haskellport/Setup.hs
-projects/haskellport/rose.cabal.in
 projects/highLevelGrammars/Makefile
 projects/interpreter/Makefile
 projects/javaport/Makefile
@@ -2044,7 +2041,6 @@ tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/Fortran_tests/experimental_frontend_tests/Makefile
-tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2171,6 +2167,12 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/haskellport/Makefile
+#projects/haskellport/Setup.hs
+#projects/haskellport/rose.cabal.in
+#tests/CompileTests/CAF2_tests/Makefile
 
 dnl
 dnl Compass2

@@ -224,9 +224,22 @@ class AstSgNodeListAttribute : public AstAttribute
      public:
           std::vector<SgNode *> &getNodeList();
           void addNode(SgNode *);
+          void setNode(SgNode *, int);
+          SgNode *getNode(int);
+          int size();
 
           AstSgNodeListAttribute();
           AstSgNodeListAttribute(std::vector<SgNode *> &);
+   };
+
+class AstIntAttribute : public AstAttribute
+   {
+          int value;
+
+     public:
+          int getValue();
+
+          AstIntAttribute(int value_);
    };
 
 #endif

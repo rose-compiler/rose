@@ -7,6 +7,7 @@
 #include "SqlDatabase.h"
 #include "LinearCongruentialGenerator.h"
 #include "Combinatorics.h"
+#include "Map.h"
 
 #include "compute_signature_vector.h"
 
@@ -25,7 +26,7 @@ typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef std::map<int, SgAsmFunction*> IdFunctionMap;
 typedef std::map<rose_addr_t, int> AddressIdMap;
-typedef std::map<std::string, rose_addr_t> NameAddress;
+typedef Map<std::string, rose_addr_t> NameAddress;
 typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
@@ -1194,13 +1195,15 @@ public:
     }
         
     // Read a single byte from memory.  If the read operation cannot find an appropriate memory cell, then @p
-    // uninitialized_read is set (it is not cleared in the counter case).
-    ValueType<8> mem_read_byte(X86SegmentRegister sr, const ValueType<32> &addr, bool *uninitialized_read/*out*/) {
+    // uninitialized_read is set (it is not cleared in the counter case) and the return value is default constructed (for
+    // PartialSymbolicSemantics it is a unique undefined value).
+    ValueType<8> mem_read_byte(X86SegmentRegister sr, const ValueType<32> &addr, bool *uninitialized_read=NULL/*out*/) {
         typename MemoryCells::iterator ci = memory.find(addr.known_value());
         if (ci!=memory.end())
             return ValueType<8>(ci->second.val);
-        *uninitialized_read = true;
-        return ValueType<8>(rand()%256);
+        if (uninitialized_read)
+            *uninitialized_read = true;
+        return ValueType<8>();
     }
         
     // Returns true if two memory addresses can be equal.
@@ -1274,7 +1277,7 @@ public:
                 OutputGroup::value_type v1 = 0;
                 MemoryCells::const_iterator ci2=ci;
                 for (size_t i=0; i<mval.first_of_n && ci2!=memory.end(); ++i, ++ci2) {
-                    if (ci2->first != addr+i)
+                    if (ci2->first != addr+i || (i>0 && ci2->second.first_of_n!=0) || !is_memory_output(ci2->first, ci2->second))
                         break;
                     v1 |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
                 }
@@ -1303,7 +1306,7 @@ public:
     }
     void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
         this->registers.print(o, fmt);
-        size_t ncells=0, max_ncells=100;
+        size_t ncells=0, max_ncells=500;
         o <<"== Memory ==\n";
         for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
             uint32_t addr = ci->first;
@@ -1311,14 +1314,17 @@ public:
             if (++ncells>max_ncells) {
                 o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
-        }
-        o <<"         cell access:"
-          <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
-          <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-          <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
-          <<"\n"
-          <<"    address " <<addr <<"\n";
-        o <<"      value " <<mval.val <<"\n";
+            }
+            o <<"    mem[" <<StringUtility::addrToString(addr) <<"] = " <<StringUtility::addrToString(mval.val, 8);
+            if (mval.first_of_n) {
+                o <<" 1/" <<mval.first_of_n;
+            } else {
+                o <<"    ";
+            }
+            o <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+              <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" write")
+              <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" init":"")
+              <<"\n";
       }
     }
 
@@ -1645,6 +1651,37 @@ public:
         return word.known_value();
     }
 
+    // Returns true if the instruction is of the form "jmp [ebx+OFFSET]"
+    bool is_thunk_ebx(SgAsmx86Instruction *insn, rose_addr_t *offset_ptr/*out*/) {
+        const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+        if (x86_jmp!=insn->get_kind() || 1!=args.size())
+            return false;
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+        if (!mre)
+            return false;
+        SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
+        if (!add)
+            return false;
+        SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(add->get_lhs());
+        if (!reg || reg->get_descriptor()!=RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32))
+            return false;
+        SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(add->get_rhs());
+        if (!offset)
+            return false;
+        if (offset_ptr)
+            *offset_ptr = offset->get_absolute_value();
+        return true;
+    }
+
+    SgAsmGenericHeader *header_for_va(rose_addr_t va) {
+        const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+        for (size_t i=0; i<hdrs.size(); ++i) {
+            if (hdrs[i]->get_best_section_by_va(va, false))
+                return hdrs[i];
+        }
+        return NULL;
+    }
+        
     // Called by instruction semantics before each instruction is executed
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (ninsns++ >= params.timeout)
@@ -1685,7 +1722,7 @@ public:
                       <<"CloneDetection: in function " <<StringUtility::addrToString(func->get_entry_va()) <<funcname
                       <<" at level " <<stack_frames.size() <<"\n"
                       <<"CloneDetection: stack ptr: " <<StringUtility::addrToString(stack_frame.entry_esp)
-                      <<" - " <<(stack_frame.entry_esp-esp) <<" = " <<StringUtility::addrToString(esp) <<"\n";
+                      <<" - " <<StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32) <<" = " <<StringUtility::addrToString(esp) <<"\n";
         }
 
         // Decide whether this function is allowed to call (via CALL, JMP, fall-through, etc) other functions.
@@ -1711,6 +1748,24 @@ public:
                         stack_frame.follow_calls = true;
                     }
                     break;
+            }
+        }
+
+        // Special handling for thunks that use the form "jmp [ebx+OFFSET]". The ebx register needs to be loaded with the
+        // address of the .got.plt before executing this function.
+        rose_addr_t got_offset = 0;
+        if (is_thunk_ebx(insn, &got_offset) &&
+            0==(state.register_rw_state.gpr[x86_gpr_bx].state & (HAS_BEEN_WRITTEN|HAS_BEEN_READ))) {
+            SgAsmGenericHeader *fhdr = header_for_va(insn->get_address());
+            SgAsmGenericSection *gotplt = fhdr ? fhdr->get_section_by_name(".got.plt") : NULL;
+            if (gotplt && gotplt->is_mapped() && got_offset+4<=gotplt->get_size()) {
+                state.registers.gpr[x86_gpr_bx] = ValueType<32>(gotplt->get_mapped_actual_va());
+                state.register_rw_state.gpr[x86_gpr_bx].state |= HAS_BEEN_INITIALIZED;
+                if (params.verbosity>=EFFUSIVE) {
+                    std::cerr <<"CloneDetection: special handling for thunk"
+                              <<" at " <<StringUtility::addrToString(insn->get_address())
+                              <<": set EBX = " <<StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
+                }
             }
         }
         
@@ -1810,6 +1865,9 @@ public:
         rose_addr_t fall_through_va = insn->get_address() + insn->get_size();
         if (next_eip!=fall_through_va)
             tracer.emit(insn->get_address(), EV_BRANCHED, next_eip);
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-20]*/
+        std::cerr <<state;
+#endif
 
         Super::finishInstruction(insn);
     }
@@ -1836,74 +1894,152 @@ public:
         throw FaultException(AnalysisFault::HALT);
     }
 
-    // Track memory access.
+    // Reads from memory without updating memory. Uninitialized bytes are read as undefined values. If any uninitialized bytes
+    // are read then "uninitialized_read" is set if non-null (it is never cleared).
     template<size_t nBits>
-    ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<1> &cond) {
-        // Read a multi-byte value from memory in little-endian order.
-        bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
+    std::vector<ValueType<8> > readMemoryWithoutUpdate(X86SegmentRegister sr, ValueType<32> a0,
+                                                       bool *uninitialized_read /*in,out*/) {
         assert(8==nBits || 16==nBits || 32==nBits);
-        ValueType<32> dword = this->concat(state.mem_read_byte(sr, a0, &uninitialized_read),
-                                           ValueType<24>(0));
+        std::vector<ValueType<8> > retval;
+
+        if (nBits>=0) {
+            retval.push_back(state.mem_read_byte(sr, a0));
+        }
         if (nBits>=16) {
             ValueType<32> a1 = this->add(a0, ValueType<32>(1));
-            dword = this->or_(dword, this->concat(ValueType<8>(0),
-                                                  this->concat(state.mem_read_byte(sr, a1, &uninitialized_read),
-                                                               ValueType<16>(0))));
+            retval.push_back(state.mem_read_byte(sr, a1));
         }
         if (nBits>=24) {
             ValueType<32> a2 = this->add(a0, ValueType<32>(2));
-            dword = this->or_(dword, this->concat(ValueType<16>(0),
-                                                  this->concat(state.mem_read_byte(sr, a2, &uninitialized_read),
-                                                               ValueType<8>(0))));
+            retval.push_back(state.mem_read_byte(sr, a2));
         }
         if (nBits>=32) {
             ValueType<32> a3 = this->add(a0, ValueType<32>(3));
-            dword = this->or_(dword, this->concat(ValueType<24>(0), state.mem_read_byte(sr, a3, &uninitialized_read)));
+            retval.push_back(state.mem_read_byte(sr, a3));
         }
 
-        ValueType<nBits> retval = this->template extract<0, nBits>(dword);
         if (uninitialized_read) {
-            // At least one of the bytes read did not previously exist, so we need to initialize these memory locations.
-            // Sometimes we want memory to have a value that depends on the next input, and other times we want a value that
-            // depends on the address.
+            for (size_t i=0; i<retval.size(); ++i) {
+                if (!retval[i].is_known()) {
+                    *uninitialized_read = true;
+                    break;
+                }
+            }
+        }
+
+        return retval;
+    }
+
+    // Concatenate bytes in little-endian order.
+    template<size_t nBits>
+    ValueType<nBits> concatBytes(const std::vector<ValueType<8> > &bytes) {
+        assert(nBits==8*bytes.size());
+        if (8==nBits)
+            return bytes[0];
+        if (16==nBits)
+            return this->concat(bytes[0], bytes[1]);
+        if (24==nBits)
+            return this->concat(this->concat(bytes[0], bytes[1]), bytes[2]);
+        if (32==nBits)
+            return this->concat(this->concat(bytes[0], bytes[1]),
+                                this->concat(bytes[2], bytes[3]));
+        assert(8==nBits || 16==nBits || 24==nBits || 32==nBits);
+        abort();
+    }
+    
+    // Track memory access.
+    template<size_t nBits>
+    ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<1> &cond) {
+        assert(8==nBits || 16==nBits || 32==nBits);
+        bool uninitialized_read = false;
+        std::vector<ValueType<8> > bytes = readMemoryWithoutUpdate<nBits>(sr, a0, &uninitialized_read);
+
+        if (uninitialized_read) {
+            // At least one of the bytes read did not previously exist, so consume an input value
+            ValueType<nBits> ivalue;
             MemoryMap *map = this->interp ? this->interp->get_map() : NULL;
             rose_addr_t addr = a0.known_value();
             rose_addr_t ebp = state.registers.gpr[x86_gpr_bp].known_value();
             bool ebp_is_stack_frame = ebp>=params.initial_stack-16*4096 && ebp<params.initial_stack;
             if (ebp_is_stack_frame && addr>=ebp+8 && addr<ebp+8+40) {
                 // This is probably an argument to the function, so consume an argument input value.
-                retval = next_input_value<nBits>(IQ_ARGUMENT, addr);
+                ivalue = next_input_value<nBits>(IQ_ARGUMENT, addr);
             } else if (ebp_is_stack_frame && addr>=ebp-8192 && addr<ebp+8) {
                 // This is probably a local stack variable
-                retval = next_input_value<nBits>(IQ_LOCAL, addr);
+                ivalue = next_input_value<nBits>(IQ_LOCAL, addr);
             } else if (this->get_map() && this->get_map()->exists(Extent(addr, 4))) {
                 // Memory is read only, so we don't need to consume a value.
                 int32_t buf=0;
                 this->get_map()->read(&buf, addr, 4);
-                retval = ValueType<nBits>(buf);
+                ivalue = ValueType<nBits>(buf);
             } else if (map!=NULL && map->exists(addr)) {
                 // Memory mapped from a file, thus probably a global variable, function pointer, etc.
-                retval = next_input_value<nBits>(IQ_GLOBAL, addr);
+                ivalue = next_input_value<nBits>(IQ_GLOBAL, addr);
             } else if (this->pointers!=NULL && this->pointers->is_pointer(SymbolicSemantics::ValueType<32>(addr))) {
                 // Pointer detection analysis says this address is a pointer
-                retval = next_input_value<nBits>(IQ_POINTER, addr);
+                ivalue = next_input_value<nBits>(IQ_POINTER, addr);
             } else if (address_hasher_initialized && map!=NULL && map->exists(addr)) {
                 // Use memory that was already initialized with values
-                retval = next_input_value<nBits>(IQ_MEMHASH, addr);
+                ivalue = next_input_value<nBits>(IQ_MEMHASH, addr);
             } else {
                 // Unknown classification
-                retval = next_input_value<nBits>(IQ_INTEGER, addr);
+                ivalue = next_input_value<nBits>(IQ_INTEGER, addr);
             }
-            // Write the value back to memory so the same value is read next time.
-            this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
+
+#if 1 /* [Robb P. Matzke 2014-01-02]: New behavior */
+            // Write the value back to memory so the same value is read next time, but only write to the bytes that are not
+            // already initialized.
+            std::vector<size_t> first_of_n(bytes.size(), 0);
+            {
+                size_t nUnknown = 0;
+                for (size_t i=bytes.size(); i>0; --i) {
+                    if (!bytes[i-1].is_known()) {
+                        ++nUnknown;
+                    } else if (nUnknown>0) {
+                        first_of_n[i] = nUnknown;
+                        nUnknown = 0;
+                    }
+                }
+                first_of_n[0] = nUnknown;
+            }
+
+            if (!bytes[0].is_known()) {
+                bytes[0] = this->template extract<0, 8>(ivalue);
+                state.mem_write_byte(sr, a0, bytes[0], first_of_n[0], HAS_BEEN_READ);
+            }
+            if (bytes.size()>=2 && !bytes[1].is_known()) {
+                bytes[1] = this->template extract<8, 16>(ivalue);
+                ValueType<32> a1 = this->add(a0, ValueType<32>(1));
+                state.mem_write_byte(sr, a1, bytes[1], first_of_n[1], HAS_BEEN_READ);
+            }
+            if (bytes.size()>=3 && !bytes[2].is_known()) {
+                bytes[2] = this->template extract<16, 24>(ivalue);
+                ValueType<32> a2 = this->add(a0, ValueType<32>(2));
+                state.mem_write_byte(sr, a2, bytes[2], first_of_n[2], HAS_BEEN_READ);
+            }
+            if (bytes.size()>=3 && !bytes[3].is_known()) {
+                bytes[3] = this->template extract<24, 32>(ivalue);
+                ValueType<32> a3 = this->add(a0, ValueType<32>(3));
+                state.mem_write_byte(sr, a3, bytes[3], first_of_n[3], HAS_BEEN_READ);
+            }
+#else /* old behavior */
+            // Write the new input value into memory, possibly overwriting some bytes that were already initialized.
+            writeMemory(sr, a0, ivalue, cond, HAS_BEEN_READ);
+#endif
         }
 
+        ValueType<nBits> retval = concatBytes<nBits>(bytes);
         return retval;
     }
         
     template<size_t nBits>
-    void writeMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<nBits> &data, const ValueType<1> &cond,
+    void writeMemory(X86SegmentRegister sr, ValueType<32> a0, ValueType<nBits> data, const ValueType<1> &cond,
                      unsigned rw_state=HAS_BEEN_WRITTEN) {
+        // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
+        // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
+        // order to stay in the concrete domain, we always choose a value of zero when this happens.
+        if (!data.is_known())
+            data = ValueType<nBits>(0);
 
         // Add the address/value pair to the memory state one byte at a time in little-endian order.
         assert(8==nBits || 16==nBits || 32==nBits);
@@ -2179,7 +2315,13 @@ public:
     }
 
     template<size_t nBits>
-    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value, unsigned update_access=HAS_BEEN_WRITTEN) {
+    void writeRegister(const RegisterDescriptor &reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
+        // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
+        // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
+        // order to stay in the concrete domain, we always choose a value of zero when this happens.
+        if (!value.is_known())
+            value = ValueType<nBits>(0);
+
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty())
             stack_frames.top().last_call = NULL; // end of function return value analysis
         switch (nBits) {
@@ -2367,6 +2509,10 @@ int64_t start_command(const SqlDatabase::TransactionPtr&, int argc, char *argv[]
 /** Called just before a command's final commit. The @p hashkey should be the value returned by start_command().
  *  The description can be updated if desired. */
 void finish_command(const SqlDatabase::TransactionPtr&, int64_t hashkey, const std::string &desc="");
+
+/** Return the name of the file that contains the specified header.  If basename is true then return only the base name, not
+ *  any directory components. */
+std::string filename_for_header(SgAsmGenericHeader*, bool basename=false);
 
 /** Return the name of the file that contains the specified function.  If basename is true then return only the base name, not
  *  any directory components. */

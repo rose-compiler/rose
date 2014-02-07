@@ -324,14 +324,14 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemantics::SValuePtr &hi_bits_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width()+b->get_width(), InsnSemanticsExpr::OP_CONCAT,
-                                                        b->get_expression(), a->get_expression()));
+    SValuePtr lo = SValue::promote(lo_bits_);
+    SValuePtr hi = SValue::promote(hi_bits_);
+    SValuePtr retval = svalue_expr(InternalNode::create(lo->get_width()+hi->get_width(), InsnSemanticsExpr::OP_CONCAT,
+                                                        hi->get_expression(), lo->get_expression()));
     if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, lo->get_defining_instructions(), hi->get_defining_instructions());
     return retval;
 }
 
@@ -632,6 +632,14 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     SValuePtr a = SValue::promote(a_->copy());
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
+
+    // Update latest writer info when appropriate and able to do so.
+    if (SgAsmInstruction *insn = get_insn()) {
+        BaseSemantics::RegisterStatePtr regs = get_state()->get_register_state();
+        BaseSemantics::RegisterStateGenericPtr gregs = boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(regs);
+        if (gregs!=NULL)
+            gregs->set_latest_writer(reg, insn->get_address());
+    }
 }
 
 BaseSemantics::SValuePtr
@@ -681,6 +689,15 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         BaseSemantics::SValuePtr byte_value = extract(value, 8*bytenum, 8*bytenum+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         state->writeMemory(byte_addr, byte_value, this);
+
+        // Update the latest writer info if we have a current instruction and the memory state supports it.
+        if (SgAsmInstruction *insn = get_insn()) {
+            BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+            BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
+            BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
+            assert(cell!=NULL); // we just wrote to it!
+            cell->set_latest_writer(insn->get_address());
+        }
     }
 }
 

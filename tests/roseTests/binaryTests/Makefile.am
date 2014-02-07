@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/binaries/samples/SpecimenSets.inc
 
 SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
@@ -9,6 +10,7 @@ EXTRA_DIST = \
 # Forward declarations
 TEST_TARGETS=
 noinst_PROGRAMS=
+bin_PROGRAMS=
 MOSTLYCLEANFILES=
 
 if USE_BINARY_ANALYSIS_TESTS
@@ -17,6 +19,7 @@ if USE_BINARY_ANALYSIS_TESTS
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
+TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
 TEST_SPECIMEN = $(srcdir)/specimen_tests.conf
 
 ###############################################################################################################################
@@ -207,19 +210,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Disassembles an executable according to various command-line switches.
-noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-#TEST_TARGETS += disassemble.passed assembler.passed
-TEST_TARGETS += disassemble.passed
-EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
-disassemble.passed: disassemble.conf disassemble
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
-#assembler.passed: assembler.conf disassemble
-#	@$(RTH_RUN) $< $@
-
-
 # Disassemble a file containing bare instructions
 noinst_PROGRAMS += disassembleBuffer
 disassembleBuffer_SOURCES = disassembleBuffer.C
@@ -244,14 +234,19 @@ noinst_PROGRAMS += functionBoundaries
 functionBoundaries_SOURCES=functionBoundaries.C
 functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += functionBoundaries_1.passed functionBoundaries_2.passed functionBoundaries_3.passed
-EXTRA_DIST += functionBoundaries.conf functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
-MOSTLYCLEANFILES += i686-test1.O0.bin-1.dump i686-test1.O0.bin-2.dump
-functionBoundaries_1.passed: functionBoundaries.conf functionBoundaries disassemble.passed
-	@$(RTH_RUN) INPUT=i686-test1.O0.bin N=1 $< $@
-functionBoundaries_2.passed: functionBoundaries.conf functionBoundaries findConstants.passed findConstantsABI.passed
-	@$(RTH_RUN) INPUT=i686-test1.O3.bin N=2 $< $@
-functionBoundaries_3.passed: functionBoundaries.conf functionBoundaries
-	@$(RTH_RUN) INPUT=i686-test1.O3-stripped.bin N=3 $< $@
+EXTRA_DIST += functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
+functionBoundaries_1.passed: $(BINARY_SAMPLES)/i686-test1.O0.bin functionBoundaries
+	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
+		ANS=$(srcdir)/functionBoundaries_1.ans \
+		$(TEST_WITH_ANSWER) $@
+functionBoundaries_2.passed: $(BINARY_SAMPLES)/i686-test1.O3.bin functionBoundaries
+	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
+		ANS=$(srcdir)/functionBoundaries_2.ans \
+		$(TEST_WITH_ANSWER) $@
+functionBoundaries_3.passed: $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin functionBoundaries
+	@$(RTH_RUN) USE_SUBDIR=yes CMD="$$(pwd)/functionBoundaries $<" \
+		ANS=$(srcdir)/functionBoundaries_3.ans \
+		$(TEST_WITH_ANSWER) $@
 
 
 # Program to add read-only data to ELF core dumps.
@@ -410,12 +405,103 @@ testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
 usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
-	@$(RTH_RUN)										\
-		USE_SUBDIR=yes									\
-		TITLE="use-def unit tests"							\
-		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(BINARY_SAMPLES)/usedef"	\
-		ANS="$(srcdir)/usedef.ans"							\
+	@$(RTH_RUN)											\
+		USE_SUBDIR=yes										\
+		TITLE="use-def unit tests"								\
+		CMD="$$(pwd)/symbolicSemantics2 --trace --usedef $(abspath $(BINARY_SAMPLES)/usedef)"	\
+		ANS="$(srcdir)/usedef.ans"								\
 		$< $@
+
+# # Test BitPattern<> class template
+# noinst_PROGRAMS += testBitPattern
+# testBitPattern_SOURCES = testBitPattern.C
+# testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# TEST_TARGETS += testBitPattern.passed
+# testBitPattern.passed: testBitPattern
+# 	@$(RTH_RUN) CMD="./testBitPattern" $(TEST_EXIT_STATUS) $@
+
+# Random number genertor tests
+noinst_PROGRAMS += testRNG
+testRNG_SOURCES = testRNG.C
+testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testRNG.passed
+testRNG.passed: testRNG
+	@$(RTH_RUN) CMD="./testRNG" $(TEST_EXIT_STATUS) $@
+
+
+###############################################################################################################################
+# Disassembly tests
+###############################################################################################################################
+
+# "disassemble" is more of a tool than a test, so we install it.
+bin_PROGRAMS += disassemble
+disassemble_SOURCES = disassemble.C linux_syscalls.C
+disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += disassemble.conf
+
+# Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
+# MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
+# PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
+disassemble1_specimens = $(filter-out $(any_any_mips_specimens) $(any_any_ppc_specimens), $(any_exe_any_specimens))
+disassemble1_directory = $(top_srcdir)/binaries/samples
+disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
+disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
+EXTRA_DIST += $(disassemble1_answers)
+TEST_TARGETS += $(disassemble1_test_targets)
+
+$(disassemble1_test_targets): disassemble1_%.passed: $(disassemble1_directory)/% disassemble disassemble.conf disassemble1_%.ans
+	@$(RTH_RUN) \
+		TITLE="disassemble $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		EXE="$$(pwd)/disassemble" \
+		SWITCHES= \
+		PSEARCH="-rose:partitioner_search -leftovers" \
+		ARGS="$<" \
+		$(srcdir)/disassemble.conf $@
+
+# Disassembly of raw x86 buffers (these should probably have position independent code)
+disassemble2_specimens = $(raw_insns_x86_specimens)
+disassemble2_directory = $(top_srcdir)/binaries/samples
+disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
+disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
+EXTRA_DIST += $(disassemble2_answers)
+TEST_TARGETS += $(disassemble2_test_targets)
+
+disassemble2_buffer2.raw.passed: $(disassemble2_directory)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans
+	@$(RTH_RUN) \
+		TITLE="disassemble $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		EXE="$$(pwd)/disassemble" \
+		SWITCHES="--disassemble --linear --raw=0x08048310" \
+		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown" \
+		ARGS="$< 0x08048310" \
+		$(srcdir)/disassemble.conf $@
+
+disassemble2_vm-final.raw.passed: $(disassemble2_directory)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
+	@$(RTH_RUN) \
+		TITLE="disassemble $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		EXE="$$(pwd)/disassemble" \
+		SWITCHES="--disassemble --linear --raw=0x00c01000" \
+		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown" \
+		ARGS="$< 0x00c00000" \
+		$(srcdir)/disassemble.conf $@
+
+disassemble2_other_targets = $(filter-out	\
+	disassemble2_buffer2.raw.passed		\
+	disassemble2_vm-final.raw.passed	\
+	,$(disassemble2_test_targets))
+
+$(disassemble2_other_targets): disassemble2_%.passed: $(disassemble2_directory)/% disassemble
+	@$(RTH_RUN) \
+		DISABLE="unknown map and entry address" \
+		TITLE="disassemble $(notdir $<) [$@]" \
+		CMD=false \
+		$(srcdir)/disassemble.conf $@
+
+# A convenient target for just testing the disassembler
+.PHONY: check-disassemble
+check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 
 ###############################################################################################################################
 # Instruction semantics tests.
@@ -424,6 +510,22 @@ usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
 # all compiled from a single source file.  Files with "1" in their name use the older, template-based API while files with
 # "2" in their name use the newer run-time plug-n-play API.
 ###############################################################################################################################
+
+# Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
+# depends on each of the targets individually rather than just this one).
+.PHONY: check-semantics
+#       API1 (the old stuff)            API2 (the newer stuff)           Extra tests
+check-semantics:											\
+        nullSemantics.passed            nullSemantics2.passed						\
+        partialSymbolicSemantics.passed partialSymbolicSemantics2.passed				\
+        intervalSemantics.passed        intervalSemantics2.passed					\
+        symbolicSemantics.passed        symbolicSemantics2.passed        traceSymbolicSemantics2.passed	\
+        yicesSemanticsExe.passed        yicesSemanticsExe2.passed					\
+        yicesSemanticsLib.passed        yicesSemanticsLib2.passed					\
+        multiSemantics.passed           multiSemantics2.passed						\
+        findConstants.passed										\
+        findConstantsABI.passed										\
+                                        semanticsSubclassing.passed     
 
 # Null semantics, old API
 noinst_PROGRAMS += nullSemantics
@@ -777,63 +879,61 @@ demo_testReadPastEOF: testReadPastEOF
 ###############################################################################################################################
 # Test various things for all our sample binaries
 
-include $(BINARY_SAMPLES)/Specimens.inc
-
 #--------------------------------------------------------------------------------
-parse_Specimens = $(Executable_Specimens)
+parse_Specimens = $(any_exe_any_specimens)
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 TEST_TARGETS += $(parse_Targets)
 
 $(parse_Targets): parse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --skip-disassemble" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --skip-disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_parse_container
 check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens = $(filter-out $(MIPS_Specimens), $(Executable_Specimens))
+disassemble_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
 TEST_TARGETS += $(disassemble_Targets)
 
 $(disassemble_Targets): disassemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_disassemble
 check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens = $(filter-out $(MIPS_Specimens), $(Executable_Specimens))
+unparse_Specimens = $(filter-out $(any_any_mips_specimens), $(any_exe_any_specimens))
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
 TEST_TARGETS += $(unparse_Targets)
 
 $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_unparse
 check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
-#assemble_Specimens = $(filter $(x86_Specimens), $(Executable_Specimens))
+#assemble_Specimens = $(any_exe_x86_specimens)
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
 TEST_TARGETS += $(assemble_Targets)
 
 $(assemble_Targets): assemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet --reassemble --show-bad" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet --reassemble --show-bad" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_assemble
 check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
-astio_Specimens = $(filter-out $(ARM_Specimens), $(Executable_Specimens))
+astio_Specimens = $(filter-out $(any_any_arm_specimens), $(any_exe_any_specimens))
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 TEST_TARGETS += $(astio_Targets)
 
 $(astio_Targets): astio_%.passed: $(BINARY_SAMPLES)/% testAstIO
-	@$(RTH_RUN) CMD="`pwd`/testAstIO -rose:binary" SPECIMEN="$<" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/testAstIO -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_astio
 check_astio: $(astio_Targets)
@@ -849,12 +949,12 @@ check_specimens: check_parse_container check_disassemble check_unparse check_ass
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 # Rather than use one big MOSTLYCLEANFILES, split things into smaller parts so we don't get command lines that are too big.
 clean-local:
-	rm -f $(addsuffix .dump, $(All_Specimens))
-	rm -f $(addsuffix .new, $(All_Specimens))
-	rm -f $(addsuffix .new.dump, $(All_Specimens))
-	rm -f $(addsuffix .new.new, $(All_Specimens))
-	rm -f $(addprefix rose_, $(addsuffix .s, $(All_Specimens)))
-	rm -f $(addprefix rose_, $(addsuffix .new.s, $(All_Specimens)))
+	rm -f $(addsuffix .dump, $(all_specimens))
+	rm -f $(addsuffix .new, $(all_specimens))
+	rm -f $(addsuffix .new.dump, $(all_specimens))
+	rm -f $(addsuffix .new.new, $(all_specimens))
+	rm -f $(addprefix rose_, $(addsuffix .s, $(all_specimens)))
+	rm -f $(addprefix rose_, $(addsuffix .new.s, $(all_specimens)))
 	rm -f $(MOSTLYCLEANFILES)
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)

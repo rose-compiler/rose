@@ -422,6 +422,14 @@ class  PreprocessingInfo
           void push_back_token_stream(token_type tok);
 
 #endif
+
+      // DQ (12/30/2013): Adding support to supress output of macros that are self-referential.
+      // e.g. "#define foo X->foo", which would be expanded a second time in the backend processing.
+      // Note that if we don't output the #define, then we still might have a problem if there was 
+      // code that depended upon a "#ifdef foo".  So this handling is not without some risk, but it
+      // always better to use the token stream unparsing for these cases.
+         bool isSelfReferential();
+         std::string getMacroName();
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 

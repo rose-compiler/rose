@@ -8,6 +8,9 @@
  *  Dependencies
  *---------------------------------------------------------------------------*/
 #include "cmdline.h"
+#include "keep_going.h"
+
+#include <boost/foreach.hpp>
 
 /*-----------------------------------------------------------------------------
  *  namespace SageSupport::Cmdline {
@@ -238,6 +241,12 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
           argument == "-include" ||                         // Used for preinclude file list (to include some header files before all others, common requirement for compiler)
           argument == "-isystem" ||                         // Used for preinclude directory list (to specify include paths to be search before all others, common requirement for compiler)
+
+          // Darwin options
+          argument == "-dylib_file" ||                      // -dylib_file <something>:<something>
+          argument == "-framework"  ||                      // -iframeworkdir (see man page for Apple GCC)
+
+          // ROSE options
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
@@ -269,6 +278,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:java:ds" ||
           argument == "-rose:java:source" ||
           argument == "-rose:java:target" ||
+          argument == "-rose:java:encoding" ||
 
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
@@ -318,6 +328,21 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:dotgraph:typeFilter" ||
           argument == "-rose:dotgraph:variableDeclarationFilter" ||
           argument == "-rose:dotgraph:noFilter" ||
+
+       // DQ (1/8/2014): We need the "-x" option which takes a single option to specify the language "c" or "c++".
+       // This is required where within the "git" build system the input file is "/dev/null" which does not have
+       // a suffix from which to compute the associated language.
+          argument == "-x" ||
+
+       // DQ (1/20/2014): Adding support for gnu's -undefined option.
+          argument == "-u" ||
+          argument == "-undefined" ||
+
+       // DQ (1/26/2014): Support for usage such as -version-info 8:9:8
+          argument == "-version-info" ||
+
+       // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
+          argument == "-MM" ||
           false)
         {
           result = true;
@@ -473,7 +498,7 @@ incrementPosition:
 
      if (SgProject::get_verbose() > 1)
         {
-          printf ("sourceFileList = = %s \n",StringUtility::listToString(sourceFileList).c_str());
+          printf ("sourceFileList = %s \n",StringUtility::listToString(sourceFileList).c_str());
           printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
         }
 
@@ -510,7 +535,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
   // the modification of the command line by SLA (to save the original command line)
-     vector<string> local_commandLineArgumentList = input_argv;
+  vector<string> local_commandLineArgumentList = input_argv;
+  { // Perform normalization on CLI before processing and storing
+
+      // Turn "-I <path>" into "-I<path>" for subsequent processing
+      local_commandLineArgumentList =
+          SageSupport::Cmdline::NormalizeIncludePathOptions(
+              local_commandLineArgumentList);
+  }
 
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
@@ -643,6 +675,56 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      SageSupport::Cmdline::ProcessKeepGoing(this, local_commandLineArgumentList);
 
   //
+  // Standard compiler options (allows specification of language -x option to just run compiler without /dev/null as input file)
+  //
+  // DQ (1/8/2014): This configuration is used by the git application to specify the C language with the input file is /dev/null.
+  // This is a slightly bizare corner case of our command line processing.
+     string tempLanguageSpecificationName;
+     optionCount = sla(local_commandLineArgumentList, "-", "($)^", "x", &tempLanguageSpecificationName, 1);
+     if (optionCount > 0)
+        {
+       // Make our own copy of the language specification name string
+       // p_language_specification = tempLanguageSpecificationName;
+       // printf ("option -x <option> found language_specification = %s \n",p_language_specification.c_str());
+          printf ("option -x <option> found language_specification = %s \n",tempLanguageSpecificationName.c_str());
+
+       //    -x <language>  Specify the language of the following input files
+       //                   Permissible languages include: c c++ assembler none
+       //                   'none' means revert to the default behavior of
+       //                   guessing the language based on the file's extension
+
+          if (tempLanguageSpecificationName == "c")
+             {
+               set_C_only(true);
+             }
+            else
+             {
+               if (tempLanguageSpecificationName == "c++")
+                  {
+                    set_Cxx_only(true);
+                  }
+                 else
+                  {
+                    if (tempLanguageSpecificationName == "none")
+                       {
+                      // Language specification is set using filename specification (nothing to do here).
+                       }
+                      else
+                       {
+                         printf ("Error: -x <option> implementation in ROSE only permits specification of \"c\" or \"c++\" or \"none\" as supported languages \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+          
+
+#if 0
+          printf ("Exiting as a test in SgProject::processCommandLine() \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  //
   // Standard compiler options (allows alternative -E option to just run CPP)
   //
   // if ( CommandlineProcessing::isOption(argc,argv,"-","(E)",false) == true )
@@ -650,6 +732,80 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("/* option -E found (just run backend compiler with -E to call CPP) */ \n");
           p_C_PreprocessorOnly = true;
+        }
+
+  // DQ (1/19/2014): Adding support for gnu "-S" option, which means:
+  // Stop after the stage of compilation proper; do not assemble. The output is in the form of an assembler code file for each non-assembler input file specified.
+  // By default, the assembler file name for a source file is made by replacing the suffix .c, .i, etc., with .s.
+  // Input files that don't require compilation are ignored.
+  //
+  // Standard compiler options (allows alternative -S option to just run gcc directly)
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(S)",false) == true )
+        {
+       // printf ("/* option -S found (just run backend compiler with -S to gcc) */ \n");
+          p_stop_after_compilation_do_not_assemble_file = true;
+        }
+
+  // DQ (1/20/2014): Adding support for gnu -undefined option to ROSE command line.
+  // -u SYMBOL, --undefined SYMBOL    Start with undefined reference to SYMBOL
+     string stringOptionForUndefinedSymbol;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(u|undefined)",stringOptionForUndefinedSymbol,true) == true )
+        {
+          printf ("Found -u -undefined option specified on command line: stringOptionForUndefinedSymbol = %s \n",stringOptionForUndefinedSymbol.c_str());
+
+          p_gnuOptionForUndefinedSymbol = stringOptionForUndefinedSymbol;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-undefined option specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -MM option to ROSE command line.
+     string stringOptionForMakeDepenenceFile;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(MM)",stringOptionForMakeDepenenceFile,true) == true )
+        {
+          printf ("Found -MM dependence information option specified on command line: stringOptionForMakeDepenenceFile = %s \n",stringOptionForMakeDepenenceFile.c_str());
+
+       // p_dependenceFilename = stringOptionForMakeDepenenceFile;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-MM dependence file specification specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/26/2014): Adding support for gnu -version-info option to ROSE command line.
+     string stringOptionForVersionSpecification;
+     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(version-info)",stringOptionForVersionSpecification,true) == true )
+        {
+          printf ("Found -version-info option specified on command line: stringOptionForVersionSpecification = %s \n",stringOptionForVersionSpecification.c_str());
+
+       // p_gnuOptionForVersionSpecification = stringOptionForVersionSpecification;
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-version-info option specified on command line (for SgFile)\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (1/20/2014): Adding support for "-m32" option for 32-bit mode on 64-bit systems.
+  // The 32-bit environment sets int, long and pointer to 32 bits.
+  // The 64-bit environment sets int to 32 bits and long and pointer to 64 bits (ROSE does not support the -m64 command line option).
+  //
+  // Standard compiler options (allows alternative -m32 option)
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(m32)",false) == true )
+        {
+          printf ("detected use of -m32 mode (will be passed to backend compiler) */ \n");
+          p_mode_32_bit = true;
         }
 
   //
@@ -661,7 +817,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("Option -c found (compile only)! \n");
           set_compileOnly(true);
         }
-
 
   // DQ (4/7/2010): This is useful when using ROSE translators as a linker, this permits the SgProject
   // to know what backend compiler to call to do the linking.  This is required when there are no SgFile
@@ -1061,6 +1216,66 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                   }
              }
 
+        // TOO1 (11/23/2013):
+        // (Darwin linker) -dylib_file <library_name.dylib>:<library_name.dylib>
+        if (argv[i].compare("-dylib_file") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -dylib_file"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -dylib_file");
+            }
+            else
+            {
+                // TODO: Save library argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -dylib_file: argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
+
+        // TOO1 (01/22/2014):
+        // (Darwin linker) -framework dir
+        if (argv[i].compare("-framework") == 0)
+        {
+            if (SgProject::get_verbose() > 1)
+            {
+                std::cout << "[INFO] [Cmdline] "
+                          << "Processing -framework"
+                          << std::endl;
+            }
+
+            if (argv.size() == (i+1))
+            {
+                throw std::runtime_error("Missing required argument to -framework");
+            }
+            else
+            {
+                // TODO: Save framework argument; for now just skip over the argument
+                ++i;
+                if (SgProject::get_verbose() > 1)
+                {
+                    std::cout << "[INFO] [Cmdline] "
+                              << "Processing -framework argument="
+                              << "'" << argv[i] << "'"
+                              << std::endl;
+                }
+                ROSE_ASSERT(! "Not implemented yet");
+            }
+        }
+
        // look only for -l library files (library files)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'l') )
              {
@@ -1080,13 +1295,25 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
 
        // look only for -I include directories (directories where #include<filename> will be found)
-          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // AS Changed source code to support absolute paths
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-               p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
-             }
+          if ((length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I'))
+          {
+              std::string include_path = argv[i].substr(2);
+              {
+                  include_path =
+                      StringUtility::getAbsolutePathFromRelativePath(include_path);
+              }
+
+              p_includeDirectorySpecifierList.push_back("-I" + include_path);
+
+              bool is_directory = boost::filesystem::is_directory(include_path);
+              if (false == is_directory)
+              {
+                  std::cout  << "[WARN] "
+                          << "Invalid argument to -I; path does not exist: "
+                          << "'" << include_path << "'"
+                          << std::endl;
+              }
+          }
 
        // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
        // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
@@ -1166,6 +1393,70 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 //------------------------------------------------------------------------------
 //                                 Cmdline
 //------------------------------------------------------------------------------
+std::vector<std::string>
+SageSupport::Cmdline::
+NormalizeIncludePathOptions (std::vector<std::string>& argv)
+{
+  std::vector<std::string> r_argv;
+
+  bool looking_for_include_path_arg = false;
+  BOOST_FOREACH(std::string arg, argv)
+  {
+      // Must be first since there could be, for example, "-I -I",
+      // in which case, the else if branch checking for -I would
+      // be entered.
+      if (looking_for_include_path_arg)
+      {
+          r_argv.push_back("-I" + arg);
+          looking_for_include_path_arg = false; // reset for next iteration
+
+          // Sanity check
+          bool is_directory = boost::filesystem::is_directory(arg);
+          if (false == is_directory)
+          {
+              std::cout  << "[WARN] "
+                        << "Invalid argument to -I; path does not exist: "
+                        << "'" << arg << "'"
+                        << std::endl;
+          }
+      }
+      else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
+      {
+          // -I <path>: There is a space between the option and the argument...
+          //   ^
+          //
+          // ...meaning this current argument is exactly "-I".
+          //
+          if (arg.size() == 2)
+          {
+              looking_for_include_path_arg = true;
+              continue; // next iteration should be the path argument
+          }
+          else
+          {
+              // no normalization required for -I<path>
+              r_argv.push_back(arg);
+          }
+      }
+      else // not an include path option
+      {
+          r_argv.push_back(arg);
+      }
+  }//argv.each
+
+  // Found -I option but no accompanying <path> argument
+  if (looking_for_include_path_arg == true)
+  {
+      std::cout  << "[FATAL] "
+                << "Missing required argument to -I; expecting '-I<path>'"
+                << std::endl;
+      exit(1);
+  }
+  else
+  {
+      return r_argv;
+  }
+}//NormalizeIncludePathOptions (std::vector<std::string>& argv)
 
 void
 SageSupport::Cmdline::
@@ -1184,6 +1475,7 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
       project->set_keep_going(true);
+      ROSE::KeepGoing::g_keep_going = true;
   }
 }
 
@@ -1287,6 +1579,14 @@ SgFile::usage ( int status )
 "                             Specifies java sources version\n"
 "     -rose:java:target\n"
 "                             Specifies java classes target version\n"
+"     -rose:java:encoding\n"
+"                             Specifies the character encoding\n"
+// "     -rose:java:Xms<size>\n"
+// "                             Set initial Java heap size\n"
+// "     -rose:java:Xmx<size>\n"
+// "                             Set maximum Java heap size\n"
+// "     -rose:java:Xss<size>\n"
+// "                             Set java thread stack size\n"
 "     -rose:Python, -rose:python, -rose:py\n"
 "                             compile Python code\n"
 "     -rose:OpenMP, -rose:openmp\n"
@@ -1402,6 +1702,12 @@ SgFile::usage ( int status )
 "     -fno-implicit-inline-templates\n"
 "                             disable output of inlined template instantiations\n"
 "                             in generated source\n"
+"     -S                      gnu option trivial\n"
+"     -u (-undefined)         gnu option trivial\n"
+"     -version-info <name>    gnu option trivial (option not passed on to linker yet, \n"
+"                             incomplete implementation)\n"
+"     -MM <filename>          gnu Makefile dependence generation (option not passed \n"
+"                             on to compiler yet, incomplete implementation)\n"
 "\n"
 "Informative output:\n"
 "     -rose:help, --help, -help, --h\n"
@@ -2930,6 +3236,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           ROSE_ASSERT(project->get_C_PreprocessorOnly() == true);
         }
 
+  // DQ (1/19/2014): This option "-S" is required for some build systems (e.g. valgrind).
+  //
+  // Standard compiler options (allows alternative -S option to just run with gcc)
+  //
+     if ( CommandlineProcessing::isOption(argv,"-","(S)",true) == true )
+        {
+       // printf ("/* option -S found (just run backend compiler with -S to call gcc) */ \n");
+          p_useBackendOnly = true;
+       // p_skip_buildHigherLevelGrammars  = true;
+          p_disable_edg_backend  = true; // This variable should be called frontend NOT backend???
+          p_skip_transformation  = true;
+          p_skip_unparse         = true;
+          p_skipfinalCompileStep = false;
+
+       // DQ (8/22/2009): Verify that this was set when the command line was processed at the SgProject level.
+          SgProject* project = this->get_project();
+          ROSE_ASSERT(project != NULL);
+          ROSE_ASSERT(project->get_stop_after_compilation_do_not_assemble_file() == true);
+        }
+
   //
   // Standard compiler options (allows alternative -H option to just output header file info)
   //
@@ -2943,6 +3269,24 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           p_skip_unparse         = true;
           p_skipfinalCompileStep = false;
         }
+
+#if 0
+  // DQ (1/20/2014): This option is only be be processed global (in SgProject support) and not on a file by file basis (SgFile support).
+  // DQ (1/20/2014): Adding support for gnu -undefined option to ROSE command line.
+  // -u SYMBOL, --undefined SYMBOL    Start with undefined reference to SYMBOL
+     string stringOptionForUndefinedSymbol;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-","(u|undefined)",stringOptionForUndefinedSymbol,true) == true )
+        {
+          printf ("Found -u -undefined option specified on command line: stringOptionForUndefinedSymbol = %s \n",stringOptionForUndefinedSymbol.c_str());
+
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("-undefined option specified on command line (for SgFile)\n");
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
   //
   // negative_test option: allows passing all tests to be treated as an error!
@@ -3171,6 +3515,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
+
+  // DQ (1/26/2014): Remove this from being output to the backend compiler.
+  // This also likely means that we are not passing it on to the backend (linker).
+  // At the moment, this fixes a problem where the version number is being treated as a file
+  // and causing ROSE to crash in the command line handling.
+     char* version_string = NULL;
+     optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -3480,6 +3831,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
@@ -3487,6 +3839,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
   // DQ (7/3/2013): define this so that the rose_edg_required_macros_and_functions.h header file can make
@@ -3545,6 +3898,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
+
+  // DQ (1.20/2014): Adding support for -m32 and associated macro to ROSE to force size_t to be defined to be 32-bit instead of 64-bit.
+     if (project->get_mode_32_bit() == true)
+        {
+          printf ("Setting ROSE_M32BIT mode! \n");
+
+          roseSpecificDefs.push_back("-DROSE_M32BIT");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      for (unsigned int i=1; i < argv.size(); i++)

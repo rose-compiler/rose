@@ -8,6 +8,7 @@
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/optional.hpp>
 
 // Documented elsewhere
 namespace BinaryAnalysis {
@@ -334,7 +335,7 @@ class RiscOperators;
  *  methods for semantic objects. */
 class Formatter {
 public:
-    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  ") {}
+    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true) {}
     virtual ~Formatter() {}
 
     /** The register dictionary which is used for printing register names.
@@ -363,11 +364,19 @@ public:
     void set_indentation_suffix(const std::string &s) { indentation_suffix = s; }
     /** @} */
 
+    /** Whether to show latest writer information for register and memory states.
+     * @{ */
+    bool get_show_latest_writers() const { return show_latest_writers; }
+    void set_show_latest_writers(bool b=true) { show_latest_writers = b; }
+    void clear_show_latest_writers() { show_latest_writers = false; }
+    /** @} */
+
 protected:
     RegisterDictionary *regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;
+    bool show_latest_writers;
 };
 
 /** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by appending the
@@ -392,13 +401,11 @@ public:
  *******************************************************************************************************************************/
 
 /** Base class for exceptions thrown by instruction semantics. */
-class Exception {
+class Exception: public std::runtime_error {
 public:
-    std::string mesg;
     SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
-    virtual ~Exception() {}
-    virtual void print(std::ostream&) const;
+    Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
+    void print(std::ostream&) const;
 };
 
 /*******************************************************************************************************************************
@@ -874,7 +881,11 @@ typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
  *  one or more stored registers.  For instance, if the state stores 64-bit registers and the specimen suddently switches to
  *  32-bit mode, this state will split the 64-bit registers into 32-bit pieces.  If the analysis later returns to 64-bit mode,
  *  the 32-bit pieces are concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis
- *  at the time the register is read or written. */
+ *  at the time the register is read or written.
+ *
+ *  The register state also maintains optional information about the most recent writer of each register. The most recent
+ *  writer is represented by a virtual address (rose_addr_t) and the addresses are stored at bit resolution--each bit of the
+ *  register may have its own writer information. */
 class RegisterStateGeneric: public RegisterState {
 public:
     // Like a RegisterDescriptor, but only the major and minor numbers.  This state maintains lists of registers, one list per
@@ -896,8 +907,15 @@ public:
         SValuePtr value;
         RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
     };
+
     typedef std::vector<RegPair> RegPairs;
-    typedef std::map<RegStore, RegPairs> Registers;
+    typedef Map<RegStore, RegPairs> Registers;
+
+    // A mapping from the bits of a register (e.g., 'al' of 'rax') to the virtual address of the instruction that last wrote
+    // a value to those bits.
+    typedef RangeMap<Extent, RangeMapNumeric<Extent, rose_addr_t> > WrittenParts;
+    typedef Map<RegStore, WrittenParts> WritersMap;
+    WritersMap writers;
 
 protected:
     Registers registers;                        /**< Values for registers that have been accessed. */
@@ -978,6 +996,12 @@ public:
      *  constructed from the various smaller parts. */
     virtual void initialize_small();
 
+    /** Initialize the specified registers of the dictionary.  Each register in the list must not overlap with any other
+     *  register in the list, or strange things will happen.  If @p initialize_to_zero is set then the specified registers are
+     *  initialized to zero, otherwise they're initialized with the prototypical value's constructor that takes only a size
+     *  parameter. This method is somewhat low level and doesn't do much error checking. */
+    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
+
     /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
      * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
      * the x86 EFLAGS register then the return value will contain a register/value pair for EFLAGS but no pairs for individual
@@ -1056,13 +1080,32 @@ public:
      * stored in the state as indicated by is_exactly_stored().
      */
     virtual void traverse(Visitor&);
+
+    /** Set the writer for the specified register. Each register (major-minor pair) is able to store a virtual address for each
+     *  bit of the register.  By convention, this data member stores the virtual address of the instruction that most recently
+     *  wrote a value to those bits. */
+    virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va);
+
+    /** Clear the writer for the specified register.  Information about the virtual address of the instruction that most
+     *  recently wrote a value to the specified register is removed from the register.  The value of the register is not
+     *  affected by this call, but the last-writer information is adjusted so it looks like no instruction wrote the bits to
+     *  the specified register. See also, set_latest_writer(). */
+    virtual void clear_latest_writer(const RegisterDescriptor&);
+
+    /** Clear all information about latest writers for all registers. */
+    virtual void clear_latest_writers();
+
+    /** Obtain the set of virtual addresses stored as the latest writers for a register.  A register may have more than one
+     *  writer if the register's value was written in parts (such as when requesting the writers for x86 AX when separate
+     *  instructions wrote to AL and AH. A register may have no writers if the writer information has been cleared (via
+     *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
+     *  specified. */
+    virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const;
     
 protected:
     void deep_copy_values();
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
-private:
-    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
 };
 
 /** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
@@ -1301,6 +1344,7 @@ class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 protected:
     SValuePtr address;                          /**< Address of memory cell. */
     SValuePtr value;                            /**< Value stored at that address. */
+    boost::optional<rose_addr_t> latest_writer;   /**< Optional address for most recent writer of this cell's value. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1375,6 +1419,14 @@ public:
     }
     /** @}*/
 
+    /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
+     *  describe the most recent instruction that wrote to this memory location.
+     * @{ */
+    virtual boost::optional<rose_addr_t> get_latest_writer() const { return latest_writer; }
+    virtual void set_latest_writer(rose_addr_t writer_va) { latest_writer = writer_va; }
+    virtual void clear_latest_writer() { latest_writer = boost::optional<rose_addr_t>(); }
+    /** @} */
+
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
      *  may be equal; multi-byte cells will need to check ranges of addresses. */
@@ -1443,6 +1495,7 @@ protected:
     MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
     CellList cells;                             // list of cells in reverse chronological order
     bool byte_restricted;                       // are cell values all exactly one byte wide?
+    MemoryCellPtr latest_written_cell;          // the cell whose value was most recently written to, if any
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1514,6 +1567,7 @@ public:
 public:
     virtual void clear() /*override*/ {
         cells.clear();
+        latest_written_cell.reset();
     }
 
     /** Read a value from memory.
@@ -1571,6 +1625,12 @@ public:
     virtual const CellList& get_cells() const { return cells; }
     virtual       CellList& get_cells()       { return cells; }
     /** @} */
+
+    /** Returns the cell most recently written. */
+    virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
+
+    /** Returns the union of writer virtual addresses for cells that may alias the given address. */
+    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops);
 };
 
 /******************************************************************************************************************

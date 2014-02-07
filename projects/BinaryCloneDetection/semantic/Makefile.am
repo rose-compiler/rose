@@ -50,6 +50,11 @@ noinst_PROGRAMS += 25-run-tests
 25_run_tests_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 27-update-aggprops
+27_update_aggprops_SOURCES = 27-update-aggprops.C
+27_update_aggprops_CPPFLAGS = $(ROSE_INCLUDES)
+27_update_aggprops_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 30-39: analysing test results
 noinst_PROGRAMS += 31-func-similarity-worklist
@@ -66,6 +71,11 @@ noinst_PROGRAMS += 32-func-similarity
 32_func_similarity_SOURCES = 32-func-similarity.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
 32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += 33-optimize-weights
+33_optimize_weights_SOURCES = 33-optimize-weights.C
+33_optimize_weights_CPPFLAGS = $(ROSE_INCLUDES)
+33_optimize_weights_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 80-89: database maintenance
@@ -91,12 +101,18 @@ noinst_PROGRAMS += 90-list-ogroup
 90_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
 90_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 92-dump-igroups
+92_dump_igroups_SOURCES = 92-dump-igroups.C
+92_dump_igroups_CPPFLAGS = $(ROSE_INCLUDES)
+92_dump_igroups_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 noinst_PROGRAMS += 99-grants
 99_grants_SOURCES = 99-grants.C
 99_grants_CPPFLAGS = $(ROSE_INCLUDES)
 99_grants_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
+# Note to Andreas: Please fix the README file since you're defining a new range of numbers here.
 # Level 100-109: analysing api similarity
 noinst_PROGRAMS += 101-api-similarity-worklist
 101_api_similarity_worklist_SOURCES = 101-api-similarity-worklist.C
@@ -122,6 +138,13 @@ noinst_PROGRAMS += 115_syscall_usage
 115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
 115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#-----------------------------------------------------------------------------------------------------------------------------
+# Utilities
+
+noinst_PROGRAMS += largestFunction
+largestFunction_SOURCES = largestFunction.C
+largestFunction_CPPFLAGS = $(ROSE_INCLUDES)
+largestFunction_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 
