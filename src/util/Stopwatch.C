@@ -3,12 +3,20 @@
 
 namespace rose {
 
+#ifdef _MSC_VER
+// If Windows doesn't have struct timeval then it probably doesn't have gettimeofday() either.  Our definition will always
+// fail, preventing a Stopwatch object from ever entering a "running" state.
+static int gettimeofday(struct timeval *tv, void *) {
+    return -1;
+}
+#endif
+
 double Stopwatch::start(bool clear) {
     double retval = elapsed_;
     if (clear) stop(true);
     if (!running_) {
-        gettimeofday(&begin_, NULL);
-        running_ = true;
+        if (-1!=gettimeofday(&begin_, NULL))
+            running_ = true;
     }
     return retval;
 }

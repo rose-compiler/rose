@@ -2,7 +2,21 @@
 #ifndef ROSE_Stopwatch_H
 #define ROSE_Stopwatch_H
 
+#ifdef _MSC_VER
+namespace rose {
+// FIXME[Robb P. Matzke 2014-02-07]: Windows doesn't have <sys/time.h> needed for struct timeval and gettimeofday().  We'll use
+//                                   our own definitions of each of these on Windows so that the rest of the code still
+//                                   compiles and runs, although a Stopwatch object will never be able to enter a running
+//                                   state (because our gettimeofday() returns failure on Windows) and will never return
+//                                   an elapsed time other than zero.
+struct timeval {
+    unsigned tv_sec;   // If windows doesn't have timeval, then it maybe doesn't have time_t either?
+    unsigned tv_usec;  // If windows doesn't have timeval, then it maybe doesn't have suseconds_t either?
+};
+}
+#else
 #include <sys/time.h>
+#endif
 
 namespace rose {
 
