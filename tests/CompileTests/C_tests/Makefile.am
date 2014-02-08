@@ -463,6 +463,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_91.c \
      test2014_92.c \
      test2014_93.c \
+     test2014_94.c \
+     test2014_95.c \
      math.c \
      complex_01.c \
      stdio.c \
