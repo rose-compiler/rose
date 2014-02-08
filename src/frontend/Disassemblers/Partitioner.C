@@ -3174,6 +3174,7 @@ Partitioner::detach_thunk(Function *func)
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
             BasicBlock *new_bb = find_bb_starting(second_va);
+            assert(new_bb!=NULL);
             if (new_bb->function==func) {
                 remove(func, new_bb);
                 append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
