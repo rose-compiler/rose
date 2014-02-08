@@ -29,7 +29,7 @@ extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgType *containing_type, SgTemplateParameterPtrList *);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
@@ -108,14 +108,14 @@ public:
 //
 class AstParameterizedTypeAttribute : public AstAttribute {
 private:
-    SgNamedType *rawType;
+    SgNamedType *genericType;
     list<SgJavaParameterizedType *> parameterizedTypes;
 
 public:
-    AstParameterizedTypeAttribute(SgNamedType *rawType_) : rawType(rawType_) {}
+    AstParameterizedTypeAttribute(SgNamedType *genericType_) : genericType(genericType_) { isSgClassType(genericType); }
 
     bool argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr);
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr);
+    SgJavaParameterizedType *findOrInsertParameterizedType(SgTemplateParameterPtrList *new_args_ptr);
 };
 
 

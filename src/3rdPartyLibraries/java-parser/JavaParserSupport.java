@@ -529,7 +529,8 @@ System.out.println("*** The processed object is of type " + processed_object.get
     void processQualifiedNameReference(QualifiedNameReference node, Scope scope, UnitInfo unit_info) {
         JavaToken jToken = unit_info.createJavaToken(node);
 
-//System.out.println("Testing Qualified Name Reference : " + node.print(0, new StringBuffer()).toString());
+// System.out.println();
+// System.out.println("Testing Qualified Name Reference : " + node.print(0, new StringBuffer()).toString());
 
         Binding binding = scope.getPackage(node.tokens);
         PackageBinding package_binding = (binding == null || (! (binding instanceof PackageBinding)) ? null : (PackageBinding) binding);
@@ -596,20 +597,15 @@ System.out.println("The first field index is: " + first_field_index);
             //
             VariableBinding variable_binding = (VariableBinding) node.binding;
             preprocessClass(variable_binding.type, unit_info);
-        	String field_name = new String(node.tokens[first_field_index]);
+            String field_name = new String(node.tokens[first_field_index]);
             JavaParser.cactionSingleNameReference("", "", field_name, jToken);
-            for (int i = first_field_index + 1, j = 0; i < node.tokens.length; i++, j++) {
-            	field_name = new String(node.tokens[i]);
 
-//System.out.println("Field reference 4" + (node.otherGenericCasts != null ? " with generic casts" : ""));
-                if (node.otherGenericCasts != null && j > 0 && node.otherGenericCasts[j - 1] != null) {
-// System.out.println("Field " + field_name + " has type: " + node.otherGenericCasts[j - 1].debugName() + " (" + (j - 1) + ")");
-                	generateAndPushType(node.otherGenericCasts[j - 1], unit_info, jToken);
-                    JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, jToken);
-                }
-                else {
-                    JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field_name, jToken);
-                }
+            for (int i = first_field_index + 1, j = 0; i < node.tokens.length; i++, j++) {
+                field_name = new String(node.tokens[i]);
+                generateAndPushType(variable_binding.type, unit_info, jToken);
+                JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, jToken);
+                variable_binding = node.otherBindings[j];
+                assert(variable_binding != null && new String(variable_binding.name).equals(field_name));
             }
         }
     }
@@ -934,7 +930,13 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                 }
                 else if (binding instanceof PackageBinding) { // import on demand?
                     PackageBinding package_binding = (PackageBinding) binding;
-                    ReferenceBinding reference_binding = (ReferenceBinding) package_binding.getTypeOrPackage(type_name.toCharArray());  // a hit?
+                    while (package_binding != null) {
+                        binding = package_binding.getTypeOrPackage(type_name.toCharArray()); // a hit?
+                        package_binding = (binding instanceof PackageBinding ? (PackageBinding) binding : null);
+if (package_binding != null)
+System.out.println("*** Found Sub-package " + package_binding.toString());
+                    } 
+                    ReferenceBinding reference_binding = (ReferenceBinding) binding;
                     if (reference_binding != null) {  // a hit?
                         if (found != null) { // a second hit?
                             return true;
@@ -2187,8 +2189,10 @@ e.printStackTrace();
             //
             // create a map from type declaration into its containing unit. 
             //
-            for (TypeDeclaration node : unit.types) {
-                typeDeclarationTable.put(node, unit);
+            if (unit.types != null) {
+                for (TypeDeclaration node : unit.types) {
+                    typeDeclarationTable.put(node, unit);
+                }
             }
         }
 
@@ -2222,9 +2226,11 @@ e.printStackTrace();
             //
             UnitInfo unit_info = unitInfos[i];
             CompilationUnitDeclaration unit = unit_info.unit;
-            for (TypeDeclaration node : unit.types) {
-                if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
-                    identifyUserDefinedTypes(node, unit_info);
+            if (unit.types != null) {
+                for (TypeDeclaration node : unit.types) {
+                    if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
+                        identifyUserDefinedTypes(node, unit_info);
+                    }
                 }
             }
         }            
