@@ -1243,7 +1243,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env,
     //
     // There is no reason to distinguish between defining and non-defining declarations in Java...
     //
-    SgMemberFunctionDeclaration *method_declaration = buildDefiningMemberFunction(method_name, class_definition, number_of_arguments, env, method_location, args_location);
+    SgMemberFunctionDeclaration *method_declaration = buildDefiningMemberFunction(is_constructor ? "<init>" : method_name, class_definition, number_of_arguments, env, method_location, args_location);
     setJavaSourcePosition(method_declaration, env, method_location);
     ROSE_ASSERT(method_declaration != NULL);
     if (is_compiler_generated) {
@@ -5742,7 +5742,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIE
         type_list.pop_front();
     }
     ROSE_ASSERT(has_type_arguments);
-    SgJavaParameterizedType *parameterized_type = getUniqueParameterizedType(raw_type, NULL /* no enclosing type */, &ordered_type_list);
+    SgJavaParameterizedType *parameterized_type = getUniqueParameterizedType(raw_type, &ordered_type_list);
 
     astJavaComponentStack.push(parameterized_type);
 
@@ -5793,14 +5793,12 @@ cout.flush();
     SgNamedType *raw_type = isSgNamedType(class_symbol -> get_type());
     ROSE_ASSERT(raw_type);
 
-//
-// DOING: Replace this code by new code below!!!
-//
-//    SgJavaParameterizedType *parameterized_type = getUniqueParameterizedType(raw_type, base_type, (has_type_arguments ? &ordered_type_list : (SgTemplateParameterPtrList *) NULL));
-//
+    //
+    // 
+    //
     SgClassDeclaration *raw_class_declaration = isSgClassDeclaration(raw_type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(raw_class_declaration != NULL);
-    SgType *type = (has_type_arguments ? (SgType *) getUniqueParameterizedType(raw_type, NULL /* containing_type */, &ordered_type_list) : (SgType *) raw_type);
+    SgType *type = (has_type_arguments ? (SgType *) getUniqueParameterizedType(raw_type, &ordered_type_list) : (SgType *) raw_type);
 
     SgJavaQualifiedType *qualified_type = getUniqueQualifiedType(raw_class_declaration, base_type, type);
 
@@ -6235,7 +6233,7 @@ cout.flush();
     }
 
 // TODO: Remove this !
-/*
+
 if (!variable_symbol)
 cout << "*** Could not find name "
  << (! type_name.getString().empty() ? type_name.getString() : name.getString())
@@ -6243,7 +6241,7 @@ cout << "*** Could not find name "
      << ::currentSourceFile -> getFileName()
  << endl;
 cout.flush();
-*/
+
     ROSE_ASSERT(variable_symbol);
 
     SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
