@@ -445,6 +445,21 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_68.c \
      test2014_69.c \
      test2014_70.c \
+     test2014_72.c \
+     test2014_76.c \
+     test2014_77.c \
+     test2014_78.c \
+     test2014_79.c \
+     test2014_80.c \
+     test2014_81.c \
+     test2014_82.c \
+     test2014_83.c \
+     test2014_84.c \
+     test2014_85.c \
+     test2014_86.c \
+     test2014_87.c \
+     test2014_88.c \
+     test2014_89.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -465,6 +480,11 @@ TESTCODES_REQUIRED_TO_PASS = \
 #     test2014_54.c  (old-stype C function parameters in wrong order, appears to be legal C but a problem for ROSE)
 #     test2014_59.c  (complex macro handling where variables are named using the __LINE__ macro)
 #     test2014_61.c  (example of assigned goto (gnu extension))
+#     test2014_71.c  (macro namespace intrudes into application namespace (macro suppression using "()")
+#     test2014_73.c  (example of anonymous union in an initializer)
+#     test2014_74.c  (another example similar to test2014_73.c)
+#     test2014_75.c  (incomplete code from application example, will not compile with gcc).
+
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 

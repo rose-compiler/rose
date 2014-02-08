@@ -522,8 +522,7 @@ bool roseInstallPrefix(std::string& result) {
       return false;
     } else {
       // the translator must locate in the installation_tree/lib
-      // TODO what about lib64??
-       if (libdirBasename != "lib")
+       if (libdirBasename != "lib" && libdirBasename != "lib64")
           {
             printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
           }
