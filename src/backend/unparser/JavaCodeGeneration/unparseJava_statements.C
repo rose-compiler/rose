@@ -1761,12 +1761,17 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
                 }
             }
 
-            curprint(i + 1 == last_enum_constant_index ? ";" : ",");
+            if (i + 1 != last_enum_constant_index) {
+                curprint(",");
+            }
             unp -> cur.insert_newline();
             info.dec_nestingLevel();
         }
     }
 
+    unp->cur.insert_newline();
+    info.dec_nestingLevel();
+    curprint(";");
     unp->cur.insert_newline();
 
     //
