@@ -150,7 +150,11 @@ sub select_random_per_program {
 # Generate a database name for a pair of specimens.
 sub database_name {
     my($a, $b) = @_;
-    $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
+    if($same_program){
+      $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{compiler}, $b->{optim};
+    }else{
+      $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
+    }
 }
 
 # Run something, but also echo the command. Do nothing if $dry_run is set. Return true on success, false on failure
