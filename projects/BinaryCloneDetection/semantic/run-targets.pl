@@ -9,11 +9,11 @@ use strict;
 
 my $dry_run = 1;      # Set true if you only want to see what would have been done.
 my $dropdb = 1;       # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 5;    # Maximum number of pairs to run, selected at random.
+my $max_pairs = 1;    # Maximum number of pairs to run, selected at random.
 my $per_program = 1;  # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1; # If true, then pairs of functions must be the same program (e.g., both "egrep")
 my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was selected.
-my $dbprefix = "as_"; # Prefix to add to each database name
+my $dbprefix = "ncomp_"; # Prefix to add to each database name
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
 my $training_dir = "$ENV{HOME}/testing-set-targets";
@@ -29,21 +29,30 @@ my $training_dir = "$ENV{HOME}/testing-set-targets";
 sub selection_predicate {
     my($a, $b) = @_;
     # Example, specimens that were compiled with different optimization levels of the same compiler.
-    $a->{compiler} ne $b->{compiler} && $a->{optim} eq '3' && $b->{optim} eq '3';
+    $a->{compiler} eq $b->{compiler} && $a->{optim} eq '3' && $b->{optim} eq '3';
 };
 
 # Configuration for the run-analysis.sh script
 my $configuration = <<'EOF';
 recreate=yes
-generate_inputs_flags='--ngroups=1 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
-add_functions_flags='--signature-components=total_for_variant,by_category,apply_log'
-get_pending_tests_flags='--size=20'
+generate_inputs_flags='--ngroups=5 --memhash arguments:redirect=memhash locals:random=1000 locals:pad=inf,0 globals:random=1000 globals:pad=inf,0 functions:random=1000 functions:pad=inf,0 integers:redirect=memhash'
+add_functions_flags='--signature-components=total_for_variant'
+get_pending_tests_flags='--size=2'
 run_tests_nprocs=''
 run_tests_job_multiplier='1'
-run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant,by_category,apply_log'
-func_similarity_worklist_flags=''
-func_similarity_flags=''
+run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call-graph=save --path-syntactic=function --signature-components=total_for_variant'
+func_similarity_worklist_flags='--delete'
+func_similarity_flags='--ignore-faults --ogroup=valueset-jaccard --aggregate=minimum'
 EOF
+
+
+my $api_configuration = <<'EOF';
+api_similarity_worklist_flags=''
+api_similarity_flags=''
+EOF
+
+
+
 
 ###############################################################################################################################
 ###############################################################################################################################
@@ -55,7 +64,7 @@ EOF
 sub load_specimens {
     my($dir) = @_;
     my @specimens;
-    my %compilers = (g=>"gcc", i=>"icc", l=>"llvm");
+    my %compilers = (g=>"gcc", i=>"icc", l=>"llvm", s => "stunnix");
     open FIND, "-|", "find $dir -type f" or die "find failed";
     while (<FIND>) {
 	# Names look like: .../coreutils-8.5/id/g1/id
@@ -259,12 +268,19 @@ for my $pair (@pairs) {
     run "ln", $b_file, ($a_file.=".2") if $a_file eq $b_file;
 
     # Run the analysis
-    my $config_file = `tempfile`; chomp $config_file;
-    open CONFIG, ">", $config_file or die "$config_file: $!\n";
-    print CONFIG "dbname='postgresql:///$dbname\n", $configuration;
-    close CONFIG;
+    my $config_file = `mktemp`; chomp $config_file;
+    open my $CONFIG, ">", $config_file or die "$config_file: $!\n";
+    print $CONFIG "dbname='postgresql:///$dbname'\n", $configuration;
+    close $CONFIG;
     print STDERR "# Configuration file ($config_file):\n", `sed 's/^/    /' $config_file`;
     my($mydir) = $0 =~ /(.*)\//; $mydir ||= ".";
     run "$mydir/run-analysis.sh", "--batch", "--config=$config_file", $a_file, $b_file;
     unlink $config_file;
+ 
+    my $api_config_file = `mktemp`; chomp $api_config_file;
+    open my $CONFIG, ">", $api_config_file or die "$api_config_file: $!\n";
+    print $CONFIG "dbname='postgresql:///$dbname'\n", $api_configuration;
+    print STDERR "# Configuration file ($api_config_file):\n", `sed 's/^/    /' $api_config_file`;
+    run "$mydir/run-api-similarity.sh", "--batch", "--config=$api_config_file";
+    unlink $api_config_file;
 }
