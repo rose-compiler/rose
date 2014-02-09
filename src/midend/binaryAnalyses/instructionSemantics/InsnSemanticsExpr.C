@@ -9,6 +9,8 @@
 #define xor ^
 #endif
 
+using namespace rose;
+
 namespace InsnSemanticsExpr {
 
 uint64_t

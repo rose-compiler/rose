@@ -10,7 +10,7 @@
 
 
 # String to prepend to all database names
-DB_PREFIX=obfuscations_
+DB_PREFIX=stunnix_
 
 # Try to drop the database ('yes' or 'no')?
 DROP_DB=no

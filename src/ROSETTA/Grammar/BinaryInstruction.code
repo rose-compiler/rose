@@ -102,6 +102,8 @@ HEADER_BINARY_INSTRUCTION_START
                 virtual bool terminates_basic_block(); /*subclasses must redefine*/
                 virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
+		bool is_first_in_block();
+		bool is_last_in_block();
                 virtual bool get_branch_target(rose_addr_t *target/*out*/);
                 virtual bool has_effect();
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,

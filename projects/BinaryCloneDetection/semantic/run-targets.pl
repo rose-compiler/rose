@@ -16,7 +16,7 @@ my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was
 my $dbprefix = "as_"; # Prefix to add to each database name
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
-my $training_dir = "$ENV{HOME}/GS-CAD/ROSE/CloneDetection/training-set-targets";
+my $training_dir = "$ENV{HOME}/testing-set-targets";
 
 # Predicate that defines how to generate pairs.  A pair is created if both $a and $b have the same program name and
 # this predicate returns true.  The predicate is called with two specimen arguments. Each specimen is a hash reference
@@ -29,7 +29,7 @@ my $training_dir = "$ENV{HOME}/GS-CAD/ROSE/CloneDetection/training-set-targets";
 sub selection_predicate {
     my($a, $b) = @_;
     # Example, specimens that were compiled with different optimization levels of the same compiler.
-    $a->{compiler} eq $b->{compiler} && $a->{optim} ne $b->{optim};
+    $a->{compiler} ne $b->{compiler} && $a->{optim} eq '3' && $b->{optim} eq '3';
 };
 
 # Configuration for the run-analysis.sh script

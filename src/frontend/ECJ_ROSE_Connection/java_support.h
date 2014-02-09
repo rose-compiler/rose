@@ -40,6 +40,7 @@ string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclarati
 bool isVisibleSimpleTypeName(SgNamedType *);
 bool isConflictingType(string, SgClassType *);
 bool isImportedType(SgClassType *);
+bool isImportedTypeOnDemand(AstSgNodeListAttribute *, SgClassDefinition *, SgClassType *);
 
 bool mustBeFullyQualified(SgClassType *class_type);
 string markAndGetQualifiedTypeName(SgClassType *class_type);

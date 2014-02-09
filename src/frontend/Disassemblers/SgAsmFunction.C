@@ -9,6 +9,8 @@
 #include <gcrypt.h>
 #endif
 
+using namespace rose;
+
 /** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
  *  version of reason_str(). */
 std::string

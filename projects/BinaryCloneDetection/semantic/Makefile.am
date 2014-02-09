@@ -112,6 +112,7 @@ noinst_PROGRAMS += 99-grants
 99_grants_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
+# Note to Andreas: Please fix the README file since you're defining a new range of numbers here.
 # Level 100-109: analysing api similarity
 noinst_PROGRAMS += 101-api-similarity-worklist
 101_api_similarity_worklist_SOURCES = 101-api-similarity-worklist.C
@@ -159,7 +160,7 @@ noinst_PROGRAMS += 119_create_graphs
 119_create_graphs_CPPFLAGS = $(ROSE_INCLUDES)
 119_create_graphs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-
+#-----------------------------------------------------------------------------------------------------------------------------
 # Utilities
 
 noinst_PROGRAMS += largestFunction

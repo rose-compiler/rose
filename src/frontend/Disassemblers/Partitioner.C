@@ -6,6 +6,7 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
+#include "BinaryLoader.h"
 #include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
 
@@ -16,6 +17,8 @@
 #include <fcntl.h>
 #include <math.h>
 #include <stdarg.h>
+
+using namespace rose;
 
 /* See header file for full documentation. */
 
@@ -4131,6 +4134,68 @@ Partitioner::get_instructions() const
         retval.insert(std::make_pair(ii->first, insn));
     }
     return retval;
+}
+
+// class method
+void
+Partitioner::disassembleInterpretation(SgAsmInterpretation *interp)
+{
+    assert(interp!=NULL);
+    if (interp->get_global_block())
+        return;
+
+    // Map segments into virtual memory if this hasn't been done yet
+    MemoryMap *map = interp->get_map();
+    if (map==NULL) {
+        map = new MemoryMap;
+        interp->set_map(map);
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        loader->remap(interp);
+    }
+
+    // Obtain a disassembler based on the type of file we're disassembling and configure it according to the
+    // -rose:disassembler_search switches stored in the enclosing SgFile node.
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    if (!disassembler)
+        throw std::runtime_error("no valid disassembler for this interpretation");
+    disassembler = disassembler->clone();               // so we can change settings without affecting the registry
+    SgFile *file = SageInterface::getEnclosingNode<SgFile>(interp);
+    assert(file!=NULL);
+    disassembler->set_search(file->get_disassemblerSearchHeuristics());
+
+    // Obtain a partitioner to organize instructions into basic blocks and basic blocks into functions.
+    Partitioner *partitioner = new Partitioner();
+    partitioner->set_search(file->get_partitionerSearchHeuristics());
+    partitioner->load_config(file->get_partitionerConfigurationFileName());
+
+    // Decide what to disassemble. Include at least the entry addresses.
+    Disassembler::AddressSet worklist;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
+        for (size_t i=0; i<entry_rvalist.size(); ++i) {
+            rose_addr_t entry_va = (*hi)->get_base_va() + entry_rvalist[i].get_rva();
+            worklist.insert(entry_va);
+        }
+        if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
+            disassembler->search_function_symbols(&worklist, map, *hi);
+    }
+
+    // Run the disassembler first to populate the instruction map for the partitioner. This will allow the partitioner to do
+    // pattern recognition to find function boundaries if desired.
+    Disassembler::BadMap errors;
+    Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &errors);
+    partitioner->add_instructions(insns);
+
+    // Organize the instructions into basic blocks and functions. This will call the disassembler to get any additional
+    // instructions that are needed (the partitioner does deeper analysis than the disassembler).
+    if (SgAsmBlock *block = partitioner->partition(interp, disassembler, map)) {
+        interp->set_global_block(block);
+        block->set_parent(interp);
+    }
+
+    delete partitioner;
+    delete disassembler;
 }
 
 /* FIXME: Deprecated 2010-01-01 */

@@ -3,6 +3,8 @@
 #include "AsmUnparser_compat.h"
 #include "Registers.h"
 
+using namespace rose;
+
 static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();
     if (!registers)
