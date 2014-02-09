@@ -96,7 +96,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #if 0
           printf ("In unparseOneElemConInit(): con_init->get_declaration() = %p \n",con_init->get_declaration());
 #endif
-          if(con_init->get_declaration())
+          if (con_init->get_declaration())
              {
             // DQ (11/12/2004)  Use the qualified name always (since get_need_qualifier() does
             //                  not appear to get set correctly (perhaps within EDG as before)
@@ -112,8 +112,29 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
-               name = nameQualifier + con_init->get_declaration()->get_name();
 
+            // DQ (2/8/2014): Adding the trimming of the constructor name where it is required for the
+            // GNU g++ version 4.5 and greater compilers (used in the backend compilation within ROSE).
+               bool skipOutputOfFunctionName = false;
+               nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
+
+            // name = nameQualifier + con_init->get_declaration()->get_name();
+               if (skipOutputOfFunctionName == false)
+                  {
+                 // Case for g++ version less than version 4.5
+                    name = nameQualifier + con_init->get_declaration()->get_name();
+                  }
+                 else
+                  {
+                 // Case for g++ versions equal to or greater than version 4.5
+                    name = nameQualifier;
+                  }
+#if 0
+               printf ("In unparseOneElemConInit(): name = %s \n",name.str());
+#endif
+#if 0
+               curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() != NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
+#endif
             // DQ (8/19/2013): I am not sure that this will include name qualification on possible template arguments.
             // We need an example of this.
                if ( unp->u_sage->printConstructorName(con_init))
@@ -147,11 +168,18 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
 
+#if 0
+                    printf ("In unparseOneElemConInit(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+
                  // DQ (8/19/2013): We need to unparse the type using any possible qualification on the type name (e.g. name qualification on template arguments).
                     if ( unp->u_sage->printConstructorName(con_init))
                        {
 #if 0
                          printf ("In unparseOneElemConInit(): Unparse the nameQualifier = %s \n",nameQualifier.str());
+#endif
+#if 0
+                         curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() == NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
 #endif
                          curprint(nameQualifier.str());
 #if 0
@@ -191,7 +219,9 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
         }
 
-  // curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#if 0
+     curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
 
   // taken from unparseExprList
   // check whether the constructor name was printed. If so, we need to surround
@@ -229,6 +259,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
 #if 0
      printf ("Leaving of Unparse_MOD_SAGE::unparseOneElemConInit \n\n\n");
+     curprint( "\n /* Leaving of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
    }
 
