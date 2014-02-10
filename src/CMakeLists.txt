@@ -274,6 +274,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerM68k.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerX86.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
