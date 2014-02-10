@@ -30,7 +30,7 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 
 	SgNode* reachingDefinition = definitions.begin()->second;
 
-	printf("The reaching definition for %s is %s: %s on line %d\n", VariableRenaming::keyToString(destroyedVarName).c_str(), reachingDefinition->class_name().c_str(),
+	printf("The reaching definition for \"%s\" : class %s :: RD:%s on line %d\n", VariableRenaming::keyToString(destroyedVarName).c_str(), reachingDefinition->class_name().c_str(),
 			reachingDefinition->unparseToString().c_str(),
 			reachingDefinition->get_file_info()->get_line());
 

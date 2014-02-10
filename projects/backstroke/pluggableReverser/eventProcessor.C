@@ -186,8 +186,13 @@ SgExpression* EventProcessor::popVal(SgType* type)
 
 SgExpression* EventProcessor::popVal_front(SgType* type)
 {
+cerr<<"DEBUG: EventProcessor::popVal_front :: P11.1"<<endl;
 	string functionName = "pop_front< " + get_type_name(type) + " >";
-	return SageBuilder::buildFunctionCallExp(functionName, type);
+cerr<<"DEBUG: EventProcessor::popVal_front :: P11.2"<<endl;
+ cerr<<"DEBUG: buildFunctionCallExp("<<functionName<<type->unparseToString()<<")"<<endl;
+SgExpression* exp=SageBuilder::buildFunctionCallExp(functionName, type);
+cerr<<"DEBUG: EventProcessor::popVal_front :: P11.3"<<endl;
+	return exp;
 }
 
 SgExpression* EventProcessor::cloneValueExp(SgExpression* value, SgType* type)
@@ -233,12 +238,12 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 	VariableVersionTable var_table(event_, var_renaming_);
 
 	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
+	ROSE_ASSERT(body);
 	std::vector<EventReversalResult> outputs;
 
 	SimpleCostModel cost_model;
 	EvaluationResult reversalResult = evaluateStatement(body, var_table);
 	ROSE_ASSERT(reversalResult.isValid());
-
 	// Here we check the validity for each result above. We have to make sure
 	// every state variable has the version 1.
 	if (!checkForInitialVersions(reversalResult.getVarTable()))
@@ -251,9 +256,7 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 		reversalResult.getCost().print();
 		reversalResult.getVarTable().print();
 	}
-
 	StatementReversal stmt = reversalResult.generateReverseStatement();
-
 	// Normalize the result.
 	BackstrokeUtility::removeUselessBraces(stmt.forwardStatement);
 	BackstrokeUtility::removeUselessBraces(stmt.reverseStatement);
@@ -267,7 +270,7 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 	string counterString = lexical_cast<string > (0);
 
 	SgScopeStatement* eventScope = event_->get_scope();
-
+	ROSE_ASSERT(eventScope);
 	//Create the function declaration for the forward body
 	SgName fwd_func_name = event_->get_name() + "_forward" + counterString;
 	SgFunctionDeclaration* fwd_func_decl =

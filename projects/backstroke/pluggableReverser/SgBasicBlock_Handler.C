@@ -56,6 +56,7 @@ EvaluationResult SgBasicBlock_Handler::evaluateExpressionStatement(SgExprStateme
 
 StatementReversal SgBasicBlock_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
+  cerr<<"DEBUG: SgBB_Handler::genRevAST"<<endl;
 	ROSE_ASSERT(reversal.getStatementHandler() == this);
 	return reversal.getAttribute<StatementReversal>();
 }

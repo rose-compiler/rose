@@ -414,7 +414,6 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			return;
 		} //end if the var has class type
 	} //end if var is pointer or reference
-
 	//We will build a push expression and a pop expression.
 	SgExpression* valueToBePushedExpression = VariableRenaming::buildVariableReference(varName);
 	SgExpression* assignedVarExpression = SageInterface::copyExpression(valueToBePushedExpression);
@@ -445,6 +444,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 	//Now, restore the value in the reverse code
     SgExpression* assign = restoreOneVariable(varName, valueToBePushedExpression->get_type());
+	ROSE_ASSERT(valueToBePushedExpression);
+	ROSE_ASSERT(valueToBePushedExpression->get_type());
 	SgExpression* commitExpression = popVal_front(valueToBePushedExpression->get_type());
 
 	SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
@@ -506,7 +507,6 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 			saveOneVariable(varName, forwardBody, reverseBody, commitBody, classHierarchy);
 		}
 	}
-
 	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 

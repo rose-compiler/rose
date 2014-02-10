@@ -75,17 +75,15 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 
 	vector<ProcessedEvent> output;
 	set<SgGlobal*> allGlobalScopes;
-
 	foreach(SgFunctionDeclaration* eventFunction, allEventMethods)
 	{
 		timer t;
 
 		SgGlobal* globalScope = SageInterface::getEnclosingNode<SgGlobal > (eventFunction);
+		ROSE_ASSERT(globalScope);
 		allGlobalScopes.insert(globalScope);
-
 		ProcessedEvent processed_event;
 		processed_event.event = eventFunction;
-
 		// Here reverse the event function into several versions.
 		processed_event.fwd_rvs_events = event_processor->processEvent(eventFunction);
 		ROSE_ASSERT(!processed_event.fwd_rvs_events.empty());
@@ -94,6 +92,7 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 		{
 			// Put the generated statement after the normalized event.
 			SgFunctionDeclaration* originalEvent = isSgFunctionDeclaration(eventFunction->get_definingDeclaration());
+			ROSE_ASSERT(originalEvent);
 
 			//We will ignore the commit method for now, because of the new way to implement commit methods
 			ROSE_ASSERT(inverseEventTuple.commitMethod == NULL);

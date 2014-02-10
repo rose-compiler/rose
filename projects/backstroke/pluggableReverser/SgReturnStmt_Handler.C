@@ -33,6 +33,7 @@ EvaluationResult SgReturnStmt_Handler::evaluate(SgStatement* statement, const Va
 
 StatementReversal SgReturnStmt_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& evaluationResult)
 {
+  cerr<<"DEBUG: ReturnStmt_Handler::genRevAST"<<endl;
 	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().size() == 0);
 	ROSE_ASSERT(isSgReturnStmt(statement));
 

@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 	EventProcessor event_processor(&varFilter);
 
 //:MS
-#define REVERSE_CODE_GENERATION
+//#define REVERSE_CODE_GENERATION
 
 #ifdef REVERSE_CODE_GENERATION
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
@@ -123,6 +123,6 @@ int main(int argc, char** argv)
 
 	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
 
-	AstTests::runAllTests(project);
+	//AstTests::runAllTests(project);
 	return backend(project);
 }
