@@ -1185,8 +1185,9 @@ main(int argc, char *argv[])
                         default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
                     }
                 }
+                std::string base_name = StringUtility::stripPathFromFileName(raw_filename);
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
-                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va);
+                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va, false, true, base_name);
                 raw_map.mprotect(Extent(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
             }
         } else {
