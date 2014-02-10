@@ -185,6 +185,8 @@ SgAsmLERelocTable
 SgAsmLESection
 SgAsmLESectionTable
 SgAsmLESectionTableEntry
+SgAsmM68kInstruction
+SgAsmM68kRegisterReferenceExpression
 SgAsmMemoryReferenceExpression
 SgAsmMipsInstruction
 SgAsmMipsRegisterReferenceExpression

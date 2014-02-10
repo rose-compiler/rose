@@ -85,9 +85,18 @@ Grammar::setUpBinaryInstructions()
                                                "../Grammar/BinaryInstruction.code");
 
 
+    NEW_TERMINAL_MACRO(AsmM68kInstruction, "AsmM68kInstruction", "AsmM68kInstructionTag");
+    AsmM68kInstruction.setFunctionPrototype("HEADER_BINARY_M68K_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+    AsmM68kInstruction.setDataPrototype("M68kInstructionKind", "kind", " = m68k_unknown_instruction",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+    AsmM68kInstruction.setPredeclarationString("HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
+
+
 
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction,
+                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
+                          AsmM68kInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionPrototype("HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
@@ -187,10 +196,16 @@ Grammar::setUpBinaryInstructions()
 
 
 
-
-    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression ,
+    NEW_TERMINAL_MACRO(AsmM68kRegisterReferenceExpression,
+                       "AsmM68kRegisterReferenceExpression", "AsmM68kRegisterReferenceExpressionTag");
+    AsmM68kRegisterReferenceExpression.setDataPrototype("int", "adjustment", "=0", // post-increment/pre-decrement amount
+                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                        NO_DELETE);
+    
+    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression,
                           Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression |
-                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression,
+                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression |
+                          AsmM68kRegisterReferenceExpression,
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
                                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
