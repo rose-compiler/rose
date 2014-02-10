@@ -235,9 +235,10 @@ public:
 
 
 
-    /*==========================================================================================================================
-     * Registration and lookup methods
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                  Registration and lookup methods
+     ***************************************************************************************************************************/
+
 public:
     /** Register a disassembler instance. More specific disassembler instances should be registered after more general
      *  disassemblers since the lookup() method will inspect disassemblers in reverse order of their registration.
@@ -276,9 +277,10 @@ public:
      *  Thread safety: The thread safety of this virtual method depends on the implementation in the subclass. */
     virtual Disassembler *clone() const = 0;
 
-    /*==========================================================================================================================
-     * Main public disassembly methods
-     *========================================================================================================================== */
+
+    /***************************************************************************************************************************
+     *                                  Main public disassembly methods
+     ***************************************************************************************************************************/
 public:
     /** This high-level method disassembles instructions belonging to part of a file described by an executable file header as
      *  indicated by the specified interpretation.  The disassembleInterp() method is called for the main disassembly work,
@@ -312,11 +314,9 @@ public:
 
 
 
-
-
-    /*==========================================================================================================================
-     * Disassembler properties and settings
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                          Disassembler properties and settings
+     ***************************************************************************************************************************/
 public:
     /** Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
      *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found
@@ -353,8 +353,8 @@ public:
 #endif
 
 #ifndef USE_ROSE
-  // DQ (2/11/2013): I think it is a problem to use this function (currently being evaluated using delta debug case).
-  // This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
+    // DQ (2/11/2013): I think it is a problem to use this function (currently being evaluated using delta debug case).
+    // This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
 
     /** Returns the partitioner object set by set_partitioner().
      *
@@ -476,10 +476,9 @@ public:
     void set_progress_reporting(FILE*, unsigned min_interval);
 
 
-
-    /*==========================================================================================================================
-     * Low-level disassembly functions
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                          Low-level disassembly functions
+     ***************************************************************************************************************************/
 public:
     /** This is the lowest level disassembly function and is implemented in the architecture-specific subclasses. It
      *  disassembles one instruction at the specified virtual address. The @p map is a mapping from virtual addresses to
@@ -501,9 +500,6 @@ public:
      *  buffer and successors set are not being modified by another thread. */
     SgAsmInstruction *disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                      AddressSet *successors=NULL);
-
-
-
 
     /** Like the disassembleOne method except it disassembles a basic block's worth of instructions beginning at the specified
      *  virtual address.  For the purposes of this function, a basic block is defined as starting from the specified
@@ -539,9 +535,6 @@ public:
     InstructionMap disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                     AddressSet *successors=NULL, InstructionMap *cache=NULL);
 
-
-
-
     /** Disassembles instructions from the content buffer beginning at the specified virtual address and including all
      *  instructions that are direct or indirect successors of the first instruction.  The @p map is a mapping from virtual
      *  addresses to offsets in the content buffer.  Any successors of individual instructions that fall outside the buffer
@@ -569,9 +562,6 @@ public:
      *  no other thread should be concurrently modifying the memory map, successor list, or exception map. */
     InstructionMap disassembleBuffer(const MemoryMap *map, AddressSet workset, AddressSet *successors=NULL, BadMap *bad=NULL);
 
-
-
-
     /** Disassembles instructions in the specified section by assuming that it's mapped to a particular starting address.
      *  Disassembly will begin at the specified byte offset in the section. The section need not be mapped with execute
      *  permission; in fact, since a starting address is specified, it need not be mapped at all.  All other aspects of this
@@ -591,10 +581,9 @@ public:
 
 
 
-
-    /*==========================================================================================================================
-     * Methods for searching for disassembly addresses.
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                  Methods for searching for disassembly addresses.
+     ***************************************************************************************************************************/
 public:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
      *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()).  The @p tried argument lists all the
@@ -639,7 +628,6 @@ public:
     void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map, const InstructionMap &insns,
                              const InstructionMap &tried, bool avoid_overlaps);
 
-
     /** Adds addresses that correspond to function symbols.  This method is invoked automatically if the SEARCH_FUNCSYMS bits
      *  are set (see set_search()). It applies only to disassembly at the file header (SgAsmGenericHeader) level or above.
      *
@@ -649,9 +637,9 @@ public:
     void search_function_symbols(AddressSet *worklist, const MemoryMap*, SgAsmGenericHeader*);
 
 
-    /*==========================================================================================================================
-     * Miscellaneous methods
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                          Miscellaneous methods
+     ***************************************************************************************************************************/
 public:
     /** Updates progress information. This should be called each time the subclass' disassembleOne() is about to return a new
      *  instruction.
@@ -699,10 +687,9 @@ private:
 
 
 
-
-    /*==========================================================================================================================
-     * Data members
-     *========================================================================================================================== */
+    /***************************************************************************************************************************
+     *                                          Data members
+     ***************************************************************************************************************************/
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
     class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */

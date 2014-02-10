@@ -15,7 +15,7 @@ public:
     virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
-     *  functions) will define a subclass whose operator() unparses a single instruction word and returns an
+     *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an
      *  SgAsmMipsInstruction. These functors are allocated and inserted into a list. When an instruction word is to be
      *  disassembled, the list is scanned to find the first entry that matches, and then its operator() is invoked.  An entry
      *  matches if the instruction bits to be disassembled match the @p match data member after both are masked according to
