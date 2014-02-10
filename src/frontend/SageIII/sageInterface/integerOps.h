@@ -26,6 +26,11 @@ namespace IntegerOpsPrivate {
 
 }
 
+/** Bit-wise operations on integers.
+ *
+ *  Many of these are function templates for the best optimization, but we also provide non-template versions for those cases
+ *  when the arguments are not known at compile time.  The non-template versions typically have "2" appended to their names to
+ *  indicate that they should be the second choice--used only when the template version cannot be used. */
 namespace IntegerOps {
 
 /** Bitmask constant with bit @p n set.  Handles the case where @p n is greater than the width of type @p T. */
@@ -48,6 +53,16 @@ struct GenMask {
 template <typename T>
 inline T genMask(size_t n) {
     return shl1<T>(n) - 1;
+}
+
+/** Generate a bitmask. The return value has bits @p lobit (inclusive) through @p hibit (inclusive) set, and all other bits
+ *  are clear. */
+template <typename T>
+inline T genMask(size_t lobit, size_t hibit)
+{
+    assert(hibit<8*sizeof(T));
+    assert(hibit>=lobit);
+    return genMask<T>(1+hibit-lobit) << lobit;
 }
 
 /** Returns true if the sign bit is set, false if clear.
@@ -211,6 +226,77 @@ inline T log2(T a) {
     return i;
 }
 
-} // namespace IntegerOps
+/** Create a shifted value. The return value is created by shifting @p value to the specified position in the result. Other
+ *  bits of the return value are clear. The @p hibit is specified so that we can check at run-time that a valid value was
+ *  specified (i.e., the value isn't too wide).
+ * @{ */
+template<size_t lobit, size_t hibit, typename T>
+inline T shift_to(T value) {
+    assert(hibit<8*sizeof(T));
+    assert(hibit>=lobit);
+    assert(0==(value & ~GenMask<T, 1+hibit-lobit>::value));
+    return shiftLeft<8*sizeof(T)>(value & GenMask<T, 1+hibit-lobit>::value, lobit);
+}
+template<typename T>
+inline T shift_to2(size_t lobit, size_t hibit, T value)
+{
+    assert(hibit<8*sizeof(T));
+    assert(hibit>=lobit);
+    assert(0==(value & ~genMask<T>(1+hibit-lobit)));
+    return shiftLeft2<T>(value & genMask<T>(1+hibit-lobit), lobit);
+}
+/** @} */
 
+/** Extract bits from a value.  Bits @p lobit through @p hibit, inclusive, are right shifted into the result and higher-order
+ *  bits of the result are cleared.
+ * @{ */
+template<size_t lobit, size_t hibit, typename T>
+inline T extract(T bits) {
+    assert(hibit<8*sizeof(T));
+    assert(hibit>=lobit);
+    return shiftRightLogical<8*sizeof(T)>(bits, lobit) & GenMask<T, 1+hibit-lobit>::value;
+}
+template<typename T>
+inline T extract2(size_t lobit, size_t hibit, T bits)
+{
+    assert(hibit<8*sizeof(T));
+    assert(hibit>=lobit);
+    return shiftRightLogical<8*sizeof(T)>(bits, lobit) & genMask<T>(1+hibit-lobit);
+}
+/** @} */
+
+/** Determines if one bitmask is a subset of another.  Returns true if the bits set in the first argument form a subset of the
+ *  bits set in the second argument. */
+template<typename T>
+inline bool bitmask_subset(T m1, T m2)
+{
+    return 0 == (~m1 & m2); // m2 must not contain bits that are not in m1
+}
+
+/** Counts how many bits are set (one). */
+template<typename T>
+inline size_t countSet(T val)
+{
+    size_t retval = 0;
+    for (size_t i=0; i<8*sizeof(T); ++i) {
+        if (0 != (val & shl1<T>(i)))
+            ++retval;
+    }
+    return retval;
+}
+
+/** Counts how many bits are clear (zero). */
+template<typename T>
+inline size_t countClear(T val)
+{
+    size_t retval = 0;
+    for (size_t i=0; i<8*sizeof(T); ++i) {
+        if (0 == (val & shl1<T>(i)))
+            ++retval;
+    }
+    return retval;
+}
+
+
+} // namespace
 #endif // ROSE_INTEGEROPS_H
