@@ -165,6 +165,8 @@ protected:
     static SgAsmInstruction *isSgAsmInstruction(SgNode*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(const Instruction*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(SgNode*);
     /** @} */
 
     /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
@@ -1413,11 +1415,20 @@ protected:
     static InstructionMap::const_iterator pattern2(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 
-    /** Matches after stack frame destruction. Matches "leave;ret" followed by one or more "nop" followed by a non-nop
+    /** Matches after stack frame destruction. Matches x86 "leave;ret" followed by one or more "nop" followed by a non-nop
      *  instruction and if matching, returns the iterator for the non-nop instruction. */
     static InstructionMap::const_iterator pattern3(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 #endif
+
+    /** Matches an x86 "enter xxxx, 0" instruction and creates a function at that address. */
+    static InstructionMap::const_iterator pattern4(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches an M68k "link a6, xxxx" instruction where xxxx is zero or negative and creates a function at that address. */
+    static InstructionMap::const_iterator pattern5(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions

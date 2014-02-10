@@ -56,6 +56,20 @@ Partitioner::isSgAsmx86Instruction(SgNode *node)
     return ::isSgAsmx86Instruction(node);
 }
 
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(const Instruction *insn)
+{
+    return insn ? isSgAsmM68kInstruction(insn->node) : NULL;
+}
+
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(SgNode *node)
+{
+    return ::isSgAsmM68kInstruction(node);
+}
+
 /* Progress report class variables. */
 time_t Partitioner::progress_interval = 10;
 time_t Partitioner::progress_time = 0;
@@ -1469,7 +1483,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
 }
 
 #if 0 /*commented out in Partitioner::mark_func_patterns()*/
-/* Tries to match "nop;nop;nop" followed by something that's not a nop. */
+/* Tries to match x86 "nop;nop;nop" followed by something that's not a nop. */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1499,7 +1513,7 @@ Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterato
 #endif
 
 #if 0 /* commented out in Partitioner::mark_func_patterns() */
-/* Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop */
+/* Tries to match x86 "leave;ret" followed by one or more "nop" followed by a non-nop */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1539,6 +1553,51 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 }
 #endif
 
+// class method: Matches an x86 "ENTER xxxx, 0" instruction.
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern4(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(first->second);
+    if (!insn || insn->get_kind()!=x86_enter)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
+    if (!arg || 0!=arg->get_absolute_value())
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
+// class method: tries to match m68k "link.w a6, IMM16" where IMM16 is zero or negative
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_link)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmM68kRegisterReferenceExpression *rre = isSgAsmM68kRegisterReferenceExpression(args[0]);
+    SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
+    if (!rre || !ival)
+        return insns.end();
+    RegisterDescriptor reg = rre->get_descriptor();
+    if (reg.get_major()!=m68k_regclass_addr || reg.get_minor()!=6/*link register*/)
+        return insns.end();
+    int64_t displacement = ival->get_signed_value();
+    if (displacement>0)
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
 /** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
  *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
  *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
@@ -1553,8 +1612,6 @@ Partitioner::mark_func_patterns()
         virtual bool operator()(bool enabled, const Args &args) /*override*/ {
             assert(args.restrict_map!=NULL);
             uint8_t buf[4096];
-            static const size_t patternsz=16;
-            assert(patternsz<sizeof buf);
             if (enabled) {
                 rose_addr_t va = args.range.first();
                 while (va<=args.range.last()) {
@@ -1583,7 +1640,10 @@ Partitioner::mark_func_patterns()
     InstructionMap::const_iterator found;
 
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
+        if (exclude.find(ii->first)==exclude.end() &&
+            ((found=pattern1(insns, ii, exclude))!=insns.end() ||
+             (found=pattern4(insns, ii, exclude))!=insns.end() ||
+             (found=pattern5(insns, ii, exclude))!=insns.end()))
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
