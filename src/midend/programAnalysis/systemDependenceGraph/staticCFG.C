@@ -115,6 +115,10 @@ void ControlFlowGraph::buildCFG(
     }
 
     CFGNode nodeCopy = node;
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 4)
+#if (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 7)
+# errror "This line does not compile using g++ versions greater than 4.7"
+#else
     nodeCopy.setFilter(filter_);
     std::vector<CFGEdge> outEdges = nodeCopy.outEdges();
 
@@ -144,6 +148,8 @@ void ControlFlowGraph::buildCFG(
         // Build the CFG recursively.
         buildCFG(tar, nodesAdded, nodesProcessed);
     }
+#endif
+#endif
 }
 
 const ControlFlowGraph::VertexVertexMap& ControlFlowGraph::getDominatorTree() const
