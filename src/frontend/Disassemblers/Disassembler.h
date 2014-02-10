@@ -4,6 +4,8 @@
 #include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
 #include "Registers.h"
 #include "MemoryMap.h"
+#include "integerOps.h"
+#include "Map.h"
 
 /** Virtual base class for instruction disassemblers.
  *
@@ -210,11 +212,11 @@ public:
     typedef std::set<rose_addr_t> AddressSet;
 
     /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
-    typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
+    typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
     /** The BadMap is a mapping from (absolute) virtual address to information about a failed disassembly attempt at that
      *  address. */
-    typedef std::map<rose_addr_t, Exception> BadMap;
+    typedef Map<rose_addr_t, Exception> BadMap;
 
     Disassembler()
         : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
@@ -518,10 +520,11 @@ public:
      *  address is the instruction that could not be disassembled), and the successors list is not modified.
      *
      *  A cache of previously disassembled instructions can be provided. If one is provided, then the cache will be updated
-     *  with any instructions disassembled during the call to disassembleBlock().  This is convenient when the SEARCH_DEADEND
-     *  bit is clear in conjunction with the SEARCH_FOLLOWING (or similar) being set, since this combination causes the
-     *  disassembler to try every address in a dead-end block. Providing a cache in this case can speed up the disassembler by
-     *  an order of magnitude.
+     *  with any instructions disassembled during the call to disassembleBlock().  Addresses where disassembly was tried but
+     *  failed will be added to the cache as null pointers. This is convenient when the SEARCH_DEADEND bit is clear in
+     *  conjunction with the SEARCH_FOLLOWING (or similar) being set, since this combination causes the disassembler to try
+     *  every address in a dead-end block. Providing a cache in this case can speed up the disassembler by an order of
+     *  magnitude.
      *
      *  Thread safety: The safety of this method depends on the implementation of disassembleOne() in the subclass. In any
      *  case, no other thread should be concurrently modifying the memory map, successors, or cache. */
@@ -594,39 +597,47 @@ public:
      *========================================================================================================================== */
 public:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
-     *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()).
+     *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()).  The @p tried argument lists all the
+     *  addresses where we already tried to disassemble (including addresses where disassembly failed) and this method refuses
+     *  to add the following address to the worklist if we've already tried that address.
      *
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
     void search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, 
-                          const MemoryMap *map, const BadMap *bad);
+                          const MemoryMap *map, const InstructionMap &tried);
 
     /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
-     *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method
-     *  is invoked automatically if the SEARCH_IMMEDIATE bit is set (see set_search()).
+     *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method is
+     *  invoked automatically if the SEARCH_IMMEDIATE bit is set (see set_search()).  The @p tried argument lists all the
+     *  addresses where we already tried to disassemble (including addresses where disassembly failed) and this method refuses
+     *  to add the following address to the worklist if we've already tried that address.
      *
      *  Thread safety:  Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
-    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const BadMap *bad);
+    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const InstructionMap &tried);
 
-    /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize
-     *  must be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()).
+    /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize must
+     *  be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()). The
+     *  @p tried argument lists all the addresses where we already tried to disassemble (including addresses where disassembly
+     *  failed) and this method refuses to add the following address to the worklist if we've already tried that address.
      *
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
-    void search_words(AddressSet *worklist, const MemoryMap *map, const BadMap *bad);
+    void search_words(AddressSet *worklist, const MemoryMap *map, const InstructionMap &tried);
 
     /** Finds the lowest virtual address, greater than or equal to @p start_va, which does not correspond to a previous
      *  disassembly attempt as evidenced by its presence in the supplied instructions or bad map.  If @p avoid_overlaps is set
      *  then do not return an address if an already disassembled instruction's raw bytes include that address.  Only virtual
-     *  addresses contained in the MemoryMap will be considered.  The address is returned by adding it to the worklist;
-     *  nothing is added if no qualifying address can be found. This method is invoked automatically if the SEARCH_ALLBYTES or
-     *  SEARCH_UNUSED bits are set (see set_search()).
+     *  addresses contained in the MemoryMap will be considered.  The @p tried argument lists all the addresses where we
+     *  already tried to disassemble (including addresses where disassembly failed) and this method refuses to add the
+     *  following address to the worklist if we've already tried that address. The address is returned by adding it to the
+     *  worklist; nothing is added if no qualifying address can be found. This method is invoked automatically if the
+     *  SEARCH_ALLBYTES or SEARCH_UNUSED bits are set (see set_search()).
      *
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
     void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map, const InstructionMap &insns,
-                             const BadMap *bad, bool avoid_overlaps);
+                             const InstructionMap &tried, bool avoid_overlaps);
 
 
     /** Adds addresses that correspond to function symbols.  This method is invoked automatically if the SEARCH_FUNCSYMS bits
