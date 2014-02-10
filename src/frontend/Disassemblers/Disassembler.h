@@ -116,28 +116,29 @@
 class Disassembler {
 public:
     /** Exception thrown by the disassemblers. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
         /** A bare exception not bound to any particular instruction. */
         Exception(const std::string &reason)
-            : mesg(reason), ip(0), bit(0), insn(NULL)
+            : std::runtime_error(reason), ip(0), bit(0), insn(NULL)
             {}
         /** An exception bound to a virtual address but no raw data or instruction. */
         Exception(const std::string &reason, rose_addr_t ip)
-            : mesg(reason), ip(ip), bit(0), insn(NULL)
+            : std::runtime_error(reason), ip(ip), bit(0), insn(NULL)
             {}
         /** An exception bound to a particular instruction being disassembled. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-            : mesg(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
+            : std::runtime_error(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
             {}
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : mesg(reason), ip(insn->get_address()), bit(0), insn(insn)
+            : std::runtime_error(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
+        ~Exception() throw() {}
+
         void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream &o, const Exception &e);
 
-        std::string mesg;               /**< Reason that disassembly failed. */
         rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
         SgUnsignedCharList bytes;       /**< Bytes (partial) of failed disassembly, including byte at failure. Empty if the
                                          *   exception is not associated with a particular byte sequence, such as if an

@@ -899,7 +899,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             if (SageInterface::querySubTree<SgAsmInterpretation>(project).size() != interps.size())
                 std::cerr <<argv0 <<": warning: new interpretations created by the linker; mixed 32- and 64-bit libraries?\n";
         } catch (const BinaryLoader::Exception &e) {
-            std::cerr <<argv0 <<": BinaryLoader error: " <<e.mesg <<"\n";
+            std::cerr <<argv0 <<": BinaryLoader error: " <<e.what() <<"\n";
             return NULL;
         }
     } else {

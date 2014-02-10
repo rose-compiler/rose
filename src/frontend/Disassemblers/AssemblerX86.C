@@ -1734,7 +1734,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
             s = assemble(insn, defn);
         } catch(const Exception &e) {
             if (p_debug)
-                fprintf(p_debug, ": %s\n", e.mesg.c_str());
+                fprintf(p_debug, ": %s\n", e.what());
             continue;
         }
         if (p_debug) {

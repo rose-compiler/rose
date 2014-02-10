@@ -42,7 +42,8 @@ std::ostream& operator<<(std::ostream &o, const MemoryMap::Segment      &x) { x.
 std::string
 MemoryMap::Exception::leader(std::string dflt) const
 {
-    return mesg.empty() ? dflt : mesg;
+    const char *s = what();
+    return s && *s ? dflt : std::string(s);
 }
 
 std::string

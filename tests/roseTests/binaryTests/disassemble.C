@@ -1547,7 +1547,7 @@ main(int argc, char *argv[])
         if (show_bad) {
             printf(":\n");
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.what());
         } else {
             printf(" (use --show-bad to see errors)\n");
         }
@@ -1675,7 +1675,7 @@ main(int argc, char *argv[])
             } catch(const Assembler::Exception &e) {
                 assembly_failures++;
                 if (show_bad) {
-                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
+                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.what());
                     FILE *old_debug = asmb->get_debug();
                     asmb->set_debug(stderr);
                     try {

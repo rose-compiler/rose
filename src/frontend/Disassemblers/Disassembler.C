@@ -34,7 +34,7 @@ Disassembler::Exception::print(std::ostream &o) const
     if (insn) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip)
           <<" [" <<unparseInstruction(insn) <<"]"
-          <<": " <<mesg;
+          <<": " <<what();
     } else if (ip>0) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip);
         if (!bytes.empty()) {
@@ -47,7 +47,7 @@ Disassembler::Exception::print(std::ostream &o) const
             o <<"] at bit " <<bit;
         }
     } else {
-        o <<mesg;
+        o <<what();
     }
 }
 
@@ -361,7 +361,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                         if (p_debug)
                             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: "
                                     "disassembly failed in basic block 0x%08"PRIx64": %s\n",
-                                    e.ip, start_va, e.mesg.c_str());
+                                    e.ip, start_va, e.what());
                         if (!cache) {
                             for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                                 SageInterface::deleteAST(ii->second);
