@@ -3902,7 +3902,9 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                                                  *   might also be thunks, and functions that have this bit set might not
                                                  *   be a thunk.  The Partitioner::is_thunk() method will return true for
                                                  *   functions whose content looks like a thunk. */
-                FUNC_DEFAULT     = 0x6fff00ff,  /**< Default value for Partitioner class. */
+                FUNC_EXPORT      = 0x80000000,  /**< Exported function. These are the functions that appear in a PE export
+                                                 *   table. */
+                FUNC_DEFAULT     = 0xefff00ff,  /**< Default value for Partitioner class. */
 
                 /*========= Miscellaneous Reasons ===========================================================================
                  * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is

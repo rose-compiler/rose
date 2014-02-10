@@ -430,13 +430,66 @@ Disassembler::InstructionMap
 Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, AddressSet *successors, BadMap *bad)
 {
     InstructionMap insns;
-    InstructionMap icache;              /* to help speed up disassembleBlock() when SEARCH_DEADEND is disabled */
-    try {
-        rose_addr_t next_search = 0;
 
-        /* Per-buffer search methods */
-        if (p_search & SEARCH_WORDS)
-            search_words(&worklist, map, bad);
+    // Helps speed up disassembleBlock() when SEARCH_DEADEND si disabled.  The destructor deletes all the instruction ASTs,
+    // so call InstructionCache.clear() first if you want to keep them.  Doing it this way (rather than deleting them in
+    // an exception handler) allows for better debugging--gdb will show you where the exception occurred rather than where we
+    // re-throw it.
+    struct InstructionCache: InstructionMap {
+        ~InstructionCache() {
+            for (iterator ii=begin(); ii!=end(); ++ii)
+                SageInterface::deleteAST(ii->second);
+        }
+    } icache;
+
+    rose_addr_t next_search = 0;
+
+    /* Per-buffer search methods */
+    if (p_search & SEARCH_WORDS)
+        search_words(&worklist, map, bad);
+
+    /* Look for more addresses */
+    if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
+        bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
+        search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
+        if (worklist.size()>0)
+            next_search = *(--worklist.end())+1;
+    }
+
+    while (worklist.size()>0) {
+        /* Get next address to disassemble */
+        AddressSet::iterator i = worklist.begin();
+        rose_addr_t va = *i;
+        worklist.erase(i);
+
+        if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
+            /* Skip this if we've already tried to disassemble it. */
+        } else if (!map->exists(va)) {
+            /* Any address that's outside the range we're allowed to work on will be added to the successors. */
+            if (successors)
+                successors->insert(va);
+        } else {
+            /* Disassemble a basic block and add successors to the work list. If a disassembly error occurs then
+             * disassembleBlock() will throw an exception that we'll add to the bad list. We must be careful when adding the
+             * basic block's instructions to the return value: although we check above to prevent disassembling the same
+             * basic block more than once, it's still possible that two basic blocks could overlap (e.g., block A could start
+             * at the second instruction of block B, or on a viariable-size instruction architecture, block A could start
+             * between instructions of block B and then become synchronized with B). */
+            InstructionMap bb;
+            try {
+                bb = disassembleBlock(map, va, &worklist, &icache);
+                insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
+            } catch(const Exception &e) {
+                if (bad)
+                    bad->insert(std::make_pair(va, e));
+            }
+
+            /* Per-basicblock search methods */
+            if (p_search & SEARCH_FOLLOWING)
+                search_following(&worklist, bb, va, map, bad);
+            if (p_search & SEARCH_IMMEDIATE)
+                search_immediate(&worklist, bb, map, bad);
+        }
 
         /* Look for more addresses */
         if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
@@ -444,58 +497,11 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
             if (worklist.size()>0)
                 next_search = *(--worklist.end())+1;
+
         }
-
-        while (worklist.size()>0) {
-            /* Get next address to disassemble */
-            AddressSet::iterator i = worklist.begin();
-            rose_addr_t va = *i;
-            worklist.erase(i);
-
-            if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
-                /* Skip this if we've already tried to disassemble it. */
-            } else if (!map->exists(va)) {
-                /* Any address that's outside the range we're allowed to work on will be added to the successors. */
-                if (successors)
-                    successors->insert(va);
-            } else {
-                /* Disassemble a basic block and add successors to the work list. If a disassembly error occurs then
-                 * disassembleBlock() will throw an exception that we'll add to the bad list. We must be careful when adding the
-                 * basic block's instructions to the return value: although we check above to prevent disassembling the same
-                 * basic block more than once, it's still possible that two basic blocks could overlap (e.g., block A could start
-                 * at the second instruction of block B, or on a viariable-size instruction architecture, block A could start
-                 * between instructions of block B and then become synchronized with B). */
-                InstructionMap bb;
-                try {
-                    bb = disassembleBlock(map, va, &worklist, &icache);
-                    insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
-                } catch(const Exception &e) {
-                    if (bad)
-                        bad->insert(std::make_pair(va, e));
-                }
-
-                /* Per-basicblock search methods */
-                if (p_search & SEARCH_FOLLOWING)
-                    search_following(&worklist, bb, va, map, bad);
-                if (p_search & SEARCH_IMMEDIATE)
-                    search_immediate(&worklist, bb, map, bad);
-            }
-
-            /* Look for more addresses */
-            if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
-                bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
-                search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
-                if (worklist.size()>0)
-                    next_search = *(--worklist.end())+1;
-
-            }
-        }
-    } catch(...) {
-        for (InstructionMap::iterator ii=icache.begin(); ii!=icache.end(); ++ii)
-            SageInterface::deleteAST(ii->second);
-        throw;
     }
 
+    icache.clear();                                     // don't let the destructor delete the instructions
     return insns;
 }
 

@@ -1455,6 +1455,7 @@ public:
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
+    virtual void mark_export_entries(SgAsmGenericHeader*);      /**< Seeds functions for PE exports */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */

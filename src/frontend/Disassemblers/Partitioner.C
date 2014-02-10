@@ -139,6 +139,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
             bits = SgAsmFunction::FUNC_IMPORT;
+        } else if (word=="export") {
+            bits = SgAsmFunction::FUNC_EXPORT;
         } else if (word=="symbol") {
             bits = SgAsmFunction::FUNC_SYMBOL;
         } else if (word=="pattern") {
@@ -1366,6 +1368,23 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+            }
+        }
+    }
+}
+
+/* Adds PE exports as function entry points. */
+void
+Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
+{
+    SgAsmGenericSectionList *sections = fhdr->get_sections();
+    for (size_t i=0; i<sections->get_sections().size(); ++i) {
+        if (SgAsmPEExportSection *export_section = isSgAsmPEExportSection(sections->get_sections()[i])) {
+            const SgAsmPEExportEntryPtrList &exports = export_section->get_exports()->get_exports();
+            for (SgAsmPEExportEntryPtrList::const_iterator ei=exports.begin(); ei!=exports.end(); ++ei) {
+                rose_addr_t va = (*ei)->get_export_rva().get_va();
+                if (find_instruction(va))
+                    add_function(va, SgAsmFunction::FUNC_EXPORT, (*ei)->get_name()->get_string());
             }
         }
     }
@@ -2659,6 +2678,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
                 mark_func_symbols(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_IMPORT)
                 mark_elf_plt_entries(headers[i]);
+            if (func_heuristics & SgAsmFunction::FUNC_EXPORT)
+                mark_export_entries(headers[i]);
         }
     }
     if (func_heuristics & SgAsmFunction::FUNC_PATTERN)
@@ -3156,6 +3177,7 @@ Partitioner::detach_thunk(Function *func)
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
             BasicBlock *new_bb = find_bb_starting(second_va);
+            assert(new_bb!=NULL);
             if (new_bb->function==func) {
                 remove(func, new_bb);
                 append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
@@ -3266,15 +3288,6 @@ Partitioner::merge_function_fragments()
             fragment_index[gnum].push_back(fi->second);
         }
     }
-#if 0 /* DEBUGGING [RPM 2012-04-18] */
-    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
-    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
-        fprintf(stderr, "  group-%zu:", gnum);
-        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
-            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
-        fprintf(stderr, "\n");
-    }
-#endif
             
     /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
      * the fragment group has a single predecessor. */
