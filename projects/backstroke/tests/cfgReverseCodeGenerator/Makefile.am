@@ -21,7 +21,7 @@ EXTRA_DIST = test_Basic.C test_Basic2.C test_Basic3.C
 TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/pluggableReverser
 
 TESTCODES_REQUIRED_TO_PASS = \
-test_Basic.C \
+test_Basic1.C \
 test_Basic2.C \
 test_Basic3.C
 

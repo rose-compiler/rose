@@ -267,9 +267,13 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 	BackstrokeUtility::removeUselessParen(stmt.forwardStatement);
 	BackstrokeUtility::removeUselessParen(stmt.reverseStatement);
 
-	SageInterface::fixVariableReferences(stmt.forwardStatement);
+#if 0
+	// MS: no longer working in rose edg4x
+   	SageInterface::fixVariableReferences(stmt.forwardStatement);
 	SageInterface::fixVariableReferences(stmt.reverseStatement);
-
+#else
+	cerr<<"DEBUG: NOT fixing variable references (broken)."<<endl;
+#endif
 	string counterString = lexical_cast<string > (0);
 
 	SgScopeStatement* eventScope = event_->get_scope();
