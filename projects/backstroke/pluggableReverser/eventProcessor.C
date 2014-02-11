@@ -296,8 +296,8 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 
 	SgFunctionDeclaration* commitFunctionDecl = NULL;
 	//MS: ROSE_ASSERT(stmt.commitStatement == NULL); //We'll worry about commit statements later
-        if(!stmt.commitStatement == NULL)
-          cerr<<"WARNING: EventProcessor::processEvent: stmt.commitStatement != NULL ()"<<endl;
+        if(!stmt.commitStatement == 0)
+          cerr<<"WARNING: EventProcessor::processEvent: stmt.commitStatement != 0 "<<endl;
         
 
 	// Add the cost information as comments to generated functions.
