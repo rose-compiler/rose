@@ -33,27 +33,25 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
-/* This is similar to rose_addr_t except instead of representing any kind of address (file offset, virtual address, relative
- * virtual address, etc.) it represents only a relative virtual address. The only significant difference between storing
- * a relative virtual address (RVA) in a rose_addr_t and a rose_rva_t is that the latter allows the address to be associated
- * with an SgAsmGenericSection so that if the section address (mapped_rva) is changed then all rose_rva_t objects bound to
- * that section are also automatically adjusted. */
+// This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class rose_rva_t {
 	public:
-		rose_rva_t() : addr(0), section(0) {}
-		rose_rva_t(const rose_rva_t &rva) : addr(rva.addr), section(rva.section) {}
-		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
-		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
+		rose_rva_t();
+		rose_rva_t(const rose_rva_t&);
+		rose_rva_t operator=(const rose_rva_t&);
+		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
+		static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
+		bool is_bound() const;
 		rose_addr_t get_rva() const;
-		rose_addr_t get_va() const;
-		rose_addr_t get_rel() const;	/* returns address relative to linked section */
-		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
 		rose_rva_t& set_rva(rose_addr_t rva);
 		SgAsmGenericSection *get_section() const;
 		rose_rva_t& set_section(SgAsmGenericSection *section);
 		rose_rva_t& bind(SgAsmGenericHeader*);
-		std::string to_string() const;
+		rose_addr_t get_va() const;
+		rose_addr_t get_rel() const;
+		rose_addr_t get_rel(SgAsmGenericSection*);
 		void increment(rose_addr_t amount);
+		std::string to_string() const;
 	private:
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
