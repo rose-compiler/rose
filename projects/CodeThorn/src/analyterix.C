@@ -32,6 +32,9 @@
 #include <cmath>
 #include "assert.h"
 
+// ROSE analyses
+#include "VariableRenaming.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -42,6 +45,7 @@ using namespace DFAstAttributeConversion;
 string option_prefix;
 bool option_stats=false;
 bool option_rdanalysis=false;
+bool option_roserdanalysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
 
@@ -189,7 +193,8 @@ int main(int argc, char* argv[]) {
       ("ast-file-node-display", "show project and file node dumps (using display()).")
       ("version,v", "display the version.")
       ("stats", "display code statistics.")
-      ("rdanalysis", "perform reaching definitions analysis.")
+      ("rd-analysis", "perform reaching definitions analysis.")
+      ("rose-rd-analysis", "perform rose-core reaching definitions analysis.")
       ("fi-constanalysis", "perform flow-insensitive constant analysis.")
       ("varidmapping", "prints variableIdMapping")
       ("write-varidmapping", "writes variableIdMapping to a file variableIdMapping.csv")
@@ -223,8 +228,11 @@ int main(int argc, char* argv[]) {
     if(args.count("stats")) {
       option_stats=true;
     }
-    if(args.count("rdanalysis")) {
+    if(args.count("rd-analysis")) {
       option_rdanalysis=true;
+    }
+    if(args.count("rose-rd-analysis")) {
+      option_roserdanalysis=true;
     }
     if(args.count("fi-constanalysis")) {
       option_fi_constanalysis=true;
@@ -294,6 +302,14 @@ int main(int argc, char* argv[]) {
   if(option_rdanalysis) {
     cout<<"STATUS: Performing RD analysis."<<endl;
     rdAnalysis(root);
+  }
+  if(option_roserdanalysis) {
+      cout << "INFO: generating rose-rd dot file (1/2)."<<endl;
+      VariableRenaming varRen(root);
+      varRen.run();
+      varRen.toFilteredDOT("rose-rd.dot");
+      varRen.printOriginalDefTable();
+      varRen.printRenameTable();
   }
   cout<< "STATUS: finished."<<endl;
 
