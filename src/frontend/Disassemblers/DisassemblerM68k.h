@@ -49,10 +49,14 @@ public:
     uint16_t instruction_word(size_t n);
 
     /** Create a data register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits);
+    SgAsmM68kRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Create an address register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits);
+    SgAsmM68kRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+
+    /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
+     *  created; when @p regnum is eight through 15 an address register is created. */
+    SgAsmM68kRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Create a reference to the condition code register. */
     SgAsmM68kRegisterReferenceExpression *makeConditionCodeRegister();
@@ -60,8 +64,18 @@ public:
     /** Create a reference to the program counter register. */
     SgAsmM68kRegisterReferenceExpression *makeProgramCounter();
 
+    /** Create a MAC register reference expression. */
+    SgAsmM68kRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
+
+    /** Create an EMAC register reference expression. */
+    SgAsmM68kRegisterReferenceExpression *makeEmacRegister(M68kEmacRegister);
+
+    /** Generic ways to make a register. */
+    SgAsmM68kRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
+
     /** Create an immediate value.
      * @{ */
+    SgAsmIntegerValueExpression *makeImmediate1(unsigned value);
     SgAsmIntegerValueExpression *makeImmediate8(unsigned value);
     SgAsmIntegerValueExpression *makeImmediate16(unsigned value);
     SgAsmIntegerValueExpression *makeImmediate32(unsigned value, unsigned hi_bits=0);
@@ -84,7 +98,8 @@ public:
 
     /** Build an instruction. */
     SgAsmM68kInstruction *makeInstruction(M68kInstructionKind, const std::string &mnemonic,
-                                          SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL);
+                                          SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
+                                          SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL, SgAsmExpression *arg5=NULL);
 
     /** Return the address of the instruction we are disassembling. */
     rose_addr_t get_insn_va() const { return insn_va; }

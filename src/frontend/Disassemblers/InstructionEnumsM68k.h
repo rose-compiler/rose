@@ -7,6 +7,7 @@ enum M68kRegisterClass {
     m68k_regclass_fpr,                  /**< Floating point registers. */
     m68k_regclass_spr,                  /**< Special purpose registers. */
     m68k_regclass_mac,                  /**< Multiply-accumulate registers. */
+    m68k_regclass_emac,                 /**< Extended multiply-accumulate registers. */
     m68k_regclass_sup,                  /**< Supervisor registers. */
 };
 
@@ -20,11 +21,17 @@ enum M68kSpecialPurposeRegister {
 
 enum M68kMacRegister {
     m68k_mac_macsr,                     /**< MAC status register. */
-    m68k_mac_acc0,                      /**< MAC accumulator 0. */
-    m68k_mac_acc1,                      /**< MAC accumulator 1. */
-    m68k_mac_acc2,                      /**< MAC accumulator 2. */
-    m68k_mac_acc3,                      /**< MAC accumulator 3. */
+    m68k_mac_acc,                       /**< MAC 32-bit accumulator. */
     m68k_mac_mask,                      /**< MAC mask register. */
+};
+
+enum M68kEmacRegister {
+    m68k_emac_macsr,                     /**< EMAC status register. */
+    m68k_emac_acc0,                      /**< EMAC accumulator 0. */
+    m68k_emac_acc1,                      /**< EMAC accumulator 1. */
+    m68k_emac_acc2,                      /**< EMAC accumulator 2. */
+    m68k_emac_acc3,                      /**< EMAC accumulator 3. */
+    m68k_emac_mask,                      /**< EMAC mask register. */
 };
 
 enum M68kSupervisorRegister {

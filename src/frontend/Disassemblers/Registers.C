@@ -865,31 +865,41 @@ RegisterDictionary::dictionary_mcf5484()
 
         // 32-bit data and address registers; 64-bit floating point registers
         for (size_t i=0; i<8; ++i) {
-            regs->insert("d"+StringUtility::numberToString(i),  m68k_regclass_data, i, 0, 32);
-            regs->insert("a"+StringUtility::numberToString(i),  m68k_regclass_addr, i, 0, 32);
+            regs->insert("d"+StringUtility::numberToString(i),       m68k_regclass_data, i, 0,  32);
+            regs->insert("d"+StringUtility::numberToString(i)+".l",  m68k_regclass_data, i, 0,  16);
+            regs->insert("d"+StringUtility::numberToString(i)+".u",  m68k_regclass_data, i, 16, 16);
+            regs->insert("a"+StringUtility::numberToString(i),       m68k_regclass_addr, i, 0, 32);
+            regs->insert("a"+StringUtility::numberToString(i)+".l",  m68k_regclass_addr, i, 0,  16);
+            regs->insert("a"+StringUtility::numberToString(i)+".u",  m68k_regclass_addr, i, 16, 16);
             regs->insert("fp"+StringUtility::numberToString(i), m68k_regclass_fpr,  i, 0, 64);
         }
         regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
 
         // Special-purpose registers
-        regs->insert("pc",    m68k_regclass_spr, m68k_spr_pc,    0, 32);        // program counter
-        regs->insert("ccr",   m68k_regclass_spr, m68k_spr_ccr,   0, 8);         // condition code register
-        regs->insert("ccr_c", m68k_regclass_spr, m68k_spr_ccr,   0, 1);         // condition code carry bit
-        regs->insert("ccr_v", m68k_regclass_spr, m68k_spr_ccr,   1, 1);         // condition code overflow
-        regs->insert("ccr_z", m68k_regclass_spr, m68k_spr_ccr,   2, 1);         // condition code zero bit
-        regs->insert("ccr_n", m68k_regclass_spr, m68k_spr_ccr,   3, 1);         // condition code negative
-        regs->insert("ccr_x", m68k_regclass_spr, m68k_spr_ccr,   4, 1);         // condition code extend
-        regs->insert("fpcr",  m68k_regclass_spr, m68k_spr_fpcr,  0, 32);        // floating-point control register
-        regs->insert("fpsr",  m68k_regclass_spr, m68k_spr_fpsr,  0, 32);        // floating-point status register
-        regs->insert("fpiar", m68k_regclass_spr, m68k_spr_fpiar, 0, 32);        // floating-point instruction address reg
+        regs->insert("pc",    m68k_regclass_spr,   m68k_spr_pc,      0, 32);    // program counter
+        regs->insert("ccr",   m68k_regclass_spr,   m68k_spr_ccr,     0, 8);     // condition code register
+        regs->insert("ccr_c", m68k_regclass_spr,   m68k_spr_ccr,     0, 1);     // condition code carry bit
+        regs->insert("ccr_v", m68k_regclass_spr,   m68k_spr_ccr,     1, 1);     // condition code overflow
+        regs->insert("ccr_z", m68k_regclass_spr,   m68k_spr_ccr,     2, 1);     // condition code zero bit
+        regs->insert("ccr_n", m68k_regclass_spr,   m68k_spr_ccr,     3, 1);     // condition code negative
+        regs->insert("ccr_x", m68k_regclass_spr,   m68k_spr_ccr,     4, 1);     // condition code extend
+        regs->insert("fpcr",  m68k_regclass_spr,   m68k_spr_fpcr,    0, 32);    // floating-point control register
+        regs->insert("fpsr",  m68k_regclass_spr,   m68k_spr_fpsr,    0, 32);    // floating-point status register
+        regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
 
-        // multiply-accumulate registers
-        regs->insert("macsr", m68k_regclass_mac, m68k_mac_macsr, 0, 32);        // MAC status register
-        regs->insert("acc0",  m68k_regclass_mac, m68k_mac_acc0,  0, 48);        // MAC accumulator 0
-        regs->insert("acc1",  m68k_regclass_mac, m68k_mac_acc1,  0, 48);        // MAC accumulator 1
-        regs->insert("acc2",  m68k_regclass_mac, m68k_mac_acc2,  0, 48);        // MAC accumulator 2
-        regs->insert("acc3",  m68k_regclass_mac, m68k_mac_acc3,  0, 48);        // MAC accumulator 3
-        regs->insert("mask",  m68k_regclass_mac, m68k_mac_mask,  0, 16);        // MAC mask register
+        // multiply-accumulate (MAC) registers
+        regs->insert("macsr", m68k_regclass_mac,   m68k_mac_macsr,   0, 32);    // MAC status register
+        regs->insert("acc",   m68k_regclass_mac,   m68k_mac_acc,     0, 32);    // MAC 32-bit accumulator
+        regs->insert("mask",  m68k_regclass_mac,   m68k_mac_mask,    0, 32);    // MAC mask register (high 16 are always zero)
+
+        // extended multiply-accumulate (EMAC) registers
+        // note: we have to use non-standard names for macsr and mask so as not to conflict with the regular MAC unit's regs.
+        regs->insert("emacsr",m68k_regclass_emac,  m68k_emac_macsr,  0, 32);    // MAC status register
+        regs->insert("acc0",  m68k_regclass_emac,  m68k_emac_acc0,   0, 48);    // MAC accumulator 0
+        regs->insert("acc1",  m68k_regclass_emac,  m68k_emac_acc1,   0, 48);    // MAC accumulator 1
+        regs->insert("acc2",  m68k_regclass_emac,  m68k_emac_acc2,   0, 48);    // MAC accumulator 2
+        regs->insert("acc3",  m68k_regclass_emac,  m68k_emac_acc3,   0, 48);    // MAC accumulator 3
+        regs->insert("emask", m68k_regclass_emac,  m68k_emac_mask,   0, 32);    // MAC mask register (high 16 are always zero)
 
         // supervisor registers
         regs->insert("sr",      m68k_regclass_sup, m68k_sup_sr,      0, 16);    // status register
