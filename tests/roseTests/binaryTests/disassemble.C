@@ -79,6 +79,11 @@ Description:\n\
     modified by hand and then fed back into another disassembly with the\n\
     \"-rose:partitioner_config FILENAME\" switch.\n\
 \n\
+  --isa=NAME\n\
+    Specify an instruction set architecture in order to choose a disassembler.\n\
+    If an ISA is specified then it overrides the disassembler that would have\n\
+    been chosen based on the file format.\n\
+\n\
   --linear\n\
     Organized the output by address rather than hierarchically.  The output\n\
     will be more like traditional disassemblers.\n\
@@ -208,11 +213,35 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
+#include "DisassemblerArm.h"
+#include "DisassemblerPowerpc.h"
+#include "DisassemblerMips.h"
+#include "DisassemblerX86.h"
+
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 using namespace BinaryAnalysis::InstructionSemantics;
+
+/* Return a suitable disassembler by name. */
+static Disassembler *
+get_disassembler(const std::string &name)
+{
+    if (0==name.compare("arm")) {
+        return new DisassemblerArm();
+    } else if (0==name.compare("ppc")) {
+        return new DisassemblerPowerpc();
+    } else if (0==name.compare("mips")) {
+        return new DisassemblerMips();
+    } else if (0==name.compare("i386")) {
+        return new DisassemblerX86(4);
+    } else if (0==name.compare("amd64")) {
+        return new DisassemblerX86(8);
+    } else {
+        return NULL;
+    }
+}
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -872,7 +901,7 @@ main(int argc, char *argv[])
     rose_addr_t rebase_va = 0;                  /* alternative base virtual address */
     bool do_rebase = false;
     ExtentMap reserved;                         /* addresses to be reserved */
-    
+    std::string isa;                            /* instruction set architecture */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -891,7 +920,10 @@ main(int argc, char *argv[])
     new_argv[new_argc++] = argv[0];
     new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
     for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
+        if (!strcmp(argv[i], "--")) {
+            ++i;
+            break;
+        } else if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
             exit(1);
         } else if (!strcmp(argv[i], "--link")) {
@@ -1075,6 +1107,8 @@ main(int argc, char *argv[])
                 exit(1);
             }
             reserved.insert(Extent(va, size));
+        } else if (!strncmp(argv[i], "--isa=", 6)) {
+            isa = argv[i]+6;
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_loader = true;
@@ -1273,12 +1307,25 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
 
     Disassembler *disassembler = NULL;
-    if (!raw_entries.empty() && !do_rose_help) {
+    if (!isa.empty()) {
+        disassembler = get_disassembler(isa);
+        if (!disassembler) {
+            std::cerr <<arg0 <<": invalid isa specified on command line: " <<isa <<"\n";
+            exit(1);
+        }
+    } else if (!raw_entries.empty() && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
-        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
+        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+        assert(disassembler!=NULL);
     } else {
-        disassembler = Disassembler::lookup(interp)->clone();
+        disassembler = Disassembler::lookup(interp);
+        if (!disassembler) {
+            std::cerr <<arg0 <<": no suitable disassembler found for interpretation\n";
+            exit(1);
+        }
     }
+    assert(disassembler!=NULL);
+    disassembler = disassembler->clone();
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Configure the disassembler and its partitioner.
