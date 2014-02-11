@@ -37,32 +37,13 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             printExpr(f, e, prefix, V_SgAsmExpression);
             break;
         }
-        case V_SgAsmByteValueExpression: {
-            SgAsmByteValueExpression *ee = isSgAsmByteValueExpression(e);
-            fprintf(f, "ByteValue {value=0x%02x", ee->get_value());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmWordValueExpression: {
-            SgAsmWordValueExpression *ee = isSgAsmWordValueExpression(e);
-            fprintf(f, "WordValue {value=0x%04x", ee->get_value());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmDoubleWordValueExpression: {
-            SgAsmDoubleWordValueExpression *ee = isSgAsmDoubleWordValueExpression(e);
-            fprintf(f, "DoubleWordValue {value=0x%08x", ee->get_value());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmQuadWordValueExpression: {
-            SgAsmQuadWordValueExpression *ee = isSgAsmQuadWordValueExpression(e);
-            fprintf(f, "QuadWordValue {value=0x%016"PRIx64, ee->get_value());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
+        case V_SgAsmIntegerValueExpression: {
+            SgAsmIntegerValueExpression *ee = isSgAsmIntegerValueExpression(e);
+            std::ostringstream ss;
+            ss <<"IntegerValue {value="
+               <<StringUtility::addrToString(ee->get_absolute_value(), ee->get_significant_bits())
+               <<"}";
+            fprintf(f, ss.str().c_str());
             break;
         }
         case V_SgAsmSingleFloatValueExpression: {
@@ -595,7 +576,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             if (ve) {
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
-                    return NULL!=isSgAsmByteValueExpression(ve);
+                    SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
+                    return NULL!=ive && 8==ive->get_significant_bits();
                 } else {
                     return *imm_p>=-128 && *imm_p<=127;
                 }
@@ -605,7 +587,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             if (ve) {
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
-                    return NULL!=isSgAsmWordValueExpression(ve);
+                    SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
+                    return NULL!=ive && 16==ive->get_significant_bits();
                 } else {
                     return *imm_p>=-32768 && *imm_p<=32767;
                 }
@@ -615,7 +598,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             if (ve) {
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
-                    return NULL!=isSgAsmDoubleWordValueExpression(ve);
+                    SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
+                    return NULL!=ive && 32==ive->get_significant_bits();
                 } else {
                     return *imm_p>=-2147483648LL && *imm_p<=2147483647LL;
                 }
@@ -625,7 +609,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             if (ve) {
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
-                    return NULL!=isSgAsmQuadWordValueExpression(ve);
+                    SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
+                    return NULL!=ive && 64==ive->get_significant_bits();
                 } else {
                     return true;
                 }
@@ -1093,7 +1078,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                 } else if (base_reg->get_descriptor().get_major()==x86_regclass_gpr) {
                     /* [register]+disp8  or  [register]+disp32 */
                     if (honor_operand_types) {
-                        mod = isSgAsmByteValueExpression(disp_ve) ? 1 : 2;
+                        SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
+                        mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
                     } else {
                         mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                     }
@@ -1144,7 +1130,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
             case mrp_base_index_disp: {
                 ROSE_ASSERT(base_reg && index_reg && disp_ve);
                 if (honor_operand_types) {
-                    mod = isSgAsmByteValueExpression(disp_ve) ? 1 : 2;
+                    SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
+                    mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
                 } else {
                     mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                 }
