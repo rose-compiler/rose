@@ -416,8 +416,8 @@ private:
             if (enabled && insn && block && insn->get_kind()==x86_int) {
                 const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
                 SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
-                if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
-                    0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+                if (expr && expr->variantT()==V_SgAsmIntegerValueExpression &&
+                    0x80==isSgAsmIntegerValueExpression(expr)->get_value()) {
 
                     const SgAsmStatementPtrList &stmts = block->get_statementList();
                     size_t int_n;

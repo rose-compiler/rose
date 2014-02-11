@@ -549,18 +549,11 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
         const std::vector<SgAsmExpression*> &operands = bbi->second->get_operandList()->get_operands();
         for (size_t i=0; i<operands.size(); i++) {
             uint64_t constant=0;
-            switch (operands[i]->variantT()) {
-                case V_SgAsmWordValueExpression:
-                    constant = isSgAsmWordValueExpression(operands[i])->get_value();
-                    break;
-                case V_SgAsmDoubleWordValueExpression:
-                    constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value();
-                    break;
-                case V_SgAsmQuadWordValueExpression:
-                    constant = isSgAsmQuadWordValueExpression(operands[i])->get_value();
-                    break;
-                default:
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operands[i])) {
+                size_t nbits = ival->get_significant_bits();
+                if (nbits!=16 && nbits!=32 && nbits!=64)
                     continue; /* Not an appropriately-sized constant */
+                constant = ival->get_value();
             }
             if (map->exists(constant) && !tried.exists(constant)) {
                 if (p_debug && worklist->find(constant)==worklist->end())

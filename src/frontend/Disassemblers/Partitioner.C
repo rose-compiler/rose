@@ -2462,14 +2462,8 @@ Partitioner::value_of(SgAsmValueExpression *e)
 {
     if (!e) {
         return 0;
-    } else if (isSgAsmByteValueExpression(e)) {
-        return isSgAsmByteValueExpression(e)->get_value();
-    } else if (isSgAsmWordValueExpression(e)) {
-        return isSgAsmWordValueExpression(e)->get_value();
-    } else if (isSgAsmDoubleWordValueExpression(e)) {
-        return isSgAsmDoubleWordValueExpression(e)->get_value();
-    } else if (isSgAsmQuadWordValueExpression(e)) {
-        return isSgAsmQuadWordValueExpression(e)->get_value();
+    } else if (isSgAsmIntegerValueExpression(e)) {
+        return isSgAsmIntegerValueExpression(e)->get_value();
     } else {
         return 0;
     }

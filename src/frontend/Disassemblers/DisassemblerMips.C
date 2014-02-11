@@ -454,50 +454,50 @@ DisassemblerMips::makeShadowRegister(unsigned cc)
     return regref;
 }
 
-SgAsmByteValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate8(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xff));
-    SgAsmByteValueExpression *retval = new SgAsmByteValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeByteValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate16(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xffff));
-    SgAsmWordValueExpression *retval = new SgAsmWordValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeWordValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate32(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xffffffffull));
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetRelative(unsigned pc_offset, size_t bit_offset, size_t nbits)
 {
     assert(0==(pc_offset & ~0xffff));
     pc_offset = shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
     pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
     unsigned target = (get_ip() + 4 + pc_offset) & GenMask<unsigned, 32>::value; // measured from next instruction
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(target);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits)
 {
     assert(nbits>0);
@@ -508,7 +508,7 @@ DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offse
     unsigned lo_target = shiftLeft<32>(insn_index, 2) & lo_mask;
     unsigned hi_target = (get_ip() + 4) & ~lo_mask;
     unsigned target = hi_target | lo_target;
-    return new SgAsmDoubleWordValueExpression(target);
+    return SageBuilderAsm::makeDWordValue(target);
 }
 
 SgAsmBinaryAdd *
@@ -517,7 +517,7 @@ DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
     SgAsmMipsRegisterReferenceExpression *regref = makeRegister(gprnum);
     assert(0==(offset16 & ~0xffff));
     unsigned offset32 = signExtend<16, 32>(offset16);
-    SgAsmDoubleWordValueExpression *offset = new SgAsmDoubleWordValueExpression(offset32);
+    SgAsmIntegerValueExpression *offset = SageBuilderAsm::makeDWordValue(offset32);
     SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(regref, offset);
     return retval;
 }

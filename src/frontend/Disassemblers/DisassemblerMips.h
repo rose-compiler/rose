@@ -88,25 +88,25 @@ public:
 
     /** Create a new 8-bit value expression from an 8-bit value.  The @p bit_offset and @p nbits indicate where the value
      * originally came from in the instruction. */
-    SgAsmByteValueExpression *makeImmediate8(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate8(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a new 16-bit value expression from a 16-bit value. The @p bit_offset and @p nbits indicate where the value
      *  originally came from in the instruction. */
-    SgAsmWordValueExpression *makeImmediate16(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate16(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a new 32-bit value expression from a 32-bit value. The @p bit_offset and @p nbits indicate where the value
      *  originally came from in the instruction. */
-    SgAsmDoubleWordValueExpression *makeImmediate32(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate32(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a 32-bit PC-relative branch target address from a 16-bit offset. The @p bit_offset and @p nbits indicate where
      *  the value originally came from in the instruction (usually 0 and 16, respectively). The return address is the
      *  address of the delay slot plus four times the signed @p offset16. */
-    SgAsmDoubleWordValueExpression *makeBranchTargetRelative(unsigned offset16, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeBranchTargetRelative(unsigned offset16, size_t bit_offset, size_t nbits);
 
     /** Create a 32-bit branch address from an instruction index value.  The returned value is the @p insn_index (@p nbits
      * wide) multiplied by four and then combined with the address of the delay slot.  They are combined such that the
      * low-order @p nbits+2 bits are from the product and the upper bits are from the delay slot address. */
-    SgAsmDoubleWordValueExpression *makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits);
 
     /** Build an expression for an offset from a register.  The return value is GPR[regnum]+signExtend(offset) expressed as an
      *  SgAsmBinaryAdd expression whose first operand is the register reference expression and second operand is the
