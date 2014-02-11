@@ -410,13 +410,13 @@ usedef.passed: usedef.conf symbolicSemantics2 $(BINARY_SAMPLES)/usedef
 		ANS="$(srcdir)/usedef.ans"								\
 		$< $@
 
-# # Test BitPattern<> class template
-# noinst_PROGRAMS += testBitPattern
-# testBitPattern_SOURCES = testBitPattern.C
-# testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-# TEST_TARGETS += testBitPattern.passed
-# testBitPattern.passed: testBitPattern
-# 	@$(RTH_RUN) CMD="./testBitPattern" $(TEST_EXIT_STATUS) $@
+# Test BitPattern<> class template
+noinst_PROGRAMS += testBitPattern
+testBitPattern_SOURCES = testBitPattern.C
+testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testBitPattern.passed
+testBitPattern.passed: testBitPattern
+	@$(RTH_RUN) CMD="./testBitPattern" $(TEST_EXIT_STATUS) $@
 
 # Random number genertor tests
 noinst_PROGRAMS += testRNG
