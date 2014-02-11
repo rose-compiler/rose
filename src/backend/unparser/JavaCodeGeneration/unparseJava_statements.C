@@ -287,6 +287,7 @@ cout.flush();
             case V_SgDefaultOptionStmt:
             case V_SgJavaLabelStatement:
             case V_SgJavaSynchronizedStatement:
+
                 printSemicolon = false;
                 break;
             case V_SgVariableDeclaration: // charles4 09/23/2011 -- Shouldn't this be the default initialization!
@@ -733,6 +734,11 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
+    AstSgNodeAttribute *alias_attribute = (AstSgNodeAttribute *) init_name -> getAttribute("real_name");
+    if (alias_attribute) { // is this the name of a parameter with an alias?
+        init_name = isSgInitializedName(alias_attribute -> getNode());
+    }
+
     if (init_name -> attributeExists("final")) {
         curprint("final ");
     }
@@ -764,12 +770,28 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
         }
     }
 */
+if (! init_name -> attributeExists("type")){
+if (init_name -> get_type() == NULL)
+cout << "The SgInitialized name " 
+     << init_name->get_name()
+     << " has no type"
+<< endl;
+else
+cout << "The SgInitialized name " 
+     << init_name->get_name()
+     << " has type " 
+     << (isSgClassType(init_name -> get_type()) ? isSgClassType(init_name -> get_type()) -> get_qualified_name().getString() : init_name -> get_type() -> class_name())
+     << " but has no type attribute"
+<< endl;
+cout.flush();
+}
+
     ROSE_ASSERT(init_name -> attributeExists("type"));
     AstRegExAttribute *attribute = (AstRegExAttribute *) init_name -> getAttribute("type");
     curprint(attribute -> expression);
     curprint(" ");
 
-    unparseName(init_name->get_name(), info);
+    unparseName(init_name -> get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
         curprint(" = ");
@@ -938,10 +960,24 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
+     if (mfuncdecl_stmt -> attributeExists("compiler-generated")) { // Do not unparse compiler-generated functions
+         return;
+     }
 
-     // charles4 :  2/29/2012   I don't think this is needed!
-     // REMOVE THIS
-     /*
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
+
+//
+// TODO: REMOVE THIS
+// charles4 :  2/29/2012   I don't think this is needed!
+/*
      //TODO should there be forward declarations or nondefining declarations?
      if (mfuncdecl_stmt->isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
@@ -954,7 +990,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
               << endl;
          return;
      }
-     */
+*/
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
 
@@ -990,8 +1026,23 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
 */
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
+// TODO: Remove this !
+
+if (! attribute) { // TODO: I am baffled as to why this is happening!!!
+SgClassDefinition *class_definition = isSgClassDefinition(mfuncdecl_stmt -> get_scope());
+cout << "What!?? No type attribute for method " 
+     << mfuncdecl_stmt -> get_name().getString()
+     << " declared in class "
+     << class_definition -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+}
+else {
+
          ROSE_ASSERT(attribute);
          curprint(attribute -> expression);
+}
          curprint(" ");
      }
 
@@ -1010,6 +1061,15 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          if (name_it != names.begin()) {
              curprint(", ");
          }
+
+         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) (*name_it) -> getAttribute("annotations");
+         if (annotations_attribute) {
+             for (int i = 0; i < annotations_attribute -> size(); i++) {
+                 SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                 unparseExpression(annotation, info);
+                 curprint(" ");
+             }
+         }
          unparseInitializedName(*name_it, info);
      }
 
@@ -1017,6 +1077,13 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (mfuncdecl_stmt -> isForward()) {
          curprint(")");
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
+
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) mfuncdecl_stmt -> getAttribute("default");
+         if (attribute) {
+             curprint(" default ");
+             unparseExpression((SgExpression *) attribute -> getNode(), info);
+         }
+
          curprint(";");
      }
      else {
@@ -1042,16 +1109,22 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
-     ROSE_ASSERT(vardecl_stmt != NULL);
-
-     unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
-
-     foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
-         unparseInitializedName(init_name, info);
-   }
+Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
+    ROSE_ASSERT(vardecl_stmt != NULL);
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) vardecl_stmt -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
+    unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
+    foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
+        unparseInitializedName(init_name, info);
+}
 
 
 void
@@ -1088,6 +1161,15 @@ Unparse_Java::unparseJavaPackageStmt(SgStatement* stmt, SgUnparse_Info& info) {
         curprint(attribute -> expression);
     }
 */
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) package_statement -> getAttribute("annotations");
+    if (annotations_attribute) {
+        for (int i = 0; i < annotations_attribute -> size(); i++) {
+            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+            unparseExpression(annotation, info);
+            unp -> cur.insert_newline();
+            curprint_indented("", info);
+        }
+    }
 
     curprint("package ");
     curprint(package_name.getString());
@@ -1110,6 +1192,16 @@ cout.flush();
 
      if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
          return;
+     }
+
+     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
+     if (annotations_attribute) {
+         for (int i = 0; i < annotations_attribute -> size(); i++) {
+             SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+             unparseExpression(annotation, info);
+             unp -> cur.insert_newline();
+             curprint_indented("", info);
+         }
      }
 
      unparseDeclarationModifier(classdecl_stmt -> get_declarationModifier(), info);
@@ -1351,7 +1443,31 @@ Unparse_Java::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgTryStmt* try_stmt = isSgTryStmt(stmt);
      ROSE_ASSERT(try_stmt != NULL);
 
-     curprint ( string("try "));
+     curprint ("try ");
+
+     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) try_stmt -> getAttribute("resources");
+     if (attribute) {
+         curprint ("(");
+         for (int i = 0; i < attribute -> size(); i++) {
+            SgVariableDeclaration *local_declaration = isSgVariableDeclaration(attribute -> getNode(i));
+            AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) local_declaration -> getAttribute("annotations");
+            if (annotations_attribute) {
+                for (int i = 0; i < annotations_attribute -> size(); i++) {
+                    SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                    unparseExpression(annotation, info);
+                    curprint(" ");
+                }
+            }
+             ROSE_ASSERT(local_declaration);
+             if (i > 0) {
+                 curprint ("; ");
+             }
+             vector<SgInitializedName *> &locals = local_declaration -> get_variables();
+             ROSE_ASSERT(locals.size() == 1);
+             unparseInitializedName(locals[0], info);
+         }
+         curprint (") ");
+     }
   
      unp->cur.format(try_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
      unparseStatement(try_stmt->get_body(), info);
@@ -1561,46 +1677,114 @@ Unparse_Java::unparseParameterType(SgType *bound_type, SgUnparse_Info& info) {
 
 void
 Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info& info) {
-     curprint(" {");
-     unp->cur.insert_newline();
-     std::vector<SgVariableDeclaration *> fields;
-     std::vector<SgMemberFunctionDeclaration *> methods;
-     foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
-         SgVariableDeclaration *field = isSgVariableDeclaration(child);
-         if (field) { // only process fields ...
-             fields.push_back(field);
-         }
-         else { // ... and methods ...  skip constructor.
-             SgMemberFunctionDeclaration *mfuncdecl_stmt = isSgMemberFunctionDeclaration(child);
-             if (mfuncdecl_stmt && (! mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor())) {
-                 methods.push_back(mfuncdecl_stmt);
-             }
-         }
-     }
+    curprint(" {");
+    unp->cur.insert_newline();
 
-     for (int i = 0; i < fields.size(); i++) {
-         SgVariableDeclaration *field = fields[i];
-         // TODO: For now we only process the name... We'll need to process the Arguments and ClassBody later ...
-         // Note that there
-         vector<SgInitializedName *> &vars = field -> get_variables();
-         assert(vars.size() == 1);
-         info.inc_nestingLevel();
-         curprint_indented(vars[0] -> get_name().getString(), info);
-         curprint(i + 1 < fields.size() ? "," : ";");
-         unp->cur.insert_newline();
-         info.dec_nestingLevel();
-     }
+    std::vector<SgDeclarationStatement *> members = class_definition -> get_members();
 
-     unp->cur.insert_newline();
+    //
+    // If an Enum type contains enum constants, they must appear first in the body.
+    //
+    int last_enum_constant_index = members.size(); // assume all the members are enum-constants or a compiler-generated member
+    for (int i = 0; i < members.size(); i++) {
+        SgDeclarationStatement *member = members[i];
 
-     for (int i = 0; i < methods.size(); i++) {
-         SgMemberFunctionDeclaration *mfuncdecl_stmt = methods[i];
-         info.inc_nestingLevel();
-         unparseMFuncDeclStmt(mfuncdecl_stmt, info);
-         info.dec_nestingLevel();
-     }
+        //
+        // Skip all enum constants and compiler-generated members while keeping track of the last enum-constant encountered.
+        //
+        if (member -> attributeExists("enum-constant") || member -> attributeExists("compiler-generated")) {
+            continue;
+        }
+        else {
+            last_enum_constant_index = i;
+            break;
+        }
+    }
 
-     curprint_indented("}", info);
+    //
+    // If an Enum contains enum constants, process them first.
+    //
+    for (int i = 0; i < last_enum_constant_index; i++) {
+        SgVariableDeclaration *enum_constant = isSgVariableDeclaration(members[i]);
+        if (enum_constant) { // An enum constant?
+            ROSE_ASSERT(enum_constant -> attributeExists("enum-constant"));
+
+            AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) enum_constant -> getAttribute("annotations");
+            if (annotations_attribute) {
+                for (int i = 0; i < annotations_attribute -> size(); i++) {
+                    SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
+                    unparseExpression(annotation, info);
+                    unp -> cur.insert_newline();
+                    curprint_indented("", info);
+                }
+            }
+
+            vector<SgInitializedName *> &vars = enum_constant -> get_variables();
+            ROSE_ASSERT(vars.size() == 1);
+            info.inc_nestingLevel();
+            curprint_indented(vars[0] -> get_name().getString(), info);
+
+            //
+            // If this Enum constant has an initializer, process it.
+            //
+            if (vars[0] -> get_initializer() != NULL) {
+                SgAssignInitializer *initializer = isSgAssignInitializer(vars[0] -> get_initializer());
+                ROSE_ASSERT(initializer);
+                SgNewExp *new_expression = isSgNewExp(initializer -> get_operand());
+                ROSE_ASSERT(new_expression);
+                ROSE_ASSERT(new_expression -> get_constructor_args());
+                SgConstructorInitializer *init = new_expression -> get_constructor_args();
+                ROSE_ASSERT(init);
+
+                //
+                // If this Enum constant initializer accepts arguments (parameters), process them.
+                //
+                vector<SgExpression *> args = init -> get_args() -> get_expressions();
+                if (args.size() > 0) {
+                    curprint(" (");
+                    for (int i = 0; i < args.size(); i++) {
+                        unparseExpression(args[i], info);
+                        if (i + 1 < args.size())
+                            curprint(", ");
+                    }
+                    curprint(")");
+                }
+
+                //
+                // If this Enum constant initializer contains a body, output the body.
+                //
+                if (new_expression -> attributeExists("body")) {
+                    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_expression -> getAttribute("body");
+                    SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> getNode());
+                    ROSE_ASSERT(class_declaration);
+                    unparseClassDefnStmt(class_declaration -> get_definition(), info);
+                }
+            }
+
+            if (i + 1 != last_enum_constant_index) {
+                curprint(",");
+            }
+            unp -> cur.insert_newline();
+            info.dec_nestingLevel();
+        }
+    }
+
+    unp->cur.insert_newline();
+    info.dec_nestingLevel();
+    curprint(";");
+    unp->cur.insert_newline();
+
+    //
+    // Now, process the remaining members of the Enum body following the Enum constants.
+    //
+    info.inc_nestingLevel();
+    for (int i = last_enum_constant_index; i < members.size(); i++) {
+        SgDeclarationStatement *member = members[i];
+        unparseStatement(member, info);
+    }
+    info.dec_nestingLevel();
+
+    curprint_indented("}", info);
 }
 
 
@@ -1681,3 +1865,4 @@ Unparse_Java::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnpars
     }
     curprint(">");
 }
+

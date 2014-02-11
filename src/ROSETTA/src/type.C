@@ -52,6 +52,7 @@ Grammar::setUpTypes ()
 
   // DQ (8/18/2011): Java specific support for generics.
      NEW_TERMINAL_MACRO ( JavaParameterizedType , "JavaParameterizedType", "T_JAVA_PARAM" );
+     NEW_TERMINAL_MACRO ( JavaQualifiedType , "JavaQualifiedType", "T_JAVA_QUALIFIED" );
      NEW_TERMINAL_MACRO ( JavaWildcardType, "JavaWildcardType", "T_JAVA_WILD" );
 
      //
@@ -119,7 +120,7 @@ Grammar::setUpTypes ()
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
   //                        "NamedType","T_NAME");
      NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | JavaParameterizedType | EnumType | TypedefType,
+                            ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType,
                             "NamedType","T_NAME", false);
 
   // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
@@ -419,6 +420,9 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(JavaParameterizedType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE",
             "SgClassDeclaration* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(JavaQualifiedType,
+            "SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE",
+            "SgClassDeclaration* decl = NULL");
 
   // DQ (11/28/2011): Make this more like the NamedType internal support.
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
@@ -521,6 +525,13 @@ Grammar::setUpTypes ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","type_list","= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     JavaQualifiedType.setFunctionPrototype ("HEADER_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code" );
+     JavaQualifiedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     JavaQualifiedType.setDataPrototype     ("SgType *","parent_type","= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaQualifiedType.setDataPrototype     ("SgType *","type","= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaWildcardType.setFunctionPrototype ("HEADER_JAVA_WILDCARD_TYPE", "../Grammar/Type.code" );
      JavaWildcardType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -772,6 +783,8 @@ Grammar::setUpTypes ()
 
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     JavaQualifiedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
      JavaWildcardType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -841,6 +854,7 @@ Grammar::setUpTypes ()
 
      ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
+     JavaQualifiedType.setFunctionSource     ( "SOURCE_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code");
      JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
 
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
