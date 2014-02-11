@@ -72,6 +72,20 @@ enum M68kEffectiveAddressMode {
     m68k_eam_absolute=0x0600,           /**< Absolute addressing (word or long) */
     m68k_eam_pc     = 0x0180,           /**< Program counter indirect addressing modes */
     m68k_eam_unknown= 0x8000,           /**< Unknown addressing mode. */
+
+    // these masks are defined in the reference manual
+    m68k_eam_data   = 0x0ffd,           /**< Data addressing modes. All modes except address register direct */
+    m68k_eam_memory = 0x0ffc,           /**< Memory accessing modes. All modes except register direct (includes immediate) */
+    m68k_eam_control= 0x07e4,           /**< Control access modes. All modes except direct, inc, dec, and immediate. */
+    m68k_eam_alter  = 0x007f,           /**< Alterable modes. From the reference manual, "alterable addressing modes refer to
+                                         *   alterable (writable) operands" [ColdFire Family Programmer’s Reference Manual,
+                                         *   Rev. 3, section 2.2.13]. The table indicates all modes except PC modes, absolute,
+                                         *   and immediate. But there seems to be confusion in the reference manual as to what
+                                         *   "alterable" means because many instructions whose text says "use only the
+                                         *   alterable addressing modes from the table below" include the word and long
+                                         *   absolute addressing modes in their tables. I have added comments to the various
+                                         *   instructions where there is a conflict between the instruction's text and the
+                                         *   instruction's table of allowed addressing modes. [Robb P. Matzke 2013-10-02] */
 };
 
 enum M68kInstructionKind {

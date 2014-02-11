@@ -6,6 +6,11 @@
 #include "sageBuilderAsm.h"
 
 using namespace rose;
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
+#include "AsmUnparser_compat.h"
+#endif
+
 using namespace IntegerOps;
 
 typedef BitPattern<uint16_t> Pattern;
@@ -23,6 +28,7 @@ EAM(unsigned eamodes, size_t lobit=0)
 {
     assert(eamodes!=0);
     Pattern retval;
+    size_t hibit = lobit + 6 - 1; // inclusive
     for (size_t bitnum=0; eamodes!=0; ++bitnum) {
         unsigned bit = IntegerOps::shl1<unsigned>(bitnum);
         if (0 != (eamodes & bit)) {
@@ -31,46 +37,46 @@ EAM(unsigned eamodes, size_t lobit=0)
             switch (eam) {
                 case m68k_eam_drd:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, reg, 0);
+                        retval |= Pattern(lobit, hibit, reg, 0);
                     break;
                 case m68k_eam_ard:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x08|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x08|reg, 0);
                     break;
                 case m68k_eam_ari:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x10|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x10|reg, 0);
                     break;
                 case m68k_eam_inc:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x18|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x18|reg, 0);
                     break;
                 case m68k_eam_dec:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x20|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x20|reg, 0);
                     break;
                 case m68k_eam_dsp:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x28|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x28|reg, 0);
                     break;
                 case m68k_eam_idx:
                     for (size_t reg=0; reg<8; ++reg)
-                        retval |= Pattern(lobit, lobit+6, 0x30|reg, 0);
+                        retval |= Pattern(lobit, hibit, 0x30|reg, 0);
                     break;
                 case m68k_eam_pcdsp:
-                    retval |= Pattern(lobit, lobit+6, 0x3a, 0);
+                    retval |= Pattern(lobit, hibit, 0x3a, 0);
                     break;
                 case m68k_eam_pcidx:
-                    retval |= Pattern(lobit, lobit+6, 0x3b, 0);
+                    retval |= Pattern(lobit, hibit, 0x3b, 0);
                     break;
                 case m68k_eam_absw:
-                    retval |= Pattern(lobit, lobit+6, 0x38, 0);
+                    retval |= Pattern(lobit, hibit, 0x38, 0);
                     break;
                 case m68k_eam_absl:
-                    retval |= Pattern(lobit, lobit+6, 0x39, 0);
+                    retval |= Pattern(lobit, hibit, 0x39, 0);
                     break;
                 case m68k_eam_imm:
-                    retval |= Pattern(lobit, lobit+6, 0x3c, 0);
+                    retval |= Pattern(lobit, hibit, 0x3c, 0);
                     break;
                 default:
                     assert(!"invalid effective address mode");
@@ -96,7 +102,7 @@ Pattern WORD(const Pattern &sub_pattern)
 template<size_t lo>
 Pattern BIT(unsigned val)
 {
-    return Pattern(lo, lo, val);
+    return Pattern(lo, lo, val, 0);
 }
 
 // see base class
@@ -122,9 +128,10 @@ SgAsmM68kRegisterReferenceExpression *
 DisassemblerM68k::makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset)
 {
     assert(regnum <= 7);
-    assert(16==nbits || 32==nbits);
     assert(0==bit_offset || 16==bit_offset);
     assert(bit_offset+nbits <= 32);
+    if (16!=nbits && 32!=nbits) // in particular, 8-bit access is not possible
+        throw Exception("invalid address register size: " + StringUtility::numberToString(nbits));
     RegisterDescriptor desc(m68k_regclass_addr, regnum, bit_offset, nbits);
     return new SgAsmM68kRegisterReferenceExpression(desc);
 }
@@ -326,7 +333,7 @@ DisassemblerM68k::makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext
             bool da_bit = 0!=extract<15, 15>(ext1);
             bool wl_bit = 0!=extract<11, 11>(ext1);
             if (!wl_bit)
-                throw Exception("word index registers not supported by this architecture");
+                throw Exception("16-bit index registers not supported by this architecture");
             SgAsmM68kRegisterReferenceExpression *ireg = da_bit ?
                                                          makeAddressRegister(extract<12, 14>(ext1), 32) :
                                                          makeDataRegister(extract<12, 14>(ext1), 32);
@@ -359,10 +366,16 @@ DisassemblerM68k::makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext
                     return makeImmediate16(instruction_word(ext_offset+1));
                 case 32:
                     return makeImmediate32(instruction_word(ext_offset+2), instruction_word(ext_offset+1));
+                default:
+                    throw Exception("invalid immediate size: " + StringUtility::numberToString(nbits) + " bits");
             }
         }
-        default:
-            throw Exception("invalid effective address mode");
+        default: {
+            unsigned mode = modreg >> 3;
+            throw Exception(std::string("invalid effective address mode:") +
+                            " mode=" + StringUtility::numberToString(mode) +
+                            " reg="  + StringUtility::numberToString(reg));
+        }
     }
 }
 
@@ -416,7 +429,7 @@ uint16_t
 DisassemblerM68k::instruction_word(size_t n)
 {
     if (n>2)
-        throw Exception("instruction word " + StringUtility::numberToString(n) + " is out of range");
+        throw Exception("malformed instruction uses more than two extension words");
     niwords_used = std::max(niwords_used, n+1);
     return iwords[n];
 }
@@ -426,7 +439,11 @@ SgAsmInstruction *
 DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
     start_instruction(map, start_va);
-    niwords = map->read(iwords, start_va, 3, get_protection());
+    size_t nbytes = map->read(iwords, start_va, sizeof iwords, get_protection());
+    niwords = nbytes / sizeof(iwords[0]);
+    if (0==niwords)
+        throw Exception("short read from memory map", start_va);
+                              
     SgAsmM68kInstruction *insn = NULL;
     if (M68k *idis = find_idis(iwords, niwords))
         insn = (*idis)(this, instruction_word(0));
@@ -434,7 +451,7 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
         throw Exception("cannot disassemble m68k instruction: "+StringUtility::addrToString(instruction_word(0), 16), start_va);
 
     assert(niwords_used>0);
-    SgUnsignedCharList raw_bytes(iwords+0, iwords+niwords_used);
+    SgUnsignedCharList raw_bytes((uint8_t*)iwords, (uint8_t*)(iwords+niwords_used));
     insn->set_raw_bytes(raw_bytes);
 
     if (successors) {
@@ -444,6 +461,9 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
     }
 
     update_progress(insn);
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
+    std::cerr <<"ROBB: disassembled: " <<unparseInstructionWithAddress(insn) <<"\n";
+#endif
     return insn;
 }
 
@@ -458,9 +478,9 @@ DisassemblerM68k::insert_idis(M68k *idis)
             // Inserting this instruction-specific disassembler would cause an ambiguity in the table
             std::cerr <<"DisassemblerM68k::insert_idis: insertion key ";
             idis->pattern.print(std::cerr, alternatives.first);
-            std::cerr <<" conflicts with existing key ";
+            std::cerr <<" for '" <<idis->name <<"' conflicts with existing key ";
             (*ti)->pattern.print(std::cerr, alternatives.second);
-            std::cerr <<"\n";
+            std::cerr <<" for '" <<(*ti)->name <<"'\n";
             throw Exception("insert_idis() would cause an ambiguity in the M68k instruction disassembly table");
         }
     }
@@ -489,7 +509,7 @@ typedef DisassemblerM68k::M68k M68k;
 
 // ADD.L <ea>y, Dx
 static struct M68k_add_1: M68k {
-    M68k_add_1(): M68k(OP(13) & BITS<6, 8>(2) & EAM(m68k_eam_all)) {}
+    M68k_add_1(): M68k("add_l", OP(13) & BITS<6, 8>(2) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_add, "add.l",
                                   d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0),
@@ -499,7 +519,7 @@ static struct M68k_add_1: M68k {
 
 // ADD.L Dy, <ea>x
 static struct M68k_add_2: M68k {
-    M68k_add_2(): M68k(OP(13) & BITS<6, 8>(6) &
+    M68k_add_2(): M68k("add_2", OP(13) & BITS<6, 8>(6) &
                        EAM(m68k_eam_all & ~(m68k_eam_direct|m68k_eam_imm|m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_add, "add.l",
@@ -510,7 +530,7 @@ static struct M68k_add_2: M68k {
 
 // ADDA.L <ea>y, Ax
 static struct M68k_adda: M68k {
-    M68k_adda(): M68k(OP(13) & BITS<6, 8>(7) & EAM(m68k_eam_all)) {}
+    M68k_adda(): M68k("adda", OP(13) & BITS<6, 8>(7) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_adda, "adda.l",
                                   d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0),
@@ -520,7 +540,7 @@ static struct M68k_adda: M68k {
 
 // ADDI #<data>.L, Dx
 static struct M68k_addi: M68k {
-    M68k_addi(): M68k(OP(0) & BITS<3, 11>(0xd0)) {}
+    M68k_addi(): M68k("addi", OP(0) & BITS<3, 11>(0xd0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_addi, "addi.l",
                                   d->makeImmediate32(d->instruction_word(2), d->instruction_word(1)),
@@ -529,9 +549,12 @@ static struct M68k_addi: M68k {
 } addi;
 
 // ADDQ.L #<data>, <ea>x
+//
+// Note: Reference manual table of addressing modes shows that the word and long absolute addressing modes are permitted,
+// but the descriptive text says "use only those alterable addressing modes listed in the following table".
+// [Robb P. Matzke 2013-10-02]
 static struct M68k_addq: M68k {
-    M68k_addq(): M68k(OP(5) & BITS<6, 8>(2) &
-                      EAM(m68k_eam_all & ~(m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_addq(): M68k("addq", OP(5) & BITS<6, 8>(2) & EAM(m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         unsigned imm = extract<9, 11>(w0);
         if (0==imm)
@@ -544,7 +567,7 @@ static struct M68k_addq: M68k {
 
 // ADDX.L Dy, Dx
 static struct M68k_addx: M68k {
-    M68k_addx(): M68k(OP(13) & BITS<3, 8>(0x30)) {}
+    M68k_addx(): M68k("addx", OP(13) & BITS<3, 8>(0x30)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_addx, "addx.l",
                                   d->makeDataRegister(extract<0, 2>(w0), 32),
@@ -554,7 +577,7 @@ static struct M68k_addx: M68k {
 
 // AND.L <ea>y, Dx
 static struct M68k_and_1: M68k {
-    M68k_and_1(): M68k(OP(12) & BITS<6, 8>(2) &
+    M68k_and_1(): M68k("and_1", OP(12) & BITS<6, 8>(2) &
                        EAM(m68k_eam_all & ~m68k_eam_ard)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_and, "and.l",
@@ -565,7 +588,7 @@ static struct M68k_and_1: M68k {
 
 // AND.L Dy, <ea>x
 static struct M68k_and_2: M68k {
-    M68k_and_2(): M68k(OP(12) & BITS<6, 8>(6) &
+    M68k_and_2(): M68k("and_2", OP(12) & BITS<6, 8>(6) &
                        EAM(m68k_eam_all & ~(m68k_eam_direct | m68k_eam_imm | m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_and, "and.l",
@@ -576,7 +599,7 @@ static struct M68k_and_2: M68k {
 
 // ANDI.L #<data>, Dx
 static struct M68k_andi: M68k {
-    M68k_andi(): M68k(OP(0) & BITS<3, 11>(0x50)) {}
+    M68k_andi(): M68k("andi", OP(0) & BITS<3, 11>(0x50)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_andi, "andi.l",
                                   d->makeImmediate32(d->instruction_word(2), d->instruction_word(1)),
@@ -589,7 +612,7 @@ static struct M68k_andi: M68k {
 // ASL.L #<nbits>, Dx
 // ASR.L #<nbits>, Dx
 static struct M68k_ashift: M68k {
-    M68k_ashift(): M68k(OP(14) & BITS<6, 7>(2) & BITS<3, 4>(0)) {}
+    M68k_ashift(): M68k("ashift", OP(14) & BITS<6, 7>(2) & BITS<3, 4>(0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         unsigned direction = w0 & 0x0100;
         M68kInstructionKind kind = direction ? m68k_asl : m68k_asr;
@@ -610,7 +633,7 @@ static struct M68k_ashift: M68k {
 // BRA.sz <label>
 // BSR.sz <label>
 static struct M68k_branch: M68k {
-    M68k_branch(): M68k(OP(6)) {}
+    M68k_branch(): M68k("branch", OP(6)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         unsigned cc = extract<8, 11>(w0);
         M68kInstructionKind kind = m68k_unknown_instruction;
@@ -658,7 +681,7 @@ static struct M68k_branch: M68k {
 // BCHG.B #<bitnum>, <ea>x
 // BCHG.L #<bitnum>, <ea>x
 static struct M68k_bchg_1: M68k {
-    M68k_bchg_1(): M68k(OP(0) & BITS<6, 11>(0x21) &
+    M68k_bchg_1(): M68k("bchg_1", OP(0) & BITS<6, 11>(0x21) &
                         EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate8(d->instruction_word(1) & 0xff);
@@ -676,9 +699,11 @@ static struct M68k_bchg_1: M68k {
 
 // BCHG.B Dy, <ea>x
 // BCHG.L Dy, <ea>x
+// 
+// Note: The reference manual addressing mode table includes word and long absolute addresses, but the text above the table
+// says "use only those data alterable addressing modes listed in the following table." [Robb P. Matzke 2013-10-02]
 static struct M68k_bchg_2: M68k {
-    M68k_bchg_2(): M68k(OP(0) & BITS<6, 8>(5) &
-                        EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_bchg_2(): M68k("bchg_2", OP(0) & BITS<6, 8>(5) & EAM(m68k_eam_data & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kEffectiveAddressMode eam = d->effectiveAddressMode(extract<0, 5>(w0), 32);
         size_t nbits = (eam & m68k_eam_direct) ? 32 : 8;
@@ -691,7 +716,7 @@ static struct M68k_bchg_2: M68k {
 // BCLR.B #<bitnum>, <ea>x
 // BCLR.L #<bitnum>, <ea>x
 static struct M68k_bclr_1: M68k {
-    M68k_bclr_1(): M68k(OP(0) & BITS<6, 11>(0x22) &
+    M68k_bclr_1(): M68k("bclr_1", OP(0) & BITS<6, 11>(0x22) &
                         EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kEffectiveAddressMode eam = d->effectiveAddressMode(extract<0, 5>(w0), 32);
@@ -704,9 +729,11 @@ static struct M68k_bclr_1: M68k {
 
 // BCLR.B Dy, <ea>x
 // BCLR.L Dy, <ea>x
+//
+// Note: The reference manual addressing mode table includes word and long absolute addresses, but the text above the table
+// says "use only those data alterable addressing modes listed in the following table." [Robb P. Matzke 2013-10-02]
 static struct M68k_bclr_2: M68k {
-    M68k_bclr_2(): M68k(OP(0) & BITS<6, 8>(6) &
-                        EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_bclr_2(): M68k("bclr_2", OP(0) & BITS<6, 8>(6) & EAM(m68k_eam_data & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kEffectiveAddressMode eam = d->effectiveAddressMode(extract<0, 5>(w0), 32);
         size_t nbits = (eam & m68k_eam_direct) ? 32 : 8;
@@ -718,7 +745,7 @@ static struct M68k_bclr_2: M68k {
 
 // BITREV.L Dx
 static struct M68k_bitrev: M68k {
-    M68k_bitrev(): M68k(OP(0) & BITS<3, 11>(0x18)) {}
+    M68k_bitrev(): M68k("bitrev", OP(0) & BITS<3, 11>(0x18)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_bitrev, "bitrev.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -727,7 +754,7 @@ static struct M68k_bitrev: M68k {
 // BSET.B #<bitnum>, <ea>x
 // BSET.L #<bitnum>, <ea>x
 static struct M68k_bset_1: M68k {
-    M68k_bset_1(): M68k(OP(0) & BITS<6, 11>(0x23) &
+    M68k_bset_1(): M68k("bset_1", OP(0) & BITS<6, 11>(0x23) &
                         EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate8(d->instruction_word(1) & 0xff);
@@ -745,9 +772,11 @@ static struct M68k_bset_1: M68k {
 
 // BSET.B Dy, <ea>x
 // BSET.L Dy, <ea>x
+//
+// Note: The reference manual addressing mode table includes word and long absolute addresses, but the text above the table
+// says "use only those data alterable addressing modes listed in the following table." [Robb P. Matzke 2013-10-02]
 static struct M68k_bset_2: M68k {
-    M68k_bset_2(): M68k(OP(0) & BITS<6, 8>(7) &
-                        EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_bset_2(): M68k("bset_2", OP(0) & BITS<6, 8>(7) & EAM(m68k_eam_data & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), 32);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
@@ -765,7 +794,7 @@ static struct M68k_bset_2: M68k {
 // BTST.B #<bitnum>, <ea>x
 // BTST.L #<bitnum>, <ea>x
 static struct M68k_btst_1: M68k {
-    M68k_btst_1(): M68k(OP(0) & BITS<6, 11>(0x20) &
+    M68k_btst_1(): M68k("btst_1", OP(0) & BITS<6, 11>(0x20) &
                         EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate8(d->instruction_word(1) & 0xff);
@@ -783,9 +812,11 @@ static struct M68k_btst_1: M68k {
 
 // BTST.B Dy, <ea>x
 // BTST.L Dy, <ea>x
+//
+// Note: The reference manual addressing mode table includes word and long absolute addresses, but the text above the table
+// says "use only those data alterable addressing modes listed in the following table." [Robb P. Matzke 2013-10-02]
 static struct M68k_btst_2: M68k {
-    M68k_btst_2(): M68k(OP(0) & BITS<6, 8>(4) &
-                        EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_btst_2(): M68k("btst_2", OP(0) & BITS<6, 8>(4) & EAM(m68k_eam_data & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), 32);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
@@ -802,7 +833,7 @@ static struct M68k_btst_2: M68k {
 
 // BYTEREV.L Dx
 static struct M68k_byterev: M68k {
-    M68k_byterev(): M68k(OP(0) & BITS<3, 11>(0x58)) {}
+    M68k_byterev(): M68k("byterev", OP(0) & BITS<3, 11>(0x58)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_byterev, "byterev.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -811,9 +842,11 @@ static struct M68k_byterev: M68k {
 // CLR.B <ea>x
 // CLR.W <ea>x
 // CLR.L <ea>x
+//
+// Note: The reference manual addressing mode table includes word and long absolute addresses, but the text above the table
+// says "use only those data alterable addressing modes listed in the following table." [Robb P. Matzke 2013-10-02]
 static struct M68k_clr: M68k {
-    M68k_clr(): M68k(OP(4) & BITS<8, 11>(2) &
-                     EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_clr(): M68k("clr", OP(4) & BITS<8, 11>(2) & EAM(m68k_eam_data & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         std::string mnemonic = "clr";
         size_t nbits = 0;
@@ -844,7 +877,7 @@ static struct M68k_clr: M68k {
 // CMPA.W <ea>y, Ax
 // CMPA.L <ea>y, Ax
 static struct M68k_cmp: M68k {
-    M68k_cmp(): M68k(OP(11) & EAM(m68k_eam_all)) {}
+    M68k_cmp(): M68k("cmp", OP(11) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kInstructionKind kind = m68k_unknown_instruction;
         std::string mnemonic;
@@ -891,7 +924,7 @@ static struct M68k_cmp: M68k {
 // CMPI.W #<data>, Dx
 // CMPI.L #<data>, Dx
 static struct M68k_cmpi: M68k {
-    M68k_cmpi(): M68k(OP(0) & BITS<8, 11>(6) & BITS<3, 5>(0)) {}
+    M68k_cmpi(): M68k("cmpi", OP(0) & BITS<8, 11>(6) & BITS<3, 5>(0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = NULL;
         std::string mnemonic = "cmpi";
@@ -922,7 +955,7 @@ static struct M68k_cmpi: M68k {
 
 // DIVS.W <ea>y, Dx
 static struct M68k_divs_w: M68k {
-    M68k_divs_w(): M68k(OP(8) & BITS<6, 8>(7) &
+    M68k_divs_w(): M68k("divs_w", OP(8) & BITS<6, 8>(7) &
                         EAM(m68k_eam_all & ~m68k_eam_ard)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_divs, "divs.w",
@@ -933,7 +966,7 @@ static struct M68k_divs_w: M68k {
 
 // DIVU.W
 static struct M68k_divu_w: M68k {
-    M68k_divu_w(): M68k(OP(8) & BITS<6, 8>(3) &
+    M68k_divu_w(): M68k("divu_w", OP(8) & BITS<6, 8>(3) &
                         EAM(m68k_eam_all & ~m68k_eam_ard)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_divu, "divu.w",
@@ -944,22 +977,33 @@ static struct M68k_divu_w: M68k {
 
 // DIVS.L <ea>y, Dx
 // DIVU.L <ea>y, Dx
-static struct M68k_divide_l: M68k {
-    M68k_divide_l(): M68k(OP(4) & BITS<6, 11>(0x31) &
-                          EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
+// REMS.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
+// REMU.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
+static struct M68k_divrem_l: M68k {
+    M68k_divrem_l(): M68k("divrem_l", OP(4) & BITS<6, 11>(0x31) &
+                          EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp) &
+                          WORD<1>(BIT<15>(0) & BITS<3, 10>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        if (extract<12, 14>(d->instruction_word(1)) != extract<0, 2>(d->instruction_word(1)))
-            throw Disassembler::Exception("inconsistent Dx register in DIVS extension word");
-        M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_divs : m68k_divu;
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l",
-                                  d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1),
-                                  d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32));
+        if (extract<12, 14>(d->instruction_word(1)) == extract<0, 2>(d->instruction_word(1))) {
+            // division
+            M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_divs : m68k_divu;
+            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l",
+                                      d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1),
+                                      d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32));
+        } else {
+            // remainder
+            M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_rems : m68k_remu;
+            SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
+            SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32);
+            SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), 32);
+            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dw, dx);
+        }
     }
-} divide_l;
+} divrem_l;
 
 // EOR.L Dy, <ea>x
 static struct M68k_eor: M68k {
-    M68k_eor(): M68k(OP(11) & BITS<6, 8>(6) &
+    M68k_eor(): M68k("eor", OP(11) & BITS<6, 8>(6) &
                      EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -970,7 +1014,7 @@ static struct M68k_eor: M68k {
 
 // EORI.L #<data>, Dx
 static struct M68k_eori: M68k {
-    M68k_eori(): M68k(OP(0) & BITS<3, 11>(0x150)) {}
+    M68k_eori(): M68k("eori", OP(0) & BITS<3, 11>(0x150)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate32(d->instruction_word(2), d->instruction_word(1));
         SgAsmExpression *dst = d->makeDataRegister(extract<0, 2>(w0), 32);
@@ -980,7 +1024,7 @@ static struct M68k_eori: M68k {
 
 // EXT.W Dx
 static struct M68k_ext_w: M68k {
-    M68k_ext_w(): M68k(OP(4) & BITS<3, 11>(0x110)) {}
+    M68k_ext_w(): M68k("ext_w", OP(4) & BITS<3, 11>(0x110)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_ext, "ext.w", d->makeDataRegister(extract<0, 2>(w0), 16));
     }
@@ -988,7 +1032,7 @@ static struct M68k_ext_w: M68k {
 
 // EXT.L Dx
 static struct M68k_ext_l: M68k {
-    M68k_ext_l(): M68k(OP(4) & BITS<3, 11>(0x118)) {}
+    M68k_ext_l(): M68k("ext_l", OP(4) & BITS<3, 11>(0x118)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_ext, "ext.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -996,7 +1040,7 @@ static struct M68k_ext_l: M68k {
 
 // EXTB.L Dx
 static struct M68k_extb_l: M68k {
-    M68k_extb_l(): M68k(OP(4) & BITS<3, 11>(0x138)) {}
+    M68k_extb_l(): M68k("extb_l", OP(4) & BITS<3, 11>(0x138)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_extb, "extb.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -1004,7 +1048,7 @@ static struct M68k_extb_l: M68k {
 
 // FF1.L Dx
 static struct M68k_ff1: M68k {
-    M68k_ff1(): M68k(BITS<3, 15>(0x98)) {}
+    M68k_ff1(): M68k("ff1", BITS<3, 15>(0x98)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_ff1, "ff1.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -1012,7 +1056,7 @@ static struct M68k_ff1: M68k {
 
 // ILLEGAL
 static struct M68k_illegal: M68k {
-    M68k_illegal(): M68k(BITS<0, 15>(0x4afc)) {}
+    M68k_illegal(): M68k("illegal", BITS<0, 15>(0x4afc)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_illegal, "illegal");
     }
@@ -1020,8 +1064,7 @@ static struct M68k_illegal: M68k {
 
 // JMP <ea>x
 static struct M68k_jmp: M68k {
-    M68k_jmp(): M68k(BITS<6, 15>(0x13b) &
-                     EAM(m68k_eam_ari | m68k_eam_dsp | m68k_eam_idx | m68k_eam_absw | m68k_eam_absl | m68k_eam_pc)) {}
+    M68k_jmp(): M68k("jmp", BITS<6, 15>(0x13b) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         return d->makeInstruction(m68k_jmp, "jmp", src);
@@ -1030,8 +1073,7 @@ static struct M68k_jmp: M68k {
 
 // JSR <ea>x
 static struct M68k_jsr: M68k {
-    M68k_jsr(): M68k(BITS<6, 15>(0x13a) &
-                     EAM(m68k_eam_ari | m68k_eam_dsp | m68k_eam_idx | m68k_eam_absw | m68k_eam_absl | m68k_eam_pc)) {}
+    M68k_jsr(): M68k("jsr", BITS<6, 15>(0x13a) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         return d->makeInstruction(m68k_jsr, "jsr", src);
@@ -1040,8 +1082,7 @@ static struct M68k_jsr: M68k {
 
 // LEA.L <ea>y, Ax
 static struct M68k_lea: M68k {
-    M68k_lea(): M68k(OP(4) & BITS<6, 8>(7) &
-                     EAM(m68k_eam_ari | m68k_eam_dsp | m68k_eam_idx | m68k_eam_absw | m68k_eam_absl | m68k_eam_pc)) {}
+    M68k_lea(): M68k("lea", OP(4) & BITS<6, 8>(7) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1051,7 +1092,7 @@ static struct M68k_lea: M68k {
 
 // LINK.W Ay, #<displacement>
 static struct M68k_link: M68k {
-    M68k_link(): M68k(BITS<3, 15>(0x9ca)) {}
+    M68k_link(): M68k("link", BITS<3, 15>(0x9ca)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeAddressRegister(extract<0, 2>(w0), 32);
         SgAsmExpression *dsp = d->makeImmediate16(d->instruction_word(1));
@@ -1064,7 +1105,7 @@ static struct M68k_link: M68k {
 // LSL.L #<nbits>, Dx
 // LSR.L #<nbits>, Dx
 static struct M68k_lshift: M68k {
-    M68k_lshift(): M68k(OP(15) & BITS<6, 7>(2) & BITS<3, 4>(1)) {}
+    M68k_lshift(): M68k("lshift", OP(15) & BITS<6, 7>(2) & BITS<3, 4>(1)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         unsigned direction = w0 & 0x0100;
         M68kInstructionKind kind = direction ? m68k_lsl : m68k_lsr;
@@ -1084,7 +1125,7 @@ static struct M68k_lshift: M68k {
 // MAC.W Ry.{U,L}, Rx.{U,L} SF
 // bits of w1 are unspecified: 0-5, 12-15
 static struct M68k_mac_w: M68k {
-    M68k_mac_w(): M68k(OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
+    M68k_mac_w(): M68k("mac_w", OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
                        WORD<1>(BIT<11>(0) & BIT<8>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         bool rx_is_areg = extract<6, 6>(w0) == 1; // is Rx an address register vs. data register?
@@ -1102,7 +1143,7 @@ static struct M68k_mac_w: M68k {
 
 // MAC.W Ry.{U,L}, Rx.{U,L} SF, <ea>y&, Rw
 static struct M68k_mac_w2: M68k {
-    M68k_mac_w2(): M68k(OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
+    M68k_mac_w2(): M68k("mac_w2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
                         WORD<1>(BIT<11>(0) & BIT<8>(0) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t rx_offset = extract<7, 7>(d->instruction_word(1)) ? 16 : 0;
@@ -1121,7 +1162,7 @@ static struct M68k_mac_w2: M68k {
 // bits of w1 are unspecified: 0-7, 12-15
 // bits w1.6 and w1.7 are only used for the upper/lower register-part indication and apply only to MAC.W
 static struct M68k_mac_l: M68k {
-    M68k_mac_l(): M68k(OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
+    M68k_mac_l(): M68k("mac_l", OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
                        WORD<1>(BIT<11>(1) & BIT<8>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         bool rx_is_areg = extract<6, 6>(w0) == 1; // is Rx an address register vs. data register?
@@ -1142,7 +1183,7 @@ static struct M68k_mac_l: M68k {
 // MAC.L Ry, Rx, SF, <ea>y&, Rw
 // The U/Lx (bit w1.7) and U/Ly (bit w1.6) are not used for this 32-bit instruction
 static struct M68k_mac_l2: M68k {
-    M68k_mac_l2(): M68k(OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
+    M68k_mac_l2(): M68k("mac_l2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
                         WORD<1>(BIT<11>(1) & BIT<8>(0) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeDataAddressRegister(extract<12, 15>(d->instruction_word(1)), 32, 0);
@@ -1156,8 +1197,14 @@ static struct M68k_mac_l2: M68k {
 } mac_l2;
 
 // MOV3Q.L #<data>, <ea>x
+//
+// Note: The reference manual addressing mode table lists address register direct as a valid addressing mode but the
+// text says "use only data addressing modes listed in the following table."  According to 2.2.13, the address register direct
+// mode is not a data addressing mode.  I am assuming that the table is correct rather than the text is correct, since the
+// table omits the non-alterable modes but the text includes them (and it doesn't make sense for the destination to be
+// non-alterable). [Robb P. Matzke 2013-10-02]
 static struct M68k_mov3q: M68k {
-    M68k_mov3q(): M68k(OP(10) & BITS<6, 8>(5) &
+    M68k_mov3q(): M68k("mov3q", OP(10) & BITS<6, 8>(5) &
                        EAM(m68k_eam_all & ~(m68k_eam_imm | m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         int32_t val = signExtend<3, 32>(extract<9, 11>(w0));
@@ -1169,8 +1216,15 @@ static struct M68k_mov3q: M68k {
 } mov3q;
 
 // MOVE.B <ea>y, <ea>x
+//
+// Note: The address mode table indicates that word and long absolute addressing modes are permitted for the destination
+// operand but the text says "the table below lists possible data alterable addressing modes", and the definition of "data
+// alterable" in section 2.2.13 excludes these two modes.  I am using the table in preference to the text because the table
+// listing the combinations of source and destination addressing modes also includes the two absolute modes (so the tables win
+// the vote by super majority). [Robb P. Matzke 2013-10-02]
 static struct M68k_move: M68k {
-    M68k_move(): M68k((OP(1)|OP(2)|OP(3)) & // 8-, 32-, or 16-bit operation
+    M68k_move(): M68k("move",
+                      (OP(1)|OP(2)|OP(3)) & // 8-, 32-, or 16-bit operation
                       ((EAM(m68k_eam_drd|m68k_eam_ard|m68k_eam_ari|m68k_eam_inc|m68k_eam_dec) &
                         EAM(m68k_eam_all & ~(m68k_eam_ard | m68k_eam_imm | m68k_eam_pc), 6)) |
                        (EAM(m68k_eam_dsp|m68k_eam_pcdsp) &
@@ -1196,7 +1250,8 @@ static struct M68k_move: M68k {
 // MOVE.B Dy, CCR
 // MOVE.B #<data>, CCR
 static struct M68k_move_to_ccr: M68k {
-    M68k_move_to_ccr(): M68k(OP(4) & BITS<6, 11>(0x13) &
+    M68k_move_to_ccr(): M68k("move_to_ccr",
+                             OP(4) & BITS<6, 11>(0x13) &
                              EAM(m68k_eam_drd | m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 8, 0);
@@ -1207,7 +1262,7 @@ static struct M68k_move_to_ccr: M68k {
 
 // MOVE.W CCR, Dx
 static struct M68k_move_from_ccr: M68k {
-    M68k_move_from_ccr(): M68k(OP(4) & BITS<3, 11>(0x58)) {}
+    M68k_move_from_ccr(): M68k("move_from_ccr", OP(4) & BITS<3, 11>(0x58)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeConditionCodeRegister();
         SgAsmExpression *dst = d->makeDataRegister(extract<0, 2>(w0), 16);
@@ -1217,7 +1272,7 @@ static struct M68k_move_from_ccr: M68k {
 
 // MOVE.L ACC, Rx
 static struct M68k_move_from_acc: M68k {
-    M68k_move_from_acc(): M68k(OP(10) & BITS<4, 11>(0x18)) {}
+    M68k_move_from_acc(): M68k("move_from_acc", OP(10) & BITS<4, 11>(0x18)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeMacRegister(m68k_mac_acc),
@@ -1227,7 +1282,7 @@ static struct M68k_move_from_acc: M68k {
 
 // MOVE.L MACSR, Rx
 static struct M68k_move_from_macsr: M68k {
-    M68k_move_from_macsr(): M68k(OP(10) & BITS<4, 11>(0x98)) {}
+    M68k_move_from_macsr(): M68k("move_from_macsr", OP(10) & BITS<4, 11>(0x98)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeRegister(RegisterDescriptor(m68k_regclass_mac, m68k_mac_macsr, 0, 32)),
@@ -1237,7 +1292,7 @@ static struct M68k_move_from_macsr: M68k {
 
 // MOVE.L MASK, Rx
 static struct M68k_move_from_mask: M68k {
-    M68k_move_from_mask(): M68k(OP(10) & BITS<4, 11>(0xd8)) {}
+    M68k_move_from_mask(): M68k("move_from_mask", OP(10) & BITS<4, 11>(0xd8)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeRegister(RegisterDescriptor(m68k_regclass_mac, m68k_mac_mask, 0, 32)),
@@ -1247,7 +1302,7 @@ static struct M68k_move_from_mask: M68k {
 
 // MOVE.L MACSR, CCR
 static struct M68k_move_macsr2ccr: M68k {
-    M68k_move_macsr2ccr(): M68k(BITS<0, 15>(0xa9c0)) {}
+    M68k_move_macsr2ccr(): M68k("move_macsr2ccr", BITS<0, 15>(0xa9c0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeRegister(RegisterDescriptor(m68k_regclass_mac, m68k_mac_macsr, 0, 32)),
@@ -1258,7 +1313,7 @@ static struct M68k_move_macsr2ccr: M68k {
 // MOVE.L Ry, ACC
 // MOVE.L #<data>, ACC
 static struct M68k_move_to_acc: M68k {
-    M68k_move_to_acc(): M68k(OP(10) & BITS<6, 11>(0x04) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
+    M68k_move_to_acc(): M68k("move_to_acc", OP(10) & BITS<6, 11>(0x04) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0),
@@ -1269,7 +1324,7 @@ static struct M68k_move_to_acc: M68k {
 // MOVE.L Ry, MACSR
 // MOVE.L #<data>, MACSR
 static struct M68k_move_to_macsr: M68k {
-    M68k_move_to_macsr(): M68k(OP(10) & BITS<6, 11>(0x24) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
+    M68k_move_to_macsr(): M68k("move_to_macsr", OP(10) & BITS<6, 11>(0x24) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0),
@@ -1280,7 +1335,7 @@ static struct M68k_move_to_macsr: M68k {
 // MOVE.L Ry, MASK
 // MOVE.L #<data>, MASK
 static struct M68k_move_to_mask: M68k {
-    M68k_move_to_mask(): M68k(OP(10) & BITS<6, 11>(0x34) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
+    M68k_move_to_mask(): M68k("move_to_mask", OP(10) & BITS<6, 11>(0x34) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_move, "move.l",
                                   d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0),
@@ -1291,7 +1346,7 @@ static struct M68k_move_to_mask: M68k {
 // MOVEA.W <ea>y, Ax
 // MOVEA.L <ea>y, Ax
 static struct M68k_movea: M68k {
-    M68k_movea(): M68k((OP(2)|OP(3)) & // 32- or 16-bit operation
+    M68k_movea(): M68k("movea", (OP(2)|OP(3)) & // 32- or 16-bit operation
                         EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = 2==extract<12, 13>(w0) ? 32 : 16;
@@ -1304,9 +1359,14 @@ static struct M68k_movea: M68k {
 // MOVEM.L #list, <ea>x
 // MOVEM.L <ea>y, #list
 static struct M68k_movem: M68k {
-    M68k_movem(): M68k(OP(4) & BIT<11>(1) & BITS<6, 9>(3) &
+    M68k_movem(): M68k("movem", OP(4) & BIT<11>(1) & BITS<6, 9>(3) &
                        EAM(m68k_eam_ari | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-01]*/
+        std::cerr <<"ROBB: M68k_movem() pattern = ";
+        pattern.print(std::cerr);
+        std::cerr <<"; w0 = " <<StringUtility::addrToString(w0, 16) <<"\n";
+#endif
         SgAsmExpression *e1 = d->makeImmediate16(d->instruction_word(1));
         SgAsmExpression *e2 = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
         if (extract<10, 10>(w0))
@@ -1317,7 +1377,7 @@ static struct M68k_movem: M68k {
 
 // MOVEQ.L #<data>, Dx
 static struct M68k_moveq: M68k {
-    M68k_moveq(): M68k(OP(7) & BIT<8>(0)) {}
+    M68k_moveq(): M68k("moveq", OP(7) & BIT<8>(0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate32(signExtend<8, 32>(extract<0, 7>(w0)));
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1328,7 +1388,7 @@ static struct M68k_moveq: M68k {
 // MSAC.W Ry.{U,L}, Rx.{U,L}SF
 // word 1 bits 0-5 and 12-15 are unused
 static struct M68k_msac_w: M68k {
-    M68k_msac_w(): M68k(OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
+    M68k_msac_w(): M68k("msac_w", OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
                         WORD<1>(BIT<11>(0) & BIT<8>(1))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t ry_offset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
@@ -1344,7 +1404,7 @@ static struct M68k_msac_w: M68k {
 
 // MSAC.W Ry.{U,L}, Rx.{U,L} SF, <ea>y&, Rw
 static struct M68k_msac_w2: M68k {
-    M68k_msac_w2(): M68k(OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
+    M68k_msac_w2(): M68k("msac_w2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
                          WORD<1>(BIT<11>(0) & BIT<8>(1) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t ry_offset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
@@ -1365,7 +1425,7 @@ static struct M68k_msac_w2: M68k {
 // word 1 bits 0-5 and 12-15 are unused
 // word 1 bits 6-7 are unused because they only apply to 16-bit operands
 static struct M68k_msac_l: M68k {
-    M68k_msac_l(): M68k(OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
+    M68k_msac_l(): M68k("msac_l", OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
                         WORD<1>(BIT<11>(1) & BIT<8>(1))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(w0), 32);
@@ -1380,7 +1440,7 @@ static struct M68k_msac_l: M68k {
 // MSAC.W Ry.{U,L}, Rx.{U,L} SF, <ea>y&, Rw
 // word 1 bits 6 and 7 are unused because they only apply to 16-bit operands
 static struct M68k_msac_l2: M68k {
-    M68k_msac_l2(): M68k(OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
+    M68k_msac_l2(): M68k("msac_l2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
                          WORD<1>(BIT<11>(1) & BIT<8>(1) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(d->instruction_word(1)), 32);
@@ -1397,8 +1457,7 @@ static struct M68k_msac_l2: M68k {
 
 // MULS.W <ea>y, Dx             16 x 16 -> 32
 static struct M68k_muls_w: M68k {
-    M68k_muls_w(): M68k(OP(12) & BITS<6, 8>(7) &
-                        EAM(m68k_eam_all & ~m68k_eam_ard)) {}
+    M68k_muls_w(): M68k("muls_w", OP(12) & BITS<6, 8>(7) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 16, 0);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1408,8 +1467,7 @@ static struct M68k_muls_w: M68k {
 
 // MULU.W <ea>y, Dx             16 x 16 -> 32
 static struct M68k_mulu_w: M68k {
-    M68k_mulu_w(): M68k(OP(12) & BITS<6, 8>(3) &
-                        EAM(m68k_eam_all & ~m68k_eam_ard)) {}
+    M68k_mulu_w(): M68k("mulu_w", OP(12) & BITS<6, 8>(3) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 16, 0);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1420,7 +1478,7 @@ static struct M68k_mulu_w: M68k {
 // MULS.L <ea>y, Dx             32 x 32 -> 32
 // MULU.L <ea>y, Dx             32 x 32 -> 32
 static struct M68k_multiply_l: M68k {
-    M68k_multiply_l(): M68k(OP(4) & BITS<6, 11>(0x30) &
+    M68k_multiply_l(): M68k("multiply_l", OP(4) & BITS<6, 11>(0x30) &
                             EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc | m68k_eam_dec | m68k_eam_dsp)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_muls : m68k_mulu;
@@ -1432,8 +1490,12 @@ static struct M68k_multiply_l: M68k {
 
 // MVS.B <ea>y, Dx
 // MVS.W <ea>y, Dx
+//
+// Note: Reference manual table shows all effective addressing modes are possible, but the text near the table says "use only
+// data addressing modes from the following table", which according to the definition in section 2.2.13 excludes the address
+// register direct mode. [Robb P. Matzke 2013-10-02]
 static struct M68k_mvs: M68k {
-    M68k_mvs(): M68k(OP(7) & BITS<7, 8>(2) & EAM(m68k_eam_all)) {}
+    M68k_mvs(): M68k("mvs", OP(7) & BITS<7, 8>(2) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = extract<6, 6>(w0) ? 16 : 8;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
@@ -1444,8 +1506,12 @@ static struct M68k_mvs: M68k {
 
 // MVZ.B <ea>y, Dx
 // MVZ.W <ea>y, Dx
+//
+// Note: Reference manual table shows all effective addressing modes are possible, but the text above the table says "use
+// the following data addressing modes", which according to the definition in section 2.2.13 excludes the address register
+// direct mode. [Robb P. Matzke 2013-10-02]
 static struct M68k_mvz: M68k {
-    M68k_mvz(): M68k(OP(7) & BITS<7, 8>(3) & EAM(m68k_eam_all)) {}
+    M68k_mvz(): M68k("mvz", OP(7) & BITS<7, 8>(3) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = extract<6, 6>(w0) ? 16 : 8;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
@@ -1456,7 +1522,7 @@ static struct M68k_mvz: M68k {
 
 // NEG.L Dx
 static struct M68k_neg: M68k {
-    M68k_neg(): M68k(OP(4) & BITS<3, 11>(0x90)) {}
+    M68k_neg(): M68k("neg", OP(4) & BITS<3, 11>(0x90)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_neg, "neg.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -1464,7 +1530,7 @@ static struct M68k_neg: M68k {
 
 // NEGX.L Dx
 static struct M68k_negx: M68k {
-    M68k_negx(): M68k(OP(4) & BITS<3, 11>(0x10)) {}
+    M68k_negx(): M68k("negx", OP(4) & BITS<3, 11>(0x10)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_negx, "negx.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -1472,7 +1538,7 @@ static struct M68k_negx: M68k {
 
 // NOP
 static struct M68k_nop: M68k {
-    M68k_nop(): M68k(BITS<0, 15>(0x4e71)) {}
+    M68k_nop(): M68k("nop", BITS<0, 15>(0x4e71)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_nop, "nop");
     }
@@ -1480,7 +1546,7 @@ static struct M68k_nop: M68k {
 
 // NOT.L Dx
 static struct M68k_not: M68k {
-    M68k_not(): M68k(OP(4) & BITS<3, 11>(0xd0)) {}
+    M68k_not(): M68k("not", OP(4) & BITS<3, 11>(0xd0)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_not, "not.l", d->makeDataRegister(extract<0, 2>(w0), 32));
     }
@@ -1488,7 +1554,7 @@ static struct M68k_not: M68k {
 
 // OR.L <ea>y, Dx
 static struct M68k_or_1: M68k {
-    M68k_or_1(): M68k(OP(8) & BITS<6, 8>(2) &
+    M68k_or_1(): M68k("or_1", OP(8) & BITS<6, 8>(2) &
                       EAM(m68k_eam_all & ~m68k_eam_ard)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
@@ -1499,7 +1565,7 @@ static struct M68k_or_1: M68k {
 
 // OR.L Dy, <ea>x
 static struct M68k_or_2: M68k {
-    M68k_or_2(): M68k(OP(8) & BITS<6, 8>(6) &
+    M68k_or_2(): M68k("or_2", OP(8) & BITS<6, 8>(6) &
                       EAM(m68k_eam_all & ~(m68k_eam_direct | m68k_eam_imm | m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1510,7 +1576,7 @@ static struct M68k_or_2: M68k {
 
 // ORI.L #<data>, Dx
 static struct M68k_ori: M68k {
-    M68k_ori(): M68k(OP(0) & BITS<3, 11>(0x10)) {}
+    M68k_ori(): M68k("ori", OP(0) & BITS<3, 11>(0x10)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate32(d->instruction_word(2), d->instruction_word(1));
         SgAsmExpression *dst = d->makeDataRegister(extract<0, 2>(w0), 32);
@@ -1520,8 +1586,7 @@ static struct M68k_ori: M68k {
 
 // PEA.L <ea>y
 static struct M68k_pea: M68k {
-    M68k_pea(): M68k(OP(4) & BITS<6, 11>(0x21) &
-                     EAM(m68k_eam_ari | m68k_eam_dsp | m68k_eam_idx | m68k_eam_absolute | m68k_eam_pc)) {}
+    M68k_pea(): M68k("pea", OP(4) & BITS<6, 11>(0x21) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         return d->makeInstruction(m68k_pea, "pea.l", src);
@@ -1530,29 +1595,15 @@ static struct M68k_pea: M68k {
 
 // PULSE
 static struct M68k_pulse: M68k {
-    M68k_pulse(): M68k(BITS<0, 15>(0x4acc)) {}
+    M68k_pulse(): M68k("pulse", BITS<0, 15>(0x4acc)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_pulse, "pulse");
     }
 } pulse;
 
-// REMS.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
-// REMU.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
-static struct M68k_remainder_l: M68k {
-    M68k_remainder_l(): M68k(OP(4) & BITS<6, 11>(0x31) &
-                             EAM(m68k_eam_drd | m68k_eam_ari | m68k_eam_inc |m68k_eam_dec |m68k_eam_dsp)) {}
-    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_rems : m68k_remu;
-        SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
-        SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32);
-        SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), 32);
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dw, dx);
-    }
-} remainder_l;
-
 // RTS
 static struct M68k_rts: M68k {
-    M68k_rts(): M68k(BITS<0, 15>(0x4e75)) {}
+    M68k_rts(): M68k("rts", BITS<0, 15>(0x4e75)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         return d->makeInstruction(m68k_rts, "rts");
     }
@@ -1560,7 +1611,7 @@ static struct M68k_rts: M68k {
 
 // SATS.L Dx
 static struct M68k_sats: M68k {
-    M68k_sats(): M68k(OP(4) & BITS<3, 11>(0x190)) {}
+    M68k_sats(): M68k("sats", OP(4) & BITS<3, 11>(0x190)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *dx = d->makeDataRegister(extract<0, 2>(w0), 32);
         return d->makeInstruction(m68k_sats, "sats.l", dx);
@@ -1569,7 +1620,7 @@ static struct M68k_sats: M68k {
 
 // Scc.B Dx
 static struct M68k_scc: M68k {
-    M68k_scc(): M68k(OP(5) & BITS<3, 7>(0x18)) {}
+    M68k_scc(): M68k("scc", OP(5) & BITS<3, 7>(0x18)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kInstructionKind kind = m68k_unknown_instruction;
         switch (extract<8, 11>(w0)) {
@@ -1597,7 +1648,7 @@ static struct M68k_scc: M68k {
                 
 // SUB.L <ea>y, Dx
 static struct M68k_sub_1: M68k {
-    M68k_sub_1(): M68k(OP(9) & BITS<6, 8>(2) & EAM(m68k_eam_all)) {}
+    M68k_sub_1(): M68k("sub_1", OP(9) & BITS<6, 8>(2) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1607,7 +1658,7 @@ static struct M68k_sub_1: M68k {
 
 // SUB.L Dy, <ea>x
 static struct M68k_sub_2: M68k {
-    M68k_sub_2(): M68k(OP(9) & BITS<6, 8>(6) &
+    M68k_sub_2(): M68k("sub_2", OP(9) & BITS<6, 8>(6) &
                        EAM(m68k_eam_all & ~(m68k_eam_direct|m68k_eam_imm|m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1618,7 +1669,7 @@ static struct M68k_sub_2: M68k {
 
 // SUBA.L <ea>y, Ax
 static struct M68k_suba: M68k {
-    M68k_suba(): M68k(OP(9) & BITS<6, 8>(7) & EAM(m68k_eam_all)) {}
+    M68k_suba(): M68k("suba", OP(9) & BITS<6, 8>(7) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
         SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), 32);
@@ -1628,7 +1679,7 @@ static struct M68k_suba: M68k {
 
 // SUBI.L #<data>, Dx
 static struct M68k_subi: M68k {
-    M68k_subi(): M68k(OP(0) & BITS<3, 11>(0x90)) {}
+    M68k_subi(): M68k("subi", OP(0) & BITS<3, 11>(0x90)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediate32(d->instruction_word(2), d->instruction_word(1));
         SgAsmExpression *dst = d->makeDataRegister(extract<0, 2>(w0), 32);
@@ -1637,9 +1688,12 @@ static struct M68k_subi: M68k {
 } subi;
 
 // SUBQ.L #<data>, <ea>x
+//
+// Note: The reference manual lists word and long absolute addressing modes as being permissible, but the text says "use only
+// those alterable addressing modes listed in the following table". According to section 2.2.13, absolute addressing modes are
+// not in the set of alterable addressing modes. [Robb P. Matzke 2013-10-02]
 static struct M68k_subq: M68k {
-    M68k_subq(): M68k(OP(5) & BITS<6, 8>(6) &
-                      EAM(m68k_eam_all & ~(m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_subq(): M68k("subq", OP(5) & BITS<6, 8>(6) & EAM(m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         int val = extract<9, 11>(w0);
         if (0==val)
@@ -1652,7 +1706,7 @@ static struct M68k_subq: M68k {
 
 // SUBX.L Dy, Dx
 static struct M68k_subx: M68k {
-    M68k_subx(): M68k(OP(9) & BITS<3, 8>(0x30)) {}
+    M68k_subx(): M68k("subx", OP(9) & BITS<3, 8>(0x30)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<0, 2>(w0), 32);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -1662,7 +1716,7 @@ static struct M68k_subx: M68k {
 
 // SWAP.W Dx
 static struct M68k_swap: M68k {
-    M68k_swap(): M68k(OP(4) & BITS<3, 11>(0x108)) {}
+    M68k_swap(): M68k("swap", OP(4) & BITS<3, 11>(0x108)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<0, 2>(w0), 32);
         return d->makeInstruction(m68k_swap, "swap.w", src);
@@ -1670,8 +1724,12 @@ static struct M68k_swap: M68k {
 } swap_1;
 
 // TAS.B <ea>x
+//
+// Note: The reference manual lists word and long absolute addressing modes as being permissible, but the text says "the
+// possible data alterable addressing modes are listed in the table below". According to section 2.2.13, absolute addressing
+// modes are not in the set of alterable addressing modes. [Robb P. Matzke 2013-10-02]
 static struct M68k_tas: M68k {
-    M68k_tas(): M68k(OP(4) & BITS<6, 11>(0x2b) &
+    M68k_tas(): M68k("tas", OP(4) & BITS<6, 11>(0x2b) &
                      EAM(m68k_eam_all & ~(m68k_eam_direct | m68k_eam_imm | m68k_eam_pc))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 8, 0);
@@ -1683,7 +1741,7 @@ static struct M68k_tas: M68k {
 // TPF.W #<data>
 // TPF.L #<data>
 static struct M68k_tpf: M68k {
-    M68k_tpf(): M68k(OP(5) & BITS<3, 11>(0x3f)) {}
+    M68k_tpf(): M68k("tpf", OP(5) & BITS<3, 11>(0x3f)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = NULL;
         unsigned opmode = extract<0, 2>(w0);
@@ -1704,7 +1762,7 @@ static struct M68k_tpf: M68k {
 
 // TRAP #<vector>
 static struct M68k_trap: M68k {
-    M68k_trap(): M68k(OP(4) & BITS<4, 11>(0xe4)) {}
+    M68k_trap(): M68k("trap", OP(4) & BITS<4, 11>(0xe4)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *vector = d->makeImmediate8(extract<0, 3>(w0));
         return d->makeInstruction(m68k_trap, "trap", vector);
@@ -1714,9 +1772,14 @@ static struct M68k_trap: M68k {
 // TST.B <ea>y
 // TST.W <ea>y
 // TST.L <ea>y
+//
+// Note: The reference manual indicates that the operand size is a word if bits<6,7> is 1 or 3. However, if bits<6,7>==3 then
+// then the instruction "TST.W #<data>" has the same encoding as "ILLEGAL", namely 0x4afc. I find it strange that two different
+// encodings are used for word-sized operand, one of which conflicts with another instruction.  I'm assuming that the
+// bits<6,7>==3 is an error in the manual until we learn otherwise. [Robb P. Matzke 2013-10-02]
 static struct M68k_tst_b: M68k {
-    M68k_tst_b(): M68k(OP(4) & BITS<8, 11>(0xa) &
-                       (((BITS<6, 7>(1) | BITS<6, 7>(2) | BITS<6, 7>(3)) & EAM(m68k_eam_all)) |
+    M68k_tst_b(): M68k("tst_b", OP(4) & BITS<8, 11>(0xa) &
+                       (((BITS<6, 7>(1) | BITS<6, 7>(2)) & EAM(m68k_eam_all)) |
                         (BITS<6, 7>(0) & EAM(m68k_eam_all & ~m68k_eam_ard)))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = 0;
@@ -1739,7 +1802,7 @@ static struct M68k_tst_b: M68k {
 
 // UNLK Ax
 static struct M68k_unlk: M68k {
-    M68k_unlk(): M68k(OP(4) & BITS<3, 11>(0x1cb)) {}
+    M68k_unlk(): M68k("unlk", OP(4) & BITS<3, 11>(0x1cb)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *dst = d->makeAddressRegister(extract<0, 2>(w0), 32);
         return d->makeInstruction(m68k_unlk, "unlk", dst);
@@ -1749,9 +1812,12 @@ static struct M68k_unlk: M68k {
 // WDDATA.B <ea>y
 // WDDATA.W <ea>y
 // WDDATA.L <ea>y
+//
+// Note: The reference manual has a table which indicates that word and long absolute addressing modes are permitted, but the
+// text states "use only those memory alterable addressing modes listed in the following table". According to section 2.2.13,
+// the absolute addressing modes are not in the set of alterable addressing modes. [Robb P. Matzke 2013-10-02]
 static struct M68k_wddata: M68k {
-    M68k_wddata(): M68k(OP(15) & BITS<8, 11>(0xb) &
-                        EAM(m68k_eam_all & ~(m68k_eam_direct | m68k_eam_imm | m68k_eam_pc))) {}
+    M68k_wddata(): M68k("wddata", OP(15) & BITS<8, 11>(0xb) & EAM(m68k_eam_memory & m68k_eam_alter)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = 0;
         switch (extract<6, 7>(w0)) {
@@ -1800,7 +1866,7 @@ DisassemblerM68k::init()
     insert_idis(&cmpi);
     insert_idis(&divs_w);
     insert_idis(&divu_w);
-    insert_idis(&divide_l);
+    insert_idis(&divrem_l);
     insert_idis(&eor);
     insert_idis(&eori);
     insert_idis(&ext_w);
@@ -1849,7 +1915,6 @@ DisassemblerM68k::init()
     insert_idis(&ori);
     insert_idis(&pea);
     insert_idis(&pulse);
-    insert_idis(&remainder_l);
     insert_idis(&rts);
     insert_idis(&sats);
     insert_idis(&scc);
