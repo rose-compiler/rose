@@ -455,6 +455,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
+  cerr<<"DEBUG: generateReverseAST: "<<stmt->unparseToString()<<endl;
 	SgBasicBlock* forwardBody = buildBasicBlock();
     SgBasicBlock* reverseBody = buildBasicBlock();
     SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
@@ -463,14 +464,18 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 
 	// If the following child result is empty, we don't have to reverse the target statement.
 	vector<EvaluationResult> child_result = eval_result.getChildResults();
+        cerr<<"DEBUG: child-vector-length:"<<child_result.size()<<endl;
 	if (!child_result.empty())
 	{
+
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
+                cerr<<"DEBUG: children>0: reverseStmt: "<<child_reversal.reverseStatement->unparseToString()<<endl;
 		SageInterface::prependStatement(child_reversal.forwardStatement, forwardBody);
 		SageInterface::appendStatement(child_reversal.reverseStatement, reverseBody);
 	}
 	else
 	{
+                cerr<<"children==0: onlyForwardStmt: "<<stmt->unparseToString()<<endl;
 		//In the forward code, include a copy of the original statement
 		SageInterface::prependStatement(SageInterface::copyStatement(stmt), forwardBody);
 	}

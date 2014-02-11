@@ -190,7 +190,10 @@ cerr<<"DEBUG: EventProcessor::popVal_front :: P11.1"<<endl;
 	string functionName = "pop_front< " + get_type_name(type) + " >";
 cerr<<"DEBUG: EventProcessor::popVal_front :: P11.2"<<endl;
  cerr<<"DEBUG: buildFunctionCallExp("<<functionName<<type->unparseToString()<<")"<<endl;
-SgExpression* exp=SageBuilder::buildFunctionCallExp(functionName, type);
+ SgScopeStatement* scope = isSgScopeStatement(event_->get_parent());
+ // TODO: investigate this fix
+ ROSE_ASSERT(scope != NULL);
+ SgExpression* exp=SageBuilder::buildFunctionCallExp(functionName, type, NULL,scope);
 cerr<<"DEBUG: EventProcessor::popVal_front :: P11.3"<<endl;
 	return exp;
 }
@@ -292,7 +295,10 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 	SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.reverseStatement));
 
 	SgFunctionDeclaration* commitFunctionDecl = NULL;
-	ROSE_ASSERT(stmt.commitStatement == NULL); //We'll worry about commit statements later
+	//MS: ROSE_ASSERT(stmt.commitStatement == NULL); //We'll worry about commit statements later
+        if(!stmt.commitStatement == NULL)
+          cerr<<"WARNING: EventProcessor::processEvent: stmt.commitStatement != NULL ()"<<endl;
+        
 
 	// Add the cost information as comments to generated functions.
 	string comment = "Cost: " + lexical_cast<string > (reversalResult.getCost().getCost());

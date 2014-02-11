@@ -77,6 +77,7 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 	set<SgGlobal*> allGlobalScopes;
 	foreach(SgFunctionDeclaration* eventFunction, allEventMethods)
 	{
+          cout<<"STATUS: reversing event-function: "<<SgNodeHelper::getFunctionName(eventFunction)<<endl;
 		timer t;
 
 		SgGlobal* globalScope = SageInterface::getEnclosingNode<SgGlobal > (eventFunction);
@@ -101,6 +102,9 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 			ROSE_ASSERT(inverseEventTuple.reverseEvent != NULL && inverseEventTuple.forwardEvent != NULL);
 			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.reverseEvent);
 			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.forwardEvent);
+
+
+                        cerr<<"DEBUG: reversed-event-function: "<<inverseEventTuple.reverseEvent->unparseToString()<<endl;
 		}
 
 		output.push_back(processed_event);
