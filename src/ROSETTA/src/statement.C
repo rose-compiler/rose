@@ -1034,8 +1034,13 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/18/2014): Add support for old-style C function prototypes without function parameters (K&R style)
+     FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1080,6 +1085,8 @@ Grammar::setUpStatements ()
   // DQ (1/17/2006): Removed since it was not properly initialized or ever used (hold over from CC++ days)
   // FunctionDefinition.setDataPrototype ( "int","par_flag", "= 0",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      MemberFunctionDeclaration.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MemberFunctionDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1308,12 +1315,22 @@ Grammar::setUpStatements ()
      VariableDefinition.setDataPrototype ( "SgInitializedName*" , "vardefn" , "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+  // It is usually a SgUnsignedLongVal, but it can sometimes be a SgIntVal.  I wonderif it could be a cast (SgCastExp)
+  // at some point.  For now we need to change this to be at least a SgValueExp instead of a SgUnsignedLongVal.
+  // We need to reepresent it in the AST as an expression so that we can record the original expression tree from
+  // which it was computed.  This is required where the expression contains the sizeof operator applied to machine 
+  // dependent types (see test2014_48.c for an example of this).  This is a problem when ROSE is using the -m32 mode.
+  // Note that test2012_166.c demonstrates that this can be a SgIntVal expresion.  
   // It is hard to believe that the "SgUnsignedLongVal" should not be an "int" instead!
-     VariableDefinition.setDataPrototype ( "SgUnsignedLongVal*", "bitfield", "= NULL",
+  // VariableDefinition.setDataPrototype ( "SgUnsignedLongVal*", "bitfield", "= NULL",
+  //                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     VariableDefinition.setDataPrototype ( "SgValueExp*", "bitfield", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-//     VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",
-//                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
-//                                          NO_COPY_DATA);
+
+  // VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+  //                                      NO_COPY_DATA);
 
      ClassDeclaration.setFunctionPrototype ( "HEADER_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      ClassDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );

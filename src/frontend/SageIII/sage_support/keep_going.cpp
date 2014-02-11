@@ -53,6 +53,27 @@ namespace Frontend {
       #endif //_MSC_VER
   }
 
+  namespace Commandline {
+    #ifndef _MSC_VER
+      sigjmp_buf jmp_target;
+    #endif //_MSC_VER
+    void SignalHandler(int sig)
+    {
+        std::cout
+            << "[WARN] "
+            << "Caught signal="
+            << "'" << sig << "' "
+            << "during commandline processing in frontend processing"
+            << std::endl;
+
+        #ifndef _MSC_VER
+            siglongjmp(Frontend::Commandline::jmp_target, -1);
+        #else
+            ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+        #endif //_MSC_VER
+    }
+  }// ::ROSE::KeepGoing::Frontend::Commandline
+
   namespace SecondaryPass {
     #ifndef _MSC_VER
       sigjmp_buf jmp_target;
@@ -75,6 +96,27 @@ namespace Frontend {
   }// ::ROSE::KeepGoing::Frontend::SecondaryPass
 }// ::ROSE::KeepGoing::Frontend
 
+namespace Midend {
+  #ifndef _MSC_VER
+    sigjmp_buf jmp_target;
+  #endif //_MSC_VER
+  void SignalHandler(int sig)
+  {
+      std::cout
+          << "[WARN] "
+          << "Caught signal="
+          << "'" << sig << "' "
+          << "during midend processing"
+          << std::endl;
+
+      #ifndef _MSC_VER
+          siglongjmp(Midend::jmp_target, -1);
+      #else
+          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+      #endif //_MSC_VER
+  }
+}// ::ROSE::KeepGoing::Midend
+
 namespace Backend {
 namespace Unparser {
   #ifndef _MSC_VER
@@ -96,6 +138,27 @@ namespace Unparser {
       #endif //_MSC_VER
   }
 }// ::ROSE::KeepGoing::Backend::Unparser
+
+namespace Compiler {
+  #ifndef _MSC_VER
+    sigjmp_buf jmp_target;
+  #endif //_MSC_VER
+  void SignalHandler(int sig)
+  {
+      std::cout
+          << "[WARN] "
+          << "Caught signal="
+          << "'" << sig << "' "
+          << "during backend compiler processing"
+          << std::endl;
+
+      #ifndef _MSC_VER
+          siglongjmp(Backend::Compiler::jmp_target, -1);
+      #else
+          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+      #endif //_MSC_VER
+  }
+}// ::ROSE::KeepGoing::Backend::Compiler
 }// ::ROSE::KeepGoing::Backend
 }// ::ROSE::KeepGoing
 }// ::ROSE

@@ -1798,6 +1798,11 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
 #endif
 #if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
+     printf ("Inside of SageBuilder::buildFunctionType() (activate test for return_type): return_type = %p = %s \n",return_type,return_type->class_name().c_str());
+#endif
+#if 0
+  // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
      if (isSgFunctionType(return_type) != NULL)
         { 
        // Liao 12/14/2012. This is not true for some functions (e.g. findFunctionUsingDlopen() on top of dlopen()) returning a function type
@@ -1805,6 +1810,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
           ROSE_ASSERT(false);
         }
 #endif
+
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
@@ -4016,6 +4022,10 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
         {
           ROSE_ASSERT(first_nondefining_declaration != NULL);
 
+       // DQ (12/27/20134): Added these to permit testing earlier than in the buildDefiningFunctionDeclaration_T() function.
+          ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
           result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,first_nondefining_declaration, NULL);
         }
 #endif
@@ -5442,6 +5452,22 @@ SgSuperExp* SageBuilder::buildSuperExp(SgClassSymbol* sym)
 SgSuperExp* SageBuilder::buildSuperExp_nfi(SgClassSymbol* sym)
 {
   SgSuperExp* result = new SgSuperExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgClassExp* SageBuilder::buildClassExp_nfi(SgClassSymbol* sym)
+{
+  SgClassExp* result = new SgClassExp(sym, 0);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
@@ -9031,11 +9057,13 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
    {
      ROSE_ASSERT(base_type != NULL);
 
+  // DQ (1/30/2014): We need to include typedefs here as well (see test2014_77.c).
   // DQ (9/28/2012): Added that the base type could be an array (see test2012_03.c (C test code)).
   // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
-     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
+  // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
+     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type))
         {
-          printf("ERROR: Base type of restrict type must be a pointer or reference type base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+          printf("ERROR: Base type of restrict type must be on a pointer or reference or array or typedef type: base_type = %p = %s \n",base_type,base_type->class_name().c_str());
           printf ("  --- generate_type_list() = %s \n",generate_type_list(base_type).c_str());
           ROSE_ASSERT(false);
         }
