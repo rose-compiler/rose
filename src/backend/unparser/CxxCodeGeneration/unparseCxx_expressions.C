@@ -1483,6 +1483,9 @@ Unparse_ExprStmt::unparseStatementExpression (SgExpression* expr, SgUnparse_Info
   // (so they are exceptions, see test2007_51.C).
      info2.unset_SkipClassDefinition();
 
+  // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+     info2.unset_SkipEnumDefinition();
+
      curprint ( "(");
      unparseStatement(statement,info2);
      curprint ( ")");
@@ -1527,6 +1530,14 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
 
+#if 0
+     printf ("In unparseBinaryOperator(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseBinaryOperator(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      unparseBinaryExpr(expr, newinfo);
 
 #if 0
@@ -1537,6 +1548,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 
 void
 Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
+
 
 void
 Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
@@ -1594,6 +1606,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           nameQualifier = var_ref->get_qualified_name_prefix();
         }
 
+  // DQ (1/22/2014): Adding support for generated names used in un-named variables.
+     bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+     printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+
+#if 0
   // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
@@ -1601,8 +1620,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
 #endif
-          curprint ( nameQualifier.str());
+          curprint(nameQualifier.str());
         }
+#else
+     curprint(nameQualifier.str());
+#endif
 
   // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
   // curprint (  var_ref->get_symbol()->get_name().str());
@@ -1615,7 +1637,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-          curprint (var_ref->get_symbol()->get_name().str());
+       // curprint (var_ref->get_symbol()->get_name().str());
+          if (isAnonymousName == false)
+             {
+               curprint (var_ref->get_symbol()->get_name().str());
+             }
         }
 
 #if 0
@@ -2747,8 +2773,16 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
         {
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
-               curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
+               curprint("L");
+
+       // curprint("\"" + str_val->get_value() + "\"");
+          string s = string("\"") + str_val->get_value() + string("\"");
+#if 0
+          printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
+#endif
+          curprint(s);
         }
 #endif
 #endif
@@ -4177,6 +4211,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      cast_op->get_file_info()->display("In unparseCastOp(): debug");
 #endif
 
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info newinfo(info);
      newinfo.unset_PrintName();
      newinfo.unset_isTypeFirstPart();
@@ -4482,6 +4524,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (6/21/2011): Added support for name qualification.
      info.set_reference_node_for_qualification(cast_op->get_operand());
      ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      unparseExpression(cast_op->get_operand(), info); 
 
@@ -5004,7 +5054,9 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
                  // Then the comment is in between the start of the construct and the end of the construct.
                     if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                        {
+#if 0
                          printf ("Found cpp include directive \n");
+#endif
                          returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
@@ -5040,7 +5092,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(aggr_init != NULL);
 
 #if 0
-  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
+  // DQ (1/26/2014): This would not be as portabile of a solution, but it is more robus in other ways. So this is a compromize.
+  // DQ (9/11/2013): It is a better solution to always unparse the ggregate attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
@@ -5078,6 +5131,15 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
                newinfo.unset_SkipClassDefinition();
+
+            // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+               newinfo.unset_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
              }
             else
              {
@@ -5105,7 +5167,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
+
 #if 0
   // DQ (7/27/2013): Commented this out since we do need it now that we support the compound literals.
      if (aggr_init->get_need_explicit_braces())
@@ -5883,6 +5948,14 @@ Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
 
      ROSE_ASSERT (operand != NULL);
      ROSE_ASSERT (type != NULL);
+
+#if 0
+     printf ("In unparseVarArgOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarArgOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      curprint ( "va_arg(");
      unparseExpression(operand,info);

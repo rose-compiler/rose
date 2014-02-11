@@ -553,7 +553,7 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
 #endif
                ROSE_ASSERT(stmt->get_file_info() != NULL);
 #if 0
-               stmt->get_file_info()->display("In unparseStatementFromTokenStream(): debug");
+               stmt->get_file_info()->display("In canBeUnparsedFromTokenStream(): debug");
 #endif
                canBeUnparsed = (tokenSubsequence->token_subsequence_start != -1);
 
@@ -689,10 +689,15 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
 
 int
-UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt)
+UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
+
+  // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
+  // mechanism that does not drop line endings.  The high fedelity version is just prettier, but 
+  // pretty counts...
+#define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
@@ -742,6 +747,67 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
                     printf ("   --- tokenSubsequence->leading_whitespace_start = %d tokenSubsequence->leading_whitespace_end = %d \n",tokenSubsequence->leading_whitespace_start,tokenSubsequence->leading_whitespace_end);
 #endif
+
+                    SgGlobal* globalScope = isSgGlobal(stmt);
+#if 0
+                    printf ("In unparseStatementFromTokenStream(): globalScope = %p \n",globalScope);
+                    if (globalScope != NULL)
+                       {
+                         printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+                         for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
+                            {
+                              SgDeclarationStatement* decl = globalScope->get_declarations()[i];
+                              ROSE_ASSERT(decl != NULL);
+                              printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
+                            }
+                       }
+#endif
+                    if (globalScope != NULL)
+                       {
+#if 0
+                         printf ("Processing corner case of empty global scope unparsed using the token stream \n");
+#endif
+                         if (globalScope->get_declarations().empty() == true)
+                            {
+                           // If this is the empry global scope then consider the SgGlobal to be the last statement to be unparsed.
+                           // This will trigger the output of the remaining tokens in the file and suppress any CPP directives and 
+                           // comments that are attached to the SgGlobal (because there was no other IR node to attach them to which
+                           // could be considered a part of the input file).
+                              lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+                            }
+                           else
+                            {
+                           // Else we have to make sure that none of the declarations in global scope are from this file.
+                           // These can de declarations from header files or the rose_edg_required_macros_and_functions.h 
+                           // file that is read to support GNU predefined macros.
+                              lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+                              for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
+                                 {
+                                   SgDeclarationStatement* decl = globalScope->get_declarations()[i];
+                                   ROSE_ASSERT(decl != NULL);
+#if 0
+                                   printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                                   if (statementFromFile(decl, getFileName(), info) == true)
+                                      {
+#if 0
+                                        printf ("Found statement that will be output: set lastStatementOfGlobalScopeUnparsedUsingTokenStream == true: decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                                        lastStatementOfGlobalScopeUnparsedUsingTokenStream = false;
+                                      }
+                                 }
+
+                              if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == true)
+                                 {
+                                // This SgGlobal will be treated as the last statement so that we can know to supporess the generation 
+                                // of CPP directives and comments that are in the AST and associated with the SgGlobal.
+#if 0
+                                   printf ("Global scope being treated as last statement in file (will be unparsed using the token sequence and CPP directives associated with SgGlobal will be supressed) \n");
+#endif
+                                 }
+                            }
+                       }
+
                     if (tokenSubsequence->leading_whitespace_start != -1 && tokenSubsequence->leading_whitespace_end != -1)
                        {
                          for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
@@ -749,7 +815,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                               printf ("Output leading tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                           // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                           // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                           // Note that this will interprete line endings which is not going to provide the precise token based output.
                               curprint(tokenVector[j]->get_lexeme_string());
+#endif
                             }
                        }
                   }
@@ -761,13 +834,91 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                 // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                 // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                    *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                 // Note that this will interprete line endings which is not going to provide the precise token based output.
                     curprint(tokenVector[j]->get_lexeme_string());
+#endif
                   }
 
+            // DQ (1/29/2014): The only consequence that I can see in not closing off the trailing token stream is that we 
+            // will (at least sometimes) not not out put a trailing CR after the last line.
             // DQ (12/1/2013): I am not clear if there are cases where we need to output the associated trailing tokens.
             // None of these cases appear to be an issue in the C regression tests.
+
+               bool isLastStatementOfGlobalScope = false;
+               SgScopeStatement* scope = stmt->get_scope();
+               ROSE_ASSERT(scope != NULL);
+
+               SgGlobal* globalScope = isSgGlobal(scope);
+               if (globalScope != NULL)
+                  {
+                 // Check if this is the last statement in the file (global scope).
+                    SgDeclarationStatementPtrList & declarationList = globalScope->get_declarations();
+                    SgDeclarationStatement* lastDeclaration = NULL;
+                    if (declarationList.rbegin() != declarationList.rend())
+                       {
+                         lastDeclaration = *(declarationList.rbegin());
+                         if (stmt == lastDeclaration)
+                            {
+#if 0
+                              printf ("In unparseStatementFromTokenStream(): identified last statement: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+                              isLastStatementOfGlobalScope = true;
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In unparseStatementFromTokenStream(): Global scope is empty! \n");
+#endif
+                       }
+                  }
+
+            // The last statement has to handle the output of the tokens for the rest of the file.
+            // If the last statement is output from the AST, then it will be handled using information 
+            // in the AST (not the token stream).
+               if (isLastStatementOfGlobalScope == true)
+                  {
+#if 0
+                    printf ("Process the tokens associated with the trailing edge of the last statement \n");
+#endif
+                 // Set the return parameter to skip the unparsing of the tailing CPP directives and 
+                 // comments from the AST (since they are being output via the token stream).
+                    lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+
+                    if (tokenSubsequence->trailing_whitespace_start != -1 && tokenSubsequence->trailing_whitespace_end != -1)
+                       {
+                         for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
+                            {
+#if 0
+                              printf ("Output trailing tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                           // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                           // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                           // Note that this will interprete line endings which is not going to provide the precise token based output.
+                              curprint(tokenVector[j]->get_lexeme_string());
+#endif
+                            }
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
              }
         }
+
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+  // If we are directly operating on the ostream, then flush after each statement.
+     unp->get_output_stream().output_stream()->flush();
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -1045,6 +1196,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+  // DQ (1/30/204): We need this to permit knowing when to unparse the trialing CPP directives and 
+  // comments from the AST.  If they were unparsed from the token steam (as part of unparsing the 
+  // last statement from the token stream) then unparsing them from the AST would be redundant
+  // (though likely harmless).
+     bool lastStatementOfGlobalScopeUnparsedUsingTokenStream = false;
+
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
@@ -1123,7 +1280,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
                if (unparseViaTokenStream == true)
                   {
-                    int status = unparseStatementFromTokenStream(sourceFile,stmt);
+                     int status = unparseStatementFromTokenStream(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
 
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
                     outputStatementAsTokens = (status == 0);
@@ -1151,7 +1308,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
                   }
-     
+
             // DQ (12/4/2007): Added to ROSE (was removed at some point).
                unparseLineDirectives(stmt);
 
@@ -1282,9 +1439,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
 #if 0
-     printf ("Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
+     printf ("Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",stmt,stmt->class_name().c_str(),lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
 #endif
-     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+  // if (outputStatementAsTokens == false)
+     if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == false)
+        {
+          unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+        }
 #if 0
      printf ("DONE: Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
 #endif
@@ -1324,6 +1486,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
 
 #if 0
      printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+     curprint(string("\n /*    unparseExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -1746,6 +1909,7 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
 #endif
    }
 
+
 void
 UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -1765,7 +1929,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      outputHiddenListData (globalScope);
 #endif
 
-  // curprint ( string(" /* global scope size = " + globalScope->get_declarations().size() + " */ \n ";
+#if 0
+     curprint(string(" /* In unparseGlobalStmt(): global scope size = ") + StringUtility::numberToString(globalScope->get_declarations().size()) + " */ \n ");
+#endif
 
 #if 0
      int declarationCounter = 0;
@@ -1814,6 +1980,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
   // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
   // printf ("At end of unparseGlobalStmt \n");
   // outputCompilerGeneratedStatements(info);
+
+#if 0
+     curprint(string(" /* Leaving unparseGlobalStmt(): global scope size = ") + StringUtility::numberToString(globalScope->get_declarations().size()) + " */ \n ");
+#endif
 
 #if 0
      printf ("Leaving UnparseLanguageIndependentConstructs::unparseGlobalStmt() \n\n");
@@ -2227,9 +2397,61 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                               if ( !info.SkipCPPDirectives() )
                                  {
                                    if (unp->opt.get_unparse_includes_opt() == true)
-                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                      {
+                                        curprint(string("// (previously processed: ignored) " ) + (*i)->getString());
+                                      }
                                      else
-                                        curprint ( (*i)->getString());
+                                      {
+                                     // curprint((*i)->getString());
+
+                                     // DQ (12/30/2013): Handle the case of a self referential macro declaration e.g. "#define foo  X->foo".
+                                        if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                                           {
+#if 0
+                                             printf ("In unparser: CPP macro = %s \n",(*i)->getString().c_str());
+#endif
+                                          // We need to supress the output of self-referential macros since they will be expanded 
+                                          // twice in the back-end compilation of the ROSE generated code.
+                                             bool isSelfReferential = (*i)->isSelfReferential();
+#if 0
+                                             printf ("In unparser: isSelfReferential = %s CPP macro = %s \n",isSelfReferential ? "true" : "false",(*i)->getString().c_str());
+#endif
+                                             if (isSelfReferential == true)
+                                                {
+#if 1
+                                               // DQ (12/31/2013): Note that the final CR is a part of the CPP #define directive (so we don't need another one).
+                                                  printf ("Detected self-referential macro (supressed in generated code) macro = %s ",(*i)->getString().c_str());
+#endif
+                                               // DQ (12/31/2013): We can't use /* */ to comment out the #define macro since it might also include a "/* ... */" substring.
+                                               // curprint(string("/* (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " */\n");
+                                               // curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " \n");
+#if 0
+                                                  if ((*i)->getNumberOfLines() == 1)
+                                                     {
+                                                    // DQ (1/21/2014): This reports: "error: stray '#' in program"
+                                                    // curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getString() + " \n");
+                                                       curprint(string("// (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " \n");
+                                                     }
+                                                    else
+                                                     {
+                                                       ROSE_ASSERT((*i)->getNumberOfLines() > 1);
+                                                       curprint(string("/* (previously processed: ignoring self-referential macro declaration) " ) + (*i)->getMacroName() + " */\n");
+                                                     }
+#else
+                                               // DQ (1/21/2014): This has to be a C style comments for the options used in Valgrind compilation (not C99, I think).
+                                                  curprint(string("/* (previously processed: ignoring self-referential macro declaration) macro name = " ) + (*i)->getMacroName() + " */ \n");
+#endif
+                                                }
+                                               else
+                                                {
+                                                  curprint((*i)->getString());
+                                                }
+                                           }
+                                          else
+                                           {
+                                             curprint((*i)->getString());
+                                           }
+                                      }
                                  }
                               break;
 
@@ -2345,14 +2567,28 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
        // test2005_09.C demonstrates this bug!
           if (isSgPointerDerefExp(expr) != NULL)
              {
-               curprint (" ");
+               curprint(" ");
              }
-          curprint ( info.get_operator_name());
+          curprint(info.get_operator_name());
         }
 
 #if 0
      printf ("In unparseUnaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
 #endif
+
+  // DQ (1/25/2014): Added support to avoid unparsing "- -5" as "--5".
+     SgValueExp* valueExp = isSgValueExp(unary_op->get_operand());
+     SgMinusOp* minus_op = isSgMinusOp(unary_op);
+     if (minus_op != NULL && valueExp != NULL)
+        {
+       // We need to make sure we don't unparse: "- -5" as "--5".
+       // I think we need an isNegative() query function so that we could refine this test to only apply to negative literals.
+#if 0
+          printf ("We need to make sure we don't unparse: \"- -5\" as \"--5\" \n");
+#endif
+          curprint(" ");
+        }
+
 #if 0
      curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
@@ -2361,9 +2597,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
      curprint ("\n /* DONE: Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
 
-     if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op) 
-        { 
-          curprint (  info.get_operator_name()); 
+     if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op)
+        {
+          curprint(info.get_operator_name());
         }
 
      info.unset_nested_expression();
@@ -2374,599 +2610,53 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
    }
 
 
-#if 0
-// *******************************************************************
-// OLD VERSION: DQ (4/14/2013): Reimplemented new version below.
-// *******************************************************************
-
-void
-UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) 
+bool
+UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* expr)
    {
-#if 0
-      curprint ( string("\n /* Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
-      printf ("\n @@@@@ In unparseBinaryExpr() expr = %p %s \n",expr,expr->class_name().c_str());
-#endif
+  // DQ (1/23/2014): This function support detecting when the supress the output of the SgDotExp
+  // in the access of data members from un-named unions.  Note that variables of type that are
+  // un-named unions are given a unique generated name of the form "__anonymous_0x" as a 
+  // prefix to the pointer value of the declaration that defines the un-named union.  The
+  // handling here is not specific to unions and handles any type where the declaration is
+  // using a generated name of this specific form.
 
-     unp->u_debug->printDebugInfo("entering unparseBinaryExpr", true);
-     SgBinaryOp* binary_op = isSgBinaryOp(expr);
-     ROSE_ASSERT(binary_op != NULL);
+     bool returnValue = false;
 
-#if 0
-  // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string ("\n /* Inside of unparseBinaryExpr (expr class name = ") + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name  = ") + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name  = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
-#endif
-
-  // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
-  // required in places even though we have historically defaulted to the generation of the 
-  // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
-     SgNode* possibleParentFunctionCall = binary_op->get_parent();
-
-  // DQ (4/9/2013): This fails for test2006_92.C.
-  // ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool parent_function_call_uses_operator_syntax = false;
-     if (possibleParentFunctionCall != NULL)
+     SgDotExp* dotExp = isSgDotExp(expr);
+     if (dotExp != NULL)
         {
-          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
-          if (functionCallExp != NULL)
+          SgBinaryOp* binary_op = isSgBinaryOp(dotExp->get_lhs_operand());
+          if (binary_op != NULL)
              {
-               parent_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
-             }
-        }
-
-  // DQ (4/13/13): Checking the current level function call expression.
-     SgNode* possibleFunctionCall = binary_op->get_lhs_operand();
-     ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool current_function_call_uses_operator_syntax = false;
-     if (possibleFunctionCall != NULL)
-        {
-          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
-          if (functionCallExp != NULL)
-             {
-               current_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
-             }
-        }
-
-#if 1
-     printf ("In unparseBinaryExpr(): parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax  == true ? "true" : "false");
-     printf ("In unparseBinaryExpr(): current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
-#endif
-
-  // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
-     SgExpression* expressionTree = binary_op->get_originalExpressionTree();
-     if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
-        {
-#if 1
-          printf ("Found and expression tree representing a cast expression (unfolded constant expression requiring a cast) expressionTree = %p = %s \n",
-               expressionTree,expressionTree->class_name().c_str());
-          curprint ( string("/* Found and expression tree representing a cast expression: binary_op->get_originalExpressionTree() = ") + binary_op->get_originalExpressionTree()->class_name() + " */ \n");
-#endif
-          unparseExpression(expressionTree,info);
-          return;
-        }
-
-  // int toplevel_expression = !info.get_nested_expression();
-     bool iostream_op = false;
-
-  // Same reasoning above except with parenthesis operator function.
-     bool paren_op = false;
-
-  // Same reasoning above except with "this" expression.
-     bool this_op = false;
-
-  // Flag to indicate whether the rhs operand is an overloaded arrow operator
-  // (to control the printing of parenthesis).
-     bool arrow_op = false;
-
-  // Flag to indicate whether the lhs operand contains an overloaded arrow operator
-  // to control printing of operator.
-     bool overload_arrow = false;
-
-  // if (!unp->opt.get_overload_opt() && unp->u_sage->isIOStreamOperator(binary_op->get_rhs_operand()) )
-     if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && unp->u_sage->isIOStreamOperator(binary_op->get_rhs_operand()) )
-          iostream_op = true;
-
-  // if (!unp->opt.get_overload_opt() && unp->u_sage->isBinaryParenOperator(binary_op->get_rhs_operand()) )
-     if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && unp->u_sage->isBinaryParenOperator(binary_op->get_rhs_operand()) )
-          paren_op = true;
-
-  // if (!unp->opt.get_this_opt() && isSgThisExp(binary_op->get_lhs_operand()) )
-     if (!unp->opt.get_this_opt() && isSgThisExp(binary_op->get_lhs_operand()) )
-          this_op = true;
-
-  // if (!unp->opt.get_overload_opt() && unp->u_sage->isOverloadedArrowOperator(binary_op->get_rhs_operand()) )
-     if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && unp->u_sage->isOverloadedArrowOperator(binary_op->get_rhs_operand()) )
-          arrow_op = true;
-
-     info.set_nested_expression();
-
-  // [DTdbug] 3/23/2000 -- Trying to figure out why overloaded square bracket
-  //          operators are not being handled correctly.
-  //
-  //          3/30/2000 -- operator[]s have been handled.  See unparseFuncCall().
-  //
-
-#if 1
-     printf ("In unparseBinaryExp(): unp->opt.get_overload_opt() = %s \n",(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     curprint ( string("\n /* unp->opt.get_overload_opt() = ") + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */ \n");
-     curprint ( string("\n /* arrow_op = ") + resBool(arrow_op) + " */ \n");
-     curprint ( string("\n /* this_op = ") + resBool(this_op) + " */ \n");
-#endif
-
-     if (info.get_operator_name() == "[]" )
-        {
-       // Special case:
-
-       // DQ (4/14/2013): This likely requires some extra support where the operator syntax is not being used, but for
-       // now this operator is always unparsed using it's operator syntax instead of using the overloaded operator name.
-       // This needs to be fixed later.
-#if 1
-          printf ("In unparseBinaryExp(): Special case of operator[] found \n");
-          curprint ("/* Special case of operator[] found */\n");
-#endif
-          unp->u_debug->printDebugInfo("we have special case: []", true);
-          unp->u_debug->printDebugInfo("lhs: ", false);
-          unparseExpression(binary_op->get_lhs_operand(), info);
-          curprint ("[") ; 
-          unp->u_debug->printDebugInfo("rhs: ", false);
-          unparseExpression(binary_op->get_rhs_operand(), info);
-          curprint ("]"); 
-        }
-       else
-        {
-       // This is the more general case (supporting both infix, prefix, and postfix operators.
-       // DQ (4/14/2013): I think that postfix operators and handled using specific mechanims and may not be well tested.
-
-#if 1
-          curprint ( "/* NOT a special case of operator[] */\n");
-          curprint ( string("/* unp->opt.get_overload_opt() = ") + (unp->opt.get_overload_opt() == true ? "true" : "false") + " */\n ");
-          unp->opt.display("unparseBinaryExpr()");
-#endif
-       // Check whether overload option is turned on or off.  If it is off, the conditional is true.
-       // Meaning that overloaded operators such as "A.operator+(B)" are output as "A + B".
-       // if (!unp->opt.get_overload_opt())
-          if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true))
-             {
-            // printf ("overload option is turned off! (output as "A+B" instead of "A.operator+(B)") \n");
-            // First check if the right hand side is an unary operator function.
-#if 0
-               curprint ( string("\n /* output as A+B instead of A.operator+(B): (u_sage->isUnaryOperator(binary_op->get_rhs_operand())) = ") + 
-                    ((unp->u_sage->isUnaryOperator(binary_op->get_rhs_operand())) ? "true" : "false") + " */ \n");
-#endif
-               if (unp->u_sage->isUnaryOperator(binary_op->get_rhs_operand()))
+               SgExpression* rhs = binary_op->get_rhs_operand();
+               ROSE_ASSERT (rhs != NULL);
+               SgVarRefExp* varRefExp = isSgVarRefExp(rhs);
+               if (varRefExp != NULL)
                   {
-                 // printf ("Found case of rhs being a unary operator! \n");
-
-                 // Two cases must be considered here: prefix unary and postfix unary 
-                 // operators. Most of the unary operators are prefix. In this case, we must
-                 // first unparse the rhs and then the lhs.     
-                 // if (isUnaryPostfixOperator(binary_op->get_rhs_operand())); // Postfix unary operator.
-                    if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
-                       {
-                      // ... nothing to do here (output the operator later!) ???
-                      // printf ("... nothing to do here (output the postfix operator later!) \n");
-                       }
-                      else 
-                       {
-                      // Prefix unary operator.
-                      // printf ("Handle prefix operator ... \n");
-                         unp->u_debug->printDebugInfo("prefix unary operator found", true);
-                         unp->u_debug->printDebugInfo("rhs: ", false);
-
-                      // printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
-                      // curprint ( "\n /* Prefix unary operator: Output the RHS operand ... */ \n";
-                         unparseExpression(binary_op->get_rhs_operand(), info);
-
-                         unp->u_debug->printDebugInfo("lhs: ", false);
-
-                      // DQ (2/22/2005): Treat the operator->() the same as an SgArrowExp IR node
-                      // DQ (2/19/2005): When converting to overloaded operator syntax (e.g. "++" instead of "operator++()")
-                      // detect the case of pointer dereferencing (from the SgArrowOp) via "x->operator++()" and convert 
-                      // to "++(*x)" instead of "*++x".
-                      // if ( isSgArrowExp(expr) )
-
-                         bool outputParen = false;
-                         SgExpression* lhs = binary_op->get_lhs_operand();
-                         ROSE_ASSERT(lhs != NULL);
-                         SgConstructorInitializer* constructor = isSgConstructorInitializer(lhs);
-                         if (constructor != NULL)
-                            {
-                              outputParen = true;
-                            }
-
-                         if ( outputParen == true )
-                            {
-                           // curprint ( " /* output paren for constructor intializer */ ";
-                              curprint ( "(");
-                            }
-
-                         if ( isSgArrowExp(expr) || arrow_op == true )
-                            {
-                           // printf ("This is an isSgArrowExp operator so dereference the lhs when converting to the dot syntax: opening \n");
-                           // curprint ( " /* opening paren for prefix fixup */ ";
-                              curprint ( "(*");
-                            }
-
-                      // printf ("Prefix unary operator: Output the LHS operand ... = %s \n",binary_op->get_lhs_operand()->sage_class_name());
-                      // curprint ( "\n /* Prefix unary operator: Output the LHS operand ... */ \n";
-                      // unparseExpression(binary_op->get_lhs_operand(), info);
-                         unparseExpression(lhs, info);
-                         info.unset_nested_expression();
-
-                      // DQ (2/22/2005): Treat the operator->() the same as an SgArrowExp IR node
-                      // if ( isSgArrowExp(expr) )
-                         if ( isSgArrowExp(expr) || arrow_op == true )
-                            {
-                           // printf ("This is an isSgArrowExp operator so dereference the lhs when converting to the dot syntax: closing \n");
-                           // curprint ( " /* closing paren for prefix fixup */ ";
-                              curprint ( " )");
-                            }
-
-                         if ( outputParen == true )
-                            {
-                              curprint ( ")");
-                            }
-                      // printf ("Calling \"return\" from this binary operator ... \n");
-                      // curprint ( "\n /* Calling \"return\" from this binary operator ... */ \n";
-                         return;
-                       }
+                    bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+                    printf ("In isDotExprWithAnonymousUnion(): (hidden in SgBinaryOp): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
+#endif
+                    returnValue = isAnonymousName;
                   }
              }
             else
              {
-#if 1
-               printf ("In unparseBinaryExp(): current_function_call_uses_operator_syntax = %s (unhandled case) \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
-#endif
-            // DQ (4/13/2013): Adding support for prefix operators.
-               if ( (parent_function_call_uses_operator_syntax == true) && (SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) == true) )
+            // The other case we have to handle is that the lhs is a SgVarRefExp to an un-named variable.  See test2014_152.C.
+               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
+               if (varRefExp != NULL)
                   {
+                    bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
 #if 0
-                    printf ("Special handling for overloaded prefix operators \n");
-                    ROSE_ASSERT(false);
+                    printf ("In isDotExprWithAnonymousUnion(): (hidden directly in the lhs operand): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
 #endif
-                    curprint ( "\n /* unparseBinaryExpr(): Test 15  before unparseExpression() binary_op->get_rhs_operand() = " + binary_op->get_rhs_operand()->class_name() + "*/ \n");
-                 // unparseExpression(binary_op->get_rhs_operand(), info);
-
-                 // Mark this as a prefix operator so that unparseMFuncRefSupport() will know to unparse the operator name.
-                    SgUnparse_Info newinfo(info);
-                    newinfo.set_prefixOperator();
-
-                    unparseExpression(binary_op->get_rhs_operand(), newinfo);
-                    curprint ( "\n /* unparseBinaryExpr(): Test 16  after unparseExpression() binary_op->get_rhs_operand() = " + binary_op->get_rhs_operand()->class_name() + "*/ \n");
+                    returnValue = isAnonymousName;
                   }
-
-             }
-
-       // Check if this is a dot expression and the overload option is turned off. If so,
-       // we need to handle this differently. Otherwise, skip this section and unparse
-       // using the default case below.
-       // if (!unp->opt.get_overload_opt() && strcmp(info.get_operator_name(),".")==0) 
-       // if (!unp->opt.get_overload_opt() && isSgDotExp(expr) != NULL )
-          if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && isSgDotExp(expr) != NULL )
-             {
-#if 0
-               printf ("overload option is turned off and this is a SgDotExp! \n");
-               if ( !info.SkipComments() || !info.SkipCPPDirectives() )
-                  {
-                    curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == true */ \n");
-                  }
-#endif
-               overload_arrow = unp->u_sage->NoDereference(binary_op->get_lhs_operand());
-
-            // curprint ( "\n /* overload_arrow = " + overload_arrow + " */ \n";
-
-               SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(binary_op->get_rhs_operand());
-
-            // curprint ( "\n /* mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + " */ \n";
-            // curprint ( "\n /* unparseBinaryExpr(): Test 1  mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + "*/ \n");
-
-               unp->u_debug->printDebugInfo("lhs: ", false);
-
-               bool addParensForLhs = false;
-               SgExpression* lhs = binary_op->get_lhs_operand();
-               ROSE_ASSERT(lhs != NULL);
-            // if (isSgBinaryOp(lhs) != NULL || isSgConstructorInitializer(lhs) != NULL )
-               SgConstructorInitializer* constructor = isSgConstructorInitializer(lhs);
-
-            // curprint ( "\n /* unparseBinaryExpr(): Test 2  constructor = " + StringUtility::numberToString(constructor) + "*/ \n");
-
-            // printf ("############## constructor = %p \n",constructor);
-               ROSE_ASSERT( (constructor == NULL) || (constructor != NULL && constructor->get_args() != NULL) );
-
-            // Make sure that lhs of SgDotExp include "()" as in: "length = (pos-fpos).magnitude();"
-               if (constructor != NULL)
-                  {
-                 // printf ("constructor->get_args()->get_expressions().size() = %zu \n",constructor->get_args()->get_expressions().size());
-                    if (constructor->get_args()->get_expressions().size() > 0)
-                       {
-                         addParensForLhs = true;
-                       }
-                  }
-
-            // Make sure that lhs of SgDotExp include "()" as in: "length = (pos-fpos).magnitude();"
-               if (mfunc_ref != NULL)
-                  {
-                 // addParensForLhs = true;
-                  }
-
-               if (addParensForLhs == true)
-                  {
-                 // DQ (2/22/2005): Removed special case from Unparse_ExprStmt::unp->u_sage->PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
-                 // curprint ("/* added paren in binary operator */ ( ");
-                    curprint ("(");
-                  }
-
-            // curprint ( "\n /* unparseBinaryExpr(): Test 3  before unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
-
-            // unparseExpression(binary_op->get_lhs_operand(), info);
-               unparseExpression(lhs, info);
-
-            // curprint ( "\n /* unparseBinaryExpr(): Test 4  after unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
-
-               unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
-
-               if (addParensForLhs == true)
-                  {
-                 // curprint ("/* closing paren */ ) ");
-                    curprint (")");
-                  }
-
-            // Check if the rhs is not a member function. If so, then it is most likely a  
-            // data member of a class. We print the dot in this case.
-               if (!mfunc_ref && !overload_arrow)  
-                  {
-                 // Print out the dot:
-                 // curprint ( "\n /* Print out the dot */ \n";
-                    curprint ( info.get_operator_name());
-                    unp->u_debug->printDebugInfo("printed dot because is not member function", true);
-                  }
-                 else
-                  {
-                 // Now check if this member function is an operator overloading function. If it
-                 // is, then we don't print the dot. If not, then print the dot.
-#if 1
-                    curprint ( "\n /* Print out the dot: Now check if this member function is an operator overloading function */ \n");
-                    if (mfunc_ref != NULL)
-                         curprint ( string("\n /* isOperator(mfunc_ref) = ") + ((unp->u_sage->isOperator(mfunc_ref) == true) ? "true" : "false") + " */ \n");
-#endif
-                 // DQ (12/11/2004): Added assertion to catch case of "a.operator->();"
-                 // ROSE_ASSERT(mfunc_ref != NULL);
-                 // if (!isOperator(mfunc_ref) && !overload_arrow)
-//                  if ( (mfunc_ref != NULL) && !isOperator(mfunc_ref) && !overload_arrow)
-//                  if ( !isOperator(mfunc_ref) && !overload_arrow)
-//                  if ( overload_arrow == true )
-//                  if ( true )
-//                  if ( !isOperator(mfunc_ref) )
-//                  if ( (mfunc_ref != NULL) && !isOperator(mfunc_ref) )
-                    if ( (mfunc_ref == NULL) || !unp->u_sage->isOperator(mfunc_ref) )
-                       {
-                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.4  before output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
-                      // curprint ( "\n /* Print out the dot in second case */ \n";
-                         curprint ( info.get_operator_name());
-                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.5  after output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
-                         unp->u_debug->printDebugInfo("printed dot because is not operator overloading function", true);
-                       }
-                  }
-             }
-         // else if (!unp->opt.get_this_opt() && strcmp(info.get_operator_name(),"->")==0) 
-            else
-             {
-            // printf ("overload option is turned on! \n");
-            // Check if this is an arrow expression and the "this" option is turned off. If 
-            // so, we need to handle this differently. Otherwise, skip this section and 
-            // unparse using the default case below.
-
-            // curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == false */ \n";
-#if 1
-               curprint ( string("\n /* ( !unp->opt.get_overload_opt() && isSgArrowExp(expr) ) = ") + ((!unp->opt.get_this_opt() && isSgArrowExp(expr)) ? "true" : "false") + " */ \n");
-#endif
-            // if ( !unp->opt.get_this_opt() && isSgArrowExp(expr) )
-            // if ( !unp->opt.get_this_opt() && (uses_operator_syntax == true) && isSgArrowExp(expr) )
-               if ( !unp->opt.get_this_opt() && isSgArrowExp(expr) )
-                  {
-                 // This is a special case to check for. We are now checking for arrow 
-                 // expressions with the overload operator option off. If so, that means that 
-                 // we cannot print "operator", which means that printing "->" is wrong. So we 
-                 // must dereference the variable and suppress the printing of "->". Jump to
-                 // "dereference" is true.
-                 // if (!unp->opt.get_overload_opt() && unp->u_sage->isOperator(binary_op->get_rhs_operand()))
-                    if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && unp->u_sage->isOperator(binary_op->get_rhs_operand()))
-                       goto dereference;
-
-                    unp->u_debug->printDebugInfo("lhs: ", false);
-                    unparseExpression(binary_op->get_lhs_operand(), info);
-                    unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
-
-                 // Check if the lhs is a this expression. If so, then don't print the arrow. 
-                 // if (!isSgThisExp(binary_op->get_lhs_operand()))
-                    if (!isSgThisExp(binary_op->get_lhs_operand()) && (current_function_call_uses_operator_syntax == true)) 
-                       {
-                      // Is not "this" exp, so print the arrow.
-                         curprint ( info.get_operator_name());
-                       }
-                  }
-              // else if (!unp->opt.get_overload_opt() && strcmp(info.get_operator_name(),"->")==0 && isOperator(binary_op->get_rhs_operand())) 
-                 else 
-                  {
-                 // We must also check the special case here mentioned above since the "this" 
-                 // option may be true, but the overload option is false.
-#if 1
-                    curprint ( string("\n /* ( !unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && isSgArrowExp(expr) && unp->u_sage->isOperator(binary_op->get_rhs_operand()) ) = ") + 
-                               (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && isSgArrowExp(expr) && unp->u_sage->isOperator(binary_op->get_rhs_operand()) ? "true" : "false") + " */ \n");
-#endif
-                 // if (!unp->opt.get_overload_opt() && isSgArrowExp(expr) && unp->u_sage->isOperator(binary_op->get_rhs_operand())) 
-                    if (!unp->opt.get_overload_opt() && (current_function_call_uses_operator_syntax == true) && isSgArrowExp(expr) && unp->u_sage->isOperator(binary_op->get_rhs_operand())) 
-                       {
-dereference:
-
-                      // Before dereferencing, first check if the function is preceded by a class
-                      // name. If not, then dereference.
-
-                         if (unp->u_sage->noQualifiedName(binary_op->get_rhs_operand())) 
-                            {
-                              curprint ("(*"); 
-                              unp->u_debug->printDebugInfo("lhs: ", false);
-                              unparseExpression(binary_op->get_lhs_operand(), info);
-                              unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
-                              curprint (")");
-                            }
-                       }
-                      else 
-                       {
-                      // We reach this if the options were on, or if this was not a dot, arrow, or unary
-                      // prefix expression. This is the default case.
-
-                         unp->u_debug->printDebugInfo("lhs: ", false);
-#if 1
-                         curprint ( "/* lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
-#endif
-                         unparseExpression(binary_op->get_lhs_operand(), info);
-#if 1
-                         curprint ( "/* DONE: lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
-#endif
-                         unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
-
-                         printf ("In unparseBinaryExpr(): binary_op->get_rhs_operand()  = %p = %s \n",binary_op->get_rhs_operand(),binary_op->get_rhs_operand()->class_name().c_str());
-                         printf ("unp->u_sage->isOperator(binary_op->get_rhs_operand()) = %s \n",unp->u_sage->isOperator(binary_op->get_rhs_operand()) ? "true" : "false");
-
-                      // Before checking to insert a newline to prevent linewrapping, check that this
-                      // expression is a primitive operator and not dot or arrow expressions.
-#if 1
-                         curprint ( string("\n/* output info.get_operator_name() = ") + info.get_operator_name() + " */ \n");
-                         curprint ( string("\n/*    --- current_function_call_uses_operator_syntax = ") + (current_function_call_uses_operator_syntax ? "true" : "false") + " */ \n");
-                         curprint ( string("\n/*    --- parent_function_call_uses_operator_syntax  = ") + (parent_function_call_uses_operator_syntax ? "true" : "false") + " */ \n");
-#endif
-
-#if 0
-
-#error "DEAD CODE!"
-
-#if 1
-                         printf ("Setup detection of special case: rhs_is_overloaded_arrow_operator (x.operator->()->data should not be unparsed as x->->data) \n");
-                         curprint ("/* Setup detection of special case: rhs_is_overloaded_arrow_operator (x.operator->()->data should not be unparsed as x->->data) */ \n");
-#endif
-                      // This handles the special case of x.operator->()->data_member.
-                         bool lhs_is_overloaded_arrow_operator = false;
-#if 1
-                         printf ("   --- In unparseBinaryExpr(): binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
-#endif
-                         SgArrowExp* arrowExp = isSgArrowExp(expr);
-                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(binary_op->get_lhs_operand());
-                         if (arrowExp != NULL && functionCallExp != NULL)
-                            {
-#error "DEAD CODE!"
-
-#if 1
-                              printf ("   --- In unparseBinaryExpr(): functionCallExp->get_function() = %p = %s \n",functionCallExp->get_function(),functionCallExp->get_function()->class_name().c_str());
-#endif
-                              SgDotExp* dotExp = isSgDotExp(functionCallExp->get_function());
-                              if (dotExp != NULL)
-                                 {
-#if 1
-                                   printf ("   --- In unparseBinaryExpr(): dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
-#endif
-                                   SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-                                   if (memberFunctionRefExp != NULL)
-                                      {
-#error "DEAD CODE!"
-
-#if 1
-                                        printf ("   --- In unparseBinaryExpr(): memberFunctionRefExp->getAssociatedMemberFunctionDeclaration() = %p = %s \n",
-                                             memberFunctionRefExp->getAssociatedMemberFunctionDeclaration(),memberFunctionRefExp->getAssociatedMemberFunctionDeclaration()->class_name().c_str());
-#endif
-                                        SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
-                                        if (memberFunctionDeclaration != NULL)
-                                           {
-                                             SgName functionName = memberFunctionDeclaration->get_name();
-                                             printf ("   --- In unparseBinaryExpr(): functionName = %s \n",functionName.str());
-#error "DEAD CODE!"
-                                             if (functionName == "operator->")
-                                                {
-                                                  lhs_is_overloaded_arrow_operator = true;
-                                                }
-                                           }
-                                      }
-                                 }
-                            }
-
-#error "DEAD CODE!"
-
-#if 1
-                         curprint ( string("\n/*    --- lhs_is_overloaded_arrow_operator = ") + (lhs_is_overloaded_arrow_operator ? "true" : "false") + " */ \n");
-#endif
-#endif
-
-#if 1
-                         printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-                         printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
-#endif
-                      // if (uses_operator_syntax == true)
-                      // if ( (uses_operator_syntax == true) || (unp->u_sage->isOperator(binary_op->get_rhs_operand()) == false) )
-                      // if ( (uses_operator_syntax == true) || (rhs_is_overloaded_arrow_operator == false) )
-                      // if ( (current_function_call_uses_operator_syntax == false) || !(lhs_is_overloaded_arrow_operator == true && parent_function_call_uses_operator_syntax == true) )
-                      // if ( !( (current_function_call_uses_operator_syntax == true) || (parent_function_call_uses_operator_syntax == true)) )
-                      // if ( ( (current_function_call_uses_operator_syntax == true) || (parent_function_call_uses_operator_syntax == true)) )
-                      // if ( current_function_call_uses_operator_syntax == true || ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false)) )
-#if 0
-                         if ( (current_function_call_uses_operator_syntax == true) || 
-                              ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == true)) || 
-                              ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false)) )
-#endif
-                      // if ( current_function_call_uses_operator_syntax == true || ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false)) )
-                      // if ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) )
-                            if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
-                                 isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
-                            {
-#if 1
-                              printf ("   --- In unparseBinaryExpr(): Output operator name = %s \n",info.get_operator_name().c_str());
-                              curprint ( "/* Output operator name = " + info.get_operator_name() + " */\n ");
-#endif
-                              curprint ( string(" ") + info.get_operator_name() + " ");
-                            }
-                       }
-                  }
-             }
-
-       // DQ (2/9/2010): Shouldn't this be true (it should also return a bool type).
-          ROSE_ASSERT(info.get_nested_expression() != 0);
-#if 1
-          printf ("In unparseBinaryExpr() -- before output of RHS: info.get_nested_expression() = %d info.get_operator_name() = %s \n",info.get_nested_expression(),info.get_operator_name().c_str());
-          curprint ("\n /* unparseBinaryExpr(): Test 4.9  before unparseExpression() info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
-#endif
-          SgExpression* rhs = binary_op->get_rhs_operand();
-
-       // DQ (4/13/2013): We need to detect if this is a prefix operator, and if we unparse it before 
-       // the LHS if we are using the oprator syntax, e.g. when current_function_call_uses_operator_syntax == true
-
-          if (info.get_operator_name() == ",")
-             {
-               SgUnparse_Info newinfo(info);
-               newinfo.set_inRhsExpr();
-               unp->u_debug->printDebugInfo("rhs: ", false);
-            // unparseExpression(binary_op->get_rhs_operand(), newinfo);
-               unparseExpression(rhs, newinfo);
-             }
-            else
-             {
-               curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
-
-            // unparseExpression(binary_op->get_rhs_operand(), info);
-               unparseExpression(rhs, info);
-
-               curprint ( "\n /* unparseBinaryExpr(): Test 6  after unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
              }
         }
 
-     info.unset_nested_expression();
-
-#if 1
-     printf ("Leaving unparseBinaryExpr(): exp = %p = %s \n",expr,expr->class_name().c_str());
-     curprint ( "\n /* Leaving unparseBinaryExpr */ \n");
-#endif
+     return returnValue;
    }
-#endif
-
 
 
 // DQ (4/14/2013): This is the new reimplemented version of the function (above).
@@ -2984,11 +2674,15 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
       printf ("\n @@@@@ In unparseBinaryExpr() expr = %p %s \n",expr,expr->class_name().c_str());
 #endif
 
+   // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
+      bool suppressOutputOfDotExp = isDotExprWithAnonymousUnion(expr);
+
 #if DEBUG_BINARY_OPERATORS
   // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name = ") + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name  = ") + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name  = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
+      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + binary_op->class_name() + " */ \n");
+      curprint ( string("\n /*                              lhs class name         = ") + binary_op->get_lhs_operand()->class_name() + " */ \n");
+      curprint ( string("\n /*                              rhs class name         = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
+      curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
@@ -3118,7 +2812,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
                          if (info.isPrefixOperator() == false)
                             {
-#if 1
+#if DEBUG_BINARY_OPERATORS
                               printf ("In unparseBinaryExp(): info.isPrefixOperator() == false: reset to be true! \n");
 #endif
                               info.set_prefixOperator();
@@ -3210,6 +2904,37 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
           printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
 #endif
+
+#if 0
+       // DQ (1/22/2014): Look ahead to see if this is a SgVarRefExp of a variable with a generated name.
+       // We can't support this approach.  We have to look from the SgDotExp down to see if their is a 
+       // variable reference to a variables named "__anonymous_0x" so that we can know to not output the
+       // SgDotExp operator name, and then always in the SgVarRef supress the name when we detect the
+       // "__anonymous_0x" named variables.
+
+          bool rhs_is_varRef = (isSgVarRefExp(binary_op->get_rhs_operand()) != NULL);
+          bool isAnonymousName = false;
+          if (rhs_is_varRef == true)
+             {
+#if DEBUG_BINARY_OPERATORS
+               printf ("Identified a SgVarRefExp: checking the name for __anonymous_0x \n");
+#endif
+               SgVarRefExp* varRefExp = isSgVarRefExp(binary_op->get_rhs_operand());
+               ROSE_ASSERT(varRefExp != NULL);
+               SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+               ROSE_ASSERT(variableSymbol != NULL);
+            // SgInitializedName* initializedName = variableSymbol->get_definition();
+            // ROSE_ASSERT(initializedName != NULL);
+            // isAnonymousName = (string(initializedName->get_name()).substr(0,14) == "__anonymous_0x");
+               isAnonymousName = (string(variableSymbol->get_name()).substr(0,14) == "__anonymous_0x");
+#if DEBUG_BINARY_OPERATORS
+               printf ("In unparseBinaryExpr(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+             }
+#endif
+
+          if (suppressOutputOfDotExp == false)
+          {
           if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
                  isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
              {
@@ -3229,6 +2954,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                curprint ( "/* SKIPPING output of operator name = " + info.get_operator_name() + " */\n ");
 #endif
             }
+          }
+          else
+             {
+            // If this is the case of suppressOutputOfDotExp == true, then output a space to seperate the output tokens (simplifies debugging).
+               curprint(" ");
+             }
+          
 
        // DQ (2/9/2010): Shouldn't this be true (it should also return a bool type).
           ROSE_ASSERT(info.get_nested_expression() != 0);
@@ -5751,6 +5483,13 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgConcatenationOp:
               return e_assoc_left;
 
+       // DQ (1/25/2014): This is not really defined for unary operators, but it does not make sense to output the warning below either.
+          case V_SgMinusOp:
+          case V_SgUnaryAddOp:
+             {
+               return e_assoc_none;
+             }
+          
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.

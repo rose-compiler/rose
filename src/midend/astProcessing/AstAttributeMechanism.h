@@ -232,4 +232,14 @@ class AstSgNodeListAttribute : public AstAttribute
           AstSgNodeListAttribute(std::vector<SgNode *> &);
    };
 
+class AstIntAttribute : public AstAttribute
+   {
+          int value;
+
+     public:
+          int getValue();
+
+          AstIntAttribute(int value_);
+   };
+
 #endif

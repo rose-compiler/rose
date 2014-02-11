@@ -1,3 +1,4 @@
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.*;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
@@ -289,14 +290,10 @@ public abstract class ExtendedASTVisitor extends ASTVisitor {
      * @since 3.1
      */
     public boolean visit(MemberValuePair pair, BlockScope scope) {
-        if (! preVisit(pair))
-            return false;
-        return enter(pair, scope);
+        return preVisit(pair) && enter(pair, scope);
     }
     public boolean visit(MessageSend messageSend, BlockScope scope) {
-        if (! preVisit(messageSend))
-            return false;
-        return enter(messageSend, scope);
+        return preVisit(messageSend) && enter(messageSend, scope);
     }
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
         return preVisit(methodDeclaration) && enter(methodDeclaration, scope);
@@ -313,9 +310,7 @@ public abstract class ExtendedASTVisitor extends ASTVisitor {
         return preVisit(annotation) && enter(annotation, scope);
     }
     public boolean visit(NullLiteral nullLiteral, BlockScope scope) {
-        if (! preVisit(nullLiteral))
-            return false;
-        return enter(nullLiteral, scope);
+        return preVisit(nullLiteral) && enter(nullLiteral, scope);
     }
     public boolean visit(OR_OR_Expression or_or_Expression, BlockScope scope) {
         return preVisit(or_or_Expression) && enter(or_or_Expression, scope);
@@ -377,9 +372,7 @@ public abstract class ExtendedASTVisitor extends ASTVisitor {
         return preVisit(annotation) && enter(annotation, scope);
     }
     public boolean visit(SingleNameReference singleNameReference, BlockScope scope) {
-        if (! preVisit(singleNameReference))
-            return false;
-        return enter(singleNameReference, scope);
+        return preVisit(singleNameReference) && enter(singleNameReference, scope);
     }
     public boolean visit(SingleNameReference singleNameReference, ClassScope scope) {
         return preVisit(singleNameReference) && enter(singleNameReference, scope);
