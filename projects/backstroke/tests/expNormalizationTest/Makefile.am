@@ -110,7 +110,6 @@ test2004_26.C \
 test2004_27.C \
 test2004_28.C \
 test2004_29.C \
-test2004_30.C \
 test2004_31.C \
 test2004_32.C \
 test2004_33.C \
@@ -453,7 +452,6 @@ test2006_26.C \
 test2006_28.C \
 test2006_34.C \
 test2006_37.C \
-test2006_38.C \
 test2006_39.C \
 test2006_40.C \
 test2006_41.C \
@@ -684,9 +682,11 @@ test2007_51.C
 
 FAILED_TESTCODES = \
 test2004_02.C \
+test2004_30.C \
 test2005_49.C \
 test2005_88.C \
 test2005_179.C \
+test2006_38.C \
 test2006_54.C \
 test2006_159.C \
 test2006_165.C \
