@@ -542,13 +542,18 @@ testJavaCommandlineOptions: $(testTranslator)
 # Source Destdir
 	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/source_destdir"
 #-----------------------------
+# JVM Options
+#-----------------------------
+# Increase ECJ's JVM stack size
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:jvm_options "-Xss5m"
+#-----------------------------
 # Remote JVM Debugging
 # TOO1 (2/6/2014): Can't perform this test since it is interactive
 #-----------------------------
-#	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:remoteDebug
+#	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:enable_remote_debugging
 
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option testJavaCommandlineOptions graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
