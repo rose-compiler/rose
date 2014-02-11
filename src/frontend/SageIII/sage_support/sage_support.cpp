@@ -522,8 +522,7 @@ bool roseInstallPrefix(std::string& result) {
       return false;
     } else {
       // the translator must locate in the installation_tree/lib
-      // TODO what about lib64??
-       if (libdirBasename != "lib")
+       if (libdirBasename != "lib" && libdirBasename != "lib64")
           {
             printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
           }
@@ -775,6 +774,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
+if (fileList.size() != 1){
+cout << endl;
+for ( Rose_STL_Container<string>::iterator i = fileList.begin(); i != fileList.end(); i++) {
+cout << (*i) << endl;
+}
+cout << endl;
+cout.flush();
+}
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -1470,12 +1477,24 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-#if 0
-     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
-#endif
-
-  // builds file list (or none if this is a link line)
-     processCommandLine(argv);
+    // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
+    // constructor. We can't set any error codes on SgProject since SgProject::parse
+    // is being called from the SgProject::SgProject constructor, meaning the SgProject
+    // object is not properly constructed yet.. The only thing we can do, then, if
+    // there is an error here in the commandline handling, is to halt the program.
+    if (KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL)
+    {
+        std::cout
+            << "[FATAL] "
+            << "Unrecoverable signal generated during commandline processing"
+            << std::endl;
+        exit(1);
+    }
+    else
+    {
+        // builds file list (or none if this is a link line)
+        processCommandLine(argv);
+    }
 
      int errorCode = 0;
 
@@ -1755,9 +1774,20 @@ SgProject::RunFrontend()
                   << "signal in SgFile::RunFrontend()"
                   << std::endl;
 
-              file->set_frontendErrorCode(100);
-              status_of_function =
-                  std::max(100, status_of_function);
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  status_of_function =
+                      std::max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
@@ -1774,7 +1804,18 @@ SgProject::RunFrontend()
               }
               catch(...)
               {
-                  file->set_frontendErrorCode(100);
+                  if (file != NULL)
+                  {
+                     file->set_frontendErrorCode(100);
+                  }
+                  else
+                  {
+                      std::cout
+                          << "[FATAL] "
+                          << "Unable to keep going due to an unrecoverable internal error"
+                          << std::endl;
+                      exit(1);
+                  }
 
                   if (ROSE::KeepGoing::g_keep_going)
                   {
@@ -2002,8 +2043,20 @@ SgProject::parse()
                   << "Configured to keep going after catching a signal in "
                   << "SgFile::secondaryPassOverSourceFile()"
                   << std::endl;
-              file->set_frontendErrorCode(-1);
-              errorCode = std::max(1, errorCode);
+
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  errorCode = std::max(100, errorCode);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
           else
           {
@@ -3010,7 +3063,7 @@ global_build_classpath()
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
   // Java (ECJ front-end) support (adding specific jar file)
-     string ecj_jar_file_name = string("ecjROSE.jar");
+     string ecj_jar_file_name = string("ecj-3.8.jar");
      string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
 
@@ -3814,7 +3867,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-     if (this -> get_package() != NULL) { // Has this file been processed already? If so, ignore it.
+     if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
      }
 
@@ -3833,12 +3886,23 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
    string classpath = "";
    list<string> classpath_list = get_project()->get_Java_classpath();
    if (classpath_list.size()) {
-           list<string>::iterator i = classpath_list.begin();
-           classpath = (*i);
-           for (i++; i != classpath_list.end(); i++) {
-                   classpath += ":";
-                   classpath += (*i);
-           }
+       list<string>::iterator i = classpath_list.begin();
+       classpath = (*i);
+       for (i++; i != classpath_list.end(); i++) {
+           classpath += ":";
+           classpath += (*i);
+       }
+   }
+
+   string sourcepath = "";
+   list<string> sourcepath_list = get_project()->get_Java_sourcepath();
+   if (sourcepath_list.size()) {
+       list<string>::iterator i = sourcepath_list.begin();
+       sourcepath = (*i);
+       for (i++; i != sourcepath_list.end(); i++) {
+           sourcepath += ":";
+           sourcepath += (*i);
+       }
    }
 
    // Extract java's rose arguments
@@ -3911,19 +3975,22 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           javaCommandLine.push_back("-classpath");
           javaCommandLine.push_back(classpath);
 
+          javaCommandLine.push_back("-sourcepath");
+          javaCommandLine.push_back(sourcepath);
+
           // Specify warnings for javac compiler.
-          if (backendJavaCompiler == "javac")
-          {
-                  if (get_output_warnings() == true) {
-                          javaCommandLine.push_back("-Xlint");
-                  } else {
-                          javaCommandLine.push_back("-Xlint:none");
-                  }
+          if (backendJavaCompiler == "javac") {
+              if (get_output_warnings() == true) {
+                  javaCommandLine.push_back("-Xlint");
+              } else {
+                  javaCommandLine.push_back("-Xlint:none");
+              }
+              javaCommandLine.push_back("-proc:none");
           }
           else
           {
-                  printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
-                  ROSE_ASSERT(false);
+              printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+              ROSE_ASSERT(false);
           }
 
           javaCommandLine.push_back(get_sourceFileNameWithPath());
@@ -4025,7 +4092,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Setup the classpath and append the classes folder ecj outputs its temporary files to
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath + ":" + ecjDestDir);
+         frontEndCommandLine.push_back(classpath); //  + ":" + ecjDestDir);
+
+         frontEndCommandLine.push_back("-sourcepath");
+         frontEndCommandLine.push_back(sourcepath);
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -4528,9 +4598,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-// TODO: Remove this!  PC 07/03/2013
-//                    frontend_failed = (frontendErrorLevel > 0);
-                    this -> set_frontendErrorCode(frontendErrorLevel);
+                    this -> set_javacErrorCode(frontendErrorLevel);
                     frontendErrorLevel = 0; // PC: Always keep going for Java!
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
@@ -4922,12 +4990,12 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           //
           // If we are processing Java, ...
           //
-          if (get_Java_only() == true)
-             {
+          if (get_Java_only() == true) {
               //
               // Report if an error detected only while compilng the output file?
               //
-              if (this -> get_frontendErrorCode()                == 0 &&
+              if (this -> get_javacErrorCode()                   == 0 &&
+                  this -> get_frontendErrorCode()                == 0 &&
                   this -> get_project() -> get_midendErrorCode() == 0 &&
                   this -> get_unparserErrorCode()                == 0 &&
                   this -> get_backendCompilerErrorCode()         != 0) {
@@ -4939,25 +5007,34 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report Error or Success of this translation.
               //
-              if (this -> get_frontendErrorCode()                != 0 ||
-                  this -> get_project() -> get_midendErrorCode() != 0 ||
-                  this -> get_unparserErrorCode()                != 0 ||
-                  this -> get_backendCompilerErrorCode()         != 0)
-                 {
+              if (this -> get_javacErrorCode() != 0) {
+                  cout << "SYNTAX ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_frontendErrorCode()                != 0 ||
+                       this -> get_project() -> get_midendErrorCode() != 0 ||
+                       this -> get_unparserErrorCode()                != 0 ||
+                       this -> get_backendCompilerErrorCode()         != 0) {
                   cout << "ERROR compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-              else
-                 {
+              }
+              else {
                   cout << "SUCCESS compiling "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
-                 }
-             }
+              }
+
+              this -> set_javacErrorCode(0);           // keep going !!!
+              this -> set_frontendErrorCode(0);        // keep going !!!
+              this -> set_unparserErrorCode(0);        // keep going !!!
+              this -> set_backendCompilerErrorCode(0); // keep going !!!
           }
+         }
        else
         {
           if ( get_verbose() > 1 )
@@ -5025,6 +5102,48 @@ SgProject::compileOutput()
      int i = 0;
 
      std::string compilerName;
+
+  // DQ (1/19/2014): Adding support for gnu "-S" option.
+     if (get_stop_after_compilation_do_not_assemble_file() == true)
+        {
+       // DQ (1/19/2014): Handle special case (issue a single compile command for all files using the "-S" option).
+          vector<string> argv = get_originalCommandLineArgumentList();
+
+       // strip out any rose options before passing the command line.
+          SgFile::stripRoseCommandLineOptions( argv );
+
+       // strip out edg specific options that would cause an error in the backend linker (compiler).
+          SgFile::stripEdgCommandLineOptions( argv );
+
+          vector<string> originalCommandLine = argv;
+          ROSE_ASSERT (!originalCommandLine.empty());
+
+          string & compilerNameString = originalCommandLine[0];
+          if (get_C_only() == true)
+             {
+               compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
+             }
+            else
+             {
+               printf ("Error: GNU \"-S\" option is not supported for more than the C language in ROSE at present! \n");
+               ROSE_ASSERT(false);
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+          if ( SgProject::get_verbose() > 0 )
+             {
+               printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(originalCommandLine).c_str());
+             }
+
+          errorCode = systemFromVector(originalCommandLine);
+
+          return errorCode + linkingReturnVal;
+        }
+     
 
      if (numberOfFiles() == 0)
         {
@@ -5123,23 +5242,31 @@ SgProject::compileOutput()
 // case 2: compilation  for each file
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
-             {
-               SgFile & file = get_file(i);
-#if 0
-               printf ("In Project::compileOutput(%s): (in loop) get_file(%d).get_skipfinalCompileStep() = %s \n",compilerName,i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
-#endif
-            // printf ("In Project::compileOutput(): (TOP of loop) file = %d \n",i);
+          {
+              int localErrorCode = 0;
+              SgFile & file = get_file(i);
 
-            // DQ (8/13/2006): Only use the first file (I don't think this
-            // makes sense with multiple files specified on the commandline)!
-            // int localErrorCode = file.compileOutput(i, compilerName);
-            // int localErrorCode = file.compileOutput(0, compilerName);
-               int localErrorCode = file.compileOutput(0);
-               if (localErrorCode > errorCode)
-                    errorCode = localErrorCode;
+              if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
+              {
+                  std::cout
+                      << "[WARN] "
+                      << "Configured to keep going after catching a "
+                      << "signal in SgProject::compileOutput()"
+                      << std::endl;
 
-            // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
-             }
+                  localErrorCode = 100;
+                  file.set_backendCompilerErrorCode(localErrorCode);
+              }
+              else
+              {
+                  localErrorCode = file.compileOutput(0);
+              }
+
+              if (localErrorCode > errorCode)
+              {
+                  errorCode = localErrorCode;
+              }
+          }
 
        // case 3: linking at the project level
           if (! (get_Java_only()   ||

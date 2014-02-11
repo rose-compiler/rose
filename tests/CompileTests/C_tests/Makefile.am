@@ -418,6 +418,53 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_37.c \
      test2014_38.c \
      test2014_39.c \
+     test2014_40.c \
+     test2014_41.c \
+     test2014_42.c \
+     test2014_43.c \
+     test2014_44.c \
+     test2014_46.c \
+     test2014_47.c \
+     test2014_48.c \
+     test2014_49.c \
+     test2014_50.c \
+     test2014_51.c \
+     test2014_52.c \
+     test2014_53.c \
+     test2014_55.c \
+     test2014_56.c \
+     test2014_57.c \
+     test2014_58.c \
+     test2014_60.c \
+     test2014_62.c \
+     test2014_63.c \
+     test2014_64.c \
+     test2014_65.c \
+     test2014_66.c \
+     test2014_67.c \
+     test2014_68.c \
+     test2014_69.c \
+     test2014_70.c \
+     test2014_72.c \
+     test2014_76.c \
+     test2014_77.c \
+     test2014_78.c \
+     test2014_79.c \
+     test2014_80.c \
+     test2014_81.c \
+     test2014_82.c \
+     test2014_83.c \
+     test2014_84.c \
+     test2014_85.c \
+     test2014_86.c \
+     test2014_87.c \
+     test2014_88.c \
+     test2014_89.c \
+     test2014_91.c \
+     test2014_92.c \
+     test2014_93.c \
+     test2014_94.c \
+     test2014_95.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -431,10 +478,19 @@ TESTCODES_REQUIRED_TO_PASS = \
      constants.c
 
 # DQ (1/5/2014): Some failing test codes:
-#     test2014_03.c  demonstrates nested functions (not supported in EDG).
-#     test2014_10.c  demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation.
-#     test2014_11.c  (simpler case of test2014_10.c.
-#     test2014_29.c  This is the test of function prototypes without parameters used for functions with parametes (C only).
+#     test2014_03.c  (demonstrates nested functions (not supported in EDG))
+#     test2014_10.c  (demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation)
+#     test2014_11.c  (simpler case of test2014_10.c)
+#     test2014_45.c  (inconsitant function declarations, but consistant through typedefs)
+#     test2014_54.c  (old-stype C function parameters in wrong order, appears to be legal C but a problem for ROSE)
+#     test2014_59.c  (complex macro handling where variables are named using the __LINE__ macro)
+#     test2014_61.c  (example of assigned goto (gnu extension))
+#     test2014_71.c  (macro namespace intrudes into application namespace (macro suppression using "()")
+#     test2014_73.c  (example of anonymous union in an initializer)
+#     test2014_74.c  (another example similar to test2014_73.c)
+#     test2014_75.c  (incomplete code from application example, will not compile with gcc).
+#     test2014_90.c  (asm command that is incomplete -- the version built using CPP is in test2014_91.c).
+
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 
@@ -683,6 +739,13 @@ test_tokenMapping:
 #	@$(MAKE) test2003_12.c.mapping.passed
 	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
 
+# DQ (1/19/2014): Test the use of the gnu "-S" option.
+test_gnu_S_option:
+	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/CompileTests/C_tests/test2014_41.c
+
+test_link_using_alias_attribute: $(testTranslator)
+	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -735,6 +798,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_link_using_alias_attribute
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed

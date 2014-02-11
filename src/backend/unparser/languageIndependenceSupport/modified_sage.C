@@ -1669,10 +1669,13 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
      short alignmentValue = initializedName->get_gnu_attribute_alignment();
      if (alignmentValue >= 0)
         {
+#if 0
+          curprint(" /* alignment attribute on SgInitializedName */ ");
+#endif
        // curprint( " __attribute__((align(N)))");
-           curprint( " __attribute__((align(");
-           curprint(StringUtility::numberToString((int)alignmentValue));
-           curprint("))) ");
+          curprint( " __attribute__((align(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint("))) ");
         }
    }
 
@@ -1702,10 +1705,6 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
              {
             // curprint(" /* from printAttributesForType(SgDeclarationStatement*) */ __attribute__((packed))");
                curprint(" __attribute__((packed))");
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
         }
 
@@ -1718,10 +1717,19 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
           if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
              {
                curprint(" __attribute__((noreturn))");
+             }
+
+       // DQ (2/7/2014): attribute set using: decl->get_functionModifier().set_gnu_attribute_named_alias(alias_name);
+          if (functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias().empty() == false)
+             {
+               string alias = functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias();
 #if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               printf ("Detected alias attribute: alias = %s \n",alias.c_str());
 #endif
+            // curprint(" __attribute__((noreturn))");
+               curprint(" __attribute__((alias(\"");
+               curprint(alias);
+               curprint("\")))");
              }
         }
    }
@@ -1758,6 +1766,9 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      if (alignmentValue >= 0)
         {
+#if 0
+          curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
+#endif
        // curprint(" __attribute__((align(N)))");
           curprint(" __attribute__((align(");
           curprint(StringUtility::numberToString((int)alignmentValue));
@@ -1988,6 +1999,9 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
           if (gnu_regparm_value > 0)
              {
                string s = StringUtility::numberToString(gnu_regparm_value);
+#if 1
+               printf ("Output __attribute__((regparm(%s))) for function = %p = %s = %s \n",s.c_str(),functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
                curprint(" __attribute__((regparm(");
                curprint(s);
 

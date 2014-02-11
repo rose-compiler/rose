@@ -26,14 +26,28 @@ void AstPostProcessing (SgNode* node)
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST post-processing:");
 
+     ROSE_ASSERT(node != NULL);
+
   // printf ("Inside of AstPostProcessing(node = %p) \n",node);
+
+  // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
+  // Later I want to change the function's API to onoy take a SgProject.  Note that this is 
+  // related to a performance bug that was fixed by Gergo a few years ago.  The fix could be
+  // improved by enforcing that this could not be called at the SgFile level of the hierarchy.
+     if (isSgProject(node) == NULL)
+        {
+          printf ("Error: AstPostProcessing should only be called on SgProject (due to repeated memory pool traversals when multiple files are specified on the command line). node = %s \n",node->class_name().c_str());
+        }
+  // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
+  //      tests/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
+  // ROSE_ASSERT(isSgProject(node) != NULL);
 
   // DQ (3/17/2007): This should be empty
      if (SgNode::get_globalMangledNameMap().size() != 0)
         {
           if (SgProject::get_verbose() > 0)
              {
-               printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->sage_class_name(),SageInterface::get_name(node).c_str());
+                printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->class_name().c_str(),SageInterface::get_name(node).c_str());
                printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
              }
 
@@ -106,7 +120,7 @@ void AstPostProcessing (SgNode* node)
                SgBinaryComposite* file = isSgBinaryComposite(node);
                ROSE_ASSERT(file != NULL);
 
-               printf ("AstPostProcessing of SgBinaryFile \n");
+               printf ("Error: AstPostProcessing of SgBinaryFile is not defined \n");
                ROSE_ASSERT(false);
 
                break;
@@ -336,7 +350,49 @@ void postProcessingSupport (SgNode* node)
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
 #if 1
-          resetConstantFoldedValues(node);
+       // DQ (1/28/2014): This is mostly neeed for C++ so that name qualification will be handled on 
+       // the original expression trees.  This function replaces the constant folded values with the
+       // original expression trees so that the support for them is seamless.
+       // resetConstantFoldedValues(node);  Avoiding this function for C dramatically improves the 
+       // performance on the C application "wireshark" but does not make much difference elsewhere.
+       // Since it is not required for C we can just skip it.
+#if 0
+          if (SageInterface::is_Cxx_language() == true)
+             {
+               resetConstantFoldedValues(node);
+             }
+#else
+          SgProject* project = isSgProject(node);
+#if 0
+          printf ("In postProcessingSupport: project = %p \n",project);
+#endif
+          if (project != NULL)
+             {
+            // DQ (1/31/2014):  This is a performance optimization: for wireshark: 
+            // packet-gmr1_rr.c, packet-gmr1_common.c, packet-gopher.c, packet-gsm_a_rp.c,
+            // packet-gsm_a_dtap.c, packet-gpef.c, packet-gsm_a_bssmap.c, packet-gsm_a_gm.c,
+            // packet-gprs-llc.c, packet-gnutella.c, packet-gre.c.
+#if 0
+               printf ("In postProcessingSupport: project->get_suppressConstantFoldingPostProcessing() = %s \n",project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
+#endif
+               if (project->get_suppressConstantFoldingPostProcessing() == false)
+                  {
+                 // DQ (1/28/2014): I think we might require this for the OMP support to work (testing).
+                    resetConstantFoldedValues(node);
+                  }
+                 else
+                  {
+                    printf ("In postProcessingSupport: skipping call to resetConstantFoldedValues(): project->get_suppressConstantFoldingPostProcessing() = %s \n",project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
+                  }
+             }
+            else
+             {
+            // DQ (1/31/2014): I don't think we can make this an error: called by some tests in: 
+            //      tests/roseTests/astRewriteTests/.libs/testIncludeDirectiveInsertion
+               printf ("Error: postProcessingSupport should not be called for non SgProject IR nodes \n");
+            // ROSE_ASSERT(false);
+             }
+#endif
 #else
        // DQ (10/11/2012): This is helpful to allow us to see both expression trees in the AST for debugging.
           printf ("Skipping AST Postprocessing resetConstantFoldedValues() \n");
