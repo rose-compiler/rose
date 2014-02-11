@@ -39,7 +39,7 @@ SgAsmM68kInstruction::terminates_basic_block()
     }
 }
 
-// see base class
+// see base class; don't modify target_va or return_va if they are not known
 bool
 SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
                                        rose_addr_t *return_va)
@@ -52,8 +52,7 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
 
     // Quick method based only on the kind of instruction
     if (m68k_bsr==last->get_kind() || m68k_jsr==last->get_kind()) {
-        bool is_branch __attribute__((unused)) = last->get_branch_target(target_va);
-        assert(is_branch);
+        last->get_branch_target(target_va); // only modifies target_va if it can be determined
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
@@ -127,9 +126,11 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         case m68k_bsr: {
             // Conditional branches
             rose_addr_t target_va;
-            bool is_branch __attribute__((unused)) = get_branch_target(&target_va);
-            assert(is_branch);
-            retval.insert(target_va);
+            if (get_branch_target(&target_va)) {
+                retval.insert(target_va);
+            } else {
+                *complete = false;
+            }
             retval.insert(get_address() + get_size());
             break;
         }
@@ -139,9 +140,11 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         case m68k_jsr: {
             // Unconditional branches
             rose_addr_t target_va;
-            bool is_branch __attribute__((unused)) = get_branch_target(&target_va);
-            assert(is_branch);
-            retval.insert(target_va);
+            if (get_branch_target(&target_va)) {
+                retval.insert(target_va);
+            } else {
+                *complete = false;
+            }
             break;
         }
 
@@ -179,7 +182,8 @@ SgAsmM68kInstruction::get_branch_target(rose_addr_t *target)
             const SgAsmExpressionPtrList &args = get_operandList()->get_operands();
             assert(1==args.size());
             SgAsmIntegerValueExpression *target_expr = isSgAsmIntegerValueExpression(args[0]);
-            assert(target_expr!=NULL);
+            if (!target_expr)
+                return false;
             if (target)
                 *target = target_expr->get_absolute_value();
             return true;

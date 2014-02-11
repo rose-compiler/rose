@@ -384,6 +384,7 @@ set( roseAsmUnparser_SRC
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseX86Asm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseArmAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparsePowerpcAsm.C 
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseM68kAsm.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseMipsAsm.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser_compat.C
