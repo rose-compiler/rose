@@ -4,6 +4,7 @@
 #include <cassert>
 #include <limits>
 #include <boost/static_assert.hpp>
+#include <boost/optional.hpp>
 
 namespace IntegerOpsPrivate {
 
@@ -297,6 +298,18 @@ inline size_t countClear(T val)
     return retval;
 }
 
+/** Optionally returns the zero-origin position of the most significant set bit.  Returns nothing if no bits are set. */
+template<typename T>
+inline boost::optional<size_t> msb_set(T val)
+{
+    if (val!=0) {
+        for (size_t bitno = 8*sizeof(T); bitno>0; --bitno) {
+            if (0 != (val & shl1<T>(bitno-1)))
+                return boost::optional<size_t>(bitno-1);
+        }
+    }
+    return boost::optional<size_t>();
+}
 
 } // namespace
 #endif // ROSE_INTEGEROPS_H
