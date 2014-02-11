@@ -83,6 +83,15 @@ public:
     size_t nwords() const {
         return mask.size();
     }
+
+    /** Returns the size of the pattern in bits.  If the pattern has no significant bits, then zero is returned. Otherwise the
+     * return value is the one-origin position of the most significant bit of the pattern mask. */
+    size_t width() const {
+        if (0==mask.size())
+            return 0;
+        assert(mask.back()!=0);
+        return 8*sizeof(T)*mask.size() + IntegerOps::msb_set(mask.back()).get();
+    }
     
     /** Returns the number of alternatives. Returns zero if the pattern is empty. */
     size_t nalternatives() const {
@@ -182,6 +191,45 @@ public:
         return insert(msk, value, wordnum);
     }
 
+    /** Return a new BitPattern with the pattern bits shifted left by the indicated amount. This function current only handles
+     *  shift amounts that are a multiple of the word size for this pattern in order to keep the implementation simple. */
+    BitPattern shift_left(size_t nbits) const {
+        if (0==nbits || patterns.empty())
+            return *this;
+        static const size_t word_size = 8*sizeof(T);
+        size_t need_nbits = width() + nbits;
+        size_t need_nwords = (need_nbits + word_size - 1) / word_size;
+        size_t word_delta = nbits / word_size;
+        size_t bit_delta_lt = nbits % word_size;
+        size_t bit_delta_rt = word_size - bit_delta_lt;
+
+        BitPattern retval;
+
+        // shift the mask
+        retval.mask.resize(need_nwords, 0);
+        for (size_t i=mask.size(); i>0; --i) {
+            retval.mask[i+word_delta] |= IntegerOps::shiftLeft2(mask[i], bit_delta_lt);
+            if (i+word_delta+1<retval.mask.size()) {
+                retval.mask[i+word_delta+1] = IntegerOps::shiftRightLogical2(mask[i], bit_delta_rt) &
+                                              IntegerOps::genMask<T>(bit_delta_lt);
+            }
+        }
+
+        // shift each pattern
+        retval.patterns.resize(patterns.size());
+        for (size_t i=0; i<patterns.size(); ++i) {
+            retval.patterns[i].resize(need_nwords, 0);
+            for (size_t j=0; j<patterns[i].size(); ++j) {
+                retval.patterns[i][j+word_delta] |= IntegerOps::shiftLeft2(patterns[i][j], bit_delta_lt);
+                if (j+word_delta+1<retval.patterns[i].size()) {
+                    retval.patterns[i][j+word_delta+1] = IntegerOps::shiftRightLogical2(patterns[i][j], bit_delta_rt) &
+                                                         IntegerOps::genMask<T>(bit_delta_lt);
+                }
+            }
+        }
+        return retval;
+    }
+    
     /** Combines this BitPattern with another by forming their conjunction. After this operation, this BitPattern will match
      *  values where both original patterns matched the value.  The two original bit patterns need not have the same mask; in
      *  fact, it's most useful when their masks don't overlap. Either (or both) original patterns can have multiple
