@@ -1562,6 +1562,7 @@ main(int argc, char *argv[])
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
         CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
+        unparser.set_registers(disassembler->get_registers());
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
