@@ -1805,13 +1805,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
         printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
 
     // This is already setup by ROSE as part of basic file initialization before calling ECJ.
-    ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+    ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
     if (SgProject::get_verbose() > 0)
-        printf ("OpenFortranParser_globalFilePointer = %s \n", OpenFortranParser_globalFilePointer -> class_name().c_str());
+        printf ("Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = %s \n", Rose::Frontend::Java::Ecj::Ecj_globalFilePointer -> class_name().c_str());
     // TODO: We need the next line for EDG4 [DONE]
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
-    SgSourceFile *sourcefile = isSgSourceFile(OpenFortranParser_globalFilePointer);
+    SgSourceFile *sourcefile = isSgSourceFile(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer);
     ROSE_ASSERT(sourcefile != NULL);
     ::project = sourcefile -> get_project();
     ROSE_ASSERT(::project);
@@ -2013,7 +2013,7 @@ cout.flush();
     env -> ReleaseStringUTFChars(java_filename, absolutePathFilename);
 
     // This is already setup by ROSE as part of basic file initialization before calling ECJ.
-    ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+    ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
 
 // TODO: Remove this! 12/09/13
 //    astJavaComponentStack.push(astJavaScopeStack.top()); // To mark the end of the list of components in this Compilation unit.
@@ -6723,3 +6723,4 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv *env, jclass, j
     if (SgProject::get_verbose() > 2)
         printf ("Exiting cactionWildcardEnd \n");
 }
+

@@ -14,6 +14,8 @@
 #include "jni_token.h"
 #include "Utf8.h"
 
+using namespace Rose::Frontend::Java::Ecj;
+
 SgProject *project = NULL;
 SgGlobal *globalScope = NULL;
 SgSourceFile *currentSourceFile = NULL;
@@ -507,9 +509,9 @@ bool isCompatibleTypes(SgType *source_type, SgType *target_type) {
         target_type = isSgJavaParameterizedType(target_type) -> get_raw_type();
 
     if (isSgTypeString(source_type))
-        source_type = StringClassType;
+        source_type = ::StringClassType;
     if (isSgTypeString(target_type))
-        target_type = StringClassType;
+        target_type = ::StringClassType;
 
     return source_type == target_type;
 }
@@ -548,7 +550,7 @@ string getPrimitiveTypeName(SgType *type) {
         type_name = "void";
     }
     else if (isSgTypeString(type)) {
-        type_name = getTypeName(StringClassType);
+        type_name = getTypeName(::StringClassType);
     }
     else {
         ROSE_ASSERT(type);
@@ -2505,3 +2507,4 @@ SgScopeStatement *get_scope_from_symbol(SgSymbol *symbol) {
     return currentScope;
 }
 */
+

@@ -91,7 +91,7 @@ int openFortranParser_main(int argc, char **argv)
     fortran_error_handler_begin();
 #endif
 
-    int status = jvm_ofp_processing(argc, argv);
+    int status = Rose::Frontend::Fortran::Ofp::jvm_ofp_processing(argc, argv);
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_end();

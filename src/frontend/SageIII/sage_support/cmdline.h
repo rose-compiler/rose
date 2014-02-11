@@ -13,7 +13,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage_support.h"
 
-namespace SageSupport {
+namespace Rose {
 namespace Cmdline {
   /** Constants to be used with CommandlineProcessing::isOptionWithParameter
    *  to specify the removeOption argument.
@@ -23,9 +23,12 @@ namespace Cmdline {
     REMOVE_OPTION_FROM_ARGV = 1   ///< Remove the CLI option from the input argv
   };
 
-  static void
-  makeSysIncludeList(const Rose_STL_Container<string> &dirs,
-                     Rose_STL_Container<string> &result);
+  extern int verbose;
+
+  void
+  makeSysIncludeList(
+      const Rose_STL_Container<string> &dirs,
+      Rose_STL_Container<string> &result);
 
   //! Convert `-I <path>` to `-I<path>`
   //
@@ -43,14 +46,76 @@ namespace Cmdline {
   std::vector<std::string>
   NormalizeIncludePathOptions (std::vector<std::string>& argv);
 
+  /** Removes "-rose:" options, or transforms them into their associated
+   *  compiler options.
+   *
+   *  For example,
+   *
+   *      -rose:java:classpath "/some/class/path"
+   *
+   *      becomes
+   *
+   *      -classpath "/some/class/path"
+   *
+   *  Whereas, this ROSE-only option is completely removed:
+   *
+   *      -rose:verose 3
+   */
   void
   StripRoseOptions (std::vector<std::string>& argv);
 
   void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
+  namespace Fortran {
+    static const std::string option_prefix = "-rose:fortran:";
+
+    /** @returns true if the Java option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
+
+    /** Process all Fortran commandline options.
+     */
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    // -rose:fortran
+    void
+    ProcessFortranOnly (SgProject* project, std::vector<std::string>& argv);
+
+    /** Targeted for src/frontend/OpenFortranParser_SAGE_Connection/jserver.C,
+     */
+    namespace Ofp {
+      extern std::list<std::string> jvm_options;
+
+      void
+      StripRoseOptions (std::vector<std::string>& argv);
+
+      std::string
+      GetRoseClasspath();
+
+      void
+      Process (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:fortran:ofp:jvm_options
+       */
+      void
+      ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:fortran:ofp:enable_remote_debugging
+       *  Enable remote debugging of the Java Virtual Machine (JVM).
+       */
+      void
+      ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
+    } // namespace Rose::Cmdline::Fortran::OpenFortranParser
+  } // namespace Rose::Cmdline::Fortran
+
   namespace Java {
-    static std::string option_prefix = "-rose:java:";
+    static const std::string option_prefix = "-rose:java:";
 
     /** @returns true if the Java option requires a user-specified argument.
      */
@@ -157,14 +222,16 @@ namespace Cmdline {
     void
     ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv);
 
-    /** Enable remote debugging of the Java Virtual Machine (JVM).
+    /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
-    void
-    ProcessRemoteDebug (SgProject* project, std::vector<std::string>& argv);
-
     namespace Ecj {
+      extern std::list<std::string> jvm_options;
+
       void
       StripRoseOptions (std::vector<std::string>& argv);
+
+      std::string
+      GetRoseClasspath();
 
       void
       Process (SgProject* project, std::vector<std::string>& argv);
@@ -173,8 +240,14 @@ namespace Cmdline {
        */
       void
       ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:java:ecj:enable_remote_debugging
+       *  Enable remote debugging of the Java Virtual Machine (JVM).
+       */
+      void
+      ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     }
-  } // namespace SageSupport::Cmdline::Java
+  } // namespace Rose::Cmdline::Java
 
   namespace X10 {
     static std::string option_prefix = "-rose:x10:";
@@ -185,9 +258,9 @@ namespace Cmdline {
     // -rose:x10
     void
     ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
-  } // namespace SageSupport::Cmdline::X10
+  } // namespace Rose::Cmdline::X10
 
-} // namespace SageSupport::Cmdline
-} // namespace SageSupport
+} // namespace Rose::Cmdline
+} // namespace Rose
 #endif // ROSE_SAGESUPPORT_CMDLINE_H
 

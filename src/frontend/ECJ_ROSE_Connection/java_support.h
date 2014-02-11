@@ -1,6 +1,9 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
+#include "jni_JavaSourceCodePosition.h"
+#include "token.h"
+
 using namespace std;
 
 extern SgProject *project;
@@ -12,11 +15,17 @@ extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
 extern SgName java_lang;
 
-// This is used for both Fortran and Java support to point to the current SgSourceFile.
-extern SgSourceFile *OpenFortranParser_globalFilePointer;
 
-#include "jni_JavaSourceCodePosition.h"
-#include "token.h"
+namespace Rose {
+namespace Frontend {
+namespace Java {
+namespace Ecj {
+  // support to point to the current SgSourceFile.
+  extern SgSourceFile *Ecj_globalFilePointer;
+}// ::Rose::Frontend::Java::Ecj
+}// ::Rose::Frontend::Java
+}// ::Rose::Frontend
+}// ::Rose
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
