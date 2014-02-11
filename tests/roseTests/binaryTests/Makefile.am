@@ -210,16 +210,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Disassemble a file containing bare instructions
-noinst_PROGRAMS += disassembleBuffer
-disassembleBuffer_SOURCES = disassembleBuffer.C
-disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += disassembleBuffer.passed
-EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
-disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
-	@$(RTH_RUN) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
-
-
 noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
