@@ -5,6 +5,7 @@
 #include "stringify.h"
 #include "sageBuilderAsm.h"
 
+using namespace rose;
 using namespace IntegerOps;
 
 typedef BitPattern<uint16_t> Pattern;
