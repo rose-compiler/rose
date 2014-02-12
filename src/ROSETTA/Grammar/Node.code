@@ -91,6 +91,7 @@ public:
 	void allocate_at(const Extent &request);
 	Extent allocate_best_fit(const rose_addr_t size);
 	Extent allocate_first_fit(const rose_addr_t size);
+	void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
 	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
