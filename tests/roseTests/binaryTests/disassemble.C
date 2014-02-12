@@ -187,11 +187,16 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
+#include "Diagnostics.h"
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::Diagnostics;
+using namespace StringUtility;
+
+static Sawyer::Message::Facility mlog("tool");          // diagnostics at the tool level; further initialization in main()
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -225,7 +230,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     try {
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
-            ROSE_ASSERT(insn!=NULL);
+            ASSERT_not_null(insn);
             semantics.processInstruction(insn);
         }
     } catch (const Semantics::Exception&) {
@@ -264,7 +269,7 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
     const SgAsmStatementPtrList &stmts = func->get_statementList();
     for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
         SgAsmBlock *bb = isSgAsmBlock(*si);
-        ROSE_ASSERT(bb!=NULL);
+        ASSERT_not_null2(bb, "SgAsmFunction should contain basic blocks");
         unsigned char bb_digest[20];
         if (block_hash(bb, bb_digest)) {
             std::string key = digest_to_str(bb_digest);
@@ -339,7 +344,7 @@ private:
         bool operator()(bool enabled, const BasicBlockArgs &args) {
             unsigned char sha1[20];
             if (enabled && block_hash(args.block, sha1))
-                args.output <<StringUtility::addrToString(args.block->get_address()) <<": " <<digest_to_str(sha1) <<"\n";
+                args.output <<addrToString(args.block->get_address()) <<": " <<digest_to_str(sha1) <<"\n";
             return enabled;
         }
     };
@@ -350,7 +355,7 @@ private:
         bool operator()(bool enabled, const FunctionArgs &args) {
             unsigned char sha1[20];
             if (enabled && function_hash(args.func, sha1)) {
-                args.output <<StringUtility::addrToString(args.func->get_entry_va())
+                args.output <<addrToString(args.func->get_entry_va())
                             <<": ============================ " <<digest_to_str(sha1) <<"\n";
             }
             return enabled;
@@ -406,7 +411,7 @@ private:
             SgAsmBlock *idom = args.block->get_immediate_dominator();
             if (enabled && idom)
                 args.output <<args.unparser->line_prefix()
-                            <<"Dominator block: " <<StringUtility::addrToString(idom->get_address()) <<"\n";
+                            <<"Dominator block: " <<addrToString(idom->get_address()) <<"\n";
             return enabled;
         }
     };
@@ -480,7 +485,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                     } else {
                         semantics_seen.insert(sha1_str);
                     }
-                    args.output <<"B" <<StringUtility::addrToString(args.block->get_address()) <<" [ label=<<table border=\"0\"";
+                    args.output <<"B" <<addrToString(args.block->get_address()) <<" [ label=<<table border=\"0\"";
                     SgAsmFunction *func = args.block->get_enclosing_function();
                     if (func && args.block->get_address()==func->get_entry_va())
                         args.output <<" bgcolor=\"lightskyblue1\"";
@@ -501,7 +506,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                         bool is_noop = i<args.unparser->insn_is_noop.size() && args.unparser->insn_is_noop[i];
                         args.output <<"<tr>"
                                     <<"<td align=\"left\"" <<(is_noop?" bgcolor=\"gray50\"":"") <<">"
-                                    <<StringUtility::htmlEscape(ss.str())
+                                    <<htmlEscape(ss.str())
                                     <<"</td></tr>";
                     }
                 }
@@ -516,7 +521,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                     SgAsmFunction *func = args.block->get_enclosing_function();
                     args.output <<"</table>>";
                     if (!args.block->get_successors_complete()) {
-                        assert(!args.block->get_statementList().empty());
+                        ASSERT_forbid2(args.block->get_statementList().empty(), "basic blocks should not be empty");
                         SgAsmInstruction *last_insn = isSgAsmInstruction(args.block->get_statementList().back());
                         if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
                             args.output <<", color=blue"; /*function return statement, not used as an unconditional branch*/
@@ -638,9 +643,9 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
 
     char func_node_name[64];
     sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
-    fprintf(stderr, " %s", func_node_name);
+    mlog[TRACE] <<"dumping graphviz file for function " <<func_node_name <<"\n";
     FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
-    ROSE_ASSERT(out!=NULL);
+    ASSERT_not_null2(out, "cannot open file: " + fileprefix+"-"+func_node_name+".dot");
     std::stringstream sout;
     sout <<"digraph " <<func_node_name <<" {\n"
          <<"  node [ shape = box ];\n";
@@ -749,7 +754,7 @@ dump_CFG_CG(SgNode *ast)
     sout <<"}\n";
     {
         FILE *out = fopen((filename + "-cg.dot").c_str(), "w");
-        assert(out!=NULL);
+        ASSERT_not_null2(out, "cannot open file: " + filename + "-cg.dot");
         fputs(sout.str().c_str(), out);
         fclose(out);
     }
@@ -760,8 +765,6 @@ dump_CFG_CG(SgNode *ast)
         if (0 == ((*fi)->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
             dump_function_cfg(filename, *fi, global_cfg);
     }
-
-    fprintf(stderr, "\n");
 }
 
 /* Returns true for any anonymous memory region containing more than a certain size. */
@@ -769,8 +772,8 @@ static rose_addr_t large_anonymous_region_limit = 8192;
 static struct LargeAnonymousRegion: public MemoryMap::Visitor {
     virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
         if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
-            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                    range.first(), range.size(), range.last()+1);
+            mlog[INFO] <<"ignoring zero-mapped memory at va " + addrToString(range.first()) <<" + "
+                       <<addrToString(range.size()) <<" = " <<addrToString(range.last()+1) <<"\n";
             return true;
         }
         return false;
@@ -812,6 +815,14 @@ main(int argc, char *argv[])
     unsigned protection = MemoryMap::MM_PROT_EXEC;
 
     /*------------------------------------------------------------------------------------------------------------------------
+     * Initialize ROSE and our own logging.  Our logging facility, "log", is tied into the librose logging facility so it
+     * can be controlled by the same command-line switches that control ROSE.
+     *------------------------------------------------------------------------------------------------------------------------*/
+    rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
+    mlog.initStreams(rose::Diagnostics::destination);
+    rose::Diagnostics::facilities.insertAndAdjust(mlog);
+
+    /*------------------------------------------------------------------------------------------------------------------------
      * Parse and remove the command-line switches intended for this executable, but leave the switches we don't
      * understand so they can be handled by ROSE if frontend() is called.
      *------------------------------------------------------------------------------------------------------------------------*/
@@ -822,10 +833,10 @@ main(int argc, char *argv[])
     new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
     for (int i=1; i<argc; i++) {
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
-            fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
+            mlog[ERROR] <<"search-related switches have been moved into ROSE's -rose:disassembler_search switch\n";
             exit(1);
         } else if (!strcmp(argv[i], "--link")) {
-            fprintf(stderr, "%s: --link switch requires library paths (see --help)\n", arg0);
+            mlog[ERROR] <<"--link switch requires library paths (see --help)\n";
             exit(1);
         } else if (!strncmp(argv[i], "--link=", 7)) {
             if (!strcmp(argv[i]+7, "no")) {
@@ -833,7 +844,7 @@ main(int argc, char *argv[])
             } else {
                 do_link = true;
                 std::vector<std::string> dirs;
-                StringUtility::splitStringIntoStrings(argv[i]+7, ':', dirs/*out*/);
+                splitStringIntoStrings(argv[i]+7, ':', dirs/*out*/);
                 library_paths.insert(library_paths.end(), dirs.begin(), dirs.end());
             }
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
@@ -844,7 +855,7 @@ main(int argc, char *argv[])
             char *rest;
             rebase_va = strtoull(argv[i]+10, &rest, 0);
             if (rest && *rest) {
-                fprintf(stderr, "%s: invalid value for --base-va switch: %s\n", arg0, argv[i]+10);
+                mlog[ERROR] <<"invalid value for --base-va switch: " <<(argv[i]+10) <<"\n";
                 exit(1);
             }
             do_rebase = true;
@@ -882,7 +893,7 @@ main(int argc, char *argv[])
             do_omit_anon = true;
             large_anonymous_region_limit = 1024 * strtoull(argv[i]+12, &rest, 0);
             if (rest && *rest) {
-                fprintf(stderr, "%s: invalid value for --omit-anon switch: %s\n", arg0, argv[i]+12);
+                mlog[ERROR] <<"invalid value for --omit-anon switch: " <<(argv[i]+12) <<"\n";
                 exit(1);
             }
         } else if (!strcmp(argv[i], "--no-omit-anon")) {
@@ -898,7 +909,7 @@ main(int argc, char *argv[])
                     case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
                     case '-': break;
                     default:
-                        fprintf(stderr, "%s: invalid --protection bit: %c\n", arg0, *s);
+                        mlog[ERROR] <<"invalid --protection bit: " <<*s <<"\n";
                         exit(1);
                 }
             }
@@ -906,7 +917,7 @@ main(int argc, char *argv[])
             new_argv[new_argc++] = strdup("--help");
             do_rose_help = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
-            fprintf(stderr, "%s: --skip-dos has been replaced by --no-dos, which is now the default.\n", arg0);
+            mlog[WARN] <<"--skip-dos has been replaced by --no-dos, which is now the default.\n";
             do_dos = false;
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
@@ -935,7 +946,7 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--raw") || !strncmp(argv[i], "--raw=", 6)) {
             char *s = !strncmp(argv[i], "--raw=", 6) ? argv[i]+6 : (i+1<argc ? argv[++i] : NULL);
             if (!s || !*s) {
-                fprintf(stderr, "%s: raw entry address(es) expceted for --raw switch\n", arg0);
+                mlog[ERROR] <<"raw entry address(es) expceted for --raw switch\n";
                 exit(1);
             }
             while (*s) {
@@ -943,7 +954,7 @@ main(int argc, char *argv[])
                 errno = 0;
                 rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
                 if (rest==s || errno!=0) {
-                    fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
+                    mlog[ERROR] <<"raw entry address expected at: " <<s <<"\n";
                     exit(1);
                 }
                 raw_entries.insert(raw_entry_va);
@@ -956,24 +967,24 @@ main(int argc, char *argv[])
             errno = 0;
             rose_addr_t va = strtoull(argv[i]+10, &rest, 0);
             if (errno || rest==argv[i]+10) {
-                fprintf(stderr, "%s: expected an address for the --reserve switch\n", arg0);
+                mlog[ERROR] <<"expected an address for the --reserve switch\n";
                 exit(1);
             }
             char *s = rest;
             while (isspace(*s)) ++s;
             if (','!=*s++) {
-                fprintf(stderr, "%s: comma expected between address and size for --reserve switch\n", arg0);
+                mlog[ERROR] <<"comma expected between address and size for --reserve switch\n";
                 exit(1);
             }
             errno = 0;
             rose_addr_t size = strtoull(s, &rest, 0);
             if (errno || rest==s) {
-                fprintf(stderr, "%s: expected a size after the address for --reserve switch\n", arg0);
+                mlog[ERROR] <<"expected a size after the address for --reserve switch\n";
                 exit(1);
             }
             while (isspace(*rest)) ++rest;
             if (*rest) {
-                fprintf(stderr, "%s: extra text after --reserve size\n", arg0);
+                mlog[ERROR] <<"extra text after --reserve size\n";
                 exit(1);
             }
             reserved.insert(Extent(va, size));
@@ -987,17 +998,17 @@ main(int argc, char *argv[])
             } else if (!strcmp(argv[i]+11, "none")) {
                 do_syscall_names = false;
             } else {
-                fprintf(stderr, "%s: bad value for --syscalls switch: %s\n", arg0, argv[i]+11);
+                mlog[ERROR] <<"bad value for --syscalls switch: " <<(argv[i]+11) <<"\n";
                 exit(1);
             }
         } else if (!strcmp(argv[i], "-rose:disassembler_search")) {
             /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
+            ASSERT_require(i+1<argc);
             try {
                 disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
             } catch (const Disassembler::Exception &e) {
-                std::cerr <<"disassembler exception: " <<e <<"\n";
+                mlog[ERROR] <<"disassembler exception: " <<e <<"\n";
                 exit(1);
             }
             new_argv[new_argc++] = argv[i++];
@@ -1005,11 +1016,11 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "-rose:partitioner_search")) {
             /* Keep track of partitioner heuristics because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
+            ASSERT_require(i+1<argc);
             try {
                 partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
             } catch (const Partitioner::Exception &e) {
-                std::cerr <<"partitioner exception: " <<e <<"\n";
+                mlog[ERROR] <<"partitioner exception: " <<e <<"\n";
                 exit(1);
             }
             new_argv[new_argc++] = argv[i++];
@@ -1017,7 +1028,7 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "-rose:partitioner_config")) {
             /* Keep track of partitioner configuration file name because we need it even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
+            ASSERT_require(i+1<argc);
             partitioner_config = argv[i+1];
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
@@ -1041,7 +1052,7 @@ main(int argc, char *argv[])
                 try {
                     raw_map.load(basename);
                 } catch (const MemoryMap::Exception &e) {
-                    std::cerr <<e <<"\n";
+                    mlog[ERROR] <<e <<"\n";
                     exit(1);
                 }
             } else {
@@ -1050,14 +1061,14 @@ main(int argc, char *argv[])
                  * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
                  * is 'rx'. */
                 if (++i>=argc) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
+                    mlog[ERROR] <<"virtual address required for raw buffer " <<raw_filename <<"\n";
                     exit(1);
                 }
                 char *suffix;
                 errno = 0;
                 rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
                 if (suffix==argv[i] || errno) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
+                    mlog[ERROR] <<"virtual address required for raw buffer " <<raw_filename <<"\n";
                     exit(1);
                 }
                 unsigned perm = 0;
@@ -1066,7 +1077,7 @@ main(int argc, char *argv[])
                         case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
                         case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
                         case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
-                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
+                        default: mlog[ERROR] <<"invalid map permissions: " <<(suffix-1) <<"\n"; exit(1);
                     }
                 }
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
@@ -1081,13 +1092,13 @@ main(int argc, char *argv[])
         }
     }
     if (0==nposargs && !do_rose_help) {
-        fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
+        mlog[ERROR] <<"incorrect usage; see --help for details.\n";
         exit(1);
     }
     if (do_rebase && !raw_entries.empty())
-        fprintf(stderr, "%s: warning: --base-va ignored in raw buffer mode\n", arg0);
+        mlog[WARN] <<"--base-va ignored in raw buffer mode\n";
     if (!reserved.empty() && !raw_entries.empty())
-        fprintf(stderr, "%s: warning: --reserve ignored in raw buffer mode\n", arg0);
+        mlog[WARN] <<"--reserve ignored in raw buffer mode\n";
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse, link, remap, relocate
@@ -1103,7 +1114,7 @@ main(int argc, char *argv[])
 
         /* Use the last header if there's more than one. Windows files often have a DOS header first followed by another
          * header such as PE.  If the "--dos" command-line switch is present then use the first header instead. */
-        ROSE_ASSERT(!interps.empty());
+        ASSERT_forbid2(interps.empty(), "a binary specimen must have at least one SgAsmInterpretation");
         interp = do_dos ? interps.front() : interps.back();
 
         /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
@@ -1118,7 +1129,7 @@ main(int argc, char *argv[])
         /* Adjust the base VA for the primary file header if requested. */
         if (do_rebase) {
             const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
-            assert(1==hdrs.size());
+            ASSERT_require2(1==hdrs.size(), "rebasing only works when the specimen has one file header");
             hdrs[0]->set_base_va(rebase_va);
         }
 
@@ -1141,12 +1152,11 @@ main(int argc, char *argv[])
                 BinaryLoader::FixupErrors errors;
                 loader->fixup(interp, &errors);
                 if (!errors.empty()) {
-                    std::cerr <<arg0 <<": warning: encountered " <<errors.size()
-                              <<" relocation fixup error" <<(1==errors.size()?"":"s") <<"\n";
+                    mlog[WARN] <<"encountered " <<plural(errors.size(), "relocation fixup errors") <<"\n";
                 }
             }
         } catch (const BinaryLoader::Exception &e) {
-            std::cerr <<arg0 <<": BinaryLoader exception: " <<e <<"\n";
+            mlog[ERROR] <<"BinaryLoader exception: " <<e <<"\n";
             exit(1);
         }
     }
@@ -1185,7 +1195,7 @@ main(int argc, char *argv[])
         try {
             partitioner->load_config(partitioner_config);
         } catch (const Partitioner::IPDParser::Exception &e) {
-            std::cerr <<e <<"\n";
+            mlog[ERROR] <<e <<"\n";
             exit(1);
         }
     }
@@ -1213,7 +1223,7 @@ main(int argc, char *argv[])
             partitioner->add_function(*i, SgAsmFunction::FUNC_ENTRY_POINT, "entry_function");
         }
     } else {
-        assert(interp->get_map()!=NULL);
+        ASSERT_not_null2(interp->get_map(), "SgAsmInterpretation must have a memory map by now");
         map = *interp->get_map();
 
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
@@ -1259,8 +1269,8 @@ main(int argc, char *argv[])
         }
     }
 
-    printf("using this memory map for disassembly:\n");
-    map.dump(stdout, "    ");
+    mlog[INFO] <<"using this memory map for disassembly:\n";
+    map.dump(mlog[INFO], "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
@@ -1280,7 +1290,7 @@ main(int argc, char *argv[])
                 bad = partitioner->get_disassembler_errors();
             }
         } catch (const Partitioner::Exception &e) {
-            std::cerr <<"partitioner exception: " <<e <<"\n";
+            mlog[ERROR] <<"partitioner exception: " <<e <<"\n";
             exit(1);
         }
     }
@@ -1308,7 +1318,7 @@ main(int argc, char *argv[])
                 if (func && func->get_entry_block()) {
                     CFG cfg = cfg_analysis.build_block_cfg_from_ast<CFG>(func);
                     CFG_Vertex entry = 0; /* see build_block_cfg_from_ast() */
-                    assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
+                    ASSERT_require(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
                     dom_analysis.apply_to_ast(dg);
@@ -1335,7 +1345,7 @@ main(int argc, char *argv[])
             SgAsmFunction *func = functions[i];
             BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
             BinaryAnalysis::ControlFlow::Vertex start = (BinaryAnalysis::ControlFlow::Vertex)0;
-            assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
+            ASSERT_require(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
             dom_analysis.clear_ast(func);
             dom_analysis.apply_to_ast(dg);
@@ -1358,9 +1368,9 @@ main(int argc, char *argv[])
             SgAsmFunction *func = functions[i];
             if (func->get_reason() & SgAsmFunction::FUNC_ENTRY_POINT) {
                 SgAsmBlock *block = func->get_entry_block();
-                assert(block!=NULL);
+                ASSERT_not_null(block);
                 BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
-                assert(get(boost::vertex_name, global_cfg, start)==block);
+                ASSERT_require(get(boost::vertex_name, global_cfg, start)==block);
                 BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
                 dom_analysis.apply_to_ast(dg);
             }
@@ -1371,18 +1381,14 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
-    printf("disassembled %zu instruction%s and %zu failure%s",
-           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
+    mlog[INFO] <<"disassembled " <<plural(insns.size(), "instructions") <<" and " <<plural(bad.size(), "failures") <<"\n";
     if (!bad.empty()) {
-        if (show_bad) {
-            printf(":\n");
+        if (show_bad && mlog[INFO]) {
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+                mlog[INFO] <<"    " <<addrToString(bmi->first) <<": " <<bmi->second.mesg <<"\n";
         } else {
-            printf(" (use --show-bad to see errors)\n");
+            mlog[INFO] <<" (use --show-bad to see errors)\n";
         }
-    } else {
-        printf("\n");
     }
 
     if (do_show_functions && block)
@@ -1422,9 +1428,9 @@ main(int argc, char *argv[])
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
             extents.erase(Extent((*ii)->get_address(), (*ii)->get_size()));
         size_t unused = extents.size();
-        if (do_show_extents && unused>0) {
-            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
-            extents.dump_extents(stdout, "    ", NULL, 0);
+        if (do_show_extents && unused>0 && mlog[INFO]) {
+            mlog[INFO] <<"These addresses (" <<plural(unused, "bytes") <<") do not contain instructions:\n";
+            extents.dump_extents(mlog[INFO], "    ", "");
         }
 
         if (do_show_coverage && disassembled_map_size>0) {
@@ -1433,7 +1439,7 @@ main(int argc, char *argv[])
                 interp->set_percentageCoverage(disassembled_coverage);
                 interp->set_coverageComputed(true);
             }
-            printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
+            mlog[INFO] <<"Disassembled coverage: " <<disassembled_coverage <<" percent\n";
         }
     }
 
@@ -1457,7 +1463,7 @@ main(int argc, char *argv[])
                     file->dump_all(true, ".dump");
             }
         };
-        printf("generating ASCII dump...\n");
+        mlog[INFO] <<"generating ASCII dump...\n";
         T1().traverse(project, preorder);
     }
 
@@ -1466,13 +1472,13 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
     
     if (do_ast_dot && project) {
-        printf("generating GraphViz dot files for the AST...\n");
+        mlog[INFO] <<"generating GraphViz dot files for the AST...\n";
         generateDOT(*project);
         //generateAstGraph(project, INT_MAX);
     }
         
     if (do_cfg_dot && block) {
-        printf("generating GraphViz dot files for control flow graphs...\n");
+        mlog[INFO] <<"generating GraphViz dot files for control flow graphs...\n";
         dump_CFG_CG(block);
     }
 
@@ -1491,7 +1497,7 @@ main(int argc, char *argv[])
         } else {
             asmb = Assembler::create(new SgAsmPEFileHeader(new SgAsmGenericFile()));
         }
-        ROSE_ASSERT(asmb!=NULL);
+        ASSERT_not_null2(asmb, "no appropriate assembler found");
         asmb->set_encoding_type(Assembler::ET_MATCHES);
 
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -1504,7 +1510,7 @@ main(int argc, char *argv[])
             } catch(const Assembler::Exception &e) {
                 assembly_failures++;
                 if (show_bad) {
-                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
+                    mlog[ERROR] <<"assembly failed at " + addrToString(insn->get_address()) <<": " <<e.mesg <<"\n";
                     FILE *old_debug = asmb->get_debug();
                     asmb->set_debug(stderr);
                     try {
@@ -1517,11 +1523,10 @@ main(int argc, char *argv[])
             }
         }
         if (assembly_failures>0) {
-            printf("reassembly failed for %zu instruction%s.%s\n",
-                   assembly_failures, 1==assembly_failures?"":"s", 
-                   show_bad ? "" : " (use --show-bad to see details)");
+            mlog[WARN] <<"reassembly failed for " <<plural(assembly_failures, "instructions")
+                       <<(show_bad ? "" : " (use --show-bad to see details)") <<"\n";
         } else {
-            printf("reassembly succeeded for all instructions.\n");
+            mlog[INFO] <<"reassembly succeeded for all instructions.\n";
         }
         delete asmb;
         if (assembly_failures>0)
@@ -1534,7 +1539,7 @@ main(int argc, char *argv[])
     
     size_t solver_ncalls = SMTSolver::get_class_stats().ncalls;
     if (solver_ncalls>0)
-        printf("SMT solver was called %zu time%s\n", solver_ncalls, 1==solver_ncalls?"":"s");
+        mlog[INFO] <<"SMT solver was called " <<plural(solver_ncalls, "times") <<"\n";
     return 0;
 }
 
