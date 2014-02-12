@@ -1,6 +1,7 @@
 #include "Message.h"
 
 #include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <iomanip>
 #include <stdexcept>
@@ -300,9 +301,23 @@ bool SequenceFilter::shouldForward(const MesgProps&) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void TimeFilter::initialDelay(double delta) {
+    if (delta > 0.0) {
+        initialDelay_ = delta;
+        if (0==nPosted_) {
+            double then_int;
+            double then_frac = modf(now() + delta, &then_int);
+            lastBakeTime_.tv_sec = then_int;
+            lastBakeTime_.tv_usec = round(1e6 * then_frac);
+        }
+    }
+}
+
 bool TimeFilter::shouldForward(const MesgProps&) {
+    ++nPosted_;
     gettimeofday(&lastBakeTime_, NULL);
-    return timeval_delta(prevMessageTime_, lastBakeTime_) >= minInterval_;
+    return  timeval_delta(prevMessageTime_, lastBakeTime_) >= minInterval_;
+
 }
 
 void TimeFilter::forwarded(const MesgProps&) {
@@ -768,18 +783,27 @@ SProxy::operator bool() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Facility::initStreams(const DestinationPtr &destination) {
-    for (int i=0; i<N_IMPORTANCE; ++i)
-        streams_.push_back(new Stream(name_, (Importance)i, destination));
+    if (streams_.empty()) {
+        for (int i=0; i<N_IMPORTANCE; ++i)
+            streams_.push_back(new Stream(name_, (Importance)i, destination));
+    } else {
+        for (int i=0; i<streams_.size(); ++i)
+            streams_[i]->destination(destination);
+    }
 }
 
 Stream& Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
     if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
-        // If you're looking at this line in a debugger, it's probably because you haven't called
-        // Sawyer::Message::initializeLibrary().  ROSE USERS: Sawyer initialization happens in
-        // rose::Diagnostics::initialize().
-        throw std::runtime_error("stream " + stringifyImportance(imp) + " is not initialized yet");
+        // If you're looking at this line in a debugger it's probably because you're trying to use a Stream from a
+        // default-constructed Facility.  Facilities that are allocated statically and/or at global scope should probably
+        // either be constructed with Facility(const std::string&) or initialized by assigning some other facility to them.
+        // Another possibility is that you provided Sawyer::Message::merr as the destination before libsawyer had a chance to
+        // initialize that global variable. You can work around that problem by calling Sawyer::initializeLibrary() first.
+        throw std::runtime_error("stream " + stringifyImportance(imp) +
+                                 (name_.empty() ? std::string() : " in facility \"" + name_ + "\"") +
+                                 " is not initialized yet");
     }
     return *streams_[imp];
 }
