@@ -590,6 +590,14 @@ namespace StringUtility
      *  size_t n = ...;
      *  std::cout <<"received " <<plural(n, "values") <<"\n";
      * @encode
+     *
+     *  Output for various values of <em>n</em> will be:
+     *
+     * @code
+     *  received 0 values
+     *  received 1 value
+     *  received 2 values
+     * @endcode
      */
     template<typename T>
     std::string plural(T n, const std::string &plural_word) {
