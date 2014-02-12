@@ -210,16 +210,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Disassemble a file containing bare instructions
-noinst_PROGRAMS += disassembleBuffer
-disassembleBuffer_SOURCES = disassembleBuffer.C
-disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += disassembleBuffer.passed
-EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
-disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
-	@$(RTH_RUN) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
-
-
 noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
@@ -842,11 +832,7 @@ demo_disassemble: disassemble demo_yicesSemanticsLib
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
-demo_disassembleBuffer: disassembleBuffer demo_disassemble
-	@echo; echo; echo "Demo for $<"; echo
-	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
-
-demo_testAssembler: testAssembler demo_disassembleBuffer
+demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 

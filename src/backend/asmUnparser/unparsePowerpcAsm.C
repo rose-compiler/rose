@@ -74,11 +74,8 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             result = unparsePowerpcRegister(insn, rr->get_descriptor(), registers);
             break;
         }
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression: {
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+        case V_SgAsmIntegerValueExpression: {
+            uint64_t v = isSgAsmIntegerValueExpression(expr)->get_absolute_value();
             if (useHex) {
                 result = StringUtility::intToHex(v);
             } else {

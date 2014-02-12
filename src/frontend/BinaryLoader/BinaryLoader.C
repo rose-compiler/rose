@@ -28,7 +28,7 @@ operator<<(std::ostream &o, const BinaryLoader::Exception &e)
 void
 BinaryLoader::Exception::print(std::ostream &o) const
 {
-    o <<mesg;
+    o <<what();
 }
 
 /* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a

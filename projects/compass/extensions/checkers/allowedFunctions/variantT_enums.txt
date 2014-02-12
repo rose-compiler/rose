@@ -373,10 +373,7 @@ V_SgAsmCommonSubExpression
 V_SgAsmx86RegisterReferenceExpression 	
 V_SgAsmArmRegisterReferenceExpression 	
 V_SgAsmRegisterReferenceExpression 	
-V_SgAsmByteValueExpression 	
-V_SgAsmWordValueExpression 	
-V_SgAsmDoubleWordValueExpression 	
-V_SgAsmQuadWordValueExpression 	
+V_SgAsmIntegerValueExpression 	
 V_SgAsmSingleFloatValueExpression 	
 V_SgAsmDoubleFloatValueExpression 	
 V_SgAsmValueExpression 	

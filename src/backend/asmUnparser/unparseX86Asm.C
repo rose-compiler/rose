@@ -119,10 +119,6 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             break;
         }
 
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression:
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ival);

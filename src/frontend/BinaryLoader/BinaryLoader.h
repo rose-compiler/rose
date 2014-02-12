@@ -72,14 +72,11 @@ public:
      *======================================================================================================================== */
 public:
     /** Base class for exceptions thrown by loaders. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &reason)
-            : mesg(reason)
-            {}
+        Exception(const std::string &reason): std::runtime_error(reason) {}
         void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
-        std::string mesg;
     };
 
 

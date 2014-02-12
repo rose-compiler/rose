@@ -74,9 +74,9 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
     }
     switch (expr->variantT()) {
         case V_SgAsmBinaryMultiply:
-            ASSERT_require(isSgAsmByteValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
+            ASSERT_require(isSgAsmIntegerValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
             result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, arm_sign_none) + "*" +
-                     StringUtility::numberToString(isSgAsmByteValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
+                     StringUtility::numberToString(isSgAsmIntegerValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
             break;
         case V_SgAsmBinaryLsl:
             result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, arm_sign_none) + ", lsl " +
@@ -198,12 +198,10 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
         case V_SgAsmArmRegisterReferenceExpression:
             result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr), registers);
             break;
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression: {
-            SgAsmValueExpression *ve = isSgAsmValueExpression(expr);
+        case V_SgAsmIntegerValueExpression: {
+            SgAsmIntegerValueExpression *ve = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ve);
-            uint64_t v = SageInterface::getAsmConstant(ve);
+            uint64_t v = ve->get_absolute_value();
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
@@ -241,7 +239,7 @@ std::string unparseArmMnemonic(SgAsmArmInstruction *insn) {
     return result;
 }
 
-/** Returns the string representation of an instruction operand. Use unparseExpress() if possible. */
+/** Returns the string representation of an instruction operand. Use unparseExpression() if possible. */
 std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
                                  const RegisterDictionary *registers) {
     /* Find the instruction with which this expression is associated. */
@@ -254,9 +252,9 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
     if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
         ASSERT_require(insn->get_operandList()->get_operands().size()==1);
         ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
-        SgAsmDoubleWordValueExpression* tgt = isSgAsmDoubleWordValueExpression(expr);
+        SgAsmIntegerValueExpression* tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
-        return StringUtility::intToHex(tgt->get_value());
+        return StringUtility::addrToString(tgt->get_value(), tgt->get_significant_bits());
     } else {
         return unparseArmExpression(expr, labels, registers, arm_sign_none);
     }

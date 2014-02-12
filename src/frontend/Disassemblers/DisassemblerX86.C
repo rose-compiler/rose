@@ -694,7 +694,7 @@ DisassemblerX86::decodeModrmMemory()
                 case 1: {
                     size_t bit_offset = 8*insnbufat;
                     uint8_t offset = getByte();
-                    SgAsmByteValueExpression *offsetExpr = SageBuilderAsm::makeByteValue(offset);
+                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::makeByteValue(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(8);
                     addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);
@@ -703,7 +703,7 @@ DisassemblerX86::decodeModrmMemory()
                 case 2: {
                     size_t bit_offset = 8*insnbufat;
                     uint32_t offset = getDWord();
-                    SgAsmDoubleWordValueExpression *offsetExpr = SageBuilderAsm::makeDWordValue(offset);
+                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::makeDWordValue(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(32);
                     addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);

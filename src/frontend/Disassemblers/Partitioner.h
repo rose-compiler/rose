@@ -1749,18 +1749,19 @@ public:
         IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
             : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        /** Exception thrown when something cannot be parsed. */
+        class Exception: public std::runtime_error {
         public:
             Exception(const std::string &mesg)
-                : lnum(0), mesg(mesg) {}
+                : std::runtime_error(mesg), lnum(0) {}
             Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
-                : name(name), lnum(lnum), mesg(mesg) {}
+                : std::runtime_error(mesg), name(name), lnum(lnum) {}
+            ~Exception() throw() {}
             std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
             friend std::ostream& operator<<(std::ostream&, const Exception &e);
 
             std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
-            std::string mesg;                   /**< Error message. */
         };
 
         void parse();                           /**< Top-level parsing function. */

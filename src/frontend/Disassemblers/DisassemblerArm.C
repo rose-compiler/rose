@@ -234,7 +234,7 @@ DisassemblerArm::makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression
    return NULL;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerArm::makeSplit8bitOffset() const
 {
     int32_t val = ((insn >> 4) & 0xF0) | (insn & 0xF);
@@ -243,7 +243,7 @@ DisassemblerArm::makeSplit8bitOffset() const
     return SageBuilderAsm::makeDWordValue((uint32_t)val);
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerArm::makeBranchTarget() const
 {
     int32_t val = insn & 0xFFFFFF;
@@ -450,7 +450,6 @@ DisassemblerArm::decodeMiscInstruction() const
 SgAsmArmInstruction *
 DisassemblerArm::disassemble()
 {
-      // fprintf(stderr, "Disassembling insn 0x%08" PRIx32 " at addr 0x%08" PRIx32 "\n", insn, p.ip);
       uint8_t condField = (insn >> 28) & 0xF;
       bool bit4 = (insn >> 4) & 1;
       bool bit7 = (insn >> 7) & 1;

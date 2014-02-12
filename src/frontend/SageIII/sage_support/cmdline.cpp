@@ -3084,7 +3084,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              heuristics = Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
          } catch(const Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
 #else

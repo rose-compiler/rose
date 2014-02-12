@@ -1,8 +1,18 @@
 #ifndef Rose_InsnSemanticsExpr_H
 #define Rose_InsnSemanticsExpr_H
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
+#include "Map.h"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <cassert>
+#include <inttypes.h>
+#include <set>
+#include <vector>
 
 /** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
  *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
@@ -75,28 +85,41 @@ typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
 typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
 typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
+typedef Map<uint64_t, uint64_t> RenameMap;
 
 /** Controls formatting of expression trees when printing. */
 struct Formatter {
-    typedef Map<uint64_t, uint64_t> RenameMap;
     enum ShowComments {
         CMT_SILENT,                             /**< Do not show comments. */
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true) {}
+    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true), max_depth(0) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
-    RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
     bool use_hexadecimal;                       /**< Show values in hexadecimal and decimal rather than just decimal. */
+    size_t max_depth;                           /**< If non-zero, then replace deep parts of expressions with "...". */
+    size_t cur_depth;                           /**< Depth in expression. */
+    RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
 };
 
-/** Base class for visiting nodes during expression traversal. */
+/** Return type for visitors. */
+enum VisitAction {
+    CONTINUE,                               /**< Continue the traversal as normal. */
+    TRUNCATE,                               /**< For a pre-order depth-first visit, do not descend into children. */
+    TERMINATE,                              /**< Terminate the traversal. */
+};
+
+/** Base class for visiting nodes during expression traversal.  The preVisit method is called before children are visited, and
+ *  the postVisit method is called after children are visited.  If preVisit returns TRUNCATE, then the children are not
+ *  visited, but the postVisit method is still called.  If either method returns TERMINATE then the traversal is immediately
+ *  terminated. */
 class Visitor {
 public:
     virtual ~Visitor() {}
-    virtual void operator()(const TreeNodePtr&) = 0;
+    virtual VisitAction preVisit(const TreeNodePtr&) = 0;
+    virtual VisitAction postVisit(const TreeNodePtr&) = 0;
 };
 
 /** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are derived.
@@ -156,9 +179,13 @@ public:
      *  cleared. */
     size_t get_nbits() const { return nbits; }
 
-    /** Traverse the expression.  The expression is traversed in a depth-first visit, invoking the functor at each node of the
-     *  expression tree. */
-    virtual void depth_first_visit(Visitor*) const = 0;
+    /** Traverse the expression.  The expression is traversed in a depth-first visit.  The final return value is the final
+     *  return value of the last call to the visitor. */
+    virtual VisitAction depth_first_traversal(Visitor&) const = 0;
+
+    /** Computes the size of an expression by counting the number of nodes.  This algorithm is usually faster than a naive
+     *  traversal-with-increment because it optimizes for the case where a large expression has common subexpressions. */
+    size_t nnodes() const;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
@@ -209,11 +236,15 @@ public:
     WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
     /** @} */
 
-    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. */
-    void print(std::ostream &stream) const { Formatter formatter; print(stream, formatter); }
-
-    /** Print the expression to a stream.  The format of the output is controlled by the Formatter argument. */
+    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. The format of the output is
+     *  controlled by the mutable Formatter argument.
+     *  @{ */
     virtual void print(std::ostream&, Formatter&) const = 0;
+    void print(std::ostream &o) const { Formatter fmt; print(o, fmt); }
+    /** @} */
+
+    /** Asserts that expressions are acyclic. This is intended only for debugging. */
+    void assert_acyclic() const;
 
 };
 
@@ -414,7 +445,6 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
@@ -422,11 +452,11 @@ public:
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); return 0;}
-    virtual void depth_first_visit(Visitor*) const;
+    virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
+    virtual VisitAction depth_first_traversal(Visitor&) const;
 
     /** Returns the number of children. */
-    size_t size() const { return children.size(); }
+    size_t nchildren() const { return children.size(); }
 
     /** Returns the specified child. */
     TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
@@ -461,6 +491,9 @@ public:
      *  either a new expression that is simplified, or the original expression. */
     TreeNodePtr involutary() const;
 
+    /** Simplifies nested shift-like operators. Simplifies (shift AMT1 (shift AMT2 X)) to (shift (add AMT1 AMT2) X). */
+    TreeNodePtr additive_nesting() const;
+
     /** Removes identity arguments. Returns either a new expression or the original expression. */
     TreeNodePtr identity(uint64_t ident) const;
 
@@ -470,6 +503,9 @@ public:
     /** Simplify an internal node. Returns a new node if this node could be simplified, otherwise returns this node. When
      *  the simplification could result in a leaf node, we return an OP_NOOP internal node instead. */
     TreeNodePtr rewrite(const Simplifier &simplifier) const;
+
+    // documented in super class
+    virtual void print(std::ostream&, Formatter&) const /*override*/;
 
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
@@ -503,18 +539,22 @@ public:
      *  will be zeroed. */
     static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
+    /** Create a new Boolean, a single-bit integer. */
+    static LeafNodePtr create_boolean(bool b, std::string comment="") {
+        return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
+    }
+
     /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of specified size. */
     static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
-    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
-    virtual void depth_first_visit(Visitor*) const;
+    virtual VisitAction depth_first_traversal(Visitor&) const;
 
     /** Is the node a bitvector variable? */
     virtual bool is_variable() const;
@@ -526,6 +566,9 @@ public:
      *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
     uint64_t get_name() const;
 
+    // documented in super class
+    virtual void print(std::ostream&, Formatter&) const /*override*/;
+
     /** Prints an integer interpreted as a signed value. */
     void print_as_signed(std::ostream&, Formatter&, bool as_signed=true) const;
     void print_as_unsigned(std::ostream &o, Formatter &f) const {
@@ -535,6 +578,56 @@ public:
 
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
+
+
+/** Counts the total size across a number of expressions. This algorithm is optimized for the case when expressions contain
+ *  common subexpressions. The iterators should point to a sequence of TreeNodePtr smart pointers. Returns (size_t)(-1) if
+ *  there are more nodes than what can be represented in size_t (yes, this does actually happen when large expressions contain
+ *  a high degree of common subexpressions). */
+template<typename InputIterator>
+size_t
+total_nnodes(InputIterator begin, InputIterator end)
+{
+    struct T1: Visitor {
+        typedef Map<const TreeNode*, size_t> SeenNodes;
+        typedef std::vector<std::pair<size_t, bool> > Stack;
+
+        SeenNodes seen;                                 // nodes that we've already seen, and the subtree size
+        size_t total_size;                              // total tree size
+        Stack stack;                                    // total_size when we enter a node, and whether we traversed children
+
+        T1(): total_size(0) {}
+
+        VisitAction preVisit(const TreeNodePtr &node) {
+            std::pair<SeenNodes::iterator, bool> inserted = seen.insert(std::make_pair(node.get(), 0));
+            stack.push_back(std::make_pair(total_size, inserted.second));
+            if (!inserted.second) {
+                assert(inserted.first->second > 0);     // failure implies that we've entered this node twice w/out exit; cycle
+                if (total_size + inserted.first->second - 1 < total_size)
+                    return TERMINATE;                   // overflow
+                total_size += inserted.first->second - 1; // don't count ourself yet
+                return TRUNCATE;
+            }
+            return CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr &node) {
+            assert(!stack.empty());
+            if ((total_size+1) < stack.back().first)
+                return TERMINATE;                       // overflow
+            size_t subtree_size = ++total_size - stack.back().first;
+            if (stack.back().second)
+                seen[node.get()] = subtree_size;
+            stack.pop_back();
+            return CONTINUE;
+        }
+    } visitor;
+
+    VisitAction status = CONTINUE;
+    for (InputIterator ii=begin; ii!=end && TERMINATE!=status; ++ii)
+        status = (*ii)->depth_first_traversal(visitor);
+    return TERMINATE==status ? (size_t)(-1) : visitor.total_size;
+}
 
 } // namespace
 #endif
