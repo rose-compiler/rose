@@ -638,12 +638,14 @@ public:
 /** Filters messages based on time.  Any message posted within some specified time of a previously forwarded message will
  *  not be forwarded to children nodes in the plumbing lattice. */
 class TimeFilter: public Filter {
+    double initialDelay_;                               // amount to delay before emitting the first message
     double minInterval_;                                // minimum time between messages
     struct timeval prevMessageTime_;                    // time previous message was emitted
     struct timeval lastBakeTime_;                       // time cached by shouldForward, used by forwarded
+    size_t nPosted_;                                    // number of messages posted (including those suppressed)
 protected:
     explicit TimeFilter(double minInterval)
-        : minInterval_(minInterval) {
+        : initialDelay_(0.0), minInterval_(minInterval) {
         memset(&prevMessageTime_, 0, sizeof(timeval));
         memset(&lastBakeTime_, 0, sizeof(timeval));
     }
@@ -659,6 +661,15 @@ public:
     double minInterval() const { return minInterval_; }
     void minInterval(double d);
     /** @} */
+
+    /** Delay before the next message.
+     *  @{ */
+    double initialDelay() const { return initialDelay_; }
+    void initialDelay(double d);
+    /** @} */
+
+    /** Number of messages processed.  This includes messages forwarded and messages not forwarded. */
+    size_t nPosted() const { return nPosted_; }
 
     virtual bool shouldForward(const MesgProps&) /*override*/;
     virtual void forwarded(const MesgProps&) /*override*/;
@@ -1207,8 +1218,19 @@ class Facility {
     std::string name_;
     std::vector<SProxy> streams_;
 public:
-    // Creates an empty facility with no streams.
+    /** Construct an empty facility.  The facility will have no name and all streams will be uninitialized.  Any attempt to
+     *  emit anything to a facility in the default state will cause an std::runtime_error to be thrown with a message similar
+     *  to "stream INFO is not initialized yet".  This facility can be initialized by assigning it a value from another
+     *  initialized facility. */
     Facility() {}
+
+    /** Create a named facility with default destinations.  All streams are enabled and all output goes to file descriptor
+     *  2 (standard error) via unbuffered system calls.  Facilities initialized to this state can typically be used before the
+     *  C++ runtime is fully initialized and before Sawyer::initializeLibrary() is called. */
+    explicit Facility(const std::string &name): name_(name) {
+        //initializeLibrary() //delay until later
+        initStreams(FdSink::instance(2));
+    }
 
     /** Creates streams of all importance levels. */
     Facility(const std::string &name, const DestinationPtr &destination): name_(name) {
@@ -1255,7 +1277,8 @@ public:
     /** Return the name of the facility. This is a read-only field initialized at construction time. */
     const std::string name() const { return name_; }
 
-private:
+    /** Cause all streams to use the specified destination.  This can be called for facilities that already have streams and
+     *  destinations, but it can also be called to initialize the streams for a default-constructed facility. */
     void initStreams(const DestinationPtr&);
 };
 
