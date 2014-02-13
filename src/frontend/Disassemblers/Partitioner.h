@@ -1833,7 +1833,7 @@ public:
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
 
-    static Sawyer::Message::Facility log;               /**< Logging facility for partitioners. */
+    static Sawyer::Message::Facility mlog;              /**< Logging facility for partitioners. */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
 

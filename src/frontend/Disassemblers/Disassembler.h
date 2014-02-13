@@ -455,7 +455,7 @@ public:
     }
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
-     *  (default is 10) by sending a single line of ouput to the log[INFO] diagnostic stream.  Progress reporting can be
+     *  (default is 10) by sending a single line of ouput to the mlog[INFO] diagnostic stream.  Progress reporting can be
      *  disabled by supplying a negative value.  Progress report properties are class variables. Changing their
      *  values will immediately affect all disassemblers in all threads.
      *
@@ -673,7 +673,7 @@ private:
      *                                          Data members
      ***************************************************************************************************************************/
 protected:
-    static Sawyer::Message::Facility log;               /**< Disassembler diagnostic streams. */
+    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
     class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */

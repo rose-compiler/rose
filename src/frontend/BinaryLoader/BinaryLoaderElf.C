@@ -241,7 +241,7 @@ void
 BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 {
     typedef std::vector<std::pair<SgAsmGenericSection*, SymbolMap*> > SymbolMapList;
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("BinaryLoaderElf");
 
     /* Build a mapping (symbolMaps) from each ".dynsym" section (one per file header) to a SymbolMap. The SymbolMap
@@ -329,7 +329,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*overr
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     build_master_symbol_table(interp);
 
-    log[TRACE] <<"BinaryLoaderElf: performing relocation fixups...\n";
+    mlog[TRACE] <<"BinaryLoaderElf: performing relocation fixups...\n";
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ASSERT_not_null(elfHeader);
@@ -781,7 +781,7 @@ BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) 
 SgAsmElfSymbol *
 BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     ASSERT_not_null(reloc);
     if (0==reloc->get_sym()) {
@@ -834,7 +834,7 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
 rose_addr_t
 BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
     SgAsmGenericSection *section = find_section_by_preferred_va(header, reloc->get_r_offset());
     if (!section) {
@@ -864,7 +864,7 @@ BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSec
 rose_addr_t
 BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     if (!symbol) {
         trace <<"    symbol: no symbol; possibly weak with no definition\n";
@@ -904,7 +904,7 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
 rose_addr_t
 BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, MemoryMap *memmap, size_t nbytes)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     SgAsmElfRelocSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
     ASSERT_not_null(reloc_section);
@@ -1012,7 +1012,7 @@ void
 BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, MemoryMap *memmap,
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
     ASSERT_not_null(header);
@@ -1055,7 +1055,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 void
 BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
     rose_addr_t target_va = fixup_info_target_va(reloc);
     rose_addr_t symbol_va = fixup_info_symbol_va(symbol);
@@ -1152,7 +1152,7 @@ Thus, we're performing
 void
 BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     ASSERT_not_null2(reloc, "ELF relocation entry");
     SgAsmElfRelocSection *parentSection = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
     ASSERT_not_null2(parentSection, "section containing ELF relocation entry");

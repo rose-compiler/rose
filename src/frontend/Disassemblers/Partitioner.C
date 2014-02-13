@@ -31,15 +31,15 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
     return o;
 }
 
-Sawyer::Message::Facility Partitioner::log("Partitioner");
+Sawyer::Message::Facility Partitioner::mlog("Partitioner");
 
 // class method
 void Partitioner::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(log);
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
     }
 }
 
@@ -86,15 +86,15 @@ Partitioner::set_progress_reporting(double min_interval)
 void
 Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
 {
-    if (progress_interval>=0 && log[INFO]) {
+    if (progress_interval>=0 && mlog[INFO]) {
         struct timeval curtime;
         gettimeofday(&curtime, NULL);
         if (Sawyer::Message::timeval_delta(progress_time, curtime) >= progress_interval) {
-            log[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
-                      <<": " <<StringUtility::plural(functions.size(), "functions")
-                      <<", " <<StringUtility::plural(insns.size(), "instructions")
-                      <<", " <<StringUtility::plural(basic_blocks.size(), "blocks")
-                      <<"\n";
+            mlog[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
+                       <<": " <<StringUtility::plural(functions.size(), "functions")
+                       <<", " <<StringUtility::plural(insns.size(), "instructions")
+                       <<", " <<StringUtility::plural(basic_blocks.size(), "blocks")
+                       <<"\n";
             progress_time = curtime;
         }
     }
@@ -268,7 +268,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                         DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
                         append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
                     }
-                    log[TRACE] <<"[jump table at " <<addrToString(base_va) <<"+" <<nentries <<"*" <<entry_size <<"]";
+                    mlog[TRACE] <<"[jump table at " <<addrToString(base_va) <<"+" <<nentries <<"*" <<entry_size <<"]";
                 }
             }
         }
@@ -303,7 +303,7 @@ Partitioner::update_analyses(BasicBlock *bb)
         Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
         if (!table_entries.empty()) {
             bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
-            log[TRACE] <<"[jump table at " <<table_extent <<"]";
+            mlog[TRACE] <<"[jump table at " <<table_extent <<"]";
         }
     }
 
@@ -440,7 +440,7 @@ Partitioner::pops_return_address(rose_addr_t va)
             }
             on_stack = policy.on_stack(orig_retaddr);
             if (!on_stack)
-                log[TRACE] <<"[B" <<addrToString(va) <<"#" <<bb->insns.size() <<" discards return address]";
+                mlog[TRACE] <<"[B" <<addrToString(va) <<"#" <<bb->insns.size() <<" discards return address]";
         } catch (const Semantics::Exception&) {
             /*void*/
         } catch (const Policy::Exception&) {
@@ -964,7 +964,7 @@ Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
         return bb;
     if (!create)
         return NULL;
-    log[TRACE] <<"[split from B" <<addrToString(bb->address()) <<"#" <<bb->insns.size() <<"]";
+    mlog[TRACE] <<"[split from B" <<addrToString(bb->address()) <<"#" <<bb->insns.size() <<"]";
     if (bb->function!=NULL)
         bb->function->pending = true;
     truncate(bb, va);
@@ -983,7 +983,7 @@ Partitioner::canonic_block(rose_addr_t va)
     for (size_t i=0; i<100; i++) {
         BasicBlock *bb = find_bb_starting(va, false);
         if (!bb || !bb->cache.alias_for) return va;
-        log[TRACE] <<"[B" <<addrToString(va) <<"->B" <<addrToString(bb->cache.alias_for) <<"]";
+        mlog[TRACE] <<"[B" <<addrToString(va) <<"->B" <<addrToString(bb->cache.alias_for) <<"]";
         va = bb->cache.alias_for;
     }
     ASSERT_not_reachable("possible alias loop");
@@ -1053,7 +1053,7 @@ Partitioner::mark_ipd_configuration()
             char block_name_str[64];
             sprintf(block_name_str, "B%08"PRIx64, va);
             std::string block_name = block_name_str;
-            log[DEBUG] << "running successors program for " <<block_name_str <<"\n";
+            mlog[DEBUG] << "running successors program for " <<block_name_str <<"\n";
 
             // FIXME: Use a copy (COW) version of the map so we don't need to modify the real map and so that the simulated
             // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
@@ -1065,7 +1065,7 @@ Partitioner::mark_ipd_configuration()
             policy.set_map(map);
             Semantics semantics(policy);
 
-            log[DEBUG] <<"  running semantics for the basic block...\n";
+            mlog[DEBUG] <<"  running semantics for the basic block...\n";
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 ASSERT_not_null(insn);
@@ -1074,7 +1074,7 @@ Partitioner::mark_ipd_configuration()
 
             /* Load the program. Keep at least one unmapped byte between the program text, stack, and svec areas in order to
              * help with debugging. */
-            log[DEBUG] <<"  loading the program...\n";
+            mlog[DEBUG] <<"  loading the program...\n";
 
             /* Load the instructions to execute */
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
@@ -1102,13 +1102,13 @@ Partitioner::mark_ipd_configuration()
              * We'll use the first byte past the end of the successor program, which gives the added benefit that the
              * successor program doesn't actually have to even return -- it can just fall off the end. */
             rose_addr_t return_va = text_va + bconf->sucs_program.size();
-            if (log[DEBUG]) {
-                log[DEBUG] <<"    memory map after program is loaded:\n";
-                map->dump(log[DEBUG], "      ");
+            if (mlog[DEBUG]) {
+                mlog[DEBUG] <<"    memory map after program is loaded:\n";
+                map->dump(mlog[DEBUG], "      ");
             }
 
             /* Push arguments onto the stack in reverse order. */
-            log[DEBUG] <<"  setting up the call frame...\n";
+            mlog[DEBUG] <<"  setting up the call frame...\n";
 
             /* old stack pointer */
             stack_ptr -= 4;
@@ -1145,7 +1145,7 @@ Partitioner::mark_ipd_configuration()
             policy.writeRegister("esp", policy.number<32>(stack_ptr));
 
             /* Interpret the program */
-            log[DEBUG] <<"  running the program...\n";
+            mlog[DEBUG] <<"  running the program...\n";
             Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
             ASSERT_not_null(disassembler);
             policy.writeRegister("eip", policy.number<32>(text_va));
@@ -1153,7 +1153,7 @@ Partitioner::mark_ipd_configuration()
                 rose_addr_t ip = policy.readRegister<32>("eip").known_value();
                 if (ip==return_va) break;
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
-                log[DEBUG] <<"    " <<addrToString(ip) <<": " <<(insn?unparseInstruction(insn):std::string("<null>")) <<"\n";
+                mlog[DEBUG] <<"    " <<addrToString(ip) <<": " <<(insn?unparseInstruction(insn):std::string("<null>")) <<"\n";
                 ASSERT_not_null(insn);
                 semantics.processInstruction(insn);
                 ASSERT_require(policy.readRegister<32>("eip").is_known());
@@ -1161,32 +1161,32 @@ Partitioner::mark_ipd_configuration()
             }
 
             /* Extract the list of successors. The number of successors is the first element of the list. */
-            log[DEBUG] <<"  extracting program return values...\n";
+            mlog[DEBUG] <<"  extracting program return values...\n";
             PartialSymbolicSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
                                                                                   policy.true_());
             ASSERT_require(nsucs.is_known());
-            log[DEBUG] <<"    number of successors: " <<nsucs.known_value() <<"\n";
+            mlog[DEBUG] <<"    number of successors: " <<nsucs.known_value() <<"\n";
             ASSERT_require(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
             for (size_t i=0; i<nsucs.known_value(); i++) {
                 PartialSymbolicSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
                                                                                        policy.number<32>(svec_va+4+i*4),
                                                                                        policy.true_());
                 if (suc_va.is_known()) {
-                    log[DEBUG] <<"    #" <<i <<": " <<addrToString(suc_va.known_value()) <<"\n";
+                    mlog[DEBUG] <<"    #" <<i <<": " <<addrToString(suc_va.known_value()) <<"\n";
                     bb->cache.sucs.insert(suc_va.known_value());
                 } else {
-                    log[DEBUG] <<"    #" <<i <<": unknown\n";
+                    mlog[DEBUG] <<"    #" <<i <<": unknown\n";
                     bb->cache.sucs_complete = false;
                 }
             }
 
             /* Unmap the program */
-            log[DEBUG] <<"  unmapping the program...\n";
+            mlog[DEBUG] <<"  unmapping the program...\n";
             map->erase(text_sgmt);
             map->erase(stack_sgmt);
             map->erase(svec_sgmt);
 
-            log[DEBUG] <<"  done.\n";
+            mlog[DEBUG] <<"  done.\n";
         }
     }
 }
@@ -1800,7 +1800,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
 bool
 Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::FindDataPadding");
     if (!enabled)
         return false;
@@ -1924,7 +1924,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
     ASSERT_not_null(dblock);
     p->append(func, dblock, SgAsmBlock::BLK_FINDDATA);
     ++nfound;
-    log[TRACE] <<"FindData: for F" <<addrToString(func->entry_va) <<": added D" <<addrToString(args.range.first()) <<"\n";
+    mlog[TRACE] <<"FindData: for F" <<addrToString(func->entry_va) <<": added D" <<addrToString(args.range.first()) <<"\n";
 
     return true;
 }
@@ -1934,7 +1934,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
 bool
 Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::FindInsnPadding");
 
     if (!enabled)
@@ -2235,7 +2235,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
         ++nfound;
 
-        log[TRACE] <<"FindThunks: found F" <<addrToString(va) <<"\n";
+        mlog[TRACE] <<"FindThunks: found F" <<addrToString(va) <<"\n";
     }
 
     return true;
@@ -2273,7 +2273,7 @@ Partitioner::FindInterPadFunctions::operator()(bool enabled, const Args &args)
     p->append(new_func, next_dblock, SgAsmBlock::BLK_PADDING, true/*force*/);
     ++nfound;
 
-    log[TRACE] <<"FindInterPadFunctions: added F" <<addrToString(new_func->entry_va) <<"\n";
+    mlog[TRACE] <<"FindInterPadFunctions: added F" <<addrToString(new_func->entry_va) <<"\n";
     return true;
 }
 
@@ -2347,7 +2347,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
                 BasicBlock *bb = p->find_bb_starting(ii->first);
                 p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
                 ++nfound;
-                log[TRACE] <<"FindThunkTable: thunk F" <<addrToString(thunk->entry_va) <<"\n";
+                mlog[TRACE] <<"FindThunkTable: thunk F" <<addrToString(thunk->entry_va) <<"\n";
             }
         }
 
@@ -2400,7 +2400,7 @@ Partitioner::is_thunk(Function *func)
 bool
 Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::FindPostFunctionInsns");
 
     if (!enabled)
@@ -2627,7 +2627,7 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
         if (found==imports.index.end())
             continue;
         func->name = found->second + "@import";
-        log[TRACE] <<"name_import_entries: F" <<addrToString(func->entry_va) <<": named \"" <<func->name <<"\"\n";
+        mlog[TRACE] <<"name_import_entries: F" <<addrToString(func->entry_va) <<": named \"" <<func->name <<"\"\n";
     }
 }
 
@@ -2646,8 +2646,8 @@ Partitioner::find_pe_iat_extents(SgAsmGenericHeader *hdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    log[TRACE] <<"function reasons referenced by Partitioner debugging output:\n"
-               <<SgAsmFunction::reason_key("  ");
+    mlog[TRACE] <<"function reasons referenced by Partitioner debugging output:\n"
+                <<SgAsmFunction::reason_key("  ");
 
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
@@ -2712,7 +2712,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 void
 Partitioner::discover_first_block(Function *func)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::discover_first_block");
 
     trace <<"1st block " <<SgAsmFunction::reason_str(true, func->reason)
@@ -2759,7 +2759,7 @@ Partitioner::discover_first_block(Function *func)
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::discover_blocks");
     trace <<" B" <<addrToString(va);
 
@@ -2915,7 +2915,7 @@ Partitioner::is_pe_dynlink_thunk(Function *func)
 void
 Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::analyze_cfg");
     
     for (size_t pass=1; true; pass++) {
@@ -3142,8 +3142,8 @@ Partitioner::detach_thunk(Function *func)
     }
 
     /* Create a new function to hold everything but the entry instruction */
-    log[TRACE] <<"detach_thunk: detaching thunk F" <<addrToString(func->entry_va)
-               <<" from body F" <<addrToString(second_va) <<"\n";
+    mlog[TRACE] <<"detach_thunk: detaching thunk F" <<addrToString(func->entry_va)
+                <<" from body F" <<addrToString(second_va) <<"\n";
     Function *new_func = add_function(second_va, func->reason);
     new_func->name = func->name;
     new_func->set_may_return(func->get_may_return());
@@ -3221,7 +3221,7 @@ Partitioner::adjust_padding()
 void
 Partitioner::merge_function_fragments()
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     trace.facilityName("Partitioner::merge_function_fragments");
 
     // Find connected components of the control flow graph, but only considering function fragments.  We do this in a single
@@ -3412,8 +3412,8 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     clear_aggregate_statistics();
     RegionStats *mean = aggregate_statistics();
     RegionStats *variance = get_aggregate_variance();
-    log[TRACE] <<"=== Mean ===\n" <<*mean <<"\n"
-               <<"=== Variance ===\n" <<*variance <<"\n";
+    mlog[TRACE] <<"=== Mean ===\n" <<*mean <<"\n"
+                <<"=== Variance ===\n" <<*variance <<"\n";
 
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
@@ -3533,9 +3533,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
             bb->reason |= SgAsmBlock::BLK_CFGHEAD;
     }
 
-    log[INFO] <<"completed " <<StringUtility::plural(functions.size(), "functions")
-              <<", " <<StringUtility::plural(insns.size(), "instructions")
-              <<", " <<StringUtility::plural(basic_blocks.size(), "blocks") <<"\n";
+    mlog[INFO] <<"completed " <<StringUtility::plural(functions.size(), "functions")
+               <<", " <<StringUtility::plural(insns.size(), "instructions")
+               <<", " <<StringUtility::plural(basic_blocks.size(), "blocks") <<"\n";
 }
 
 size_t
@@ -3927,7 +3927,7 @@ SgAsmFunction *
 Partitioner::build_ast(Function* f)
 {
     if (f->basic_blocks.empty()) {
-        log[TRACE] <<"function F" <<addrToString(f->entry_va) <<" \"" <<f->name <<"\" has no basic blocks!\n";
+        mlog[TRACE] <<"function F" <<addrToString(f->entry_va) <<" \"" <<f->name <<"\" has no basic blocks!\n";
         return NULL;
     }
 

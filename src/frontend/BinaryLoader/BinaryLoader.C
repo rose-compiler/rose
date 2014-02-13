@@ -15,7 +15,7 @@
 using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
 
-Sawyer::Message::Facility BinaryLoader::log("BinaryLoader");
+Sawyer::Message::Facility BinaryLoader::mlog("BinaryLoader");
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
 std::ostream&
@@ -45,8 +45,8 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(log);
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
     }
 }
 
@@ -149,24 +149,24 @@ BinaryLoader::load(SgAsmInterpretation *interp)
 std::string
 BinaryLoader::find_so_file(const std::string &libname) const
 {
-    log[TRACE] <<"find library=" <<libname <<"\n";
+    mlog[TRACE] <<"find library=" <<libname <<"\n";
     if (!libname.empty() && '/'==libname[0])
         return libname;
     for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
-        log[TRACE] <<"  looking in " <<*di <<"\n";
+        mlog[TRACE] <<"  looking in " <<*di <<"\n";
         std::string libpath = *di + "/" + libname;
         struct stat sb;
 #ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
-            log[TRACE] <<"    found.\n";
+            mlog[TRACE] <<"    found.\n";
             return libpath;
         }
 #endif
     }
-    if (log[TRACE]) {
+    if (mlog[TRACE]) {
         if (directories.empty())
-            log[TRACE] <<"no search directories\n";
-        log[TRACE] <<"  not found; throwing exception.\n";
+            mlog[TRACE] <<"no search directories\n";
+        mlog[TRACE] <<"  not found; throwing exception.\n";
     }
     throw Exception("cannot find file for library: " + libname);
 }
@@ -206,12 +206,12 @@ BinaryLoader::link(SgAsmInterpretation* interp)
 
     /* Make sure the pre-load objects are parsed and linked into the AST. */
     for (std::vector<std::string>::const_iterator pi=preloads.begin(); pi!=preloads.end(); ++pi) {
-        log[TRACE] <<"preload object " <<*pi <<"\n";
+        mlog[TRACE] <<"preload object " <<*pi <<"\n";
         std::string filename = find_so_file(*pi);
         if (is_linked(composite, filename)) {
-            log[TRACE] <<filename <<" is already parsed.\n";
+            mlog[TRACE] <<filename <<" is already parsed.\n";
         } else {
-            Stream m1(log[TRACE] <<"parsing " <<filename);
+            Stream m1(mlog[TRACE] <<"parsing " <<filename);
             createAsmAST(composite, filename);
             m1 <<"... done.\n";
         }
@@ -230,12 +230,12 @@ BinaryLoader::link(SgAsmInterpretation* interp)
         std::string header_name = header->get_file()->get_name();
         std::vector<std::string> deps = dependencies(header);
         for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
-            log[TRACE] <<"library " <<*di <<" needed by " <<header_name <<"\n";
+            mlog[TRACE] <<"library " <<*di <<" needed by " <<header_name <<"\n";
             std::string filename = find_so_file(*di);
             if (is_linked(composite, filename)) {
-                log[TRACE] <<filename <<" is already parsed.\n";
+                mlog[TRACE] <<filename <<" is already parsed.\n";
             } else {
-                Stream m1(log[TRACE] <<"parsing " <<filename);
+                Stream m1(mlog[TRACE] <<"parsing " <<filename);
                 SgAsmGenericFile *new_file = createAsmAST(composite, filename);
                 m1 <<"... done.\n";
                 ASSERT_not_null2(new_file, "createAsmAST failed");
@@ -345,7 +345,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     SgAsmGenericFile *file = header->get_file();
     ASSERT_not_null(file);
 
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     trace <<"remapping sections of " <<header->get_file()->get_name() <<"\n";
     SgAsmGenericSectionPtrList sections = get_remap_sections(header);
@@ -657,7 +657,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
 {
     if (0==val1 % align1 && 0==val2 % align2)
         return 0;
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
 
     /* Minimum amount by which the addresses must be adjusted downward to independently meet their alignment constraint. */
     int64_t Ma = val1 - ALIGN_DN(val1, align1);
@@ -753,8 +753,8 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
     /* Align lower end of mapped region to satisfy both memory and file alignment constraints. */
     rose_addr_t va_offset = bialign(va, malign_lo, offset, falign_lo);
     if (va_offset>va || va_offset>offset) {
-        log[TRACE] <<"      Adjustment " <<va_offset <<" exceeds va or offset (va=" <<va
-                   <<", offset=" <<offset <<")\n";
+        mlog[TRACE] <<"      Adjustment " <<va_offset <<" exceeds va or offset (va=" <<va
+                    <<", offset=" <<offset <<")\n";
         throw Exception("no solutions to memory/file alignment constraints");
     }
     ASSERT_require((va - va_offset) % malign_lo == 0);

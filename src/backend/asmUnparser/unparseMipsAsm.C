@@ -41,7 +41,7 @@ static std::string mipsValToLabel(uint64_t val, const AsmUnparser::LabelMap *lab
 
 static std::string mipsTypeToPtrName(SgAsmType* ty) {
     if (NULL==ty) {
-        Diagnostics::log[ERROR] <<"mipsTypeToPtrName: null type\n";
+        mlog[ERROR] <<"mipsTypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
 

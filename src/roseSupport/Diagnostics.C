@@ -11,7 +11,7 @@ namespace rose {
 namespace Diagnostics {
 
 Sawyer::Message::DestinationPtr destination;
-Sawyer::Message::Facility log("rose");
+Sawyer::Message::Facility mlog("rose");
 Sawyer::Message::Facilities facilities;
 
 void initialize() {
@@ -21,11 +21,11 @@ void initialize() {
         // rose::Diagnostics::destination (such as sending messages to additional locations).
         Sawyer::initializeLibrary();
         destination = Sawyer::Message::merr;
-        log.initStreams(destination);
-        facilities.insert(log);
+        mlog.initStreams(destination);
+        facilities.insert(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
-        Sawyer::Assert::assertionStream = log[FATAL];
+        Sawyer::Assert::assertionStream = mlog[FATAL];
 
         // Register logging facilities from other software layers.  These facilities should already be in a usable, but
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error

@@ -406,7 +406,7 @@ public:
      * Private stuff
      *======================================================================================================================== */
 protected:
-    static Sawyer::Message::Facility log;               /**< Logging facility initialized by initDiagnostics(). */
+    static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
 
 private: 
     void init();                                        /**< Further initializations in a *.C file. */

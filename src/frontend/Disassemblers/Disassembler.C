@@ -27,7 +27,7 @@ RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEM
 std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Diagnostics */
-Sawyer::Message::Facility Disassembler::log("Disassembler");
+Sawyer::Message::Facility Disassembler::mlog("Disassembler");
 double Disassembler::progress_interval = 10.0;
 struct timeval progress_time;
 
@@ -35,8 +35,8 @@ void Disassembler::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(log);
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
     }
 }
     
@@ -288,13 +288,13 @@ Disassembler::update_progress(SgAsmInstruction *insn)
     RTS_MUTEX(class_mutex) {
         if (insn) {
             ++p_ndisassembled;
-            if (progress_interval>=0 && log[INFO]) {
+            if (progress_interval>=0 && mlog[INFO]) {
                 struct timeval curtime;
                 gettimeofday(&curtime, NULL);
                 if (Sawyer::Message::timeval_delta(progress_time, curtime) >= progress_interval) {
                     if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
-                        log[INFO] <<"at va " <<addrToString(insn->get_address())
-                                  <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
+                        mlog[INFO] <<"at va " <<addrToString(insn->get_address())
+                                   <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
                     }
                     progress_time = curtime;
                 }
@@ -319,7 +319,7 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors, InstructionMap *cache)
 {
-    Stream trace(log[TRACE]);
+    Stream trace(mlog[TRACE]);
     InstructionMap insns;
     SgAsmInstruction *insn;
     rose_addr_t va=0, next_va=start_va;
@@ -520,8 +520,8 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, r
     }
 
     if (map->exists(following_va) && !tried.exists(following_va)) {
-        if (log[TRACE] && worklist->find(following_va)==worklist->end())
-            log[TRACE] <<"at " <<addrToString(bb_va) <<": SEARCH_FOLLOWING added " <<addrToString(following_va) <<"\n";
+        if (mlog[TRACE] && worklist->find(following_va)==worklist->end())
+            mlog[TRACE] <<"at " <<addrToString(bb_va) <<": SEARCH_FOLLOWING added " <<addrToString(following_va) <<"\n";
         worklist->insert(following_va);
     }
 }
@@ -541,8 +541,8 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
                 constant = ival->get_value();
             }
             if (map->exists(constant) && !tried.exists(constant)) {
-                if (log[TRACE] && worklist->find(constant)==worklist->end())
-                    log[TRACE] <<"at " <<addrToString(bbi->first) <<": SEARCH_IMMEDIATE added " <<addrToString(constant) <<"\n";
+                if (mlog[TRACE] && worklist->find(constant)==worklist->end())
+                    mlog[TRACE] <<"at " <<addrToString(bbi->first) <<": SEARCH_IMMEDIATE added " <<addrToString(constant) <<"\n";
                 worklist->insert(constant);
             }
         }
@@ -584,8 +584,8 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
                     }
                 }
                 if (map->exists(constant) && !tried.exists(constant)) {
-                    if (d->log[TRACE] && worklist->find(constant)==worklist->end())
-                        d->log[TRACE] <<"at " <<addrToString(va) <<": SEARCH_WORD added " <<addrToString(constant) <<"\n";
+                    if (d->mlog[TRACE] && worklist->find(constant)==worklist->end())
+                        d->mlog[TRACE] <<"at " <<addrToString(va) <<": SEARCH_WORD added " <<addrToString(constant) <<"\n";
                     worklist->insert(constant);
                 }
                 va += d->get_alignment();
@@ -643,9 +643,9 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
             continue; /*tail recursion*/
         }
 
-        log[TRACE] <<"at " <<addrToString(start_va)
-                   <<": SEARCH_" <<(avoid_overlap?"UNUSED":"ALLBYTES")
-                   <<" added " <<addrToString(next_va) <<"\n";
+        mlog[TRACE] <<"at " <<addrToString(start_va)
+                    <<": SEARCH_" <<(avoid_overlap?"UNUSED":"ALLBYTES")
+                    <<" added " <<addrToString(next_va) <<"\n";
 
         worklist->insert(next_va);
         return;
@@ -667,8 +667,8 @@ Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map
                 if (section && (section->is_mapped() || section->get_contains_code())) {
                     rose_addr_t va = section->get_mapped_actual_va();
                     if (map->exists(va)) {
-                        d->log[TRACE] <<"SEARCH_FUNCSYMS added " <<addrToString(va)
-                                      <<" for \"" <<symbol->get_name()->get_string(true) <<"\"\n";
+                        d->mlog[TRACE] <<"SEARCH_FUNCSYMS added " <<addrToString(va)
+                                       <<" for \"" <<symbol->get_name()->get_string(true) <<"\"\n";
                         worklist->insert(va);
                     }
                 }
@@ -729,7 +729,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
 Disassembler::InstructionMap
 Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)
 {
-    Stream trace(log[DEBUG]);
+    Stream trace(mlog[DEBUG]);
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
 
