@@ -98,7 +98,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    inheritedAndSynthesizedAttributeTraversal \
    inheritedAttributeTraversal \
    inlineTransformations \
-   instrumentationExample \
    instrumentEndOfFunction \
    interveneAtVariables \
    lineReplacement \
@@ -134,6 +133,9 @@ NOINST_TUTORIAL_EXAMPLES = \
    wholeASTGraphGenerator \
    wholeGraphAST \
    wholeGraphFilterOnPersistantAttributes
+
+# TV (02/13/2014) : desactivated tutorials using the deprecated AST rewrite mechanism.
+#   instrumentationExample
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
@@ -210,7 +212,7 @@ instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
 
 reductionRecognition_SOURCES= reductionRecognition.C
 
-instrumentationExample_SOURCES = instrumentationExample.C
+#instrumentationExample_SOURCES = instrumentationExample.C
 
 abstractHandle1_SOURCES = abstractHandle1.cpp
 
@@ -429,8 +431,8 @@ testResolveOverloadedFunction: resolveOverloadedFunction
 testInstantiatedTemplate: templateParameter
 	./templateParameter $(srcdir)/inputCode_1.C
 
-testInstrumentationExample: instrumentationExample
-	./instrumentationExample -rose:verbose 0 -c $(srcdir)/inputCode_InstrumentationTranslator.C
+#testInstrumentationExample: instrumentationExample
+#	./instrumentationExample -rose:verbose 0 -c $(srcdir)/inputCode_InstrumentationTranslator.C
 
 testInstrumentEndOfFunction: instrumentEndOfFunction
 	./instrumentEndOfFunction -rose:verbose 0 -c $(srcdir)/inputCode_instrumentEndOfFunction.C
@@ -820,7 +822,6 @@ generatedCodeExamples = \
    abstractHandle2.outx \
    rose_inputCode_AddExpression.C \
    rose_inputCode_AddFunctionCalls.C \
-   rose_inputCode_InstrumentationTranslator.C \
    rose_inputCode_instrumentEndOfFunction.C \
    loopRecognition.out \
    reductionRecognition.out \
@@ -875,6 +876,9 @@ generatedCodeExamples = \
    inputCode_dwarfAnalysis.pdf \
    inputCode_dwarfAnalysis.out \
    rose_inputCode_buildFile.C
+
+# TV (02/13/2014) : remove as translator use deprecated AST Rewrite Mechanism
+#   rose_inputCode_InstrumentationTranslator.C
 
 # TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
 if !USING_XTENSA_BACKEND_COMPILER
@@ -1100,9 +1104,9 @@ rose_inputCode_AddFunctionCalls.C: addFunctionCalls
 	@echo "Generate executable from compilation of input code (addFunctionCalls) ..."
 	./addFunctionCalls $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionCalls.C
 
-rose_inputCode_InstrumentationTranslator.C: instrumentationExample
-	@echo "Generate executable from compilation of input code ..."
-	./instrumentationExample $(ROSE_FLAGS) -c $(srcdir)/inputCode_InstrumentationTranslator.C
+#rose_inputCode_InstrumentationTranslator.C: instrumentationExample
+#	@echo "Generate executable from compilation of input code ..."
+#	./instrumentationExample $(ROSE_FLAGS) -c $(srcdir)/inputCode_InstrumentationTranslator.C
 
 rose_inputCode_instrumentEndOfFunction.C: instrumentEndOfFunction
 	@echo "Generate executable from compilation of input code ..."

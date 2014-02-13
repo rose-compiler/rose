@@ -4477,15 +4477,16 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
         }
 
   // TV (7/18/2013): If this is a Global Scope then insert an alias in the project wide Global Scope
+  // TODO: Check that the symbol have project wide visibility (static function in C)
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       // TODO check that this symbol does not have a scope limited to one file
        SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+       }
      }
 
 #if 0
@@ -4594,16 +4595,16 @@ SgScopeStatement::remove_symbol ( SgSymbol* s )
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
 
-       SgName n = s->get_name();
+         SgName n = s->get_name();
 
-       SgSymbol * aliasSymbol = globalScopeAcrossFiles->get_symbol_table()->find_aliased_symbol(n,s);
-       if (aliasSymbol != NULL)
-         globalScopeAcrossFiles->get_symbol_table()->remove(aliasSymbol);
-
+         SgSymbol * aliasSymbol = globalScopeAcrossFiles->get_symbol_table()->find_aliased_symbol(n,s);
+         if (aliasSymbol != NULL)
+           globalScopeAcrossFiles->get_symbol_table()->remove(aliasSymbol);
+       }
      }
 
      p_symbol_table->remove(s);
@@ -4630,10 +4631,11 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       return globalScopeAcrossFiles->get_symbol_table()->find(n,s) || p_symbol_table->find(n,s);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         return globalScopeAcrossFiles->get_symbol_table()->find(n,s) || p_symbol_table->find(n,s);
+       }
      }
 
      return p_symbol_table->find(n,s);
@@ -4661,11 +4663,12 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgTemplateParameterPtrList* tem
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_any(n,templateParameterList,templateArgumentList);
@@ -4695,11 +4698,12 @@ SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_typedef(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_typedef(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_typedef(n);
@@ -4729,11 +4733,12 @@ SgScopeStatement::lookup_enum_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgEnumSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgEnumSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_enum(n);
@@ -4763,11 +4768,12 @@ SgScopeStatement::lookup_enum_field_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgEnumFieldSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum_field(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgEnumFieldSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum_field(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_enum_field(n);
@@ -4804,11 +4810,12 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgVariableSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_variable(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgVariableSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_variable(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_variable(n);
@@ -4839,11 +4846,12 @@ SgScopeStatement::lookup_class_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_class(n);
@@ -4870,11 +4878,12 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n,templateArgumentsList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_class(n,templateArgumentsList);
@@ -4902,11 +4911,12 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgLabelSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_label(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgLabelSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_label(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_label(n);
@@ -4949,11 +4959,12 @@ SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t, SgTem
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n,t,templateArgumentsList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+          assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_function(n,t,templateArgumentsList);
@@ -4981,11 +4992,12 @@ SgScopeStatement::lookup_function_symbol(const SgName& n) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_function(n);
@@ -5013,11 +5025,12 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgNamespaceSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_namespace(n);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgNamespaceSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_namespace(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_namespace(n);
@@ -5046,11 +5059,12 @@ SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPt
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template(n,templateParameterList,templateSpecializationArgumentList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template(n,templateParameterList,templateSpecializationArgumentList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_template(n,templateParameterList,templateSpecializationArgumentList);
@@ -5080,11 +5094,12 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
@@ -5116,11 +5131,12 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_class(n,templateArgumentsList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_class(n,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
@@ -5148,11 +5164,12 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_function(n,t,templateParameterList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_function(n,t,templateParameterList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_template_function(n,t,templateParameterList);
@@ -5179,11 +5196,12 @@ SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgT
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_function(n,t,templateArgumentsList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_nontemplate_function(n,t,templateArgumentsList);
@@ -5211,11 +5229,12 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n,t,templateParameterList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n,t,templateParameterList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_template_member_function(n,t,templateParameterList);
@@ -5243,11 +5262,12 @@ SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, co
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n,t,templateArgumentsList);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
      }
 
      return p_symbol_table->find_nontemplate_member_function(n,t,templateArgumentsList);
