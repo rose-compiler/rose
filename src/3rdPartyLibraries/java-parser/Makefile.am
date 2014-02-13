@@ -63,7 +63,7 @@ JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.jav
 JavaSourcePositionInformationFactory.class: ${srcdir}/JavaSourcePositionInformationFactory.java
 	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformationFactory.java
 
-EXTRA_DIST = CMakeLists.txt ecj-3.8.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
+EXTRA_DIST = CMakeLists.txt ecj-3.8.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java UnitInfo.java
 
 install-data-local:
 	$(INSTALL_DATA) $(srcdir)/ecj-3.8.jar $(libdir)/ecj-3.8.jar
