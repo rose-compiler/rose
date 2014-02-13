@@ -81,7 +81,7 @@ std::string get_output_filename( SgFile& file);
 std::string get_type_name( SgType* t);
 
 //! Unparse the declaration as a string for use in prototypes within the AST rewrite mechanism prefix mechanism
-std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
+ROSE_DLL_API std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
 
 //! Unparse the header of the scope statement (used in the prefix generation to 
 //! permit context to be accounted for the in generation of AST fragements from 
@@ -259,6 +259,15 @@ class Unparser
        // DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
       //! Reset the Sg_File_Info to reference the unparsed (generated) source code.
           void resetSourcePosition (SgStatement* stmt);
+
+       // DQ (9/30/2013): Unparse the file using the token stream (stored in the SgFile).
+          void unparseFileUsingTokenStream ( SgSourceFile* file );
+
+       // DQ (9/30/2013): Supporting function for evaluating token source position information.
+       // int getNumberOfLines( std::string s ) const;
+       // int getColumnNumberOfEndOfString( std::string s ) const;
+          static int getNumberOfLines( std::string s );
+          static int getColumnNumberOfEndOfString( std::string s );
    };
 
 
@@ -270,13 +279,13 @@ void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unpars
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+ROSE_DLL_API void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! Support for handling directories of files in ROSE (useful for code generation).
 void unparseDirectory   ( SgDirectory* directory, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );

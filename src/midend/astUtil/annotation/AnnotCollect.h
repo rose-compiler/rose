@@ -9,7 +9,7 @@ typedef ReadAnnotCollection<OperatorDeclaration, '{', ';','}'> ReadOperatorColle
 
 //! An interface to read into type(class) and operator(function) annotations
 // Each type of 
-class ReadAnnotation {
+class ROSE_DLL_API ReadAnnotation {
   ReadTypeCollection typeInfo;
   ReadOperatorCollection opInfo;
   static ReadAnnotation* inst;

@@ -7,7 +7,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  $(unparseFormat_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
+set(unparseFormat_headers unparse_format.h unparseFormatHelp.h)
+install(FILES  ${unparseFormat_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
@@ -17,7 +18,6 @@ install(FILES  $(unparseFormat_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
 #
 #INCLUDES = $(ROSE_INCLUDES)
 #
-#unparseFormat_headers = unparse_format.h unparseFormatHelp.h
 #unparseFormat_sources = $(unparseFormat_headers:.h=.C)
 #
 #include_HEADERS = $(unparseFormat_headers)

@@ -810,6 +810,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgTemplateClassDeclaration:
 
                case V_SgClassDeclaration:
+               case V_SgJavaPackageDeclaration:
                case V_SgTemplateInstantiationDecl:
                   {
                     const SgClassDeclaration* classDeclaration = isSgClassDeclaration(statement);
@@ -1745,7 +1746,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
   // ROSE_ASSERT(key.empty() == false);
      if (key.empty() == true)
         {
-#if 1
+#if 0
           printf ("Empty key generated (should be ignored): node = %p = %s \n",node,node->class_name().c_str());
           if (node->get_file_info() != NULL)
                node->get_file_info()->display("Empty key generated (should be ignored)");

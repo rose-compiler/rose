@@ -175,12 +175,27 @@ void postProcessingSupport (SgNode* node)
           if (SageBuilder::SourcePositionClassificationMode != SageBuilder::e_sourcePositionTransformation)
                detectTransformations(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupTypeReferences() \n");
+             }
+
        // DQ (8/12/2012): reset all of the type references (to intermediately generated types).
           fixupTypeReferences();
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling topLevelResetParentPointer() \n");
+             }
 
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling resetParentPointersInMemoryPool() \n");
+             }
 
        // DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
        // parents of template instantiations that have not be placed into the AST but exist in the memory pool.
@@ -188,15 +203,30 @@ void postProcessingSupport (SgNode* node)
        // resetParentPointersInMemoryPool();
           resetParentPointersInMemoryPool(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupAstDefiningAndNondefiningDeclarations() \n");
+             }
+
        // DQ (6/27/2005): fixup the defining and non-defining declarations referenced at each SgDeclarationStatement
        // This is a more sophisticated fixup than that done by fixupDeclarations. See test2009_09.C for an example
        // of a non-defining declaration appearing before a defining declaration and requiring a fixup of the
        // non-defining declaration reference to the defining declaration.
           fixupAstDefiningAndNondefiningDeclarations(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupAstDeclarationScope() \n");
+             }
+
        // DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
        // We need it to be a rule in ROSE that the scope of the declarations are consistant between defining and all non-defining declaration).
           fixupAstDeclarationScope(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupAstSymbolTables() \n");
+             }
 
        // Fixup the symbol tables (in each scope) and the global function type 
        // symbol table. This is less important for C, but required for C++.
@@ -204,13 +234,28 @@ void postProcessingSupport (SgNode* node)
        // setup the global function type table there to be uniform.
           fixupAstSymbolTables(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupAstSymbolTablesToSupportAliasedSymbols() \n");
+             }
+
        // DQ (4/14/2010): Added support for symbol aliases for C++
        // This is the support for C++ "using declarations" which uses symbol aliases in the symbol table to provide 
        // correct visability of symbols included from alternative scopes (e.g. namespaces).
           fixupAstSymbolTablesToSupportAliasedSymbols(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling resetTemplateNames() \n");
+             }
+
        // DQ (2/12/2012): Added support for this, since AST_consistancy expects get_nameResetFromMangledForm() == true.
           resetTemplateNames(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupTemplateInstantiations() \n");
+             }
 
        // **********************************************************************
        // DQ (4/29/2012): Added some of the template fixup support for EDG 4.3 work.
@@ -226,6 +271,11 @@ void postProcessingSupport (SgNode* node)
           postProcessingTestFunctionCallArguments(node);
 #endif
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling markTemplateSpecializationsForOutput() \n");
+             }
+
        // DQ (8/19/2005): Mark any template specialization (C++ specializations are template instantiations 
        // that are explicit in the source code).  Such template specializations are marked for output only
        // if they are present in the source file.  This detail could effect handling of header files later on.
@@ -233,17 +283,32 @@ void postProcessingSupport (SgNode* node)
        // be searched for uses of (references to) instantiated template functions and member functions.
           markTemplateSpecializationsForOutput(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling markTemplateInstantiationsForOutput() \n");
+             }
+
        // DQ (6/21/2005): This function marks template declarations for output by the unparser (it is part of a 
        // fixed point iteration over the AST to force find all templates that are required (EDG at the moment 
        // outputs only though template functions that are required, but this function solves the more general 
        // problem of instantiation of both function and member function templates (and static data, later)).
           markTemplateInstantiationsForOutput(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupFriendTemplateDeclarations() \n");
+             }
+
        // DQ (10/21/2007): Friend template functions were previously not properly marked which caused their generated template 
        // symbols to be added to the wrong symbol tables.  This is a cause of numerous symbol table problems.
           fixupFriendTemplateDeclarations();
        // DQ (4/29/2012): End of new template fixup support for EDG 4.3 work.
        // **********************************************************************
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupSourcePositionConstructs() \n");
+             }
 
        // DQ (5/14/2012): Fixup source code position information for the end of functions to match the largest values in their subtree.
        // DQ (10/27/2007): Setup any endOfConstruct Sg_File_Info objects (report on where they occur)
@@ -259,6 +324,11 @@ void postProcessingSupport (SgNode* node)
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling resetConstantFoldedValues() \n");
+             }
+
        // DQ (10/4/2012): Added this pass to support command line option to control use of constant folding 
        // (fixes bug pointed out by Liao).
        // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
@@ -266,7 +336,21 @@ void postProcessingSupport (SgNode* node)
        // values will be visited.  However, the default should be to save the original expression trees
        // and remove the constant folded values since this represents the original code.
 #if 1
+       // DQ (1/28/2014): This is mostly neeed for C++ so that name qualification will be handled on 
+       // the original expression trees.  This function replaces the constant folded values with the
+       // original expression trees so that the support for them is seamless.
+       // resetConstantFoldedValues(node);  Avoiding this function for C dramatically improves the 
+       // performance on the C application "wireshark" but does not make much difference elsewhere.
+       // Since it is not required for C we can just skip it.
+#if 0
+          if (SageInterface::is_Cxx_language() == true)
+             {
+               resetConstantFoldedValues(node);
+             }
+#else
+       // DQ (1/28/2014): I think we might require this for the OMP support to work (testing).
           resetConstantFoldedValues(node);
+#endif
 #else
        // DQ (10/11/2012): This is helpful to allow us to see both expression trees in the AST for debugging.
           printf ("Skipping AST Postprocessing resetConstantFoldedValues() \n");
@@ -278,6 +362,11 @@ void postProcessingSupport (SgNode* node)
           postProcessingTestFunctionCallArguments(node);
 #endif
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupSelfReferentialMacrosInAST() \n");
+             }
+
        // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
           fixupSelfReferentialMacrosInAST(node);
 
@@ -286,11 +375,21 @@ void postProcessingSupport (SgNode* node)
           checkIsFrontendSpecificFlag(node);
           checkIsCompilerGeneratedFlag(node);
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling checkIsModifiedFlag() \n");
+             }
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
        // step.
           checkIsModifiedFlag(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling detectTransformations() \n");
+             }
 
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
@@ -304,9 +403,19 @@ void postProcessingSupport (SgNode* node)
           postProcessingTestFunctionCallArguments(node);
 #endif
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupFunctionDefaultArguments() \n");
+             }
+
        // DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
        // This can only be a single function and it can't be any function (this is a moderately complex issue).
           fixupFunctionDefaultArguments(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling checkPhysicalSourcePosition() \n");
+             }
 
        // DQ (12/20/2012): We now store the logical and physical source position information.
        // Although they are frequently the same, the use of #line directives causes them to be different.

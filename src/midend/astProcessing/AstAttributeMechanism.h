@@ -5,10 +5,11 @@
 #define ASTATTRIBUTEMECHANISM_H
 
 #include "AttributeMechanism.h"
+#include "rosedll.h"
 
 class SgNode;
 
-class AstAttribute
+class ROSE_DLL_API AstAttribute
    {
   // This class contains no data and is to be used as a based class (typically, but not required)
   // to support under-defined attributes to be attached to AST IR nodes.
@@ -223,9 +224,22 @@ class AstSgNodeListAttribute : public AstAttribute
      public:
           std::vector<SgNode *> &getNodeList();
           void addNode(SgNode *);
+          void setNode(SgNode *, int);
+          SgNode *getNode(int);
+          int size();
 
           AstSgNodeListAttribute();
           AstSgNodeListAttribute(std::vector<SgNode *> &);
+   };
+
+class AstIntAttribute : public AstAttribute
+   {
+          int value;
+
+     public:
+          int getValue();
+
+          AstIntAttribute(int value_);
    };
 
 #endif

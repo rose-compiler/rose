@@ -76,6 +76,21 @@
 #define restrict __restrict__
 #endif
 
+#if 0
+/* DQ (1/20/2014): This is better handled by generated the expressions for size dependent 
+   expression instead of the constant folded values. This is now better implemented where
+   it was an issue for bit field widths. 
+ */
+/* DQ (1/20/2014): Added support for -m32 mode and the associated associated size of size_t. */
+#ifdef ROSE_M32BIT
+/* Build a 32-bit version of size_t using "int32_t". */
+ #include<stdint.h>
+  typedef int32_t size_t;
+#else
+/* The 64-bit version of "size_t" is not built by default (stddef.h must be include). */
+#endif
+#endif
+
 /* Defined language modes in ROSE (permits control over what builting functions are defined) */
 #define ROSE_C_LANGUAGE_MODE      0
 #define ROSE_CXX_LANGUAGE_MODE    1
@@ -2009,7 +2024,7 @@ int __builtin_ia32_loadupd(double const *);
 int __builtin_ia32_shufpd(double,double,int);
 int __builtin_ia32_storeupd(double*,double);
 int __builtin_ia32_vec_ext_v2df(double,int);
-int __builtin_ia32_shufpd();
+/* int __builtin_ia32_shufpd(); */
 int __builtin_ia32_vec_ext_v4si(int,int);
 int __builtin_ia32_vec_ext_v2di(long long,int);
 int __builtin_ia32_addpd(double,double);

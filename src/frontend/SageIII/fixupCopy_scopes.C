@@ -54,7 +54,11 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
 
                SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(originalInitializedName->get_declptr());
                ROSE_ASSERT(variableDefinition_original != NULL);
-               SgUnsignedLongVal* bitfield = variableDefinition_original->get_bitfield();
+
+            // DQ (1/20/204): Moved to supporting the more general expression (required), plus the expression from which it may have been generated.
+            // SgUnsignedLongVal* bitfield = variableDefinition_original->get_bitfield();
+               SgValueExp* bitfield = variableDefinition_original->get_bitfield();
+
                SgVariableDefinition* variableDefinition_copy = new SgVariableDefinition(copyInitializedName,bitfield);
                ROSE_ASSERT(variableDefinition_copy != NULL);
                copyInitializedName->set_declptr(variableDefinition_copy);
@@ -369,7 +373,9 @@ SgScopeStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // if (copyScopeStatement->get_symbol_table()->size() != 0)
      if (copyScopeStatement->symbol_table_size() != 0)
         {
+#if 0
           printf ("copy = %p = %s = %s \n",copy,copy->class_name().c_str(),SageInterface::get_name(copy).c_str());
+#endif
           copyScopeStatement->get_file_info()->display("In SgScopeStatement::fixupCopy_scopes()");
         }
 
@@ -1069,8 +1075,9 @@ SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopy
 #endif
 
      ROSE_ASSERT(this != NULL);
+#if 0
      printf ("\nIn SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(): for function = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
-
+#endif
      SgTemplateInstantiationMemberFunctionDecl* templateMemberFunctionDeclaration_copy = isSgTemplateInstantiationMemberFunctionDecl(copy);
      ROSE_ASSERT(templateMemberFunctionDeclaration_copy != NULL);
 

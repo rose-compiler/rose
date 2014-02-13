@@ -1,0 +1,122 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
+%% and extended with rules covering the GNU compiler extensions (superset)                          %%
+%% Version: 1.2                                                                                     %%
+%% Author: Markus Schordan, 2013.                                                                   %%
+%% Copyright: Lawrence Livermore National Laboratory                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+module Literal
+
+imports
+FloatingLiteral
+
+exports
+sorts 
+Literal
+String-literal
+Single-string-literal
+Binary-digit
+Binary-literal
+Boolean-literal
+C-char
+Character-literal
+D-char
+Encoding-prefix
+Escape-sequence
+Hexadecimal-digit
+Hexadecimal-escape-sequence
+Hexadecimal-literal
+Integer
+Integer-literal
+Integer-suffix
+Octal-escape-sequence
+Octal-literal
+Pointer-literal
+Quoted-char
+Simple-escape-sequence
+Universal-character-name
+
+context-free syntax
+
+Integer-literal			-> Literal
+Character-literal 		-> Literal
+Floating-literal		-> Literal
+String-literal 			-> Literal
+Boolean-literal			-> Literal
+Pointer-literal			-> Literal
+
+(Single-string-literal)+	-> String-literal   %% for implicit string concatenation (C/C++). example: f("xxx" "xxx")
+
+Integer Integer-suffix?			-> Integer-literal
+Octal-literal Integer-suffix?		-> Integer-literal
+Hexadecimal-literal Integer-suffix?	-> Integer-literal
+Binary-literal Integer-suffix?		-> Integer-literal
+
+
+lexical syntax
+
+"\\0" 			-> C-char
+~[\0-\31\n\t\\\']	-> C-char  %% note the last character in the character set
+Quoted-char		-> C-char
+
+[uUL]?           [\'] C-char+ [\'] -> Character-literal
+
+~[\0-\31\n\t\\\"]	-> D-char  %% note the last character in the character set
+Quoted-char		-> D-char
+
+Encoding-prefix? [\"] D-char* [\"] -> Single-string-literal
+
+[uUL]			-> Encoding-prefix
+"u8"			-> Encoding-prefix
+
+~[\0-\31\n\t\'\\]	-> Quoted-char
+Escape-sequence 	-> Quoted-char
+Universal-character-name-> Quoted-char
+
+
+"\\a" 			-> Simple-escape-sequence  %% Beep
+"\\b" 			-> Simple-escape-sequence  %% Backspace
+"\\f" 			-> Simple-escape-sequence  %% Formfeed
+"\\n" 			-> Simple-escape-sequence  %% New line
+"\\r" 			-> Simple-escape-sequence  %% Carriage return
+"\\t" 			-> Simple-escape-sequence  %% Horizontal tab
+"\\v"			-> Simple-escape-sequence  %% Vertical tab
+"\\\\"			-> Simple-escape-sequence  %% Backslash
+"\\'" 			-> Simple-escape-sequence  %% Single quotation mark
+"\\\""			-> Simple-escape-sequence  %% Double quotation mark
+
+Simple-escape-sequence		-> Escape-sequence
+Octal-escape-sequence		-> Escape-sequence
+Hexadecimal-escape-sequence	-> Escape-sequence
+
+"\\x" Hexadecimal-digit+ 	-> Hexadecimal-escape-sequence
+
+"\\u" Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit+ -> Universal-character-name
+"\\U" Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit Hexadecimal-digit+ -> Universal-character-name
+
+"\\" [0-7][0-7]?[0-7]?		-> Octal-escape-sequence
+
+[0][0-7]+			-> Octal-literal  %% treating 0 as integer
+
+
+%% Hex literal
+[0-9a-fA-F]			-> Hexadecimal-digit
+[0][xX] Hexadecimal-digit+ 	-> Hexadecimal-literal
+
+
+[01]			-> Binary-digit
+[0][bB] Binary-digit+	-> Binary-literal
+
+%% Integer
+[0-9]+ 			-> Integer
+
+%% Type specifier 
+[lLuU]?[lLuU]?[lLuU] 	-> Integer-suffix
+
+"nullptr"		-> Pointer-literal
+
+"false"			-> Boolean-literal
+"true"			-> Boolean-literal
+
+%% raw-string

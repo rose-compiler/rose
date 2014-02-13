@@ -1,6 +1,15 @@
 #include <rangemap.h>
 #include <cmath>
 
+#ifdef _MSC_VER
+#include <float.h>
+#define isnan(x) _isnan(x)
+#define INFINITY (DBL_MAX+DBL_MAX)
+#define NAN (INFINITY-INFINITY)
+#else
+using std::isnan;
+#endif
+
 /******************************************************************************************************************************
  *                                      Specializations for Range<double>
  ******************************************************************************************************************************/
@@ -11,7 +20,7 @@ Range<double>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<double>::empty() const {
-    return std::isnan(r_last);
+    return isnan(r_last);
 }
 
 template<>
@@ -86,7 +95,7 @@ Range<float>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<float>::empty() const {
-    return std::isnan(r_last);
+    return isnan(r_last);
 }
 
 template<>
