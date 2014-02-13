@@ -12,7 +12,7 @@ main( int argc, char * argv[] )
 
   // Build a vector of strings to represent the command line arguments.
      std::vector<std::string> sourceCommandline = std::vector<std::string>(argv, argv + argc);
-     sourceCommandline.push_back("-rose:output_tokens");
+     sourceCommandline.push_back("-rose:unparse_tokens");
 
      SgProject* project = frontend(sourceCommandline);
 

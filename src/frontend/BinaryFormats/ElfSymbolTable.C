@@ -25,17 +25,17 @@ SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
 
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::parse(ByteOrder::Endianness sex, const Elf32SymbolEntry_disk *disk)
 {
-    p_st_info  = disk_to_host(sex, disk->st_info);
-    p_st_res1  = disk_to_host(sex, disk->st_res1);
-    p_st_shndx = disk_to_host(sex, disk->st_shndx);
-    p_st_size  = disk_to_host(sex, disk->st_size);
+    p_st_info  = ByteOrder::disk_to_host(sex, disk->st_info);
+    p_st_res1  = ByteOrder::disk_to_host(sex, disk->st_res1);
+    p_st_shndx = ByteOrder::disk_to_host(sex, disk->st_shndx);
+    p_st_size  = ByteOrder::disk_to_host(sex, disk->st_size);
 
-    p_value    = disk_to_host(sex, disk->st_value);
+    p_value    = ByteOrder::disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
 
-    rose_addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    rose_addr_t name_offset  = ByteOrder::disk_to_host(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -43,17 +43,17 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+SgAsmElfSymbol::parse(ByteOrder::Endianness sex, const Elf64SymbolEntry_disk *disk)
 {
-    p_st_info  = disk_to_host(sex, disk->st_info);
-    p_st_res1  = disk_to_host(sex, disk->st_res1);
-    p_st_shndx = disk_to_host(sex, disk->st_shndx);
-    p_st_size  = disk_to_host(sex, disk->st_size);
+    p_st_info  = ByteOrder::disk_to_host(sex, disk->st_info);
+    p_st_res1  = ByteOrder::disk_to_host(sex, disk->st_res1);
+    p_st_shndx = ByteOrder::disk_to_host(sex, disk->st_shndx);
+    p_st_size  = ByteOrder::disk_to_host(sex, disk->st_size);
 
-    p_value    = disk_to_host(sex, disk->st_value);
+    p_value    = ByteOrder::disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
 
-    rose_addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    rose_addr_t name_offset  = ByteOrder::disk_to_host(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -64,13 +64,10 @@ SgAsmElfSymbol::parse_common()
 {
     /* Binding */
     switch (get_elf_binding()) {
-        case STB_LOCAL:   p_binding = SYM_LOCAL;  break;
-        case STB_GLOBAL:  p_binding = SYM_GLOBAL; break;
-        case STB_WEAK:    p_binding = SYM_WEAK;   break;
-        default:
-            fprintf(stderr, "unknown elf symbol binding: %u\n", get_elf_binding());
-            ROSE_ASSERT(0);
-            break;
+        case STB_LOCAL:   p_binding = SYM_LOCAL;      break;
+        case STB_GLOBAL:  p_binding = SYM_GLOBAL;     break;
+        case STB_WEAK:    p_binding = SYM_WEAK;       break;
+        default:          p_binding = SYM_NO_BINDING; break;
     }
 
     /* Type */
@@ -83,10 +80,7 @@ SgAsmElfSymbol::parse_common()
         case STT_COMMON:  p_type = SYM_COMMON;  break;
         case STT_TLS:     p_type = SYM_TLS;     break;
         case STT_IFUNC:   p_type = SYM_IFUNC;   break;
-        default:
-            fprintf(stderr, "unknown elf symbol type: %u\n", get_elf_type());
-            ROSE_ASSERT(0);
-            break;
+        default:          p_type = SYM_NO_TYPE; break;
     }
 
     /* Definition state */
@@ -142,29 +136,29 @@ SgAsmElfSymbol::get_elf_type() const
 
 /** Encode a symbol into disk format */
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk) const
+SgAsmElfSymbol::encode(ByteOrder::Endianness sex, Elf32SymbolEntry_disk *disk) const
 {
     rose_addr_t st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
-    host_to_disk(sex, st_name,     &(disk->st_name));
-    host_to_disk(sex, p_st_info,   &(disk->st_info));
-    host_to_disk(sex, p_st_res1,   &(disk->st_res1));
-    host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
-    host_to_disk(sex, p_st_size,   &(disk->st_size));
-    host_to_disk(sex, get_value(), &(disk->st_value));
+    ByteOrder::host_to_disk(sex, st_name,     &(disk->st_name));
+    ByteOrder::host_to_disk(sex, p_st_info,   &(disk->st_info));
+    ByteOrder::host_to_disk(sex, p_st_res1,   &(disk->st_res1));
+    ByteOrder::host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
+    ByteOrder::host_to_disk(sex, p_st_size,   &(disk->st_size));
+    ByteOrder::host_to_disk(sex, get_value(), &(disk->st_value));
     return disk;
 }
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk) const
+SgAsmElfSymbol::encode(ByteOrder::Endianness sex, Elf64SymbolEntry_disk *disk) const
 {
     rose_addr_t st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
-    host_to_disk(sex, st_name,     &(disk->st_name));
-    host_to_disk(sex, p_st_info,   &(disk->st_info));
-    host_to_disk(sex, p_st_res1,   &(disk->st_res1));
-    host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
-    host_to_disk(sex, p_st_size,   &(disk->st_size));
-    host_to_disk(sex, get_value(), &(disk->st_value));
+    ByteOrder::host_to_disk(sex, st_name,     &(disk->st_name));
+    ByteOrder::host_to_disk(sex, p_st_info,   &(disk->st_info));
+    ByteOrder::host_to_disk(sex, p_st_res1,   &(disk->st_res1));
+    ByteOrder::host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
+    ByteOrder::host_to_disk(sex, p_st_size,   &(disk->st_size));
+    ByteOrder::host_to_disk(sex, get_value(), &(disk->st_value));
     return disk;
 }
 
@@ -317,7 +311,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);

@@ -96,7 +96,7 @@ public:
                 LeafNodePtr target = LeafNode::create_integer(32, 2067789406);
                 LeafNodePtr arg1_leaf = arg1.get_expression()->isLeafNode();
                 uint64_t arg1_varno = arg1_leaf->get_name();
-                InternalNodePtr expr = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
+                TreeNodePtr expr = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
                 if (SMTSolver::SAT_YES==smt_solver.satisfiable(expr)) {
                     LeafNodePtr arg1_value = smt_solver.evidence_for_variable(arg1_varno)->isLeafNode();

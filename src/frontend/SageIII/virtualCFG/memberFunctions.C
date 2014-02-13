@@ -2993,6 +2993,54 @@ SgJavaInstanceOfOp::cfgInEdges(unsigned int idx) {
 }
 
 unsigned int
+SgJavaTypeExpression::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgJavaTypeExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgJavaTypeExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+unsigned int
+SgJavaAnnotation::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgJavaAnnotation::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgJavaAnnotation::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+unsigned int
 SgThrowOp::cfgIndexForEnd() const 
    {
      return (get_operand() == NULL) ? 0 : 1;
@@ -3131,6 +3179,33 @@ SgVarRefExp::cfgOutEdges(unsigned int idx)
 
 std::vector<CFGEdge>
 SgVarRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+unsigned int
+SgCompoundLiteralExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3870,6 +3945,30 @@ SgSuperExp::cfgOutEdges(unsigned int idx)
 
 std::vector<CFGEdge>
 SgSuperExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+unsigned int
+SgClassExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgClassExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+  }
+
+std::vector<CFGEdge>
+SgClassExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -4951,6 +5050,32 @@ bool SgVarRefExp::isChildUsedAsLValue(const SgExpression* child) const
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
         return false;
 }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:2.5 par:5 */
+bool SgCompoundLiteralExp::isDefinable() const
+{
+        // if not constant
+        if (SageInterface::isConstType(get_type()))
+                return false;
+        // if it is protected, it is not definable
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:5.1 par:7,8 */
+bool SgCompoundLiteralExp::isLValue() const
+{
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+bool SgCompoundLiteralExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
+        return false;
+}
+
 
 /*! std:5.16 par:4 */
 bool SgConditionalExp::isLValue() const

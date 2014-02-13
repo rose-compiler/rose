@@ -133,7 +133,7 @@ DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-02-13]*/
     unsigned insn_bits = SgAsmExecutableFileFormat::le_to_host(insn_disk);
 #else
-    unsigned insn_bits = SgAsmExecutableFileFormat::be_to_host(insn_disk);
+    unsigned insn_bits = ByteOrder::be_to_host(insn_disk);
 #endif
     SgAsmMipsInstruction *insn = disassemble_insn(insn_bits);
     if (!insn)
@@ -475,6 +475,7 @@ DisassemblerMips::makeHwRegister(unsigned cc)
 {
     assert(!"FIXME");
     abort();
+    return NULL;
 }
 
 SgAsmMipsRegisterReferenceExpression *
@@ -482,6 +483,7 @@ DisassemblerMips::makeShadowRegister(unsigned cc)
 {
     assert(!"FIXME");
     abort();
+    return NULL;
 }
 
 SgAsmByteValueExpression *
@@ -3624,7 +3626,7 @@ DisassemblerMips::init()
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_MSB);
+    set_sex(ByteOrder::ORDER_MSB);
 
     insert_idis(&mips32_abs_s);
     insert_idis(&mips32_abs_d);

@@ -1,60 +1,58 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
+TEST_TARGETS =
+EXTRA_DIST =
 
-# To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
-# INCLUDES = 
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-## Don't use the repository in ../src
-CXX_TEMPLATE_REPOSITORY_PATH = .
+test_input_sources = mangleTest.C mangleTwo.C mangleThree.C
+test_input_headers = mangleTest.h mangleTwo.h
+test_input_files = $(test_input_sources) $(test_input_headers)
+EXTRA_DIST += $(test_input_files)
 
-# This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = \
-   testMerge
-
-# Allow development using -lrose -ledg (simpler) or using 
-# long list of separate libraries (for faster development)
-ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
-# ROSE_DEVELOPMENT_LIBS = $(ROSE_LIBS)
-
+#------------------------------------------------------------------------------------------------------------------------
+# testMerge executable
+noinst_PROGRAMS += testMerge
 testMerge_SOURCES = testMerge.C
-testMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+testMerge_LDADD = $(ROSE_LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-# source files don't contain anything that would be merged
-# TESTCODES = $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C $(srcdir)/mangleThree.C
-TESTCODES = mangleTest.C mangleTwo.C mangleThree.C
+#------------------------------------------------------------------------------------------------------------------------
+# tests of the testMerge executable
+testMerge_CMD = ./testMerge -rose:verbose 0
+testMerge_TESTS = testMerge_test1.passed testMerge_test2.passed testMerge_test3.passed testMerge_test4.passed
+TEST_TARGETS += $(testMerge_TESTS)
 
-checkMerge: $(TESTCODES) testMerge
-	@echo "Compiling test of merged ASTs $(TESTCODES) ..."
-# DQ (5/30/2007): Simplify this test since merging all three files causes an error at present!
-#	./testMerge -rose:verbose 0 -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C $(srcdir)/mangleThree.C
-#	./testMerge -rose:verbose 0 -rose:astMerge -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C $(srcdir)/mangleThree.C
-	./testMerge -rose:verbose 0 -rose:astMerge -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C
+.PHONY: check_testMerge
+check_testMerge: $(testMerge_TESTS)
 
-newMerge: $(TESTCODES) testMerge
-	@echo "Compiling test of merged ASTs $(TESTCODES) ..."
-	rm -rf commandFile.data
-	@echo "Build the AST merge command file"
-	./testMerge -rose:astMergeCommandFile commandFile.data $(INCLUDES) -c $(srcdir)/mangleTest.C
-	./testMerge -rose:astMergeCommandFile commandFile.data $(INCLUDES) -c $(srcdir)/mangleTwo.C
-	./testMerge -rose:astMergeCommandFile commandFile.data $(INCLUDES) -c $(srcdir)/mangleThree.C
-	cat commandFile.data
-	@echo "Now geneate and merge the ASTs"
-	./testMerge -rose:verbose 0 -rose:astMerge -rose:astMergeCommandFile commandFile.data
+testMerge_test1.passed: testMerge $(test_input_files)
+	@$(RTH_RUN) \
+		CMD="$(testMerge_CMD) -rose:astMerge -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C" \
+		$(TEST_EXIT_STATUS) $@
 
-EXTRA_DIST = $(TESTCODES) mangleTest.h  mangleTwo.h mangleTest.C
+testMerge_test2.passed: testMerge $(test_input_files)
+	@$(RTH_RUN) \
+		CMD="$(testMerge_CMD) -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C $(srcdir)/mangleThree.C" \
+		DISABLED="Simplify this test since merging all three files causes an error at present [DQ 5/30/2007]" \
+		$(TEST_EXIT_STATUS) $@
 
-check-local:
-	@$(MAKE) checkMerge
-# DQ (5/30/2007): This is not working yet, we are testing merge using multiple files on the command line for now!
-#	@$(MAKE) newMerge
-	@echo "******************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astMergeTests: make check rule complete (terminated normally) ***"
-	@echo "******************************************************************************************"
+testMerge_test3.passed: testMerge $(test_input_files)
+	@$(RTH_RUN) \
+		CMD="$(testMerge_CMD) -rose:astMerge -c $(srcdir)/mangleTest.C $(srcdir)/mangleTwo.C $(srcdir)/mangleThree.C" \
+		DISABLED="Simplify this test since merging all three files causes an error at present [DQ 5/30/2007]" \
+		$(TEST_EXIT_STATUS) $@
+
+EXTRA_DIST += testMerge_test4.conf
+testMerge_test4.passed: testMerge testMerge_test4.conf $(test_input_files)
+	@$(RTH_RUN) $(srcdir)/testMerge_test4.conf $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
+
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C *.dot *.ps *.data
-
-distclean-local:
-	rm -rf Templates.DB 
-
-
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f mangleTest--mangleTwo.C.dot

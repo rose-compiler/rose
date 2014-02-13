@@ -81,6 +81,6 @@ print "  $_$warning\n" for sort @remaining;
 # DQ (11/20/2010): Added the total file could so we can measure progress/failure.
 #$size = @remaining;
 #print "Remaining file count: $size.\n";
-print "Number of remaining unused header files: " . @remaining . ".\n";
+print "Number of remaining unused header files: " . @remaining . " (max allowed: 199).\n";
 
 exit(@remaining ? ($warning?128:1) : 0);

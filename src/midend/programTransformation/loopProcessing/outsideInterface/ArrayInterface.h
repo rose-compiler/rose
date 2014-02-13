@@ -6,12 +6,20 @@
 #include <StmtInfoCollect.h>
 #include <ValuePropagate.h>
 #include <LoopTransformInterface.h>
+#include <AstInterface_ROSE.h>
 
-class ArrayInterface 
+class SgFunctionDefinition; // Sneak in a forward reference
+
+class ROSE_DLL_API ArrayInterface 
   : public AstObserver, public AliasAnalysisInterface, public ArrayAbstractionInterface
 {
+ public: typedef std::map<SgFunctionDefinition *, ArrayInterface *> ArrayInterfaceMapT;
+ private:
   StmtVarAliasCollect aliasCollect;
   ValuePropagate valueCollect;
+
+  static ArrayInterfaceMapT instMap;
+
   std::map <AstNodePtr, int> dimmap;
   std::map <AstNodePtr, SymbolicFunctionDeclarationGroup> lenmap;
   std::map <std::string, ArrayOptDescriptor> optmap;
@@ -49,6 +57,8 @@ class ArrayInterface
                               AstInterface::AstNodeList* alias = 0,
                               int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0);
  
+  static ArrayInterface * get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, AstNodePtrImpl node );
+
   AstNodePtr impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, 
                                   bool insertinit = false);
   AstNodePtr impl_access_array_length(  CPPAstInterface& fa, const AstNodePtr& array, int dim,

@@ -23,6 +23,15 @@ FixupTemplateInstantiations::visit (SgNode* node)
   // Take care of marking the whole subtree of any declarations
   // that the EDG/Sage connection marked as compiler generated.
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
+
+  // DQ (1/18/2014): Testcode test2012_75.c demonstrates why we need to force the function 
+  // parameters to be marked as compiler generated.  Else there are errors in how comments 
+  // are woven back into the AST.
+  // DQ (1/18/2014): Skip function parameter lists, since they are always marked as
+  // compiler generated (because we don't have source position information for them).  
+  // Perhaps marking it as frontend specific would be more appropriate).
+  // if (declaration != NULL)
+  // if (declaration != NULL && isSgFunctionParameterList(declaration) == NULL)
      if (declaration != NULL)
         {
           if (declaration->get_file_info() == NULL)
@@ -38,9 +47,8 @@ FixupTemplateInstantiations::visit (SgNode* node)
           if (declaration->get_file_info()->isCompilerGenerated() == true)
              {
 #if 0
-               string name = SageInterface::get_name(declaration);
-               printf ("declaration = %p = %s is marked as compiler generated (mark the rest of the subtree similarly) \n",
-                    declaration,name.c_str());
+               std::string name = SageInterface::get_name(declaration);
+               printf ("declaration = %p = %s is marked as compiler generated (mark the rest of the subtree similarly) \n",declaration,name.c_str());
 #endif
 
             // DQ (8/10/2005): We should never mark a template declaration as compiler generated 
@@ -49,6 +57,9 @@ FixupTemplateInstantiations::visit (SgNode* node)
                if (isSgTemplateDeclaration(node) == NULL)
                   {
                  // Mark the whole declaration as compiler generated since we could not do so in the EDG/Sage III translation
+#if 0
+                    printf ("In FixupTemplateInstantiations::visit(): Calling markAsCompilerGenerated: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
                     markAsCompilerGenerated(declaration);
                   }
              }

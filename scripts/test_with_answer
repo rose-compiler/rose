@@ -3,5 +3,10 @@
 # its exit status, and verifies that its standard output exactly matches the contents of the
 # file specified by the "ANS=" command-line arg.
 
+title = ${TITLE}
 cmd = ${VALGRIND} ${CMD}
 answer = ${ANS}
+
+# Other things that are sometimes convenient to set in the makefile
+title = ${TITLE}
+disabled = ${DISABLED}

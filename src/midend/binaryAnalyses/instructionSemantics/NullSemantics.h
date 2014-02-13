@@ -26,6 +26,9 @@ namespace BinaryAnalysis { // documented elsewhere
                 void print(std::ostream &o) const {
                     o <<"VOID";
                 }
+                void print(std::ostream &o, BaseSemantics::Formatter&) const {
+                    o <<"VOID";
+                }
             };
 
             /** Output operator.  Values in a semantic domain should be printable. */
@@ -128,7 +131,8 @@ namespace BinaryAnalysis { // documented elsewhere
                 /** Invoked for the x86 INT instruction. */
                 void interrupt(uint8_t) {}
 
-                /** Invoked for the x86 SYSENTER instruction. */
+                /** Invoked for the x86 SYSENTER instruction.  Note: the semantics API2 uses interrupt() for the x86 SYSENTER
+                 *  instruction. */
                 void sysenter() {}
 
                 /** Adds two integers. */
@@ -347,15 +351,20 @@ namespace BinaryAnalysis { // documented elsewhere
             public:
 
                 /** Print the current state of the policy.  A NullSemantic policy has no state, so we just print the string
-                 * "null state". Policy states are normally multi-line output that includes a final line terminator. */
+                 * "null state". Policy states are normally multi-line output that includes a final line terminator.
+                 * @{ */
                 void print(std::ostream &o) const {
                     o <<"null state\n";
                 }
-
+                void print(std::ostream &o, BaseSemantics::Formatter&) const {
+                    o <<"null state\n";
+                }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &policy) {
                     policy.print(o);
                     return o;
                 }
+                /** @} */
+
             };
         } /*namespace*/
     } /*namespace*/

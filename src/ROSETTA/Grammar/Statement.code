@@ -1650,9 +1650,11 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           SgInitializedName *get_decl_item(const SgName&);
        // SgInitializedName *get_defn_item(const SgName&);
 
-       // I think this should be "unsigned long" instead of SgUnsignedLongVal (but I'm not certain!)
-          SgUnsignedLongVal *get_bitfield();
-          void set_bitfield (SgUnsignedLongVal*);
+       // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+       // SgUnsignedLongVal *get_bitfield();
+       // void set_bitfield (SgUnsignedLongVal*);
+          SgValueExp* get_bitfield();
+          void set_bitfield (SgValueExp*);
 
        // Only on the first variable declaration's
           int reset_initializer(SgInitializer *);
@@ -1836,10 +1838,6 @@ HEADER_VARIABLE_DEFINITION_STATEMENT_START
        // SgInitializedName *get_defn_item(); 
        // SgInitializedName *get_decl_item(); 
       //  void set_initializer(SgInitializer *);
-
-       // I think this should be "unsigned long" instead of SgUnsignedLongVal (but I'm not certain!)
-       // SgUnsignedLongVal *get_bitfield();
-       // void set_bitfield (SgUnsignedLongVal*);
 
           SgVariableDeclaration *get_declaration();
 
@@ -3596,7 +3594,12 @@ HEADER_JAVA_IMPORT_STATEMENT_START
 
 HEADER_JAVA_IMPORT_STATEMENT_END
 
+HEADER_JAVA_PACKAGE_DECLARATION_START
+          virtual SgName get_mangled_name() const;
+HEADER_JAVA_PACKAGE_DECLARATION_END
+
 HEADER_JAVA_PACKAGE_STATEMENT_START
+          virtual SgName get_mangled_name() const;
 HEADER_JAVA_PACKAGE_STATEMENT_END
 
 // #########################################################
@@ -4518,6 +4521,26 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
                s,s->class_name().c_str(),SageInterface::get_name(s).c_str(),p_symbol_table,this,this->class_name().c_str());
         }
      ROSE_ASSERT(symbolAlreadyPresent == false);
+#endif
+
+#if 1
+  // DQ (11/21/2013): Adding test as a result of debugging with Philippe.
+  // This test is not a test for a bug, since we require that symbols in base classes be aliased in the derived classes.
+     SgClassSymbol* class_symbol = isSgClassSymbol(s);
+     if (class_symbol != NULL)
+        {
+          SgClassDeclaration* class_declaration = isSgClassDeclaration(class_symbol->get_declaration());
+          ROSE_ASSERT(class_declaration != NULL);
+          if (class_declaration->get_scope() != this)
+             {
+               printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
+               printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
+               printf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
+               printf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
+               class_declaration->get_file_info()->display("class_declaration: debug");
+             }
+       // ROSE_ASSERT(class_declaration->get_scope() == this);
+        }
 #endif
 
      p_symbol_table->insert(n,s);
@@ -11744,15 +11767,19 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
      return defn_stmt;
    }
 
-SgUnsignedLongVal*
+// DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+// SgUnsignedLongVal* SgVariableDeclaration::get_bitfield()
+SgValueExp*
 SgVariableDeclaration::get_bitfield()
    {
      assert(get_definition() != 0);
      return get_definition()->get_bitfield();
    }
 
+// DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+// void SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
 void
-SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
+SgVariableDeclaration::set_bitfield (SgValueExp* bfield)
    {
      assert(get_definition() != 0);
      get_definition()->set_bitfield(bfield);
@@ -16969,12 +16996,40 @@ SgJavaImportStatement::get_mangled_name(void) const
 
 SOURCE_JAVA_IMPORT_STATEMENT_END
 
+SOURCE_JAVA_PACKAGE_DECLARATION_START
+void
+SgJavaPackageDeclaration::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJavaPackageDeclaration::get_mangled_name() const
+   {
+     return SgName("_package_" + SgClassDeclaration::get_mangled_name()); // PC: 06/21/2013
+   }
+SOURCE_JAVA_PACKAGE_DECLARATION_END
+
 SOURCE_JAVA_PACKAGE_STATEMENT_START
 void
 SgJavaPackageStatement::post_construction_initialization()
-{
-  // Nothing to setup here.
-}
+   {
+     // Nothing to setup here.
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgJavaPackageStatement::get_mangled_name(void) const
+   {
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgName returnName = SgName("_java_package_stmt_") + get_name();
+
+     return returnName;
+   }
+
 SOURCE_JAVA_PACKAGE_STATEMENT_END
 
 SOURCE_OMP_SIMD_STATEMENT_START

@@ -193,7 +193,7 @@ namespace BinaryAnalysis {
          *  CG cg1 = FunctionCall().build_cg_from_ast(node);
          *
          *  // Method 2
-         *  CFG cfg = ControlFlow().build_cfg_from_ast<CFG>(node);
+         *  CFG cfg = ControlFlow().build_block_cfg_from_ast<CFG>(node);
          *  CG cg2 = FunctionCall().build_cg_from_cfg<CG>(cfg);
          *  @endcode
          *
@@ -380,7 +380,7 @@ void
 BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGraph &dst)
 {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-    Vertex NO_VERTEX = typename boost::graph_traits<FunctionCallGraph>::null_vertex();
+    Vertex NO_VERTEX = boost::graph_traits<FunctionCallGraph>::null_vertex();
 
     dst.clear();
     std::vector<Vertex> src_to_dst(num_vertices(src), NO_VERTEX);

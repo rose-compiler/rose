@@ -11,8 +11,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # This should probably also depend on all the source files that contain enum definitions.
 stringify.h: stringify.C
 stringify.C: $(top_srcdir)/scripts/stringify.pl
-	@echo "  GEN     $@"
-	@$(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
+	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
 
 threadSupport.lo: stringify.h
 
@@ -27,7 +26,10 @@ libroseSupport_la_SOURCES =			\
 	utility_functions.C			\
 	memoryUsage.C				\
 	threadSupport.C				\
-	IncludeDirective.C
+	IncludeDirective.C			\
+	SqlDatabase.C				\
+	LinearCongruentialGenerator.C		\
+	Combinatorics.C
 
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
@@ -42,7 +44,10 @@ include_HEADERS =				\
 	stringify.h				\
 	utility_functions.h			\
 	threadSupport.h				\
-	IncludeDirective.h
+	IncludeDirective.h			\
+	SqlDatabase.h				\
+	LinearCongruentialGenerator.h		\
+	Combinatorics.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 

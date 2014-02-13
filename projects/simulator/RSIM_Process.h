@@ -16,7 +16,7 @@ public:
         : simulator(simulator), tracing_file(NULL), tracing_flags(0),
           brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), ep_orig_va(0), ep_start_va(0),
-          terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
+          terminated(false), termination_status(0), project(NULL), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
@@ -617,6 +617,7 @@ private:
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
     std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
+    SgProject *project;                         /**< AST project node for the main specimen (not interpreter or libraries). */
 
 public:
     /** Thrown by exit system calls. */
@@ -673,6 +674,11 @@ public:
         return headers;
     }
 
+    /** Returns the project node. This returns null until after load() is called. */
+    SgProject *get_project() const {
+        return project;
+    }
+    
     /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
     SgAsmInterpretation *get_interpretation() const {
         return interpretation;

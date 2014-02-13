@@ -2,10 +2,18 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_executable( testTranslator testTranslator.C )
-target_link_libraries(testTranslator ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(testTranslator ROSE_DLL ${edg_lib} ${link_with_libraries} )
 
 add_subdirectory (translatorTests)
 enable_testing()
+
+find_program(bash bash)
+if(bash)
+  add_test(
+    NAME check_policies
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${bash} ${CMAKE_SOURCE_DIR}/scripts/policies-checker.sh)
+endif()
 
 # ${Boost_LIBRARIES}
 #    libastMerge libsageInterface libastTokenStream 

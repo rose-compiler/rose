@@ -16,7 +16,7 @@ class DisassemblerX86: public Disassembler {
      *========================================================================================================================*/
 public:
     DisassemblerX86(size_t wordsize)
-        : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none), 
+        : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none),
           branchPrediction(x86_branch_prediction_none), branchPredictionEnabled(false), rexPresent(false), rexW(false), 
           rexR(false), rexX(false), rexB(false), sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false),
           lock(false), repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0), 
@@ -401,7 +401,7 @@ private:
     size_t insnbufat;                           /**< Index of next byte to be read from or write to insnbuf */
 
     /* Temporary flags set by the instruction; initialized by startInstruction() */
-    X86SegmentRegister segOverride;             /**< Set to other than x86_segreg_none by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
+    X86SegmentRegister segOverride;             /**< Set by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
     X86BranchPrediction branchPrediction;       /*FIXME: this seems to set only to x86_branch_prediction_true [RPM 2009-06-16] */
     bool branchPredictionEnabled;
     bool rexPresent, rexW, rexR, rexX, rexB;    /**< Set by 0x40-0x4f prefixes; extended registers present; see setRex() */

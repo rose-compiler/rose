@@ -13,6 +13,8 @@ roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
+
 # all input files are put into tests/CompileTests/OpenMP_tests
 # They are shared by both OpenMP parsing tests and OpenMP lowering tests
 
@@ -21,33 +23,34 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
 	dijkstra_open_mp.c \
-        dynamicChunk.c \
+	dynamicChunk.c \
 	endif.c \
 	endif3.c \
-	firstPrivateArray.c \
 	full_verify.c \
 	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
-        master.c \
+	master.c \
 	md_open_mp.c \
-        nowait.c \
-        ompfor5.c \
-        ompfor6.c \
+	nowait.c \
+	ompfor5.c \
+	ompfor6.c \
 	private-duplicate.c \
 	single2.c \
 	sizeof.c \
-        staticChunk.c \
-        task_orphaned.c \
-        task_underIf.c \
-        task_wait.c \
-        task_wait2.c \
+	staticChunk.c \
+	task_orphaned.c \
+	task_underIf.c \
+	task_wait.c \
+	task_wait2.c \
+	task_array2.c \
 	task_untied4.c \
 	twoRegions.c
 
+#        axpy_ompacc2.c 
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        collapse_2.c\
         axpy_ompacc.c \
-        axpy_ompacc2.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
         jacobi-ompacc-opt1.c
@@ -56,70 +59,74 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
 C_TESTCODES_REQUIRED_TO_RUN = \
-        3loops.c \
+	3loops.c \
 	array_init.c \
-        atomic.c \
-        barrier.c \
-        critical.c \
-        critical_orphaned.c \
-        empty.c \
-        falsesharing.c \
-        firstlastprivate.c \
-        firstprivate.c \
-        flush.c \
-        get_max_threads.c \
-        hello-1.c \
-        hello-2.c \
-        hello-ordered.c \
-        hello.c \
-        jacobi.c \
-        lastprivate.c \
-        lastprivate0.c \
-        lockarray.c \
+	array_init_2.c \
+	atomic.c \
+	barrier.c \
+	critical.c \
+	critical_orphaned.c \
+	empty.c \
+	falsesharing.c \
+	firstlastprivate.c \
+	firstprivate.c \
+	firstPrivateArray.c \
+	firstPrivateArray_2.c \
+	flush.c \
+	get_max_threads.c \
+	hello-1.c \
+	hello-2.c \
+	hello-ordered.c \
+	hello.c \
+	jacobi.c \
+	lastprivate.c \
+	lastprivate0.c \
+	lockarray.c \
 	loop1.c \
-        nestedpar.c \
-        nestedpar1.c \
-        masterSingle.c \
+	nestedpar.c \
+	nestedpar1.c \
+	masterSingle.c \
 	multiple_return.c \
-        ordered.c \
-        ordered2.c \
-        omp1.c \
-        ompfor.c \
-        ompfor2.c \
-        ompfor3.c \
-        ompfor4.c \
+	ordered.c \
+	ordered2.c \
+	omp1.c \
+	ompfor.c \
+	ompfor2.c \
+	ompfor3.c \
+	ompfor4.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
 	ompfor-static.c \
 	ompGetNumThreads.c \
-        orphaned-directives.c \
-        parallel.c \
+	orphaned-directives.c \
+	parallel.c \
 	parallel-if.c \
 	parallel-if-numthreads.c \
 	parallel-numthreads.c \
-        parallel-reduction.c \
-        parallel-reduction2.c \
-        parallelsections.c \
-        parallelfor.c \
-        parallelfor2.c \
+	parallel-reduction.c \
+	parallel-reduction2.c \
+	parallelsections.c \
+	parallelfor.c \
+	parallelfor2.c \
 	prettyfunc.c \
-        private.c \
-        privatej.c \
-        reduction.c \
-        reduction2.c \
+	private.c \
+	privatej.c \
+	reduction.c \
+	reduction2.c \
 	reduction-classic.c \
 	rice1.c \
-        section.c \
-        section1.c \
-        set_num_threads.c \
-        single.c \
-        subteam.c \
-        subteam2.c \
-        spmd1.c \
-        task_largenumber.c \
-        task_untied.c \
-        task_untied2.c \
-        task_untied3.c
+	section.c \
+	section1.c \
+	set_num_threads.c \
+	single.c \
+	subteam.c \
+	subteam2.c \
+	spmd1.c \
+	task_largenumber.c \
+	task_outlining.c \
+	task_untied.c \
+	task_untied2.c \
+	task_untied3.c
 
 # DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
 # support for thread local storage). Liao knows more about the details of these tests.
@@ -133,7 +140,8 @@ endif
 
 # C++ test codes which can only be compiled
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
-	memberFunction.cpp 
+	memberFunction.cpp \
+	memberFunction2.cpp
 
 # C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
@@ -169,20 +177,20 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO: npb, validation suite, developer tests, epcc
 # full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
-        collapse.c \
-        copyin.c \
-        copyprivate.c \
-        copyprivate2.c \
-        copyprivate3.c \
-        critical_dead.c \
+	collapse.c \
+	copyin.c \
+	copyprivate.c \
+	copyprivate2.c \
+	copyprivate3.c \
+	critical_dead.c \
 	endif2.c \
-        expressions.c \
-        macroCalls.c \
-        recursive.c \
+	expressions.c \
+	macroCalls.c \
+	recursive.c \
 	shared.c \
-        single_copyprivate.c \
-        threadProcessor.c \
-        variables.c
+	single_copyprivate.c \
+	threadProcessor.c \
+	variables.c
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
@@ -210,24 +218,39 @@ PASSING_OMP_ACC_TEST_EXE_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.out)
 
 # rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #$(C_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
 $(C_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #$(CXX_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
-	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+	@$(RTH_RUN) \
+		TITLE="roseomp $(notdir $<) [$@.passed]" \
+		CMD="./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 # Experimental translation for OpenMP accelerator model directives
 # no final compilation for now, which requires CUDA compiler for the generated code
 # each rose_*.cu file depends o its corresponding *.c file
 $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<
+	@$(RTH_RUN) \
+		TITLE="roseompacc $(notdir $<) [$@.passed]" \
+		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 #rose_axpy_ompacc.cu:roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
@@ -236,7 +259,10 @@ $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
 
 # build executables using nvcc
 $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
-	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+	@$(RTH_RUN) \
+		TITLE="nvcc $(notdir $<) [$@.passed]" \
+		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
+		$(TEST_EXIT_STATUS) $@.passed
 
 # a short cut to run omp-acc support test
 ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
@@ -246,6 +272,9 @@ ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
 #matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
 #	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
+# NOTE: ROSE Test Harness has mechanisms for checking answers via diffs that could possibly be used here. It would also
+# be able to handle via its filters the cases mentioned below where function names have random integer numbers. [RPM
+# 2013-09-28]
 OMP_ACC_DIFF_FILES=$(PASSING_OMP_ACC_TEST_CUDA_Files:.cu=.cu.diff)
 DIFF=diff
 EXPECTED_PATH = $(top_srcdir)/tests/roseTests/ompLoweringTests/referenceResults
@@ -289,7 +318,7 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 else
@@ -332,17 +361,16 @@ endif
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally)         ******"
 	@echo "***********************************************************************************************************"
 
 # USE gcc GOMP library
 else
 
 #-------------compile only --------------------------------	
-check-local: roseomp
-	@echo "Test for ROSE OpenMP lowering."
-	@echo "***************** Testing C input *******************"
-	$(MAKE) $(PASSING_C_TEST_Objects)
+check-local: roseomp \
+		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
+		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -352,24 +380,44 @@ if OS_MACOSX
 	@echo "/* threadprivate.c not run on MAC OSX (no thread local storage on OSX). */" > rose_threadprivate.c
 endif
 #	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
-	$(MAKE)	$(C_TEST_OBJECT_REQUIRED_TO_RUN)
-	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
-	@echo "***************** Testing C++ input ******************"
-	$(MAKE) $(PASSING_CXX_TEST_Objects)
-	$(MAKE)	$(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                              *******************************"
-	@echo "****       compilation tests completed but executables are not generated and run***************************"
-	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP   ******"
-	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/              ********"
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                                                        ******"
+	@echo "******       compilation tests completed but executables are not generated and run                   ******"
+	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP        ******"
+	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/                   ******"
 	@echo "***********************************************************************************************************"
 
 endif # ROSE_USE_OMNI_OPENMP
  
 endif # 
 
+# Try not to delete files that a developer might have sitting in this directory--delete only things created by
+# running the makefile.  I.e., try not to use wildcards!  Also, we could have combined these variables into a
+# single list, but sometimes those lists tend to get too long, so we just do them one at a time.
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.cu *.diff
+	rm -f $(addprefix rose_, $(C_TESTCODES_REQUIRED_TO_COMPILE))
+	rm -f $(addprefix rose_, $(CXX_TESTCODES_REQUIRED_TO_COMPILE))
+	rm -f $(addprefix rose_, $(C_TESTCODES_REQUIRED_TO_RUN))
+	rm -f $(addprefix rose_, $(CXX_TESTCODES_REQUIRED_TO_RUN))
+	rm -f $(PASSING_C_TEST_Objects)
+	rm -f $(addsuffix .passed, $(PASSING_C_TEST_Objects))
+	rm -f $(addsuffix .failed, $(PASSING_C_TEST_Objects))
+	rm -f $(C_TEST_OBJECT_REQUIRED_TO_RUN)
+	rm -f $(addsuffix .passed, $(C_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(addsuffix .faild, $(C_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(PASSING_CXX_TEST_Objects)
+	rm -f $(addsuffix .passed, $(PASSING_CXX_TEST_Objects))
+	rm -f $(addsuffix .failed, $(PASSING_CXX_TEST_Objects))
+	rm -f $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
+	rm -f $(addsuffix .passed, $(CXX_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(addsuffix .failed, $(CXX_TEST_OBJECT_REQUIRED_TO_RUN))
+	rm -f $(PASSING_OMP_ACC_TEST_CUDA_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
+	rm -f $(PASSING_OMP_ACC_TEST_EXE_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_EXE_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_EXE_Files))
+
 
 EXTRA_DIST = referenceResults
 

@@ -104,8 +104,6 @@ check-vfa: $(VFA_TEST_TARGETS)
 clean-vfa:
 	rm -f $(VFA_TEST_TARGETS)
 	rm -f $(VFA_TEST_TARGETS:.passed=.failed)
-	rm -f $(VFA_TEST_TARGETS:.passed=.out)
-	rm -f $(VFA_TEST_TARGETS:.passed=.err)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -177,9 +175,7 @@ vf_05.passed: $(CHECK_EXIT_STATUS) VirtualFunctionAnalysisTest $(srcdir)/test_vf
 
 MOSTLYCLEANFILES +=				\
 	$(EXTRA_TEST_TARGETS)			\
-	$(EXTRA_TEST_TARGETS:.passed=.failed)	\
-	$(EXTRA_TEST_TARGETS:.passed=.out)	\
-	$(EXTRA_TEST_TARGETS:.passed=.err)
+	$(EXTRA_TEST_TARGETS:.passed=.failed)
 
 EXTRA_DIST +=								\
 	testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.ref	\

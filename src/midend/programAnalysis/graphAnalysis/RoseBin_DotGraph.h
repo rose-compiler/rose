@@ -11,7 +11,7 @@
 #include "RoseBin_Graph.h"
 #include "virtualBinCFG.h"
 
-class RoseBin_DotGraph : public RoseBin_Graph {
+class ROSE_DLL_API RoseBin_DotGraph : public RoseBin_Graph {
  private:
   void printInternalNodes( bool dfg,  bool forward_analysis,
                            std::ofstream &myfile, std::string& recursiveFunctionName,

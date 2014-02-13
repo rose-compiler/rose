@@ -284,6 +284,20 @@ HEADER_VAR_REF_EXPRESSION_START
 HEADER_VAR_REF_EXPRESSION_END
 
 
+HEADER_COMPOUND_LITERAL_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // get lvalue
+          virtual bool isDefinable() const;
+          virtual bool isLValue() const;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+HEADER_COMPOUND_LITERAL_EXPRESSION_END
+
+
 HEADER_LABEL_REF_EXPRESSION_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1028,6 +1042,15 @@ HEADER_SUPER_EXPRESSION_START
 
 HEADER_SUPER_EXPRESSION_END
 
+HEADER_CLASS_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_CLASS_EXPRESSION_END
+
 HEADER_TUPLE_EXP_START
 HEADER_TUPLE_EXP_END
 
@@ -1424,6 +1447,39 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
+
+HEADER_JAVA_ANNOTATION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_ANNOTATION_END
+
+HEADER_JAVA_MARKER_ANNOTATION_START
+HEADER_JAVA_MARKER_ANNOTATION_END
+
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_START
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+HEADER_JAVA_NORMAL_ANNOTATION_START
+
+  // DQ (1/13/2014): Added append and prepend member functions to support Java annotations.
+     void append_value_pair (SgJavaMemberValuePair *what);
+     void prepend_value_pair(SgJavaMemberValuePair *what);
+
+HEADER_JAVA_NORMAL_ANNOTATION_END
+
+HEADER_JAVA_TYPE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_TYPE_EXPRESSION_END
+
 
 // #########################################################
 // #########################################################
@@ -2601,6 +2657,10 @@ SgVarRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
 SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
 
 
+SOURCE_COMPOUND_LITERAL_EXPRESSION_START
+SOURCE_COMPOUND_LITERAL_EXPRESSION_END
+
+
 SOURCE_LABEL_REFERENCE_EXPRESSION_START
 
 SgName
@@ -3354,32 +3414,25 @@ SgFunctionCallExp::get_type() const
        // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
 
        // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+       // Milind Chabbi, after discussing with DQ (7/29/2013), we need to strip all. See test: CompileTests/Cxx_tests/test2013_milind_01.C
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE | 
+                                                             SgType::STRIP_REFERENCE_TYPE | 
+                                                             SgType::STRIP_POINTER_TYPE | 
+                                                             SgType::STRIP_ARRAY_TYPE | 
+                                                             SgType::STRIP_TYPEDEF_TYPE);
 
        // printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
           functionType = isSgFunctionType(likelyFunctionType);
 
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
+       // if functionType is NULL (e.g SgTemplateType or SgClassType) we have no idea what the return type is, so we will return SgTypeUnknown
+          if (functionType == NULL) {
+              //printf ("Warning: Unable to infer the return type of %s in SgFunctionCallExp\n", likelyFunctionType->class_name().c_str());
+              return SgTypeUnknown::createType();
+          } 
         }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
+     ROSE_ASSERT(functionType);
      returnType = functionType->get_return_type();
-#endif
      ROSE_ASSERT(returnType != NULL);
-
      return returnType;
    }
 
@@ -4021,6 +4074,7 @@ SgTypeIdOp::set_type( SgType* type )
 SgType*
 SgTypeIdOp::get_type() const
    {
+#if 0
   // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
   // type of expression expr. You must include the standard template library header <typeinfo> to use the 
   // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a 
@@ -4048,6 +4102,34 @@ SgTypeIdOp::get_type() const
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
+#else
+    // get_type on SgTypeIdOp must always retuen a const referene to "std::type_info"
+
+     SgType* returnType = NULL;
+     // If we call get_type() on a node that is not fully build then this will break.
+     SgGlobal* globalScope = SageInterface::getGlobalScope(this);
+     ROSE_ASSERT(globalScope && "globalScope is NULL");
+
+     SgNamespaceSymbol* stdNamespaceSymbol = globalScope->lookup_namespace_symbol(SgName("std"));
+     ROSE_ASSERT(stdNamespaceSymbol && "lookup_namespace_symbol did not found std symbol");
+
+     SgNamespaceDeclarationStatement *  namespaceDeclarationStatement   = stdNamespaceSymbol->get_declaration ();
+     SgNamespaceDefinitionStatement * namespaceDefinitionStatement = namespaceDeclarationStatement->get_definition();
+     ROSE_ASSERT(namespaceDefinitionStatement && "get_definition() retured NULL");
+
+     SgClassSymbol * typeInfoClassSymbol = namespaceDefinitionStatement->lookup_class_symbol(SgName("type_info"));
+     ROSE_ASSERT(typeInfoClassSymbol && "lookup_class_symbol did not found type_info symbol");
+
+     //returnType = SageInterface::deepCopy(typeInfoClassSymbol->get_type());
+     returnType = typeInfoClassSymbol->get_type();
+     ROSE_ASSERT(isSgClassType(returnType));
+
+
+     SgModifierType* constType =  SageBuilder::buildConstType(returnType);
+     ROSE_ASSERT (constType);
+     SgReferenceType * constRefType = SageBuilder::buildReferenceType(constType);
+     return constRefType;
+#endif
    }
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_END
@@ -4374,7 +4456,10 @@ $CLASSNAME::get_type() const
         }
        else
         {
-          returnType = SgPointerType::createType(baseType);
+          // Milind Chabbi (8/1/2013) We must strip the reference else we will get pointer to a reference. 
+          // See CompileTests/Cxx_tests/test2004_157.C run under extractFunctionArgumentsNormalization
+          // TODO: should we strip STRIP_TYPEDEF_TYPE? Not sure, need to talk to Dan.
+          returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE));
         }
 
    //  ROSE_ASSERT(returnType != NULL);
@@ -4693,7 +4778,6 @@ SgPntrArrRefExp::get_type() const
                break;
              }
 
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (10/3/2006): Added case of array reference of string type (assume it returns a char).
        // Once we have a wcharString type then we have to add that case to this list as well!
           case V_SgTypeString:
@@ -4703,6 +4787,7 @@ SgPntrArrRefExp::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
      // Liao (1/25/2008) SgTypeUnknown is used to specify a temporary symbol generated 
      //during translation when the corresponding variable declaration is not yet declared.
           case V_SgTypeUnknown:
@@ -4948,6 +5033,9 @@ SOURCE_THIS_EXPRESSION_END
 
 SOURCE_SUPER_EXPRESSION_START
 SOURCE_SUPER_EXPRESSION_END
+
+SOURCE_CLASS_EXPRESSION_START
+SOURCE_CLASS_EXPRESSION_END
 
 SOURCE_TUPLE_EXP_START
 SOURCE_TUPLE_EXP_END
@@ -5226,34 +5314,40 @@ SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 SgClassDeclaration*
 SgConstructorInitializer::get_class_decl () const
 {
-    SgClassDeclaration *cdecl = NULL;
+    SgClassDeclaration *class_decl = NULL;
 
     if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
         // The constructor is declared (and is a member of a class type)
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
-        cdecl = isSgClassDeclaration(cdef->get_parent());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(cdef->get_parent());
+        assert(class_decl!=NULL);
     } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
         // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
         // p_expression_type's declaration.
-        cdecl = isSgClassDeclaration(expr_type->get_declaration());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(expr_type->get_declaration());
+        assert(class_decl!=NULL);
     } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
 	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
 	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
 	    // SAGE Representation.
-        cdecl = isSgClassDeclaration(parmType->get_declaration());
-        ROSE_ASSERT(cdecl != NULL);    
+        class_decl = isSgClassDeclaration(parmType->get_declaration());
+        ROSE_ASSERT(class_decl != NULL);    
+    } else if (SgJavaQualifiedType *qualType = isSgJavaQualifiedType(p_expression_type)) {
+	    // 01/24/15 PC added case of SgJavaQualifiedType... Note that Strictly speaking,
+	    // an SgJavaQualifiedType is a class.  However, this is not the case in the current
+	    // SAGE Representation.
+        class_decl = isSgClassDeclaration(qualType->get_declaration());
+        ROSE_ASSERT(class_decl != NULL);    
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
 
-    if (cdecl) {
-        cdecl = isSgClassDeclaration(cdecl->get_firstNondefiningDeclaration());
-        assert(cdecl!=NULL);
+    if (class_decl) {
+        class_decl = isSgClassDeclaration(class_decl->get_firstNondefiningDeclaration());
+        assert(class_decl!=NULL);
     }
-    return cdecl;
+    return class_decl;
 }
 
 void
@@ -5266,7 +5360,8 @@ SgConstructorInitializer::post_construction_initialization()
        // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
        // an SgJavaParameterizedType is a class.  However, this is not the case in the current
        // SAGE Representation.
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+       //01/24/15 added case of SgJavaQualifiedType...
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
@@ -5916,6 +6011,18 @@ $CLASSNAME::get_type() const
    }
 
 SOURCE_GET_TYPE_SUPER_EXPRESSION_END
+
+SOURCE_GET_TYPE_CLASS_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     ROSE_ASSERT(get_class_symbol() != NULL);
+     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     return get_class_symbol() -> get_type();
+   }
+
+SOURCE_GET_TYPE_CLASS_EXPRESSION_END
 
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END
@@ -6734,3 +6841,59 @@ SgCudaKernelCallExp::post_construction_initialization()
 SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
+
+
+SOURCE_JAVA_ANNOTATION_START
+
+// DQ (1/13/2014): This function helps to provide a uniform interface even though 
+// the type is held in a field called p_expression_type.  This supports Java annotations
+// for the SgJavaMarkerAnnotation, SgJavaSingleMemberAnnotation, and SgJavaNormalAnnotation.
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_expression_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_JAVA_ANNOTATION_END
+
+SOURCE_JAVA_MARKER_ANNOTATION_START
+SOURCE_JAVA_MARKER_ANNOTATION_END
+
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_START
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+SOURCE_JAVA_NORMAL_ANNOTATION_START
+
+void
+SgJavaNormalAnnotation::append_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.push_back(what); }
+
+void
+SgJavaNormalAnnotation::prepend_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.insert(p_value_pair_list.begin(), what); }
+
+SOURCE_JAVA_NORMAL_ANNOTATION_END
+
+SOURCE_JAVA_TYPE_EXPRESSION_START
+
+//
+// Return the type associated with this Type expression.
+//
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_JAVA_TYPE_EXPRESSION_END
+

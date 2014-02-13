@@ -2,6 +2,7 @@
 #define Rose_SemanticState_H
 
 #include "Registers.h"
+#include "FormatRestorer.h"
 
 // Documented elsewhere
 namespace BinaryAnalysis {
@@ -139,9 +140,47 @@ namespace BinaryAnalysis {
         namespace BaseSemantics {
             
 
-            /** Indicates no print helper.  This can be used as the PrintHelper argument for most print methods related to
-             *  instruction semantics. */
-            class SEMANTIC_NO_PRINT_HELPER {};
+            /** Format for printing things. Some semantic domains may want to pass some additional information to print methods
+             *  on a per-call basis.  This base class provides something they can subclass to do that.  A reference is passed
+             *  to all print() methods for semantic objects. */
+            class Formatter {
+            public:
+                Formatter(): indentation_suffix("    ") {}
+                virtual ~Formatter() {}
+
+                /** The string to print at the start of each line. This only applies to objects that occupy more than one line.
+                 * @{ */
+                std::string get_line_prefix() const { return line_prefix; }
+                void set_line_prefix(const std::string &s) { line_prefix = s; }
+                /** @} */
+
+                /** Indentation string appended to the line prefix for multi-level, multi-line outputs.
+                 * @{ */
+                std::string get_indentation_suffix() const { return indentation_suffix; }
+                void set_indentation_suffix(const std::string &s) { indentation_suffix = s; }
+                /** @} */
+
+            protected:
+                std::string line_prefix;
+                std::string indentation_suffix;
+            };
+
+            /** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by
+             * appending the formatter's indentation suffix.  When this Indent object is destructed, the formatter's line
+             * prefix is reset to its original value. */
+            class Indent {
+            private:
+                Formatter &fmt;
+                std::string old_line_prefix;
+            public:
+                Indent(Formatter &fmt): fmt(fmt) {
+                    old_line_prefix = fmt.get_line_prefix();
+                    fmt.set_line_prefix(old_line_prefix + fmt.get_indentation_suffix());
+                }
+                ~Indent() {
+                    fmt.set_line_prefix(old_line_prefix);
+                }
+            };
 
             /******************************************************************************************************************
              *                                  MemoryCell
@@ -228,30 +267,32 @@ namespace BinaryAnalysis {
                 /** @}*/
 
                 /** Prints a memory cell.  The output (at least for the BaseSemantics::MemoryCell implementation) is three
-                 *  lines, one each for the address, the value, and various flags. Each line is prefixed with the specified @p
-                 *  prefix string.  The print() method of the underlying ValueType should accept two arguments: the
-                 *  std::ostream and a pointer to an optional templatized PrintHelper which is not interpreted in any way by
-                 *  this method. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    o <<prefix <<"address = { ";
-                    address.print(o, ph);
+                 *  lines, one each for the address, the value, and various flags.
+                 * @{  */
+                void print(std::ostream &o) const {
+                    Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, Formatter &fmt) const {
+                    o <<fmt.get_line_prefix() <<"address = { ";
+                    address.print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  value = { ";
-                    data.print(o, ph);
+                    o <<fmt.get_line_prefix() <<"  value = { ";
+                    data.print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  flags = { size=" <<nbytes;
+                    o <<fmt.get_line_prefix() <<"  flags = { size=" <<nbytes;
                     if (!written) o <<"; read-only";
                     if (clobbered) o <<"; clobbered";
                     o <<" }\n";
                 }
+                /** @} */
 
                 /** Prints a memory cell.  This is the same as calling the BaseSemantics::MemoryCell::print() method with an
                  *  empty prefix and a null PrintHelper. */
                 friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
-                    mc.print<SEMANTIC_NO_PRINT_HELPER>(o);
+                    mc.print(o);
                     return o;
                 }
 
@@ -295,37 +336,38 @@ namespace BinaryAnalysis {
                         flag[i] = ValueType<1>(z);
                 }
 
-                /** Print the register contents. This emits one line per register and contains the register name and its value.
-                 *  The @p ph argument is a templatized PrintHelper that is simply passed as the second argument of the
-                 *  underlying print methods for the ValueType. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    std::ios_base::fmtflags orig_flags = o.flags();
-                    try {
-                        for (size_t i=0; i<n_gprs; ++i) {
-                            o <<prefix <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
-                            gpr[i].print(o, ph);
-                            o <<" }\n";
-                        }
-                        for (size_t i=0; i<n_segregs; ++i) {
-                            o <<prefix <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
-                            segreg[i].print(o, ph);
-                            o <<" }\n";
-                        }
-                        for (size_t i=0; i<n_flags; ++i) {
-                            o <<prefix <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
-                            flag[i].print(o, ph);
-                            o <<" }\n";
-                        }
-                        o <<prefix <<std::setw(7) <<std::left <<"ip" <<" = { ";
-                        ip.print(o, ph);
-                        o <<" }\n";
-                    } catch (...) {
-                        o.flags(orig_flags);
-                        throw;
-                    }
-                    o.flags(orig_flags);
+                /** Print the register contents. This emits one line per register and contains the register name and its
+                 * value.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    Formatter fmt;
+                    print(o, fmt);
                 }
+                void print(std::ostream &o, Formatter &fmt) const {
+                    FormatRestorer save(o);
+                    for (size_t i=0; i<n_gprs; ++i) {
+                        o <<fmt.get_line_prefix()
+                          <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
+                        gpr[i].print(o, fmt);
+                        o <<" }\n";
+                    }
+                    for (size_t i=0; i<n_segregs; ++i) {
+                        o <<fmt.get_line_prefix()
+                          <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
+                        segreg[i].print(o, fmt);
+                        o <<" }\n";
+                    }
+                    for (size_t i=0; i<n_flags; ++i) {
+                        o <<fmt.get_line_prefix()
+                          <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
+                        flag[i].print(o, fmt);
+                        o <<" }\n";
+                    }
+                    o <<fmt.get_line_prefix() <<std::setw(7) <<std::left <<"ip" <<" = { ";
+                    ip.print(o, fmt);
+                    o <<" }\n";
+                }
+                /** @} */
             };
 
             /******************************************************************************************************************
@@ -365,45 +407,51 @@ namespace BinaryAnalysis {
                     memory.clear();
                 }
 
-                /** Print the register contents. This emits one line per register and contains the register name and its value.
-                 *  The @p ph argument is a templatized PrintHelper that is simply passed as the second argument of the
-                 *  underlying print methods for the ValueType. */
-                template<typename PrintHelper>
-                void print_registers(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    registers.print(o, prefix, ph);
+                /** Print the register contents. This emits one line per register and contains the register name and its
+                 *  value.
+                 * @{ */
+                void print_registers(std::ostream &o) const {
+                    Formatter fmt;
+                    print(o, fmt);
                 }
+                void print_registers(std::ostream &o, Formatter &fmt) const {
+                    registers.print(o, fmt);
+                }
+                /** @} */
 
-                /** Print memory contents.  This simply calls the MemoryCell::print method for each memory cell. The @p ph
-                 * argument is a templatized PrintHelper that's just passed as the second argument to the underlying print
-                 * methods for the ValueType. */
-                template<typename PrintHelper>
-                void print_memory(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    std::ios_base::fmtflags orig_flags = o.flags();
-                    try {
-                        for (typename Memory::const_iterator mi=memory.begin(); mi!=memory.end(); ++mi)
-                            mi->print(o, prefix, ph);
-                    } catch (...) {
-                        o.flags(orig_flags);
-                        throw;
-                    }
-                    o.flags(orig_flags);
+                /** Print memory contents.  This simply calls the MemoryCell::print method for each memory cell.
+                 * @{ */
+                void print_memory(std::ostream &o) const {
+                    Formatter fmt;
+                    print_memory(o, fmt);
                 }
+                void print_memory(std::ostream &o, Formatter &fmt) const {
+                    FormatRestorer save(o);
+                    for (typename Memory::const_iterator mi=memory.begin(); mi!=memory.end(); ++mi)
+                        mi->print(o, fmt);
+                }
+                /** @} */
 
                 /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
-                 *  The @p ph argument is a templatized PrintHelper pointer that's simply passed as the second argument to the
-                 *  print methods for the ValueType. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    o <<prefix <<"registers:\n";
-                    print_registers(o, prefix+"    ", ph);
-                    o <<prefix <<"memory:\n";
-                    print_memory(o, prefix+"    ", ph);
+                 * @{ */
+                void print(std::ostream &o) const {
+                    Formatter fmt;
+                    print(o, fmt);
                 }
+                void print(std::ostream &o, Formatter &fmt) const {
+                    std::string prefix = fmt.get_line_prefix();
+                    Indent indent(fmt);
+                    o <<prefix <<"registers:\n";
+                    print_registers(o, fmt);
+                    o <<prefix <<"memory:\n";
+                    print_memory(o, fmt);
+                }
+                /** @}*/
 
                 /** Prints a semantic policy state.  This is the same as calling the StateX86's print() method with an empty
                  *  prefix string and a null PrintHelper. */
                 friend std::ostream& operator<<(std::ostream &o, const StateX86 &state) {
-                    state.print<SEMANTIC_NO_PRINT_HELPER>(o);
+                    state.print(o);
                     return o;
                 }
             };

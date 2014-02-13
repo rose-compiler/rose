@@ -1,0 +1,21 @@
+/*
+ * This file is part of Canviz. See http://www.canviz.org/
+ * $Id: canviz-ie6.css 246 2008-12-27 08:36:24Z ryandesign.com $
+ */
+
+body {
+	height: 100%;
+	overflow: hidden;
+}
+#page_container {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+#busy,
+#graph_form {
+	position: absolute;
+}
+#graph_form {
+	width: 24em;
+}

@@ -2,7 +2,7 @@
 # The order matters!!
 
 #----- put platform independent settings in this section-----------------
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 project (ROSE CXX C)
 
 # Why do we have to have a copy of some standard built-in modules inside rose?
@@ -198,6 +198,14 @@ message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_D
 set(Boost_USE_STATIC_LIBS TRUE)        
 set(Boost_DEBUG TRUE)
 
+# Honor BOOST_HOME environment variable
+if (DEFINED ENV{BOOST_HOME})
+  set (BOOST_ROOT "$ENV{BOOST_HOME}")
+endif ()
+
+option(Boost_USE_MULTITHREADED
+  "Should Boost multithreaded libraries be used?" OFF)
+
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
 #set (Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}/../../ )
@@ -232,11 +240,12 @@ if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
+add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
 
 
 
 # default paths to install header, executable, and libraries
-set(INCLUDE_INSTALL_DIR "/usr/include")
+set(INCLUDE_INSTALL_DIR "include")
 set(BIN_INSTALL_DIR      "bin"   )   # The install dir for executables
 set(LIB_INSTALL_DIR      "lib" )
 
@@ -248,8 +257,8 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         COMPONENT
                                                                         Devel
                                                                         )
-# a new definition to tweak code for cmake 
-add_definitions (-DUSE_CMAKE)
+# a new definition to tweak code for cmake
+set(USE_CMAKE 1)
 
 
 if (NOT WIN32)
@@ -277,7 +286,7 @@ if (WIN32)
 # /MP multiple processors compilation
 # /0s small files
 set( CMAKE_BUILD_TYPE Release )
-set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541 " )
+set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 " )
 set( CMAKE_C_FLAGS "   /wd4541 " )
 set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
 set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
@@ -289,8 +298,10 @@ set( CMAKE_MODULE_LINKER_FLAGS " ${CMAKE_MODULE_LINKER_FLAGS} /INCREMENTAL:NO" )
 set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
 set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
 else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
 #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
@@ -304,6 +315,53 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 #Generate our configure file
 
 # --------- please do all system, platform, software tests here --------------
+
+# Setup EDG version
+set(EDG_VERSION "4.7" CACHE STRING
+  "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
+string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
+string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
+set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
+set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
+if ("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
+  set(ROSE_USE_EDG_VERSION_4 1)
+  set(ROSE_USE_NEW_EDG_INTERFACE 1)
+  if ("${EDG_MINOR_VERSION}" VERSION_GREATER "3")
+    set(TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS 1)
+  endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "4")
+    set(ROSE_USE_EDG_VERSION_4_4 1)
+  endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "7")
+    set(ROSE_USE_EDG_VERSION_4_7 1)
+  endif()
+endif()
+
+# Check if we need to download the EDG binary tarball
+if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
+  set(have_EDG_source TRUE)
+else()
+  set(have_EDG_source FALSE)
+  set(edg_lib "")
+  set(BINARY_EDG 1)
+  if (NOT WIN32)
+  # no need to display this message after the file has been downloaded
+  if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+    message(WARNING
+      "At build time, CMake will attempt to download a required library "
+      "tarball.\n"
+      "Please note that this EDG binary tarball is currently only available "
+      "for the GCC compiler.\n" )
+  endif()
+  include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+  set(edg_lib EDG)
+  endif()
+endif()
+
+# Set ROSE_SHLIBPATH_VAR.  For now, it just has the same value as
+# LD_LIBRARY_PATH.
+set(ROSE_SHLIBPATH_VAR $ENV{LD_LIBRARY_PATH})
+
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
 include(ConfigureChecks)
@@ -313,6 +371,292 @@ include(MacroLibrary)
 # Try to find MySQL / MySQL Embedded library
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
+
+find_package(OpenSSL)
+
+# Language configuration options
+
+option(enable-c "Enable C/C++ language support in ROSE." ON)
+if (enable-c)
+  set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
+  set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-cuda "Enable cuda support in ROSE." ON)
+if (enable-cuda)
+  find_package(CUDA REQUIRED)
+  set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-fortran "Enable Fortran support in ROSE." ON)
+if (enable-fortran)
+  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-java "Enable Java support in ROSE." ON)
+if (enable-java)
+  message(Status "Looking for JAVA ...")
+  include(FindJava)
+  find_program(GCJ gcj)
+  find_program(GCJH gcjh)
+  find_package(JNI)
+  set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-opencl "Enable OpenCL support in ROSE." ON)
+if (enable-opencl)
+  set(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT 1)
+  find_path(with-opencl-inc NAMES cl.h
+    DOC "For OpenCL runtime library")
+  find_library(with-opencl-lib OpenCL DOC "OpenCL library for runtime examples")
+endif()
+
+option(enable-php "Enable PHP support in ROSE." ON)
+if (enable-php)
+  set(ROSE_BUILD_PHP_LANGUAGE_SUPPORT 1)
+  find_path(with-php php
+    DOC "Specify the prefix where PHP (and phc) is installed")
+endif()
+
+option(enable-python "Enable Python support in ROSE." OFF)
+if (enable-python)
+  set(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT 1)
+  find_package(PythonLibs REQUIRED)
+  option(with-python "Build code that requires a Python interpreter" ON)
+  if(with-python)
+    find_package(PythonInterp)
+  endif()
+endif()
+
+# Other configuration options
+
+option(disable-binary-analysis-tests
+  "Disable tests of ROSE binary analysis code" ON)
+
+option(disable-tests-directory
+  "Disable compilation and testing of the ROSE/tests directory" OFF)
+
+option(disable-tutorial-directory
+  "Disable compilation and testing of the ROSE/tutorial directory" OFF)
+
+option(disable-projects-directory
+  "Disable compilation and testing of the ROSE/projects directory" OFF)
+
+option(enable-advanced-warnings
+  "Support for an advanced uniform warning level for ROSE development" OFF)
+if (enable-advanced-warnings)
+  message(WARNING
+    "Using an advanced uniform warning level for ROSE development.")
+  set(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT 1)
+endif()
+
+option(enable-assembly-semantics
+  "Enable semantics-based analysis of assembly code" OFF)
+
+option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
+if (enable-binary-analysis)
+  set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
+endif()
+
+option(enable-candl "Support for ScopLib" OFF)
+if(enable-candl)
+  find_path(with-candl "include/candl.h"
+    DOC "Path to a valid Candl installation")
+endif()
+
+option(enable-cloog "Support for Cloog" OFF)
+if(enable-cloog)
+  find_path(with-cloog "include/cloog.h"
+    DOC "Path to a valid Cloog installation")
+endif()
+
+option(enable-compass2 "build the Compass2 static analysis tool" OFF)
+
+option(enable-edg-cuda "Build EDG 4.0 with CUDA support" OFF)
+
+option(enable-edg-opencl "Build EDG 4.0 with OpenCL support" OFF)
+
+option(enable-edg_union_struct_debugging
+  "Should EDG Union/Struct debugging support be used?" OFF)
+if(enable-edg_union_struct_debugging)
+  set(USE_ROSE_EDG_DEBUGGING_SUPPORT 1)
+endif()
+
+option(enable-FLTK "Enable FLTK")
+if(enable-FLTK)
+  find_package(FLTK REQUIRED)
+endif()
+
+option(enable-gnu-extensions
+  "Enable internal support in ROSE for GNU language extensions" OFF)
+if(enable-gnu-extensions)
+  set(ROSE_SUPPORT_GNU_EXTENSIONS TRUE)
+endif()
+
+option(enable-internalFrontendDevelopment
+  "Enable development mode to reduce files required to support work on
+  language frontends" OFF)
+if (enable-internalFrontendDevelopment)
+  set(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT 1)
+endif()
+
+option(enable-microsoft-extensions
+  "Enable internal support in ROSE for GNU language extensions" OFF)
+if(enable-microsoft-extensions)
+  set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
+endif()
+
+set(enable-ofp-version "0.8.3" CACHE STRING "version number for OFP")
+
+option(enable-ppl "Support for Parma Polyhedral Library" OFF)
+if(enable-ppl)
+  find_path(with-ppl "include/ppl.h"
+    DOC "Path to Parma Polyhedral Library installation")
+  find_library(libppl ppl)
+endif()
+
+option(enable-purify-api "Enable purify API in code" OFF)
+if(enable-purify-api)
+  set(USE_PURIFY_API 1)
+endif()
+
+option(enable-purify-linker "Augment the linker with purify." OFF)
+if(enable-purify-linker)
+  set(USE_PURIFY 1)
+  set(USE_PURIFY_LINKER 1)
+endif()
+
+option(enable-rosehpct "enable build of the ROSE-HPCT module" ON)
+
+option(enable-rose-openGL "enable openGL" OFF)
+if(enable-rose-openGL)
+  find_package(OpenGL)
+  find_package(GLUT)
+endif()
+
+option(enable-scoplib "Support for ScopLib" OFF)
+if(enable-scoplib)
+  find_path(with-scoplib "include/scolib.h"
+    DOC "Path to a valid ScopLib installation")
+endif()
+
+option(enable-yices "Use the Yices Satisfiability Modulo Theories (SMT)")
+if(enable-yices)
+  find_path(with-yices bin/yices DOC
+    "The prefix used to install Yices.
+     An executable named /bin/yices should be under the specified prefix.")
+endif()
+
+set(with-alternate_backend_Cxx_compiler "" CACHE STRING
+  "Specify an alternative C++ back-end compiler")
+if(with-alternate_backend_Cxx_compiler)
+  if(EXISTS ${with-alternate_backend_Cxx_compiler})
+    set(BACKEND_CXX_COMPILER ${with-alternate_backend_Cxx_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_Cxx_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_C_compiler "" CACHE STRING
+  "Specify an alternative C back-end compiler")
+if(with-alternate_backend_C_compiler)
+  if(EXISTS ${with-alternate_backend_C_compiler})
+    set(BACKEND_C_COMPILER ${with-alternate_backend_C_compiler})
+    message(STATUS "just set backend C compiler to ${BACKEND_C_COMPILER}")
+  else()
+    message(WARNING
+      "${with-alternate_backend_C_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_fortran_compiler "" CACHE STRING
+  "Specify an alternative fortran back-end compiler")
+if(with-alternate_backend_fortran_compiler)
+  if(EXISTS ${with-alternate_backend_fortran_compiler})
+    set(BACKEND_FORTRAN_COMPILER ${with-alternate_backend_fortran_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_fortran_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_java_compiler "" CACHE STRING
+  "Specify an alternative java back-end compiler")
+if(with-alternate_backend_java_compiler)
+  if(EXISTS ${with-alternate_backend_java_compiler})
+  set(BACKEND_JAVA_COMPILER ${with-alternate_backend_java_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_java_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+find_path(with-backstroke-ross ROSS
+  DOC "Specify the path where ROSS is installed")
+
+find_path(with-backstroke-speedes SPEEDES
+  DOC "Specify the path where SPEEDES is installed")
+
+find_library(with-dwarf dwarf
+  DOC "Specify the path where libdwarf is installed")
+
+find_library(with-gomp_omp_runtime_library gomp_omp
+  DOC "Specify the prefix where GOMP Runtime System is installed")
+
+find_path(with-GraphViz_include graphviz.h
+  DOC "Specify the prefix where GraphViz include files are installed")
+
+find_path(with-GraphViz_libs GraphViz_libs
+  DOC "Specify the prefix where GraphViz libraries are installed")
+
+find_path(with-haskell runghc
+  DOC "Path to bin directory containing ghc and runghc.")
+
+find_path(with-ida "ida2sql.py"
+  DOC "Specify the prefix where IDA Pro is installed")
+
+find_path(with-insure insure++
+  DOC "Specify the prefix where insure++ is installed")
+
+find_path(with-IntelPin include/IntelPinSupport.h
+  DOC "Specify the prefix where Intel Pin Package is installed")
+
+find_path(with-ltdl-include ltdl.h
+  DOC "use the ltdl headers installed in DIR")
+
+find_library(with-ltdl-lib ltdl DOC "Path to ltdl library")
+
+find_path(with-llvm "llvm"
+  DOC "Specify the prefix where LLVM (and opt) is installed")
+
+find_path(with-maple "include/maple.h"
+  DOC "Specify the prefix where Maple is installed")
+
+find_path(with-omni_omp_runtime_support include/omni_omp.h
+  DOC "Specify the prefix where Omni OpenMP Runtime System is installed")
+
+find_path(with-purify bin/purify
+  DOC "Specify the prefix where purify is installed")
+if(with-purify)
+  set(USE_PURIFY 1)
+endif()
+
+find_path(with-QRose QRose DOC "prefix of QRose installation")
+
+option(with-roseQt "Build with roseQt" OFF)
+
+find_path(with-rted rted DOC "Configure option to have RTED enabled.")
+
+find_path(with-smt-solver smt-solver
+  DOC "Specify the path to an SMT-LIB compatible SMT solver.
+       Used only for testing.")
+
+find_path(with-wine "bin/wine" DOC "Specify the prefix where Wine is installed")
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -476,11 +820,8 @@ include(FindOpenSSL)
 include(FindSQLITE3)
 endif (NOT WIN32)
 
-message(Status "Looking for JAVA ...")
-include(FindJava)
-
 message(Status "Looking for flex ...")
-include(FindFlex)
+find_package(FLEX)
 if(NOT FLEX_FOUND)
     message(FATAL_ERROR "Could not find flex command")
 endif(NOT FLEX_FOUND)
@@ -520,7 +861,6 @@ message(Status "Running tests ...")
 if (HAVE_DLFCN_H)
   if (HAVE_DLADDR)
     set (use_rose_in_build_tree_var TRUE)
-    set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} -ldl)
 # this following line won't work since it only set the environment variable for cmake's session
 # not for ctest session. Still no good way to set it within cmake
 # fortunately,   
@@ -537,7 +877,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
      ${ROSE_TOP_SRC_DIR}
-     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sage_support
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
      ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/
@@ -571,6 +912,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
@@ -612,6 +954,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/graphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticSingleAssignment
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/valuePropagation 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/partialRedundancyElimination 
@@ -641,14 +984,159 @@ ENDIF()
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
 
-message(Status "Enabling QT ...")
+
+if(with-roseQt)
+  find_package(Qt4 REQUIRED)
+  include(${QT_USE_FILE})
+  #message(Status "Enabling QT ...")
+  list(APPEND ROSE_INCLUDES
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/Common
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/QueryBox
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/SourceBox
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/TreeBox
+  )
+  set(qtWidgets_INCLUDE_DIRS
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmInstructionBar
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstBrowserWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstGraphWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstProcessing
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/BeautifiedAst
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/FlopCounter
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/InstructionCountAnnotator
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/KiviatView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsConfig
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricFilter
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsKiviat
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/NodeInfoWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/ProjectManager
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/PropertyTreeWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QtGradientEditor
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseCodeEdit
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseFileSelector
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/SrcBinView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TaskSystem
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TreeModel
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/util
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/WidgetCreator
+  )
+endif()
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
+
+# Set default output paths for libraries and directories.
+# This causes all the libraries to be built into a single lib directory,
+# and all the executables to be built into a single bin directory.
+# If these variables are not set, then by default the targets will be
+# littered throughout the binary directory, matching the structure of
+# the source directory.
+#
+# Organizing the output of the build directory this way is important
+# when building on Windows.  By default, Windows .exes do not know where
+# to find their required .dlls.  The easiest way to overcome this problem
+# is by placing the .exe and all its dependent .dlls in the same directory.
+# We accomplish this with CMake by setting CMAKE_RUNTIME_OUTPUT_DIRECTORY.
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(tests)
+add_subdirectory(demo)
+add_subdirectory(exampleTranslators)
+
+if(NOT disable-tests-directory)
+  add_subdirectory(tests)
+endif()
+
+if(NOT disable-tutorial-directory)
+  add_subdirectory(tutorial)
+endif()
+
+if(NOT disable-projects-directory)
+  add_subdirectory(projects)
+endif()
 
 enable_testing()
+
+# Copy CTestCustom.cmake into the binary directory.
+# This file tells CTest to ignore some output that it otherwise
+# considers compilation errors.
+configure_file(
+  cmake/CTestCustom.cmake.in
+  ${CMAKE_BINARY_DIR}/CTestCustom.cmake
+  @ONLY)
+
+#TODO: better support for other compilers & operating systems
+set(C_INCLUDE_STRING
+  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+set(CXX_INCLUDE_STRING
+  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+find_program(shell sh)
+if(shell AND CMAKE_COMPILER_IS_GNUCXX)
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
+    OUTPUT_VARIABLE C_backend_includes
+  )
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs g++
+    OUTPUT_VARIABLE CXX_backend_includes
+  )
+  string(REPLACE "\n" ";" C_backend_includes "${C_backend_includes}")
+  string(REPLACE "\n" ";" CXX_backend_includes "${CXX_backend_includes}")
+
+  foreach(C_include_dir ${C_backend_includes})
+    string(STRIP "${C_include_dir}" C_include_dir)
+    set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
+  endforeach()
+
+  foreach(CXX_include_dir ${CXX_backend_includes})
+    string(STRIP "${CXX_include_dir}" CXX_include_dir)
+    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
+  endforeach()
+
+  # In the Autools build system, ROSE stores compiler specific headers in two
+  # distinct locations:
+  #    In the build tree, the directory is named $ROSE_BUILD/include-staging
+  #    In the installation tree, the directory is named $ROSE_INSTALL/include
+  # During make-install, the content of $ROSE_BUILD/include-staging is simply
+  # copied over into $ROSE_INSTALL/include.
+  #
+  # If a ROSE translator is detected as being run from the build tree, then the
+  # associated header file include paths are added to the translator's command
+  # line, e.g. <translator> -I$ROSE_BUILD/include-staging/<path>. Similarly, if
+  # the ROSE translator is detected as being run from the install tree, the
+  # command line will contain the associated paths in the installation
+  # location, e.g. -I$ROSE_INSTALL/include/<path>
+  #
+  # The setup of CMake for ROSE, on the other hand, does not make this
+  # distinction. Instead, the CMake system utilizes a single directory
+  # $ROSE_CMAKE_BIN/include for the same purpose.
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${CMAKE_BINARY_DIR}/include-staging ${CMAKE_BINARY_DIR}/include
+  )
+endif()
+set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
+set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
 
 # ------------------------- Private Configuration File ----------------------------
 # The rose_config.h file contains CPP macros describing what features were detected

@@ -771,7 +771,7 @@ RSIM_Thread::main()
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                int status = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
+                int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
                 assert(0==status);
                 insn_semaphore_posted = false;
                 semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
@@ -784,42 +784,67 @@ RSIM_Thread::main()
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
             post_insn_semaphore();
-            std::ostringstream s;
-            s <<e;
-            tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            process->dump_core(SIGSEGV);
-            report_stack_frames(tracing(TRACE_MISC));
+            if (show_exceptions) {
+                std::ostringstream s;
+                s <<e;
+                tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
+            }
+            if (do_coredump) {
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                process->dump_core(SIGSEGV);
+                report_stack_frames(tracing(TRACE_MISC));
+            }
             throw;
         } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             post_insn_semaphore();
-            std::ostringstream s;
-            s <<e;
-            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
+            if (show_exceptions) {
+                std::ostringstream s;
+                s <<e;
+                tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
+            }
 #ifdef X86SIM_STRICT_EMULATION
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            process->dump_core(SIGILL);
-            report_stack_frames(tracing(TRACE_MISC));
-            abort();
+            if (do_coredump) {
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                process->dump_core(SIGILL);
+                report_stack_frames(tracing(TRACE_MISC));
+                abort();
+            } else {
+                throw;
+            }
 #else
-            report_stack_frames(tracing(TRACE_MISC));
-            tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
+            if (show_exceptions) {
+                report_stack_frames(tracing(TRACE_MISC));
+                tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
+            }
 #endif
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
-            /* Thrown for the HLT instruction */
-            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::InnerPolicy<>::Halt");
+            // Thrown for the HLT instruction
             post_insn_semaphore();
+            if (show_exceptions)
+                tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::InnerPolicy<>::Halt");
+            throw;
+        } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
+            // thrown for the INT instruction if the interrupt is not handled
+            post_insn_semaphore();
+            if (show_exceptions)
+                tracing(TRACE_MISC)->mesg("unhandled specimen interrupt from INT insn");
             throw;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             post_insn_semaphore();
-            std::ostringstream s;
-            s <<e;
-            tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            process->dump_core(SIGILL);
-            report_stack_frames(tracing(TRACE_MISC));
-            abort();
+            if (show_exceptions) {
+                std::ostringstream s;
+                s <<e;
+                tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
+            }
+            if (do_coredump) {
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                process->dump_core(SIGILL);
+                report_stack_frames(tracing(TRACE_MISC));
+                abort();
+            } else {
+                throw;
+            }
         } catch (const RSIM_Process::Exit &e) {
             post_insn_semaphore();
             sys_exit(e);

@@ -230,10 +230,8 @@ template<
 void
 RSIM_Semantics::InnerPolicy<State, ValueType>::interrupt(uint8_t num)
 {
-    if (num != 0x80) {
-        fprintf(stderr, "Bad interrupt\n");
-        abort();
-    }
+    if (num != 0x80)
+        throw Interrupt(this->get_insn()->get_address(), num);
     thread->emulate_syscall();
 }
 

@@ -33,9 +33,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <iostream>
 #include <set>
 #include <list>
-#include <error_config.h>
-#include <poetAST.h>
-#include <ASTvisitor.h>
+#include <poet_ASTvisitor.h>
 #include <assert.h>
 #include <string>
 
@@ -77,6 +75,7 @@ private:
                  for (int i = 0; i < col; ++i) out << " ";  }
 
  virtual void defaultVisit(POETCode* c) { out << c->toString(); }
+ virtual void visitUnknown(POETCode_ext* c) { out << c->toString(); }
  virtual void visitMap(POETMap* m) 
   {
     out << "MAP:{\n";
@@ -211,6 +210,11 @@ class CodeGenVisitor : public CollectInfoVisitor
            output_content(res->toString(OUTPUT_NO_DEBUG),r);
         }
      }
+  virtual void visitUnknown(POETCode_ext* e)
+    {
+      std::string r = POETAstInterface::unparseToString(e->get_content());
+      output_content(r, r);
+    }
   virtual void visitString(POETString* s) 
      {  output(s); }
   virtual void visitIconst(POETIconst* s) 
@@ -222,12 +226,6 @@ class CodeGenVisitor : public CollectInfoVisitor
   virtual void visitList(POETList* l) 
     {
        POETCode* cur = l->get_first();
-/*
-       if (cur->get_enum() != SRC_LIST &&
-           listelem != 0 && !match_AST(cur, listelem,MATCH_AST_EQ)) {
-          cur = ASTFactory::inst()->new_codeRef(listelem->get_entry(), cur);
-       }
-*/
        cur->visit(this) ; 
        if (l->get_rest() != 0) {
            if (listsep != 0)

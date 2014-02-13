@@ -35,7 +35,7 @@ class ReachingDefinitionBase
  friend class ReachingDefinitionGenerator;
 };
 
-class  ReachingDefinitionGenerator 
+class  ROSE_DLL_API ReachingDefinitionGenerator 
 : private BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >
 {
   Ast2StringMap scopemap;
@@ -94,7 +94,7 @@ class ReachingDefNode
   friend class ReachingDefinitionAnalysis;
 };
 
-class ReachingDefinitionAnalysis 
+class ROSE_DLL_API ReachingDefinitionAnalysis 
 : public DataFlowAnalysis <ReachingDefNode, ReachingDefinitions>
 {
   ReachingDefinitionGenerator* g;

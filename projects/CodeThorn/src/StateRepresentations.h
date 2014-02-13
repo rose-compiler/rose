@@ -38,6 +38,10 @@ using CodeThorn::Edge;
 
 namespace CodeThorn {
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
     PState() {
@@ -46,6 +50,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   friend istream& operator>>(istream& os, PState& value);
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
+  bool varIsTop(VariableId varId) const;
   string varValueToString(VariableId varname) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
@@ -77,6 +82,10 @@ class PStateHashFun {
     long tabSize;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  public:
   typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
@@ -87,8 +96,10 @@ class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  private:
 };
 
-/**
- * Input: a value val is read into a variable var
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ * \brief Input: a value val is read into a variable var
  * Output: either a variable or a value is written
  */
 class InputOutput {
@@ -102,13 +113,22 @@ class InputOutput {
   string toString(VariableIdMapping* variableIdMapping) const;
   void recordVariable(OpType op, VariableId varId);
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
+  void recordConst(OpType op, int val);
   void recordFailedAssert();
+  bool isStdInIO() const { return op==STDIN_VAR; }
+  bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
+  bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
+  bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);
 bool operator==(const InputOutput& c1, const InputOutput& c2);
 bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EState {
  public:
  EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
@@ -128,7 +148,8 @@ class EState {
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
   InputOutput::OpType ioOp(Labeler*) const;
-
+  // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
+  AType::ConstIntLattice determineUniqueIOValue() const;
  private:
   Label _label;
   const PState* _pstate;
@@ -157,6 +178,10 @@ struct EStateLessComp {
   }
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EStateHashFun {
    public:
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
@@ -170,6 +195,10 @@ class EStateHashFun {
     long tabSize;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
  public:
  EStateSet():HSetMaintainer<EState,EStateHashFun>(),_constraintSetMaintainer(0){}
@@ -184,6 +213,10 @@ class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class Transition {
  public:
  Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
@@ -195,6 +228,10 @@ public:
 
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class TransitionHashFun {
    public:
     TransitionHashFun(long prime=99991) : tabSize(prime) {}
@@ -219,13 +256,21 @@ class EStateList : public list<EState> {
 
 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+ 
+ typedef set<const EState*> EStatePtrSet;
+ typedef set<const Transition*> TransitionPtrSet;
+
 class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
-  typedef set<const Transition*> TransitionPtrSet;
+   typedef set<const Transition*> TransitionPtrSet;
  TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
-  set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-  set<const EState*> estateSetOfLabel(Label lab);
-  set<const EState*> estateSet();
+  EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
+  EStatePtrSet estateSetOfLabel(Label lab);
+  EStatePtrSet estateSet();
   void add(Transition trans);
   string toString() const;
   CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
@@ -239,20 +284,26 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   void erase(const Transition trans);
 #endif
 
-  //! reduces all non-maintained estates and unions edge-annotations. Adds edge-annotation PATH. Returns number of reduced estates.
+  //! deprecated
   void reduceEStates(set<const EState*> toReduce);
   void reduceEState(const EState* estate);
+  //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
   void reduceEStates2(set<const EState*> toReduce);
   void reduceEState2(const EState* estate); // used for semantic folding
   TransitionPtrSet inEdges(const EState* estate);
   TransitionPtrSet outEdges(const EState* estate);
+  EStatePtrSet pred(const EState* estate);
+  EStatePtrSet succ(const EState* estate);
   bool checkConsistency();
-
+  const Transition* hasSelfEdge(const EState* estate);
+  // deletes EState and *deletes* all ingoing and outgoing transitions
+  void eliminateEState(const EState* estate);
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet
   map<const EState*,TransitionPtrSet > _inEdges;
   map<const EState*,TransitionPtrSet > _outEdges;
+  set<const EState*> _recomputedestateSet;
 };
 
 } // namespace CodeThorn

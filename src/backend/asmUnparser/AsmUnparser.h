@@ -339,12 +339,12 @@ public:
          *         added to one of the function callback lists.</li>
          *  </ol>
          *  @{ */
-        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
-        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); }
-        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
-        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
+        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); return false; }
+        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); return false; }
+        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); return false; }
+        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); return false; }
         /** @} */
     };
 
@@ -848,6 +848,11 @@ public:
      *  contained in the specified AST.  For output organized by address, it is the number of instructions and data objects
      *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast);
+
+    /** Unparse part of the AST into a string.
+     *
+     * This is a wrapper around unparse() that returns a string rather than producing output on a stream. */
+    std::string to_string(SgNode *ast);
 
     /** Unparse a single node if possible.
      *

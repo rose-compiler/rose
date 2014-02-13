@@ -368,7 +368,7 @@ struct UnaryConstraint: public Constraint {
                 if (le1.isTop) {result->set(LatticeElement<(OutLen)>()); return;}                                              \
                 Formula                                                                                                        \
             }                                                                                                                  \
-            virtual uint64_t compute(uint64_t) const {abort();}                                                                \
+            virtual uint64_t compute(uint64_t) const {abort(); return 0;}                                                                \
         };                                                                                                                     \
         (new IC(result, a))->activate();                                                                                       \
         return result;                                                                                                         \

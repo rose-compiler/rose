@@ -5,9 +5,27 @@
 #include <cerrno>
 #include <fstream>
 
-#include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
+#ifndef _MSC_VER
+#include <unistd.h>
 #include <sys/mman.h>
+#else
+#include <io.h>
+  inline void * mmap(void*, size_t length, int, int, int, off_t)
+  {
+    return new char[length];
+  }
+  inline void munmap(void* p_data, size_t)
+  {
+    delete [] (char *)p_data;
+  }
+#define MAP_FAILED 0
+#undef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) expression
+#define PROT_WRITE 0x02
+#define F_OK 0
+#endif
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const MemoryMap::Exception    &x) { x.print(o); return o; }
@@ -211,11 +229,7 @@ MemoryMap::ByteBuffer::create_from_file(const std::string &filename, size_t offs
     // Read data from file until EOF
     rose_addr_t size = offset > (size_t)sb.st_size ? 0 : sb.st_size-offset;
     uint8_t *data = new uint8_t[size];
-#ifndef _MSC_VER
     ssize_t n = TEMP_FAILURE_RETRY(::read(fd, data, size));
-#else
-    ROSE_ASSERT(!"lacking Windows support");
-#endif
     if (-1==n || n!=sb.st_size) {
         delete[] data;
         close(fd);
@@ -562,6 +576,7 @@ MemoryMap&
 MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
 {
     p_segments = other.p_segments;
+    sex = other.sex;
 
     switch (copy_level) {
         case COPY_SHALLOW:
@@ -757,6 +772,26 @@ MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms) const
     return retval;
 }
 
+std::string
+MemoryMap::read_string(rose_addr_t va, size_t desired, int(*valid_char)(int), int(*invalid_char)(int), unsigned req_perms) const
+{
+    std::string retval;
+    while (desired>0) {
+        unsigned char buf[4096];
+        size_t nread = read1(buf, va, desired, req_perms);
+        if (0==nread)
+            return retval;
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]=='\0' || (NULL!=valid_char && !valid_char(buf[i])) || (NULL!=invalid_char && invalid_char(buf[i])))
+                return retval;
+            retval += buf[i];
+        }
+        va += nread;
+        desired -= nread;
+    }
+    return retval;
+}
+
 size_t
 MemoryMap::write1(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms)
 {
@@ -848,6 +883,43 @@ MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
         if (!done)
             range = Extent::inin(segment_range.last()+1, range.last());
     }
+}
+
+void
+MemoryMap::erase_zeros(size_t minsize)
+{
+    ExtentMap to_remove;
+    for (Segments::const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si) {
+        Extent extent = si->first;
+        const Segment &segment = si->second;
+        if (0==(segment.get_mapperms() & MM_PROT_EXEC) || extent.size() < minsize)
+            continue; // not executable or too small to remove
+        BufferPtr buffer = segment.get_buffer();
+        if (buffer->is_zero()) {
+            to_remove.insert(extent);
+        } else {
+            for (size_t i=0; i<extent.size(); /*void*/) {
+                uint8_t page[8192];
+                size_t nread = read(page, extent.first()+i, sizeof page);
+                if (0==nread)
+                    break;
+                for (size_t j=0; j<nread; /*void*/) {
+                    if (0==page[j]) {
+                        size_t k = 1;
+                        while (j+k<nread && 0==page[j+k]) ++k;
+                        if (k>=minsize)
+                            to_remove.insert(Extent(extent.first()+i+j, k));
+                        j += k;
+                    } else {
+                        ++j;
+                    }
+                }
+                i += nread;
+            }
+        }
+    }
+    for (ExtentMap::iterator ei=to_remove.begin(); ei!=to_remove.end(); ++ei)
+        erase(ei->first);
 }
 
 void
@@ -1039,4 +1111,3 @@ MemoryMap::load(const std::string &basename)
     if (line) free(line);
     return nread<=0;
 }
-    

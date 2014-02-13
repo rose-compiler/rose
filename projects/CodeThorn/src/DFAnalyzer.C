@@ -8,19 +8,69 @@
 #define DFANALYZER_C
 
 #include "DFAnalyzer.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
+
+template<typename LatticeType>
+DFAnalyzer<LatticeType>::DFAnalyzer():
+  _labeler(0),
+  _cfanalyzer(0),
+  _numberOfLabels(0),
+  _preInfoIsValid(false),
+  _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
+{}
+
+template<typename LatticeType>
+LatticeType DFAnalyzer<LatticeType>::getPreInfo(Label lab) {
+  if(!_preInfoIsValid) {
+    computeAllPreInfo();
+    ROSE_ASSERT(_preInfoIsValid==true);
+  }
+  return *_analyzerDataPreInfo[lab];
+}
+
+template<typename LatticeType>
+LatticeType DFAnalyzer<LatticeType>::getPostInfo(Label lab) {
+  return *_analyzerData[lab];
+}
+
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::computeAllPreInfo() {
+  for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
+    LatticeType le;
+    computePreInfo(lab,le);
+    _analyzerDataPreInfo[lab]=le;
+  }
+  _preInfoIsValid=true;
+}
 
 template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 template<typename LatticeType>
-DFAnalyzer<LatticeType>::DFAnalyzer()
-  :
-   _labeler(0),
-   _cfanalyzer(0)
-{}
+LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) {
+  ROSE_ASSERT(root);
+  cout << "INFO: Initializing property state with global variables."<<endl;
+  VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
+  VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
+  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs;
+  cout <<"INFO: global variables: "<<globalVars.size()<<endl;
+  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  LatticeType elem;
+  list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
+    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end())
+      elem=transfer(_labeler->getLabel(*i),elem);
+  }
+  cout << "INIT: initial element: ";
+  elem.toStream(cout,&_variableIdMapping);
+  cout<<endl;
+  _initialElement=elem;
+  return elem;
+}
 
 template<typename LatticeType>
 void
@@ -33,14 +83,10 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
   _cfanalyzer=new CFAnalyzer(_labeler);
-  //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
-  cout << "INIT: Building CFGs."<<endl;
+  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
+  cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;
-  //  if(boolOptions["reduce-cfg"]) {
-  //    int cnt=cfanalyzer->reduceBlockBeginNodes(flow);
-  //    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
-  //}
   cout << "INIT: Intra-Flow OK. (size: " << _flow.size() << " edges)"<<endl;
   InterFlow interFlow=_cfanalyzer->interFlow(_flow);
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
@@ -48,9 +94,17 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
   for(long l=0;l<_labeler->numberOfLabels();++l) {
     LatticeType le;
+    _analyzerDataPreInfo.push_back(le);
     _analyzerData.push_back(le);
   }
+  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
+  {
+    size_t numDeletedEdges=_cfanalyzer->deleteFunctioncCallLocalEdges(_flow);
+    int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+    cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
+  }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
+
 #if 0
   std::string functionToStartAt="main";
   std::string funtofind=functionToStartAt;
@@ -65,9 +119,11 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
     set<Label> elab;
     elab.insert(startlab);
     setExtremalLabels(elab);
+    _analyzerData[startlab]=initializeGlobalVariables(root);
+    cout << "STATUS: Initial info established at label "<<startlab<<endl;
   }
 #endif
-
+  
   // create empty state
 #if 0
   PState emptyPState;
@@ -122,22 +178,69 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
+
+// runs until worklist is empty
+template<typename LatticeType>
+void
+DFAnalyzer<LatticeType>::solveAlgorithm1() {
+  cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
+  ROSE_ASSERT(!_workList.isEmpty());
+  while(!_workList.isEmpty()) {
+    Label lab=_workList.take();
+    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
+    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
+    LatticeType inInfo;
+    computePreInfo(lab,inInfo);
+    
+    LatticeType newInfo=transfer(lab,inInfo);
+    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
+    if(!newInfo.approximatedBy(_analyzerData[lab])) {
+      _analyzerData[lab].combine(newInfo);
+      LabelSet succ;
+      succ=_flow.succ(lab);
+      _workList.add(succ);
+    } else {
+      // no new information was computed. Nothing to do.
+    }
+  }
+  cout<<"INFO: solver (label-out-algorithm1) finished."<<endl;
+}
+
 // runs until worklist is empty
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
+  switch(_solverMode) {
+  case SOLVERMODE_STANDARD: solveAlgorithm1();break;
+  case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
+  default: cerr<<"Error: improper solver mode."<<endl; 
+    exit(1);
+  }
+  _preInfoIsValid=false;
+}
+template<typename LatticeType>
+
+void
+DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
+  LabelSet pred=_flow.pred(lab);
+  for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
+    inInfo.combine(_analyzerData[*i]);
+  }
+}
+
+// runs until worklist is empty
+template<typename LatticeType>
+void
+DFAnalyzer<LatticeType>::solveAlgorithm2() {
   cout<<"INFO: solver started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LabelSet pred=_flow.pred(lab);
+
     LatticeType inInfo;
-    for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-      inInfo.combine(_analyzerData[*i]);
-    }
-    
+    computePreInfo(lab,inInfo);
     LatticeType newInfo=transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
     bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
@@ -171,7 +274,14 @@ void
 DFAnalyzer<LatticeType>::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-    _workList.add(*i);
+    cout << "Initializing "<<*i<<" with ";
+    _analyzerData[*i]=transfer(*i,_initialElement);
+    _analyzerData[*i].toStream(cout,&_variableIdMapping);
+    cout<<endl;
+    LabelSet initsucc=_flow.succ(*i);
+    for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
+      _workList.add(*i);
+    }
   }
   solve();
 }
@@ -191,18 +301,17 @@ DFAnalyzer<LatticeType>::getResultAccess() {
 
 #include <iostream>
 
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include <string>
 
 using std::string;
 
-class GeneralResultAttribute : public AnalysisResultAttribute {
+class GeneralResultAttribute : public DFAstAttribute {
 public:
-  GeneralResultAttribute(string postinfo) { _postinfo="// "+postinfo;}
-  string getPreInfoString() { return ""; }
-  string getPostInfoString() { return _postinfo; }
+  GeneralResultAttribute(string info) { _info="// "+info;}
+  string toString() { return _info; }
 private:
-  string _postinfo;
+  string _info;
 };
 
 #include <sstream>
@@ -221,6 +330,11 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
     lab++;
   }
 
+}
+
+template<typename LatticeType>
+CFAnalyzer* DFAnalyzer<LatticeType>::getCFAnalyzer() {
+  return _cfanalyzer;
 }
 
 template<typename LatticeType>

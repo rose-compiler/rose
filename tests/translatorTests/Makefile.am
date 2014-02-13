@@ -27,7 +27,9 @@ noinst_PROGRAMS = \
 	testPragmaInBody \
 	querySubTree \
 	testCopyAndDelete \
-   testTraversalOfTemplateInstantiations
+   testTraversalOfTemplateInstantiations \
+	testTranslator2013_01 \
+	testTranslator2013_02
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -59,6 +61,9 @@ querySubTree_SOURCES = querySubTree.C
 testCopyAndDelete_SOURCES = testCopyAndDelete.C
 
 testTraversalOfTemplateInstantiations_SOURCES = testTraversalOfTemplateInstantiations.C
+
+testTranslator2013_01_SOURCES = testTranslator2013_01.C
+testTranslator2013_02_SOURCES = testTranslator2013_02.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -110,7 +115,7 @@ input_testTranslator2012_01b.o: testTranslator2012_01
 
 # Fortran tests
 parameter.o: testFortranParameter
-	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null && touch $@
+	./testFortranParameter $(srcdir)/../CompileTests/Fortran_tests/parameter.f -o /dev/null && touch $@
 
 protected.o: testFortranProtected
 	gfortran -c $(srcdir)/../CompileTests/Fortran_tests/protected_mod.f03
@@ -125,6 +130,11 @@ input_testCopyAndDelete_2.o:
 input_testTraversalOfTemplateInstantiations.o:
 	./testTraversalOfTemplateInstantiations -c $(srcdir)/input_testTraversalOfTemplateInstantiations.C  && touch $@
 
+input_testTranslator2013_01.o: testTranslator2013_01
+	./testTranslator2013_01 -rose:verbose 0 $(srcdir)/input_testTranslator2013_01.C && touch $@
+
+input_testTranslator2013_02.o: testTranslator2013_02
+	./testTranslator2013_02 -rose:verbose 0 $(srcdir)/input_testTranslator2013_02.C && touch $@
 
 
 EXTRA_DIST = \
@@ -158,10 +168,11 @@ else
 check-cxx:
 endif
 
+# Liao, 1/13/2014, these two tests are not tested by EDG 3 based ROSE, comment out for now
+#	parameter.o 
+#	protected.o
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-check-fortran: \
-	parameter.o \
-	protected.o
+check-fortran:
 else
 check-fortran:
 endif
