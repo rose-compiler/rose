@@ -2660,7 +2660,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           // TV (2/5/14): Found symbol might come from another file, in this case we need to insert it in the current scope. 
           //              Can only happen when scope is a global scope
              ROSE_ASSERT(scope != NULL);
-             if (isSgGlobal(scope) != NULL && scope != func_symbol->get_scope() && !SageInterface::isAncestor(scope, func_symbol->get_scope())) {
+             if (  isSgGlobal(scope) != NULL
+                && scope != func_symbol->get_scope()
+                && !SageInterface::isAncestor(scope, func_symbol->get_scope())
+                && !scope->symbol_exists(nameWithTemplateArguments, func_symbol)
+             ) {
                scope->insert_symbol(nameWithTemplateArguments, func_symbol);
              }
         }
