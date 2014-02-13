@@ -17,27 +17,27 @@
 #include <vector>
 
 // Define this if you don't have a c++-11 complaint library. If your library doesn't support std::move semantics for
-// std::ostream then you must define this.  The semantics change slightly when this is defined: instead of log[INFO]
+// std::ostream then you must define this.  The semantics change slightly when this is defined: instead of mlog[INFO]
 // returning a new stream each time, it returns a reference to an existing stream.  The biggest impact is that code
 // written like this:
 //
-//     log[INFO] <<"the sum of 1 + 2 = " <<sum(1,2) <<"\n";
+//     mlog[INFO] <<"the sum of 1 + 2 = " <<sum(1,2) <<"\n";
 //
-// might not work as expected if sum() also writes to log[INFO].  The logging system will see both functions writing
+// might not work as expected if sum() also writes to mlog[INFO].  The logging system will see both functions writing
 // to the same stream as if they were somehow coordinating to produce messages, some of which contain text from both
 // functions.
 //
 // Defining SAWYER_MESSAGE_USE_PROXY also means that lazy use of streams is permitted. The following creates a single message
 // when defined, but two messages (a canceled partial message and a complete message) when c++-11 move support is available:
 //
-//     log[INFO] <<"starting";
+//     mlog[INFO] <<"starting";
 //     do_something();
-//     log[INFO] <<" done.\n";
+//     mlog[INFO] <<" done.\n";
 //
-// The proper, non-lazy way write that (which also works if do_something writes to log[INFO]), is to save the "starting"
+// The proper, non-lazy way write that (which also works if do_something writes to mlog[INFO]), is to save the "starting"
 // message's stream so the message can be completed later:
 //
-//     SProxy m1(log[INFO].dup());
+//     SProxy m1(mlog[INFO].dup());
 //     *m1 <<"starting";
 //     do_something();
 //     *m1 <<" done.\n";
@@ -101,41 +101,57 @@ namespace Sawyer {
  *
  * @section usage Basic message emission via porcelain
  *
- *  A useful usage pattern is to name all the Facility objects "logger" or "lg" ("log" is ambiguous with the logorithm function
- *  in  <cmath> if  namespaces are imported). Define a logger in the global scope and any successively smaller scopes to the
- *  extent desired.  To emit a message, write code like:
+ *  A useful usage pattern is to name all the Facility objects the same thing (good choices are "logger", "mlog", or "lg" since
+ *  "log" can be ambiguous with the logorithm function). Define a logger in the global scope and any successively smaller
+ *  scopes to the extent desired.  To emit a message, write code like:
  *
  * @code
  *  #include <Sawyer/Message.h>
  *  using namespace Sawyer::Message;
  *  ...
- *  Message::log[DEBUG] <<"this is a debugging message.\n";
+ *  Message::mlog[DEBUG] <<"this is a debugging message.\n";
  * @endcode
  *
- *  The C++ compiler will resolve "log" to the most-locally available declaration, i.e., the most specific Facility. "[DEBUG]"
+ *  The C++ compiler will resolve "mlog" to the most-locally available declaration, i.e., the most specific Facility. "[DEBUG]"
  *  selects the importance level, and the rest is normal C++ ostream idioms.  The insertion operators are all evaluated even
- *  when the stream is disabled, unless the "log[DEBUG]" is surrounded by the SAWYER_MESG() macro. This is a bit more typing,
+ *  when the stream is disabled, unless the "mlog[DEBUG]" is surrounded by the SAWYER_MESG() macro. This is a bit more typing,
  *  but is useful when the insertion operators are expensive:
  *
  * @code
- *  SAWYER_MESG(log[DEBUG]) <<"the result is " <<something_expensive() <<"\n";
+ *  SAWYER_MESG(mlog[DEBUG]) <<"the result is " <<something_expensive() <<"\n";
  * @endcode
  *
- *  The SAWYER_MESG macro is just shorthand for evaluating <code>log[DEBUG]</code> in a boolean context and then
+ *  The SAWYER_MESG macro is just shorthand for evaluating <code>mlog[DEBUG]</code> in a boolean context and then
  *  short-circuiting the output expression:
  *
  * @code
- *  log[DEBUG] and log[DEBUG] <<"the result is " <<something_expensive() <<"\n";
+ *  mlog[DEBUG] and mlog[DEBUG] <<"the result is " <<something_expensive() <<"\n";
  * @endcode
  *
- *  Obviously, one can also use "if" statements and conditional compilation if desired.
+ *  Obviously, one can also use "if" statements and conditional compilation if desired.  In fact, another related trick is to
+ *  create a temporary logging stream and use that in the "if" statements and throughout the function.  Besides being less to
+ *  type, this has the benefit that since the stream is a new function-local stream, partial messages to that stream won't
+ *  interfere with partial messages written to the original stream.  Here's an example:
+ *
+ * @code
+ *  void myBigFunction() {
+ *      Stream debug(mlog[DEBUG]);
+ *      ...
+ *      if (debug) {
+ *          do_some_debug_stuff();
+ *          debug <<"debugging results are...\n";
+ *      }
+ *      ...
+ *  }
+ * @endcode
+ *
  *
  * @section facility Defining a message facility
  * 
- *  A Facility object, such as "log" in the previous examples is a collection of Stream objects, one per message importance
+ *  A Facility object, such as "mlog" in the previous examples is a collection of Stream objects, one per message importance
  *  level.  A user may create as many facilities as desired, and the recommended usage is to create one facility per software
  *  component: typically one global facility and a facility in each major namespace or class.  Each facility has a name as a
- *  C++ variable (often "log") and an optional string name. The string name appears (optionally) in the output and is also the
+ *  C++ variable (often "mlog") and an optional string name. The string name appears (optionally) in the output and is also the
  *  name by which the facility is referenced when the facility is part of a collection of facilities in a Facilities
  *  object. The string name may contain "." and ":" as well as the usual C++ symbol naming syntax and is often the fully
  *  qualified name of the software component where it's defined.
@@ -148,9 +164,9 @@ namespace Sawyer {
  *  namespace Rose {
  *  namespace BinaryAnalysis {
  *  class Disassembler {
- *      static Sawyer::Message::Facility log;
+ *      static Sawyer::Message::Facility mlog;
  *  };
- *  Saywer::Message::Facility Disassembler::log("Rose::BinaryAnalsysis::Disassembler", Sawyer::Message::merr);
+ *  Saywer::Message::Facility Disassembler::mlog("Rose::BinaryAnalsysis::Disassembler", Sawyer::Message::merr);
  * @endcode
  *
  * @section facilities Grouping and controlling facility objects
@@ -207,14 +223,14 @@ namespace Sawyer {
  *  Stream objects will share the same destination (i.e., they will be collectively limited to one message per second).
  *
  * @code
- *  Facility log("sample", d);
+ *  Facility mlog("sample", d);
  * @endcode
  *
  *  If you want the FATAL level to not be rate limited, you could adjust it like this:
  *
  * @code
- *  log[FATAL].destination(some_other_destination);
- *  //FIXME[Robb Matzke 2014-01-21]: This needs to be different when log[FATAL] returns
+ *  mlog[FATAL].destination(some_other_destination);
+ *  //FIXME[Robb Matzke 2014-01-21]: This needs to be different when mlog[FATAL] returns
  *  // a copy of the stream.  Perhaps log.destination(FATAL, some_other_destination).
  * @endcode
  */
@@ -499,9 +515,7 @@ protected:
     MesgProps dflts_;                                   // default property values merged into each incoming message
     MesgProps overrides_;                               // overrides applied to incoming message
 protected:
-    Destination() {
-        initializeLibrary();
-    }
+    Destination() {}
 public:
     virtual ~Destination() {}
 
@@ -1055,7 +1069,7 @@ public:
     }
 
     // Same as Stream(const Stream&) but declared so we can do things like this:
-    //   Stream m1(log[INFO] <<"first part of the message");
+    //   Stream m1(mlog[INFO] <<"first part of the message");
     //   m1 <<"; finalize message\n";
     Stream(const std::ostream &other_)
         : std::ostream(rdbuf()), nrefs_(0), streambuf_(NULL) {
@@ -1066,7 +1080,7 @@ public:
     }
 
     // Same as operator=(const Stream&) but declared so we can do things like this:
-    //   Stream m1 = log[INFO] <<"first part of the message");
+    //   Stream m1 = mlog[INFO] <<"first part of the message");
     //   m1 <<"; finalize message\n";
     Stream& operator=(const std::ostream &other_) {
         const Stream *other = dynamic_cast<const Stream*>(&other_);
@@ -1123,12 +1137,12 @@ public:
      *  insertion operations when a stream is disabled.  For example, if printing MemoryMap is an expensive operation then the
      *  logging can be written like this to avoid formatting memorymap when logging is disabled:
      * @code
-     *  logger[DEBUG] and logger[DEBUG] <<"the memory map is:" <<memorymap <<"\n";
+     *  mlog[DEBUG] and mlog[DEBUG] <<"the memory map is:" <<memorymap <<"\n";
      * @endcode
      *
      * In fact, the SAWYER_MESG macro does exactly this and can be used instead:
      * @code
-     *  SAWYER_MESG(logger[DEBUG]) <<"the memory map is: " <<memorymap <<"\n";
+     *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memorymap <<"\n";
      * @endcode
      */
     operator bool() { return enabled(); }
@@ -1193,10 +1207,10 @@ public:
  *  Facilities::control().  All Stream objects created for the facility are given the same name, message prefix generator, and
  *  message sink, but they can be adjusted later on a per-stream basis.
  *
- *  The C++ name for the facility is often just "logger" (appropriately scoped) so that code to emit messages is self
- *  documenting. The name "log" is also often used, but is ambiguous with the log() function defined in "math.h".
+ *  The C++ name for the facility is often just "mlog" or "logger" (appropriately scoped) so that code to emit messages is self
+ *  documenting. The name "log" is also often used, but can be ambiguous with the logorithm function.
  * @code
- *  logger[ERROR] <<"I got an error\n";
+ *  mlog[ERROR] <<"I got an error\n";
  * @endcode
  *
  *  When a Facility is intended to serve an entire program, the name of the facility is redundant with the program name printed
@@ -1205,12 +1219,12 @@ public:
  *
  * @code
  *  using namespace Sawyer;
- *  Facility logger("");
+ *  Facility mlog("");
  *  Facilities facilities;
  *
  *  int main(int argc, char *argv[]) {
  *      std::string progname = get_program_name(argv[0]);
- *      facilities.insert(logger, progname);
+ *      facilities.insert(mlog, progname);
  *      ...
  * @endcode
  */
@@ -1239,8 +1253,8 @@ public:
     }
 
     /** Returns a stream for the specified importance level.  Returns a copy so that we can do things like this:
-     *     Stream m1 = (log[INFO] <<"message 1 part 1");
-     *     Stream m2 = (log[INFO] <<"message 2 part 1");
+     *     Stream m1 = (mlog[INFO] <<"message 1 part 1");
+     *     Stream m2 = (mlog[INFO] <<"message 2 part 1");
      *     m1 <<" part 2\n";
      *     m2 <<" part 2\n";
      * @{ */
@@ -1255,8 +1269,8 @@ public:
     // Microsoft's implemention is reportedly conforming as of 2014-01-20
     // See http://www.cplusplus.com/forum/general/121964
     // The reason we want to return a new stream is so that we can add multi-threading support and this will work:
-    //    log[DEBUG] <<"long message output by thread 1\n";
-    //    log[DEBUG] <<"long message output by thread 2\n";
+    //    mlog[DEBUG] <<"long message output by thread 1\n";
+    //    mlog[DEBUG] <<"long message output by thread 2\n";
     // The two threads end up writing to different streams so that they create independent messages. If these functions
     // returned references instead of copies then the two threads are writing to the same stream, and their concurrent output
     // is being used to create a single sequence of messages. An individual message might have some text from one thread and
@@ -1445,7 +1459,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DestinationPtr merr;                             // unbuffered output to standard error
-extern Facility log;                                    // global logging facility
+extern Facility mlog;                                   // global logging facility
 extern Facilities facilities;                           // global facilities object provided by Sawyer
 
 } // namespace

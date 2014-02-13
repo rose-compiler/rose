@@ -1201,7 +1201,7 @@ void Facilities::print(std::ostream &log) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DestinationPtr merr;
-Facility log;
+Facility mlog("");
 Facilities facilities;
 bool isInitialized;
 
@@ -1209,8 +1209,8 @@ bool initializeLibrary() {
     if (!isInitialized) {
         isInitialized = true;
         merr = FdSink::instance(2);
-        log = Facility("", merr);
-        facilities.insert(log, "sawyer");
+        mlog = Facility("", merr);
+        facilities.insert(mlog, "sawyer");
     }
     return true;
 }
