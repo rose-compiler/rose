@@ -5,6 +5,9 @@
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerArm.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /* See header file for full documentation. */
 
@@ -279,7 +282,7 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
 SgAsmArmInstruction *
 DisassemblerArm::decodeMediaInstruction() const
 {
-    std::cerr << "ARM media instructions not supported: " << StringUtility::intToHex(insn) << std::endl;
+    log[DEBUG] << "ARM media instructions not supported: " << StringUtility::intToHex(insn) << "\n";
     throw ExceptionArm("media instruction not supported", this);
 }
 
@@ -571,7 +574,7 @@ DisassemblerArm::disassemble()
             if ((insn & 0x0F000000U) == 0x0F000000U) {
               return MAKE_INSN1(swi, 3, SageBuilderAsm::makeDWordValue(insn & 0x00FFFFFFU));
             } else {
-                std::cerr << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << std::endl;
+                log[DEBUG] << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << "\n";
                 throw ExceptionArm("coprocessor not supported", this, 26);
             }
           }
@@ -593,7 +596,7 @@ DisassemblerArm::disassemble()
             }
           }
           default: {
-              std::cerr << "Cannot handle too many unconditional instructions: " << StringUtility::intToHex(insn) << std::endl;
+              log[DEBUG] << "Cannot handle too many unconditional instructions: " << StringUtility::intToHex(insn) << "\n";
               throw ExceptionArm("too many unconditional instructions", this, 32);
           }
         }
