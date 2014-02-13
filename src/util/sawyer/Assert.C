@@ -11,7 +11,7 @@ void
 fail(const char *mesg, const char *expr, const std::string &note, const char *filename, unsigned linenum, const char *funcname)
 {
     if (!assertionStream)
-        assertionStream = Message::log[Message::FATAL];
+        assertionStream = Message::mlog[Message::FATAL];
 
     *assertionStream <<mesg <<":\n";
     if (filename && *filename)
