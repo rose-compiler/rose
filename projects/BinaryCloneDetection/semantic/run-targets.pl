@@ -224,16 +224,35 @@ sub example6 {
     print "               where CompilerOptimSet is a set of ordered pairs\n";
     print "               where each pair is a compiler and optimization level\n";
     my $npairs = 3;		# number of (compiler,otpim) pairs to randomly select
-    my %distinct;		# keys are the distinct (compiler,optim) pairs
-    $distinct{"$_->{compiler} $_->{optim}"} = 1 for @specimens;
-    my %coset = map {$_=>1} select_random $npairs, keys %distinct;
-    print "selecting these combinations of compiler and optimization level:\n";
-    print "   $_\n" for sort keys %coset;
+    my %all_co;
+    $all_co{"$_->{compiler} $_->{optim}"} = 1 for @specimens; #all distinct compiler/optimizer pairs
+    my %selected_co = map {$_=>1} select_random $npairs, keys %all_co;
+    print "CompilerOptimSet contains:\n";
+    print "   $_\n" for sort keys %selected_co;
     return sub {
 	my($a, $b) = @_;
-	$coset{"$a->{compiler} $a->{optim}"} && $coset{"$b->{compiler} $b->{optim}"};
+	$selected_co{"$a->{compiler} $a->{optim}"} && $selected_co{"$b->{compiler} $b->{optim}"};
     }
 }
+
+sub example7 {
+    print "\nexample 7: select (a, b) s.t.\n";
+    print "               a_program = b_program and\n";
+    print "               (a_compiler, a_optim, b_compiler, b_optim) in CompilerOptimPairSet\n";
+    print "               where CompilerOptimPairSet is a set of ordered 4-tuples\n";
+    print "               where each 4-tuple contains two compiler/optimization pairs.\n";
+    my $npairs = 3;		# number of (compiler,otpim) pairs to randomly select
+    my %all_co;
+    $all_co{"$_->{compiler} $_->{optim}"} = 1 for @specimens; # all distinct comipler/optimizer pairs
+    my %selected_4t = map {$_=>1} select_random $npairs, map {my $p1=$_; map {"$p1 $_"} keys %all_co} keys %all_co;
+    print "CompilerOptimPairSet contains:\n";
+    print "   $_\n" for sort keys %selected_4t;
+    return sub {
+	my($a, $b) = @_;
+	$selected_4t{"$a->{compiler} $a->{optim} $b->{compiler} $b->{optim}"};
+    }
+}
+
 
 ###############################################################################################################################
 ###############################################################################################################################
@@ -242,7 +261,7 @@ sub example6 {
 ###############################################################################################################################
 
 # Generate a list of pairs over which to run
-my @pairs = select_pairs \@specimens, example6;
+my @pairs = select_pairs \@specimens, example7;
 if (defined $max_pairs) {
     if ($per_program) {
 	@pairs = select_random_per_program $max_pairs, @pairs;
