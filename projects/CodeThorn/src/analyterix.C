@@ -22,6 +22,7 @@
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
 #include "FIConstAnalysis.h"
+#include <boost/foreach.hpp>
 
 #include <vector>
 #include <set>
@@ -156,6 +157,72 @@ void printRoseInfo(SgProject* project) {
     ss<<"FILE NODE Nr. "<<i;
     file->display(ss.str());
   }
+}
+
+void generateRoseRDDotFile(VariableRenaming* varRen,string filename) {
+  ofstream myfile;
+  myfile.open(filename.c_str());
+  myfile<<"digraph RD1 {"<<endl;
+  std::cout << "Propagated Def Table:" << endl;
+  VariableRenaming::DefUseTable& defTable=varRen->getPropDefTable();
+    BOOST_FOREACH(VariableRenaming::DefUseTable::value_type& node, defTable)
+    {
+	  SgNode* astNode=node.first;
+	  std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
+	  myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
+        BOOST_FOREACH(VariableRenaming::TableEntry::value_type& entry, defTable[astNode])
+        {
+            std::cout << "    Defs for [" << varRen->keyToString(entry.first) << "]:" << std::endl;
+            BOOST_FOREACH(VariableRenaming::NodeVec::value_type& iter, entry.second)
+            {
+                std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+				std::vector<SgInitializedName*> defNameVec=entry.first;
+				ROSE_ASSERT(defNameVec.size()==1);
+				myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
+            }
+        }
+    }
+	myfile<<"}"<<endl;
+	myfile.close();
+}
+
+/*
+typedef std::map<int, SgNode*> NumNodeRenameEntry;
+NumNodeRenameEntry getUsesAtNodeForName(SgNode* node, const VarName& var);
+NumNodeRenameEntry getDefsAtNodeForName(SgNode* node, const VarName& var);
+typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
+NumNodeRenameTable getUsesAtNode(SgNode* node);
+NumNodeRenameTable getDefsAtNode(SgNode* node);
+NumNodeRenameTable getDefsForSubtree(SgNode* node);
+static VarName getVarName(SgNode* node);
+NodeVec getAllUsesForDef(const VarName& var, int num);
+*/
+
+void generateRoseRDDotFile2(VariableRenaming* varRen,string filename) {
+  ofstream myfile;
+  myfile.open(filename.c_str());
+  myfile<<"digraph RD1 {"<<endl;
+  std::cout << "Propagated Def Table:" << endl;
+  VariableRenaming::DefUseTable& defTable=varRen->getPropDefTable();
+    BOOST_FOREACH(VariableRenaming::DefUseTable::value_type& node, defTable)
+    {
+	  SgNode* astNode=node.first;
+	  std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
+	  myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
+        BOOST_FOREACH(VariableRenaming::TableEntry::value_type& entry, defTable[astNode])
+        {
+            std::cout << "    Defs for [" << varRen->keyToString(entry.first) << "]:" << std::endl;
+            BOOST_FOREACH(VariableRenaming::NodeVec::value_type& iter, entry.second)
+            {
+                std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+				std::vector<SgInitializedName*> defNameVec=entry.first;
+				ROSE_ASSERT(defNameVec.size()==1);
+				myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
+            }
+        }
+    }
+	myfile<<"}"<<endl;
+	myfile.close();
 }
 
 void printCodeStatistics(SgNode* root) {
@@ -307,9 +374,10 @@ int main(int argc, char* argv[]) {
       cout << "INFO: generating rose-rd dot file (1/2)."<<endl;
       VariableRenaming varRen(root);
       varRen.run();
-      varRen.toFilteredDOT("rose-rd.dot");
-      varRen.printOriginalDefTable();
-      varRen.printRenameTable();
+      varRen.toFilteredDOT("rose-rd1.dot");
+	  //      varRen.printOriginalDefTable();
+      //varRen.printRenameTable();
+	  generateRoseRDDotFile(&varRen,"rose-rd2.dot");
   }
   cout<< "STATUS: finished."<<endl;
 
