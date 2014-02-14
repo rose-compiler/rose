@@ -100,6 +100,10 @@ class f2cTraversal : public AstSimpleProcessing
 
 void f2cTraversal::visit(SgNode* n)
 {
+  Sg_File_Info* fileInfo = n->get_file_info();
+  fileInfo->set_isPartOfTransformation(true);
+//  fileInfo->set_physical_filename(fileInfo->get_filenameString());
+//  cout << n << " sets physical filename to " << fileInfo->get_filenameString() << endl;
   /*
     1. The following switch statement search for the Fortran-specific
        AST nodes and transform them into C nodes. 
@@ -210,9 +214,6 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(newArgc,newArgv);
   AstTests::runAllTests(project);   
 
-  if (SgProject::get_verbose() > 2)
-    generateAstGraph(project,8000,"_orig");
-  
   // Traversal with Memory Pool to search for variableDeclaration
   variableDeclTraversal translateVariableDeclaration;
   traverseMemoryPoolVisitorPattern(translateVariableDeclaration);
@@ -379,6 +380,9 @@ int main( int argc, char * argv[] )
   {
     deepDelete(*i);
   }
+
+  project->set_C_only(true);
+  project->set_Fortran_only(false);
       
 /*
   1. There should be no Fortran-specific AST nodes in the whole
@@ -386,7 +390,7 @@ int main( int argc, char * argv[] )
   
   TODO: make sure translator generating clean AST 
 */
-    //generateDOT(*project);
+//    generateDOT(*project);
   if (SgProject::get_verbose() > 2)
     generateAstGraph(project,8000);
   return backend(project);

@@ -75,19 +75,18 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
   // The main function return type is int
   SgType* mainType = SgTypeInt::createType();
   
-  // Create SgFunctionDeclaration for C main function. Name must be "main".
-  SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration("main",
-                                                                                 mainType,
-                                                                                 functionParameterList,
-                                                                                 scopeStatement,
-                                                                                 decoratorList);
-  
   // Remove original function symbol.  Keep the new function symbol with name of "main"
   SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(programHeaderStatement->get_name()));
   SgSymbolTable* globalSymbolTable = isSgSymbolTable(functionSymbol->get_parent());
   globalSymbolTable->remove(functionSymbol);
   functionSymbol->set_parent(NULL);
   delete(functionSymbol);
+  
+  // Create SgFunctionDeclaration for C main function. Name must be "main".
+  SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration("main",
+                                                                                 mainType,
+                                                                                 functionParameterList,
+                                                                                 scopeStatement);
   
   // Setup the C function declaration.
   removeList.push_back(cFunctionDeclaration->get_definition());
@@ -99,6 +98,10 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
 
   // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
   replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
+  cFunctionDeclaration->set_decoratorList(decoratorList);
+//  cFunctionDeclaration->set_startOfConstruct(functionDefinition->get_startOfConstruct());
+//  cFunctionDeclaration->set_endOfConstruct(functionDefinition->get_endOfConstruct());
+//  cFunctionDeclaration->get_file_info()->set_physical_filename(cFunctionDeclaration->get_file_info()->get_filenameString()); 
   
   /*
      Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
@@ -150,18 +153,19 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   */
   SgType* functionType = procedureHeaderStatement->get_type()->get_return_type(); 
   
+  // Fix the function symbol declaration
+  SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(procedureHeaderStatement->get_name()));
+  SgSymbolTable* globalSymbolTable = isSgSymbolTable(functionSymbol->get_parent());
+  globalSymbolTable->remove(functionSymbol);
+  functionSymbol->set_parent(NULL);
+  delete(functionSymbol);
+
   // Create SgFunctionDeclaration for C function. 
   SgFunctionDeclaration* cFunctionDeclaration = buildDefiningFunctionDeclaration(functionName,
                                                                                  functionType,
                                                                                  functionParameterList,
-                                                                                 scopeStatement,
-                                                                                 decoratorList);
+                                                                                 scopeStatement);
 
-
-  // Fix the function symbol declaration
-  SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(scopeStatement->lookup_symbol(procedureHeaderStatement->get_name()));
-  functionSymbol->set_declaration(cFunctionDeclaration);
-  
   // Setup the C function declaration.
   removeList.push_back(cFunctionDeclaration->get_definition());
   functionDefinition->set_parent(cFunctionDeclaration);
@@ -197,7 +201,10 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
 
   // Replace the SgProcedureHeaderStatement with SgFunctionDeclaration.
   replaceStatement(procedureHeaderStatement,cFunctionDeclaration,true);
-  
+  cFunctionDeclaration->set_decoratorList(decoratorList);
+//  cFunctionDeclaration->set_startOfConstruct(functionDefinition->get_startOfConstruct());
+//  cFunctionDeclaration->set_endOfConstruct(functionDefinition->get_endOfConstruct());
+  //cFunctionDeclaration->get_file_info()->set_physical_filename(cFunctionDeclaration->get_file_info()->get_filenameString()); 
   /*
      Fortran has the implicit data type.  Variables with implicit data type will be found in the local basic block in
      AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
@@ -312,6 +319,9 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
             labelStmtList.insert(pair<SgLabelSymbol*,SgLabelStatement*>(localLabelSymbol,newLabelStmt));
 
             replaceStatement(fortranLabelStmt,newLabelStmt,true);
+            SgNullExpression* nullExp = buildNullExpression();
+            SgExprStatement* nullStmt = buildExprStatement(nullExp);
+            insertStatement(newLabelStmt, nullStmt, false, true);
             break;
           }
         case V_SgBasicBlock:
@@ -469,6 +479,9 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
       {
         j->second->set_scope(oldStmt->get_scope());
         replaceStatement(oldStmt,j->second,true);
+        SgNullExpression* nullExp = buildNullExpression();
+        SgExprStatement* nullStmt = buildExprStatement(nullExp);
+        insertStatement(j->second, nullStmt, false, true);
         delete(oldStmt->get_numeric_label());
         oldStmt->set_numeric_label(NULL);
         delete(oldStmt);
