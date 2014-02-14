@@ -193,7 +193,9 @@ NumNodeRenameEntry getDefsAtNodeForName(SgNode* node, const VarName& var);
 typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 NumNodeRenameTable getUsesAtNode(SgNode* node);
 NumNodeRenameTable getDefsAtNode(SgNode* node);
+
 NumNodeRenameTable getDefsForSubtree(SgNode* node);
+
 static VarName getVarName(SgNode* node);
 NodeVec getAllUsesForDef(const VarName& var, int num);
 */
