@@ -218,6 +218,26 @@ if (0) {
 	$want_C{$a->{compiler}} && $want_X{$a->{optim}};
     };
 
+    #------------------------------------------------------------
+    print "\nexample 6: select (a, b) s.t.\n";
+    print "               a_program = b_program and\n";
+    print "               (a_compiler, a_optim) in CompilerOptimSet and\n";
+    print "               (b_compiler, b_optim) in CompilerOptimSet\n";
+    print "               where CompilerOptimSet is a set of ordered pairs\n";
+    print "               where each pair is a compiler and optimization level\n";
+    my $npairs = 3;		# number of (compiler,otpim) pairs to randomly select
+    my %distinct;		# keys are the distinct (compiler,optim) pairs
+    $distinct{"$_->{compiler} $_->{optim}"} = 1 for @specimens;
+    my %coset = map {$_=>1} select_random $npairs, keys %distinct;
+    print "selecting these combinations of compiler and optimization level:\n";
+    print "   $_\n" for sort keys %coset;
+
+    my @example6 = select_pairs \@specimens, sub {
+	my($a,$b) = @_;
+	$coset{"$a->{compiler} $a->{optim}"} && $coset{"$b->{compiler} $b->{optim}"};
+    };
+
+
     print "\n\n";
 }
 
