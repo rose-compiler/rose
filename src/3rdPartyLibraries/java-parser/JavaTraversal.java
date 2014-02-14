@@ -76,8 +76,8 @@ class JavaTraversal implements Callable<Boolean> {
         // for (String arg: args)
         int max = args.length;
         for (int j = 0; j < max; j++) {
-             if (commandlineErrorLevel > 0)
-                 System.out.println("ROSE Argument found: " + args[j]);
+            if (commandlineErrorLevel > 0)
+                System.out.println("ROSE Argument found: " + args[j]);
 
             // String matchingString = "-rose";
             // Java substring uses index 0 ... 5 (the upper bound "6" is not used.

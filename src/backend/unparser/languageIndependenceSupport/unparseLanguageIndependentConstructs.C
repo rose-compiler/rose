@@ -553,7 +553,7 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
 #endif
                ROSE_ASSERT(stmt->get_file_info() != NULL);
 #if 0
-               stmt->get_file_info()->display("In unparseStatementFromTokenStream(): debug");
+               stmt->get_file_info()->display("In canBeUnparsedFromTokenStream(): debug");
 #endif
                canBeUnparsed = (tokenSubsequence->token_subsequence_start != -1);
 
@@ -689,10 +689,15 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
 
 int
-UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt)
+UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
+
+  // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
+  // mechanism that does not drop line endings.  The high fedelity version is just prettier, but 
+  // pretty counts...
+#define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
@@ -742,6 +747,67 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
                     printf ("   --- tokenSubsequence->leading_whitespace_start = %d tokenSubsequence->leading_whitespace_end = %d \n",tokenSubsequence->leading_whitespace_start,tokenSubsequence->leading_whitespace_end);
 #endif
+
+                    SgGlobal* globalScope = isSgGlobal(stmt);
+#if 0
+                    printf ("In unparseStatementFromTokenStream(): globalScope = %p \n",globalScope);
+                    if (globalScope != NULL)
+                       {
+                         printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+                         for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
+                            {
+                              SgDeclarationStatement* decl = globalScope->get_declarations()[i];
+                              ROSE_ASSERT(decl != NULL);
+                              printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
+                            }
+                       }
+#endif
+                    if (globalScope != NULL)
+                       {
+#if 0
+                         printf ("Processing corner case of empty global scope unparsed using the token stream \n");
+#endif
+                         if (globalScope->get_declarations().empty() == true)
+                            {
+                           // If this is the empry global scope then consider the SgGlobal to be the last statement to be unparsed.
+                           // This will trigger the output of the remaining tokens in the file and suppress any CPP directives and 
+                           // comments that are attached to the SgGlobal (because there was no other IR node to attach them to which
+                           // could be considered a part of the input file).
+                              lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+                            }
+                           else
+                            {
+                           // Else we have to make sure that none of the declarations in global scope are from this file.
+                           // These can de declarations from header files or the rose_edg_required_macros_and_functions.h 
+                           // file that is read to support GNU predefined macros.
+                              lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+                              for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
+                                 {
+                                   SgDeclarationStatement* decl = globalScope->get_declarations()[i];
+                                   ROSE_ASSERT(decl != NULL);
+#if 0
+                                   printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                                   if (statementFromFile(decl, getFileName(), info) == true)
+                                      {
+#if 0
+                                        printf ("Found statement that will be output: set lastStatementOfGlobalScopeUnparsedUsingTokenStream == true: decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                                        lastStatementOfGlobalScopeUnparsedUsingTokenStream = false;
+                                      }
+                                 }
+
+                              if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == true)
+                                 {
+                                // This SgGlobal will be treated as the last statement so that we can know to supporess the generation 
+                                // of CPP directives and comments that are in the AST and associated with the SgGlobal.
+#if 0
+                                   printf ("Global scope being treated as last statement in file (will be unparsed using the token sequence and CPP directives associated with SgGlobal will be supressed) \n");
+#endif
+                                 }
+                            }
+                       }
+
                     if (tokenSubsequence->leading_whitespace_start != -1 && tokenSubsequence->leading_whitespace_end != -1)
                        {
                          for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
@@ -749,7 +815,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                               printf ("Output leading tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                           // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                           // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                           // Note that this will interprete line endings which is not going to provide the precise token based output.
                               curprint(tokenVector[j]->get_lexeme_string());
+#endif
                             }
                        }
                   }
@@ -761,13 +834,91 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                 // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                 // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                    *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                 // Note that this will interprete line endings which is not going to provide the precise token based output.
                     curprint(tokenVector[j]->get_lexeme_string());
+#endif
                   }
 
+            // DQ (1/29/2014): The only consequence that I can see in not closing off the trailing token stream is that we 
+            // will (at least sometimes) not not out put a trailing CR after the last line.
             // DQ (12/1/2013): I am not clear if there are cases where we need to output the associated trailing tokens.
             // None of these cases appear to be an issue in the C regression tests.
+
+               bool isLastStatementOfGlobalScope = false;
+               SgScopeStatement* scope = stmt->get_scope();
+               ROSE_ASSERT(scope != NULL);
+
+               SgGlobal* globalScope = isSgGlobal(scope);
+               if (globalScope != NULL)
+                  {
+                 // Check if this is the last statement in the file (global scope).
+                    SgDeclarationStatementPtrList & declarationList = globalScope->get_declarations();
+                    SgDeclarationStatement* lastDeclaration = NULL;
+                    if (declarationList.rbegin() != declarationList.rend())
+                       {
+                         lastDeclaration = *(declarationList.rbegin());
+                         if (stmt == lastDeclaration)
+                            {
+#if 0
+                              printf ("In unparseStatementFromTokenStream(): identified last statement: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+                              isLastStatementOfGlobalScope = true;
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In unparseStatementFromTokenStream(): Global scope is empty! \n");
+#endif
+                       }
+                  }
+
+            // The last statement has to handle the output of the tokens for the rest of the file.
+            // If the last statement is output from the AST, then it will be handled using information 
+            // in the AST (not the token stream).
+               if (isLastStatementOfGlobalScope == true)
+                  {
+#if 0
+                    printf ("Process the tokens associated with the trailing edge of the last statement \n");
+#endif
+                 // Set the return parameter to skip the unparsing of the tailing CPP directives and 
+                 // comments from the AST (since they are being output via the token stream).
+                    lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
+
+                    if (tokenSubsequence->trailing_whitespace_start != -1 && tokenSubsequence->trailing_whitespace_end != -1)
+                       {
+                         for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
+                            {
+#if 0
+                              printf ("Output trailing tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                           // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
+                           // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                           // Note that this will interprete line endings which is not going to provide the precise token based output.
+                              curprint(tokenVector[j]->get_lexeme_string());
+#endif
+                            }
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
              }
         }
+
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+  // If we are directly operating on the ostream, then flush after each statement.
+     unp->get_output_stream().output_stream()->flush();
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -1045,6 +1196,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
         }
 
+  // DQ (1/30/204): We need this to permit knowing when to unparse the trialing CPP directives and 
+  // comments from the AST.  If they were unparsed from the token steam (as part of unparsing the 
+  // last statement from the token stream) then unparsing them from the AST would be redundant
+  // (though likely harmless).
+     bool lastStatementOfGlobalScopeUnparsedUsingTokenStream = false;
+
   // DQ (7/20/2008): This mechanism is now extended to SgStatement and revised to handle 
   // more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
@@ -1123,7 +1280,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
                if (unparseViaTokenStream == true)
                   {
-                    int status = unparseStatementFromTokenStream(sourceFile,stmt);
+                     int status = unparseStatementFromTokenStream(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
 
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
                     outputStatementAsTokens = (status == 0);
@@ -1151,7 +1308,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
                   }
-     
+
             // DQ (12/4/2007): Added to ROSE (was removed at some point).
                unparseLineDirectives(stmt);
 
@@ -1282,9 +1439,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
 #if 0
-     printf ("Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
+     printf ("Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",stmt,stmt->class_name().c_str(),lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
 #endif
-     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+  // if (outputStatementAsTokens == false)
+     if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == false)
+        {
+          unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+        }
 #if 0
      printf ("DONE: Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
 #endif
@@ -1747,6 +1909,7 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
 #endif
    }
 
+
 void
 UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -1766,7 +1929,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      outputHiddenListData (globalScope);
 #endif
 
-  // curprint ( string(" /* global scope size = " + globalScope->get_declarations().size() + " */ \n ";
+#if 0
+     curprint(string(" /* In unparseGlobalStmt(): global scope size = ") + StringUtility::numberToString(globalScope->get_declarations().size()) + " */ \n ");
+#endif
 
 #if 0
      int declarationCounter = 0;
@@ -1815,6 +1980,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
   // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
   // printf ("At end of unparseGlobalStmt \n");
   // outputCompilerGeneratedStatements(info);
+
+#if 0
+     curprint(string(" /* Leaving unparseGlobalStmt(): global scope size = ") + StringUtility::numberToString(globalScope->get_declarations().size()) + " */ \n ");
+#endif
 
 #if 0
      printf ("Leaving UnparseLanguageIndependentConstructs::unparseGlobalStmt() \n\n");

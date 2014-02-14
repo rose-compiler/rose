@@ -5865,6 +5865,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (4/13/2013): Added support to unparse code using overloaded operator names or operator syntax (to match the input code).
                b_prefixOperator = 45, /*!< Part of support to unparse code using overloaded operator names or operator syntax (to match the input code); this marks prefix operators to be unparsed before the LHS s output. */
 
+            // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+               b_supressArrayBound = 46, /*!< Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax for secondary (prototype) declarations (e.g. int array[];). */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6104,6 +6107,12 @@ HEADER_UNPARSE_INFO_START
           bool isPrefixOperator() const;
           void set_prefixOperator();
           void unset_prefixOperator();
+
+       // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+          bool supressArrayBound() const;
+          void set_supressArrayBound();
+          void unset_supressArrayBound();
+
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -10374,7 +10383,8 @@ SgInitializedName::get_qualified_name_prefix_for_type() const
 
      return nameQualifier;
    }
- 
+
+
 void
 SgInitializedName::post_construction_initialization()
    {
@@ -10425,6 +10435,14 @@ SgInitializedName::post_construction_initialization()
      p_shapeDeferred          = false;
      p_initializationDeferred = false;
      p_protected_declaration  = false;
+
+  // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+     p_name_qualification_length_for_type = 0;
+     p_type_elaboration_required_for_type = false;
+     p_global_qualification_required_for_type = false;
+
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+     p_hasArrayTypeWithEmptyBracketSyntax = false;
 
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
@@ -10567,6 +10585,15 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_shapeDeferred          = ptr.p_shapeDeferred;
      p_initializationDeferred = ptr.p_initializationDeferred;
      p_protected_declaration  = ptr.p_protected_declaration;
+
+  // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+     p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
+     p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
+     p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+
+
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+     p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
    }
 
 SgInitializedName&
@@ -10652,6 +10679,14 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
           p_isCoArray                             = ptr.p_isCoArray;
+
+       // DQ (2/5/2014): I just noticed that the initialization of these were missing.
+          p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
+          p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
+          p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+
+       // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+          p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
         }
        else
         {
@@ -13705,6 +13740,9 @@ X aggressive
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
+  // DQ (1/30/2014): Support for testing of token unparsing.
+     p_unparse_tokens_testing = 0;
+
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
 
@@ -14206,7 +14244,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_backendCompileFormat                 = %s output format \n",backendCompileFormatName.c_str());
 
      printf ("     p_fortran_implicit_none                = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
-     printf ("     p_openmp                       = %s \n",(p_openmp == true) ? "true" : "false");
+     printf ("     p_openmp                               = %s \n",(p_openmp == true) ? "true" : "false");
      printf ("     p_cray_pointer_support                 = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
      printf ("     p_output_parser_actions                = %s \n",(p_output_parser_actions == true) ? "true" : "false");
      printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
@@ -14291,7 +14329,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_markGeneratedFiles                   = %s \n",(p_markGeneratedFiles == true) ? "true" : "false");
      printf ("     p_negative_test                        = %s \n",(p_negative_test == true) ? "true" : "false");
      printf ("     p_strict_language_handling             = %s \n",(p_strict_language_handling == true) ? "true" : "false");
-     printf ("     p_wave             = %s \n",(p_wave == true) ? "true" : "false");
+     printf ("     p_wave                                 = %s \n",(p_wave == true) ? "true" : "false");
      printf ("     p_embedColorCodesInGeneratedCode       = %s \n",(p_embedColorCodesInGeneratedCode == true) ? "true" : "false");
      printf ("     p_generateSourcePositionCodes          = %s \n",(p_generateSourcePositionCodes == true) ? "true" : "false");
      printf ("     p_sourceFileUsesCppFileExtension       = %s \n",(p_sourceFileUsesCppFileExtension == true) ? "true" : "false");
@@ -14305,7 +14343,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
-     printf ("     p_unparse_tokens                        = %s \n",(p_unparse_tokens == true) ? "true" : "false");
+     printf ("     p_unparse_tokens                       = %s \n",(p_unparse_tokens == true) ? "true" : "false");
+     printf ("     p_unparse_tokens_testing               = %d \n",p_unparse_tokens_testing);
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
@@ -14780,6 +14819,10 @@ SgProject::initialization()
 
   // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
      p_mode_32_bit = false;
+
+  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
+  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
+     p_suppressConstantFoldingPostProcessing = false;
    }
 
 
@@ -16700,6 +16743,17 @@ void
 SgUnparse_Info::unset_prefixOperator()
    { unsetBit(b_prefixOperator); }
 
+// DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
+bool SgUnparse_Info::supressArrayBound() const
+   { return checkBit(b_supressArrayBound); }
+
+void SgUnparse_Info::set_supressArrayBound()
+   { setBit(b_supressArrayBound); }
+
+void SgUnparse_Info::unset_supressArrayBound()
+   { unsetBit(b_supressArrayBound); }
+
+
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
@@ -16781,6 +16835,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("SkipQualifiedNames                     = %s \n",( SkipQualifiedNames() == true ) ? "true" : "false");
      printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
+     printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
