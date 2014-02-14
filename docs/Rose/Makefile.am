@@ -73,6 +73,10 @@ ROSE_MAINPAGE_DOCUMENTATION = $(top_builddir)/rose.docs
 $(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
 	cd $(top_builddir); $(MAKE) rose.docs
 
+# DQ (1/27/2014): Add simple makefile rule to run doxygen to generate ROSE API docs.
+doxygen_docs: rose.cfg AvailableDocumentation.docs
+	doxygen rose.cfg
+
 # A more complex dependence is defined that requires the sage.tag file
 $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
