@@ -10,7 +10,7 @@ use strict;
 my $dry_run = 1;      # Set true if you only want to see what would have been done.
 my $dropdb = 1;       # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
 my $max_pairs = 5;    # Maximum number of pairs to run, selected at random.
-my $per_program = 1;  # If true, select $max_pairs on a per program basis rather than over all.
+my $per_program = 0;  # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1; # If true, then pairs of functions must be the same program (e.g., both "egrep")
 my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was selected.
 my $dbprefix = "as_"; # Prefix to add to each database name
@@ -26,11 +26,8 @@ my $training_dir = "$ENV{HOME}/GS-CAD/ROSE/CloneDetection/training-set-targets";
 #   program  => name of the program, as in "egrep"
 #   compiler => as in "gcc", "icc", "llvm"
 #   optim    => optimization level, as in "s", "0", "3", etc.
-sub selection_predicate {
-    my($a, $b) = @_;
-    # Example, specimens that were compiled with different optimization levels of the same compiler.
-    $a->{compiler} eq $b->{compiler} && $a->{optim} ne $b->{optim};
-};
+#
+# See the examples below that return predicates.
 
 # Configuration for the run-analysis.sh script
 my $configuration = <<'EOF';
@@ -158,67 +155,68 @@ print "loaded information for ", 0+@specimens, " specimens.\n";
 
 ###############################################################################################################################
 ###############################################################################################################################
-##  These examples demonstrate the queries from Andreas' email on 2/6/14
+##  These examples demonstrate the queries from Andreas' email on 2/6/14 and later.  Each function returns a predicate that
+##  can then be passed to the select_pairs function.
 ###############################################################################################################################
 ###############################################################################################################################
 
-
-if (0) {
-
-    print "\n*** Examples from Andreas ***\n";
-
-    #------------------------------------------------------------
+sub example1 {
     print "\nexample 1: all (a,b) s.t.\n";
     print "               a_program = b_program\n";
-    my @example1 = select_pairs \@specimens, sub {1};
+    return sub {1}
+}
 
-    #------------------------------------------------------------
+sub example2 {
     print "\nexample 2: all (a,b) s.t.\n";
     print "               a_program = b_program and\n";
     print "               a_compiler in {gcc, icc} and\n";
     print "               a_optim in {s, 0} and\n";
     print "               b_compiler in {gcc, icc} and\n";
     print "               b_optim in {s, 0}\n";
-    my @example2 = select_pairs \@specimens, sub {
+    return sub {
 	my($a, $b) = @_;
 	my %want_C = (gcc=>1, icc=>1);
 	my %want_X = ('s'=>'1', '0'=>1);
 	$want_C{$a->{compiler}} && $want_C{$b->{compiler}} && $want_X{$a->{optim}} && $want_X{$b->{optim}};
-    };
+    }
+}
 
-    #------------------------------------------------------------
+sub example3 {
     print "\nexample 3: all (a,b) s.t.\n";
     print "               a_program = b_program and\n";
     print "               a_optim in {s, 0} and\n";
     print "               b_optim in {s, 0}\n";
-    my @example3 = select_pairs \@specimens, sub {
+    return sub {
 	my($a, $b) = @_;
 	my %want_X = ('s'=>1, '0'=>1);
 	$want_X{$a->{optim}} && $want_X{$b->{optim}}
-    };
+    }
+}
 
-    #------------------------------------------------------------
+sub example4 {
     print "\nexample 4: all (a,b) s.t.\n";
     print "               a_program = b_program and\n";
     print "               a_compiler != b_compiler\n";
-    my @example4 = select_pairs \@specimens, sub {
+    return sub {
 	my($a, $b) = @_;
 	$a->{compiler} ne $b->{compiler};
-    };
+    }
+}
 
-    #------------------------------------------------------------
+sub example5 {
     print "\nexample 5: all (a, b) s.t.\n";
     print "               a_program = b_program and\n";
     print "               a_compiler in {gcc, icc} and\n";
     print "               a_optim in {s, 0}\n";
-    my @example5 = select_pairs \@specimens, sub {
+    return sub {
 	my($a, $b) = @_;
 	my %want_C = (gcc=>1, icc=>1);
 	my %want_X = ('s'=>1, '0'=>1);
 	$want_C{$a->{compiler}} && $want_X{$a->{optim}};
-    };
+    }
+}
 
-    #------------------------------------------------------------
+sub example6 {
     print "\nexample 6: select (a, b) s.t.\n";
     print "               a_program = b_program and\n";
     print "               (a_compiler, a_optim) in CompilerOptimSet and\n";
@@ -231,14 +229,10 @@ if (0) {
     my %coset = map {$_=>1} select_random $npairs, keys %distinct;
     print "selecting these combinations of compiler and optimization level:\n";
     print "   $_\n" for sort keys %coset;
-
-    my @example6 = select_pairs \@specimens, sub {
-	my($a,$b) = @_;
+    return sub {
+	my($a, $b) = @_;
 	$coset{"$a->{compiler} $a->{optim}"} && $coset{"$b->{compiler} $b->{optim}"};
-    };
-
-
-    print "\n\n";
+    }
 }
 
 ###############################################################################################################################
@@ -248,7 +242,7 @@ if (0) {
 ###############################################################################################################################
 
 # Generate a list of pairs over which to run
-my @pairs = select_pairs \@specimens, \&selection_predicate;
+my @pairs = select_pairs \@specimens, example6;
 if (defined $max_pairs) {
     if ($per_program) {
 	@pairs = select_random_per_program $max_pairs, @pairs;
