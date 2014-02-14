@@ -7,16 +7,16 @@ use strict;
 ###############################################################################################################################
 ###############################################################################################################################
 
-my $dry_run = 1;      # Set true if you only want to see what would have been done.
+my $dry_run = 0;      # Set true if you only want to see what would have been done.
 my $dropdb = 1;       # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 5;    # Maximum number of pairs to run, selected at random.
+my $max_pairs = 10;    # Maximum number of pairs to run, selected at random.
 my $per_program = 0;  # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1; # If true, then pairs of functions must be the same program (e.g., both "egrep")
 my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was selected.
-my $dbprefix = "ncomp_"; # Prefix to add to each database name
+my $dbprefix = "compilersignorebuiltin_"; # Prefix to add to each database name
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
-my $training_dir = "$ENV{HOME}/testing-set-targets";
+my $training_dir = "$ENV{HOME}/binary-runs/suspects-and-victims-subset/test-set/";
 
 # Predicate that defines how to generate pairs.  A pair is created if both $a and $b have the same program name and
 # this predicate returns true.  The predicate is called with two specimen arguments. Each specimen is a hash reference
@@ -29,7 +29,11 @@ my $training_dir = "$ENV{HOME}/testing-set-targets";
 sub selection_predicate {
     my($a, $b) = @_;
     # Example, specimens that were compiled with different optimization levels of the same compiler.
-    $a->{compiler} eq $b->{compiler} && $a->{optim} eq '3' && $b->{optim} eq '3';
+    $a->{compiler} ne $b->{compiler} && $a->{optim} eq '3' && $b->{optim} eq '3';
+
+    #my %want_C = (gcc=>1);
+    #my %want_X = ('s'=>1, '0'=>1);
+    #$want_C{$a->{compiler}} 
 };
 #
 # See the examples below that return predicates.
@@ -153,7 +157,7 @@ sub select_random_per_program {
 sub database_name {
     my($a, $b) = @_;
     if($same_program){
-      $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{compiler}, $b->{optim};
+      $dbprefix . join "_", $a->{program}, substr($a->{compiler},0,1) . $a->{optim}, substr($b->{compiler},0,1) . $b->{optim};
     }else{
       $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
     }
