@@ -195,7 +195,7 @@ RiscOperators::after(const BaseSemantics::SValuePtr &retval, const BaseSemantics
 void
 RiscOperators::after(const BaseSemantics::Exception &e)
 {
-    mesg.more(" = Exception(%s)", e.mesg.c_str());
+    mesg.more(" = Exception(%s)", e.what());
     mesg.multipart_end();
 }
 

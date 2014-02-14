@@ -23,7 +23,7 @@ TEST_TARGETS += $(inlineEverything_test_targets)
 $(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/inlineEverything -rose:verbose 0 $< -o a.out && ./a.out" \
+		CMD="$$(pwd)/inlineEverything -rose:verbose 0 $(abspath $<) -o a.out && ./a.out" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------

@@ -5,6 +5,7 @@
 #include "stringify.h"
 
 using namespace std;
+using namespace rose;
 using namespace SageInterface;
 
 void CountTraversal::visit ( SgNode* n )

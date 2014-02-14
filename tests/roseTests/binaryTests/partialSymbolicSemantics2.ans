@@ -4,133 +4,133 @@
 
 0x80482c8:push   ebp
 registers:
-  esp    = v256-0x4[32]
-  ebp    = v257[32]
+  esp    = v255-0x4[32]
+  ebp    = v256[32]
   eip    = 0x80482c9[32]
 memory:
-  addr=v256-0x4[32] value=v257[32]
+  addr=v255-0x4[32] value=v256[32]
 
 0x80482c9:mov    ebp, esp
 registers:
-  esp    = v256-0x4[32]
-  ebp    = v256-0x4[32]
+  esp    = v255-0x4[32]
+  ebp    = v255-0x4[32]
   eip    = 0x80482cb[32]
 memory:
-  addr=v256-0x4[32] value=v257[32]
+  addr=v255-0x4[32] value=v256[32]
 
 0x80482cb:sub    esp, 0x08
 registers:
-  esp    = v256-0xc[32]
-  ebp    = v256-0x4[32]
+  esp    = v255-0xc[32]
+  ebp    = v255-0x4[32]
   eip    = 0x80482ce[32]
-  pf     = -v272+0x1[1]
-  sf     = v273[1]
-  zf     = v274[1]
-  af     = -v277+0x1[1]
-  cf     = -v275+0x1[1]
-  of     = v278[1]
+  pf     = -v271+0x1[1]
+  sf     = v272[1]
+  zf     = v273[1]
+  af     = -v276+0x1[1]
+  cf     = -v274+0x1[1]
+  of     = v277[1]
 memory:
-  addr=v256-0x4[32] value=v257[32]
+  addr=v255-0x4[32] value=v256[32]
 
 0x80482ce:call   0x08048364<call_gmon_start>
 registers:
-  esp    = v256-0x10[32]
-  ebp    = v256-0x4[32]
+  esp    = v255-0x10[32]
+  ebp    = v255-0x4[32]
   eip    = 0x8048364[32]
-  pf     = -v272+0x1[1]
-  sf     = v273[1]
-  zf     = v274[1]
-  af     = -v277+0x1[1]
-  cf     = -v275+0x1[1]
-  of     = v278[1]
+  pf     = -v271+0x1[1]
+  sf     = v272[1]
+  zf     = v273[1]
+  af     = -v276+0x1[1]
+  cf     = -v274+0x1[1]
+  of     = v277[1]
 memory:
-  addr=v256-0x10[32] value=0x80482d3[32]
-  addr=v256-0x4[32] value=v257[32]
+  addr=v255-0x10[32] value=0x80482d3[32]
+  addr=v255-0x4[32] value=v256[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80482d3:call   0x080483d0<frame_dummy>
 registers:
-  esp    = v373-0x4[32]
+  esp    = v372-0x4[32]
   eip    = 0x80483d0[32]
 memory:
-  addr=v373-0x4[32] value=0x80482d8[32]
+  addr=v372-0x4[32] value=0x80482d8[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80482d8:call   0x08048580<__do_global_ctors_aux>
 registers:
-  esp    = v468-0x4[32]
+  esp    = v467-0x4[32]
   eip    = 0x8048580[32]
 memory:
-  addr=v468-0x4[32] value=0x80482dd[32]
+  addr=v467-0x4[32] value=0x80482dd[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80482dd:leave  
 registers:
-  esp    = v563+0x4[32]
-  ebp    = v564[32]
+  esp    = v562+0x4[32]
+  ebp    = v563[32]
   eip    = 0x80482de[32]
 memory:
-  addr=v563[32] value=v564[32]
+  addr=v562[32] value=v563[32]
 
 0x80482de:ret    
 registers:
-  esp    = v563+0x8[32]
-  ebp    = v564[32]
-  eip    = v566[32]
+  esp    = v562+0x8[32]
+  ebp    = v563[32]
+  eip    = v565[32]
 memory:
-  addr=v563+0x4[32] value=v566[32]
-  addr=v563[32] value=v564[32]
+  addr=v562+0x4[32] value=v565[32]
+  addr=v562[32] value=v563[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
 registers:
-  eip    = v662[32]
+  eip    = v661[32]
 memory:
-  addr=0x80496d4[32] value=v662[32]
+  addr=0x80496d4[32] value=v661[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
 registers:
-  eip    = v758[32]
+  eip    = v757[32]
 memory:
-  addr=0x80496d8[32] value=v758[32]
+  addr=0x80496d8[32] value=v757[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
 registers:
-  eip    = v854[32]
+  eip    = v853[32]
 memory:
-  addr=0x80496dc[32] value=v854[32]
+  addr=0x80496dc[32] value=v853[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
 registers:
-  eip    = v950[32]
+  eip    = v949[32]
 memory:
-  addr=0x80496e0[32] value=v950[32]
+  addr=0x80496e0[32] value=v949[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
 registers:
-  eip    = v1046[32]
+  eip    = v1045[32]
 memory:
-  addr=0x80496e4[32] value=v1046[32]
+  addr=0x80496e4[32] value=v1045[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -143,261 +143,261 @@ registers:
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v1143[1]
+  af     = v1141[1]
   cf     = 0x0[1]
 memory:
 
 0x8048342:pop    esi
 registers:
-  esp    = v1144+0x4[32]
+  esp    = v1142+0x4[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048343[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v1143[1]
+  af     = v1141[1]
   cf     = 0x0[1]
 memory:
-  addr=v1144[32] value=v1145[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048343:mov    ecx, esp
 registers:
-  ecx    = v1144+0x4[32]
-  esp    = v1144+0x4[32]
+  ecx    = v1142+0x4[32]
+  esp    = v1142+0x4[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048345[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v1143[1]
+  af     = v1141[1]
   cf     = 0x0[1]
 memory:
-  addr=v1144[32] value=v1145[32]
+  addr=v1142[32] value=v1143[32]
 
-0x8048345:and    esp, 0xf0<-0x10>
+0x8048345:and    esp, 0xf0<-16>
 registers:
-  ecx    = v1144+0x4[32]
-  esp    = v1147[32]
+  ecx    = v1142+0x4[32]
+  esp    = v1145[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048348[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1144[32] value=v1145[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048348:push   eax
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  esp    = v1147-0x4[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  esp    = v1145-0x4[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048349[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048349:push   esp
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  esp    = v1147-0x8[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  esp    = v1145-0x8[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x804834a[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x804834a:push   edx
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0xc[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0xc[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x804834b[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x804834b:push   0x08048520<__libc_csu_fini>
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x10[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x10[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048350[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048350:push   0x080484b0<__libc_csu_init>
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x14[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x14[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048355[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x14[32] value=0x80484b0[32]
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x14[32] value=0x80484b0[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048355:push   ecx
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x18[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x18[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048356[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x18[32] value=v1144+0x4[32]
-  addr=v1147-0x14[32] value=0x80484b0[32]
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x18[32] value=v1142+0x4[32]
+  addr=v1145-0x14[32] value=0x80484b0[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048356:push   esi
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x1c[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x1c[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048357[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x1c[32] value=v1145[32]
-  addr=v1147-0x18[32] value=v1144+0x4[32]
-  addr=v1147-0x14[32] value=0x80484b0[32]
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x1c[32] value=v1143[32]
+  addr=v1145-0x18[32] value=v1142+0x4[32]
+  addr=v1145-0x14[32] value=0x80484b0[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x8048357:push   0x08048410<main>
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x20[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x20[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x804835c[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x20[32] value=0x8048410[32]
-  addr=v1147-0x1c[32] value=v1145[32]
-  addr=v1147-0x18[32] value=v1144+0x4[32]
-  addr=v1147-0x14[32] value=0x80484b0[32]
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x20[32] value=0x8048410[32]
+  addr=v1145-0x1c[32] value=v1143[32]
+  addr=v1145-0x18[32] value=v1142+0x4[32]
+  addr=v1145-0x14[32] value=0x80484b0[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 
 0x804835c:call   0x08048310<__libc_start_main@plt>
 registers:
-  eax    = v1165[32]
-  ecx    = v1144+0x4[32]
-  edx    = v1166[32]
-  esp    = v1147-0x24[32]
+  eax    = v1163[32]
+  ecx    = v1142+0x4[32]
+  edx    = v1164[32]
+  esp    = v1145-0x24[32]
   ebp    = 0x0[32]
-  esi    = v1145[32]
+  esi    = v1143[32]
   eip    = 0x8048310[32]
-  pf     = -v1161+0x1[1]
-  sf     = v1162[1]
-  zf     = v1163[1]
+  pf     = -v1159+0x1[1]
+  sf     = v1160[1]
+  zf     = v1161[1]
   of     = 0x0[1]
-  af     = v1164[1]
+  af     = v1162[1]
   cf     = 0x0[1]
 memory:
-  addr=v1147-0x24[32] value=0x8048361[32]
-  addr=v1147-0x20[32] value=0x8048410[32]
-  addr=v1147-0x1c[32] value=v1145[32]
-  addr=v1147-0x18[32] value=v1144+0x4[32]
-  addr=v1147-0x14[32] value=0x80484b0[32]
-  addr=v1147-0x10[32] value=0x8048520[32]
-  addr=v1147-0xc[32] value=v1166[32]
-  addr=v1147-0x8[32] value=v1147-0x4[32]
-  addr=v1147-0x4[32] value=v1165[32]
-  addr=v1144[32] value=v1145[32]
+  addr=v1145-0x24[32] value=0x8048361[32]
+  addr=v1145-0x20[32] value=0x8048410[32]
+  addr=v1145-0x1c[32] value=v1143[32]
+  addr=v1145-0x18[32] value=v1142+0x4[32]
+  addr=v1145-0x14[32] value=0x80484b0[32]
+  addr=v1145-0x10[32] value=0x8048520[32]
+  addr=v1145-0xc[32] value=v1164[32]
+  addr=v1145-0x8[32] value=v1145-0x4[32]
+  addr=v1145-0x4[32] value=v1163[32]
+  addr=v1142[32] value=v1143[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -412,397 +412,397 @@ memory:
 
 0x8048364:push   ebp
 registers:
-  esp    = v1355-0x4[32]
-  ebp    = v1356[32]
+  esp    = v1353-0x4[32]
+  ebp    = v1354[32]
   eip    = 0x8048365[32]
 memory:
-  addr=v1355-0x4[32] value=v1356[32]
+  addr=v1353-0x4[32] value=v1354[32]
 
 0x8048365:mov    ebp, esp
 registers:
-  esp    = v1355-0x4[32]
-  ebp    = v1355-0x4[32]
+  esp    = v1353-0x4[32]
+  ebp    = v1353-0x4[32]
   eip    = 0x8048367[32]
 memory:
-  addr=v1355-0x4[32] value=v1356[32]
+  addr=v1353-0x4[32] value=v1354[32]
 
 0x8048367:push   ebx
 registers:
-  ebx    = v1357[32]
-  esp    = v1355-0x8[32]
-  ebp    = v1355-0x4[32]
+  ebx    = v1355[32]
+  esp    = v1353-0x8[32]
+  ebp    = v1353-0x4[32]
   eip    = 0x8048368[32]
 memory:
-  addr=v1355-0x8[32] value=v1357[32]
-  addr=v1355-0x4[32] value=v1356[32]
+  addr=v1353-0x8[32] value=v1355[32]
+  addr=v1353-0x4[32] value=v1354[32]
 
 0x8048368:push   ecx
 registers:
-  ecx    = v1358[32]
-  ebx    = v1357[32]
-  esp    = v1355-0xc[32]
-  ebp    = v1355-0x4[32]
+  ecx    = v1356[32]
+  ebx    = v1355[32]
+  esp    = v1353-0xc[32]
+  ebp    = v1353-0x4[32]
   eip    = 0x8048369[32]
 memory:
-  addr=v1355-0xc[32] value=v1358[32]
-  addr=v1355-0x8[32] value=v1357[32]
-  addr=v1355-0x4[32] value=v1356[32]
+  addr=v1353-0xc[32] value=v1356[32]
+  addr=v1353-0x8[32] value=v1355[32]
+  addr=v1353-0x4[32] value=v1354[32]
 
 0x8048369:call   0x0804836e<<Insn>>
 registers:
-  ecx    = v1358[32]
-  ebx    = v1357[32]
-  esp    = v1355-0x10[32]
-  ebp    = v1355-0x4[32]
+  ecx    = v1356[32]
+  ebx    = v1355[32]
+  esp    = v1353-0x10[32]
+  ebp    = v1353-0x4[32]
   eip    = 0x804836e[32]
 memory:
-  addr=v1355-0x10[32] value=0x804836e[32]
-  addr=v1355-0xc[32] value=v1358[32]
-  addr=v1355-0x8[32] value=v1357[32]
-  addr=v1355-0x4[32] value=v1356[32]
+  addr=v1353-0x10[32] value=0x804836e[32]
+  addr=v1353-0xc[32] value=v1356[32]
+  addr=v1353-0x8[32] value=v1355[32]
+  addr=v1353-0x4[32] value=v1354[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804836e:pop    ebx
 registers:
-  ebx    = v1454[32]
-  esp    = v1453+0x4[32]
+  ebx    = v1452[32]
+  esp    = v1451+0x4[32]
   eip    = 0x804836f[32]
 memory:
-  addr=v1453[32] value=v1454[32]
+  addr=v1451[32] value=v1452[32]
 
-0x804836f:add    ebx, 0x0000135a
+0x804836f:add    ebx, 0x0000135a<4954>
 registers:
-  ebx    = v1454+0x135a[32]
-  esp    = v1453+0x4[32]
+  ebx    = v1452+0x135a[32]
+  esp    = v1451+0x4[32]
   eip    = 0x8048375[32]
-  pf     = -v1470+0x1[1]
-  sf     = v1471[1]
-  zf     = v1472[1]
-  af     = v1475[1]
-  cf     = v1473[1]
-  of     = v1476[1]
+  pf     = -v1468+0x1[1]
+  sf     = v1469[1]
+  zf     = v1470[1]
+  af     = v1473[1]
+  cf     = v1471[1]
+  of     = v1474[1]
 memory:
-  addr=v1453[32] value=v1454[32]
+  addr=v1451[32] value=v1452[32]
 
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
-  edx    = v1477[32]
-  ebx    = v1454+0x135a[32]
-  esp    = v1453+0x4[32]
+  edx    = v1475[32]
+  ebx    = v1452+0x135a[32]
+  esp    = v1451+0x4[32]
   eip    = 0x804837b[32]
-  pf     = -v1470+0x1[1]
-  sf     = v1471[1]
-  zf     = v1472[1]
-  af     = v1475[1]
-  cf     = v1473[1]
-  of     = v1476[1]
+  pf     = -v1468+0x1[1]
+  sf     = v1469[1]
+  zf     = v1470[1]
+  af     = v1473[1]
+  cf     = v1471[1]
+  of     = v1474[1]
 memory:
-  addr=v1454+0x1356[32] value=v1477[32]
-  addr=v1453[32] value=v1454[32]
+  addr=v1452+0x1356[32] value=v1475[32]
+  addr=v1451[32] value=v1452[32]
 
 0x804837b:test   edx, edx
 registers:
-  edx    = v1477[32]
-  ebx    = v1454+0x135a[32]
-  esp    = v1453+0x4[32]
+  edx    = v1475[32]
+  ebx    = v1452+0x135a[32]
+  esp    = v1451+0x4[32]
   eip    = 0x804837d[32]
-  pf     = -v1523+0x1[1]
-  sf     = v1524[1]
-  zf     = v1525[1]
-  af     = v1526[1]
+  pf     = -v1521+0x1[1]
+  sf     = v1522[1]
+  zf     = v1523[1]
+  af     = v1524[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v1454+0x1356[32] value=v1477[32]
-  addr=v1453[32] value=v1454[32]
+  addr=v1452+0x1356[32] value=v1475[32]
+  addr=v1451[32] value=v1452[32]
 
 0x804837d:je     0x08048384<<Insn>>
 registers:
-  edx    = v1477[32]
-  ebx    = v1454+0x135a[32]
-  esp    = v1453+0x4[32]
-  eip    = v1527[32]
-  pf     = -v1523+0x1[1]
-  sf     = v1524[1]
-  zf     = v1525[1]
-  af     = v1526[1]
+  edx    = v1475[32]
+  ebx    = v1452+0x135a[32]
+  esp    = v1451+0x4[32]
+  eip    = v1525[32]
+  pf     = -v1521+0x1[1]
+  sf     = v1522[1]
+  zf     = v1523[1]
+  af     = v1524[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v1454+0x1356[32] value=v1477[32]
-  addr=v1453[32] value=v1454[32]
+  addr=v1452+0x1356[32] value=v1475[32]
+  addr=v1451[32] value=v1452[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804837f:call   0x08048330<__gmon_start__@plt>
 registers:
-  esp    = v1622-0x4[32]
+  esp    = v1620-0x4[32]
   eip    = 0x8048330[32]
 memory:
-  addr=v1622-0x4[32] value=0x8048384[32]
+  addr=v1620-0x4[32] value=0x8048384[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048384:pop    eax
 registers:
-  eax    = v1718[32]
-  esp    = v1717+0x4[32]
+  eax    = v1716[32]
+  esp    = v1715+0x4[32]
   eip    = 0x8048385[32]
 memory:
-  addr=v1717[32] value=v1718[32]
+  addr=v1715[32] value=v1716[32]
 
 0x8048385:pop    ebx
 registers:
-  eax    = v1718[32]
-  ebx    = v1720[32]
-  esp    = v1717+0x8[32]
+  eax    = v1716[32]
+  ebx    = v1718[32]
+  esp    = v1715+0x8[32]
   eip    = 0x8048386[32]
 memory:
-  addr=v1717+0x4[32] value=v1720[32]
-  addr=v1717[32] value=v1718[32]
+  addr=v1715+0x4[32] value=v1718[32]
+  addr=v1715[32] value=v1716[32]
 
 0x8048386:leave  
 registers:
-  eax    = v1718[32]
-  ebx    = v1720[32]
-  esp    = v1722+0x4[32]
-  ebp    = v1723[32]
+  eax    = v1716[32]
+  ebx    = v1718[32]
+  esp    = v1720+0x4[32]
+  ebp    = v1721[32]
   eip    = 0x8048387[32]
 memory:
-  addr=v1722[32] value=v1723[32]
-  addr=v1717+0x4[32] value=v1720[32]
-  addr=v1717[32] value=v1718[32]
+  addr=v1720[32] value=v1721[32]
+  addr=v1715+0x4[32] value=v1718[32]
+  addr=v1715[32] value=v1716[32]
 
 0x8048387:ret    
 registers:
-  eax    = v1718[32]
-  ebx    = v1720[32]
-  esp    = v1722+0x8[32]
-  ebp    = v1723[32]
-  eip    = v1785[32]
+  eax    = v1716[32]
+  ebx    = v1718[32]
+  esp    = v1720+0x8[32]
+  ebp    = v1721[32]
+  eip    = v1783[32]
 memory:
-  addr=v1722+0x4[32] value=v1785[32]
-  addr=v1722[32] value=v1723[32]
-  addr=v1717+0x4[32] value=v1720[32]
-  addr=v1717[32] value=v1718[32]
+  addr=v1720+0x4[32] value=v1783[32]
+  addr=v1720[32] value=v1721[32]
+  addr=v1715+0x4[32] value=v1718[32]
+  addr=v1715[32] value=v1716[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048390:push   ebp
 registers:
-  esp    = v1941-0x4[32]
-  ebp    = v1942[32]
+  esp    = v1939-0x4[32]
+  ebp    = v1940[32]
   eip    = 0x8048391[32]
 memory:
-  addr=v1941-0x4[32] value=v1942[32]
+  addr=v1939-0x4[32] value=v1940[32]
 
 0x8048391:mov    ebp, esp
 registers:
-  esp    = v1941-0x4[32]
-  ebp    = v1941-0x4[32]
+  esp    = v1939-0x4[32]
+  ebp    = v1939-0x4[32]
   eip    = 0x8048393[32]
 memory:
-  addr=v1941-0x4[32] value=v1942[32]
+  addr=v1939-0x4[32] value=v1940[32]
 
 0x8048393:sub    esp, 0x08
 registers:
-  esp    = v1941-0xc[32]
-  ebp    = v1941-0x4[32]
+  esp    = v1939-0xc[32]
+  ebp    = v1939-0x4[32]
   eip    = 0x8048396[32]
-  pf     = -v1957+0x1[1]
-  sf     = v1958[1]
-  zf     = v1959[1]
-  af     = -v1962+0x1[1]
-  cf     = -v1960+0x1[1]
-  of     = v1963[1]
+  pf     = -v1955+0x1[1]
+  sf     = v1956[1]
+  zf     = v1957[1]
+  af     = -v1960+0x1[1]
+  cf     = -v1958+0x1[1]
+  of     = v1961[1]
 memory:
-  addr=v1941-0x4[32] value=v1942[32]
+  addr=v1939-0x4[32] value=v1940[32]
 
 0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
 registers:
-  esp    = v1941-0xc[32]
-  ebp    = v1941-0x4[32]
+  esp    = v1939-0xc[32]
+  ebp    = v1939-0x4[32]
   eip    = 0x804839d[32]
-  pf     = -v2006+0x1[1]
-  sf     = v2007[1]
-  zf     = v2008[1]
-  af     = -v2011+0x1[1]
-  cf     = -v2009+0x1[1]
-  of     = v2012[1]
+  pf     = -v2004+0x1[1]
+  sf     = v2005[1]
+  zf     = v2006[1]
+  af     = -v2009+0x1[1]
+  cf     = -v2007+0x1[1]
+  of     = v2010[1]
 memory:
-  addr=0x80496f4[32] value=v1964[8]
-  addr=v1941-0x4[32] value=v1942[32]
+  addr=0x80496f4[32] value=v1962[8]
+  addr=v1939-0x4[32] value=v1940[32]
 
 0x804839d:jne    0x080483cc<<Insn>>
 registers:
-  esp    = v1941-0xc[32]
-  ebp    = v1941-0x4[32]
-  eip    = v2013[32]
-  pf     = -v2006+0x1[1]
-  sf     = v2007[1]
-  zf     = v2008[1]
-  af     = -v2011+0x1[1]
-  cf     = -v2009+0x1[1]
-  of     = v2012[1]
+  esp    = v1939-0xc[32]
+  ebp    = v1939-0x4[32]
+  eip    = v2011[32]
+  pf     = -v2004+0x1[1]
+  sf     = v2005[1]
+  zf     = v2006[1]
+  af     = -v2009+0x1[1]
+  cf     = -v2007+0x1[1]
+  of     = v2010[1]
 memory:
-  addr=0x80496f4[32] value=v1964[8]
-  addr=v1941-0x4[32] value=v1942[32]
+  addr=0x80496f4[32] value=v1962[8]
+  addr=v1939-0x4[32] value=v1940[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
-  eax    = v2108[32]
+  eax    = v2106[32]
   eip    = 0x80483a4[32]
 memory:
-  addr=0x80496f0[32] value=v2108[32]
+  addr=0x80496f0[32] value=v2106[32]
 
 0x80483a4:mov    edx, DWORD PTR ds:[eax]
 registers:
-  eax    = v2108[32]
-  edx    = v2110[32]
+  eax    = v2106[32]
+  edx    = v2108[32]
   eip    = 0x80483a6[32]
 memory:
-  addr=v2108[32] value=v2110[32]
-  addr=0x80496f0[32] value=v2108[32]
+  addr=v2106[32] value=v2108[32]
+  addr=0x80496f0[32] value=v2106[32]
 
 0x80483a6:test   edx, edx
 registers:
-  eax    = v2108[32]
-  edx    = v2110[32]
+  eax    = v2106[32]
+  edx    = v2108[32]
   eip    = 0x80483a8[32]
-  pf     = -v2152+0x1[1]
-  sf     = v2153[1]
-  zf     = v2154[1]
+  pf     = -v2150+0x1[1]
+  sf     = v2151[1]
+  zf     = v2152[1]
   of     = 0x0[1]
-  af     = v2155[1]
+  af     = v2153[1]
   cf     = 0x0[1]
 memory:
-  addr=v2108[32] value=v2110[32]
-  addr=0x80496f0[32] value=v2108[32]
+  addr=v2106[32] value=v2108[32]
+  addr=0x80496f0[32] value=v2106[32]
 
 0x80483a8:je     0x080483c5<<Insn>>
 registers:
-  eax    = v2108[32]
-  edx    = v2110[32]
-  eip    = v2156[32]
-  pf     = -v2152+0x1[1]
-  sf     = v2153[1]
-  zf     = v2154[1]
+  eax    = v2106[32]
+  edx    = v2108[32]
+  eip    = v2154[32]
+  pf     = -v2150+0x1[1]
+  sf     = v2151[1]
+  zf     = v2152[1]
   of     = 0x0[1]
-  af     = v2155[1]
+  af     = v2153[1]
   cf     = 0x0[1]
 memory:
-  addr=v2108[32] value=v2110[32]
-  addr=0x80496f0[32] value=v2108[32]
+  addr=v2106[32] value=v2108[32]
+  addr=0x80496f0[32] value=v2106[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80483aa:lea    esi, [esi + 0x00000000]
 registers:
-  esi    = v2251[32]
+  esi    = v2249[32]
   eip    = 0x80483b0[32]
 memory:
 
 0x80483b0:add    eax, 0x04
 registers:
-  eax    = v2252+0x4[32]
-  esi    = v2251[32]
+  eax    = v2250+0x4[32]
+  esi    = v2249[32]
   eip    = 0x80483b3[32]
-  pf     = -v2267+0x1[1]
-  sf     = v2268[1]
-  zf     = v2269[1]
-  af     = v2272[1]
-  cf     = v2270[1]
-  of     = v2273[1]
+  pf     = -v2265+0x1[1]
+  sf     = v2266[1]
+  zf     = v2267[1]
+  af     = v2270[1]
+  cf     = v2268[1]
+  of     = v2271[1]
 memory:
 
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 registers:
-  eax    = v2252+0x4[32]
-  esi    = v2251[32]
+  eax    = v2250+0x4[32]
+  esi    = v2249[32]
   eip    = 0x80483b8[32]
-  pf     = -v2267+0x1[1]
-  sf     = v2268[1]
-  zf     = v2269[1]
-  af     = v2272[1]
-  cf     = v2270[1]
-  of     = v2273[1]
+  pf     = -v2265+0x1[1]
+  sf     = v2266[1]
+  zf     = v2267[1]
+  af     = v2270[1]
+  cf     = v2268[1]
+  of     = v2271[1]
 memory:
-  addr=0x80496f0[32] value=v2252+0x4[32]
+  addr=0x80496f0[32] value=v2250+0x4[32]
 
 0x80483b8:call   edx
 registers:
-  eax    = v2252+0x4[32]
-  edx    = v2275[32]
-  esp    = v2274-0x4[32]
-  esi    = v2251[32]
-  eip    = v2275[32]
-  pf     = -v2267+0x1[1]
-  sf     = v2268[1]
-  zf     = v2269[1]
-  af     = v2272[1]
-  cf     = v2270[1]
-  of     = v2273[1]
+  eax    = v2250+0x4[32]
+  edx    = v2273[32]
+  esp    = v2272-0x4[32]
+  esi    = v2249[32]
+  eip    = v2273[32]
+  pf     = -v2265+0x1[1]
+  sf     = v2266[1]
+  zf     = v2267[1]
+  af     = v2270[1]
+  cf     = v2268[1]
+  of     = v2271[1]
 memory:
-  addr=v2274-0x4[32] value=0x80483ba[32]
-  addr=0x80496f0[32] value=v2252+0x4[32]
+  addr=v2272-0x4[32] value=0x80483ba[32]
+  addr=0x80496f0[32] value=v2250+0x4[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
-  eax    = v2370[32]
+  eax    = v2368[32]
   eip    = 0x80483bf[32]
 memory:
-  addr=0x80496f0[32] value=v2370[32]
+  addr=0x80496f0[32] value=v2368[32]
 
 0x80483bf:mov    edx, DWORD PTR ds:[eax]
 registers:
-  eax    = v2370[32]
-  edx    = v2372[32]
+  eax    = v2368[32]
+  edx    = v2370[32]
   eip    = 0x80483c1[32]
 memory:
-  addr=v2370[32] value=v2372[32]
-  addr=0x80496f0[32] value=v2370[32]
+  addr=v2368[32] value=v2370[32]
+  addr=0x80496f0[32] value=v2368[32]
 
 0x80483c1:test   edx, edx
 registers:
-  eax    = v2370[32]
-  edx    = v2372[32]
+  eax    = v2368[32]
+  edx    = v2370[32]
   eip    = 0x80483c3[32]
-  pf     = -v2414+0x1[1]
-  sf     = v2415[1]
-  zf     = v2416[1]
+  pf     = -v2412+0x1[1]
+  sf     = v2413[1]
+  zf     = v2414[1]
   of     = 0x0[1]
-  af     = v2417[1]
+  af     = v2415[1]
   cf     = 0x0[1]
 memory:
-  addr=v2370[32] value=v2372[32]
-  addr=0x80496f0[32] value=v2370[32]
+  addr=v2368[32] value=v2370[32]
+  addr=0x80496f0[32] value=v2368[32]
 
 0x80483c3:jne    0x080483b0<<Insn>>
 registers:
-  eax    = v2370[32]
-  edx    = v2372[32]
-  eip    = v2418[32]
-  pf     = -v2414+0x1[1]
-  sf     = v2415[1]
-  zf     = v2416[1]
+  eax    = v2368[32]
+  edx    = v2370[32]
+  eip    = v2416[32]
+  pf     = -v2412+0x1[1]
+  sf     = v2413[1]
+  zf     = v2414[1]
   of     = 0x0[1]
-  af     = v2417[1]
+  af     = v2415[1]
   cf     = 0x0[1]
 memory:
-  addr=v2370[32] value=v2372[32]
-  addr=0x80496f0[32] value=v2370[32]
+  addr=v2368[32] value=v2370[32]
+  addr=0x80496f0[32] value=v2368[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -815,21 +815,21 @@ memory:
 
 0x80483cc:leave  
 registers:
-  esp    = v2513+0x4[32]
-  ebp    = v2514[32]
+  esp    = v2511+0x4[32]
+  ebp    = v2512[32]
   eip    = 0x80483cd[32]
 memory:
-  addr=v2513[32] value=v2514[32]
+  addr=v2511[32] value=v2512[32]
   addr=0x80496f4[32] value=0x1[8]
 
 0x80483cd:ret    
 registers:
-  esp    = v2513+0x8[32]
-  ebp    = v2514[32]
-  eip    = v2542[32]
+  esp    = v2511+0x8[32]
+  ebp    = v2512[32]
+  eip    = v2540[32]
 memory:
-  addr=v2513+0x4[32] value=v2542[32]
-  addr=v2513[32] value=v2514[32]
+  addr=v2511+0x4[32] value=v2540[32]
+  addr=v2511[32] value=v2512[32]
   addr=0x80496f4[32] value=0x1[8]
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -837,81 +837,81 @@ memory:
 
 0x80483d0:push   ebp
 registers:
-  esp    = v2664-0x4[32]
-  ebp    = v2665[32]
+  esp    = v2662-0x4[32]
+  ebp    = v2663[32]
   eip    = 0x80483d1[32]
 memory:
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=v2662-0x4[32] value=v2663[32]
 
 0x80483d1:mov    ebp, esp
 registers:
-  esp    = v2664-0x4[32]
-  ebp    = v2664-0x4[32]
+  esp    = v2662-0x4[32]
+  ebp    = v2662-0x4[32]
   eip    = 0x80483d3[32]
 memory:
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=v2662-0x4[32] value=v2663[32]
 
 0x80483d3:sub    esp, 0x08
 registers:
-  esp    = v2664-0xc[32]
-  ebp    = v2664-0x4[32]
+  esp    = v2662-0xc[32]
+  ebp    = v2662-0x4[32]
   eip    = 0x80483d6[32]
-  pf     = -v2680+0x1[1]
-  sf     = v2681[1]
-  zf     = v2682[1]
-  af     = -v2685+0x1[1]
-  cf     = -v2683+0x1[1]
-  of     = v2686[1]
+  pf     = -v2678+0x1[1]
+  sf     = v2679[1]
+  zf     = v2680[1]
+  af     = -v2683+0x1[1]
+  cf     = -v2681+0x1[1]
+  of     = v2684[1]
 memory:
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=v2662-0x4[32] value=v2663[32]
 
 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
 registers:
-  eax    = v2687[32]
-  esp    = v2664-0xc[32]
-  ebp    = v2664-0x4[32]
+  eax    = v2685[32]
+  esp    = v2662-0xc[32]
+  ebp    = v2662-0x4[32]
   eip    = 0x80483db[32]
-  pf     = -v2680+0x1[1]
-  sf     = v2681[1]
-  zf     = v2682[1]
-  af     = -v2685+0x1[1]
-  cf     = -v2683+0x1[1]
-  of     = v2686[1]
+  pf     = -v2678+0x1[1]
+  sf     = v2679[1]
+  zf     = v2680[1]
+  af     = -v2683+0x1[1]
+  cf     = -v2681+0x1[1]
+  of     = v2684[1]
 memory:
-  addr=0x80495f8[32] value=v2687[32]
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=0x80495f8[32] value=v2685[32]
+  addr=v2662-0x4[32] value=v2663[32]
 
 0x80483db:test   eax, eax
 registers:
-  eax    = v2687[32]
-  esp    = v2664-0xc[32]
-  ebp    = v2664-0x4[32]
+  eax    = v2685[32]
+  esp    = v2662-0xc[32]
+  ebp    = v2662-0x4[32]
   eip    = 0x80483dd[32]
-  pf     = -v2729+0x1[1]
-  sf     = v2730[1]
-  zf     = v2731[1]
-  af     = v2732[1]
+  pf     = -v2727+0x1[1]
+  sf     = v2728[1]
+  zf     = v2729[1]
+  af     = v2730[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=0x80495f8[32] value=v2687[32]
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=0x80495f8[32] value=v2685[32]
+  addr=v2662-0x4[32] value=v2663[32]
 
 0x80483dd:je     0x08048400<<Insn>>
 registers:
-  eax    = v2687[32]
-  esp    = v2664-0xc[32]
-  ebp    = v2664-0x4[32]
-  eip    = v2733[32]
-  pf     = -v2729+0x1[1]
-  sf     = v2730[1]
-  zf     = v2731[1]
-  af     = v2732[1]
+  eax    = v2685[32]
+  esp    = v2662-0xc[32]
+  ebp    = v2662-0x4[32]
+  eip    = v2731[32]
+  pf     = -v2727+0x1[1]
+  sf     = v2728[1]
+  zf     = v2729[1]
+  af     = v2730[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=0x80495f8[32] value=v2687[32]
-  addr=v2664-0x4[32] value=v2665[32]
+  addr=0x80495f8[32] value=v2685[32]
+  addr=v2662-0x4[32] value=v2663[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -930,7 +930,7 @@ registers:
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v2828[1]
+  af     = v2826[1]
   cf     = 0x0[1]
 memory:
 
@@ -942,86 +942,86 @@ registers:
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v2828[1]
+  af     = v2826[1]
   cf     = 0x0[1]
 memory:
 
 0x8048400:mov    esp, ebp
 registers:
   eax    = 0x0[32]
-  esp    = v2829[32]
-  ebp    = v2829[32]
+  esp    = v2827[32]
+  ebp    = v2827[32]
   eip    = 0x8048402[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v2828[1]
+  af     = v2826[1]
   cf     = 0x0[1]
 memory:
 
 0x8048402:pop    ebp
 registers:
   eax    = 0x0[32]
-  esp    = v2829+0x4[32]
-  ebp    = v2830[32]
+  esp    = v2827+0x4[32]
+  ebp    = v2828[32]
   eip    = 0x8048403[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v2828[1]
+  af     = v2826[1]
   cf     = 0x0[1]
 memory:
-  addr=v2829[32] value=v2830[32]
+  addr=v2827[32] value=v2828[32]
 
 0x8048403:ret    
 registers:
   eax    = 0x0[32]
-  esp    = v2829+0x8[32]
-  ebp    = v2830[32]
-  eip    = v2832[32]
+  esp    = v2827+0x8[32]
+  ebp    = v2828[32]
+  eip    = v2830[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v2828[1]
+  af     = v2826[1]
   cf     = 0x0[1]
 memory:
-  addr=v2829+0x4[32] value=v2832[32]
-  addr=v2829[32] value=v2830[32]
+  addr=v2827+0x4[32] value=v2830[32]
+  addr=v2827[32] value=v2828[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
 registers:
-  esp    = v2928[32]
+  esp    = v2926[32]
   eip    = 0x80483ef[32]
 memory:
-  addr=v2928[32] value=0x80495f8[32]
+  addr=v2926[32] value=0x80495f8[32]
 
 0x80483ef:call   0x00000000
 registers:
-  esp    = v2928-0x4[32]
+  esp    = v2926-0x4[32]
   eip    = 0x0[32]
 memory:
-  addr=v2928-0x4[32] value=0x80483f4[32]
-  addr=v2928[32] value=0x80495f8[32]
+  addr=v2926-0x4[32] value=0x80483f4[32]
+  addr=v2926[32] value=0x80495f8[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80483f4:lea    esi, [esi + 0x00000000]
 registers:
-  esi    = v3023[32]
+  esi    = v3021[32]
   eip    = 0x80483fa[32]
 memory:
 
 0x80483fa:lea    edi, [edi + 0x00000000]
 registers:
-  esi    = v3023[32]
-  edi    = v3024[32]
+  esi    = v3021[32]
+  edi    = v3022[32]
   eip    = 0x8048400[32]
 memory:
 =====================================================================================
@@ -1030,600 +1030,600 @@ memory:
 
 0x8048410:push   ebp
 registers:
-  esp    = v3119-0x4[32]
-  ebp    = v3120[32]
+  esp    = v3117-0x4[32]
+  ebp    = v3118[32]
   eip    = 0x8048411[32]
 memory:
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x8048411:mov    edx, 0x08048480<handler>
 registers:
   edx    = 0x8048480[32]
-  esp    = v3119-0x4[32]
-  ebp    = v3120[32]
+  esp    = v3117-0x4[32]
+  ebp    = v3118[32]
   eip    = 0x8048416[32]
 memory:
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x8048416:mov    ebp, esp
 registers:
   edx    = 0x8048480[32]
-  esp    = v3119-0x4[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3117-0x4[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x8048418[32]
 memory:
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x8048418:sub    esp, 0x08
 registers:
   edx    = 0x8048480[32]
-  esp    = v3119-0xc[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3117-0xc[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x804841b[32]
-  pf     = -v3135+0x1[1]
-  sf     = v3136[1]
-  zf     = v3137[1]
-  af     = -v3140+0x1[1]
-  cf     = -v3138+0x1[1]
-  of     = v3141[1]
+  pf     = -v3133+0x1[1]
+  sf     = v3134[1]
+  zf     = v3135[1]
+  af     = -v3138+0x1[1]
+  cf     = -v3136+0x1[1]
+  of     = v3139[1]
 memory:
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
-0x804841b:and    esp, 0xf0<-0x10>
+0x804841b:and    esp, 0xf0<-16>
 registers:
   edx    = 0x8048480[32]
-  esp    = v3142[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3140[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x804841e[32]
-  pf     = -v3156+0x1[1]
-  sf     = v3157[1]
-  zf     = v3158[1]
-  af     = v3159[1]
+  pf     = -v3154+0x1[1]
+  sf     = v3155[1]
+  zf     = v3156[1]
+  af     = v3157[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx
 registers:
   edx    = 0x8048480[32]
-  esp    = v3142[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3140[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x8048422[32]
-  pf     = -v3156+0x1[1]
-  sf     = v3157[1]
-  zf     = v3158[1]
-  af     = v3159[1]
+  pf     = -v3154+0x1[1]
+  sf     = v3155[1]
+  zf     = v3156[1]
+  af     = v3157[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v3142+0x4[32] value=0x8048480[32]
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3140+0x4[32] value=0x8048480[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a
 registers:
   edx    = 0x8048480[32]
-  esp    = v3142[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3140[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x8048429[32]
-  pf     = -v3156+0x1[1]
-  sf     = v3157[1]
-  zf     = v3158[1]
-  af     = v3159[1]
+  pf     = -v3154+0x1[1]
+  sf     = v3155[1]
+  zf     = v3156[1]
+  af     = v3157[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v3142[32] value=0xa[32]
-  addr=v3142+0x4[32] value=0x8048480[32]
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3140[32] value=0xa[32]
+  addr=v3140+0x4[32] value=0x8048480[32]
+  addr=v3117-0x4[32] value=v3118[32]
 
 0x8048429:call   0x080482f0<signal@plt>
 registers:
   edx    = 0x8048480[32]
-  esp    = v3142-0x4[32]
-  ebp    = v3119-0x4[32]
+  esp    = v3140-0x4[32]
+  ebp    = v3117-0x4[32]
   eip    = 0x80482f0[32]
-  pf     = -v3156+0x1[1]
-  sf     = v3157[1]
-  zf     = v3158[1]
-  af     = v3159[1]
+  pf     = -v3154+0x1[1]
+  sf     = v3155[1]
+  zf     = v3156[1]
+  af     = v3157[1]
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v3142-0x4[32] value=0x804842e[32]
-  addr=v3142[32] value=0xa[32]
-  addr=v3142+0x4[32] value=0x8048480[32]
-  addr=v3119-0x4[32] value=v3120[32]
+  addr=v3140-0x4[32] value=0x804842e[32]
+  addr=v3140[32] value=0xa[32]
+  addr=v3140+0x4[32] value=0x8048480[32]
+  addr=v3117-0x4[32] value=v3118[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804842e:mov    esp, ebp
 registers:
-  esp    = v3254[32]
-  ebp    = v3254[32]
+  esp    = v3252[32]
+  ebp    = v3252[32]
   eip    = 0x8048430[32]
 memory:
 
 0x8048430:xor    eax, eax
 registers:
   eax    = 0x0[32]
-  esp    = v3254[32]
-  ebp    = v3254[32]
+  esp    = v3252[32]
+  ebp    = v3252[32]
   eip    = 0x8048432[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v3256[1]
+  af     = v3253[1]
   cf     = 0x0[1]
 memory:
 
 0x8048432:pop    ebp
 registers:
   eax    = 0x0[32]
-  esp    = v3254+0x4[32]
-  ebp    = v3257[32]
+  esp    = v3252+0x4[32]
+  ebp    = v3254[32]
   eip    = 0x8048433[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v3256[1]
+  af     = v3253[1]
   cf     = 0x0[1]
 memory:
-  addr=v3254[32] value=v3257[32]
+  addr=v3252[32] value=v3254[32]
 
 0x8048433:ret    
 registers:
   eax    = 0x0[32]
-  esp    = v3254+0x8[32]
-  ebp    = v3257[32]
-  eip    = v3259[32]
+  esp    = v3252+0x8[32]
+  ebp    = v3254[32]
+  eip    = v3256[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v3256[1]
+  af     = v3253[1]
   cf     = 0x0[1]
 memory:
-  addr=v3254+0x4[32] value=v3259[32]
-  addr=v3254[32] value=v3257[32]
+  addr=v3252+0x4[32] value=v3256[32]
+  addr=v3252[32] value=v3254[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048440:push   ebp
 registers:
-  esp    = v3355-0x4[32]
-  ebp    = v3356[32]
+  esp    = v3352-0x4[32]
+  ebp    = v3353[32]
   eip    = 0x8048441[32]
 memory:
-  addr=v3355-0x4[32] value=v3356[32]
+  addr=v3352-0x4[32] value=v3353[32]
 
 0x8048441:mov    ebp, esp
 registers:
-  esp    = v3355-0x4[32]
-  ebp    = v3355-0x4[32]
+  esp    = v3352-0x4[32]
+  ebp    = v3352-0x4[32]
   eip    = 0x8048443[32]
 memory:
-  addr=v3355-0x4[32] value=v3356[32]
+  addr=v3352-0x4[32] value=v3353[32]
 
 0x8048443:sub    esp, 0x08
 registers:
-  esp    = v3355-0xc[32]
-  ebp    = v3355-0x4[32]
+  esp    = v3352-0xc[32]
+  ebp    = v3352-0x4[32]
   eip    = 0x8048446[32]
-  pf     = -v3371+0x1[1]
-  sf     = v3372[1]
-  zf     = v3373[1]
-  af     = -v3376+0x1[1]
-  cf     = -v3374+0x1[1]
-  of     = v3377[1]
+  pf     = -v3368+0x1[1]
+  sf     = v3369[1]
+  zf     = v3370[1]
+  af     = -v3373+0x1[1]
+  cf     = -v3371+0x1[1]
+  of     = v3374[1]
 memory:
-  addr=v3355-0x4[32] value=v3356[32]
+  addr=v3352-0x4[32] value=v3353[32]
 
 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = v3355-0xc[32]
-  ebp    = v3355-0x4[32]
+  esp    = v3352-0xc[32]
+  ebp    = v3352-0x4[32]
   eip    = 0x804844d[32]
-  pf     = -v3371+0x1[1]
-  sf     = v3372[1]
-  zf     = v3373[1]
-  af     = -v3376+0x1[1]
-  cf     = -v3374+0x1[1]
-  of     = v3377[1]
+  pf     = -v3368+0x1[1]
+  sf     = v3369[1]
+  zf     = v3370[1]
+  af     = -v3373+0x1[1]
+  cf     = -v3371+0x1[1]
+  of     = v3374[1]
 memory:
-  addr=v3355-0xc[32] value=0x80485d4[32]
-  addr=v3355-0x4[32] value=v3356[32]
+  addr=v3352-0xc[32] value=0x80485d4[32]
+  addr=v3352-0x4[32] value=v3353[32]
 
 0x804844d:call   0x08048300<puts@plt>
 registers:
-  esp    = v3355-0x10[32]
-  ebp    = v3355-0x4[32]
+  esp    = v3352-0x10[32]
+  ebp    = v3352-0x4[32]
   eip    = 0x8048300[32]
-  pf     = -v3371+0x1[1]
-  sf     = v3372[1]
-  zf     = v3373[1]
-  af     = -v3376+0x1[1]
-  cf     = -v3374+0x1[1]
-  of     = v3377[1]
+  pf     = -v3368+0x1[1]
+  sf     = v3369[1]
+  zf     = v3370[1]
+  af     = -v3373+0x1[1]
+  cf     = -v3371+0x1[1]
+  of     = v3374[1]
 memory:
-  addr=v3355-0x10[32] value=0x8048452[32]
-  addr=v3355-0xc[32] value=0x80485d4[32]
-  addr=v3355-0x4[32] value=v3356[32]
+  addr=v3352-0x10[32] value=0x8048452[32]
+  addr=v3352-0xc[32] value=0x80485d4[32]
+  addr=v3352-0x4[32] value=v3353[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048452:mov    esp, ebp
 registers:
-  esp    = v3472[32]
-  ebp    = v3472[32]
+  esp    = v3469[32]
+  ebp    = v3469[32]
   eip    = 0x8048454[32]
 memory:
 
 0x8048454:pop    ebp
 registers:
-  esp    = v3472+0x4[32]
-  ebp    = v3473[32]
+  esp    = v3469+0x4[32]
+  ebp    = v3470[32]
   eip    = 0x8048455[32]
 memory:
-  addr=v3472[32] value=v3473[32]
+  addr=v3469[32] value=v3470[32]
 
 0x8048455:ret    
 registers:
-  esp    = v3472+0x8[32]
-  ebp    = v3473[32]
-  eip    = v3475[32]
+  esp    = v3469+0x8[32]
+  ebp    = v3470[32]
+  eip    = v3472[32]
 memory:
-  addr=v3472+0x4[32] value=v3475[32]
-  addr=v3472[32] value=v3473[32]
+  addr=v3469+0x4[32] value=v3472[32]
+  addr=v3469[32] value=v3470[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048460:push   ebp
 registers:
-  esp    = v3571-0x4[32]
-  ebp    = v3572[32]
+  esp    = v3568-0x4[32]
+  ebp    = v3569[32]
   eip    = 0x8048461[32]
 memory:
-  addr=v3571-0x4[32] value=v3572[32]
+  addr=v3568-0x4[32] value=v3569[32]
 
 0x8048461:mov    ebp, esp
 registers:
-  esp    = v3571-0x4[32]
-  ebp    = v3571-0x4[32]
+  esp    = v3568-0x4[32]
+  ebp    = v3568-0x4[32]
   eip    = 0x8048463[32]
 memory:
-  addr=v3571-0x4[32] value=v3572[32]
+  addr=v3568-0x4[32] value=v3569[32]
 
 0x8048463:sub    esp, 0x08
 registers:
-  esp    = v3571-0xc[32]
-  ebp    = v3571-0x4[32]
+  esp    = v3568-0xc[32]
+  ebp    = v3568-0x4[32]
   eip    = 0x8048466[32]
-  pf     = -v3587+0x1[1]
-  sf     = v3588[1]
-  zf     = v3589[1]
-  af     = -v3592+0x1[1]
-  cf     = -v3590+0x1[1]
-  of     = v3593[1]
+  pf     = -v3584+0x1[1]
+  sf     = v3585[1]
+  zf     = v3586[1]
+  af     = -v3589+0x1[1]
+  cf     = -v3587+0x1[1]
+  of     = v3590[1]
 memory:
-  addr=v3571-0x4[32] value=v3572[32]
+  addr=v3568-0x4[32] value=v3569[32]
 
 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = v3571-0xc[32]
-  ebp    = v3571-0x4[32]
+  esp    = v3568-0xc[32]
+  ebp    = v3568-0x4[32]
   eip    = 0x804846d[32]
-  pf     = -v3587+0x1[1]
-  sf     = v3588[1]
-  zf     = v3589[1]
-  af     = -v3592+0x1[1]
-  cf     = -v3590+0x1[1]
-  of     = v3593[1]
+  pf     = -v3584+0x1[1]
+  sf     = v3585[1]
+  zf     = v3586[1]
+  af     = -v3589+0x1[1]
+  cf     = -v3587+0x1[1]
+  of     = v3590[1]
 memory:
-  addr=v3571-0xc[32] value=0x80485d4[32]
-  addr=v3571-0x4[32] value=v3572[32]
+  addr=v3568-0xc[32] value=0x80485d4[32]
+  addr=v3568-0x4[32] value=v3569[32]
 
 0x804846d:call   0x08048300<puts@plt>
 registers:
-  esp    = v3571-0x10[32]
-  ebp    = v3571-0x4[32]
+  esp    = v3568-0x10[32]
+  ebp    = v3568-0x4[32]
   eip    = 0x8048300[32]
-  pf     = -v3587+0x1[1]
-  sf     = v3588[1]
-  zf     = v3589[1]
-  af     = -v3592+0x1[1]
-  cf     = -v3590+0x1[1]
-  of     = v3593[1]
+  pf     = -v3584+0x1[1]
+  sf     = v3585[1]
+  zf     = v3586[1]
+  af     = -v3589+0x1[1]
+  cf     = -v3587+0x1[1]
+  of     = v3590[1]
 memory:
-  addr=v3571-0x10[32] value=0x8048472[32]
-  addr=v3571-0xc[32] value=0x80485d4[32]
-  addr=v3571-0x4[32] value=v3572[32]
+  addr=v3568-0x10[32] value=0x8048472[32]
+  addr=v3568-0xc[32] value=0x80485d4[32]
+  addr=v3568-0x4[32] value=v3569[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000
 registers:
-  esp    = v3688[32]
+  esp    = v3685[32]
   eip    = 0x8048479[32]
 memory:
-  addr=v3688[32] value=0x0[32]
+  addr=v3685[32] value=0x0[32]
 
 0x8048479:call   0x08048320<_exit@plt>
 registers:
-  esp    = v3688-0x4[32]
+  esp    = v3685-0x4[32]
   eip    = 0x8048320[32]
 memory:
-  addr=v3688-0x4[32] value=0x804847e[32]
-  addr=v3688[32] value=0x0[32]
+  addr=v3685-0x4[32] value=0x804847e[32]
+  addr=v3685[32] value=0x0[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048480:push   ebp
 registers:
-  esp    = v3783-0x4[32]
-  ebp    = v3784[32]
+  esp    = v3780-0x4[32]
+  ebp    = v3781[32]
   eip    = 0x8048481[32]
 memory:
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=v3780-0x4[32] value=v3781[32]
 
 0x8048481:mov    ebp, esp
 registers:
-  esp    = v3783-0x4[32]
-  ebp    = v3783-0x4[32]
+  esp    = v3780-0x4[32]
+  ebp    = v3780-0x4[32]
   eip    = 0x8048483[32]
 memory:
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=v3780-0x4[32] value=v3781[32]
 
 0x8048483:sub    esp, 0x08
 registers:
-  esp    = v3783-0xc[32]
-  ebp    = v3783-0x4[32]
+  esp    = v3780-0xc[32]
+  ebp    = v3780-0x4[32]
   eip    = 0x8048486[32]
-  pf     = -v3799+0x1[1]
-  sf     = v3800[1]
-  zf     = v3801[1]
-  af     = -v3804+0x1[1]
-  cf     = -v3802+0x1[1]
-  of     = v3805[1]
+  pf     = -v3796+0x1[1]
+  sf     = v3797[1]
+  zf     = v3798[1]
+  af     = -v3801+0x1[1]
+  cf     = -v3799+0x1[1]
+  of     = v3802[1]
 memory:
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=v3780-0x4[32] value=v3781[32]
 
 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
 registers:
-  esp    = v3783-0xc[32]
-  ebp    = v3783-0x4[32]
+  esp    = v3780-0xc[32]
+  ebp    = v3780-0x4[32]
   eip    = 0x804848c[32]
-  pf     = -v3848+0x1[1]
-  sf     = v3849[1]
-  zf     = v3850[1]
-  af     = v3853[1]
-  cf     = -v3802+0x1[1]
-  of     = v3854[1]
+  pf     = -v3845+0x1[1]
+  sf     = v3846[1]
+  zf     = v3847[1]
+  af     = v3850[1]
+  cf     = -v3799+0x1[1]
+  of     = v3851[1]
 memory:
-  addr=0x80496f8[32] value=v3806+0x1[32]
-  addr=0x80496f8[32] value=v3806[32]
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=0x80496f8[32] value=v3803+0x1[32]
+  addr=0x80496f8[32] value=v3803[32]
+  addr=v3780-0x4[32] value=v3781[32]
 
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = v3783-0xc[32]
-  ebp    = v3783-0x4[32]
+  esp    = v3780-0xc[32]
+  ebp    = v3780-0x4[32]
   eip    = 0x8048493[32]
-  pf     = -v3848+0x1[1]
-  sf     = v3849[1]
-  zf     = v3850[1]
-  af     = v3853[1]
-  cf     = -v3802+0x1[1]
-  of     = v3854[1]
+  pf     = -v3845+0x1[1]
+  sf     = v3846[1]
+  zf     = v3847[1]
+  af     = v3850[1]
+  cf     = -v3799+0x1[1]
+  of     = v3851[1]
 memory:
-  addr=v3783-0xc[32] value=0x80485d4[32]
-  addr=0x80496f8[32] value=v3806+0x1[32]
-  addr=0x80496f8[32] value=v3806[32]
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=v3780-0xc[32] value=0x80485d4[32]
+  addr=0x80496f8[32] value=v3803+0x1[32]
+  addr=0x80496f8[32] value=v3803[32]
+  addr=v3780-0x4[32] value=v3781[32]
 
 0x8048493:call   0x08048300<puts@plt>
 registers:
-  esp    = v3783-0x10[32]
-  ebp    = v3783-0x4[32]
+  esp    = v3780-0x10[32]
+  ebp    = v3780-0x4[32]
   eip    = 0x8048300[32]
-  pf     = -v3848+0x1[1]
-  sf     = v3849[1]
-  zf     = v3850[1]
-  af     = v3853[1]
-  cf     = -v3802+0x1[1]
-  of     = v3854[1]
+  pf     = -v3845+0x1[1]
+  sf     = v3846[1]
+  zf     = v3847[1]
+  af     = v3850[1]
+  cf     = -v3799+0x1[1]
+  of     = v3851[1]
 memory:
-  addr=v3783-0x10[32] value=0x8048498[32]
-  addr=v3783-0xc[32] value=0x80485d4[32]
-  addr=0x80496f8[32] value=v3806+0x1[32]
-  addr=0x80496f8[32] value=v3806[32]
-  addr=v3783-0x4[32] value=v3784[32]
+  addr=v3780-0x10[32] value=0x8048498[32]
+  addr=v3780-0xc[32] value=0x80485d4[32]
+  addr=0x80496f8[32] value=v3803+0x1[32]
+  addr=0x80496f8[32] value=v3803[32]
+  addr=v3780-0x4[32] value=v3781[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000
 registers:
-  esp    = v3949[32]
+  esp    = v3946[32]
   eip    = 0x804849f[32]
 memory:
-  addr=v3949[32] value=0x0[32]
+  addr=v3946[32] value=0x0[32]
 
 0x804849f:call   0x08048320<_exit@plt>
 registers:
-  esp    = v3949-0x4[32]
+  esp    = v3946-0x4[32]
   eip    = 0x8048320[32]
 memory:
-  addr=v3949-0x4[32] value=0x80484a4[32]
-  addr=v3949[32] value=0x0[32]
+  addr=v3946-0x4[32] value=0x80484a4[32]
+  addr=v3946[32] value=0x0[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80484b0:push   ebp
 registers:
-  esp    = v4044-0x4[32]
-  ebp    = v4045[32]
+  esp    = v4041-0x4[32]
+  ebp    = v4042[32]
   eip    = 0x80484b1[32]
 memory:
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b1:mov    ebp, esp
 registers:
-  esp    = v4044-0x4[32]
-  ebp    = v4044-0x4[32]
+  esp    = v4041-0x4[32]
+  ebp    = v4041-0x4[32]
   eip    = 0x80484b3[32]
 memory:
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b3:push   edi
 registers:
-  esp    = v4044-0x8[32]
-  ebp    = v4044-0x4[32]
-  edi    = v4046[32]
+  esp    = v4041-0x8[32]
+  ebp    = v4041-0x4[32]
+  edi    = v4043[32]
   eip    = 0x80484b4[32]
 memory:
-  addr=v4044-0x8[32] value=v4046[32]
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x8[32] value=v4043[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b4:push   esi
 registers:
-  esp    = v4044-0xc[32]
-  ebp    = v4044-0x4[32]
-  esi    = v4047[32]
-  edi    = v4046[32]
+  esp    = v4041-0xc[32]
+  ebp    = v4041-0x4[32]
+  esi    = v4044[32]
+  edi    = v4043[32]
   eip    = 0x80484b5[32]
 memory:
-  addr=v4044-0xc[32] value=v4047[32]
-  addr=v4044-0x8[32] value=v4046[32]
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0xc[32] value=v4044[32]
+  addr=v4041-0x8[32] value=v4043[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b5:push   ebx
 registers:
-  ebx    = v4048[32]
-  esp    = v4044-0x10[32]
-  ebp    = v4044-0x4[32]
-  esi    = v4047[32]
-  edi    = v4046[32]
+  ebx    = v4045[32]
+  esp    = v4041-0x10[32]
+  ebp    = v4041-0x4[32]
+  esi    = v4044[32]
+  edi    = v4043[32]
   eip    = 0x80484b6[32]
 memory:
-  addr=v4044-0x10[32] value=v4048[32]
-  addr=v4044-0xc[32] value=v4047[32]
-  addr=v4044-0x8[32] value=v4046[32]
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x10[32] value=v4045[32]
+  addr=v4041-0xc[32] value=v4044[32]
+  addr=v4041-0x8[32] value=v4043[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b6:sub    esp, 0x0c
 registers:
-  ebx    = v4048[32]
-  esp    = v4044-0x1c[32]
-  ebp    = v4044-0x4[32]
-  esi    = v4047[32]
-  edi    = v4046[32]
+  ebx    = v4045[32]
+  esp    = v4041-0x1c[32]
+  ebp    = v4041-0x4[32]
+  esi    = v4044[32]
+  edi    = v4043[32]
   eip    = 0x80484b9[32]
-  pf     = -v4063+0x1[1]
-  sf     = v4064[1]
-  zf     = v4065[1]
-  af     = -v4068+0x1[1]
-  cf     = -v4066+0x1[1]
-  of     = v4069[1]
+  pf     = -v4060+0x1[1]
+  sf     = v4061[1]
+  zf     = v4062[1]
+  af     = -v4065+0x1[1]
+  cf     = -v4063+0x1[1]
+  of     = v4066[1]
 memory:
-  addr=v4044-0x10[32] value=v4048[32]
-  addr=v4044-0xc[32] value=v4047[32]
-  addr=v4044-0x8[32] value=v4046[32]
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x10[32] value=v4045[32]
+  addr=v4041-0xc[32] value=v4044[32]
+  addr=v4041-0x8[32] value=v4043[32]
+  addr=v4041-0x4[32] value=v4042[32]
 
 0x80484b9:call   0x080484be<<Insn>>
 registers:
-  ebx    = v4048[32]
-  esp    = v4044-0x20[32]
-  ebp    = v4044-0x4[32]
-  esi    = v4047[32]
-  edi    = v4046[32]
+  ebx    = v4045[32]
+  esp    = v4041-0x20[32]
+  ebp    = v4041-0x4[32]
+  esi    = v4044[32]
+  edi    = v4043[32]
   eip    = 0x80484be[32]
-  pf     = -v4063+0x1[1]
-  sf     = v4064[1]
-  zf     = v4065[1]
-  af     = -v4068+0x1[1]
-  cf     = -v4066+0x1[1]
-  of     = v4069[1]
+  pf     = -v4060+0x1[1]
+  sf     = v4061[1]
+  zf     = v4062[1]
+  af     = -v4065+0x1[1]
+  cf     = -v4063+0x1[1]
+  of     = v4066[1]
 memory:
-  addr=v4044-0x20[32] value=0x80484be[32]
-  addr=v4044-0x10[32] value=v4048[32]
-  addr=v4044-0xc[32] value=v4047[32]
-  addr=v4044-0x8[32] value=v4046[32]
-  addr=v4044-0x4[32] value=v4045[32]
+  addr=v4041-0x20[32] value=0x80484be[32]
+  addr=v4041-0x10[32] value=v4045[32]
+  addr=v4041-0xc[32] value=v4044[32]
+  addr=v4041-0x8[32] value=v4043[32]
+  addr=v4041-0x4[32] value=v4042[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80484be:pop    ebx
 registers:
-  ebx    = v4165[32]
-  esp    = v4164+0x4[32]
+  ebx    = v4162[32]
+  esp    = v4161+0x4[32]
   eip    = 0x80484bf[32]
 memory:
-  addr=v4164[32] value=v4165[32]
+  addr=v4161[32] value=v4162[32]
 
-0x80484bf:add    ebx, 0x0000120a
+0x80484bf:add    ebx, 0x0000120a<4618>
 registers:
-  ebx    = v4165+0x120a[32]
-  esp    = v4164+0x4[32]
+  ebx    = v4162+0x120a[32]
+  esp    = v4161+0x4[32]
   eip    = 0x80484c5[32]
-  pf     = -v4181+0x1[1]
-  sf     = v4182[1]
-  zf     = v4183[1]
-  af     = v4186[1]
-  cf     = v4184[1]
-  of     = v4187[1]
+  pf     = -v4178+0x1[1]
+  sf     = v4179[1]
+  zf     = v4180[1]
+  af     = v4183[1]
+  cf     = v4181[1]
+  of     = v4184[1]
 memory:
-  addr=v4164[32] value=v4165[32]
+  addr=v4161[32] value=v4162[32]
 
 0x80484c5:call   0x080482c8<_init>
 registers:
-  ebx    = v4165+0x120a[32]
-  esp    = v4164[32]
+  ebx    = v4162+0x120a[32]
+  esp    = v4161[32]
   eip    = 0x80482c8[32]
-  pf     = -v4181+0x1[1]
-  sf     = v4182[1]
-  zf     = v4183[1]
-  af     = v4186[1]
-  cf     = v4184[1]
-  of     = v4187[1]
+  pf     = -v4178+0x1[1]
+  sf     = v4179[1]
+  zf     = v4180[1]
+  af     = v4183[1]
+  cf     = v4181[1]
+  of     = v4184[1]
 memory:
-  addr=v4164[32] value=0x80484ca[32]
-  addr=v4164[32] value=v4165[32]
+  addr=v4161[32] value=0x80484ca[32]
+  addr=v4161[32] value=v4162[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = v4282-0xe0[32]
-  ebx    = v4282[32]
+  eax    = v4279-0xe0[32]
+  ebx    = v4279[32]
   eip    = 0x80484d0[32]
 memory:
 
-0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = v4282-0xe0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
+  eax    = v4279-0xe0[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
   eip    = 0x80484d6[32]
 memory:
 
 0x80484d6:sub    eax, edx
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
   eip    = 0x80484d8[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
@@ -1636,331 +1636,331 @@ memory:
 0x80484d8:sar    eax, 0x02
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
   eip    = 0x80484db[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
-  af     = v4284[1]
+  af     = v4281[1]
   cf     = 0x0[1]
-  of     = v4285[1]
+  of     = v4282[1]
 memory:
 
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
-  ebp    = v4286[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
+  ebp    = v4283[32]
   eip    = 0x80484de[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
-  af     = v4284[1]
+  af     = v4281[1]
   cf     = 0x0[1]
-  of     = v4285[1]
+  of     = v4282[1]
 memory:
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
-  ebp    = v4286[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
+  ebp    = v4283[32]
   eip    = 0x80484e0[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
-  af     = v4284[1]
+  af     = v4281[1]
   cf     = 0x0[1]
-  of     = v4285[1]
+  of     = v4282[1]
 memory:
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e0:add    esp, 0x0c
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4282[32]
-  esp    = v4287+0xc[32]
-  ebp    = v4286[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4279[32]
+  esp    = v4284+0xc[32]
+  ebp    = v4283[32]
   eip    = 0x80484e3[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e3:pop    ebx
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4309[32]
-  esp    = v4287+0x10[32]
-  ebp    = v4286[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4306[32]
+  esp    = v4284+0x10[32]
+  ebp    = v4283[32]
   eip    = 0x80484e4[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4287+0xc[32] value=v4309[32]
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4284+0xc[32] value=v4306[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e4:pop    esi
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4309[32]
-  esp    = v4287+0x14[32]
-  ebp    = v4286[32]
-  esi    = v4341[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4306[32]
+  esp    = v4284+0x14[32]
+  ebp    = v4283[32]
+  esi    = v4338[32]
   eip    = 0x80484e5[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4287+0x10[32] value=v4341[32]
-  addr=v4287+0xc[32] value=v4309[32]
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4284+0x10[32] value=v4338[32]
+  addr=v4284+0xc[32] value=v4306[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e5:pop    edi
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4309[32]
-  esp    = v4287+0x18[32]
-  ebp    = v4286[32]
-  esi    = v4341[32]
-  edi    = v4373[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4306[32]
+  esp    = v4284+0x18[32]
+  ebp    = v4283[32]
+  esi    = v4338[32]
+  edi    = v4370[32]
   eip    = 0x80484e6[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4287+0x14[32] value=v4373[32]
-  addr=v4287+0x10[32] value=v4341[32]
-  addr=v4287+0xc[32] value=v4309[32]
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4284+0x14[32] value=v4370[32]
+  addr=v4284+0x10[32] value=v4338[32]
+  addr=v4284+0xc[32] value=v4306[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e6:pop    ebp
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4309[32]
-  esp    = v4287+0x1c[32]
-  ebp    = v4405[32]
-  esi    = v4341[32]
-  edi    = v4373[32]
+  edx    = v4279-0xe0[32]
+  ebx    = v4306[32]
+  esp    = v4284+0x1c[32]
+  ebp    = v4402[32]
+  esi    = v4338[32]
+  edi    = v4370[32]
   eip    = 0x80484e7[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4287+0x18[32] value=v4405[32]
-  addr=v4287+0x14[32] value=v4373[32]
-  addr=v4287+0x10[32] value=v4341[32]
-  addr=v4287+0xc[32] value=v4309[32]
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4284+0x18[32] value=v4402[32]
+  addr=v4284+0x14[32] value=v4370[32]
+  addr=v4284+0x10[32] value=v4338[32]
+  addr=v4284+0xc[32] value=v4306[32]
+  addr=v4283-0x10[32] value=0x0[32]
 
 0x80484e7:ret    
 registers:
   eax    = 0x0[32]
-  edx    = v4282-0xe0[32]
-  ebx    = v4309[32]
-  esp    = v4287+0x20[32]
-  ebp    = v4405[32]
-  esi    = v4341[32]
-  edi    = v4373[32]
-  eip    = v4437[32]
-  pf     = -v4302+0x1[1]
-  sf     = v4303[1]
-  zf     = v4304[1]
-  af     = v4307[1]
-  cf     = v4305[1]
-  of     = v4308[1]
+  edx    = v4279-0xe0[32]
+  ebx    = v4306[32]
+  esp    = v4284+0x20[32]
+  ebp    = v4402[32]
+  esi    = v4338[32]
+  edi    = v4370[32]
+  eip    = v4434[32]
+  pf     = -v4299+0x1[1]
+  sf     = v4300[1]
+  zf     = v4301[1]
+  af     = v4304[1]
+  cf     = v4302[1]
+  of     = v4305[1]
 memory:
-  addr=v4287+0x1c[32] value=v4437[32]
-  addr=v4287+0x18[32] value=v4405[32]
-  addr=v4287+0x14[32] value=v4373[32]
-  addr=v4287+0x10[32] value=v4341[32]
-  addr=v4287+0xc[32] value=v4309[32]
-  addr=v4286-0x10[32] value=0x0[32]
+  addr=v4284+0x1c[32] value=v4434[32]
+  addr=v4284+0x18[32] value=v4402[32]
+  addr=v4284+0x14[32] value=v4370[32]
+  addr=v4284+0x10[32] value=v4338[32]
+  addr=v4284+0xc[32] value=v4306[32]
+  addr=v4283-0x10[32] value=0x0[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048520:push   ebp
 registers:
-  esp    = v4563-0x4[32]
-  ebp    = v4564[32]
+  esp    = v4560-0x4[32]
+  ebp    = v4561[32]
   eip    = 0x8048521[32]
 memory:
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048521:mov    ebp, esp
 registers:
-  esp    = v4563-0x4[32]
-  ebp    = v4563-0x4[32]
+  esp    = v4560-0x4[32]
+  ebp    = v4560-0x4[32]
   eip    = 0x8048523[32]
 memory:
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048523:push   edi
 registers:
-  esp    = v4563-0x8[32]
-  ebp    = v4563-0x4[32]
-  edi    = v4565[32]
+  esp    = v4560-0x8[32]
+  ebp    = v4560-0x4[32]
+  edi    = v4562[32]
   eip    = 0x8048524[32]
 memory:
-  addr=v4563-0x8[32] value=v4565[32]
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x8[32] value=v4562[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048524:push   esi
 registers:
-  esp    = v4563-0xc[32]
-  ebp    = v4563-0x4[32]
-  esi    = v4566[32]
-  edi    = v4565[32]
+  esp    = v4560-0xc[32]
+  ebp    = v4560-0x4[32]
+  esi    = v4563[32]
+  edi    = v4562[32]
   eip    = 0x8048525[32]
 memory:
-  addr=v4563-0xc[32] value=v4566[32]
-  addr=v4563-0x8[32] value=v4565[32]
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0xc[32] value=v4563[32]
+  addr=v4560-0x8[32] value=v4562[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048525:push   ebx
 registers:
-  ebx    = v4567[32]
-  esp    = v4563-0x10[32]
-  ebp    = v4563-0x4[32]
-  esi    = v4566[32]
-  edi    = v4565[32]
+  ebx    = v4564[32]
+  esp    = v4560-0x10[32]
+  ebp    = v4560-0x4[32]
+  esi    = v4563[32]
+  edi    = v4562[32]
   eip    = 0x8048526[32]
 memory:
-  addr=v4563-0x10[32] value=v4567[32]
-  addr=v4563-0xc[32] value=v4566[32]
-  addr=v4563-0x8[32] value=v4565[32]
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x10[32] value=v4564[32]
+  addr=v4560-0xc[32] value=v4563[32]
+  addr=v4560-0x8[32] value=v4562[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048526:sub    esp, 0x0c
 registers:
-  ebx    = v4567[32]
-  esp    = v4563-0x1c[32]
-  ebp    = v4563-0x4[32]
-  esi    = v4566[32]
-  edi    = v4565[32]
+  ebx    = v4564[32]
+  esp    = v4560-0x1c[32]
+  ebp    = v4560-0x4[32]
+  esi    = v4563[32]
+  edi    = v4562[32]
   eip    = 0x8048529[32]
-  pf     = -v4582+0x1[1]
-  sf     = v4583[1]
-  zf     = v4584[1]
-  af     = -v4587+0x1[1]
-  cf     = -v4585+0x1[1]
-  of     = v4588[1]
+  pf     = -v4579+0x1[1]
+  sf     = v4580[1]
+  zf     = v4581[1]
+  af     = -v4584+0x1[1]
+  cf     = -v4582+0x1[1]
+  of     = v4585[1]
 memory:
-  addr=v4563-0x10[32] value=v4567[32]
-  addr=v4563-0xc[32] value=v4566[32]
-  addr=v4563-0x8[32] value=v4565[32]
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x10[32] value=v4564[32]
+  addr=v4560-0xc[32] value=v4563[32]
+  addr=v4560-0x8[32] value=v4562[32]
+  addr=v4560-0x4[32] value=v4561[32]
 
 0x8048529:call   0x0804852e<<Insn>>
 registers:
-  ebx    = v4567[32]
-  esp    = v4563-0x20[32]
-  ebp    = v4563-0x4[32]
-  esi    = v4566[32]
-  edi    = v4565[32]
+  ebx    = v4564[32]
+  esp    = v4560-0x20[32]
+  ebp    = v4560-0x4[32]
+  esi    = v4563[32]
+  edi    = v4562[32]
   eip    = 0x804852e[32]
-  pf     = -v4582+0x1[1]
-  sf     = v4583[1]
-  zf     = v4584[1]
-  af     = -v4587+0x1[1]
-  cf     = -v4585+0x1[1]
-  of     = v4588[1]
+  pf     = -v4579+0x1[1]
+  sf     = v4580[1]
+  zf     = v4581[1]
+  af     = -v4584+0x1[1]
+  cf     = -v4582+0x1[1]
+  of     = v4585[1]
 memory:
-  addr=v4563-0x20[32] value=0x804852e[32]
-  addr=v4563-0x10[32] value=v4567[32]
-  addr=v4563-0xc[32] value=v4566[32]
-  addr=v4563-0x8[32] value=v4565[32]
-  addr=v4563-0x4[32] value=v4564[32]
+  addr=v4560-0x20[32] value=0x804852e[32]
+  addr=v4560-0x10[32] value=v4564[32]
+  addr=v4560-0xc[32] value=v4563[32]
+  addr=v4560-0x8[32] value=v4562[32]
+  addr=v4560-0x4[32] value=v4561[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804852e:pop    ebx
 registers:
-  ebx    = v4684[32]
-  esp    = v4683+0x4[32]
+  ebx    = v4681[32]
+  esp    = v4680+0x4[32]
   eip    = 0x804852f[32]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
-0x804852f:add    ebx, 0x0000119a
+0x804852f:add    ebx, 0x0000119a<4506>
 registers:
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
   eip    = 0x8048535[32]
-  pf     = -v4700+0x1[1]
-  sf     = v4701[1]
-  zf     = v4702[1]
-  af     = v4705[1]
-  cf     = v4703[1]
-  of     = v4706[1]
+  pf     = -v4697+0x1[1]
+  sf     = v4698[1]
+  zf     = v4699[1]
+  af     = v4702[1]
+  cf     = v4700[1]
+  of     = v4703[1]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
-0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
+  eax    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
   eip    = 0x804853b[32]
-  pf     = -v4700+0x1[1]
-  sf     = v4701[1]
-  zf     = v4702[1]
-  af     = v4705[1]
-  cf     = v4703[1]
-  of     = v4706[1]
+  pf     = -v4697+0x1[1]
+  sf     = v4698[1]
+  zf     = v4699[1]
+  af     = v4702[1]
+  cf     = v4700[1]
+  of     = v4703[1]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
-0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = v4684+0x10ba[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
+  eax    = v4681+0x10ba[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
   eip    = 0x8048541[32]
-  pf     = -v4700+0x1[1]
-  sf     = v4701[1]
-  zf     = v4702[1]
-  af     = v4705[1]
-  cf     = v4703[1]
-  of     = v4706[1]
+  pf     = -v4697+0x1[1]
+  sf     = v4698[1]
+  zf     = v4699[1]
+  af     = v4702[1]
+  cf     = v4700[1]
+  of     = v4703[1]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
 0x8048541:sub    eax, edx
 registers:
   eax    = 0x0[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
   eip    = 0x8048543[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
@@ -1969,49 +1969,49 @@ registers:
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
 0x8048543:sar    eax, 0x02
 registers:
   eax    = 0x0[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
   eip    = 0x8048546[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
-  af     = v4708[1]
+  af     = v4705[1]
   cf     = 0x0[1]
-  of     = v4709[1]
+  of     = v4706[1]
 memory:
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=v4681[32]
 
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax    = 0x0[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
-  ebp    = v4710[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
+  ebp    = v4707[32]
   eip    = 0x8048549[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
-  af     = v4708[1]
+  af     = v4705[1]
   cf     = 0x0[1]
-  of     = v4709[1]
+  of     = v4706[1]
 memory:
-  addr=v4710-0x10[32] value=0x0[32]
-  addr=v4683[32] value=v4684[32]
+  addr=v4707-0x10[32] value=0x0[32]
+  addr=v4680[32] value=v4681[32]
 
 0x8048549:dec    eax
 registers:
   eax    = 0xffffffff (-0x1)[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
-  ebp    = v4710[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
+  ebp    = v4707[32]
   eip    = 0x804854a[32]
   pf     = 0x1[1]
   sf     = 0x1[1]
@@ -2020,16 +2020,16 @@ registers:
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v4710-0x10[32] value=0x0[32]
-  addr=v4683[32] value=v4684[32]
+  addr=v4707-0x10[32] value=0x0[32]
+  addr=v4680[32] value=v4681[32]
 
-0x804854a:cmp    eax, 0xff<-0x01>
+0x804854a:cmp    eax, 0xff<-1>
 registers:
   eax    = 0xffffffff (-0x1)[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
-  ebp    = v4710[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
+  ebp    = v4707[32]
   eip    = 0x804854d[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
@@ -2038,16 +2038,16 @@ registers:
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v4710-0x10[32] value=0x0[32]
-  addr=v4683[32] value=v4684[32]
+  addr=v4707-0x10[32] value=0x0[32]
+  addr=v4680[32] value=v4681[32]
 
 0x804854d:je     0x0804856b<<Insn>>
 registers:
   eax    = 0xffffffff (-0x1)[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683+0x4[32]
-  ebp    = v4710[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680+0x4[32]
+  ebp    = v4707[32]
   eip    = 0x804856b[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
@@ -2056,16 +2056,16 @@ registers:
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v4710-0x10[32] value=0x0[32]
-  addr=v4683[32] value=v4684[32]
+  addr=v4707-0x10[32] value=0x0[32]
+  addr=v4680[32] value=v4681[32]
 
 0x804856b:call   0x080485b0<_fini>
 registers:
   eax    = 0xffffffff (-0x1)[32]
-  edx    = v4684+0x10ba[32]
-  ebx    = v4684+0x119a[32]
-  esp    = v4683[32]
-  ebp    = v4710[32]
+  edx    = v4681+0x10ba[32]
+  ebx    = v4681+0x119a[32]
+  esp    = v4680[32]
+  ebp    = v4707[32]
   eip    = 0x80485b0[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
@@ -2074,629 +2074,629 @@ registers:
   cf     = 0x0[1]
   of     = 0x0[1]
 memory:
-  addr=v4683[32] value=0x8048570[32]
-  addr=v4710-0x10[32] value=0x0[32]
-  addr=v4683[32] value=v4684[32]
+  addr=v4680[32] value=0x8048570[32]
+  addr=v4707-0x10[32] value=0x0[32]
+  addr=v4680[32] value=v4681[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x804854f:lea    esi, [edx + eax*0x04]
 registers:
-  eax    = v4806[32]
-  edx    = v4805[32]
-  esi    = v4808[32]
+  eax    = v4803[32]
+  edx    = v4802[32]
+  esi    = v4805[32]
   eip    = 0x8048552[32]
 memory:
 
 0x8048552:xor    edi, edi
 registers:
-  eax    = v4806[32]
-  edx    = v4805[32]
-  esi    = v4808[32]
+  eax    = v4803[32]
+  edx    = v4802[32]
+  esi    = v4805[32]
   edi    = 0x0[32]
   eip    = 0x8048554[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v4810[1]
+  af     = v4806[1]
   cf     = 0x0[1]
 memory:
 
 0x8048554:lea    esi, [esi + 0x00000000]
 registers:
-  eax    = v4806[32]
-  edx    = v4805[32]
-  esi    = v4808[32]
+  eax    = v4803[32]
+  edx    = v4802[32]
+  esi    = v4805[32]
   edi    = 0x0[32]
   eip    = 0x804855a[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v4810[1]
+  af     = v4806[1]
   cf     = 0x0[1]
 memory:
 
 0x804855a:lea    edi, [edi + 0x00000000]
 registers:
-  eax    = v4806[32]
-  edx    = v4805[32]
-  esi    = v4808[32]
+  eax    = v4803[32]
+  edx    = v4802[32]
+  esi    = v4805[32]
   edi    = 0x0[32]
   eip    = 0x8048560[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v4810[1]
+  af     = v4806[1]
   cf     = 0x0[1]
 memory:
 
 0x8048560:call   DWORD PTR ds:[esi]
 registers:
-  eax    = v4806[32]
-  edx    = v4805[32]
-  esp    = v4811-0x4[32]
-  esi    = v4808[32]
+  eax    = v4803[32]
+  edx    = v4802[32]
+  esp    = v4807-0x4[32]
+  esi    = v4805[32]
   edi    = 0x0[32]
-  eip    = v4812[32]
+  eip    = v4808[32]
   pf     = 0x1[1]
   sf     = 0x0[1]
   zf     = 0x1[1]
   of     = 0x0[1]
-  af     = v4810[1]
+  af     = v4806[1]
   cf     = 0x0[1]
 memory:
-  addr=v4808[32] value=v4812[32]
-  addr=v4811-0x4[32] value=0x8048562[32]
+  addr=v4805[32] value=v4808[32]
+  addr=v4807-0x4[32] value=0x8048562[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048562:inc    edi
 registers:
-  edi    = v4938+0x1[32]
+  edi    = v4934+0x1[32]
   eip    = 0x8048563[32]
-  pf     = -v4953+0x1[1]
-  sf     = v4954[1]
-  zf     = v4955[1]
-  af     = v4958[1]
-  of     = v4959[1]
+  pf     = -v4949+0x1[1]
+  sf     = v4950[1]
+  zf     = v4951[1]
+  af     = v4954[1]
+  of     = v4955[1]
 memory:
 
 0x8048563:sub    esi, 0x04
 registers:
-  esi    = v4960-0x4[32]
-  edi    = v4938+0x1[32]
+  esi    = v4956-0x4[32]
+  edi    = v4934+0x1[32]
   eip    = 0x8048566[32]
-  pf     = -v4975+0x1[1]
-  sf     = v4976[1]
-  zf     = v4977[1]
-  af     = -v4980+0x1[1]
-  of     = v4981[1]
-  cf     = -v4978+0x1[1]
+  pf     = -v4971+0x1[1]
+  sf     = v4972[1]
+  zf     = v4973[1]
+  af     = -v4976+0x1[1]
+  of     = v4977[1]
+  cf     = -v4974+0x1[1]
 memory:
 
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
-  ebp    = v4982[32]
-  esi    = v4960-0x4[32]
-  edi    = v4938+0x1[32]
+  ebp    = v4978[32]
+  esi    = v4956-0x4[32]
+  edi    = v4934+0x1[32]
   eip    = 0x8048569[32]
-  pf     = -v5000+0x1[1]
-  sf     = v5001[1]
-  zf     = v5002[1]
-  af     = -v5005+0x1[1]
-  of     = v5006[1]
-  cf     = -v5003+0x1[1]
+  pf     = -v4996+0x1[1]
+  sf     = v4997[1]
+  zf     = v4998[1]
+  af     = -v5001+0x1[1]
+  of     = v5002[1]
+  cf     = -v4999+0x1[1]
 memory:
-  addr=v4982-0x10[32] value=v4983[32]
+  addr=v4978-0x10[32] value=v4979[32]
 
 0x8048569:jne    0x08048560<<Insn>>
 registers:
-  ebp    = v4982[32]
-  esi    = v4960-0x4[32]
-  edi    = v4938+0x1[32]
-  eip    = v5007[32]
-  pf     = -v5000+0x1[1]
-  sf     = v5001[1]
-  zf     = v5002[1]
-  af     = -v5005+0x1[1]
-  of     = v5006[1]
-  cf     = -v5003+0x1[1]
+  ebp    = v4978[32]
+  esi    = v4956-0x4[32]
+  edi    = v4934+0x1[32]
+  eip    = v5003[32]
+  pf     = -v4996+0x1[1]
+  sf     = v4997[1]
+  zf     = v4998[1]
+  af     = -v5001+0x1[1]
+  of     = v5002[1]
+  cf     = -v4999+0x1[1]
 memory:
-  addr=v4982-0x10[32] value=v4983[32]
+  addr=v4978-0x10[32] value=v4979[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048570:add    esp, 0x0c
 registers:
-  esp    = v5102+0xc[32]
+  esp    = v5098+0xc[32]
   eip    = 0x8048573[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
 
 0x8048573:pop    ebx
 registers:
-  ebx    = v5124[32]
-  esp    = v5102+0x10[32]
+  ebx    = v5120[32]
+  esp    = v5098+0x10[32]
   eip    = 0x8048574[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
-  addr=v5102+0xc[32] value=v5124[32]
+  addr=v5098+0xc[32] value=v5120[32]
 
 0x8048574:pop    esi
 registers:
-  ebx    = v5124[32]
-  esp    = v5102+0x14[32]
-  esi    = v5126[32]
+  ebx    = v5120[32]
+  esp    = v5098+0x14[32]
+  esi    = v5122[32]
   eip    = 0x8048575[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
-  addr=v5102+0x10[32] value=v5126[32]
-  addr=v5102+0xc[32] value=v5124[32]
+  addr=v5098+0x10[32] value=v5122[32]
+  addr=v5098+0xc[32] value=v5120[32]
 
 0x8048575:pop    edi
 registers:
-  ebx    = v5124[32]
-  esp    = v5102+0x18[32]
-  esi    = v5126[32]
-  edi    = v5128[32]
+  ebx    = v5120[32]
+  esp    = v5098+0x18[32]
+  esi    = v5122[32]
+  edi    = v5124[32]
   eip    = 0x8048576[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
-  addr=v5102+0x14[32] value=v5128[32]
-  addr=v5102+0x10[32] value=v5126[32]
-  addr=v5102+0xc[32] value=v5124[32]
+  addr=v5098+0x14[32] value=v5124[32]
+  addr=v5098+0x10[32] value=v5122[32]
+  addr=v5098+0xc[32] value=v5120[32]
 
 0x8048576:pop    ebp
 registers:
-  ebx    = v5124[32]
-  esp    = v5102+0x1c[32]
-  ebp    = v5130[32]
-  esi    = v5126[32]
-  edi    = v5128[32]
+  ebx    = v5120[32]
+  esp    = v5098+0x1c[32]
+  ebp    = v5126[32]
+  esi    = v5122[32]
+  edi    = v5124[32]
   eip    = 0x8048577[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
-  addr=v5102+0x18[32] value=v5130[32]
-  addr=v5102+0x14[32] value=v5128[32]
-  addr=v5102+0x10[32] value=v5126[32]
-  addr=v5102+0xc[32] value=v5124[32]
+  addr=v5098+0x18[32] value=v5126[32]
+  addr=v5098+0x14[32] value=v5124[32]
+  addr=v5098+0x10[32] value=v5122[32]
+  addr=v5098+0xc[32] value=v5120[32]
 
 0x8048577:ret    
 registers:
-  ebx    = v5124[32]
-  esp    = v5102+0x20[32]
-  ebp    = v5130[32]
-  esi    = v5126[32]
-  edi    = v5128[32]
-  eip    = v5132[32]
-  pf     = -v5117+0x1[1]
-  sf     = v5118[1]
-  zf     = v5119[1]
-  af     = v5122[1]
-  cf     = v5120[1]
-  of     = v5123[1]
+  ebx    = v5120[32]
+  esp    = v5098+0x20[32]
+  ebp    = v5126[32]
+  esi    = v5122[32]
+  edi    = v5124[32]
+  eip    = v5128[32]
+  pf     = -v5113+0x1[1]
+  sf     = v5114[1]
+  zf     = v5115[1]
+  af     = v5118[1]
+  cf     = v5116[1]
+  of     = v5119[1]
 memory:
-  addr=v5102+0x1c[32] value=v5132[32]
-  addr=v5102+0x18[32] value=v5130[32]
-  addr=v5102+0x14[32] value=v5128[32]
-  addr=v5102+0x10[32] value=v5126[32]
-  addr=v5102+0xc[32] value=v5124[32]
+  addr=v5098+0x1c[32] value=v5128[32]
+  addr=v5098+0x18[32] value=v5126[32]
+  addr=v5098+0x14[32] value=v5124[32]
+  addr=v5098+0x10[32] value=v5122[32]
+  addr=v5098+0xc[32] value=v5120[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048580:push   ebp
 registers:
-  esp    = v5228-0x4[32]
-  ebp    = v5229[32]
+  esp    = v5224-0x4[32]
+  ebp    = v5225[32]
   eip    = 0x8048581[32]
 memory:
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x8048581:mov    ebp, esp
 registers:
-  esp    = v5228-0x4[32]
-  ebp    = v5228-0x4[32]
+  esp    = v5224-0x4[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x8048583[32]
 memory:
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x8048583:push   ebx
 registers:
-  ebx    = v5230[32]
-  esp    = v5228-0x8[32]
-  ebp    = v5228-0x4[32]
+  ebx    = v5226[32]
+  esp    = v5224-0x8[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x8048584[32]
 memory:
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x8048584:sub    esp, 0x04
 registers:
-  ebx    = v5230[32]
-  esp    = v5228-0xc[32]
-  ebp    = v5228-0x4[32]
+  ebx    = v5226[32]
+  esp    = v5224-0xc[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x8048587[32]
-  pf     = -v5245+0x1[1]
-  sf     = v5246[1]
-  zf     = v5247[1]
-  af     = -v5250+0x1[1]
-  cf     = -v5248+0x1[1]
-  of     = v5251[1]
+  pf     = -v5241+0x1[1]
+  sf     = v5242[1]
+  zf     = v5243[1]
+  af     = -v5246+0x1[1]
+  cf     = -v5244+0x1[1]
+  of     = v5247[1]
 memory:
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x8048587:mov    ebx, 0x080495e8<.ctors>
 registers:
   ebx    = 0x80495e8[32]
-  esp    = v5228-0xc[32]
-  ebp    = v5228-0x4[32]
+  esp    = v5224-0xc[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x804858c[32]
-  pf     = -v5245+0x1[1]
-  sf     = v5246[1]
-  zf     = v5247[1]
-  af     = -v5250+0x1[1]
-  cf     = -v5248+0x1[1]
-  of     = v5251[1]
+  pf     = -v5241+0x1[1]
+  sf     = v5242[1]
+  zf     = v5243[1]
+  af     = -v5246+0x1[1]
+  cf     = -v5244+0x1[1]
+  of     = v5247[1]
 memory:
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
 registers:
-  eax    = v5252[32]
+  eax    = v5248[32]
   ebx    = 0x80495e8[32]
-  esp    = v5228-0xc[32]
-  ebp    = v5228-0x4[32]
+  esp    = v5224-0xc[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x8048591[32]
-  pf     = -v5245+0x1[1]
-  sf     = v5246[1]
-  zf     = v5247[1]
-  af     = -v5250+0x1[1]
-  cf     = -v5248+0x1[1]
-  of     = v5251[1]
+  pf     = -v5241+0x1[1]
+  sf     = v5242[1]
+  zf     = v5243[1]
+  af     = -v5246+0x1[1]
+  cf     = -v5244+0x1[1]
+  of     = v5247[1]
 memory:
-  addr=0x80495e8[32] value=v5252[32]
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=0x80495e8[32] value=v5248[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
-0x8048591:cmp    eax, 0xff<-0x01>
+0x8048591:cmp    eax, 0xff<-1>
 registers:
-  eax    = v5252[32]
+  eax    = v5248[32]
   ebx    = 0x80495e8[32]
-  esp    = v5228-0xc[32]
-  ebp    = v5228-0x4[32]
+  esp    = v5224-0xc[32]
+  ebp    = v5224-0x4[32]
   eip    = 0x8048594[32]
-  pf     = -v5320+0x1[1]
-  sf     = v5321[1]
-  zf     = v5322[1]
-  af     = -v5325+0x1[1]
-  cf     = -v5323+0x1[1]
-  of     = v5326[1]
+  pf     = -v5316+0x1[1]
+  sf     = v5317[1]
+  zf     = v5318[1]
+  af     = -v5321+0x1[1]
+  cf     = -v5319+0x1[1]
+  of     = v5322[1]
 memory:
-  addr=0x80495e8[32] value=v5252[32]
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=0x80495e8[32] value=v5248[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 
 0x8048594:je     0x080485ac<<Insn>>
 registers:
-  eax    = v5252[32]
+  eax    = v5248[32]
   ebx    = 0x80495e8[32]
-  esp    = v5228-0xc[32]
-  ebp    = v5228-0x4[32]
-  eip    = v5327[32]
-  pf     = -v5320+0x1[1]
-  sf     = v5321[1]
-  zf     = v5322[1]
-  af     = -v5325+0x1[1]
-  cf     = -v5323+0x1[1]
-  of     = v5326[1]
+  esp    = v5224-0xc[32]
+  ebp    = v5224-0x4[32]
+  eip    = v5323[32]
+  pf     = -v5316+0x1[1]
+  sf     = v5317[1]
+  zf     = v5318[1]
+  af     = -v5321+0x1[1]
+  cf     = -v5319+0x1[1]
+  of     = v5322[1]
 memory:
-  addr=0x80495e8[32] value=v5252[32]
-  addr=v5228-0x8[32] value=v5230[32]
-  addr=v5228-0x4[32] value=v5229[32]
+  addr=0x80495e8[32] value=v5248[32]
+  addr=v5224-0x8[32] value=v5226[32]
+  addr=v5224-0x4[32] value=v5225[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x8048596:lea    esi, [esi + 0x00]
 registers:
-  esi    = v5422[32]
+  esi    = v5418[32]
   eip    = 0x8048599[32]
 memory:
 
 0x8048599:lea    edi, [edi + 0x00000000]
 registers:
-  esi    = v5422[32]
-  edi    = v5423[32]
+  esi    = v5418[32]
+  edi    = v5419[32]
   eip    = 0x80485a0[32]
 memory:
 
 0x80485a0:sub    ebx, 0x04
 registers:
-  ebx    = v5424-0x4[32]
-  esi    = v5422[32]
-  edi    = v5423[32]
+  ebx    = v5420-0x4[32]
+  esi    = v5418[32]
+  edi    = v5419[32]
   eip    = 0x80485a3[32]
-  pf     = -v5439+0x1[1]
-  sf     = v5440[1]
-  zf     = v5441[1]
-  af     = -v5444+0x1[1]
-  cf     = -v5442+0x1[1]
-  of     = v5445[1]
+  pf     = -v5435+0x1[1]
+  sf     = v5436[1]
+  zf     = v5437[1]
+  af     = -v5440+0x1[1]
+  cf     = -v5438+0x1[1]
+  of     = v5441[1]
 memory:
 
 0x80485a3:call   eax
 registers:
-  eax    = v5447[32]
-  ebx    = v5424-0x4[32]
-  esp    = v5446-0x4[32]
-  esi    = v5422[32]
-  edi    = v5423[32]
-  eip    = v5447[32]
-  pf     = -v5439+0x1[1]
-  sf     = v5440[1]
-  zf     = v5441[1]
-  af     = -v5444+0x1[1]
-  cf     = -v5442+0x1[1]
-  of     = v5445[1]
+  eax    = v5443[32]
+  ebx    = v5420-0x4[32]
+  esp    = v5442-0x4[32]
+  esi    = v5418[32]
+  edi    = v5419[32]
+  eip    = v5443[32]
+  pf     = -v5435+0x1[1]
+  sf     = v5436[1]
+  zf     = v5437[1]
+  af     = -v5440+0x1[1]
+  cf     = -v5438+0x1[1]
+  of     = v5441[1]
 memory:
-  addr=v5446-0x4[32] value=0x80485a5[32]
+  addr=v5442-0x4[32] value=0x80485a5[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80485a5:mov    eax, DWORD PTR ds:[ebx]
 registers:
-  eax    = v5543[32]
-  ebx    = v5542[32]
+  eax    = v5539[32]
+  ebx    = v5538[32]
   eip    = 0x80485a7[32]
 memory:
-  addr=v5542[32] value=v5543[32]
+  addr=v5538[32] value=v5539[32]
 
-0x80485a7:cmp    eax, 0xff<-0x01>
+0x80485a7:cmp    eax, 0xff<-1>
 registers:
-  eax    = v5543[32]
-  ebx    = v5542[32]
+  eax    = v5539[32]
+  ebx    = v5538[32]
   eip    = 0x80485aa[32]
-  pf     = -v5559+0x1[1]
-  sf     = v5560[1]
-  zf     = v5561[1]
-  af     = -v5564+0x1[1]
-  cf     = -v5562+0x1[1]
-  of     = v5565[1]
+  pf     = -v5555+0x1[1]
+  sf     = v5556[1]
+  zf     = v5557[1]
+  af     = -v5560+0x1[1]
+  cf     = -v5558+0x1[1]
+  of     = v5561[1]
 memory:
-  addr=v5542[32] value=v5543[32]
+  addr=v5538[32] value=v5539[32]
 
 0x80485aa:jne    0x080485a0<<Insn>>
 registers:
-  eax    = v5543[32]
-  ebx    = v5542[32]
-  eip    = v5566[32]
-  pf     = -v5559+0x1[1]
-  sf     = v5560[1]
-  zf     = v5561[1]
-  af     = -v5564+0x1[1]
-  cf     = -v5562+0x1[1]
-  of     = v5565[1]
+  eax    = v5539[32]
+  ebx    = v5538[32]
+  eip    = v5562[32]
+  pf     = -v5555+0x1[1]
+  sf     = v5556[1]
+  zf     = v5557[1]
+  af     = -v5560+0x1[1]
+  cf     = -v5558+0x1[1]
+  of     = v5561[1]
 memory:
-  addr=v5542[32] value=v5543[32]
+  addr=v5538[32] value=v5539[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80485ac:pop    eax
 registers:
-  eax    = v5662[32]
-  esp    = v5661+0x4[32]
+  eax    = v5658[32]
+  esp    = v5657+0x4[32]
   eip    = 0x80485ad[32]
 memory:
-  addr=v5661[32] value=v5662[32]
+  addr=v5657[32] value=v5658[32]
 
 0x80485ad:pop    ebx
 registers:
-  eax    = v5662[32]
-  ebx    = v5664[32]
-  esp    = v5661+0x8[32]
+  eax    = v5658[32]
+  ebx    = v5660[32]
+  esp    = v5657+0x8[32]
   eip    = 0x80485ae[32]
 memory:
-  addr=v5661+0x4[32] value=v5664[32]
-  addr=v5661[32] value=v5662[32]
+  addr=v5657+0x4[32] value=v5660[32]
+  addr=v5657[32] value=v5658[32]
 
 0x80485ae:pop    ebp
 registers:
-  eax    = v5662[32]
-  ebx    = v5664[32]
-  esp    = v5661+0xc[32]
-  ebp    = v5666[32]
+  eax    = v5658[32]
+  ebx    = v5660[32]
+  esp    = v5657+0xc[32]
+  ebp    = v5662[32]
   eip    = 0x80485af[32]
 memory:
-  addr=v5661+0x8[32] value=v5666[32]
-  addr=v5661+0x4[32] value=v5664[32]
-  addr=v5661[32] value=v5662[32]
+  addr=v5657+0x8[32] value=v5662[32]
+  addr=v5657+0x4[32] value=v5660[32]
+  addr=v5657[32] value=v5658[32]
 
 0x80485af:ret    
 registers:
-  eax    = v5662[32]
-  ebx    = v5664[32]
-  esp    = v5661+0x10[32]
-  ebp    = v5666[32]
-  eip    = v5668[32]
+  eax    = v5658[32]
+  ebx    = v5660[32]
+  esp    = v5657+0x10[32]
+  ebp    = v5662[32]
+  eip    = v5664[32]
 memory:
-  addr=v5661+0xc[32] value=v5668[32]
-  addr=v5661+0x8[32] value=v5666[32]
-  addr=v5661+0x4[32] value=v5664[32]
-  addr=v5661[32] value=v5662[32]
+  addr=v5657+0xc[32] value=v5664[32]
+  addr=v5657+0x8[32] value=v5662[32]
+  addr=v5657+0x4[32] value=v5660[32]
+  addr=v5657[32] value=v5658[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80485b0:push   ebp
 registers:
-  esp    = v5764-0x4[32]
-  ebp    = v5765[32]
+  esp    = v5760-0x4[32]
+  ebp    = v5761[32]
   eip    = 0x80485b1[32]
 memory:
-  addr=v5764-0x4[32] value=v5765[32]
+  addr=v5760-0x4[32] value=v5761[32]
 
 0x80485b1:mov    ebp, esp
 registers:
-  esp    = v5764-0x4[32]
-  ebp    = v5764-0x4[32]
+  esp    = v5760-0x4[32]
+  ebp    = v5760-0x4[32]
   eip    = 0x80485b3[32]
 memory:
-  addr=v5764-0x4[32] value=v5765[32]
+  addr=v5760-0x4[32] value=v5761[32]
 
 0x80485b3:push   ebx
 registers:
-  ebx    = v5766[32]
-  esp    = v5764-0x8[32]
-  ebp    = v5764-0x4[32]
+  ebx    = v5762[32]
+  esp    = v5760-0x8[32]
+  ebp    = v5760-0x4[32]
   eip    = 0x80485b4[32]
 memory:
-  addr=v5764-0x8[32] value=v5766[32]
-  addr=v5764-0x4[32] value=v5765[32]
+  addr=v5760-0x8[32] value=v5762[32]
+  addr=v5760-0x4[32] value=v5761[32]
 
 0x80485b4:push   eax
 registers:
-  eax    = v5767[32]
-  ebx    = v5766[32]
-  esp    = v5764-0xc[32]
-  ebp    = v5764-0x4[32]
+  eax    = v5763[32]
+  ebx    = v5762[32]
+  esp    = v5760-0xc[32]
+  ebp    = v5760-0x4[32]
   eip    = 0x80485b5[32]
 memory:
-  addr=v5764-0xc[32] value=v5767[32]
-  addr=v5764-0x8[32] value=v5766[32]
-  addr=v5764-0x4[32] value=v5765[32]
+  addr=v5760-0xc[32] value=v5763[32]
+  addr=v5760-0x8[32] value=v5762[32]
+  addr=v5760-0x4[32] value=v5761[32]
 
 0x80485b5:call   0x080485ba<<Insn>>
 registers:
-  eax    = v5767[32]
-  ebx    = v5766[32]
-  esp    = v5764-0x10[32]
-  ebp    = v5764-0x4[32]
+  eax    = v5763[32]
+  ebx    = v5762[32]
+  esp    = v5760-0x10[32]
+  ebp    = v5760-0x4[32]
   eip    = 0x80485ba[32]
 memory:
-  addr=v5764-0x10[32] value=0x80485ba[32]
-  addr=v5764-0xc[32] value=v5767[32]
-  addr=v5764-0x8[32] value=v5766[32]
-  addr=v5764-0x4[32] value=v5765[32]
+  addr=v5760-0x10[32] value=0x80485ba[32]
+  addr=v5760-0xc[32] value=v5763[32]
+  addr=v5760-0x8[32] value=v5762[32]
+  addr=v5760-0x4[32] value=v5761[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80485ba:pop    ebx
 registers:
-  ebx    = v5863[32]
-  esp    = v5862+0x4[32]
+  ebx    = v5859[32]
+  esp    = v5858+0x4[32]
   eip    = 0x80485bb[32]
 memory:
-  addr=v5862[32] value=v5863[32]
+  addr=v5858[32] value=v5859[32]
 
-0x80485bb:add    ebx, 0x0000110e
+0x80485bb:add    ebx, 0x0000110e<4366>
 registers:
-  ebx    = v5863+0x110e[32]
-  esp    = v5862+0x4[32]
+  ebx    = v5859+0x110e[32]
+  esp    = v5858+0x4[32]
   eip    = 0x80485c1[32]
-  pf     = -v5879+0x1[1]
-  sf     = v5880[1]
-  zf     = v5881[1]
-  af     = v5884[1]
-  cf     = v5882[1]
-  of     = v5885[1]
+  pf     = -v5875+0x1[1]
+  sf     = v5876[1]
+  zf     = v5877[1]
+  af     = v5880[1]
+  cf     = v5878[1]
+  of     = v5881[1]
 memory:
-  addr=v5862[32] value=v5863[32]
+  addr=v5858[32] value=v5859[32]
 
 0x80485c1:call   0x08048390<__do_global_dtors_aux>
 registers:
-  ebx    = v5863+0x110e[32]
-  esp    = v5862[32]
+  ebx    = v5859+0x110e[32]
+  esp    = v5858[32]
   eip    = 0x8048390[32]
-  pf     = -v5879+0x1[1]
-  sf     = v5880[1]
-  zf     = v5881[1]
-  af     = v5884[1]
-  cf     = v5882[1]
-  of     = v5885[1]
+  pf     = -v5875+0x1[1]
+  sf     = v5876[1]
+  zf     = v5877[1]
+  af     = v5880[1]
+  cf     = v5878[1]
+  of     = v5881[1]
 memory:
-  addr=v5862[32] value=0x80485c6[32]
-  addr=v5862[32] value=v5863[32]
+  addr=v5858[32] value=0x80485c6[32]
+  addr=v5858[32] value=v5859[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
 0x80485c6:pop    eax
 registers:
-  eax    = v5981[32]
-  esp    = v5980+0x4[32]
+  eax    = v5977[32]
+  esp    = v5976+0x4[32]
   eip    = 0x80485c7[32]
 memory:
-  addr=v5980[32] value=v5981[32]
+  addr=v5976[32] value=v5977[32]
 
 0x80485c7:pop    ebx
 registers:
-  eax    = v5981[32]
-  ebx    = v5983[32]
-  esp    = v5980+0x8[32]
+  eax    = v5977[32]
+  ebx    = v5979[32]
+  esp    = v5976+0x8[32]
   eip    = 0x80485c8[32]
 memory:
-  addr=v5980+0x4[32] value=v5983[32]
-  addr=v5980[32] value=v5981[32]
+  addr=v5976+0x4[32] value=v5979[32]
+  addr=v5976[32] value=v5977[32]
 
 0x80485c8:leave  
 registers:
-  eax    = v5981[32]
-  ebx    = v5983[32]
-  esp    = v5985+0x4[32]
-  ebp    = v5986[32]
+  eax    = v5977[32]
+  ebx    = v5979[32]
+  esp    = v5981+0x4[32]
+  ebp    = v5982[32]
   eip    = 0x80485c9[32]
 memory:
-  addr=v5985[32] value=v5986[32]
-  addr=v5980+0x4[32] value=v5983[32]
-  addr=v5980[32] value=v5981[32]
+  addr=v5981[32] value=v5982[32]
+  addr=v5976+0x4[32] value=v5979[32]
+  addr=v5976[32] value=v5977[32]
 
 0x80485c9:ret    
 registers:
-  eax    = v5981[32]
-  ebx    = v5983[32]
-  esp    = v5985+0x8[32]
-  ebp    = v5986[32]
-  eip    = v6048[32]
+  eax    = v5977[32]
+  ebx    = v5979[32]
+  esp    = v5981+0x8[32]
+  ebp    = v5982[32]
+  eip    = v6044[32]
 memory:
-  addr=v5985+0x4[32] value=v6048[32]
-  addr=v5985[32] value=v5986[32]
-  addr=v5980+0x4[32] value=v5983[32]
-  addr=v5980[32] value=v5981[32]
+  addr=v5981+0x4[32] value=v6044[32]
+  addr=v5981[32] value=v5982[32]
+  addr=v5976+0x4[32] value=v5979[32]
+  addr=v5976[32] value=v5977[32]
 analyzed headers: 1

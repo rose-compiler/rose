@@ -13,6 +13,7 @@
 #include <cctype>
 
 using namespace std;
+using namespace rose;
 using namespace VirtualBinCFG;
 
 #include "../RoseBin_FlowAnalysis.h"
