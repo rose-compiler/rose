@@ -59,14 +59,6 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libLoopProcessing.la
 
-# DQ (2/9/2014): This code does not compile using GNU g++ version 4.7 and later compilers.
-# This requires more investigation to decide on a fix, but we might eliminate 
-# this code in favor of more recent analysis work so it might not be work fixing).
-# libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
-if ROSE_USING_GCC_VERSION_LATER_4_6
-libLoopProcessing_la_SOURCES=\
-	$(mptlpDriver_la_sources) 
-else
 libLoopProcessing_la_SOURCES=\
 	$(mptlpDepInfo_la_sources) \
 	$(mptlpDepGraph_la_sources) \
@@ -75,7 +67,6 @@ libLoopProcessing_la_SOURCES=\
 	$(mptlpSlicing_la_sources) \
 	$(mptlpDriver_la_sources) \
 	$(mptlpPrepostTransformation_la_sources)
-endif
 
 include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \

@@ -90,23 +90,6 @@ noinst_LTLIBRARIES=\
 
 ##################################################################
 
-# DQ (2/9/2014): This code does not compile using GNU g++ version 4.7 and later compilers.
-# This requires more investigation to decide on a fix, but we might eliminate 
-# this code in favor of more recent analysis work so it might not be work fixing).
-# libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
-if ROSE_USING_GCC_VERSION_LATER_4_6
-libprogramAnalysis_la_SOURCES=\
-	$(mpaCallGraphAnalysis_la_sources) \
-	$(mpaCFG_la_sources) \
-	$(mpaVirtualFunctionAnalysis_la_sources) \
-	$(mpaDefUseAnalysis_la_sources) \
-	$(mpaGraphAnalysis_la_sources) \
-	$(mpaGenericDataflow_la_sources) \
-	$(mpaOAWrap_la_sources) \
-	$(mpaPointerAnal_la_sources) \
-	$(mpaSideEffectAnalysis_la_sources) \
-	$(mpaVariableRenaming_la_sources)
-else
 libprogramAnalysis_la_SOURCES=\
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
@@ -121,7 +104,6 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaStaticInterproceduralSlicing_la_sources) \
 	$(mpaValuePropagation_la_sources) \
 	$(mpaVariableRenaming_la_sources)
-endif
 
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
