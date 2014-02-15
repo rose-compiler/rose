@@ -1,5 +1,8 @@
-#include <linux/types.h>
+// #include <linux/types.h>
 // #include <stdio.h>
+
+// DQ (2/14/2014): Required for access to uint32_t on Rhel6 systems.
+#include <stdint.h>
 
 static inline void
 test_cpuid_new(uint32_t i, uint32_t *buf)

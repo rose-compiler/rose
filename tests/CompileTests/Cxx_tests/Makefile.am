@@ -65,6 +65,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_05.C \
    test2014_06.C
 
+# Note that these will not compile with the GNU 4.7 header files.
+# It might be a boost issue.  The error is always the same.
+# test2013_234.C
+# test2013_235.C
+# test2013_240.C
+# test2013_241.C
+# test2013_242.C
+# test2013_246.C
+
 # Current problem test codes:
 #  test2013_262.C 
 #  test2013_263.C 

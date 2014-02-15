@@ -680,6 +680,14 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // ROSE_ASSERT(false);
                     break;
                   }
+
+            // DQ (2/10/2014): Added this case to avoid compiler warning (I think there is nothing to do here).
+               case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+                 // printf ("Error: resetParentPointersInTemplateArgumentList() SgTemplateArgument::start_of_pack_expansion_argument case not implemented \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
              }
 
        // Increment to next template argument

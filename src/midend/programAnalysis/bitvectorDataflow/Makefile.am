@@ -7,15 +7,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 noinst_LTLIBRARIES = libbitvectorDataflow.la
 
-# DQ (2/9/2014): This code does not compile using GNU g++ version 4.7 and later compilers.
-# This requires more investigation to decide on a fix, but we might eliminate 
-# this code in favor of more recent analysis work so it might not be work fixing).
-# libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
-if ROSE_USING_GCC_VERSION_LATER_4_6
-  libbitvectorDataflow_la_SOURCES = 
-else
-  libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
-endif
+libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
 
 #libdataflowAnalysisSources = DataFlowAnalysis.C  ReachingDefinition.C
 

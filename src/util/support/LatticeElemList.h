@@ -33,12 +33,12 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
      T item = _item;
      for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; ) {
         DoublyLinkedEntryWrap<T>* tmp = e;
-        e = Next(e);
+        e = this->Next(e);
         T& d = tmp->GetEntry();
         T result;
         if (Merge != 0 && Merge->MergeElem(d, item, result))  {
           if (result != d)  {
-             Delete(tmp);
+             this->Delete(tmp);
              mod = true;
              if (!Merge->IsTop(result))
                 item = result;
@@ -54,7 +54,7 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
         }
     }
     if (add)  {
-       AppendLast(item);
+       this->AppendLast(item);
        mod = true;
     }
     return mod;
@@ -62,11 +62,11 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
 
   void UpdateElem( bool (*Update)(T & info) )
   {
-    for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; e = Next(e)) {
+    for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; e = this->Next(e)) {
        T& d = e->GetEntry();
        if (! Update(d)) {
-          DoublyLinkedEntryWrap<T> *tmp = Prev(e);
-          Delete(e);
+          DoublyLinkedEntryWrap<T> *tmp = this->Prev(e);
+          this->Delete(e);
           e = (tmp == 0)? First() : tmp;
        }
     }

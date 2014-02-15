@@ -9061,7 +9061,8 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
   // DQ (9/28/2012): Added that the base type could be an array (see test2012_03.c (C test code)).
   // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
   // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
-     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type))
+  // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type))
+     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type) && !isSgModifierType(base_type))
         {
           printf("ERROR: Base type of restrict type must be on a pointer or reference or array or typedef type: base_type = %p = %s \n",base_type,base_type->class_name().c_str());
           printf ("  --- generate_type_list() = %s \n",generate_type_list(base_type).c_str());

@@ -14,6 +14,7 @@ libSDG_la_DEPENDENCIES =
 # libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
 if ROSE_USING_GCC_VERSION_LATER_4_6
   libSDG_la_SOURCES = 
+# libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
 else
   libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
 endif

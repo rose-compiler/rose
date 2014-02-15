@@ -1,4 +1,13 @@
+// DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
 #include <linux/types.h>
+
+// DQ (2/14/2014): Required for access to uint32_t on Rhel6 systems.
+#include <stdint.h>
+
+// DQ (2/14/2014): Required for access to u_char on Rhel6 systems.
+#include <sys/types.h>
+
+// This is at least what one would expect to be required!
 #include <stdio.h>
 
 #define test_strcmp(s1, s2)  strcmp((const char *) s1, (const char *) s2)
