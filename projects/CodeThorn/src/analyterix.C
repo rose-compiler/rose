@@ -200,10 +200,60 @@ static VarName getVarName(SgNode* node);
 NodeVec getAllUsesForDef(const VarName& var, int num);
 */
 
-void generateRoseRDDotFile2(VariableRenaming* varRen,string filename) {
+
+SgNode* normalizeAstPointer(SgNode* node) {
+  if(isSgExprStatement(node))
+	node=SgNodeHelper::getExprStmtChild(node);
+  if(SgInitializedName* initName=isSgInitializedName(node))
+	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(initName->get_parent()))
+	  node=varDecl;
+  return node;
+}
+SgNode* normalizeAstPointer2(SgNode* node) {
+  SgNode* node0=node;
+  while(1) {
+	node=normalizeAstPointer(node);
+	if(isSgReturnStmt(node)||isSgCastExp(node))
+	  node=SgNodeHelper::getFirstChild(node);
+	if(node0==node)
+	  break;
+	else
+	  node0=node;
+  }
+  return node;
+}
+
+// errors in rose-RD analysis:
+// 1) int a; int b=a; // b=a is not detected as initialization (because a has no def, but better would bespecial init (e.g. '?') for a)
+//    this loses information that a variable may not be initialized
+// 2) global variables are not represented properly (instead pointer to SgFunctionDefinition is stored)
+void generateRoseRDDotFile2(Labeler* labeler, VariableRenaming* varRen,string filename) {
   ofstream myfile;
   myfile.open(filename.c_str());
   myfile<<"digraph RD1 {"<<endl;
+
+  for(Labeler::iterator i=labeler->begin();i!=labeler->end();++i) {
+	SgNode* node=labeler->getNode(*i);
+	node=normalizeAstPointer2(node);
+	if(!isSgFunctionDeclaration(node)&&!isSgFunctionDefinition(node)&&!isSgBasicBlock(node)&&!isSgWhileStmt(node)&&!isSgForStatement(node)) {
+	  myfile<<"// ---------------------------------------------------------"<<endl;
+	  myfile<<"N"<<node<<"[label=\""<<node->class_name()<<"::"<<node->unparseToString()<<"\"];"<<endl;
+	  VariableRenaming::NumNodeRenameTable useTable=varRen->getUsesAtNode(node);
+	  for(VariableRenaming::NumNodeRenameTable::iterator j=useTable.begin();j!=useTable.end();++j) {
+		VariableRenaming::VarName varName=(*j).first;
+		VariableRenaming::NumNodeRenameEntry numNodeRenameEntry=(*j).second;
+		for(VariableRenaming::NumNodeRenameEntry::iterator k=numNodeRenameEntry.begin();k!=numNodeRenameEntry.end();++k) {
+		  int renNum=(*k).first;
+		  SgNode* renNode=(*k).second;
+		  renNode=normalizeAstPointer2(renNode); // required to get the variable declaration instead of only the initialized name
+		  myfile<<"N"<<node<<" -> "<<"N"<<renNode<<"[label=\""<<varRen->keyToString(varName)<<"-"<<renNum <<"\"];"<<endl;
+		  // the following name label is only required when a non-labeled node is referenced by the RD analysis
+		  myfile<<"N"<<renNode<<"[label=\""<<renNode->class_name()<<"::"<<renNode->unparseToString()<<"\"];"<<endl;
+		}
+	  }
+	}
+  }
+#if 0
   std::cout << "Propagated Def Table:" << endl;
   VariableRenaming::DefUseTable& defTable=varRen->getPropDefTable();
     BOOST_FOREACH(VariableRenaming::DefUseTable::value_type& node, defTable)
@@ -223,6 +273,7 @@ void generateRoseRDDotFile2(VariableRenaming* varRen,string filename) {
             }
         }
     }
+#endif
 	myfile<<"}"<<endl;
 	myfile.close();
 }
@@ -379,7 +430,7 @@ int main(int argc, char* argv[]) {
       varRen.toFilteredDOT("rose-rd1.dot");
 	  //      varRen.printOriginalDefTable();
       //varRen.printRenameTable();
-	  generateRoseRDDotFile(&varRen,"rose-rd2.dot");
+	  generateRoseRDDotFile2(labeler,&varRen,"rose-rd2.dot");
   }
   cout<< "STATUS: finished."<<endl;
 

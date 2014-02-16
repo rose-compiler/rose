@@ -18,15 +18,22 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 	if (definitions.size() > 1)
 	{
 		//TODO: We don't support resolving multiple definitions yet.
+  	    ROSE_ASSERT("Error: Variable with more than one RD. Not supported by Backstroke.");
 		return results;
 	}
 
-        // MS:
-        //	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
-        if(definitions.size()==0) {
-          std::cout<<"WARNING: variable without RDs."<<std::endl;
-          return results; // return empty vector
-        }
+	// MS:
+	//	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
+	if(definitions.size()==0) {
+	  //	  std::cout<<"WARNING: variable without RDs."<<std::endl;
+	  // MS: note that: typedef std::vector<SgInitializedName*> VarName (!)
+	  ROSE_ASSERT(destroyedVarName.size()==1);
+	  printf("WARNING: The reaching definition for \"%s\" : is empty\n", VariableRenaming::keyToString(destroyedVarName).c_str());
+	  SgExpression* workaroundExp=destroyedVarName[0]->get_initializer();
+	  ROSE_ASSERT(workaroundExp);
+	  //results.push_back(workaroundExp);
+	  return results; // return empty vector
+	}
 
 	SgNode* reachingDefinition = definitions.begin()->second;
 
