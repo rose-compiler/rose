@@ -2592,6 +2592,15 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          break;
                        }
 
+                 // DQ (2/16/2014): The SystemC example (in systemc_tests) demonstrates where this case must be handled.
+                 // I think it should be the scope of the SgTypedefDeclaration.
+                    case V_SgTypedefDeclaration:
+                       {
+                         SgTypedefDeclaration* declaration = isSgTypedefDeclaration(parentOfFunctionDeclaration);
+                         currentScope = declaration->get_scope();
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
