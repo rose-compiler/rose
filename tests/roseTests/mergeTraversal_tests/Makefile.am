@@ -19,7 +19,7 @@ traversalArray1.passed: input_traversalArray.C traversalArray
 	@$(RTH_RUN) \
 		DISABLED="not tested in original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $<" \
+		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # Pick a random large file...
@@ -28,7 +28,7 @@ traversalArray2.passed: $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C trave
 	@$(RTH_RUN) \
 		DISABLED="not tested in original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $<" \
+		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------

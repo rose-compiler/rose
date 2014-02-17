@@ -4498,7 +4498,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Disassembler::disassembleInterpretation(interps[i]);
+            Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 
@@ -4553,7 +4553,7 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
     } else {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Disassembler::disassembleInterpretation(interps[i]);
+            Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 

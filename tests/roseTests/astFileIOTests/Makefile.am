@@ -47,7 +47,7 @@ $(Cxx_binaries): %.binary: $(Cxx_directory)/% ../../testAstFileIO
 	@$(RTH_RUN) \
 		TITLE="../../testAstFileIO $(notdir $<) [$@]" \
 		FLAGS="$(ROSE_FLAGS) -I$(Cxx_directory)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT=$@ \
 		$(srcdir)/testAstFileIO.conf $@.passed
 EXTRA_TEST_TARGETS += $(addsuffix .passed, $(Cxx_binaries))
@@ -59,7 +59,7 @@ $(local_binaries): %.binary: % ../../testAstFileIO
 	@$(RTH_RUN) \
 		TITLE="../../testAstFileIO $(notdir $<) [$@]" \
 		FLAGS="$(ROSE_FLAGS) -I." \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT=$@ \
 		$(srcdir)/testAstFileIO.conf $@.passed
 EXTRA_TEST_TARGETS += $(addsuffix .passed, $(local_binaries))

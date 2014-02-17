@@ -42,15 +42,24 @@ case6:	mov [eax], ebx
 case7:	mov eax, [ebx]
 	je end
 
+	;; Is repeated logical right shift simplified?
+case8:
+	shr eax, 10		;eax is originally an unknown value
+	shr eax, 10
+	shr eax, 10
+	shr eax, 2		;eax should be zero after this
+	mov eax, ebx		;so the predicate isn't opaque
+	je end
+
 	;; XOR of a register with itself is an idiom for clearing the register. The result should not
 	;; depend on the operands
-case8:  mov eax, 1
+case9:  mov eax, 1
 	xor eax, eax
 	neg ecx			;only here so next branch is unknown
 	je end
 
 	;; Pushing constants onto the stack
-case9:	push 3
+case10:	push 3
 	mov eax, 7
 	push eax
 	je end

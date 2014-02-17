@@ -460,6 +460,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_87.c \
      test2014_88.c \
      test2014_89.c \
+     test2014_91.c \
+     test2014_92.c \
+     test2014_93.c \
+     test2014_94.c \
+     test2014_95.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -484,6 +489,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 #     test2014_73.c  (example of anonymous union in an initializer)
 #     test2014_74.c  (another example similar to test2014_73.c)
 #     test2014_75.c  (incomplete code from application example, will not compile with gcc).
+#     test2014_90.c  (asm command that is incomplete -- the version built using CPP is in test2014_91.c).
 
 
 # DQ (9/9/2013): This is a problem for the new block support.
@@ -737,6 +743,9 @@ test_tokenMapping:
 test_gnu_S_option:
 	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/CompileTests/C_tests/test2014_41.c
 
+test_link_using_alias_attribute: $(testTranslator)
+	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -789,6 +798,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_link_using_alias_attribute
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
