@@ -286,12 +286,41 @@ for (int k = 0; k < stack.length; k++) {
         return main;
     }
 
-// TODO: Remove this !
-static int totalUnits = 0;
+    // TODO: Remove this !
+    static int totalUnits = 0;
+    static Runtime runtime = Runtime.getRuntime();
+    static long r1, r2, f1, f2;
+    
+    public static void startJava() {
+        System.gc();
+
+        r1 = runtime.totalMemory();
+        f1 = runtime.freeMemory();
+    }
+    
+    public static void endJava(ArrayList<CompilationUnitDeclaration> units) {
+        r2 = runtime.totalMemory();
+        f2 = runtime.freeMemory();
+        int size = units.size();
+        System.out.println();
+        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");    
+        System.out.println();
+        for (CompilationUnitDeclaration unit : units) {
+            System.out.println("   " + new String(unit.getFileName()));
+        }
+        System.out.println();
+        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+        System.out.println("**** Total Number of Units Processed: " + totalUnits);
+        System.out.println();
+    }
+
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
 
+    	startJava();
+    	
         assert(! processedFiles.contains(args[args.length - 1]));
 
         // Filter out ROSE specific options.
@@ -312,6 +341,7 @@ static int totalUnits = 0;
 //        int maxUnits = main.getCompilationUnits().length;
         
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+        ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
         try {
             if (verboseLevel > 2)
                 System.out.println("test 7 ...");
@@ -326,7 +356,6 @@ static int totalUnits = 0;
             // maxUnits. To iterate over all units, including the ones that are pulled 
             // in by closure, iterate up to batchCompiler.totalUnits.
             //
-            ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert(unit != null);
@@ -354,15 +383,15 @@ static int totalUnits = 0;
                 }
             }
 
+            totalUnits += units.size();
 // TODO: Remove this !
-
-totalUnits += units.size();
+/*
 //System.out.println("MaxUnits = " + maxUnits);
 System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");    
 for (CompilationUnitDeclaration unit : units) {
 System.out.println("   " + new String(unit.getFileName()));
 }
-
+*/
             //
             //
             //
@@ -406,6 +435,8 @@ System.out.println("   " + new String(unit.getFileName()));
 
         JavaParser.cactionCompilationUnitListEnd();
 
+        endJava(units);
+        
         if (verboseLevel > 2)
             System.out.println("Done compiling");
     }

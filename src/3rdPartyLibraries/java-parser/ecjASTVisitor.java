@@ -53,8 +53,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             return " MessageSend: " + javaParserSupport.getMethodName(((MessageSend) node).binding) + "( ... )";
         else if (node instanceof MethodDeclaration) // && (! (node instanceof AnnotationMethodDeclaration)))
             return " MethodDeclaration: " + javaParserSupport.getMethodName(((MethodDeclaration) node).binding) + "(***)";
-        else if (node instanceof SingleNameReference)
-            return " SingleNameReference: " + new String(((SingleNameReference) node).token);
+        else if (node instanceof NameReference)
+            return node.getClass().getName() + ": " +  ((NameReference) node).print(0, new StringBuffer()).toString();
+        else if (node instanceof TypeReference)
+            return node.getClass().getName() + ": " + ((TypeReference) node).print(0, new StringBuffer()).toString();
         return node.getClass().getName();
     }
     
@@ -249,6 +251,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         //
         // Complete the processing of the type parameters, if any.
         //
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             JavaParser.cactionPushTypeParameterScope(package_name,
                                                      typename,
@@ -260,7 +263,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
             JavaParser.cactionPopTypeParameterScope(location);
         }
-
+        */
         JavaParser.cactionTypeDeclaration(package_name,
                                           typename,
                                           (node.annotations == null ? 0 : node.annotations.length),
@@ -1202,12 +1205,14 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                 node.annotations[i].traverse(this, node.scope);
         }
 
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             int typeParametersLength = node.typeParameters.length;
             for (int i = 0; i < typeParametersLength; i++) {
                 node.typeParameters[i].traverse(this, node.scope);
             }
         }
+        */
 
         if (node.arguments != null) {
             int argumentLength = node.arguments.length;
@@ -2109,11 +2114,14 @@ javaParserSupport.getMethodKey(node.binding) +
                 node.annotations[i].traverse(this, node.scope);
         }
 
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             for (int i = 0; i < node.typeParameters.length; i++) {
                 node.typeParameters[i].traverse(this, node.scope);
             }
         }
+        */
+
         /*
         if (node.returnType != null) {
             node.returnType.traverse(this, node.scope);
@@ -3249,7 +3257,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(TypeParameter, BlockScope)");
 
-        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(TypeParameter, BlockScope)");
@@ -3261,7 +3270,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering exit(TypeParameter, BlockScope)");
 
-        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(TypeParameter, BlockScope)");
@@ -3272,7 +3282,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(TypeParameter, ClassScope)");
 
-        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(TypeParameter, ClassScope)");
@@ -3284,7 +3295,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside exit(TypeParameter, ClassScope)");
 
-        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(TypeParameter, ClassScope)");
@@ -3342,6 +3354,7 @@ System.out.flush();
     public boolean enter(Wildcard node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(Wildcard, BlockScope)");
+//System.out.println("Wildcard " + node.print(0, new StringBuffer()).toString());
 
         JavaParser.cactionWildcard(this.unitInfo.createJavaToken(node));
 
@@ -3365,6 +3378,7 @@ System.out.flush();
     public boolean enter(Wildcard node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(Wildcard, ClassScope)");
+//System.out.println("Wildcard " + node.print(0, new StringBuffer()).toString());
 
         JavaParser.cactionWildcard(this.unitInfo.createJavaToken(node));
 

@@ -160,7 +160,9 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_foreach5.java \
      cave3_foreach6.java \
      cave3_foreach7.java \
-     cave3_labelBreak4.java
+     cave3_labelBreak4.java \
+     \
+     InterfaceWithGenericMethod.java
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 

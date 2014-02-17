@@ -992,12 +992,15 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 */
 
-     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
-
      if (mfuncdecl_stmt->get_functionModifier().isJavaInitializer()) { // If this is an initializer block, process it here and return.
-         unparseBasicBlockStmt(mfuncdecl_stmt->get_definition() -> get_body(), info);
+         if (mfuncdecl_stmt -> get_declarationModifier().get_storageModifier().isStatic()) {
+             curprint("static ");
+         }
+         unparseBasicBlockStmt(mfuncdecl_stmt -> get_definition() -> get_body(), info);
          return;
      }
+
+     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
 
      unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 

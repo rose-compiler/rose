@@ -186,8 +186,8 @@ class JavaParser implements Callable<Boolean> {
     public static native void cactionTryStatement(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
     public static native void cactionTryStatementEnd(int numResources, int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
     public static native void cactionCatchBlockEnd(JavaToken jToken);
-    public static native void cactionTypeParameter(String name, JavaToken jToken);
-    public static native void cactionTypeParameterEnd(String name, boolean has_extends, int num_bounds, JavaToken jToken);
+//    public static native void cactionTypeParameter(String name, JavaToken jToken);
+//    public static native void cactionTypeParameterEnd(String name, boolean has_extends, int num_bounds, JavaToken jToken);
     public static native void cactionUnaryExpression(JavaToken jToken);
     public static native void cactionUnaryExpressionEnd(int java_operator_kind, JavaToken jToken);
     public static native void cactionWhileStatement(JavaToken jToken);
@@ -200,9 +200,10 @@ class JavaParser implements Callable<Boolean> {
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);
     public static native void cactionBuildClassSupportStart(String className, String externalName, boolean user_defined_class, boolean is_interface, boolean is_enum, boolean is_anonymous, JavaToken jToken);
     public static native void cactionUpdateClassSupportStart(String class_name, JavaToken jToken);
-    public static native void cactionBuildParameterSupport(String name, JavaToken jToken);
+    public static native void cactionInsertTypeParameter(String name, JavaToken jToken);
+    public static native void cactionBuildTypeParameterSupport(String package_name, String type_name, int method_index, String parameter_name, int num_bounds, JavaToken jToken);
     public static native void cactionUpdatePushMethodParameterScope(String package_name, String typename, JavaToken jToken);
-    public static native void cactionUpdateParameterSupport(String name, int method_index, JavaToken jToken);
+    public static native void cactionUpdateTypeParameterSupport(String name, int method_index, int num_bounds, JavaToken jToken);
     public static native void cactionUpdatePopMethodParameterScope(JavaToken jToken);
     public static native void cactionBuildClassExtendsAndImplementsSupport(int num_type_parameters, boolean has_super_class, int num_interfaces, JavaToken jToken);
     public static native void cactionBuildClassSupportEnd(String className, int num_class_members, JavaToken jToken);

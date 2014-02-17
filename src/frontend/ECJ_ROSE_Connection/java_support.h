@@ -10,6 +10,7 @@ extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
 extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
+extern SgVariableSymbol *lengthSymbol;
 extern SgName java_lang;
 
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
@@ -28,7 +29,7 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
-extern SgPointerType *getUniquePointerType(SgType *, int);
+//extern SgPointerType *getUniquePointerType(SgType *, int);
 extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
@@ -47,6 +48,7 @@ string markAndGetQualifiedTypeName(SgClassType *class_type);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
+string getUnionTypeName(SgJavaUnionType *);
 string getFullyQualifiedTypeName(SgClassType *);
 string getParameters(SgJavaParameterizedType *);
 string getUnqualifiedTypeName(SgJavaParameterizedType *);
@@ -485,7 +487,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 // *********************************************
 
 SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
-SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
+SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName, SgScopeStatement *);
 SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
 SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
 SgJavaPackageDeclaration *findPackageDeclaration(SgName &);
