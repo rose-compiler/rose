@@ -565,6 +565,7 @@ System.out.println("The first field index is: " + first_field_index);
             preprocessClass(type_binding, unit_info);
             String package_name = getPackageName(type_binding),
                    type_name = getTypeName(type_binding);
+//System.out.println("Starting with type " + type_binding.debugName());
             JavaParser.cactionTypeReference(package_name, type_name, unit_info.getDefaultLocation());
             int index;
             for (index = first_type_index + 1; index < node.tokens.length; index++) {
@@ -576,6 +577,7 @@ System.out.println("The first field index is: " + first_field_index);
                     break;
                 }
                 preprocessClass(type_binding, unit_info);
+//System.out.println("Qualifying with type " + type_binding.debugName());
                 JavaParser.cactionQualifiedTypeReference(getPackageName(type_binding), getTypeName(type_binding), unit_info.getDefaultLocation());
             }
             
@@ -1211,9 +1213,40 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
 
         if (method.typeParameters() != null) {
             TypeParameter type_parameters[] = method.typeParameters();
+
+            ReferenceBinding type_binding = method.binding.declaringClass;
+            String package_name = getPackageName(type_binding),
+                   type_name = getTypeName(type_binding);
+            
             for (int i = 0; i < type_parameters.length; i++) {
                 TypeParameter type_parameter = type_parameters[i];
-                JavaParser.cactionBuildParameterSupport(type_parameter.binding.debugName(), (unit_info == null ? default_location : unit_info.createJavaToken(type_parameter)));
+                JavaToken parameter_location = (unit_info == null ? default_location : unit_info.createJavaToken(type_parameter));
+
+                JavaParser.cactionInsertTypeParameter(type_parameter.binding.debugName(), parameter_location);
+            }
+
+            for (int i = 0; i < type_parameters.length; i++) {
+                TypeParameter type_parameter = type_parameters[i];
+                JavaToken parameter_location = (unit_info == null ? default_location : unit_info.createJavaToken(type_parameter));
+                TypeVariableBinding type_variable = type_parameter.binding;
+                
+                if (type_variable.superclass == type_variable.firstBound) {
+                    setupClass(type_variable.superclass, unit_info);
+                    generateAndPushType(type_variable.superclass, unit_info, parameter_location);
+                }
+                if (type_variable.superInterfaces != null) {
+                    for (int k = 0, length = type_variable.superInterfaces.length; k < length; k++) {
+                        setupClass(type_variable.superInterfaces[k], unit_info);
+                        generateAndPushType(type_variable.superInterfaces[k], unit_info, parameter_location);
+                    }
+                }
+                
+                JavaParser.cactionBuildTypeParameterSupport(package_name,
+                                                            type_name,
+                                                            method_index,
+                                                            type_parameter.binding.debugName(),
+                                                            type_variable.boundsCount(),
+                                                            parameter_location);
             }
         }
     
@@ -1284,22 +1317,39 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
         //
         TypeVariableBinding type_variables[] = binding.typeVariables();
         if (type_variables != null) {
+            String package_name = getPackageName(binding),
+                   type_name = getTypeName(binding);
+
             for (int i = 0; i < type_variables.length; i++) {
                 TypeVariableBinding type_variable = type_variables[i];
+                String type_parameter_name = new String(type_variable.sourceName);
+                JavaParser.cactionInsertTypeParameter(type_parameter_name, location);
+            }
+            
+            for (int i = 0; i < type_variables.length; i++) {
+                TypeVariableBinding type_variable = type_variables[i];
+                String type_parameter_name = new String(type_variable.sourceName);
 
-                if (type_variable.superclass != null) {
+                if (type_variable.superclass == type_variable.firstBound) {
                     setupClass(type_variable.superclass, unit_info);
+                    generateAndPushType(type_variable.superclass, unit_info, location);
                 }
                 if (type_variable.superInterfaces != null) {
                     for (int k = 0, length = type_variable.superInterfaces.length; k < length; k++) {
                         setupClass(type_variable.superInterfaces[k], unit_info);
+                        generateAndPushType(type_variable.superInterfaces[k], unit_info, location);
                     }
                 }
 
-                String type_parameter_name = new String(type_variable.sourceName);
                 if (verboseLevel > 2)
                     System.out.println("Type Parameter Support added for " + type_parameter_name);         
-                JavaParser.cactionBuildParameterSupport(type_parameter_name, location);
+
+                JavaParser.cactionBuildTypeParameterSupport(package_name,
+                                                            type_name,
+                                                            -1, // method index
+                                                            type_parameter_name,
+                                                            type_variable.boundsCount(),
+                                                            location);
             }
         }
 
@@ -1458,9 +1508,37 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
 
                 TypeVariableBinding method_type_variables[] = method_binding.typeVariables;
                 if (method_type_variables != null) {
+                    ReferenceBinding type_binding = method_binding.declaringClass;
+                    String package_name = getPackageName(type_binding),
+                           type_name = getTypeName(type_binding);
+
                     for (int k = 0; k < method_type_variables.length; k++) {
                         TypeVariableBinding method_type_variable = method_type_variables[k];
-                        JavaParser.cactionBuildParameterSupport(new String(method_type_variable.sourceName), location);
+                        String type_parameter_name = new String(method_type_variable.sourceName);
+                        JavaParser.cactionInsertTypeParameter(type_parameter_name, location);
+                    }
+                        
+                    for (int k = 0; k < method_type_variables.length; k++) {
+                        TypeVariableBinding method_type_variable = method_type_variables[k];                        
+
+                        if (method_type_variable.superclass == method_type_variable.firstBound) {
+                            setupClass(method_type_variable.superclass, unit_info);
+                            generateAndPushType(method_type_variable.superclass, unit_info, location);
+                        }
+                        if (method_type_variable.superInterfaces != null) {
+                            for (int j = 0, length = method_type_variable.superInterfaces.length; j < length; j++) {
+                                setupClass(method_type_variable.superInterfaces[j], unit_info);
+                                generateAndPushType(method_type_variable.superInterfaces[j], unit_info, location);
+                            }
+                        }
+
+                        String type_parameter_name = new String(method_type_variable.sourceName);
+                        JavaParser.cactionBuildTypeParameterSupport(package_name,
+                                                                    type_name,
+                                                                    method_index,
+                                                                    type_parameter_name,
+                                                                    method_type_variable.boundsCount(),
+                                                                    location);
                     }
                 }
             
@@ -1572,26 +1650,40 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
         //
         TypeParameter parameters[] = node.typeParameters;
         if (parameters != null) {
-            SourceTypeBinding binding = node.binding;
-            TypeVariableBinding type_variables[] = binding.typeVariables();
-            if (type_variables != null) {
-                for (int i = 0; i < type_variables.length; i++) {
-                    TypeVariableBinding type_variable = type_variables[i];
-                     
-                    if (type_variable.superclass != null) {
-                        setupClass(type_variable.superclass, unit_info);
-                    }
-                    if (type_variable.superInterfaces != null) {
-                        for (int k = 0, length = type_variable.superInterfaces.length; k < length; k++) {
-                            setupClass(type_variable.superInterfaces[k], unit_info);
-                        }
-                    }
-                }
-            }
-            
+            TypeBinding enclosing_binding = (TypeBinding) node.binding;
+            String package_name = getPackageName(enclosing_binding),
+                   type_name = getTypeName(enclosing_binding);
+
             for (int i = 0; i < parameters.length; i++) {
                 TypeParameter parameter = parameters[i];
-                JavaParser.cactionBuildParameterSupport(new String(parameter.name), location);
+                JavaToken parameter_location = unit_info.createJavaToken(parameter);
+                String parameter_name = new String(parameter.name);
+                JavaParser.cactionInsertTypeParameter(parameter_name, parameter_location);
+            }
+
+            for (int i = 0; i < parameters.length; i++) {
+                TypeParameter parameter = parameters[i];
+                JavaToken parameter_location = unit_info.createJavaToken(parameter);
+                TypeVariableBinding type_variable = parameter.binding;
+            
+                if (type_variable.superclass == type_variable.firstBound) {
+                    setupClass(type_variable.superclass, unit_info);
+                    generateAndPushType(type_variable.superclass, unit_info, parameter_location);
+                }
+                if (type_variable.superInterfaces != null) {
+                    for (int k = 0, length = type_variable.superInterfaces.length; k < length; k++) {
+                        setupClass(type_variable.superInterfaces[k], unit_info);
+                        generateAndPushType(type_variable.superInterfaces[k], unit_info, parameter_location);
+                    }
+                }
+
+                String parameter_name = new String(parameter.name);
+                JavaParser.cactionBuildTypeParameterSupport(package_name,
+                                                            type_name,
+                                                            -1, // method index
+                                                            parameter_name,
+                                                            type_variable.boundsCount(),
+                                                            parameter_location);
             }
         }
 
@@ -1802,7 +1894,24 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
                 if (verboseLevel > 2) {
                     System.out.println("Updating parameter type " + new String(parameter.name));
                 }
-                JavaParser.cactionUpdateParameterSupport(new String(parameter.name), -1 /* method_index*/, unit_info.createJavaToken(parameter));
+                JavaToken parameter_location = unit_info.createJavaToken(parameter);
+
+                TypeVariableBinding type_variable = parameter.binding;
+                if (type_variable.superclass == type_variable.firstBound) {
+                    setupClass(type_variable.superclass, unit_info);
+                    generateAndPushType(type_variable.superclass, unit_info, parameter_location);
+                }
+                if (type_variable.superInterfaces != null) {
+                    for (int k = 0, length = type_variable.superInterfaces.length; k < length; k++) {
+                        setupClass(type_variable.superInterfaces[k], unit_info);
+                        generateAndPushType(type_variable.superInterfaces[k], unit_info, parameter_location);
+                    }
+                }
+
+                JavaParser.cactionUpdateTypeParameterSupport(new String(parameter.name),
+                                                             -1 /* method_index*/, 
+                                                             type_variable.boundsCount(),
+                                                             parameter_location);
             }
         }
 
@@ -1940,8 +2049,25 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
                         TypeParameter type_parameters[] = method.typeParameters();
                         num_type_parameters = type_parameters.length;
                         for (int i = 0; i < num_type_parameters; i++) {
-                            TypeParameter type_parameter = type_parameters[i];
-                            JavaParser.cactionUpdateParameterSupport(type_parameter.binding.debugName(), assigned_index, unit_info.createJavaToken(type_parameter));
+                            TypeParameter type_parameter = type_parameters[i];                   
+                            JavaToken parameter_location = unit_info.createJavaToken(type_parameter);
+
+                            TypeVariableBinding type_variable = type_parameter.binding;
+                            if (type_variable.superclass == type_variable.firstBound) {
+                                setupClass(type_variable.superclass, unit_info);
+                                generateAndPushType(type_variable.superclass, unit_info, parameter_location);
+                            }
+                            if (type_variable.superInterfaces != null) {
+                                for (int j = 0, length = type_variable.superInterfaces.length; j < length; j++) {
+                                    setupClass(type_variable.superInterfaces[j], unit_info);
+                                    generateAndPushType(type_variable.superInterfaces[j], unit_info, parameter_location);
+                                }
+                            }
+
+                            JavaParser.cactionUpdateTypeParameterSupport(new String(type_parameter.name),
+                                                                         assigned_index,
+                                                                         type_variable.boundsCount(),
+                                                                         parameter_location);
                         }
                     }
                         
@@ -2143,9 +2269,10 @@ e.printStackTrace();
         }
         else if (type_binding instanceof WildcardBinding) {
             WildcardBinding wildcard_binding = (WildcardBinding) type_binding;
-            
+
+//System.out.println("Wildcard " + wildcard_binding.toString());            
             JavaParser.cactionWildcard(location);
-            
+
             if (! wildcard_binding.isUnboundWildcard()) { // there is a bound!
                 preprocessClass(wildcard_binding.bound, unit_info);
                 generateAndPushType(wildcard_binding.bound, unit_info, location);

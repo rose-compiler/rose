@@ -1863,7 +1863,8 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_class,             /*!< class declaration (default) */
                e_struct,            /*!< struct declaration */
                e_union,             /*!< union declaration */
-               e_template_parameter /*!< type parameter in a template declaration */
+               e_template_parameter, /*!< type parameter in a template declaration */
+               e_java_parameter      /*!< A Java parameter type */
              };
 
           virtual SgName get_qualified_name() const;
