@@ -1702,10 +1702,10 @@ public:
         StackFrame &stack_frame = stack_frames.top();
         if (entered_function) {
             AddressIdMap::const_iterator id_found = entry2id.find(insn->get_address());
-            if (id_found!=entry2id.end()) {
+            if (id_found!=entry2id.end() && 1!=stack_frames.size()) { // ignore top-level call from the test itself
                 ++funcinfo[id_found->second].ncalls;
                 // update dynamic callgraph info
-                if (params.compute_callgraph && stack_frames.size()>1 && (!params.top_callgraph || 2==stack_frames.size())) {
+                if (params.compute_callgraph && (!params.top_callgraph || 2==stack_frames.size())) {
                     AddressIdMap::const_iterator caller_id_found = entry2id.find(stack_frames[1].func->get_entry_va());
                     if (caller_id_found!=entry2id.end())
                         dynamic_cg.call(caller_id_found->second, id_found->second);
@@ -1722,7 +1722,8 @@ public:
                       <<"CloneDetection: in function " <<StringUtility::addrToString(func->get_entry_va()) <<funcname
                       <<" at level " <<stack_frames.size() <<"\n"
                       <<"CloneDetection: stack ptr: " <<StringUtility::addrToString(stack_frame.entry_esp)
-                      <<" - " <<StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32) <<" = " <<StringUtility::addrToString(esp) <<"\n";
+                      <<" - " <<StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32)
+                      <<" = " <<StringUtility::addrToString(esp) <<"\n";
         }
 
         // Decide whether this function is allowed to call (via CALL, JMP, fall-through, etc) other functions.
