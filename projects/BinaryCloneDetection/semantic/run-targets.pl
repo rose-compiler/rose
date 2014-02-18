@@ -288,7 +288,7 @@ sub example8 {
         We need rules for the testing harness to get 10 pairs uniformly at random from:
             X={O0,O1,O2,O3,S3} C={gcc} where S3 is stunnix with gcc O3 as backend.\n\n";
     my @cx = (['stunnix', '3'], cross ['gcc'], [qw/0 1 2 3/]);
-    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    my @constraints = select_random 10, cross \@cx, \@cx;
     return select_tuples $specimens, ['compiler','optim'], @constraints;
 }
 
@@ -323,7 +323,7 @@ sub example11 {
         We need rules for the testing harness to get 10 pairs uniformly at random from:
             C={gcc,icc,llvm} and X={O0,O1,O2,O3,Os} and stunnix compiled with O3\n\n";
     my @cx = cross [qw/gcc icc llvm/], [qw/0 1 2 3 s/];
-    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    my @constraints = select_random 10, cross \@cx, \@cx;
     return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
 
@@ -334,7 +334,7 @@ sub example11 {
 ###############################################################################################################################
 
 # Generate a list of pairs over which to run
-my @pairs = select_random_pairs $max_pairs, example11 \@specimens;
+my @pairs = select_random_pairs $max_pairs, example9 \@specimens;
 
 # Run the analysis for each pair
 for my $pair (@pairs) {
