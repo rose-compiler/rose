@@ -391,6 +391,14 @@ EXTRA_DIST += testCallDetection.ans
 testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
 
+# Test analysis to see whether a function returns a value
+noinst_PROGRAMS += testReturnsValue
+testReturnsValue_SOURCES = testReturnsValue.C
+testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testReturnsValue.passed
+testReturnsValue.passed: $(BINARY_SAMPLES)/buffer2.bin testReturnsValue
+	@$(RTH_RUN) CMD="./testReturnsValue $<" $(TEST_EXIT_STATUS) $@
+
 # Unit tests for use-def (executed created below)
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
