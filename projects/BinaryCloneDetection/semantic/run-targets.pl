@@ -7,13 +7,13 @@ use strict;
 ###############################################################################################################################
 ###############################################################################################################################
 
-my $dry_run = 1;      # Set true if you only want to see what would have been done.
-my $dropdb = 1;       # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 10;   # Maximum number of pairs to run, selected at random.
-my $per_program = 0;  # If true, select $max_pairs on a per program basis rather than over all.
-my $same_program = 1; # If true, then pairs of functions must be the same program (e.g., both "egrep")
-my $symmetric = 1;    # If true, avoid generating pair (a, b) if pair (b, a) was selected.
-my $dbprefix = "as_"; # Prefix to add to each database name
+my $dry_run = 1;        # Set true if you only want to see what would have been done.
+my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
+my $max_pairs = 10;     # Maximum number of specimen pairs pairs to run, selected at random.
+my $per_program = 0;    # If true, select $max_pairs on a per program basis rather than over all.
+my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
+my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
+my $dbprefix = "as_";   # Prefix to add to each database name
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
 my $training_dir = "$ENV{HOME}/GS-CAD/ROSE/CloneDetection/suspects-and-victims";
@@ -55,14 +55,14 @@ sub load_specimens {
     my %compilers = (g=>"gcc", i=>"icc", l=>"llvm", s=>"stunnix");
     open FIND, "-|", "find $dir -type f" or die "find failed";
     while (<FIND>) {
-	# Names look like: .../coreutils-8.5/id/g1/id
-	chomp;
-	my @parts = reverse split "/";
-	next unless @parts >= 4 && $parts[0] eq $parts[2];
-	@parts = splice @parts, 1, 3; # g1 id coreutils-8.5
-	splice @parts, 0, 1, split "", $parts[0], 2;   # g 1 id coreutils-8.5
-	$parts[0] = $compilers{$parts[0]} if exists $compilers{$parts[0]}; # use full compiler name if we have it
-	push @specimens, { filename=>$_, package=>$parts[3], program=>$parts[2], compiler=>$parts[0], optim=>$parts[1] };
+        # Names look like: .../coreutils-8.5/id/g1/id
+        chomp;
+        my @parts = reverse split "/";
+        next unless @parts >= 4 && $parts[0] eq $parts[2];
+        @parts = splice @parts, 1, 3; # g1 id coreutils-8.5
+        splice @parts, 0, 1, split "", $parts[0], 2;   # g 1 id coreutils-8.5
+        $parts[0] = $compilers{$parts[0]} if exists $compilers{$parts[0]}; # use full compiler name if we have it
+        push @specimens, { filename=>$_, package=>$parts[3], program=>$parts[2], compiler=>$parts[0], optim=>$parts[1] };
     }
     close FIND;
     return @specimens;
@@ -72,54 +72,55 @@ sub load_specimens {
 sub print_specimens {
     my @specimens = @_;
     for my $specimen (@specimens) {
-	printf("    %-20s %-16s %7s -O%s %s\n",
-	       $specimen->{package}, $specimen->{program}, $specimen->{compiler}, $specimen->{optim}, $specimen->{filename});
+        printf("    %-20s %-16s %7s -O%s %s\n",
+               $specimen->{package}, $specimen->{program}, $specimen->{compiler}, $specimen->{optim}, $specimen->{filename});
     }
 }
 
-# Select all pairs of functions for which:
+# Select all pairs of specimens for which:
 #  + the predicate returns true
 #  + and for which the program names are the same (if $same_program is true)
 # Optionally omitting pairs that are symmetric duplicates
 sub select_pairs {
     my($specimens, $predicate) = @_;
     my(@pairs,%selected);
-    print "generating function pairs...\n";
+    print "generating specimen pairs...\n";
     for my $specimen1 (@$specimens) {
-	for my $specimen2 (@$specimens) {
-	    if ((!$same_program || ($specimen1->{program} eq $specimen2->{program})) &&
-		&{$predicate}($specimen1, $specimen2)) {
-		# Do not use this pair if we already selected its symmetric counterpart
-		if ($symmetric) {
-		    my $ab = "$specimen1->{filename}:$specimen2->{filename}";
-		    my $ba = "$specimen2->{filename}:$specimen1->{filename}";
-		    next if $selected{$ba};
-		    $selected{$ab} = 1;
-		}
-		push @pairs, [$specimen1, $specimen2];
-	    }
-	}
+        for my $specimen2 (@$specimens) {
+            if ((!$same_program || ($specimen1->{program} eq $specimen2->{program})) &&
+                &{$predicate}($specimen1, $specimen2)) {
+                # Do not use this pair if we already selected its symmetric counterpart
+                if ($symmetric) {
+                    my $ab = "$specimen1->{filename}:$specimen2->{filename}";
+                    my $ba = "$specimen2->{filename}:$specimen1->{filename}";
+                    next if $selected{$ba};
+                    $selected{$ab} = 1;
+                }
+                push @pairs, [$specimen1, $specimen2];
+            }
+        }
     }
-    print "generated ", 0+@pairs, " function pairs", ($symmetric?" pruned by symmetry":""), "\n";
+    print "required a_program = b_program\n" if $same_program;
+    print "eliminated symmetric specimen pair duplicates: (a,b) if (b,a)\n" if $symmetric;
+    print "generated ", 0+@pairs, " specimen pairs\n";
     return @pairs;
 }
 
 # Select pairs of specimens (a, b) such that the ordered tuple created from certain properties of a and b exists
-# in the set @tuples.  Each tuple is a string which is the space-separated list of values for the properties specified by the
-# $keys array reference for both a and b.  For example, if $keys = ['compiler', 'optim'] then the @tuples array should contain
-# strings like "gcc s icc 0", which selects pairs such that a_compiler='gcc' and a_optim='s' and b_compiler='icc' and
-# b_optim='0'.
+# in the set @tuples. For example, if $keys = ['compiler', 'optim'] then the @tuples array should contain
+# array refs like ["gcc", "s", "icc", "0"], which selects pairs such that a_compiler='gcc' and a_optim='s'
+# and b_compiler='icc' and b_optim='0'.
 sub select_tuples {
     my($specimens, $keys, @tuples) = @_;
-    print "Criteria for (", join(", ", @$keys), ") are:\n";
-    print "    $_\n" for sort @tuples;
+    print "Selected ", 0+@tuples, " criteria for (", join(", ", @$keys), "):\n";
+    print "    (", join(", ", @$_), ")\n" for sort @tuples;
     my %tuples;
-    $tuples{$_} = 1 for @tuples;
+    $tuples{join(" ",@$_)} = 1 for @tuples;  # so we can do O(log N) lookups
     return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	my $a_key = join " ", map {$a->{$_}} @$keys;
-	my $b_key = join " ", map {$b->{$_}} @$keys;
-	return $tuples{"$a_key $b_key"};
+        my($a, $b) = @_;
+        my $a_key = join " ", map {$a->{$_}} @$keys;
+        my $b_key = join " ", map {$b->{$_}} @$keys;
+        return $tuples{"$a_key $b_key"};
     }
 }
 
@@ -129,8 +130,8 @@ sub select_random {
     my($n, @array) = @_;
     my @retval;
     while ($n-- > 0 && @array > 0) {
-	my $idx = int rand(scalar @array);
-	push @retval, splice @array, $idx, 1;
+        my $idx = int rand(scalar @array);
+        push @retval, splice @array, $idx, 1;
     }
     return @retval;
 }
@@ -143,9 +144,9 @@ sub select_random_per_program {
     # Partition list of all pairs into lists according to $a->{program}
     my %perprog;
     for my $pair (@pairs) {
-	my $a = $pair->[0];
-	$perprog{$a->{program}} ||= [];
-	push @{$perprog{$a->{program}}}, $pair;
+        my $a = $pair->[0];
+        $perprog{$a->{program}} ||= [];
+        push @{$perprog{$a->{program}}}, $pair;
     }
    
     # Select N randomly from each list
@@ -154,18 +155,18 @@ sub select_random_per_program {
     return @retval;
 }
 
-# Select random pairs of functions.  Selects either $n pairs at random overall, or partitions the set by program name
+# Select random pairs of specimens.  Selects either $n pairs at random overall, or partitions the set by program name
 # and selects $n for each program name.
 sub select_random_pairs {
     my($n, @pairs) = @_;
     if (defined $n) {
-	if ($per_program) {
-	    @pairs = select_random_per_program $n, @pairs;
-	    print "selected up to $n pairs for each program; ", 0+@pairs, " pairs in total\n";
-	} else {
-	    @pairs = select_random $n, @pairs;
-	    print "selected ", 0+@pairs, " pairs at random\n";
-	}
+        if ($per_program) {
+            @pairs = select_random_per_program $n, @pairs;
+            print "selected up to $n specimen pairs for each program; ", 0+@pairs, " pairs in total\n";
+        } else {
+            @pairs = select_random $n, @pairs;
+            print "selected ", 0+@pairs, " specimen pairs at random\n";
+        }
     }
     return @pairs;
 }
@@ -183,6 +184,50 @@ sub run {
     0==system @cmd unless $dry_run;
 }
 
+# Cartesian product of arrays. cross [0 1], [a b] = ([0 a], [0 b], [1 a], [1 b])
+# Members of the operand arrays are either array-refs or other.
+# Any number of arguments are allowed, all of which are arefs
+# Returns an array.
+sub cross {
+    return () unless @_;
+
+    # Rewrite all args to the array-of-arrays format: [[0], [1]]
+    my @args;
+    for my $arg (@_) {
+        die unless 'ARRAY' eq ref $arg;
+        push @args, [ map {'ARRAY' eq ref $_ ? $_ : [$_] } @$arg ];
+    }
+
+    # Do Cartesian product left-to-right
+    my $lhs = shift @args;
+    for my $rhs (@args) {
+        my $tmp = [];
+        for my $a (@$lhs) {
+            for my $b (@$rhs) {
+                push @$tmp, [ @{$a}, @{$b} ];
+            }
+        }
+        $lhs = $tmp;
+    }
+    return @$lhs;
+}
+
+# Given an array of constraint tuples each containing an even number of members, remove those for which the first
+# half of the members are equal to the second half of the members.
+sub eliminate_diagonal {
+    my(@constraints) = @_;
+    print "Eliminated criteria that have the same constraints for both specimens of a pair\n";
+    return grep {
+        my @members = @{$_};
+        my $halflen = @members / 2;
+        my $allsame = 1;
+        for (my $i=0; $i<$halflen && $allsame; ++$i) {
+            $allsame = $members[$i] eq $members[$i+$halflen];
+        }
+        !$allsame;
+    } @constraints;
+}
+
 my @specimens = load_specimens $training_dir;
 print "loaded information for ", 0+@specimens, " specimens.\n";
 
@@ -197,184 +242,89 @@ print "loaded information for ", 0+@specimens, " specimens.\n";
 
 sub example1 {
     my($specimens) = @_;
-    print "\nexample 1: function pairs (a,b) s.t.\n";
-    print "               a_program = b_program\n";
+    print "\nexample 1: all specimen pairs (a,b)\n";
     return select_pairs $specimens, sub {1}
 }
 
 sub example2 {
     my($specimens) = @_;
-    print "\nexample 2: function pairs (a,b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               a_compiler in {gcc, icc} and\n";
-    print "               a_optim in {s, 0} and\n";
-    print "               b_compiler in {gcc, icc} and\n";
-    print "               b_optim in {s, 0}\n";
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	my %want_C = (gcc=>1, icc=>1);
-	my %want_X = ('s'=>'1', '0'=>1);
-	$want_C{$a->{compiler}} && $want_C{$b->{compiler}} && $want_X{$a->{optim}} && $want_X{$b->{optim}};
-    }
+    my @constraints = select_random 10, cross [qw/gcc icc/], [qw/s 0/], [qw/gcc icc/], [qw/s 0/];
+    return select_tuples $specimens, [qw/compiler optim/], @constraints;
 }
 
 sub example3 {
     my($specimens) = @_;
-    print "\nexample 3: function pairs (a,b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               a_optim in {s, 0} and\n";
-    print "               b_optim in {s, 0}\n";
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	my %want_X = ('s'=>1, '0'=>1);
-	$want_X{$a->{optim}} && $want_X{$b->{optim}}
-    }
+    my @constraints = select_random 10, cross [qw/s 0/], [qw/s 0/];
+    return select_tuples $specimens, ['optim'], @constraints;
 }
 
 sub example4 {
     my($specimens) = @_;
-    print "\nexample 4: function pairs (a,b) s.t.\n";
-    print "               a_program = b_program and\n";
+    print "\nexample 4: specimen pairs (a,b) s.t.\n";
     print "               a_compiler != b_compiler\n";
     return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	$a->{compiler} ne $b->{compiler};
+        my($a, $b) = @_;
+        $a->{compiler} ne $b->{compiler};
     }
 }
 
 sub example5 {
     my($specimens) = @_;
-    print "\nexample 5: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
+    print "\nexample 5: specimen pairs (a, b) s.t.\n";
     print "               a_compiler in {gcc, icc} and\n";
     print "               a_optim in {s, 0}\n";
     return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	my %want_C = (gcc=>1, icc=>1);
-	my %want_X = ('s'=>1, '0'=>1);
-	$want_C{$a->{compiler}} && $want_X{$a->{optim}};
+        my($a, $b) = @_;
+        my %want_C = (gcc=>1, icc=>1);
+        my %want_X = ('s'=>1, '0'=>1);
+        $want_C{$a->{compiler}} && $want_X{$a->{optim}};
     }
-}
-
-sub example6 {
-    my($specimens) = @_;
-    print "\nexample 6: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               (a_compiler, a_optim) in CompilerOptimSet and\n";
-    print "               (b_compiler, b_optim) in CompilerOptimSet\n";
-    print "             where CompilerOptimSet is a set of ordered pairs\n";
-    print "             where each pair is a compiler and optimization level.\n";
-    print "             The pairs are selected uniformly at random from the set of all existing pairs.\n";
-    my $npairs = 3;		# number of (compiler,otpim) pairs to randomly select
-    my %all_co;
-    $all_co{"$_->{compiler} $_->{optim}"} = 1 for @specimens; #all distinct compiler/optimizer pairs
-    my %selected_co = map {$_=>1} select_random $npairs, keys %all_co;
-    print "CompilerOptimSet contains:\n";
-    print "   $_\n" for sort keys %selected_co;
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	$selected_co{"$a->{compiler} $a->{optim}"} && $selected_co{"$b->{compiler} $b->{optim}"};
-    }
-}
-
-sub example7 {
-    my($specimens) = @_;
-    print "\nexample 7: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               (a_compiler, a_optim, b_compiler, b_optim) in CompilerOptimPairSet\n";
-    print "             where CompilerOptimPairSet is a set of ordered 4-tuples\n";
-    print "             where each 4-tuple contains two compiler/optimization pairs. The\n";
-    print "             CompilerOptimPairSet is constructed by randomly selecting elements\n";
-    print "             from the Cartesian product of all existing (compiler, optimizer) pairs.\n";
-    my $npairs = 3;		# number of (compiler,otpim) pairs to randomly select
-    my %all_co;
-    $all_co{"$_->{compiler} $_->{optim}"} = 1 for @specimens; # all distinct comipler/optimizer pairs
-    my @selected_4t = select_random $npairs, map {my $p1=$_; map {"$p1 $_"} keys %all_co} keys %all_co;
-    return select_tuples $specimens, ['compiler', 'optim'], @selected_4t;
 }
 
 #Andreas 2014-02-17
-#>     We need rules for the testing harness to get 10 pairs uniformly at
-#>     random from:
-#>       1) X={O0,O1,O2,O3,S3} C={gcc} where S3 is stunnix with gcc O3 as
-#>     backend.
 sub example8 {
     my($specimens) = @_;
-    print "\nexample 8: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               (a_compiler, a_optim) in {(gcc, 0), (gcc, 1), (gcc, 2), (gcc, 3), (stunnix, 3)} and\n";
-    print "               (b_compiler, b_optim) in {(gcc, 0), (gcc, 1), (gcc, 2), (gcc, 3), (stunnix, 3)}\n";
-    my %criteria = ("gcc 0"=>1, "gcc 1"=>1, "gcc 2"=>1, "gcc 2"=>1, "gcc 3"=>1, "stunnix 3"=>1);
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	return $criteria{"$a->{compiler} $a->{optim}"} && $criteria{"$b->{compiler} $b->{optim}"};
-    }
+    print "\nexample 8:
+        We need rules for the testing harness to get 10 pairs uniformly at random from:
+            X={O0,O1,O2,O3,S3} C={gcc} where S3 is stunnix with gcc O3 as backend.\n\n";
+    my @cx = (['stunnix', '3'], cross ['gcc'], [qw/0 1 2 3/]);
+    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    return select_tuples $specimens, ['compiler','optim'], @constraints;
 }
 
-#Andreas 2014-02-17
-#>     We need rules for the testing harness to get 10 pairs uniformly at
-#>     random from:
-#>       2) C={gcc}, and 5 pairs uniformly at random from each of two sets
-#>     (the union ten will be returned):
-#>               I) the first optimization is Os and the other is
-#>     X={O0,O1,O2,O3} 
-#>               II) the first optimization is stunnix O3 and the other is
-#>     X={O0,O1,O2,O3}
-#>Robb: I'm assuming you wanted the C={gcc} inside case I rather than above it since otherwise the
-#>      intersection of {gcc} with {stunnix} in case II would be empty.
 sub example9 {
     my($specimens) = @_;
-    print "\nexample 9: function pairs (a, b) s.t.\n";
-    print "               <see code>\n";
-    my %want_X = ("0"=>1, "1"=>1, "2"=>1, "3"=>1);
-    my @set1 = select_random 5, select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	return $a->{compiler} eq 'gcc' && $b->{compiler} eq 'gcc' && $a->{optim} eq 's' && $want_X{$b->{optim}};
-    };
-    my @set2 = select_random 5, select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	return $a->{compiler} eq 'stunnix' && $b->{compiler} eq 'stunnix' && $a->{optim} eq 's' && $want_X{$b->{optim}};
-    };
-    return (@set1, @set2);
+    print "\nexample 9:
+        We need rules for the testing harness to get 10 pairs uniformly at random from:
+            C={gcc}, and 5 pairs uniformly at random from each of two sets (the union ten will be returned):
+                 I) the first optimization is Os and the other is X={O0,O1,O2,O3} 
+                II) the first optimization is stunnix O3 and the other is X={O0,O1,O2,O3}\n\n";
+    my @constraints1 = select_random 5, cross [['gcc', 's']],     [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
+    my @constraints2 = select_random 5, cross [['stunnix', '3']], [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
+    return (select_tuples($specimens, ['compiler', 'optim'], @constraints1),
+            select_tuples($specimens, ['compiler', 'optim'], @constraints2));
 }
 
 #Andreas 2014-02-17
-#>     We need rules for the testing harness to get 10 pairs uniformly at
-#>     random from:
-#>       3) C={gcc,icc,llvm} and X={O3} 
 sub example10 {
     my($specimens) = @_;
-    print "\nexample 10: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               a_compiler in {gcc, icc, llvm} and\n";
-    print "               b_compiler in {gcc, icc, llvm} and\n";
-    print "               a_optim = b_optim = 3\n";
-    my %want_C = ("gcc"=>1, "icc"=>1, "llvm"=>1);
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	return $want_C{$a->{compiler}} && $a->{optim} eq '3' && $want_C{$b->{compiler}} && $b->{optim} eq '3';
-    }
+    print "\nexample 10:
+        We need rules for the testing harness to get 10 pairs uniformly at random from:
+            C={gcc,icc,llvm} and X={O3}\n\n";
+    my @cx = cross [qw/gcc icc lvm/], ['3'];
+    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
 
 #Andreas 2014-02-17
-#>     We need rules for the testing harness to get 10 pairs uniformly at
-#>     random from:
-#>       4) C={gcc,icc,llvm} and X={O0,O1,O2,O3,Os} and stunnix compiled with O3
 sub example11 {
     my($specimens) = @_;
-    print "\nexample 11: function pairs (a, b) s.t.\n";
-    print "               a_program = b_program and\n";
-    print "               ((a_compiler in {gcc, icc, llvm} and a_optim in {0, 1, 2, 3, s}) or\n";
-    print "                (a_compiler = stunnix and a_optim = 3)) and\n";
-    print "               ((b_compiler in {gcc, icc, llvm} and b_optim in {0, 1, 2, 3, s}) or\n";
-    print "                (b_compiler = stunnix and b_optim = 3))\n";
-    my %want_C = ("gcc"=>1, "icc"=>1, "llvm"=>1);
-    my %want_X = ("0"=>1, "1"=>1, "2"=>1, "3"=>1, "s"=>1);
-    return select_pairs $specimens, sub {
-	my($a, $b) = @_;
-	return (($want_C{$a->{compiler}} && $want_X{$a->{optim}} || ($a->{compiler} eq "stunnix" && $a->{optim} eq "3")) &&
-		($want_C{$b->{compiler}} && $want_X{$b->{optim}} || ($b->{compiler} eq "stunnix" && $b->{optim} eq "3")));
-    }
+    print "\nexample 11:
+        We need rules for the testing harness to get 10 pairs uniformly at random from:
+            C={gcc,icc,llvm} and X={O0,O1,O2,O3,Os} and stunnix compiled with O3\n\n";
+    my @cx = cross [qw/gcc icc llvm/], [qw/0 1 2 3 s/];
+    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
 
 ###############################################################################################################################
