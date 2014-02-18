@@ -9,7 +9,7 @@ use strict;
 
 my $dry_run = 1;        # Set true if you only want to see what would have been done.
 my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 10;     # Maximum number of specimen pairs pairs to run, selected at random.
+my $max_pairs = undef;  # Maximum number of specimen pairs pairs to run, selected at random (or all of them if undefined)
 my $per_program = 0;    # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
 my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
@@ -326,7 +326,7 @@ sub example10 {
     print "\nexample 10:
         We need rules for the testing harness to get 10 pairs uniformly at random from:
             C={gcc,icc,llvm} and X={O3}\n\n";
-    my @cx = cross [qw/gcc icc lvm/], ['3'];
+    my @cx = cross [qw/gcc icc llvm/], ['3'];
     my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
     return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
