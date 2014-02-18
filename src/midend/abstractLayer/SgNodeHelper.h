@@ -44,6 +44,9 @@ namespace SgNodeHelper {
   //! returns filename information of AST fragment in format "line:col". Used for generating readable output
   std::string sourceLineColumnToString(SgNode* node);
 
+  //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
+  vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
+
   /*! computes a list representing the nesting structure of classes (including structs and unions). 
     It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
     and combinations of those. 
