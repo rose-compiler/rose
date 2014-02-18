@@ -9,7 +9,7 @@ use strict;
 
 my $dry_run = 1;        # Set true if you only want to see what would have been done.
 my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 1;     # Maximum number of specimen pairs pairs to run, selected at random.
+my $max_pairs = 10;     # Maximum number of specimen pairs pairs to run, selected at random.
 my $per_program = 0;    # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
 my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
@@ -41,6 +41,13 @@ run_tests_flags='--follow-calls=builtin --timeout=1000000 --coverage=save --call
 func_similarity_worklist_flags=''
 func_similarity_flags=''
 EOF
+
+my $api_configuration = <<'EOF';
+api_similarity_worklist_flags=''
+api_similarity_flags=''
+EOF
+
+
 
 ###############################################################################################################################
 ###############################################################################################################################
@@ -356,7 +363,7 @@ for my $pair (@pairs) {
     run "ln", $b_file, ($a_file.=".2") if $a_file eq $b_file;
 
     # Run the analysis
-    my $config_file = `tempfile`; chomp $config_file;
+    my $config_file = `mktemp`; chomp $config_file;
     open CONFIG, ">", $config_file or die "$config_file: $!\n";
     print CONFIG "dbname='postgresql:///$dbname\n", $configuration;
     close CONFIG;
@@ -364,4 +371,13 @@ for my $pair (@pairs) {
     my($mydir) = $0 =~ /(.*)\//; $mydir ||= ".";
     run "$mydir/run-analysis.sh", "--batch", "--config=$config_file", $a_file, $b_file;
     unlink $config_file;
+
+    my $api_config_file = `mktemp`; chomp $api_config_file;
+    open my $CONFIG, ">", $api_config_file or die "$api_config_file: $!\n";
+    print $CONFIG "dbname='postgresql:///$dbname'\n", $api_configuration;
+    print STDERR "# Configuration file ($api_config_file):\n", `sed 's/^/    /' $api_config_file`;
+    run "$mydir/run-api-similarity.sh", "--batch", "--config=$api_config_file";
+    unlink $api_config_file;
+
+
 }
