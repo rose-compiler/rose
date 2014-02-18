@@ -1,3 +1,6 @@
+// temporary to allow unknown unparsed types
+#define UNKNOWN int
+
 struct Line
 {
 	Line()

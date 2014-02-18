@@ -42,7 +42,3 @@ check-local:
 clean-local:
 	rm -f *.o *.C
 
-test: FORCE
-	@$(MAKE) $(simple_test)
-
-FORCE:

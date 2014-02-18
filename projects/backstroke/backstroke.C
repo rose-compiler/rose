@@ -103,8 +103,6 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.reverseEvent);
 			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.forwardEvent);
 
-
-                        cerr<<"DEBUG: reversed-event-function: "<<inverseEventTuple.reverseEvent->unparseToString()<<endl;
 		}
 
 		output.push_back(processed_event);
@@ -120,7 +118,7 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 		insertHeader("backstrokeRuntime.h", PreprocessingInfo::after, false, globalScope);
 
 		// Fix all variable references here.
-		SageInterface::fixVariableReferences(globalScope);
+		//SageInterface::fixVariableReferences(globalScope);
 	}
 
 	return output;
