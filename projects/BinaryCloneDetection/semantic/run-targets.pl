@@ -7,10 +7,10 @@ use strict;
 ###############################################################################################################################
 ###############################################################################################################################
 
-my $dry_run = 1;        # Set true if you only want to see what would have been done.
+my $dry_run = 0;        # Set true if you only want to see what would have been done.
 my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
 my $max_pairs = 10;     # Maximum number of specimen pairs pairs to run, selected at random.
-my $per_program = 0;    # If true, select $max_pairs on a per program basis rather than over all.
+my $per_program = 1;    # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
 my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
 my $dbprefix = "as_";   # Prefix to add to each database name
@@ -181,8 +181,13 @@ sub select_random_pairs {
 # Generate a database name for a pair of specimens.
 sub database_name {
     my($a, $b) = @_;
-    $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
+    if($same_program){
+      $dbprefix . join "_", $a->{program}, substr($a->{compiler},0,1) . $a->{optim}, substr($b->{compiler},0,1) . $b->{optim};
+    }else{
+      $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
+    }
 }
+
 
 # Run something, but also echo the command. Do nothing if $dry_run is set. Return true on success, false on failure
 sub run {
@@ -307,7 +312,7 @@ sub example9 {
                  I) the first optimization is Os and the other is X={O0,O1,O2,O3} 
                 II) the first optimization is stunnix O3 and the other is X={O0,O1,O2,O3}\n\n";
     my @constraints1 = select_random 5, cross [['gcc', 's']],     [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
-    my @constraints2 = select_random 5, cross [['stunnix', '3']], [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
+    my @constraints2 = select_random 5, cross [['stunnix', '3']], [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3'],['gcc', 's']];
     return (select_tuples($specimens, ['compiler', 'optim'], @constraints1),
             select_tuples($specimens, ['compiler', 'optim'], @constraints2));
 }
