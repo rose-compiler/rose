@@ -746,6 +746,10 @@ test_gnu_S_option:
 test_link_using_alias_attribute: $(testTranslator)
 	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
 
+# DQ (2/17/2014): Added to force test of two week old asm fix for linking that didn't make it out in github.
+test_link_using_asm_symbol_injection: $(testTranslator)
+	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -798,6 +802,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_link_using_asm_symbol_injection
 	@$(MAKE) test_link_using_alias_attribute
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
