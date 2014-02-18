@@ -102,6 +102,20 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
 
 /*! 
   * \author Markus Schordan
+  * \date 2014.
+ */
+vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
+  vector<SgVarRefExp*> varVec;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgVarRefExp* v=isSgVarRefExp(node)) {
+	  varVec.push_back(v);
+	}
+  }
+  return varVec;
+}
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 size_t SgNodeHelper::determineChildIndex(SgNode* child) {
