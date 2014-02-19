@@ -1,5 +1,7 @@
 // DQ (2/10/2014): I have fixed boost filesystem 3 issues so we now want to avoid specifying this explicitly if possible.
-// #define BOOST_FILESYSTEM_VERSION 2
+#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+  #define BOOST_FILESYSTEM_VERSION 2
+#endif
 
 #include "rose_config.h"
 
