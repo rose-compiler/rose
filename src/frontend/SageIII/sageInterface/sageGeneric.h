@@ -1664,22 +1664,10 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmRegisterReferenceExpression>(*n));
         break;
 
-      case V_SgAsmByteValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmByteValueExpression>(*n));
+      case V_SgAsmIntegerValueExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerValueExpression>(*n));
         break;
-
-      case V_SgAsmWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmWordValueExpression>(*n));
-        break;
-
-      case V_SgAsmDoubleWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDoubleWordValueExpression>(*n));
-        break;
-
-      case V_SgAsmQuadWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmQuadWordValueExpression>(*n));
-        break;
-
+    
       case V_SgAsmSingleFloatValueExpression:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmSingleFloatValueExpression>(*n));
         break;

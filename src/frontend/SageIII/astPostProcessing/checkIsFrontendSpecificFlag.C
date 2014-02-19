@@ -2,6 +2,8 @@
 #include "checkIsFrontendSpecificFlag.h"
 #include "stringify.h"
 
+using namespace rose;
+
 // documented in header file
 size_t
 checkIsFrontendSpecificFlag(SgNode *ast)

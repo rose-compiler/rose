@@ -210,16 +210,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Disassemble a file containing bare instructions
-noinst_PROGRAMS += disassembleBuffer
-disassembleBuffer_SOURCES = disassembleBuffer.C
-disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += disassembleBuffer.passed
-EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
-disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
-	@$(RTH_RUN) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
-
-
 noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
@@ -400,6 +390,14 @@ TEST_TARGETS += testCallDetection.passed
 EXTRA_DIST += testCallDetection.ans
 testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
+
+# Test analysis to see whether a function returns a value
+noinst_PROGRAMS += testReturnsValue
+testReturnsValue_SOURCES = testReturnsValue.C
+testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testReturnsValue.passed
+testReturnsValue.passed: $(BINARY_SAMPLES)/buffer2.bin testReturnsValue
+	@$(RTH_RUN) CMD="./testReturnsValue $<" $(TEST_EXIT_STATUS) $@
 
 # Unit tests for use-def (executed created below)
 TEST_TARGETS += usedef.passed
@@ -842,11 +840,7 @@ demo_disassemble: disassemble demo_yicesSemanticsLib
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
-demo_disassembleBuffer: disassembleBuffer demo_disassemble
-	@echo; echo; echo "Demo for $<"; echo
-	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
-
-demo_testAssembler: testAssembler demo_disassembleBuffer
+demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 

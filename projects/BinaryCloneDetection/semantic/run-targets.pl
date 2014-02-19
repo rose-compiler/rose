@@ -9,11 +9,19 @@ use strict;
 
 my $dry_run = 0;        # Set true if you only want to see what would have been done.
 my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
+<<<<<<< HEAD
 my $max_pairs = 20;     # Maximum number of specimen pairs pairs to run, selected at random.
 my $per_program = 1;    # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
 my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
 my $dbprefix = "example10_";   # Prefix to add to each database name
+=======
+my $max_pairs = undef;  # Maximum number of specimen pairs pairs to run, selected at random (or all of them if undefined)
+my $per_program = 0;    # If true, select $max_pairs on a per program basis rather than over all.
+my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
+my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
+my $dbprefix = "as";    # Prefix to add to each database name
+>>>>>>> b2197eaa90e31bc057b41c066b118716b0b65d87
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
 my $training_dir = "$ENV{HOME}/binary-runs/suspects-and-victims-subset/test-set/";
@@ -24,7 +32,8 @@ my $training_dir = "$ENV{HOME}/binary-runs/suspects-and-victims-subset/test-set/
 #   filename => name of the file in the file system
 #   package  => name of the package, as in "grep-2.6.3"
 #   program  => name of the program, as in "egrep"
-#   compiler => as in "gcc", "icc", "llvm"
+#   compiler => as in "gcc", "icc", "llvm", "stunnix"
+#   comp     => as in "g", "i", "l", "s";
 #   optim    => optimization level, as in "s", "0", "3", etc.
 #
 # See the examples below that return predicates.
@@ -59,7 +68,7 @@ EOF
 sub load_specimens {
     my($dir) = @_;
     my @specimens;
-    my %compilers = (g=>"gcc", i=>"icc", l=>"llvm", s=>"stunnix");
+    my %compilers = (g=>"gcc", i=>"icc", l=>"llvm", "s"=>"stunnix");
     open FIND, "-|", "find $dir -type f" or die "find failed";
     while (<FIND>) {
         # Names look like: .../coreutils-8.5/id/g1/id
@@ -68,8 +77,9 @@ sub load_specimens {
         next unless @parts >= 4 && $parts[0] eq $parts[2];
         @parts = splice @parts, 1, 3; # g1 id coreutils-8.5
         splice @parts, 0, 1, split "", $parts[0], 2;   # g 1 id coreutils-8.5
-        $parts[0] = $compilers{$parts[0]} if exists $compilers{$parts[0]}; # use full compiler name if we have it
-        push @specimens, { filename=>$_, package=>$parts[3], program=>$parts[2], compiler=>$parts[0], optim=>$parts[1] };
+	push @parts, $compilers{$parts[0]} || $parts[0]; # g 1 id coreutils-8.5 gcc
+        push @specimens, { filename=>$_, package=>$parts[3], program=>$parts[2], comp=>$parts[0], optim=>$parts[1],
+			   compiler=>$parts[4] };
     }
     close FIND;
     return @specimens;
@@ -94,7 +104,8 @@ sub select_pairs {
     print "generating specimen pairs...\n";
     for my $specimen1 (@$specimens) {
         for my $specimen2 (@$specimens) {
-            if ((!$same_program || ($specimen1->{program} eq $specimen2->{program})) &&
+            if ((!$same_program ||
+		 ($specimen1->{package} eq $specimen2->{package} && ($specimen1->{program} eq $specimen2->{program}))) &&
                 &{$predicate}($specimen1, $specimen2)) {
                 # Do not use this pair if we already selected its symmetric counterpart
                 if ($symmetric) {
@@ -181,11 +192,27 @@ sub select_random_pairs {
 # Generate a database name for a pair of specimens.
 sub database_name {
     my($a, $b) = @_;
+<<<<<<< HEAD
     if($same_program){
       $dbprefix . join "_", $a->{program}, substr($a->{compiler},0,1) . $a->{optim}, substr($b->{compiler},0,1) . $b->{optim};
     }else{
       $dbprefix . join "_", $a->{program}, $a->{compiler}, $a->{optim}, $b->{program}, $b->{compiler}, $b->{optim};
     }
+=======
+    my @name = $dbprefix;
+    my $normalize = sub {
+	local($_) = @_;
+	tr/a-zA-Z0-9//cd;
+	return $_;
+    };
+    push @name, &{$normalize}($a->{package});
+    push @name, &${normalize}($b->{package}) if $a->{package} ne $b->{package};
+    push @name, &{$normalize}($a->{program});
+    push @name, &{$normalize}($b->{program}) if $a->{program} ne $b->{program};
+    push @name, &{$normalize}($a->{comp} . $a->{optim});
+    push @name, &{$normalize}($b->{comp} . $b->{optim});
+    return lc(join "_", @name);
+>>>>>>> b2197eaa90e31bc057b41c066b118716b0b65d87
 }
 
 
@@ -323,8 +350,13 @@ sub example10 {
     print "\nexample 10:
         We need rules for the testing harness to get 10 pairs uniformly at random from:
             C={gcc,icc,llvm} and X={O3}\n\n";
+<<<<<<< HEAD
     my @cx = cross [qw/gcc icc llvm/], ['0','1','2','3','s'];
     my @constraints = select_random 6, eliminate_diagonal cross \@cx, \@cx;
+=======
+    my @cx = cross [qw/gcc icc llvm/], ['3'];
+    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+>>>>>>> b2197eaa90e31bc057b41c066b118716b0b65d87
     return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
 

@@ -88,8 +88,8 @@ add_syscall_edges(DirectedGraph* G, std::vector<SgAsmFunction*>& all_functions)
         SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
 
         //semantically execute the basic block to find out which sytem call was called
-        if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
-            0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+        if (expr && expr->variantT()==V_SgAsmIntegerValueExpression &&
+            0x80==isSgAsmIntegerValueExpression(expr)->get_value()) {
 
           const SgAsmStatementPtrList &stmts = block->get_statementList();
           size_t int_n;

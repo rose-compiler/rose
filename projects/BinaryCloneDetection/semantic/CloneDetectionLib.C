@@ -999,7 +999,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             if (SageInterface::querySubTree<SgAsmInterpretation>(project).size() != interps.size())
                 std::cerr <<argv0 <<": warning: new interpretations created by the linker; mixed 32- and 64-bit libraries?\n";
         } catch (const BinaryLoader::Exception &e) {
-            std::cerr <<argv0 <<": BinaryLoader error: " <<e.mesg <<"\n";
+            std::cerr <<argv0 <<": BinaryLoader error: " <<e.what() <<"\n";
             return NULL;
         }
     } else {
@@ -1416,77 +1416,108 @@ function_to_str(SgAsmFunction *function, const FunctionIdMap &ids)
 }
 
 static double
-function_returns_value(size_t ncalls, size_t nretused, size_t ntests, size_t nvoids)
+function_returns_value(const FuncAnalysis &fa, size_t ncalls_s, size_t nretused_s)
 {
-    assert(nretused<=ncalls);
-    assert(nvoids<=ntests);
-    if (0==ncalls && 0==ntests)
-        return 0.5;
+    if (ncalls_s>0) {
+        assert(nretused_s <= ncalls_s);
+        return (double)nretused_s/ncalls_s;
+    } else {
+        assert(fa.nretused<=fa.ncalls);
+        assert(fa.nvoids<=fa.ntests);
+        if (0==fa.ncalls && 0==fa.ntests)
+            return 0.5;
 
-    double p1 = ntests>0 ? 1.0-(double)nvoids/ntests : 0.5;
-    double p1_weight = ntests>0 ? 1.0 : 0.0;
-    double p2 = ncalls>0 ? (double)nretused/ncalls : 0.5;
-    double p2_weight = ncalls>0 ? 1.0 : 0.0;
+        double p1 = fa.ntests>0 ? 1.0-(double)fa.nvoids/fa.ntests : 0.5;
+        double p1_weight = fa.ntests>0 ? 1.0 : 0.0;
+        double p2 = fa.ncalls>0 ? (double)fa.nretused/fa.ncalls : 0.5;
+        double p2_weight = fa.ncalls>0 ? 1.0 : 0.0;
 
-    if (ntests>0 && nvoids==ntests) {
-        if (nretused>0) {
-            // The function was tested but never wrote to EAX, but callers read a return value. Something bizarre is going on
-            // here! Maybe the function has a logic error?  Give weight to the callers with the assumption that something in
-            // our testing may have prevented writing to EAX.
+        if (fa.ntests>0 && fa.nvoids==fa.ntests) {
+            if (fa.nretused>0) {
+                // The function was tested but never wrote to EAX, but callers read a return value. Something bizarre is going
+                // on here! Maybe the function has a logic error?  Give weight to the callers with the assumption that
+                // something in our testing may have prevented writing to EAX.
+                p1_weight = 0.0;
+                p2_weight = 1.0;
+            } else {
+                // Never wrote to EAX, and no caller read from EAX (or there were no callers).
+                return 0.0;
+            }
+        } else if (0==fa.ntests) {
+            // The function was never tested, so we don't know if it would write to EAX.  Our only choice is to rely entirely
+            // on whether the callers read a return value.  If there were no callers then we know nothing.
+            if (0==fa.ncalls)
+                return 0.5;
             p1_weight = 0.0;
             p2_weight = 1.0;
+        } else if (0==fa.ncalls) {
+            // The function was never called.  Even functions that write to EAX might only be using it as a temporary. If some
+            // of the tests don't write to EAX then EAX is probably not a return value.
+            if (fa.nvoids>0)
+                p1 *= 0.25;
+            p1_weight = 1.0;
+            p2_weight = 0.0;
         } else {
-            // Never wrote to EAX, and no caller read from EAX (or there were no callers).
-            return 0.0;
+            // The function was tested (and writes to EAX at least once), and it was called. Since even void functions can
+            // write to EAX as a temporary, we give more weight to whether the callers read a return value.
+            p1_weight = 1.0;
+            p2_weight = 5.0;
         }
-    } else if (0==ntests) {
-        // The function was never tested, so we don't know if it would write to EAX.  Our only choice is to rely entirely
-        // on whether the callers read a return value.  If there were no callers then we know nothing.
-        if (0==ncalls)
-            return 0.5;
-        p1_weight = 0.0;
-        p2_weight = 1.0;
-    } else if (0==ncalls) {
-        // The function was never called.  Even functions that write to EAX might only be using it as a temporary. If some of
-        // the tests don't write to EAX then EAX is probably not a return value.
-        if (nvoids>0)
-            p1 *= 0.25;
-        p1_weight = 1.0;
-        p2_weight = 0.0;
-    } else {
-        // The function was tested (and writes to EAX at least once), and it was called. Since even void functions can write
-        // to EAX as a temporary, we give more weight to whether the callers read a return value.
-        p1_weight = 1.0;
-        p2_weight = 5.0;
-    }
 
-    assert(p1_weight+p2_weight > 0);
-    return (p1*p1_weight+p2*p2_weight)/(p1_weight+p2_weight);
+        assert(p1_weight+p2_weight > 0);
+        return (p1*p1_weight+p2*p2_weight)/(p1_weight+p2_weight);
+    }
 }
 
 double
 function_returns_value(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
-    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids)"
-                                                   " from semantic_funcpartials where func_id = ?")->bind(0, func_id);
-    SqlDatabase::Statement::iterator row = stmt->begin();
-    if (row==stmt->end())
-        return 0.5; // we know nothing about this function
-    return function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
-                                  row.get<size_t>(2), row.get<size_t>(3));
+
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids)"
+                                                    " from semantic_funcpartials where func_id = ? group by func_id")
+                                      ->bind(0, func_id);
+    SqlDatabase::Statement::iterator row = stmt1->begin();
+    FuncAnalysis fa;
+    if (row!=stmt1->end()) {
+        fa.ncalls = row.get<size_t>(0);
+        fa.nretused = row.get<size_t>(1);
+        fa.ntests = row.get<size_t>(2);
+        fa.nvoids = row.get<size_t>(3);
+    }
+
+    SqlDatabase::StatementPtr stmt2 = tx->statement("select callsites, retvals_used from semantic_functions"
+                                                    " where id = ?")->bind(0, func_id);
+    row = stmt2->begin();
+    assert(row!=stmt2->end());
+    size_t ncalls_s = row.get<size_t>(0);
+    size_t nretused_s = row.get<size_t>(1);
+
+    return function_returns_value(fa, ncalls_s, nretused_s);
 }
 
 std::map<int, double>
 function_returns_value(const SqlDatabase::TransactionPtr &tx)
 {
+    FuncAnalyses fas;
     std::map<int, double> retval;
-    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids), func_id"
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids), func_id"
                                                    " from semantic_funcpartials group by func_id");
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        double p = function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
-                                          row.get<size_t>(2), row.get<size_t>(3));
+    for (SqlDatabase::Statement::iterator row=stmt1->begin(); row!=stmt1->end(); ++row) {
         int func_id = row.get<int>(4);
-        retval[func_id] = p;
+        FuncAnalysis &fa = fas[func_id];
+        fa.ncalls = row.get<size_t>(0);
+        fa.nretused = row.get<size_t>(1);
+        fa.ntests = row.get<size_t>(2);
+        fa.nvoids = row.get<size_t>(3);
+    }
+
+    SqlDatabase::StatementPtr stmt2 = tx->statement("select id, callsites, retvals_used from semantic_functions");
+    for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row) {
+        int func_id = row.get<int>(0);
+        FuncAnalysis &fa = fas[func_id];
+        size_t ncalls_s = row.get<size_t>(1);
+        size_t nretused_s = row.get<size_t>(2);
+        retval[func_id] = function_returns_value(fa, ncalls_s, nretused_s);
     }
     return retval;
 }

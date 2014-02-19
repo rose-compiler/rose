@@ -104,6 +104,8 @@ create table semantic_functions (
        isize integer,                           -- size of function instructions in bytes, non-overlapping
        dsize integer,                           -- size of function data in bytes, non-overlapping
        size integer,                            -- total size of function, non-overlapping
+       callsites integer,                       -- number of places this function is called
+       retvals_used integer,                    -- number of call sites where a return value is used
        digest varchar(40),                      -- SHA1 hash of the function's instructions and static data
        counts_b64 text,                         -- binary blob of signature vector, base64 encoded
        cmd bigint references semantic_history(hashkey) -- command that created this row

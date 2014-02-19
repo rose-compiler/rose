@@ -62,8 +62,8 @@ private:
     SgAsmExpression *makeShifterField() const; /**< Decode last 12 bits and bit 25 (I) */
     SgAsmArmInstruction *makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression* rn, SgAsmExpression* rd,
                                                  SgAsmExpression* rhsOperand);
-    SgAsmDoubleWordValueExpression *makeSplit8bitOffset() const;
-    SgAsmDoubleWordValueExpression *makeBranchTarget() const;
+    SgAsmIntegerValueExpression *makeSplit8bitOffset() const;
+    SgAsmIntegerValueExpression *makeBranchTarget() const;
     SgAsmExpression *decodeMemoryAddress(SgAsmExpression* rn) const;
     SgAsmArmInstruction *decodeMediaInstruction() const;
     SgAsmArmInstruction *decodeMultiplyInstruction() const;

@@ -1,6 +1,7 @@
 /* This source file contains anything related to SgAsm*Expression nodes. */
 #include "sage3basic.h"
 #include "stringify.h"          /* used in error messages */
+#include "integerOps.h"
 
 using namespace rose;
 
@@ -11,6 +12,7 @@ using namespace rose;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** @class SgAsmValueExpression
  *  Assembly operands that contain numeric values.
  *
@@ -55,6 +57,7 @@ using namespace rose;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** @class SgAsmIntegerValueExpression
  *  Base class for integer values.
  *
@@ -70,8 +73,7 @@ using namespace rose;
  *
  *  This base class stores the offset as a 64-bit, unsigned integer that is accessed with the get_relative_value() and
  *  set_relative_value() methods.  The class also defines get_absolute_value() and set_absolute_value() methods that operate on
- *  the absolute value (which isn't actually stored anywhere).  Subclasses will typically define their get_value() and
- *  set_value() methods in terms of get_absolute_value() and set_absolute() using a narrower integer type. */
+ *  the absolute value (which isn't actually stored anywhere). */
 
 /** @fn SgNode *get_base_node() const
  *  Returns the base node associated with an integer. */
@@ -281,26 +283,28 @@ SgAsmIntegerValueExpression::get_base_address() const
     return virtual_address(get_base_node());
 }
 
-/** Returns the current absolute value.  The absolute value is the sum of the address of the base node (or zero if no base node
- *  is associated with this object) and the offset.  Subclasses typically redefine this method to return a narrower integer
- *  type.  All underlying arithmetic is modulo 2^64; this function returns only the specified number of low-order bits.  If @p
- *  nbits is zero, then  get_significant_bits() is called. */
+/** Returns the current absolute value zero filled to 64 bits.  The absolute value is the 64-bit sum of the 64-bit address of
+ *  the base node (or zero if no base node is associated with this object) and the 64-bit offset. However, this function
+ *  returns only the specified number of low-order bits zero extended to the 64-bit return type.  If @p nbits is zero, then
+ *  get_significant_bits() is called. */
 uint64_t
 SgAsmIntegerValueExpression::get_absolute_value(size_t nbits) const
 {
     if (0==nbits)
         nbits = get_significant_bits();
     uint64_t retval = get_base_address() + get_relative_value();
-    // note: (uint64_t)1 << 64 is undefined behavior, so do it the hard way
-    uint64_t mask = (nbits >= 64 ? (uint64_t)0 : (uint64_t)1<<(uint64_t)nbits) - 1;
+    uint64_t mask = IntegerOps::genMask<uint64_t>(nbits);
     return retval & mask; // clear high-order bits
 }
 
-/** Returns the current absolute value.  The returned value is signed, unlike get_absolute_value(). */
+/** Returns the current absolute value sign extended to 64 bits.  The returned value is signed, unlike get_absolute_value(). */
 int64_t
-SgAsmIntegerValueExpression::get_absolute_signed_value() const
+SgAsmIntegerValueExpression::get_signed_value() const
 {
-    return get_base_address() + get_relative_value();
+    size_t nbits = get_significant_bits();
+    uint64_t u = (get_base_address() + get_relative_value()) & IntegerOps::genMask<uint64_t>(nbits);
+    uint64_t retval = IntegerOps::signExtend2(u, nbits, 64);
+    return (int64_t)retval;
 }
 
 /** Set absolute value.  Changes the absolute value of this integer expression without changing the base node.   Subclasses
@@ -312,78 +316,3 @@ SgAsmIntegerValueExpression::set_absolute_value(uint64_t v)
     uint64_t new_offset = v - get_base_address(); // mod 2^64
     set_relative_value(new_offset);
 }
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Accessors for subclasses
-//
-// These are the get_value() and set_value() accessors for subclasses.  They're backward compatible with the old interface that
-// stored the absolute value in the subclass objects with data types particular to that subclass.
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Returns absolute value as an 8-bit unsigned integer.  See SgAsmIntegerValueExpression::get_absolute_value() */
-uint8_t
-SgAsmByteValueExpression::get_value() const
-{
-    return SgAsmIntegerValueExpression::get_absolute_value();
-}
-
-/** Sets absolute value.  See SgAsmIntegerValueExpression::set_absolute_value(). */
-void
-SgAsmByteValueExpression::set_value(uint8_t n_)
-{
-    set_significant_bits(8);
-    uint64_t n = (int64_t)(int8_t)n_; // sign extend
-    SgAsmIntegerValueExpression::set_absolute_value(n);
-}
-
-/** Returns absolute value as a 16-bit unsigned integer. See SgAsmIntegerValueExpression::get_absolute_value() */
-uint16_t
-SgAsmWordValueExpression::get_value() const
-{
-    return SgAsmIntegerValueExpression::get_absolute_value();
-}
-
-/** Sets absolute value.  See SgAsmIntegerValueExpression::set_absolute_value(). */
-void
-SgAsmWordValueExpression::set_value(uint16_t n_)
-{
-    set_significant_bits(16);
-    uint64_t n = (int64_t)(int16_t)n_; // sign extend
-    SgAsmIntegerValueExpression::set_absolute_value(n);
-}
-
-/** Returns absolute value as a 32-bit unsigned integer. See SgAsmIntegerValueExpression::get_absolute_value() */
-uint32_t
-SgAsmDoubleWordValueExpression::get_value() const
-{
-    return SgAsmIntegerValueExpression::get_absolute_value();
-}
-
-/** Sets absolute value.  See SgAsmIntegerValueExpression::set_absolute_value(). */
-void
-SgAsmDoubleWordValueExpression::set_value(uint32_t n_)
-{
-    set_significant_bits(32);
-    uint64_t n = (int64_t)(int32_t)n_; // sign extend
-    SgAsmIntegerValueExpression::set_absolute_value(n);
-}
-
-/** Returns absolute value as a 64-bit unsigned integer. See SgAsmIntegerValueExpression::get_absolute_value() */
-uint64_t
-SgAsmQuadWordValueExpression::get_value() const
-{
-    return SgAsmIntegerValueExpression::get_absolute_value();
-}
-
-/** Sets absolute value.  See SgAsmIntegerValueExpression::set_absolute_value(). */
-void
-SgAsmQuadWordValueExpression::set_value(uint64_t n_)
-{
-    set_significant_bits(64);
-    SgAsmIntegerValueExpression::set_absolute_value(n_);
-}
-
