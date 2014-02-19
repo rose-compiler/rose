@@ -9,11 +9,11 @@ use strict;
 
 my $dry_run = 0;        # Set true if you only want to see what would have been done.
 my $dropdb = 1;         # Set true to try to drop each database before the test runs (tests are skipped if a database exists).
-my $max_pairs = 10;     # Maximum number of specimen pairs pairs to run, selected at random.
+my $max_pairs = 20;     # Maximum number of specimen pairs pairs to run, selected at random.
 my $per_program = 1;    # If true, select $max_pairs on a per program basis rather than over all.
 my $same_program = 1;   # If true, then pairs of specimens must be the same program (e.g., both "egrep")
 my $symmetric = 1;      # If true, avoid generating pair (a, b) if pair (b, a) was selected.
-my $dbprefix = "as_";   # Prefix to add to each database name
+my $dbprefix = "example10_";   # Prefix to add to each database name
 
 # Location of the training files. These must follow a naming convention described in the load_specimens function.
 my $training_dir = "$ENV{HOME}/binary-runs/suspects-and-victims-subset/test-set/";
@@ -298,9 +298,9 @@ sub example8 {
     my($specimens) = @_;
     print "\nexample 8:
         We need rules for the testing harness to get 10 pairs uniformly at random from:
-            X={O0,O1,O2,O3,S3} C={gcc} where S3 is stunnix with gcc O3 as backend.\n\n";
-    my @cx = (['stunnix', '3'], cross ['gcc'], [qw/0 1 2 3/]);
-    my @constraints = select_random 10, cross \@cx, \@cx;
+            X={O0,O1,O2,O3,Os,S3} C={gcc} where S3 is stunnix with gcc O3 as backend.\n\n";
+    my @cx = (['stunnix', '3'], cross ['gcc'], [qw/0 1 2 3 s/]);
+    my @constraints = select_random 20, cross \@cx, \@cx;
     return select_tuples $specimens, ['compiler','optim'], @constraints;
 }
 
@@ -312,7 +312,7 @@ sub example9 {
                  I) the first optimization is Os and the other is X={O0,O1,O2,O3} 
                 II) the first optimization is stunnix O3 and the other is X={O0,O1,O2,O3}\n\n";
     my @constraints1 = select_random 5, cross [['gcc', 's']],     [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
-    my @constraints2 = select_random 5, cross [['stunnix', '3']], [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3'],['gcc', 's']];
+    my @constraints2 = select_random 5, cross [['stunnix', '3']], [['gcc', '0'], ['gcc', '1'], ['gcc', '2'], ['gcc', '3']];
     return (select_tuples($specimens, ['compiler', 'optim'], @constraints1),
             select_tuples($specimens, ['compiler', 'optim'], @constraints2));
 }
@@ -323,8 +323,8 @@ sub example10 {
     print "\nexample 10:
         We need rules for the testing harness to get 10 pairs uniformly at random from:
             C={gcc,icc,llvm} and X={O3}\n\n";
-    my @cx = cross [qw/gcc icc lvm/], ['3'];
-    my @constraints = select_random 10, eliminate_diagonal cross \@cx, \@cx;
+    my @cx = cross [qw/gcc icc llvm/], ['0','1','2','3','s'];
+    my @constraints = select_random 6, eliminate_diagonal cross \@cx, \@cx;
     return select_tuples $specimens, ['compiler', 'optim'], @constraints;
 }
 
@@ -346,7 +346,7 @@ sub example11 {
 ###############################################################################################################################
 
 # Generate a list of pairs over which to run
-my @pairs = select_random_pairs $max_pairs, example9 \@specimens;
+my @pairs = select_random_pairs $max_pairs, example10 \@specimens;
 
 # Run the analysis for each pair
 for my $pair (@pairs) {
@@ -370,7 +370,7 @@ for my $pair (@pairs) {
     # Run the analysis
     my $config_file = `mktemp`; chomp $config_file;
     open CONFIG, ">", $config_file or die "$config_file: $!\n";
-    print CONFIG "dbname='postgresql:///$dbname\n", $configuration;
+    print CONFIG "dbname='postgresql:///$dbname'\n", $configuration;
     close CONFIG;
     print STDERR "# Configuration file ($config_file):\n", `sed 's/^/    /' $config_file`;
     my($mydir) = $0 =~ /(.*)\//; $mydir ||= ".";
@@ -378,8 +378,8 @@ for my $pair (@pairs) {
     unlink $config_file;
 
     my $api_config_file = `mktemp`; chomp $api_config_file;
-    open my $CONFIG, ">", $api_config_file or die "$api_config_file: $!\n";
-    print $CONFIG "dbname='postgresql:///$dbname'\n", $api_configuration;
+    open API_CONFIG, ">", $api_config_file or die "$api_config_file: $!\n";
+    print API_CONFIG "dbname='postgresql:///$dbname'\n", $api_configuration;
     print STDERR "# Configuration file ($api_config_file):\n", `sed 's/^/    /' $api_config_file`;
     run "$mydir/run-api-similarity.sh", "--batch", "--config=$api_config_file";
     unlink $api_config_file;
