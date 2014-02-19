@@ -380,7 +380,7 @@ tp.java \
 update_outer.java \
 utf8concat.java \
 utilTest.java \
-verify.java
+verify.java 
 
 GCJ_TESTCODE_CURRENTLY_FAILING = \
    PR35020.java \
@@ -422,8 +422,6 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR
 
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
 
-
-
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 testTranslator=../../testTranslator
@@ -463,6 +461,7 @@ $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTr
 $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	@echo "Test using Java 1.7 version support."
 	$(testTranslator) -rose:java:source 1.7 -rose:java:target 1.7 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)

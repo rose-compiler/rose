@@ -2,6 +2,8 @@
 #include "checkIsCompilerGeneratedFlag.h"
 #include "stringify.h"
 
+using namespace rose;
+
 // documented in header file
 size_t
 checkIsCompilerGeneratedFlag(SgNode *ast)

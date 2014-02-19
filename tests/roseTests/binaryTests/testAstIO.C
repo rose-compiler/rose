@@ -2,6 +2,8 @@
 #include "rose.h"
 #include "stringify.h"
 
+using namespace rose;
+
 #if 0 // call is commented out below
 static void
 dump_ast(std::ostream &o, SgNode *ast)

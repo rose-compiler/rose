@@ -638,6 +638,13 @@ public:
      *  some object are affected. */
     virtual void fixup_pointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
+    /** Called by frontend() to disassemble an entire interpretation. Disassembles the specified interpretation using
+     *  configuration settings from the ROSE command-line and then links the resulting SgAsmBlock into the AST.  The
+     *  disassembly is partitioner-driven.
+     *
+     *  See also: Disassembler::disassembleInterpratation(), which does Disassembler-driven disassembly. */
+    static void disassembleInterpretation(SgAsmInterpretation*);
+
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects
      **************************************************************************************************************************/
@@ -1455,6 +1462,7 @@ public:
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
+    virtual void mark_export_entries(SgAsmGenericHeader*);      /**< Seeds functions for PE exports */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */

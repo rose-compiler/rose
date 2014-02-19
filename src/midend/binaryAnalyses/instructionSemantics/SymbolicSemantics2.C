@@ -324,14 +324,14 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemantics::SValuePtr &hi_bits_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
-    SValuePtr retval = svalue_expr(InternalNode::create(a->get_width()+b->get_width(), InsnSemanticsExpr::OP_CONCAT,
-                                                        b->get_expression(), a->get_expression()));
+    SValuePtr lo = SValue::promote(lo_bits_);
+    SValuePtr hi = SValue::promote(hi_bits_);
+    SValuePtr retval = svalue_expr(InternalNode::create(lo->get_width()+hi->get_width(), InsnSemanticsExpr::OP_CONCAT,
+                                                        hi->get_expression(), lo->get_expression()));
     if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+        retval->defined_by(omit_cur_insn ? NULL : cur_insn, lo->get_defining_instructions(), hi->get_defining_instructions());
     return retval;
 }
 

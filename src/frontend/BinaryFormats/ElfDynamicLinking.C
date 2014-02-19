@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Adds the newly constructed entry to the dynamic section. */
 void
 SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
