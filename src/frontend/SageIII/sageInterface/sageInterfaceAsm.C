@@ -209,19 +209,11 @@ SageInterface::get_value( SgAsmValueExpression* asmValueExpression )
   // Identify what type of value expression this is...
      switch (asmValueExpression->variantT())
         {
-          case V_SgAsmByteValueExpression:
+          case V_SgAsmIntegerValueExpression:
              {
-               SgAsmByteValueExpression* asmByteValueExpression = isSgAsmByteValueExpression(asmValueExpression);
-               value = asmByteValueExpression->get_value();
+               SgAsmIntegerValueExpression* asmIntegerValueExpression = isSgAsmIntegerValueExpression(asmValueExpression);
+               value = asmIntegerValueExpression->get_value();
             // printf ("structure field assigned (Byte) value = %zu \n",value);
-               break;
-             }
-
-          case V_SgAsmDoubleWordValueExpression:
-             {
-               SgAsmDoubleWordValueExpression* asmDoubleWordValueExpression = isSgAsmDoubleWordValueExpression(asmValueExpression);
-               value = asmDoubleWordValueExpression->get_value();
-            // printf ("structure field assigned (Double Word) value = %p \n",(void*)value);
                break;
              }
 
@@ -311,7 +303,7 @@ SageInterface::equivalenceTest(SgNode* x, SgNode* y)
                break;
              }
 
-          case V_SgAsmDoubleWordValueExpression:
+          case V_SgAsmIntegerValueExpression:
              {
             // Look at the instruction kind only.
             // SgAsmDoubleWordValueExpression* x_value = isSgAsmDoubleWordValueExpression(x);
