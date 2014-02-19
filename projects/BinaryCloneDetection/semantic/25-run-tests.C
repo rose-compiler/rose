@@ -9,6 +9,7 @@
 #include <csignal>
 
 using namespace CloneDetection;
+
 typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;
 typedef X86InstructionSemantics<ClonePolicy, PartialSymbolicSemantics::ValueType> CloneSemantics;
 typedef std::set<std::string> NameSet;
