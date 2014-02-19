@@ -1462,6 +1462,7 @@ public:
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
+    virtual void mark_export_entries(SgAsmGenericHeader*);      /**< Seeds functions for PE exports */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
@@ -1760,18 +1761,19 @@ public:
         IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
             : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        /** Exception thrown when something cannot be parsed. */
+        class Exception: public std::runtime_error {
         public:
             Exception(const std::string &mesg)
-                : lnum(0), mesg(mesg) {}
+                : std::runtime_error(mesg), lnum(0) {}
             Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
-                : name(name), lnum(lnum), mesg(mesg) {}
+                : std::runtime_error(mesg), name(name), lnum(lnum) {}
+            ~Exception() throw() {}
             std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
             friend std::ostream& operator<<(std::ostream&, const Exception &e);
 
             std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
-            std::string mesg;                   /**< Error message. */
         };
 
         void parse();                           /**< Top-level parsing function. */

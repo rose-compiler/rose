@@ -4,11 +4,14 @@
 #include "CloneDetectionLib.h"
 #include "DwarfLineMapper.h"
 #include "BinaryFunctionCall.h"
+#include "BinaryReturnValueUsed.h"
 #include "rose.h"
 
 #include "vectorCompression.h"
 
 using namespace CloneDetection;
+using namespace rose::BinaryAnalysis;
+
 std::string argv0;
 
 static void
@@ -312,6 +315,9 @@ main(int argc, char *argv[])
     std::cerr <<argv0 <<": adding " <<functions_to_add.size() <<" function" <<(1==functions_to_add.size()?"":"s")
               <<" to the database\n";
 
+    // Figure out how many places each function is called and how many times a return value is used.
+    ReturnValueUsed::Results used_retvals = ReturnValueUsed::analyze(interp);
+
     // Get source code location info for all instructions and update the FilesTable
     BinaryAnalysis::DwarfLineMapper* dlm;
 
@@ -332,9 +338,11 @@ main(int argc, char *argv[])
     SqlDatabase::StatementPtr stmt1 = tx->statement("insert into semantic_functions"
                                                     // 0   1         2     3        4            5
                                                     " (id, entry_va, name, file_id, specimen_id, ninsns,"
-                                                    // 6      7      8     9       10
-                                                    "  isize, dsize, size, digest, counts_b64, cmd)"
-                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                    // 6      7      8     9       10          11
+                                                    "  isize, dsize, size, digest, counts_b64, cmd,"
+                                                    // 12         13
+                                                    "  callsites, retvals_used)"
+                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_instructions"
                                                     // 0        1     2         3        4
                                                     " (address, size, assembly, func_id, position,"
@@ -343,6 +351,7 @@ main(int argc, char *argv[])
     for (IdFunctionMap::iterator fi=functions_to_add.begin(); fi!=functions_to_add.end(); ++fi) {
         // Save function
         SgAsmFunction *func = fi->second;
+        ReturnValueUsed::UsageCounts &retval_usage = used_retvals[func];
         ExtentMap e_insns, e_data, e_total;
         size_t ninsns = func->get_extent(&e_insns, NULL, NULL, &iselector);
         func->get_extent(&e_data, NULL, NULL, &dselector);
@@ -373,6 +382,8 @@ main(int argc, char *argv[])
         stmt1->bind(9, digest_str);
         stmt1->bind(10,StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
         stmt1->bind(11, cmd_id);
+        stmt1->bind(12, retval_usage.nUsed + retval_usage.nUnused);
+        stmt1->bind(13, retval_usage.nUsed);
         stmt1->execute();
 
 	// Save instructions

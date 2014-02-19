@@ -14,6 +14,7 @@
 int analysisDebugLevel=1;
 
 using namespace std;
+using namespace rose;
 
 /*******************************
  *** IntraProceduralAnalysis ***
