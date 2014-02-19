@@ -34,7 +34,7 @@ Disassembler::Exception::print(std::ostream &o) const
     if (insn) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip)
           <<" [" <<unparseInstruction(insn) <<"]"
-          <<": " <<mesg;
+          <<": " <<what();
     } else if (ip>0) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip);
         if (!bytes.empty()) {
@@ -47,7 +47,7 @@ Disassembler::Exception::print(std::ostream &o) const
             o <<"] at bit " <<bit;
         }
     } else {
-        o <<mesg;
+        o <<what();
     }
 }
 
@@ -341,13 +341,8 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
          * instruction; otherwise INSN is null, VA is the address where disassembly failed, and NEXT_VA is meaningless. */
         while (1) {
             va = next_va;
+            insn = cache ? cache->get_value_or(va, NULL) : NULL;
 
-            insn = NULL;
-            if (cache) {
-                InstructionMap::iterator cached = cache->find(va);
-                if (cached!=cache->end())
-                    insn = cached->second;
-            }
             try {
                 if (!insn) {
                     insn = disassembleOne(map, va, NULL);
@@ -357,12 +352,16 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             } catch(const Exception &e) {
                 if ((p_search & SEARCH_UNKNOWN) && e.bytes.size()>0) {
                     insn = make_unknown_instruction(e);
+                    if (cache)
+                        cache->insert(std::make_pair(va, insn));
                 } else {
+                    if (cache)
+                        cache->insert(std::make_pair(va, (SgAsmInstruction*)0));
                     if (insns.size()==0 || !(p_search & SEARCH_DEADEND)) {
                         if (p_debug)
                             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: "
                                     "disassembly failed in basic block 0x%08"PRIx64": %s\n",
-                                    e.ip, start_va, e.mesg.c_str());
+                                    e.ip, start_va, e.what());
                         if (!cache) {
                             for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                                 SageInterface::deleteAST(ii->second);
@@ -443,79 +442,85 @@ Disassembler::InstructionMap
 Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, AddressSet *successors, BadMap *bad)
 {
     InstructionMap insns;
-    InstructionMap icache;              /* to help speed up disassembleBlock() when SEARCH_DEADEND is disabled */
-    try {
-        rose_addr_t next_search = 0;
 
-        /* Per-buffer search methods */
-        if (p_search & SEARCH_WORDS)
-            search_words(&worklist, map, bad);
+    // Helps speed up disassembleBlock() when SEARCH_DEADEND si disabled.  The destructor deletes all the instruction ASTs,
+    // so call InstructionCache.clear() first if you want to keep them.  Doing it this way (rather than deleting them in
+    // an exception handler) allows for better debugging--gdb will show you where the exception occurred rather than where we
+    // re-throw it.
+    struct InstructionCache: InstructionMap {
+        ~InstructionCache() {
+            for (iterator ii=begin(); ii!=end(); ++ii)
+                SageInterface::deleteAST(ii->second);
+        }
+    } icache;
+
+    rose_addr_t next_search = 0;
+
+    /* Per-buffer search methods */
+    if (p_search & SEARCH_WORDS)
+        search_words(&worklist, map, icache);
+
+    /* Look for more addresses */
+    if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
+        bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
+        search_next_address(&worklist, next_search, map, insns, icache, avoid_overlap);
+        if (worklist.size()>0)
+            next_search = *(--worklist.end())+1;
+    }
+
+    while (worklist.size()>0) {
+        /* Get next address to disassemble */
+        AddressSet::iterator i = worklist.begin();
+        rose_addr_t va = *i;
+        worklist.erase(i);
+
+        if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
+            /* Skip this if we've already tried to disassemble it. */
+        } else if (!map->exists(va)) {
+            /* Any address that's outside the range we're allowed to work on will be added to the successors. */
+            if (successors)
+                successors->insert(va);
+        } else {
+            /* Disassemble a basic block and add successors to the work list. If a disassembly error occurs then
+             * disassembleBlock() will throw an exception that we'll add to the bad list. We must be careful when adding the
+             * basic block's instructions to the return value: although we check above to prevent disassembling the same
+             * basic block more than once, it's still possible that two basic blocks could overlap (e.g., block A could start
+             * at the second instruction of block B, or on a viariable-size instruction architecture, block A could start
+             * between instructions of block B and then become synchronized with B). */
+            InstructionMap bb;
+            try {
+                bb = disassembleBlock(map, va, &worklist, &icache);
+                insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
+                assert(icache.exists(va));
+            } catch(const Exception &e) {
+                if (bad)
+                    bad->insert(std::make_pair(va, e));
+            }
+
+            /* Per-basicblock search methods */
+            if (p_search & SEARCH_FOLLOWING)
+                search_following(&worklist, bb, va, map, icache);
+            if (p_search & SEARCH_IMMEDIATE)
+                search_immediate(&worklist, bb, map, icache);
+        }
 
         /* Look for more addresses */
         if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
             bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
-            search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
+            search_next_address(&worklist, next_search, map, insns, icache, avoid_overlap);
             if (worklist.size()>0)
                 next_search = *(--worklist.end())+1;
         }
-
-        while (worklist.size()>0) {
-            /* Get next address to disassemble */
-            AddressSet::iterator i = worklist.begin();
-            rose_addr_t va = *i;
-            worklist.erase(i);
-
-            if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
-                /* Skip this if we've already tried to disassemble it. */
-            } else if (!map->exists(va)) {
-                /* Any address that's outside the range we're allowed to work on will be added to the successors. */
-                if (successors)
-                    successors->insert(va);
-            } else {
-                /* Disassemble a basic block and add successors to the work list. If a disassembly error occurs then
-                 * disassembleBlock() will throw an exception that we'll add to the bad list. We must be careful when adding the
-                 * basic block's instructions to the return value: although we check above to prevent disassembling the same
-                 * basic block more than once, it's still possible that two basic blocks could overlap (e.g., block A could start
-                 * at the second instruction of block B, or on a viariable-size instruction architecture, block A could start
-                 * between instructions of block B and then become synchronized with B). */
-                InstructionMap bb;
-                try {
-                    bb = disassembleBlock(map, va, &worklist, &icache);
-                    insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
-                } catch(const Exception &e) {
-                    if (bad)
-                        bad->insert(std::make_pair(va, e));
-                }
-
-                /* Per-basicblock search methods */
-                if (p_search & SEARCH_FOLLOWING)
-                    search_following(&worklist, bb, va, map, bad);
-                if (p_search & SEARCH_IMMEDIATE)
-                    search_immediate(&worklist, bb, map, bad);
-            }
-
-            /* Look for more addresses */
-            if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
-                bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
-                search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
-                if (worklist.size()>0)
-                    next_search = *(--worklist.end())+1;
-
-            }
-        }
-    } catch(...) {
-        for (InstructionMap::iterator ii=icache.begin(); ii!=icache.end(); ++ii)
-            SageInterface::deleteAST(ii->second);
-        throw;
     }
 
+    icache.clear();                                     // don't let the destructor delete the instructions
     return insns;
 }
 
 /* Add basic block following address to work list. */
 void
 Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, const MemoryMap *map,
-                               const BadMap *bad)
+                               const InstructionMap &tried)
 {
     rose_addr_t following_va = 0;
     if (bb.empty()) {
@@ -527,7 +532,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, r
         following_va = last_insn->get_address() + last_insn->get_size();
     }
 
-    if (map->exists(following_va) && (!bad || bad->find(following_va)==bad->end())) {
+    if (map->exists(following_va) && !tried.exists(following_va)) {
         if (p_debug && worklist->find(following_va)==worklist->end()) {
             rose_addr_t va = bb.begin()->first;
             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_FOLLOWING added 0x%08"PRIx64"\n", va, following_va);
@@ -538,26 +543,19 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, r
 
 /* Add values of immediate operands to work list */
 void
-Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const BadMap *bad)
+Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const InstructionMap &tried)
 {
     for (InstructionMap::const_iterator bbi=bb.begin(); bbi!=bb.end(); bbi++) {
         const std::vector<SgAsmExpression*> &operands = bbi->second->get_operandList()->get_operands();
         for (size_t i=0; i<operands.size(); i++) {
             uint64_t constant=0;
-            switch (operands[i]->variantT()) {
-                case V_SgAsmWordValueExpression:
-                    constant = isSgAsmWordValueExpression(operands[i])->get_value();
-                    break;
-                case V_SgAsmDoubleWordValueExpression:
-                    constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value();
-                    break;
-                case V_SgAsmQuadWordValueExpression:
-                    constant = isSgAsmQuadWordValueExpression(operands[i])->get_value();
-                    break;
-                default:
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operands[i])) {
+                size_t nbits = ival->get_significant_bits();
+                if (nbits!=16 && nbits!=32 && nbits!=64)
                     continue; /* Not an appropriately-sized constant */
+                constant = ival->get_value();
             }
-            if (map->exists(constant) && (!bad || bad->find(constant)==bad->end())) {
+            if (map->exists(constant) && !tried.exists(constant)) {
                 if (p_debug && worklist->find(constant)==worklist->end())
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_IMMEDIATE added 0x%08"PRIx64"\n",
                             bbi->first, constant);
@@ -569,14 +567,14 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
 
 /* Add word-aligned values to work list */
 void
-Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const BadMap *bad)
+Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const InstructionMap &tried)
 {
     // Predicate is used only for its side effects
     struct Visitor: public MemoryMap::Visitor {
         Disassembler *d;
         AddressSet *worklist;
-        const BadMap *bad;
-        Visitor(Disassembler *d, AddressSet *worklist, const BadMap *bad): d(d), worklist(worklist), bad(bad) {}
+        const InstructionMap &tried;
+        Visitor(Disassembler *d, AddressSet *worklist, const InstructionMap &tried): d(d), worklist(worklist), tried(tried) {}
         virtual bool operator()(const MemoryMap *map, const Extent &range, const MemoryMap::Segment &segment) {
             rose_addr_t va = range.first();
             va = ALIGN_UP(va, d->get_alignment());
@@ -601,7 +599,7 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Bad
                             ROSE_ASSERT(!"not implemented");
                     }
                 }
-                if (map->exists(constant) && (!bad || bad->find(constant)==bad->end())) {
+                if (map->exists(constant) && !tried.exists(constant)) {
                     if (d->get_debug() && worklist->find(constant)==worklist->end())
                         fprintf(d->get_debug(), "Disassembler[va 0x%08"PRIx64"]: SEARCH_WORD added 0x%08"PRIx64"\n", va, constant);
                     worklist->insert(constant);
@@ -610,16 +608,16 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Bad
             }
             return true;
         }
-    } visitor(this, worklist, bad);
+    } visitor(this, worklist, tried);
     map->traverse(visitor);
 }
 
 /* Find next unused address. */
 void
 Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map,
-                                  const InstructionMap &insns, const BadMap *bad, bool avoid_overlap)
+                                  const InstructionMap &insns, const InstructionMap &tried, bool avoid_overlap)
 {
-    /* Assume a maximum instruction size so that while we're search backward (by virtual address) through previously
+    /* Assume a maximum instruction size so that while we search backward (by virtual address) through previously
      * disassembled instructions we don't have to go all the way to the beginning of the instruction map to prove that an
      * instruction doesn't overlap with a specified address. */
     rose_addr_t next_va = start_va;
@@ -643,7 +641,7 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
         next_va = std::max(next_va, range.first());
 
         /* If we tried to disassemble at this address and failed, then try the next address. */
-        if (bad && bad->find(next_va)!=bad->end()) {
+        if (tried.exists(next_va)) {
             next_va++;
             continue; /*tail recursion*/
         }

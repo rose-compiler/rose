@@ -26,6 +26,10 @@ factorial(T n)
     return retval;
 }
 
+/** Simulate flipping a coin. Randomly returns true or false with equal probability. See also,
+ *  LinearCongruentialGenerator::flip_coin(). */
+bool flip_coin();
+
 /** Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
  *  and the factorial of the values size (exclusive).  A permutation number of zero is a no-op; higher permutation numbers
  *  shuffle the values in repeatable ways.  Using swap rather that erase/insert is much faster than the standard Lehmer codes,

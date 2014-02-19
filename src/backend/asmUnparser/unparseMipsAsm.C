@@ -85,10 +85,6 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
             break;
         }
 
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression:
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             assert(ival!=NULL);
