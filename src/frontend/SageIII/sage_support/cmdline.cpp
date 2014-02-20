@@ -2052,7 +2052,7 @@ GetRoseClasspath ()
   std::string classpath = "-Djava.class.path=";
 
   // Java (ECJ front-end) support (adding specific jar file)
-  std::string ecj_jar_file_name = std::string("ecj-3.8.jar");
+  std::string ecj_jar_file_name = std::string("ecj-3.8.2.jar");
   std::string ecj_class_path_jarfile =
       "src/3rdPartyLibraries/java-parser/" +
       ecj_jar_file_name;
