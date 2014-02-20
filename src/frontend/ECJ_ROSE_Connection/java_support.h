@@ -13,6 +13,7 @@ extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
 extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
+extern SgVariableSymbol *lengthSymbol;
 extern SgName java_lang;
 
 
@@ -37,8 +38,8 @@ namespace Ecj {
 extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
 
 extern SgArrayType *getUniqueArrayType(SgType *, int);
-extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgType *containing_type, SgTemplateParameterPtrList *);
+//extern SgPointerType *getUniquePointerType(SgType *, int);
+extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
 extern SgJavaWildcardType *getUniqueWildcardUnbound();
 extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
 extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
@@ -56,6 +57,7 @@ string markAndGetQualifiedTypeName(SgClassType *class_type);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
+string getUnionTypeName(SgJavaUnionType *);
 string getFullyQualifiedTypeName(SgClassType *);
 string getParameters(SgJavaParameterizedType *);
 string getUnqualifiedTypeName(SgJavaParameterizedType *);
@@ -117,14 +119,14 @@ public:
 //
 class AstParameterizedTypeAttribute : public AstAttribute {
 private:
-    SgNamedType *rawType;
+    SgNamedType *genericType;
     list<SgJavaParameterizedType *> parameterizedTypes;
 
 public:
-    AstParameterizedTypeAttribute(SgNamedType *rawType_) : rawType(rawType_) {}
+    AstParameterizedTypeAttribute(SgNamedType *genericType_) : genericType(genericType_) { isSgClassType(genericType); }
 
     bool argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr);
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr);
+    SgJavaParameterizedType *findOrInsertParameterizedType(SgTemplateParameterPtrList *new_args_ptr);
 };
 
 
@@ -494,7 +496,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 // *********************************************
 
 SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
-SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
+SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName, SgScopeStatement *);
 SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
 SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
 SgJavaPackageDeclaration *findPackageDeclaration(SgName &);

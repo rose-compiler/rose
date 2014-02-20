@@ -3923,11 +3923,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
           }
 
-          javaCommandLine.push_back("-classpath");
-          javaCommandLine.push_back(classpath);
+          if (classpath.size()) {
+              javaCommandLine.push_back("-classpath");
+              javaCommandLine.push_back(classpath);
+          }
 
-          javaCommandLine.push_back("-sourcepath");
-          javaCommandLine.push_back(sourcepath);
+          if (sourcepath.size()) {
+              javaCommandLine.push_back("-sourcepath");
+              javaCommandLine.push_back(sourcepath);
+          }
 
           // Specify warnings for javac compiler.
           if (backendJavaCompiler == "javac") {
@@ -4043,10 +4047,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Setup the classpath and append the classes folder ecj outputs its temporary files to
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath); //  + ":" + ecjDestDir);
+         frontEndCommandLine.push_back((classpath.size() > 0 ? (classpath + ":") : "") + ecjDestDir);
 
-         frontEndCommandLine.push_back("-sourcepath");
-         frontEndCommandLine.push_back(sourcepath);
+         if (sourcepath.size()) {
+             frontEndCommandLine.push_back("-sourcepath");
+             frontEndCommandLine.push_back(sourcepath);
+         }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
