@@ -23,6 +23,7 @@ SgClassType *ObjectClassType = NULL;
 SgClassType *StringClassType = NULL;
 SgClassType *ClassClassType = NULL;
 SgClassDefinition *ObjectClassDefinition = NULL;
+SgVariableSymbol *lengthSymbol = NULL;
 SgName java_lang = "java.lang";
 
 
@@ -105,85 +106,27 @@ bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type
     return (arg_it == args.end()); // The two argument lists match?
 }
 
-SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr) {
-/*
-cout << "Looking for type ";
-if (containing_type != NULL)
-cout << getTypeName(containing_type) << "." << rawType -> get_name().getString() << endl;
-else cout << getFullyQualifiedTypeName(rawType);
-if (new_args_ptr == NULL)
-cout << " with no arguments";
-else {
-  cout << "<";
-for (SgTemplateParameterPtrList::iterator new_arg_it = new_args_ptr -> begin(); new_arg_it != new_args_ptr -> end(); new_arg_it++){
-if (new_arg_it != new_args_ptr -> begin()) cout <<", ";
-cout << getTypeName((*new_arg_it) -> get_type());
-}
-cout <<">";
-}
-cout << endl;
-cout.flush();
-*/
-
+SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(SgTemplateParameterPtrList *new_args_ptr) {
     //
     // Keep track of parameterized types in a table so as not to duplicate them.
     //
-/*
-cout << "Ready to check type list with " << parameterizedTypes.size() << " elements" << endl;
-cout.flush();
-*/
-
     for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
-
-/*
-cout << "Considering parameterized type "
-    << getTypeName(*type_it)
-    << endl;
-cout.flush();
-*/
-
         if (argumentsMatch((*type_it) -> get_type_list(), new_args_ptr)) {
-/*
-cout << "Got this far for raw type " << getFullyQualifiedTypeName(rawType)
-     << endl;
-cout.flush();
-*/
-
-            AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ((*type_it) -> getAttribute("enclosing_type"));
-            if ((attribute == NULL && containing_type == NULL) || (attribute != NULL && attribute -> getNode() == containing_type)) {
-/*
-cout << "Found a match for "
-    << getTypeName(*type_it)
-     << endl;
-cout.flush();
-*/
-                return (*type_it);
-            }
+            return (*type_it);
         }
     }
 
     //
     // This parameterized type does not yet exist. Create it, store it in the table and return it.
     //
-    SgClassDeclaration *classDeclaration = isSgClassDeclaration(rawType -> getAssociatedDeclaration());
+    SgClassDeclaration *classDeclaration = isSgClassDeclaration(genericType -> getAssociatedDeclaration());
     ROSE_ASSERT(classDeclaration != NULL);
     SgTemplateParameterList *typeParameterList = (new_args_ptr == NULL ? NULL : new SgTemplateParameterList());
     if (new_args_ptr != NULL) {
         typeParameterList -> set_args(*new_args_ptr);
     }
-    SgJavaParameterizedType *parameterized_type = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
-    if (containing_type != NULL) {
-        AstSgNodeAttribute *attribute = new AstSgNodeAttribute(containing_type);
-        parameterized_type -> setAttribute("enclosing_type", attribute);
-    }
-
+    SgJavaParameterizedType *parameterized_type = new SgJavaParameterizedType(classDeclaration, genericType, typeParameterList);
     parameterizedTypes.push_front(parameterized_type);
-
-/*
-cout << "Entering a new type for raw type " << getTypeName(parameterized_type)
-     << endl;
-cout.flush();
-*/
 
     return parameterized_type;
 }
@@ -293,25 +236,26 @@ bool isImportedType(SgClassType *class_type) {
 
 SgArrayType *getUniqueArrayType(SgType *base_type, int num_dimensions) {
     ROSE_ASSERT(num_dimensions > 0);
-    ostringstream convert;     // stream used for the conversion
-    convert << num_dimensions; // insert the textual representation of num_dimensions in the characters in the stream
-    string dimensions = convert.str();
+    if (num_dimensions > 1) {
+        base_type = getUniqueArrayType(base_type, num_dimensions - 1);
+    }
 
-    AstArrayTypeAttribute *attribute = (AstArrayTypeAttribute *) base_type -> getAttribute(dimensions);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
     if (attribute == NULL) {
         SgArrayType *array_type = SageBuilder::buildArrayType(base_type);
         array_type -> set_rank(num_dimensions);
-        attribute = new AstArrayTypeAttribute(array_type);
-        base_type -> setAttribute(dimensions, attribute);
+        attribute = new AstSgNodeAttribute(array_type);
+        base_type -> setAttribute("array", attribute);
     }
 
-    return attribute -> getArrayType();
+    return isSgArrayType(attribute -> getNode());
 }
 
 
 //
 // Turn Java array into a pointer to make it look like C++ in order to please the consistency check in Cxx_Grammar.C
 //
+/*
 SgPointerType *getUniquePointerType(SgType *base_type, int num_dimensions) {
     ROSE_ASSERT(base_type);
     ROSE_ASSERT(num_dimensions > 0);
@@ -336,17 +280,17 @@ SgPointerType *getUniquePointerType(SgType *base_type, int num_dimensions) {
 
     return attribute -> getPointerType();
 }
+*/
 
-
-SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *raw_type, SgType *containing_type, SgTemplateParameterPtrList *new_args) {
-    AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) raw_type -> getAttribute("parameterized types");
+SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *generic_type, SgTemplateParameterPtrList *new_args) {
+    AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) generic_type -> getAttribute("parameterized types");
     if (! attribute) {
-        attribute = new AstParameterizedTypeAttribute(raw_type);
-        raw_type -> setAttribute("parameterized types", attribute);
+        attribute = new AstParameterizedTypeAttribute(generic_type);
+        generic_type -> setAttribute("parameterized types", attribute);
     }
     ROSE_ASSERT(attribute);
 
-    return attribute -> findOrInsertParameterizedType(containing_type, new_args);
+    return attribute -> findOrInsertParameterizedType(new_args);
 }
 
 
@@ -397,11 +341,7 @@ SgJavaWildcardType *getUniqueWildcardUnbound() {
     ROSE_ASSERT(::ObjectClassType);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ::ObjectClassType -> getAttribute("unbound");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType();
-        wildcard -> set_is_unbound(true);
-        wildcard -> set_has_extends(false);
-        wildcard -> set_has_super(false);
-
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(::ObjectClassDefinition -> get_declaration());
         attribute = new AstSgNodeAttribute(wildcard);
         ::ObjectClassType -> setAttribute("unbound", attribute);
     }
@@ -417,10 +357,22 @@ SgJavaWildcardType *getUniqueWildcardExtends(SgType *type) {
     ROSE_ASSERT(type);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("extends");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
-        wildcard -> set_is_unbound(false);
-        wildcard -> set_has_extends(true);
-        wildcard -> set_has_super(false);
+        SgNamedType *named_type = (isSgArrayType(type) ? ::ObjectClassType : isSgNamedType(type));
+if (! named_type){
+cout << "The type " << getTypeName(type)
+     << " is of type "
+     << type -> class_name()
+     << " in file "
+     << ::currentSourceFile -> getFileName()
+     << endl;
+cout.flush();
+}
+
+        ROSE_ASSERT(named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(named_type -> getAssociatedDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration);
+        wildcard -> set_extends_type(type);
 
         attribute = new AstSgNodeAttribute(wildcard);
         type -> setAttribute("extends", attribute);
@@ -437,10 +389,12 @@ SgJavaWildcardType *getUniqueWildcardSuper(SgType *type) {
     ROSE_ASSERT(type);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("super");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
-        wildcard -> set_is_unbound(false);
-        wildcard -> set_has_extends(false);
-        wildcard -> set_has_super(true);
+        SgNamedType *named_type = isSgNamedType(type);
+        ROSE_ASSERT(named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(named_type -> getAssociatedDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration);
+        wildcard -> set_super_type(type);
 
         attribute = new AstSgNodeAttribute(wildcard);
         type -> setAttribute("super", attribute);
@@ -572,9 +526,32 @@ string getPrimitiveTypeName(SgType *type) {
 string getWildcardTypeName(SgJavaWildcardType *wild_type) {
     string name = "?";
 
-    if (! wild_type -> get_is_unbound()) {
-        name += (wild_type -> get_has_extends() ? " extends " : " super ");
-        name += getTypeName(wild_type -> get_bound_type());
+    SgType *extends_type = wild_type -> get_extends_type(),
+           *super_type = wild_type -> get_super_type();
+    if (extends_type) {
+        name += " extends ";
+        name += getTypeName(extends_type);
+    }
+    else if (super_type) {
+        name += " super ";
+        name += getTypeName(super_type);
+    }
+
+    return name;
+}
+
+
+//
+//
+//
+string getUnionTypeName(SgJavaUnionType *union_type) {
+    string name = "";
+    SgTypePtrList type_list = union_type -> get_type_list();
+    for (int i = 0; i < type_list.size(); i++) {
+        if (i > 0) {
+            name += " | ";
+        }
+        name += getTypeName(type_list[i]);
     }
 
     return name;
@@ -627,7 +604,7 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
         SgClassDefinition *definition = defining_declaration -> get_definition();
         ROSE_ASSERT(definition);
         SgScopeStatement *scope = definition -> get_scope();
-        if (isSgFunctionDefinition(scope) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
+        if (isSgFunctionDefinition(scope) || isSgJavaParameterType(definition -> get_declaration() -> get_type())) { // -> attributeExists("is_parameter_type")) {
             name = definition -> get_declaration() -> get_name().getString();
         }
         else name = definition -> get_qualified_name().getString();
@@ -639,8 +616,8 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
 }
 
 string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
-    SgNamedType *raw_type = isSgNamedType(parm_type -> get_raw_type());
-    ROSE_ASSERT(raw_type);
+    SgNamedType *generic_type = isSgNamedType(parm_type -> get_raw_type());
+    ROSE_ASSERT(generic_type);
 
     string result;
 // TODO: Review this !!! ... may not be needed!
@@ -651,13 +628,13 @@ string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
                       ? getFullyQualifiedTypeName((SgJavaParameterizedType *) attribute -> getNode())
                       : getFullyQualifiedTypeName((SgClassType *) attribute -> getNode()));
         result += ".";
-        result += raw_type -> get_name().getString();
+        result += generic_type -> get_name().getString();
     }
     else {
 */
 
-        SgClassType *c_type = isSgClassType(raw_type);
-        SgJavaQualifiedType *q_type = isSgJavaQualifiedType(raw_type);
+        SgClassType *c_type = isSgClassType(generic_type);
+        SgJavaQualifiedType *q_type = isSgJavaQualifiedType(generic_type);
         result = (c_type ? getFullyQualifiedTypeName(c_type) : getFullyQualifiedTypeName(q_type));
 
 //    }
@@ -742,7 +719,7 @@ bool hasConflicts(SgClassDeclaration *class_declaration) {
 
 
 bool isVisibleSimpleTypeName(SgNamedType *named_type) {
-    if (named_type -> attributeExists("is_parameter_type")) { // a parameter type?
+    if (isSgJavaParameterType(named_type)) { // -> attributeExists("is_parameter_type")) { // a parameter type?
         return true;
     }
     SgJavaQualifiedType *q_type = isSgJavaQualifiedType(named_type);
@@ -809,6 +786,7 @@ cout.flush();
 */
     //
     // If we are not currently processing a compilation unit or this type was already tagged as must-be fully qualified in this source file, ...
+    // TODO: I think this is necessary because of a javac bug... Check on that.
     //
     if (mustBeFullyQualified(class_type)) {
         return getFullyQualifiedTypeName(class_type);
@@ -829,7 +807,7 @@ cout.flush();
     SgName class_name = class_type -> get_name(), // do a local lookup of the type.
            class_simple_name = class_type -> get_name().getString();
 
-    if (class_type -> attributeExists("is_parameter_type")) { // a parameter type?
+    if (isSgJavaParameterType(class_type)) { // -> attributeExists("is_parameter_type")) { // a parameter type?
 // TODO: Remove this !!!
 /*
 cout << "The class "
@@ -1020,30 +998,30 @@ string getUnqualifiedTypeName(SgJavaParameterizedType *param_type) {
 
 
 string getTypeName(SgJavaParameterizedType *param_type) {
-    SgNamedType *raw_type = isSgNamedType(param_type -> get_raw_type());
-    ROSE_ASSERT(raw_type);
+    SgNamedType *generic_type = isSgNamedType(param_type -> get_raw_type());
+    ROSE_ASSERT(generic_type);
 /*
 cout << "Looking up a name for "
      << getFullyQualifiedTypeName(param_type)
-     << " ; Its raw type is ("
-     << raw_type -> class_name()
+     << " ; Its generic type is ("
+     << generic_type -> class_name()
      << ") "
-     << (isSgClassType(raw_type) ?  getFullyQualifiedTypeName(isSgClassType(raw_type)) :  getFullyQualifiedTypeName(isSgJavaQualifiedType(raw_type)))
+     << (isSgClassType(generic_type) ?  getFullyQualifiedTypeName(isSgClassType(generic_type)) :  getFullyQualifiedTypeName(isSgJavaQualifiedType(generic_type)))
      << endl;
 cout.flush();
 */
 // TODO: Review this !!! ... may not be needed!
 /*
-    string result = getTypeName(parm_type -> get_raw_type());
+    string result = getTypeName(parm_type -> get_generic_type());
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) parm_type -> getAttribute("enclosing_type");
-    string result = getTypeName(attribute != NULL ? ((SgType *) attribute -> getNode()) :  parm_type -> get_raw_type());
+    string result = getTypeName(attribute != NULL ? ((SgType *) attribute -> getNode()) :  parm_type -> get_generic_type());
     if (attribute) {
         result += ".";
-        result += raw_type -> get_name().getString();
+        result += generic_type -> get_name().getString();
     }
 */
 
-    return getTypeName(raw_type) + getParameters(param_type);
+    return getTypeName(generic_type) + getParameters(param_type);
 }
 
 
@@ -1054,11 +1032,14 @@ cout << "Looking up a name for "
      << endl;
 cout.flush();
 */
+
     SgJavaParameterizedType *p_type = isSgJavaParameterizedType(qualified_type -> get_type());
     SgClassType *c_type = isSgClassType(qualified_type -> get_type());
     ROSE_ASSERT(p_type || c_type);
     string type_name = (p_type ? getUnqualifiedTypeName(p_type) : c_type -> get_name().getString());
+/**
     bool simply_visible = isVisibleSimpleTypeName(c_type ? c_type : (SgNamedType *) p_type -> get_raw_type());
+**/
 /*
 if(simply_visible) {
   cout << " Its simple type is visible"
@@ -1071,7 +1052,8 @@ else {
   cout.flush();
 }
 */
-    return (simply_visible ? type_name : (getTypeName(qualified_type -> get_parent_type()) + "." + type_name));
+/**    return (simply_visible ? type_name : (getTypeName(qualified_type -> get_parent_type()) + "." + type_name)); **/
+    return getTypeName(qualified_type -> get_parent_type()) + "." + type_name;
 }
 
 
@@ -1081,9 +1063,10 @@ else {
 string getTypeName(SgType *type) {
     SgJavaParameterizedType *param_type = isSgJavaParameterizedType(type); 
     SgJavaQualifiedType *qualified_type = isSgJavaQualifiedType(type); 
+    SgArrayType *array_type = isSgArrayType(type);
     SgClassType *class_type = isSgClassType(type);
-    SgPointerType *pointer_type = isSgPointerType(type);
     SgJavaWildcardType *wild_type = isSgJavaWildcardType(type);
+    SgJavaUnionType *union_type = isSgJavaUnionType(type);
     string result;
 
     if (param_type) {
@@ -1092,14 +1075,17 @@ string getTypeName(SgType *type) {
     else if (qualified_type) {
          result = getTypeName(qualified_type);
     }
+    else if (array_type) {
+         result = getTypeName(array_type -> get_base_type()) + "[]";
+    }
     else if (class_type) {
          result = getTypeName(class_type);
     }
-    else if (pointer_type) {
-         result = getTypeName(pointer_type -> get_base_type()) + "[]";
-    }
     else if (wild_type) {
          result = getWildcardTypeName(wild_type);
+    }
+    else if (union_type) {
+         result = getUnionTypeName(union_type);
     }
     else result = getPrimitiveTypeName(type);
 
@@ -1377,7 +1363,7 @@ SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *scope, const
 }
 
 
-SgClassDeclaration *buildDefiningClassDeclaration(SgName class_name, SgScopeStatement *scope) {
+SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName class_name, SgScopeStatement *scope) {
     ROSE_ASSERT(scope);
     SgClassSymbol *class_symbol = lookupClassSymbolInScope(scope, class_name);
 //
@@ -1402,7 +1388,7 @@ cout << "The qualified type name is "
     bool buildTemplateInstantiation                  = false;
     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
 
-    SgClassDeclaration* class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_class, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    SgClassDeclaration* class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, kind, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
     ROSE_ASSERT(class_declaration);
     class_declaration -> set_parent(scope);
     class_declaration -> set_scope(scope);
@@ -2436,7 +2422,7 @@ cout.flush();
     // If we are dealing with an array, build the Array type...
     //
     if (num_dimensions > 0) {
-        type = getUniquePointerType(type, num_dimensions); // getUniqueArrayType(type, num_dimensions);
+        type = getUniqueArrayType(type, num_dimensions);
     }
 
     ROSE_ASSERT(type);
