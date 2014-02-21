@@ -102,7 +102,13 @@ class Driver<Sage> {
     Driver(SgProject * project_ = NULL);
 
     unsigned long createPairOfFiles(const std::string & name);
-    unsigned long   loadPairOfFiles(const std::string & name, const std::string & header_path, const std::string & source_path);
+    unsigned long   loadPairOfFiles(
+      const std::string & name,
+      const std::string & header_path,
+      const std::string & source_path,
+      std::string header_extension = "hpp",
+      std::string source_extension = "cpp"
+    );
 
     unsigned long createStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");
     unsigned long   loadStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");

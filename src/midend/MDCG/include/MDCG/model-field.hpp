@@ -23,12 +23,12 @@ template <>
 struct node_t<e_model_field> {
   field_symbol_t * symbol;
 
-  type_t  * type;
+  type_t type;
 };
 
 template <>
 struct scope_t<e_model_field> {
-  class_t * parent;
+  class_t parent;
 };
 
 /** @} */

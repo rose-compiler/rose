@@ -18,6 +18,108 @@ namespace MDCG {
  * @{
 */
 
+template <Model::model_elements_e kind>
+void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<kind> * element, SgSymbol * symbol) {
+  SgScopeStatement * scope = symbol->get_scope();
+  assert(scope != NULL);
+
+  SgNamespaceDefinitionStatement * nsp_defn     = isSgNamespaceDefinitionStatement(scope);
+  SgClassDefinition              * class_defn   = isSgClassDefinition(scope);
+  SgGlobal                       * global_scope = isSgGlobal(scope);
+
+  if (nsp_defn != NULL) {
+    // field and method cannot have namespace for scope
+    assert(kind != Model::e_model_field && kind != Model::e_model_method);
+  
+    SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
+    assert(nsp_decl != NULL);
+    
+    SgNamespaceSymbol * parent_symbol = isSgNamespaceSymbol(nsp_decl->get_symbol_from_symbol_table());
+    assert(parent_symbol != NULL);
+    
+    Model::namespace_t parent_element = model.lookup_namespace_by(parent_symbol);
+    if (parent_element == NULL) {
+      add(model, parent_symbol);
+      parent_element = model.lookup_namespace_by(parent_symbol);
+    }
+    assert(parent_element != NULL);
+    
+    switch (kind) {
+      case Model::e_model_variable:  parent_element->scope->variable_children.push_back  ( (Model::variable_t)  element); break;
+      case Model::e_model_function:  parent_element->scope->function_children.push_back  ( (Model::function_t)  element); break;
+      case Model::e_model_type:      parent_element->scope->type_children.push_back      ( (Model::type_t)      element); break;
+      case Model::e_model_class:     parent_element->scope->class_children.push_back     ( (Model::class_t)     element); break;
+      case Model::e_model_namespace: parent_element->scope->namespace_children.push_back ( (Model::namespace_t) element); break;
+
+      case Model::e_model_field:
+      case Model::e_model_method:
+        assert(false);
+    }
+    
+    switch (kind) {
+      case Model::e_model_variable:  ( (Model::variable_t)  element)->scope->parent = parent_element; break;
+      case Model::e_model_function:  ( (Model::function_t)  element)->scope->parent = parent_element; break;
+      case Model::e_model_namespace: ( (Model::namespace_t) element)->scope->parent = parent_element; break;
+
+      case Model::e_model_type:  ( (Model::type_t)  element)->scope->parent.a_namespace = parent_element; break;
+      case Model::e_model_class: ( (Model::class_t) element)->scope->parent.a_namespace = parent_element; break;
+
+      case Model::e_model_field:
+      case Model::e_model_method:
+        assert(false);
+    }
+  }
+  else if (class_defn != NULL) {
+    // namespace, function, and variable cannot have class for scope
+    assert(kind != Model::e_model_namespace && kind != Model::e_model_function && kind != Model::e_model_variable);
+    
+    SgClassDeclaration * class_decl = class_defn->get_declaration();
+    assert(class_decl != NULL);
+    
+    SgClassSymbol * parent_symbol = isSgClassSymbol(class_decl->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table());
+    assert(parent_symbol != NULL);
+    
+    Model::class_t parent_element = model.lookup_class_by(parent_symbol);
+    if (parent_element == NULL) {
+      add(model, parent_symbol);
+      parent_element = model.lookup_class_by(parent_symbol);
+    }
+    assert(parent_element != NULL);
+
+    switch (kind) {
+      case Model::e_model_field:  parent_element->scope->field_children.push_back  ( (Model::field_t)  element); break;
+      case Model::e_model_method: parent_element->scope->method_children.push_back ( (Model::method_t) element); break;
+      case Model::e_model_type:   parent_element->scope->type_children.push_back   ( (Model::type_t)   element); break;
+      case Model::e_model_class:  parent_element->scope->class_children.push_back  ( (Model::class_t)  element); break;
+
+      case Model::e_model_namespace:
+      case Model::e_model_variable:
+      case Model::e_model_function:
+        assert(false);
+    }
+
+    switch (kind) {
+      case Model::e_model_field:  ( (Model::field_t)  element)->scope->parent = parent_element; break;
+      case Model::e_model_method: ( (Model::method_t) element)->scope->parent = parent_element; break;
+      
+      case Model::e_model_type:  ( (Model::type_t)  element)->scope->parent.a_class = parent_element; break;
+      case Model::e_model_class: ( (Model::class_t) element)->scope->parent.a_class = parent_element; break;
+
+      case Model::e_model_namespace:
+      case Model::e_model_variable:
+      case Model::e_model_function:
+        assert(false);
+    }
+  }
+  else if (global_scope != NULL) {
+    /// \todo Should we have a root namespace to represent the global scope ???
+  }
+  else {
+    /// \todo error printing
+    assert(false);
+  }
+}
+
 ModelBuilder::ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver) :
   p_mfb_driver(mfb_driver),
   p_models()
@@ -36,6 +138,21 @@ void ModelBuilder::addOne(
   std::string suffix
 ) {
   unsigned long file_id = p_mfb_driver.loadStandaloneSourceFile(name, path, suffix);
+
+  MFB::api_t * api = p_mfb_driver.getAPI(file_id);
+
+  add(p_models[model_id], api);
+}
+
+void ModelBuilder::addPair(
+  unsigned model_id,
+  const std::string & name,
+  const std::string & header_path,
+  const std::string & source_path,
+  std::string header_suffix,
+  std::string source_suffix
+) {
+  unsigned long file_id = p_mfb_driver.loadPairOfFiles(name, header_path, source_path, header_suffix, source_suffix);
 
   MFB::api_t * api = p_mfb_driver.getAPI(file_id);
 
@@ -70,48 +187,233 @@ void ModelBuilder::add(Model::model_t & model, const MFB::api_t * api) {
 }
 
 void ModelBuilder::add(Model::model_t & model, SgNamespaceSymbol * namespace_symbol) {
-  SgScopeStatement * scope = namespace_symbol->get_scope();
-  SgNamespaceDefinitionStatement * nsp_defn = isSgNamespaceDefinitionStatement(scope);
-  if (nsp_defn != NULL) {
-    SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
-    assert(nsp_decl != NULL);
-    SgNamespaceSymbol * parent_namespace_symbol = isSgNamespaceSymbol(nsp_decl->get_symbol_from_symbol_table());
-    assert(parent_namespace_symbol != NULL);
-    if (model.lookup_namespace_by(parent_namespace_symbol) == NULL) 
-      add(model, parent_namespace_symbol);
-    assert(false); /// \todo build  elem to insert
-  }
-  else {
-    assert(isSgGlobal(scope));
-    assert(false); /// \todo build  elem to insert
-  }
+  Model::namespace_t element = Model::build<Model::e_model_namespace>();
+
+  element->node->symbol = namespace_symbol;
+  
+  setParentFromScope<Model::e_model_namespace>(model, element, namespace_symbol);
+
+  model.namespaces.push_back(element);
 }
 
 void ModelBuilder::add(Model::model_t & model, SgVariableSymbol * variable_symbol) {
-  /// \todo
+  SgScopeStatement * scope = variable_symbol->get_scope();
+  assert(scope != NULL);
+
+  SgNamespaceDefinitionStatement * nsp_defn     = isSgNamespaceDefinitionStatement(scope);
+  SgClassDefinition              * class_defn   = isSgClassDefinition(scope);
+  SgGlobal                       * global_scope = isSgGlobal(scope);
+  
+  SgType * sg_type = variable_symbol->get_type();
+  assert(sg_type != NULL);
+  Model::type_t type = model.lookup_type_by(sg_type);
+  if (type == NULL) {
+    add(model, sg_type);
+    type = model.lookup_type_by(sg_type);
+  }
+  assert(type != NULL);
+  
+  if (nsp_defn != NULL || global_scope != NULL) {
+    Model::variable_t element = Model::build<Model::e_model_variable>();
+
+    element->node->symbol = variable_symbol;
+    element->node->type = type;
+  
+    setParentFromScope<Model::e_model_variable>(model, element, variable_symbol);
+
+    model.variables.push_back(element);
+  }
+  else if (class_defn != NULL) {
+    Model::field_t element = Model::build<Model::e_model_field>();
+
+    element->node->symbol = variable_symbol;
+    element->node->type = type;
+  
+    setParentFromScope<Model::e_model_field>(model, element, variable_symbol);
+
+    model.fields.push_back(element);
+  }
+  else {
+    /// \todo error printing
+    assert(false);
+  }
 }
 
 void ModelBuilder::add(Model::model_t & model, SgFunctionSymbol * function_symbol) {
-  /// \todo
+  Model::function_t element = Model::build<Model::e_model_function>();
+
+  element->node->symbol = function_symbol;
+
+  SgFunctionType * func_type = isSgFunctionType(function_symbol->get_type());
+  assert(func_type != NULL);
+
+  SgType * func_return_type = func_type->get_return_type();
+  assert(func_return_type != NULL);
+  element->node->return_type = model.lookup_type_by(func_return_type);
+  if (element->node->return_type == NULL) {
+    add(model, func_return_type);
+    element->node->return_type = model.lookup_type_by(func_return_type);
+  }
+  assert(element->node->return_type != NULL);
+
+  SgFunctionParameterTypeList * param_type_list = func_type->get_argument_list();
+  assert(param_type_list != NULL);
+  const std::vector<SgType *> & arguments = param_type_list->get_arguments();
+  std::vector<SgType *>::const_iterator it_argument;
+  for (it_argument = arguments.begin(); it_argument != arguments.end(); it_argument++) {
+    Model::type_t type = model.lookup_type_by(*it_argument);
+    if (type == NULL) {
+      add(model, *it_argument);
+      type = model.lookup_type_by(*it_argument);
+    }
+    assert(type != NULL);
+    element->node->args_types.push_back(type);
+  }
+  
+  setParentFromScope<Model::e_model_function>(model, element, function_symbol);
+
+  model.functions.push_back(element);
 }
 
 void ModelBuilder::add(Model::model_t & model, SgClassSymbol * class_symbol) {
-  /// \todo
+  Model::class_t element = Model::build<Model::e_model_class>();
+
+  element->node->symbol = class_symbol;
+
+  /// \todo std::map<class_t, inheritance_kind_t> base_classes;
+  
+  setParentFromScope<Model::e_model_class>(model, element, class_symbol);
+
+  model.classes.push_back(element);
 }
 
 void ModelBuilder::add(Model::model_t & model, SgMemberFunctionSymbol * member_function_symbol) {
-  /// \todo
+  Model::method_t element = Model::build<Model::e_model_method>();
+
+  element->node->symbol = member_function_symbol;
+
+  SgFunctionType * func_type = isSgFunctionType(member_function_symbol->get_type());
+  assert(func_type != NULL);
+
+  SgType * func_return_type = func_type->get_return_type();
+  assert(func_return_type != NULL);
+  element->node->return_type = model.lookup_type_by(func_return_type);
+  if (element->node->return_type == NULL) {
+    add(model, func_return_type);
+    element->node->return_type = model.lookup_type_by(func_return_type);
+  }
+  assert(element->node->return_type != NULL);
+
+  SgFunctionParameterTypeList * param_type_list = func_type->get_argument_list();
+  assert(param_type_list != NULL);
+  const std::vector<SgType *> & arguments = param_type_list->get_arguments();
+  std::vector<SgType *>::const_iterator it_argument;
+  for (it_argument = arguments.begin(); it_argument != arguments.end(); it_argument++) {
+    Model::type_t type = model.lookup_type_by(*it_argument);
+    if (type == NULL) {
+      add(model, *it_argument);
+      type = model.lookup_type_by(*it_argument);
+    }
+    assert(type != NULL);
+    element->node->args_types.push_back(type);
+  }
+  
+  setParentFromScope<Model::e_model_method>(model, element, member_function_symbol);
+
+  model.methods.push_back(element);
 }
 
-void ModelBuilder::addPair(
-  unsigned model,
-  const std::string & name,
-  const std::string & header_path,
-  const std::string & source_path,
-  std::string header_suffix,
-  std::string source_suffix
-) {
-  assert(false); /// \todo
+void ModelBuilder::add(Model::model_t & model, SgType * sg_type) {
+  Model::type_t element = Model::build<Model::e_model_type>();
+
+  element->node->type = sg_type;
+
+  SgNamedType     * named_type     = isSgNamedType(sg_type);
+  SgArrayType     * array_type     = isSgArrayType(sg_type);
+  SgPointerType   * pointer_type   = isSgPointerType(sg_type);
+  SgReferenceType * reference_type = isSgReferenceType(sg_type);
+  if (named_type != NULL) {
+    SgClassType   * class_type   = isSgClassType(named_type);
+    SgEnumType    * enum_type    = isSgEnumType(named_type);
+    SgTypedefType * typedef_type = isSgTypedefType(named_type);
+
+    SgDeclarationStatement * decl_stmt = named_type->get_declaration()->get_firstNondefiningDeclaration();
+    assert(decl_stmt != NULL);
+    SgSymbol * decl_sym = decl_stmt->get_symbol_from_symbol_table();
+    assert(decl_sym != NULL);
+
+    if (class_type != NULL) {
+      element->node->kind = Model::node_t<Model::e_model_type>::e_class_type;
+
+      SgClassSymbol * class_sym = isSgClassSymbol(decl_sym);
+      assert(class_sym != NULL);
+      element->node->base_class = model.lookup_class_by(class_sym);
+      if (element->node->base_class == NULL) {
+        add(model, class_sym);
+        element->node->base_class = model.lookup_class_by(class_sym);
+      }
+      assert(element->node->base_class != NULL);
+    }
+    else if (enum_type != NULL) {
+      element->node->kind = Model::node_t<Model::e_model_type>::e_enum_type;
+
+      SgEnumSymbol * enum_sym = isSgEnumSymbol(decl_sym);
+      assert(enum_sym != NULL);
+      element->node->enum_symbol = enum_sym;
+    }
+    else if (typedef_type != NULL) {
+      element->node->kind = Model::node_t<Model::e_model_type>::e_typedef_type;
+
+      SgTypedefSymbol * typedef_sym = isSgTypedefSymbol(decl_sym);
+      assert(typedef_sym != NULL);
+      element->node->typedef_symbol = typedef_sym;
+
+      element->node->base_type = model.lookup_type_by(typedef_type->get_base_type());
+      if (element->node->base_type == NULL) {
+        add(model, typedef_type->get_base_type());
+        element->node->base_type = model.lookup_type_by(typedef_type->get_base_type());
+      }
+      assert(element->node->base_type != NULL);
+    }
+    else assert(false);
+  }
+  else if (array_type != NULL) {
+    element->node->kind = Model::node_t<Model::e_model_type>::e_array_type;
+
+    element->node->base_type = model.lookup_type_by(array_type->get_base_type());
+    if (element->node->base_type == NULL) {
+      add(model, array_type->get_base_type());
+      element->node->base_type = model.lookup_type_by(array_type->get_base_type());
+    }
+    assert(element->node->base_type != NULL);
+  }
+  else if (pointer_type != NULL) {
+    element->node->kind = Model::node_t<Model::e_model_type>::e_pointer_type;
+
+    element->node->base_type = model.lookup_type_by(pointer_type->get_base_type());
+    if (element->node->base_type == NULL) {
+      add(model, pointer_type->get_base_type());
+      element->node->base_type = model.lookup_type_by(pointer_type->get_base_type());
+    }
+    assert(element->node->base_type != NULL);
+  }
+  else if (reference_type != NULL) {
+    element->node->kind = Model::node_t<Model::e_model_type>::e_reference_type;
+
+    element->node->base_type = model.lookup_type_by(reference_type->get_base_type());
+    if (element->node->base_type == NULL) {
+      add(model, reference_type->get_base_type());
+      element->node->base_type = model.lookup_type_by(reference_type->get_base_type());
+    }
+    assert(element->node->base_type != NULL);
+  }
+  else {
+    element->node->kind = Model::node_t<Model::e_model_type>::e_native_type;
+  }
+  
+  element->scope->parent.a_namespace = NULL; /// \todo
+
+  model.types.push_back(element);
 }
  
 const Model::model_t & ModelBuilder::get(const unsigned model_id) const {

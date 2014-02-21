@@ -93,17 +93,21 @@ unsigned long Driver<Sage>::createPairOfFiles(const std::string & name) {
   return id;
 }
 
-unsigned long Driver<Sage>::loadPairOfFiles(const std::string & name, const std::string & header_path, const std::string & source_path) {
+unsigned long Driver<Sage>::loadPairOfFiles(
+  const std::string & name,
+  const std::string & header_path,
+  const std::string & source_path,
+  std::string header_extension,
+  std::string source_extension
+) {
   std::string filename;
 
-  std::cout << "Load : " << name << " from header-path=\"" << header_path << "\" and source-path=\"" << source_path << "\"." << std::endl;
-
-  filename = name + ".hpp";
-  assert(boost::filesystem::exists(header_path + filename));
+  filename = name + "." + header_extension;
+  assert(boost::filesystem::exists(header_path + "/" + filename));
   SgSourceFile * header_file = isSgSourceFile(SageBuilder::buildFile(header_path + filename, std::string("rose_") + filename, project)); // FIXME could extract the header from the source file...
 
-  filename = name + ".cpp";
-  assert(boost::filesystem::exists(source_path + filename));
+  filename = name + "." + source_extension;
+  assert(boost::filesystem::exists(source_path + "/" + filename));
   SgSourceFile * source_file = isSgSourceFile(SageBuilder::buildFile(source_path + filename, std::string("rose_") + filename, project));
 
   unsigned long id = addPairOfFiles(header_file, source_file);
@@ -140,7 +144,6 @@ unsigned long Driver<Sage>::loadStandaloneSourceFile(const std::string & name, c
   std::string filename;
 
   filename = name + std::string(".") + suffix;
-  std::cout << "Path + Filename: " << path << std::string("/") << filename << std::endl;
   assert(boost::filesystem::exists(path + std::string("/") + filename));
   SgSourceFile * file = isSgSourceFile(SageBuilder::buildFile(path + std::string("/") + filename, std::string("rose_") + filename, project));
 
@@ -232,7 +235,7 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceF
 api_t * Driver<Sage>::getAPI(unsigned long file_id) const {
   api_t * api = new api_t();
 
-  // Namespaces are not local to a file. If a namespace have been detected in any file, it will in the API
+  // Namespaces are not local to a file. If a namespace have been detected in any file, it will be in the API
   std::set<SgNamespaceSymbol *>::const_iterator it_namespace_symbol;
   for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++)
     api->namespace_symbols.insert(*it_namespace_symbol);

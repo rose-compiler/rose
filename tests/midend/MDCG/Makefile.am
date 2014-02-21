@@ -21,17 +21,41 @@ build_model_LDADD= \
 
 check-model: build-model
 	echo "one bar $(srcdir) h" > test.dat
-	./build-model test.dat
-	echo "pair foo $(srcdir) $(srcdir) h c" > test.dat
-	./build-model test.dat
-	echo "one bar $(srcdir) h" > test.dat
-	echo "pair foo $(srcdir) $(srcdir) h c" >> test.dat
-	echo "one test $(srcdir) c" >> test.dat
-	./build-model test.dat
+	./build-model test.dat model_test.dot
+	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >  acc_internal.dat
+	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one compiler $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one mem-manager $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one opencl-debug $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one opencl-init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
+	./build-model acc_internal.dat model_acc_internal.dot -I$(top_srcdir)/../libopenacc/include/ -I/export/tmp.vanderbrugge1/scratch/
+	echo "one openacc $(top_srcdir)/../libopenacc/include/OpenACC/ h" >  openacc.dat
+	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one debug $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
+	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >>  openacc.dat
+	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one compiler $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one mem-manager $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one opencl-debug $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one opencl-init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
+	./build-model openacc.dat model_openacc.dot -I$(top_srcdir)/../libopenacc/include/ -I/export/tmp.vanderbrugge1/scratch/
 
 check-local: build-model
 	$(MAKE) check-model
 
 clean-local:
-	rm -f *.hpp *.cpp
+	rm -f *.hpp *.cpp *.dat *.png *.dot
 

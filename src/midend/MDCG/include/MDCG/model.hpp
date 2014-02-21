@@ -16,6 +16,12 @@
 #include "MDCG/model-method.hpp"
 #include "MDCG/model-namespace.hpp"
 
+#include <vector>
+#include <set>
+
+#include <iostream>
+#include <string>
+
 namespace MDCG {
 
 namespace Model {
@@ -45,7 +51,7 @@ struct model_t {
 
   std::vector<type_t> types;
 
-  type_t lookup_type_by(SgSymbol * symbol) const;
+  type_t lookup_type_by(SgType * type) const;
 
   // Classes
 
@@ -70,6 +76,10 @@ struct model_t {
   std::vector<namespace_t> namespaces;
 
   namespace_t lookup_namespace_by(SgNamespaceSymbol * symbol) const;
+
+  // Printer
+
+  void toDot(std::ostream & out, std::string prefix_filter, bool, bool, bool) const;
 };
 
 /** @} */

@@ -17,6 +17,8 @@ class SgFunctionSymbol;
 class SgClassSymbol;
 class SgMemberFunctionSymbol;
 class SgNamespaceSymbol;
+class SgTypedefSymbol;
+class SgEnumSymbol;
 
 namespace MDCG {
 
@@ -55,6 +57,14 @@ struct element_t {
   scope_t<kind_> * scope; ///< Scope part of the element: Information on the scoping of the elements
 };
 
+template <model_elements_e kind>
+element_t<kind> * build() {
+  element_t<kind> * element = new element_t<kind>();
+  element->node = new node_t<kind>();
+  element->scope = new scope_t<kind>();
+  return element;
+}
+
 /// A variable: part of a namespace. interact_with(type)
 typedef element_t<e_model_variable> * variable_t;
 
@@ -88,6 +98,8 @@ typedef SgClassSymbol class_symbol_t;
 typedef SgVariableSymbol field_symbol_t;
 typedef SgMemberFunctionSymbol method_symbol_t;
 typedef SgNamespaceSymbol namespace_symbol_t;
+typedef SgTypedefSymbol typedef_symbol_t;
+typedef SgEnumSymbol enum_symbol_t;
 
 /** @} */
 

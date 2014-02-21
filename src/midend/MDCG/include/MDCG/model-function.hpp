@@ -23,13 +23,13 @@ template <>
 struct node_t<e_model_function> {
   function_symbol_t * symbol;
 
-  type_t * return_type;
-  std::vector<type_t  *> args_types;
+  type_t return_type;
+  std::vector<type_t> args_types;
 };
 
 template <>
 struct scope_t<e_model_function> {
-  namespace_t * parent;
+  namespace_t parent;
 };
 
 /** @} */

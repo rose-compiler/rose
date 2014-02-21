@@ -23,12 +23,12 @@ template <>
 struct node_t<e_model_variable> {
   variable_symbol_t * symbol;
 
-  type_t  * type;
+  type_t type;
 };
 
 template <>
 struct scope_t<e_model_variable> {
-  namespace_t * parent;
+  namespace_t parent;
 };
 
 /** @} */

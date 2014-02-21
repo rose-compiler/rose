@@ -23,31 +23,36 @@ namespace Model {
 
 template <>
 struct node_t<e_model_type> {
-  /// invalid when kind == e_native_type && kind == e_class_type (should be NULL)
-  type_symbol_t * symbol;
+  SgType * type;
 
   enum {
+    e_array_type,
+    e_pointer_type,
+    e_reference_type,
     e_typedef_type,
+    e_class_type,
     e_enum_type,
-    e_native_type,
-    e_class_type /// in this case symbol is NULL.
+    e_native_type
   } kind;
 
-  /// valid iff kind == e_typedef_type
-  type_t * referenced_type;
+  /// valid iff kind == e_array_type/e_pointer_type/e_reference_type/e_typedef_type
+  type_t base_type;
 
-  /// valid iff kind == e_native_type
-  SgType * native_type;
+  /// valid iff kind == e_typedef_type
+  typedef_symbol_t * typedef_symbol;
 
   /// valid iff kind == e_class_type
-  class_t * aliased_class;
+  class_t base_class;
+
+  /// valid iff kind == e_enum_type
+  enum_symbol_t * enum_symbol;
 };
 
 template <>
 struct scope_t<e_model_type> {
   union {
-    namespace_t * a_namespace;
-    class_t * a_class;
+    namespace_t a_namespace;
+    class_t a_class;
   } parent;
 };
 

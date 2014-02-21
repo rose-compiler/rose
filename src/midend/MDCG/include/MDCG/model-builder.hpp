@@ -40,12 +40,21 @@ class ModelBuilder /*:
     std::vector<Model::model_t> p_models;
 
   private:
+    
+    template <Model::model_elements_e kind>
+    void toDotNode(std::ostream & out, Model::element_t<kind> * element) const;
+
+    template <Model::model_elements_e kind>
+    void setParentFromScope(Model::model_t & model, Model::element_t<kind> * element, SgSymbol * symbol);
+  
     void add(Model::model_t & model, const MFB::api_t * api);
     void add(Model::model_t & model, SgNamespaceSymbol * namespace_symbol);
     void add(Model::model_t & model, SgVariableSymbol * variable_symbol);
     void add(Model::model_t & model, SgFunctionSymbol * function_symbol);
     void add(Model::model_t & model, SgClassSymbol * class_symbol);
     void add(Model::model_t & model, SgMemberFunctionSymbol * member_function_symbol);
+
+    void add(Model::model_t & model, SgType * type);
 
   public:
     ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver);

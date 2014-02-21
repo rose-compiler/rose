@@ -40,20 +40,20 @@ struct node_t<e_model_class> {
     bool virtual_inheritance;
   };
   /// Associate to each inherited classes: access privileges and virtual inheritance flag
-  std::map<class_t *, inheritance_kind_t> base_classes;
+  std::map<class_t, inheritance_kind_t> base_classes;
 };
 
 template <>
 struct scope_t<e_model_class> {
   union {
-    namespace_t * a_namespace;
-    class_t * a_class;
+    namespace_t a_namespace;
+    class_t a_class;
   } parent;
 
-  std::vector<type_t *>      type_children;
-  std::vector<class_t *>     class_children;
-  std::vector<field_t *>     field_children;
-  std::vector<method_t *>    method_children;
+  std::vector<type_t>      type_children;
+  std::vector<class_t>     class_children;
+  std::vector<field_t>     field_children;
+  std::vector<method_t>    method_children;
 };
 
 /** @} */
