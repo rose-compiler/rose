@@ -1,13 +1,8 @@
 #include "rose_config.h"
 
 // DQ (2/10/2014): I have fixed boost filesystem 3 issues so we now want to avoid specifying this explicitly if possible.
-#ifndef _MSC_VER
 // Non-windows support should used boost filesystem 2 if using GNU version less than 4.7.
-#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
-  #define BOOST_FILESYSTEM_VERSION 2
-#endif
-#else
-// Windows support should use boost filesytem 2 for now.
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
   #define BOOST_FILESYSTEM_VERSION 2
 #endif
 
@@ -52,7 +47,7 @@ public:
         return boostPath.parent_path().string();
     }
 
-#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
  // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
     static string getFileName(const string& aPath) {
         path boostPath(aPath);
@@ -117,7 +112,7 @@ public:
         }
         //All remaining path elements of toPath are appended to the relative path.
         if (toPathIterator != boostToPath.end()) {
-#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
          // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
             relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
 #else
@@ -126,7 +121,7 @@ public:
 #endif
             toPathIterator++;
             while (toPathIterator != boostToPath.end()) {
-#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
              // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
                 relativePath += pathDelimiter + *toPathIterator;
 #else
