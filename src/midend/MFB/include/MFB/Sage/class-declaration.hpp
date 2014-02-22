@@ -32,7 +32,7 @@ class Sage<SgClassDeclaration> {
       unsigned long kind;
 
       SgSymbol * parent;
-      unsigned long file_id; // non-zero
+      unsigned file_id; // non-zero
 
       bool create_definition;
 
@@ -40,7 +40,7 @@ class Sage<SgClassDeclaration> {
         std::string name_,
         unsigned long kind_,
         SgSymbol * parent_,
-        unsigned long file_id_,
+        unsigned file_id_,
         bool create_definition_ = true
       );
     };
@@ -58,7 +58,7 @@ template <>
 Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDeclaration>(const Sage<SgClassDeclaration>::object_desc_t & desc);
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, unsigned target_file_id);
 
 /** @} */
 

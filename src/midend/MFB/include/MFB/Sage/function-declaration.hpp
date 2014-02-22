@@ -34,7 +34,9 @@ class Sage<SgFunctionDeclaration> {
       SgFunctionParameterList * params;
 
       SgNamespaceSymbol * parent;
-      unsigned long file_id; // For declaration and definition scopes
+
+      unsigned decl_file_id;
+      unsigned defn_file_id;
 
       bool is_static;
 
@@ -45,7 +47,8 @@ class Sage<SgFunctionDeclaration> {
         SgType * return_type_,
         SgFunctionParameterList * params_,
         SgNamespaceSymbol * parent_namespace_,
-        unsigned long file_id_,
+        unsigned decl_file_id_,
+        unsigned defn_file_id_,
         bool is_static_ = false,
         bool create_definition_ = true
       );
@@ -64,7 +67,7 @@ template <>
 Sage<SgFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgFunctionDeclaration>(const Sage<SgFunctionDeclaration>::object_desc_t & desc);
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFunctionDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFunctionDeclaration>::symbol_t symbol, unsigned target_file_id);
 
 /** @} */
 

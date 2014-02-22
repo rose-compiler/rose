@@ -61,20 +61,11 @@ class ModelBuilder /*:
 
     unsigned create();
 
-    void addOne(
+    void add(
       unsigned model,
       const std::string & name,
       const std::string & path,
       std::string suffix
-    );
-
-    void addPair(
-      unsigned model,
-      const std::string & name,
-      const std::string & header_path,
-      const std::string & source_path,
-      std::string header_suffix,
-      std::string source_suffix
     );
 
     const Model::model_t & get(unsigned model) const;

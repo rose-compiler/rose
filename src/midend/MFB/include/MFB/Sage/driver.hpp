@@ -13,6 +13,8 @@
 #include <string>
 #include <utility>
 
+#include <boost/filesystem.hpp>
+
 class SgType;
 
 class SgFunctionDeclaration;
@@ -57,19 +59,19 @@ class Driver<Sage> {
 
   // Files management
 
-    unsigned long file_id_counter;
+    unsigned file_id_counter;
+    
+    std::map<boost::filesystem::path, unsigned> path_to_id_map;
 
-    std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> > file_pair_map;
+    std::map<unsigned, SgSourceFile *> id_to_file_map;
 
-    std::map<unsigned long, SgSourceFile *> standalone_source_file_map;
+    std::map<SgSourceFile *, unsigned> file_to_id_map;
 
-    std::map<SgSourceFile *, unsigned long> file_to_id_map;
-
-    std::map<SgSourceFile *, std::set<unsigned long> > file_id_to_accessible_file_id_map;
+    std::map<unsigned, std::set<unsigned> > file_id_to_accessible_file_id_map;
 
   // Symbols management
 
-    std::map<SgSymbol *, unsigned long> p_symbol_to_file_id_map;
+    std::map<SgSymbol *, unsigned> p_symbol_to_file_id_map;
 
     std::set<SgSymbol *> p_valid_symbols;
 
@@ -82,60 +84,62 @@ class Driver<Sage> {
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
 
   private:
-    void addIncludeDirectives(SgSourceFile * target_file, unsigned long to_be_included_file_id);
+    template <typename Object>
+    void loadSymbols(unsigned file_id, SgSourceFile * file);
+ 
+    void addIncludeDirectives(unsigned target_file_id, unsigned header_file_id);
 
     template <typename Object>
-    void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, SgSourceFile * target_file);
+    void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_id);
 
-    template <typename Object>
-    void loadSymbols(unsigned long file_id, SgSourceFile * file);
-
-    template <typename Object>
-    void loadSymbolsFromPair(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file);
+    /// If a symbol is imported through include directive, we need to add a pointer to its outer most associated declaration scope (not global-scope).
+    void addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned target_id);
 
     template <typename Symbol>
     bool resolveValidParent(Symbol * symbol);
-    
-    void addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceFile * file);
 
-  public:
-    Driver(SgProject * project_ = NULL);
-
-    unsigned long createPairOfFiles(const std::string & name);
-    unsigned long   loadPairOfFiles(
-      const std::string & name,
-      const std::string & header_path,
-      const std::string & source_path,
-      std::string header_extension = "hpp",
-      std::string source_extension = "cpp"
-    );
-
-    unsigned long createStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");
-    unsigned long   loadStandaloneSourceFile(const std::string & name, const std::string & path, std::string suffix = "cpp");
-
-    unsigned long addPairOfFiles(SgSourceFile * header_file, SgSourceFile * source_file);
-    unsigned long addStandaloneSourceFile(SgSourceFile * source_file);
-
-    void addExternalHeader(unsigned long file_id, std::string header_name, bool is_system_header = true);
-
-    api_t * getAPI(unsigned long file_id) const;
-    api_t * getAPI(const std::set<unsigned long> & file_ids) const;
-
-    template <typename Object>
-    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false);
-
-    template <typename Object>
-    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, unsigned long file_id, bool needed_in_header = false, bool need_forward_only = false);
-
-    template <typename Object>
-    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgScopeStatement * scope, bool need_forward_only = false);
-
-    template <typename Object>
-    typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
+    unsigned getFileID(const boost::filesystem::path & path) const;
+    unsigned getFileID(SgSourceFile * source_file) const;
+    unsigned getFileID(SgScopeStatement * scope) const;
 
   protected:
     template <typename Object>
     typename Sage<Object>::build_scopes_t getBuildScopes(const typename Sage<Object>::object_desc_t & desc);
+
+  public:
+    Driver(SgProject * project_ = NULL);
+
+    /// Create or load a file
+    unsigned add(const boost::filesystem::path & path);
+
+    /// Build API of one file
+    api_t * getAPI(unsigned file_id) const;
+
+    /// Build API of a collection of files
+    api_t * getAPI(const std::set<unsigned> & file_ids) const;
+
+    /// Add needed include statement or forward definition to use a symbol in a file (from file ID)
+    template <typename Object>
+    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, unsigned file_id, bool need_forward_only = false);
+
+    /// Add needed include statement or forward definition to use a symbol in a file (from SgSourceFile pointer)
+    template <typename Object>
+    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false) {
+      return useSymbol(symbol, getFileID(file), need_forward_only);
+    }
+
+    /// Add needed include statement or forward definition to use a symbol in a file (from SgScopeStatement pointer)
+    template <typename Object>
+    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgScopeStatement * scope, bool need_forward_only = false) {
+      return useSymbol(symbol, getFileID(scope), need_forward_only);
+    }
+
+    /// Build an object and add associated symbol to driver
+    template <typename Object>
+    typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
+
+    /// Import external header for a given file
+    void addExternalHeader(unsigned file_id, std::string header_name, bool is_system_header = true);
 };
 
 // SgTemplateInstantiationMemberFunctionDecl

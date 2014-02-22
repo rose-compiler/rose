@@ -31,7 +31,7 @@ class Sage<SgVariableDeclaration> {
       SgInitializer * initializer;
 
       SgSymbol * parent;
-      unsigned long file_id; // if parent is a class and it is a static: only used for definition scope (declaration scope depends on parent)
+      unsigned file_id; // if parent is a class and it is a static: only used for definition scope (declaration scope depends on parent)
 
       bool is_static;
 
@@ -42,7 +42,7 @@ class Sage<SgVariableDeclaration> {
         SgType * type_,
         SgInitializer * initializer_ = NULL,
         SgSymbol * parent_ = NULL,
-        unsigned long file_id_ = 0,
+        unsigned file_id_ = 0,
         bool is_static_ = false,
         bool create_definition_ = true
       );
@@ -61,7 +61,7 @@ template <>
 Sage<SgVariableDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgVariableDeclaration>(const Sage<SgVariableDeclaration>::object_desc_t & desc);
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariableDeclaration>::symbol_t symbol, SgSourceFile * target_file);
+void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariableDeclaration>::symbol_t symbol, unsigned target_file_id);
 
 /** @} */
 

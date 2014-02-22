@@ -50,7 +50,7 @@ bool Driver<Sage>::resolveValidParent<SgMemberFunctionSymbol>(SgMemberFunctionSy
 }
 
 template <>
-void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(unsigned long file_id, SgSourceFile * file) {
+void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(unsigned file_id, SgSourceFile * file) {
   std::vector<SgMemberFunctionDeclaration *> member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(file);
 
   std::set<SgMemberFunctionSymbol *> member_function_symbols;
@@ -70,45 +70,7 @@ void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(unsigned long file_
   std::set<SgMemberFunctionSymbol *>::iterator it;
   for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
     if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
-//    std::cout << "   Method Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
-    }
-}
-
-template <>
-void  Driver<Sage>::loadSymbolsFromPair<SgMemberFunctionDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
-  std::vector<SgMemberFunctionDeclaration *> header_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(header_file);
-  std::vector<SgMemberFunctionDeclaration *> source_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(source_file);
-
-  std::set<SgMemberFunctionSymbol *> member_function_symbols;
-  std::vector<SgMemberFunctionDeclaration *>::const_iterator it_member_function_decl;
-  for (it_member_function_decl = header_member_function_decl.begin(); it_member_function_decl != header_member_function_decl.end(); it_member_function_decl++) {
-    SgMemberFunctionDeclaration * member_function_decl = *it_member_function_decl;
-
-    if (ignore(member_function_decl->get_scope())) continue;
-    if (ignore(member_function_decl->get_name().getString())) continue;
-
-    SgMemberFunctionSymbol * member_function_sym = (SgMemberFunctionSymbol *)SageInterface::lookupFunctionSymbolInParentScopes(member_function_decl->get_name(), member_function_decl->get_scope());
-    assert(member_function_sym != NULL);
-
-    member_function_symbols.insert(member_function_sym);
-  }
-  for (it_member_function_decl = source_member_function_decl.begin(); it_member_function_decl != source_member_function_decl.end(); it_member_function_decl++) {
-    SgMemberFunctionDeclaration * member_function_decl = *it_member_function_decl;
-
-    if (ignore(member_function_decl->get_scope())) continue;
-    if (ignore(member_function_decl->get_name().getString())) continue;
-
-    SgMemberFunctionSymbol * member_function_sym = (SgMemberFunctionSymbol *)SageInterface::lookupFunctionSymbolInParentScopes(member_function_decl->get_name(), member_function_decl->get_scope());
-    assert(member_function_sym != NULL);
-
-    member_function_symbols.insert(member_function_sym);
-  }
-
-  std::set<SgMemberFunctionSymbol *>::iterator it;
-  for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
-    if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(*it, file_id));
 //    std::cout << "   Method Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
     }
 }
@@ -118,7 +80,7 @@ Sage<SgMemberFunctionDeclaration>::object_desc_t::object_desc_t(
   SgType * return_type_,
   SgFunctionParameterList * params_,
   SgClassSymbol * parent_class_,
-  unsigned long file_id_,
+  unsigned file_id_,
   bool is_static_,
   bool is_virtual_,
   bool is_constructor_,
@@ -181,7 +143,7 @@ Sage<SgMemberFunctionDeclaration>::build_result_t Driver<Sage>::build<SgMemberFu
     result.symbol = isSgMemberFunctionSymbol(decl_scope->lookup_function_symbol(desc.name));
     assert(result.symbol != NULL);
 
-    std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
+    std::map<SgSymbol *, unsigned>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
     assert(it_symbol_to_file_id != p_symbol_to_file_id_map.end());
     p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, it_symbol_to_file_id->second));
 
@@ -221,27 +183,19 @@ Sage<SgMemberFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<S
   }
 
   if (desc.create_definition) {
-    unsigned long file_id = desc.file_id;
+    unsigned file_id = desc.file_id;
 
     if (file_id == 0) {
-      std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
+      std::map<SgSymbol *, unsigned>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
       assert(it_symbol_to_file_id != p_symbol_to_file_id_map.end());
 
       file_id = it_symbol_to_file_id->second;
     }
     assert(file_id != 0);
 
-    std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> >::iterator it_file_pair = file_pair_map.find(file_id);
-    std::map<unsigned long, SgSourceFile *>::iterator it_standalone_source_file = standalone_source_file_map.find(file_id);
-
-    assert((it_file_pair != file_pair_map.end()) xor (it_standalone_source_file != standalone_source_file_map.end()));
-
-    SgSourceFile * defn_file = NULL;
-    if (it_file_pair != file_pair_map.end())
-      defn_file = it_file_pair->second.second; // the source file
-    else if (it_standalone_source_file != standalone_source_file_map.end())
-      defn_file = it_standalone_source_file->second; // decl local to the source file
-    else assert(false);
+    std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+    assert(it_file != id_to_file_map.end());
+    SgSourceFile * defn_file = it_file->second;
     assert(defn_file != NULL);
 
     result.defn_scope = defn_file->get_globalScope();

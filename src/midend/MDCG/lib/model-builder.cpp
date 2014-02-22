@@ -131,28 +131,14 @@ unsigned ModelBuilder::create() {
   return model;
 }
 
-void ModelBuilder::addOne(
+void ModelBuilder::add(
   unsigned model_id,
   const std::string & name,
   const std::string & path,
   std::string suffix
 ) {
-  unsigned long file_id = p_mfb_driver.loadStandaloneSourceFile(name, path, suffix);
-
-  MFB::api_t * api = p_mfb_driver.getAPI(file_id);
-
-  add(p_models[model_id], api);
-}
-
-void ModelBuilder::addPair(
-  unsigned model_id,
-  const std::string & name,
-  const std::string & header_path,
-  const std::string & source_path,
-  std::string header_suffix,
-  std::string source_suffix
-) {
-  unsigned long file_id = p_mfb_driver.loadPairOfFiles(name, header_path, source_path, header_suffix, source_suffix);
+  boost::filesystem::path file_path = path + "/" + name + "." + suffix;
+  unsigned file_id = p_mfb_driver.add(file_path);
 
   MFB::api_t * api = p_mfb_driver.getAPI(file_id);
 

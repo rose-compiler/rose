@@ -47,7 +47,7 @@ bool Driver<Sage>::resolveValidParent<SgNamespaceSymbol>(SgNamespaceSymbol * sym
 }
 
 template <>
-void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned long file_id, SgSourceFile * file) {
+void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned file_id, SgSourceFile * file) {
   std::vector<SgNamespaceDeclarationStatement *> namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(file);
 
   std::set<SgNamespaceSymbol *> namespace_symbols;
@@ -70,42 +70,7 @@ void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned long fi
     }
 }
 
-template <>
-void Driver<Sage>::loadSymbolsFromPair<SgNamespaceDeclarationStatement>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
-  std::vector<SgNamespaceDeclarationStatement *> header_namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(header_file);
-  std::vector<SgNamespaceDeclarationStatement *> source_namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(source_file);
-
-  std::set<SgNamespaceSymbol *> namespace_symbols;
-  std::vector<SgNamespaceDeclarationStatement *>::const_iterator it_namespace_decl;
-  for (it_namespace_decl = header_namespace_decl.begin(); it_namespace_decl != header_namespace_decl.end(); it_namespace_decl++) {
-    SgNamespaceDeclarationStatement * namespace_decl = *it_namespace_decl;
-
-    if (ignore(namespace_decl->get_name().getString())) continue;
-
-    SgNamespaceSymbol * namespace_sym = SageInterface::lookupNamespaceSymbolInParentScopes(namespace_decl->get_name(), namespace_decl->get_scope());
-    assert(namespace_sym != NULL);
-
-    namespace_symbols.insert(namespace_sym);
-  }
-  for (it_namespace_decl = source_namespace_decl.begin(); it_namespace_decl != source_namespace_decl.end(); it_namespace_decl++) {
-    SgNamespaceDeclarationStatement * namespace_decl = *it_namespace_decl;
-
-    if (ignore(namespace_decl->get_name().getString())) continue;
-
-    SgNamespaceSymbol * namespace_sym = SageInterface::lookupNamespaceSymbolInParentScopes(namespace_decl->get_name(), namespace_decl->get_scope());
-    assert(namespace_sym != NULL);
-
-    namespace_symbols.insert(namespace_sym);
-  }
-
-  std::set<SgNamespaceSymbol *>::iterator it;
-  for (it = namespace_symbols.begin(); it != namespace_symbols.end(); it++)
-    if (resolveValidParent<SgNamespaceSymbol>(*it)) {
-//    std::cout << "Namespace Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
-    }
-}
-
-Sage<SgNamespaceDeclarationStatement>::object_desc_t::object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned long file_id_) :
+Sage<SgNamespaceDeclarationStatement>::object_desc_t::object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned file_id_) :
   name(name_),
   parent(parent_),
   file_id(file_id_)
@@ -162,28 +127,20 @@ Sage<SgNamespaceDeclarationStatement>::build_scopes_t Driver<Sage>::getBuildScop
 
   assert(desc.file_id != 0);
 
-  std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> >::const_iterator it_file_pair_map = file_pair_map.find(desc.file_id);
-  std::map<unsigned long, SgSourceFile *>::const_iterator it_standalone_source_file_map = standalone_source_file_map.find(desc.file_id);
-  assert((it_file_pair_map != file_pair_map.end()) xor (it_standalone_source_file_map != standalone_source_file_map.end()));
-  if (it_file_pair_map != file_pair_map.end()) {
-    header_file = it_file_pair_map->second.first;
-    source_file = it_file_pair_map->second.second;
-  }
-  if (it_standalone_source_file_map != standalone_source_file_map.end())
-    source_file = it_standalone_source_file_map->second;
-  
-  assert(source_file != NULL);
+  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
+  assert(it_file != id_to_file_map.end());
+  SgSourceFile * file = it_file->second;
+  assert(file != NULL);
 
-  if (header_file != NULL) result.header_file = header_file;
-  if (source_file != NULL) result.source_file = source_file;
+  if (file != NULL) result.header_file = file;
 
   if (desc.parent != NULL) {
-    if (header_file != NULL) result.header_scope = Sage<SgNamespaceDeclarationStatement>::getDefinition(desc.parent, header_file);
-    if (source_file != NULL) result.source_scope = Sage<SgNamespaceDeclarationStatement>::getDefinition(desc.parent, source_file);
+    if (header_file != NULL) result.header_scope = Sage<SgNamespaceDeclarationStatement>::getDefinition(desc.parent, file);
+    if (source_file != NULL) result.source_scope = Sage<SgNamespaceDeclarationStatement>::getDefinition(desc.parent, file);
   }
   else {
-    if (header_file != NULL) result.header_scope = header_file->get_globalScope();
-    if (source_file != NULL) result.source_scope = source_file->get_globalScope();
+    if (header_file != NULL) result.header_scope = file->get_globalScope();
+    if (source_file != NULL) result.source_scope = file->get_globalScope();
   }
 
   assert(result.source_scope != NULL);

@@ -33,9 +33,9 @@ class Sage<SgNamespaceDeclarationStatement> {
     struct object_desc_t {
       std::string name;
       SgNamespaceSymbol * parent;
-      unsigned long file_id;
+      unsigned file_id;
 
-      object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned long file_id_);
+      object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned file_id_);
     };
 
     typedef SgNamespaceSymbol * build_result_t;
