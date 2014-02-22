@@ -267,7 +267,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_170.c \
      test2012_171.c \
      test2012_172.c \
-     test2012_173.c \
      test2012_174.c \
      test2012_175.c \
      test2013_01.c \
@@ -475,7 +474,18 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_12.c \
      test2010_11.c \
      test2010_14.c \
-     constants.c
+     constants.c \
+     $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+if OS_VENDOR_REDHAT_REL5
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = 
+endif
+
+if OS_VENDOR_REDHAT_REL6
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173.c
+endif
+
+
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
