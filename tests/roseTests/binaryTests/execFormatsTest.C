@@ -7,6 +7,7 @@
 #include "rose.h"
 #include "stringify.h"
 
+using namespace rose;
 
 /* Check that all nodes have the correct parent.  Not thread safe. */
 struct AstChecker: public AstPrePostProcessing {

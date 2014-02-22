@@ -211,7 +211,7 @@ $(classic_test_targets): classic_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline classic $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:enable_classic -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:enable_classic -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -224,7 +224,7 @@ $(inplace_test_targets): inplace_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline in-place $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:temp_variable -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -237,7 +237,7 @@ $(tofile_test_targets): tofile_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline new-file $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:new_file -rose:outline:temp_variable -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:new_file -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outine dlopen $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen_test_flags) -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ $(default_test_targets): default_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline default $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(OUTLINE_FLAGS) -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(OUTLINE_FLAGS) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -287,7 +287,7 @@ $(noswitch_test_targets): noswitch_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(noswitch_test_args) -c $<" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(noswitch_test_args) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ $(seq7a_test_targets): seq7a_%.passed: $(TEST_DIR)/% outlineSelection
 	@$(RTH_RUN) \
 		TITLE="outlineSelection seq7 $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7a_test_flags) -c $<" \
+		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7a_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -318,7 +318,7 @@ $(seq7b_test_targets): seq7b_%.passed: % outlineSelection
 	@$(RTH_RUN) \
 		TITLE="outlineSelection seq7 $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7b_test_flags) -c $<" \
+		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7b_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -334,7 +334,7 @@ TEST_TARGETS += complexStruct.passed
 complexStruct.passed: complexStruct.c outline
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline $(complexStruct_flags) -c $<" \
+		CMD="$$(pwd)/outline $(complexStruct_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += complexStruct.c

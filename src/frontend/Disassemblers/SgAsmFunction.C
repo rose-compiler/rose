@@ -9,6 +9,8 @@
 #include <gcrypt.h>
 #endif
 
+using namespace rose;
+
 /** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
  *  version of reason_str(). */
 std::string
@@ -16,9 +18,9 @@ SgAsmFunction::reason_key(const std::string &prefix)
 {
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
-            prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
-            prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks" +
+            prefix + "O = exported              S = function symbol      P = instruction pattern\n" +
+            prefix + "G = CFG graph analysis    U = user-def detection   N = NOP/zero padding\n" +
+            prefix + "D = discontiguous blocks  V = intra-function block L = leftover blocks\n" +
             prefix + "Mxxx are miscellaneous reasons (at most one misc reason per function):\n" +
             prefix + "      M001 = code between function padding bytes\n" +
             prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
@@ -68,6 +70,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, (r & FUNC_THUNK),     do_pad, "T", "thunk");
     }
     add_to_reason_string(result, (r & FUNC_IMPORT),        do_pad, "I", "import");
+    add_to_reason_string(result, (r & FUNC_EXPORT),        do_pad, "E", "export");
     add_to_reason_string(result, (r & FUNC_SYMBOL),        do_pad, "S", "symbol");
     add_to_reason_string(result, (r & FUNC_PATTERN),       do_pad, "P", "pattern");
     add_to_reason_string(result, (r & FUNC_GRAPH),         do_pad, "G", "graph");

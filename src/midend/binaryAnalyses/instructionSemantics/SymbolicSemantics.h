@@ -48,6 +48,9 @@ namespace BinaryAnalysis {              // documented elsewhere
             /** Formatter for symbolic values. */
             class Formatter: public BaseSemantics::Formatter {
             public:
+                Formatter() {
+                    expr_formatter.use_hexadecimal = false;             // preserve the old behavior in API1
+                }
                 InsnSemanticsExpr::Formatter expr_formatter;
             };
 
@@ -418,6 +421,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 void enable_read_pruning(bool b=true) { read_pruning = b; }
                 void disable_read_pruning() { read_pruning = false; }
                 /** @} */
+
+                /** Clear all memory */
+                void clear() { cell_list.clear(); }
 
                 /** Write a value to memory. Returns the list of cells that were added. The number of cells added is the same
                  *  as the number of bytes in the value being written. */

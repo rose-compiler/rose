@@ -233,7 +233,7 @@ Partitioner::RegionStats::print(std::ostream &o) const
       <<std::setw(11) <<std::right <<"Sum"         <<" "
       <<std::setw(11) <<std::right <<"NSamples"    <<" "
       <<std::setw(11) <<std::right <<"Value"       <<"\n";
-    for (size_t id=0; id<dictionary.size(); ++id) {
+    for (size_t id=0; id<dictionary.size() && id<results.size(); ++id) {
         o <<"  "
           <<std::setw(16) <<std::left  <<dictionary[id].name   <<" "
           <<std::setw(40) <<std::left  <<dictionary[id].desc   <<" "

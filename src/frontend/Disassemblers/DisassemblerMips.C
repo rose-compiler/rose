@@ -481,9 +481,15 @@ DisassemblerMips::makeHwRegister(unsigned cc)
 SgAsmMipsRegisterReferenceExpression *
 DisassemblerMips::makeShadowRegister(unsigned cc)
 {
-    assert(!"FIXME");
-    abort();
-    return NULL;
+    // Get the general purpose register
+    SgAsmMipsRegisterReferenceExpression *regref = makeRegister(cc);
+    assert(regref!=NULL);
+
+    // Turn it into a shadow register
+    RegisterDescriptor desc = regref->get_descriptor();
+    desc.set_major(mips_regclass_sgpr);
+    regref->set_descriptor(desc);
+    return regref;
 }
 
 SgAsmByteValueExpression *
