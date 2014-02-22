@@ -5143,10 +5143,6 @@ HEADER_APPLICATION_FILE_START
       //! function that removes all OFP related options from a command line
           static void stripFortranCommandLineOptions ( std::vector<std::string> & argv );
 
-       // DQ (4/2/2011): Added Java specific support to filter command line options from the backend compiler's command line.
-      //! function that removes all ECJ related options from a command line
-          static void stripJavaCommandLineOptions ( std::vector<std::string> & argv );
-
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
@@ -5264,8 +5260,6 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
-      //! Support for setting Java's classpath (to support the Open Fortran Parser (OFP))
-          static std::string build_classpath();
 
       //! Divide up the handling of different languages
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
@@ -13836,14 +13830,7 @@ SgFile::compileOutput ( int fileNameIndex )
              }
             else
              {
-               if (get_Java_only() == true)
-                  {
-                    stripJavaCommandLineOptions( argv );
-                  }
-                 else
-                  {
                  // This is the case of binary analysis or python...(nothing to do there)
-                  }
              }
         }
 
@@ -15522,7 +15509,6 @@ SgProject::set_Java_destdir (std::string param)
 std::string
 SgProject::get_Java_destdir (void) const
    {
-    // If modifying, check stripJavaCommandLineOptions in cmdline.cpp    
     if (p_Java_destdir == "") {
       return ROSE::getWorkingDirectory();
     }
