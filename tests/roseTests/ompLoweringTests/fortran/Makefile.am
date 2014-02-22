@@ -24,16 +24,14 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   ompdo-default.f \
   ompdo-orphaned.f \
   ompdo-static.f \
+  ompdo-multiple.f \
+  task_largenumber.f \
+  task_scalar.f \
+  task_simplest.f \
   private.f \
   reduction.f \
   shared.f \
   single.f 
-
-# DQ (8/23/2013): Failing tests:
-#  ompdo-multiple.f
-#  task_largenumber.f 
-#  task_scalar.f 
-#  task_simplest.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 

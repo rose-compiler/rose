@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "keep_going.h"
 
 #include <assert.h>
 #include <setjmp.h>
@@ -43,13 +44,11 @@ AppendToFile(const std::string& filename, const std::string& msg);
 std::map<std::string, std::string>
 CreateExpectedFailuresMap(const std::string& filename);
 
-sigjmp_buf rose__midend_mark;
-static void HandleMidendSignal(int sig);
-
 int
 main(int argc, char * argv[])
 {
   bool verbose = false;
+  bool enable_ast_tests = false;
   std::string report_filename__fail("rose-failed_files.txt");
   std::string report_filename__pass("rose-passed_files.txt");
   std::string expectations_filename;
@@ -62,12 +61,13 @@ main(int argc, char * argv[])
   rose_cmdline.push_back("-rose:keep_going");
 
   {// CLI
-      std::string cli_report       = "--report="; // deprecated 2013-11-2
-      std::string cli_report__fail = "--report-fail=";
-      std::string cli_report__pass = "--report-pass=";
-      std::string cli_expectations = "--expectations=";
+      std::string cli_report            = "--report="; // deprecated 2013-11-2
+      std::string cli_report__fail      = "--report-fail=";
+      std::string cli_report__pass      = "--report-pass=";
+      std::string cli_expectations      = "--expectations=";
       std::string cli_strip_path_prefix = "--strip-path-prefix=";
-      std::string cli_verbose = "--verbose";
+      std::string cli_enable_ast_tests = "--enable-ast-tests";
+      std::string cli_verbose           = "--verbose";
 
       for (int ii = 1; ii < argc; ++ii)
       {
@@ -184,6 +184,11 @@ main(int argc, char * argv[])
                   path_prefix = arg;
               }
           }
+          // --enable-ast-tests
+          else if (arg.find(cli_enable_ast_tests) == 0)
+          {
+              enable_ast_tests = true;
+          }
           else
           {
               rose_cmdline.push_back(arg);
@@ -202,25 +207,28 @@ main(int argc, char * argv[])
   // Build the AST used by ROSE
   SgProject* project = frontend(rose_cmdline);
 
-  struct sigaction act;
-  act.sa_handler = HandleMidendSignal;
-  sigemptyset(&act.sa_mask);
-  act.sa_flags = 0;
-  sigaction(SIGSEGV, &act, 0);
-  sigaction(SIGABRT, &act, 0);
-
-  if (sigsetjmp(rose__midend_mark, 0) == -1)
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
   {
       std::cout
-          << "[WARN] Ignoring midend failure "
-          << " as directed by -rose:keep_going"
+          << "[WARN] "
+          << "Configured to keep going after catching a signal in the Midend"
           << std::endl;
-      project->set_midendErrorCode(-1);
+      project->set_midendErrorCode(100);
   }
   else
   {
-      // Run internal consistency tests on AST
-      AstTests::runAllTests(project);
+      if (enable_ast_tests)
+      {
+          // Run internal consistency tests on AST
+          AstTests::runAllTests(project);
+      }
+      else
+      {
+          std::cout
+              << "[INFO] "
+              << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
+              << std::endl;
+      }
   }
 
   // Insert your own manipulation of the AST here...
@@ -326,6 +334,8 @@ ShowUsage(std::string program_name)
     << "  --report-fail=<filename>        File to write report of failurest\n"
     << "  --expectations=<filename>       File containing filenames that are expected to fail\n"
     << "  --strip-path-prefix=<filename>  Normalize filenames by stripping this path prefix from them\n"
+    << "\n"
+    << "  --enable-ast-tests              Enables the internal ROSE AST consistency tests\n"
     << "\n"
     << "  -h,--help                       Show this help message\n"
     << "  --verbose                       Enables debugging output, e.g. outputs successful files\n"
@@ -488,11 +498,5 @@ CreateExpectedFailuresMap(const std::string& filename)
   fin.close();
 
   return expected_failures;
-}
-
-static void HandleMidendSignal(int sig)
-{
-  std::cout << "[WARN] Caught midend signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__midend_mark, -1);
 }
 

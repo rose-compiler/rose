@@ -1650,9 +1650,11 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           SgInitializedName *get_decl_item(const SgName&);
        // SgInitializedName *get_defn_item(const SgName&);
 
-       // I think this should be "unsigned long" instead of SgUnsignedLongVal (but I'm not certain!)
-          SgUnsignedLongVal *get_bitfield();
-          void set_bitfield (SgUnsignedLongVal*);
+       // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+       // SgUnsignedLongVal *get_bitfield();
+       // void set_bitfield (SgUnsignedLongVal*);
+          SgValueExp* get_bitfield();
+          void set_bitfield (SgValueExp*);
 
        // Only on the first variable declaration's
           int reset_initializer(SgInitializer *);
@@ -1836,10 +1838,6 @@ HEADER_VARIABLE_DEFINITION_STATEMENT_START
        // SgInitializedName *get_defn_item(); 
        // SgInitializedName *get_decl_item(); 
       //  void set_initializer(SgInitializer *);
-
-       // I think this should be "unsigned long" instead of SgUnsignedLongVal (but I'm not certain!)
-       // SgUnsignedLongVal *get_bitfield();
-       // void set_bitfield (SgUnsignedLongVal*);
 
           SgVariableDeclaration *get_declaration();
 
@@ -11689,15 +11687,19 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
      return defn_stmt;
    }
 
-SgUnsignedLongVal*
+// DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+// SgUnsignedLongVal* SgVariableDeclaration::get_bitfield()
+SgValueExp*
 SgVariableDeclaration::get_bitfield()
    {
      assert(get_definition() != 0);
      return get_definition()->get_bitfield();
    }
 
+// DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
+// void SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
 void
-SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
+SgVariableDeclaration::set_bitfield (SgValueExp* bfield)
    {
      assert(get_definition() != 0);
      get_definition()->set_bitfield(bfield);

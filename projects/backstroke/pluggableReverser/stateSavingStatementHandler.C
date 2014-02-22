@@ -38,6 +38,7 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(
 		if (!SageInterface::isAncestor(node, var_name[0]->get_declaration()) && filter->isVariableInteresting(var_name))
 			modified_vars.push_back(var_name);
 	}
+	cout<<"STATUS: number of modified variables: "<<modified_vars.size()<<endl;
 
 	// Sort those names in lexicographical order.
 	using namespace boost::lambda;

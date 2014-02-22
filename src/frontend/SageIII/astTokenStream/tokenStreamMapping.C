@@ -2933,7 +2933,13 @@ getTokenStream( SgSourceFile* file )
           tokenVector.push_back(*i);
         }
 
-     ROSE_ASSERT(tokenVector.empty() == false);
+  // DQ (1/30/2014): I have added the corner case for an empty file, with zero tokens to find.
+  // We need to make sure this is not an error (OK it issue a warning).
+  // ROSE_ASSERT(tokenVector.empty() == false);
+     if (tokenVector.empty() == true)
+        {
+          printf ("Warning: this is an empty file (no tokens found): not even a CR present! (but not an error using the token stream unparsing) \n");
+        }
 
      return tokenVector;
 #else
@@ -3179,7 +3185,14 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 #else
      vector<stream_element*> tokenVector = getTokenStream(sourceFile);
 #endif
-     ROSE_ASSERT(tokenVector.empty() == false);
+
+  // DQ (1/30/2014): Empty files are allowed (and tested).
+  // ROSE_ASSERT(tokenVector.empty() == false);
+     if (tokenVector.empty() == true)
+        {
+          printf ("In buildTokenStreamMapping(): No tokens found in file \n");
+          return;
+        }
 
   // Build the inherited attribute
      bool processThisNode = true;

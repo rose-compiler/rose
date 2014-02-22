@@ -337,8 +337,19 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (varRefExp != NULL)
         {
           SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (variableSymbol == NULL)
+             {
+               printf ("WARNING: variableSymbol == NULL: varRefExp = %p \n",varRefExp);
+             }
           ROSE_ASSERT(variableSymbol != NULL);
-          string name = variableSymbol->get_name();
+
+          string name = "unknown";
+          if (variableSymbol != NULL)
+             {
+               name = variableSymbol->get_name();
+             }
           nodelabel += string("\\n name = ") + name;
         }
 

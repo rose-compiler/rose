@@ -267,9 +267,13 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 	BackstrokeUtility::removeUselessParen(stmt.forwardStatement);
 	BackstrokeUtility::removeUselessParen(stmt.reverseStatement);
 
-	SageInterface::fixVariableReferences(stmt.forwardStatement);
+#if 0
+	// MS: no longer working in rose edg4x
+   	SageInterface::fixVariableReferences(stmt.forwardStatement);
 	SageInterface::fixVariableReferences(stmt.reverseStatement);
-
+#else
+	cerr<<"DEBUG: NOT fixing variable references (broken)."<<endl;
+#endif
 	string counterString = lexical_cast<string > (0);
 
 	SgScopeStatement* eventScope = event_->get_scope();
@@ -296,8 +300,8 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 
 	SgFunctionDeclaration* commitFunctionDecl = NULL;
 	//MS: ROSE_ASSERT(stmt.commitStatement == NULL); //We'll worry about commit statements later
-        if(!stmt.commitStatement == NULL)
-          cerr<<"WARNING: EventProcessor::processEvent: stmt.commitStatement != NULL ()"<<endl;
+        if(!stmt.commitStatement == 0)
+          cerr<<"WARNING: EventProcessor::processEvent: stmt.commitStatement != 0 "<<endl;
         
 
 	// Add the cost information as comments to generated functions.

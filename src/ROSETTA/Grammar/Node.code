@@ -598,6 +598,9 @@ typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
 typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrList;
 typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
+// DQ (1/13/2014): Added support for Java annotations.
+typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
+typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;
