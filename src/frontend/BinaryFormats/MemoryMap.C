@@ -135,7 +135,8 @@ MemoryMap::Buffer::is_zero() const
     while (at<size()) {
         size_t n = std::min(size()-at, sizeof buf);
         size_t nread = read(buf, at, n);
-        assert(nread==n);
+        if (nread!=n)
+            return false;
         for (size_t i=0; i<nread; ++i) {
             if (buf[i]!=0)
                 return false;

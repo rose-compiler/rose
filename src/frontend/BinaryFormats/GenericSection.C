@@ -5,6 +5,8 @@
 #include "stringify.h"
 #include "MemoryMap.h"
 
+using namespace rose;
+
 /** Section constructors set the optional section header relationship--a bidirectional link between this new section and its
  *  optional, single header.  This new section points to its header and the header contains a list that points to this new
  *  section.  The section-to-header part of the link is deleted by the default destructor by virtue of being a simple pointer,

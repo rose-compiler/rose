@@ -100,25 +100,26 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
+      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
       ${CMAKE_SOURCE_DIR}/src/util/support/BitVectorRepr.C
-#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/CommandOptions.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
