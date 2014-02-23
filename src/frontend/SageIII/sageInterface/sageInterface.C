@@ -8050,6 +8050,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
 // Liao, 6/15/2009
 //! A helper function to calculate n!
+//! See also, Combinatorics::factorial(), which also checks for overflow.
 static size_t myfactorial (size_t n)
 {
   size_t result=1;
@@ -8062,7 +8063,8 @@ static size_t myfactorial (size_t n)
 
 #ifndef USE_ROSE
 
-//! A helper function to return a permutation order for n elements based on a lexicographical order number
+//! A helper function to return a permutation order for n elements based on a lexicographical order number.
+//! See also, Combinatorics::permute(), which is faster but does not use strict lexicographic ordering.
 std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
 {
   size_t k = lexicoOrder;

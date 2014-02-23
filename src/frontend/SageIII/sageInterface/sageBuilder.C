@@ -10704,7 +10704,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
           if (nondefdecl->get_type() == NULL)
              {
-               nondefdecl->set_type(SgClassType::createType(nondefdecl));
+               SgClassType *class_type = (kind == SgClassDeclaration::e_java_parameter 
+                                                ? (SgClassType *) SgJavaParameterType::createType(nondefdecl)
+                                                : (SgClassType *) SgClassType::createType(nondefdecl));
+               nondefdecl->set_type(class_type);
              }
 
        // DQ (3/22/2012): Added assertions.

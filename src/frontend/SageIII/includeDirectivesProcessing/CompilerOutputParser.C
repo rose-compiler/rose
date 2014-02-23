@@ -190,11 +190,7 @@ void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose) {
             inputFile -> stripEdgCommandLineOptions(argv);
             inputFile -> stripFortranCommandLineOptions(argv);
         } else {
-            if (inputFile -> get_Java_only() == true) {
-                inputFile -> stripJavaCommandLineOptions(argv);
-            } else {
-                // This is the case of binary analysis...(nothing to do there)
-            }
+            // This is the case of binary analysis...(nothing to do there)
         }
     }
 
