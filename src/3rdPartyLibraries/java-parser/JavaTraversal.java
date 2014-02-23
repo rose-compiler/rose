@@ -76,8 +76,8 @@ class JavaTraversal implements Callable<Boolean> {
         // for (String arg: args)
         int max = args.length;
         for (int j = 0; j < max; j++) {
-             if (commandlineErrorLevel > 0)
-                 System.out.println("ROSE Argument found: " + args[j]);
+            if (commandlineErrorLevel > 0)
+                System.out.println("ROSE Argument found: " + args[j]);
 
             // String matchingString = "-rose";
             // Java substring uses index 0 ... 5 (the upper bound "6" is not used.
@@ -159,6 +159,7 @@ class JavaTraversal implements Callable<Boolean> {
             compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
     }
 
+
     /** 
      * This method was copied from Compiler.java as it is not directly accessible there.
      */
@@ -168,11 +169,23 @@ class JavaTraversal implements Callable<Boolean> {
 
         // Switch the current policy and compilation result for this unit to the requested one.
         for (int i = 0; i < maxUnits; i++) {
+            CompilationResult unitResult = null;
             try {
+                /*
+                if (compiler.options.verbose) {
+                    compiler.out.println(
+                        Messages.bind(Messages.compilation_request,
+                        new String[] {
+                            String.valueOf(i + 1),
+                            String.valueOf(maxUnits),
+                            new String(sourceUnits[i].getFileName())
+                        }));
+                }
+                */
+
                 // diet parsing for large collection of units
                 CompilationUnitDeclaration parsedUnit;
-                CompilationResult unitResult =
-                    new CompilationResult(sourceUnits[i], i, maxUnits, compiler.options.maxProblemsPerUnit);
+                unitResult = new CompilationResult(sourceUnits[i], i, maxUnits, compiler.options.maxProblemsPerUnit);
                 long parseStart = System.currentTimeMillis();
                 if (compiler.totalUnits < compiler.parseThreshold) {
                     parsedUnit = compiler.parser.parse(sourceUnits[i], unitResult);
@@ -189,6 +202,21 @@ class JavaTraversal implements Callable<Boolean> {
                 if (currentPackage != null) {
                     unitResult.recordPackageName(currentPackage.tokens);
                 }
+                //} catch (AbortCompilationUnit e) {
+                // requestor.acceptResult(unitResult.tagAsAccepted());
+            } catch (AbortCompilation a) {
+                // best effort to find a way for reporting this problem:
+                if (a.compilationResult == null)
+                    a.compilationResult = unitResult;
+/*
+System.out.println("ECJ error: " + a.getMessage());
+System.out.println("ECJ cause: " + a.getCause().getClass().getCanonicalName());
+StackTraceElement stack[] = a.getCause().getStackTrace();
+for (int k = 0; k < stack.length; k++) {
+    System.out.println(stack[k].toString());
+}
+*/
+                throw a;
             } finally {
                 sourceUnits[i] = null; // no longer hold onto the unit
             }
@@ -200,14 +228,15 @@ class JavaTraversal implements Callable<Boolean> {
         // binding resolution
         compiler.lookupEnvironment.completeTypeBindings();
     }
-    
+
+
     /**
      * Compile and generate an AST for each input file specified in args.
      * 
      * @param args
      */
     static Main generateAst(String args[]) {
-        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
         if (verboseLevel > 0)
@@ -222,7 +251,7 @@ class JavaTraversal implements Callable<Boolean> {
         }
         catch (Exception e) {
             e.printStackTrace();
-            System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
+            System.out.println("(2) Error in main.configure(args): " + e.getMessage()); 
             System.exit(1);
         }
 
@@ -239,11 +268,11 @@ class JavaTraversal implements Callable<Boolean> {
                                            main.progress
                                           );
 
-    	/**
-    	 * Add the initial set of compilation units into the loop
-    	 *  ->  build compilation unit declarations, their bindings and record their results.
-    	 */
-    	/* tps : handle compilation units--------------------------------------------- */
+        /**
+         * Add the initial set of compilation units into the loop
+         *  ->  build compilation unit declarations, their bindings and record their results.
+         */
+        /* tps : handle compilation units--------------------------------------------- */
         /*
          *  Expand above protected function from ECJ's Compiler class.
          */
@@ -251,17 +280,47 @@ class JavaTraversal implements Callable<Boolean> {
         int maxUnits = sourceUnits.length;
         main.batchCompiler.totalUnits = 0;
         main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+
         internalBeginToCompile(main.batchCompiler, sourceUnits, maxUnits);
 
         return main;
     }
 
-// TODO: Remove this !
-static int totalUnits = 0;
+    // TODO: Remove this !
+    static int totalUnits = 0;
+    static Runtime runtime = Runtime.getRuntime();
+    static long r1, r2, f1, f2;
+    
+    public static void startJava() {
+        System.gc();
+
+        r1 = runtime.totalMemory();
+        f1 = runtime.freeMemory();
+    }
+    
+    public static void endJava(ArrayList<CompilationUnitDeclaration> units) {
+        r2 = runtime.totalMemory();
+        f2 = runtime.freeMemory();
+        int size = units.size();
+        System.out.println();
+        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");    
+        System.out.println();
+        for (CompilationUnitDeclaration unit : units) {
+            System.out.println("   " + new String(unit.getFileName()));
+        }
+        System.out.println();
+        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+        System.out.println("**** Total Number of Units Processed: " + totalUnits);
+        System.out.println();
+    }
+
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
 
+    	startJava();
+    	
         assert(! processedFiles.contains(args[args.length - 1]));
 
         // Filter out ROSE specific options.
@@ -273,11 +332,8 @@ static int totalUnits = 0;
         Main main = generateAst(args); // get compiler to generate AST.
         if (main.globalErrorsCount > 0) { // errors were detected?
             System.out.flush();
-            System.err.flush();
-
-            System.err.println();
-            System.err.println();
-            System.err.println("ECJ front-end errors detected in input java program");
+            System.out.println();
+            System.out.println(main.globalErrorsCount + " ECJ front-end errors detected in input java program with " + main.getCompilationUnits().length + " compilation units");
             System.exit(1);
         }
 
@@ -285,6 +341,7 @@ static int totalUnits = 0;
 //        int maxUnits = main.getCompilationUnits().length;
         
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+        ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
         try {
             if (verboseLevel > 2)
                 System.out.println("test 7 ...");
@@ -299,7 +356,6 @@ static int totalUnits = 0;
             // maxUnits. To iterate over all units, including the ones that are pulled 
             // in by closure, iterate up to batchCompiler.totalUnits.
             //
-            ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert(unit != null);
@@ -316,24 +372,26 @@ static int totalUnits = 0;
 
                 if (unit.compilationResult.hasSyntaxError || unit.compilationResult.hasErrors()) {
                     System.out.flush();
-                    System.err.flush();
-
-                    System.err.println();
-                    System.err.println();
-                    System.err.println("ECJ front-end errors detected in input java program");
-                    System.exit(1);
+                    System.out.println();
+                    System.out.println("*** ECJ front-end errors detected in input java program:");
+                    System.out.println(unit.compilationResult.toString());
+                    System.out.println();
+//                    for (int k = 0; k < args.length; k++) {
+//                        System.out.println("    " + args[k]);
+//                    }
+//                    System.exit(1);
                 }
             }
 
+            totalUnits += units.size();
 // TODO: Remove this !
-
-totalUnits += units.size();
+/*
 //System.out.println("MaxUnits = " + maxUnits);
 System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");    
 for (CompilationUnitDeclaration unit : units) {
 System.out.println("   " + new String(unit.getFileName()));
 }
-
+*/
             //
             //
             //
@@ -343,10 +401,10 @@ System.out.println("   " + new String(unit.getFileName()));
             }
             catch (Exception e) {
                 e.printStackTrace();
-                System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+                System.out.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
 
                 // This should output the call stack.
-                System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                System.out.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
             }
 
             //
@@ -363,12 +421,12 @@ System.out.println("   " + new String(unit.getFileName()));
         }
         catch (UnsatisfiedLinkError e) {
             e.printStackTrace();
-            System.err.println("Ouch !!! Make sure that the signature of all native (jni?) methods match their corresponding Java headers. " + e.getMessage());
+            System.out.println("Ouch !!! Make sure that the signature of all native (jni?) methods match their corresponding Java headers. " + e.getMessage());
         }
         catch (Exception e) {
             // DQ (11/1/2010): Added more aggressive termination of program...
             e.printStackTrace();
-            System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
+            System.out.println("Error in JavaTraversal::main(): " + e.getMessage());
             // System.exit(1);
 
             hasErrorOccurred = true;
@@ -377,6 +435,8 @@ System.out.println("   " + new String(unit.getFileName()));
 
         JavaParser.cactionCompilationUnitListEnd();
 
+        endJava(units);
+        
         if (verboseLevel > 2)
             System.out.println("Done compiling");
     }

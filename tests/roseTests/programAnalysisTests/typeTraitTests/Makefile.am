@@ -21,7 +21,6 @@ SWITCHES = \
         --edg:no_warnings -w 
 
 $(TEST_TARGETS): nt_%.passed: $(TESTDIR)/% typeTraitExerciseWithRetCode $(TEST_EXIT_STATUS)
-	echo '@$(RTH_RUN) CMD="./typeTraitExerciseWithRetCode $(SWITCHES) -c $<" $(TEST_EXIT_STATUS) $@'
 	@$(RTH_RUN) CMD="./typeTraitExerciseWithRetCode $(SWITCHES) -c $<" $(TEST_EXIT_STATUS)  $@
 
 ROSE_HRD_TEST: typeTraitExerciseWithoutRetCode $(srcdir)/tests/roseHeader.C
