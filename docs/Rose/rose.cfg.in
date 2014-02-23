@@ -443,9 +443,11 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/Disassemblers/Partitioner.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/Registers.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmArmInstruction.C			     \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C				     \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C			     \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C			     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C				     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C			     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C			     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C			     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmMipsInstruction.C			     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C		     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmX86Instruction.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C			     \

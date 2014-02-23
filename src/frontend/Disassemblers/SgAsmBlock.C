@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Fall-through virtual address.  A block's fall-through address is the virtual address that follows the last byte of the
  *  block's last instruction.  The block must have instructions (e.g., it cannot be a strict data block). */
 rose_addr_t
