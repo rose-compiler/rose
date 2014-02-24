@@ -65,6 +65,35 @@ SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&)
     return false;
 }
 
+/** Returns true if this instruction is the first instruction in a basic block. */
+bool
+SgAsmInstruction::is_first_in_block()
+{
+    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    if (bb) {
+        const SgAsmStatementPtrList &stmts = bb->get_statementList();
+        for (size_t i=0; i<stmts.size(); ++i) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(stmts[i]))
+                return insn==this;
+        }
+    }
+    return false;
+}
+
+/** Returns true if this instruction is the last instruction in a basic block. */
+bool
+SgAsmInstruction::is_last_in_block()
+{
+    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    if (bb) {
+        const SgAsmStatementPtrList &stmts = bb->get_statementList();
+        for (size_t i=stmts.size(); i>0; --i) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(stmts[i-1]))
+                return insn==this;
+        }
+    }
+    return false;
+}
 
 /** Obtains the virtual address for a branching instruction.  Returns true if this instruction is a branching instruction and
   *  the target address is known; otherwise, returns false and @p target is not modified. */

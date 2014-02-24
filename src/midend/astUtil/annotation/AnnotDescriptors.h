@@ -79,7 +79,7 @@ class SetDescriptor : public std::set<Member>
       public:
         std::set<Member>::end;
         void push_back( const Member& n)
-         { insert(n); }
+         { this->insert(n); }
         bool is_member( const Member& n)
          { return find(n) != end(); }
         bool replace( const Member& orig, const Member& n) 
@@ -98,8 +98,7 @@ class SetDescriptor : public std::set<Member>
         std::string ToString() const { std::stringstream out; write(out); return out.str(); }
         bool read( std::istream& in)
             { 
-              return ReadContainer<SetDescriptor<Member,sep,left,right>, Member,
-                                  sep, left, right>::read(*this, in); 
+              return ReadContainer<SetDescriptor<Member,sep,left,right>, Member,sep, left, right>::read(*this, in); 
             }
 
     };
@@ -121,7 +120,7 @@ class MapDescriptor : public std::map< Key,Member>
      std::map< Key,Member>::end;
 
      void push_back( const std::pair<Key, Member>& n )
-         { operator[](n.first) = n.second;  }
+         { this->operator[](n.first) = n.second;  }
      bool is_member( const Key& key, const Member*& n)
          { 
            typename std::map< Key,Member>::const_iterator p = find(key);

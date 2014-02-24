@@ -363,6 +363,10 @@ SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
 
+//! Build class pointer
+SgClassExp* buildClassExp(SgClassSymbol* sym);
+SgClassExp* buildClassExp_nfi(SgClassSymbol* sym);
+
 //! Build lambda expression
 SgLambdaRefExp* buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope);
 

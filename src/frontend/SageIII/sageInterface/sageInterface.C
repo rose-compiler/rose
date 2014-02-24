@@ -8050,6 +8050,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
 // Liao, 6/15/2009
 //! A helper function to calculate n!
+//! See also, Combinatorics::factorial(), which also checks for overflow.
 static size_t myfactorial (size_t n)
 {
   size_t result=1;
@@ -8062,7 +8063,8 @@ static size_t myfactorial (size_t n)
 
 #ifndef USE_ROSE
 
-//! A helper function to return a permutation order for n elements based on a lexicographical order number
+//! A helper function to return a permutation order for n elements based on a lexicographical order number.
+//! See also, Combinatorics::permute(), which is faster but does not use strict lexicographic ordering.
 std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
 {
   size_t k = lexicoOrder;
@@ -10498,7 +10500,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     if (namespaceDefinition != NULL)
                        {
                          associatedScope = namespaceDefinition->get_global_definition();
-
+#error "DEAD CODE!"
                          printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
                               initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
                        }
@@ -10524,6 +10526,31 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     initName->set_prev_decl_item(prev_decl);
 
                ROSE_ASSERT(initName->get_prev_decl_item() != initName);
+#if 0
+            // DQ (1/25/2014): We need to make sure that the variable is not initialzed twice.
+            // The selection of where to do the initialization is however important.
+            // ROSE_ASSERT(initName->get_prev_decl_item() != NULL);
+               if (initName->get_prev_decl_item() != NULL)
+                  {
+                 // Check if get_prev_decl_item() is marked extern, and if so don't let it be marked with an initializer.
+                 // We might also want to check is this is in a class, marked const, etc.
+                    if (initName->get_prev_decl_item()->get_initializer() != NULL && initName->get_initializer() != NULL)
+                       {
+#if 1
+                         printf ("In SageInterface::fixVariableDeclaration(): (initName->get_prev_decl_item()->get_init() != NULL): variable initialized twice! \n");
+#endif
+                         ROSE_ASSERT(initName->get_prev_decl_item()->get_initializer() != initName->get_initializer());
+
+                      // DQ (1/25/2014): If the first variable was initialized, then reset the second one to NULL.
+                         initName->set_initializer(NULL);
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#endif
+               
              } //end if
         } //end for
 

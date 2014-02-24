@@ -45,6 +45,13 @@ typedef void(*SignalHandlerFunction)(int);
               &ROSE::KeepGoing::Frontend::SecondaryPass::SignalHandler) &&          \
           sigsetjmp(ROSE::KeepGoing::Frontend::SecondaryPass::jmp_target, 0) != 0   \
       )
+    #define KEEP_GOING_CAUGHT_MIDEND_SIGNAL                         \
+      (                                                             \
+          ROSE::KeepGoing::g_keep_going &&                          \
+          ROSE::KeepGoing::set_signal_handler(                      \
+              &ROSE::KeepGoing::Midend::SignalHandler) &&           \
+          sigsetjmp(ROSE::KeepGoing::Midend::jmp_target, 0) != 0    \
+      )
     #define KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL                       \
       (                                                                     \
           ROSE::KeepGoing::g_keep_going &&                                  \
@@ -70,6 +77,7 @@ typedef void(*SignalHandlerFunction)(int);
     #define KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL false
     #define KEEP_GOING_CAUGHT_FRONTEND_SIGNAL false
     #define KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL false
+    #define KEEP_GOING_CAUGHT_MIDEND_SIGNAL false
     #define KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL false
     #define KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL false
 #endif //_MSC_VER
@@ -99,6 +107,13 @@ namespace Frontend {
     void SignalHandler(int sig);
   }// ::ROSE::KeepGoing::Frontend::SecondaryPass
 }// ::ROSE::KeepGoing::Frontend
+
+namespace Midend {
+  #ifndef _MSC_VER
+    extern sigjmp_buf jmp_target;
+  #endif //_MSC_VER
+    void SignalHandler(int sig);
+}// ::ROSE::KeepGoing::Midend
 
 namespace Backend {
 namespace Unparser {

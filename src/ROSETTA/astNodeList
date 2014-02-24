@@ -759,3 +759,8 @@ SgJavaAnnotation
 SgJavaMarkerAnnotation
 SgJavaSingleMemberAnnotation
 SgJavaNormalAnnotation
+SgJavaTypeExpression
+SgJavaQualifiedType
+SgClassExp
+SgJavaUnionType
+SgJavaParameterType
