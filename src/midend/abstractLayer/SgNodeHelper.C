@@ -1138,7 +1138,26 @@ SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
   return SgNodeHelper::getFirstChild(node);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+SgNode* SgNodeHelper::getExprRootChild(SgNode* node) {
+  if(!isSgExpressionRoot(node)) {
+    cerr << "Error: improper type in getExprStmtChild ("<<node->class_name()<<")"<<endl;
+    exit(1);
+  }
+  return SgNodeHelper::getFirstChild(node);
+}
 
+bool SgNodeHelper::isArrayElementAssignment(SgNode* node) {
+  if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
+	SgNode* lhs=getLhs(node);
+	if(isSgPntrArrRefExp(lhs))
+	  return true;
+  }
+  return false;
+}
 
 /*! 
   * \author Markus Schordan
