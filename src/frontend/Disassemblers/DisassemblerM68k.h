@@ -64,14 +64,22 @@ public:
     /** Create an address register reference expression. */
     SgAsmM68kRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
-    /** Make register indirect address with predecrement mode. */
-    SgAsmMemoryReferenceExpression *makeAddressRegisterPredecrement(unsigned regnum, size_t nbits);
+    /** Make a memory reference expression using an address register in pre-decrement mode. The @p nbits are the size of the
+     *  memory reference; all 32-bits of the address register are accessed. */
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPreDecrement(unsigned regnum, size_t nbits);
+
+    /** Make a memory reference expression using an address register in post-increment mode. The @p nbits are the size of the
+     *  memory reference; all 32-bits of the address register are accessed. */
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPostIncrement(unsigned regnum, size_t nbits);
 
     /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
      *  created; when @p regnum is eight through 15 an address register is created. */
     SgAsmM68kRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
-    /** Create a reference to the condition code register. */
+    /** Create a reference to the status register. */
+    SgAsmM68kRegisterReferenceExpression *makeStatusRegister();
+
+    /** Create a reference to the condition code register. This is the low-order 8 bits of the status register. */
     SgAsmM68kRegisterReferenceExpression *makeConditionCodeRegister();
 
     /** Create a reference to the program counter register. */

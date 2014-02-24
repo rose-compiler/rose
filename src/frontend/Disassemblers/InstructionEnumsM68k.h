@@ -163,162 +163,209 @@ enum M68kEffectiveAddressMode {
 
 enum M68kInstructionKind {
     m68k_unknown_instruction,
-    m68k_abcd,                          /**< Add decimal with extended */
-    m68k_add,                           /**< Add */
-    m68k_adda,                          /**< Add address */
-    m68k_addi,                          /**< Add immediate */
-    m68k_addq,                          /**< Add quick */
-    m68k_addx,                          /**< Add extended */
-    m68k_and,                           /**< AND logical */
-    m68k_andi,                          /**< AND immediate */
-    m68k_asl,                           /**< Arithmetic shift left */
-    m68k_asr,                           /**< Arithmetic shift right */
-    m68k_bcc,                           /**< Branch carry clear (alias bhs) */
-    m68k_bcs,                           /**< Branch carry set (alias blo) */
-    m68k_beq,                           /**< Branch equal */
-    m68k_bge,                           /**< Branch greater or equal */
-    m68k_bgt,                           /**< Branch greater than */
-    m68k_bhi,                           /**< Branch high */
-    m68k_ble,                           /**< Branch less or equal */
-    m68k_bls,                           /**< Branch lower or same */
-    m68k_blt,                           /**< Branch less than */
-    m68k_bmi,                           /**< Branch minus */
-    m68k_bne,                           /**< Branch not equal */
-    m68k_bpl,                           /**< Branch plus */
-    m68k_bvc,                           /**< Branch overflow clear */
-    m68k_bvs,                           /**< Branch overflow set */
-    m68k_bchg,                          /**< Test a bit and change */
-    m68k_bclr,                          /**< Test a bit and clear */
-    m68k_bfchg,                         /**< Test bit field and change */
-    m68k_bfclr,                         /**< Test bit field and clear */
-    m68k_bfexts,                        /**< Extract bit field signed */
-    m68k_bfextu,                        /**< Extract bit field unsigned */
-    m68k_bfffo,                         /**< Find first one in bit field */
-    m68k_bfins,                         /**< Insert bit field */
-    m68k_bfset,                         /**< Test bit field and set */
-    m68k_bftst,                         /**< Test bit field */
-    m68k_bitrev,                        /**< Bit reverse register */
-    m68k_bkpt,                          /**< Breakpoint */
-    m68k_bra,                           /**< Branch always */
-    m68k_bset,                          /**< Test a bit and set */
-    m68k_bsr,                           /**< Branch to subroutine */
-    m68k_btst,                          /**< Test a bit */
-    m68k_byterev,                       /**< Byte reverse register */
-    m68k_callm,                         /**< Call module */
-    m68k_cas,                           /**< Compare and swap with operand */
-    m68k_cas2,                          /**< Compare and swap with operands */
-    m68k_chk,                           /**< Check register against bounds */
-    m68k_chk2,                          /**< Check register against bounds */
-    m68k_clr,                           /**< Clear an operand */
-    m68k_cmp,                           /**< Compare */
-    m68k_cmpa,                          /**< Compare address */
-    m68k_cmpi,                          /**< Compare immediate */
-    m68k_cpushl,
-    m68k_divs,                          /**< Signed divide */
-    m68k_divu,                          /**< Unsigned divide */
-    m68k_eor,                           /**< Exclusive-OR logical */
-    m68k_eori,                          /**< Exclusive-OR immediate */
-    m68k_ext,                           /**< Sign extend */
-    m68k_extb,                          /**< Sign extend byte to longword */
-    m68k_fabs,
-    m68k_fadd,
-    m68k_fbcc,                          // FIXME: split
-    m68k_fcmp,
-    m68k_fdabs,
-    m68k_fdadd,
-    m68k_fddiv,
-    m68k_fdiv,
-    m68k_fdmove,
-    m68k_fdmul,
-    m68k_fdneg,
-    m68k_fdsqrt,
-    m68k_fdsub,
-    m68k_ff1,                           /**< Find first one in register */
-    m68k_fint,
-    m68k_fintrz,
-    m68k_fmove,
-    m68k_fmovem,
-    m68k_fmul,
-    m68k_fneg,
-    m68k_fnop,
-    m68k_frestore,
-    m68k_fsabs,
-    m68k_fsadd,
-    m68k_fsave,
-    m68k_fsdiv,
-    m68k_fsmove,
-    m68k_fsmul,
-    m68k_fsneg,
-    m68k_fsqrt,
-    m68k_fssqrt,
-    m68k_fssub,
-    m68k_fsub,
-    m68k_ftst,
-    m68k_halt,                          /**< Halt the CPU */
-    m68k_illegal,                       /**< Take illegal instruction trap */
-    m68k_intouch,
-    m68k_jmp,                           /**< Jump */
-    m68k_jsr,                           /**< Jump to subroutine */
-    m68k_lea,                           /**< Load effective address */
-    m68k_link,                          /**< Link and allocate */
-    m68k_lsl,                           /**< Logical shift left */
-    m68k_lsr,                           /**< Logical shift right */
-    m68k_mac,                           /**< Multiply accumulate */
-    m68k_mov3q,                         /**< Move 3-bit data quick */
-    m68k_movclr,
-    m68k_move,                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */
-    m68k_movea,                         /**< Move address from source to destination */
-    m68k_movec,
-    m68k_movem,                         /**< Move multiple registers */
-    m68k_moveq,                         /**< Move quick */
-    m68k_msac,                          /**< Multiply subtract */
-    m68k_muls,                          /**< Signed multiply */
-    m68k_mulu,                          /**< Unsigned multiply */
-    m68k_mvs,                           /**< Move with sign extend */
-    m68k_mvz,                           /**< Move with zero fill */
-    m68k_neg,                           /**< Negate */
-    m68k_negx,                          /**< Negate with extend */
-    m68k_nop,                           /**< No operation */
-    m68k_not,                           /**< Logical complement */
-    m68k_or,                            /**< Inclusive-OR logical */
-    m68k_ori,                           /**< Inclusive-OR immediate */
-    m68k_pea,                           /**< Push effective address */
-    m68k_pulse,                         /**< Generate unique processor status */
-    m68k_rems,                          /**< Signed divide remainder */
-    m68k_remu,                          /**< Unsigned divide remainder */
-    m68k_rte,                           /**< Return from exception */
-    m68k_rts,                           /**< Return from subroutine */
-    m68k_sats,                          /**< Signed saturate */
-    m68k_st,                            /**< Set if true */
-    m68k_sf,                            /**< Set if false */
-    m68k_shi,                           /**< Set if high */
-    m68k_sls,                           /**< Set if lower or same */
-    m68k_scc,                           /**< Set if carry clear (HS) */
-    m68k_scs,                           /**< Set if carry set (LO) */
-    m68k_sne,                           /**< Set if not equal */
-    m68k_seq,                           /**< Set if equal */
-    m68k_svc,                           /**< Set if overflow clear */
-    m68k_svs,                           /**< Set if overflow set */
-    m68k_spl,                           /**< Set if plus */
-    m68k_smi,                           /**< Set if minus */
-    m68k_sge,                           /**< Set if greater or equal */
-    m68k_slt,                           /**< Set if less than */
-    m68k_sgt,                           /**< Set if greater than */
-    m68k_sle,                           /**< Set if less or equal */
-    m68k_stop,
-    m68k_sub,                           /**< Subtract */
-    m68k_suba,                          /**< Subtract address */
-    m68k_subi,                          /**< Subtract immediate */
-    m68k_subq,                          /**< Subtract quick */
-    m68k_subx,                          /**< Subtract extended */
-    m68k_swap,                          /**< Swap register halves */
-    m68k_tas,                           /**< Test and set an operand */
-    m68k_tpf,                           /**< Trap false (no operation) */
-    m68k_trap,                          /**< Trap */
-    m68k_tst,                           /**< Test an operand */
-    m68k_unlk,                          /**< Unlink */
-    m68k_wddata,                        /**< Write to debug data */
-    m68k_wdebug,
+    m68k_abcd,                                          /**< Add decimal with extended */
+    m68k_add,                                           /**< Add */
+    m68k_adda,                                          /**< Add address */
+    m68k_addi,                                          /**< Add immediate */
+    m68k_addq,                                          /**< Add quick */
+    m68k_addx,                                          /**< Add extended */
+    m68k_and,                                           /**< AND logical */
+    m68k_andi,                                          /**< AND immediate */
+    m68k_asl,                                           /**< Arithmetic shift left */
+    m68k_asr,                                           /**< Arithmetic shift right */
+    m68k_bcc,                                           /**< Branch carry clear (alias bhs) */
+    m68k_bcs,                                           /**< Branch carry set (alias blo) */
+    m68k_beq,                                           /**< Branch equal */
+    m68k_bge,                                           /**< Branch greater or equal */
+    m68k_bgt,                                           /**< Branch greater than */
+    m68k_bhi,                                           /**< Branch high */
+    m68k_ble,                                           /**< Branch less or equal */
+    m68k_bls,                                           /**< Branch lower or same */
+    m68k_blt,                                           /**< Branch less than */
+    m68k_bmi,                                           /**< Branch minus */
+    m68k_bne,                                           /**< Branch not equal */
+    m68k_bpl,                                           /**< Branch plus */
+    m68k_bvc,                                           /**< Branch overflow clear */
+    m68k_bvs,                                           /**< Branch overflow set */
+    m68k_bchg,                                          /**< Test a bit and change */
+    m68k_bclr,                                          /**< Test a bit and clear */
+    m68k_bfchg,                                         /**< Test bit field and change */
+    m68k_bfclr,                                         /**< Test bit field and clear */
+    m68k_bfexts,                                        /**< Extract bit field signed */
+    m68k_bfextu,                                        /**< Extract bit field unsigned */
+//    m68k_bfffo,                         /**< Find first one in bit field */
+    m68k_bfins,                                         /**< Insert bit field */
+    m68k_bfset,                                         /**< Test bit field and set */
+    m68k_bftst,                                         /**< Test bit field */
+//    m68k_bitrev,                        /**< Bit reverse register */
+    m68k_bkpt,                                          /**< Breakpoint */
+    m68k_bra,                                           /**< Branch always */
+    m68k_bset,                                          /**< Test a bit and set */
+    m68k_bsr,                                           /**< Branch to subroutine */
+    m68k_btst,                                          /**< Test a bit */
+//    m68k_byterev,                       /**< Byte reverse register */
+    m68k_callm,                                         /**< Call module */
+    m68k_cas,                                           /**< Compare and swap with operand */
+    m68k_cas2,                                          /**< Compare and swap with operands */
+    m68k_chk,                                           /**< Check register against bounds */
+    m68k_chk2,                                          /**< Check register against bounds */
+    m68k_clr,                                           /**< Clear an operand */
+    m68k_cmp,                                           /**< Compare */
+    m68k_cmp2,                                          /**< Compare register against bounds */
+    m68k_cmpa,                                          /**< Compare address */
+    m68k_cmpi,                                          /**< Compare immediate */
+//    m68k_cpushl,
+    m68k_dbt,                                           /**< Decrement and branch if true */
+    m68k_dbf,                                           /**< Decrement and branch if false */
+    m68k_dbhi,                                          /**< Decrement and branch if high */
+    m68k_dbls,                                          /**< Decrement and branch if lower or same */
+    m68k_dbcc,                                          /**< Decrement and branch if cary clear */
+    m68k_dbcs,                                          /**< Decrement and branch if carry set */
+    m68k_dbne,                                          /**< Decrement and branch if not equal */
+    m68k_dbeq,                                          /**< Decrement and branch if equal */
+    m68k_dbvc,                                          /**< Decrement and branch if overflow clear */
+    m68k_dbvs,                                          /**< Decrement and branch if overflow set */
+    m68k_dbpl,                                          /**< Decrement and branch if plus */
+    m68k_dbmi,                                          /**< Decrement and branch if minus */
+    m68k_dbge,                                          /**< Decrement and branch if greater or equal */
+    m68k_dblt,                                          /**< Decrement and branch if less than */
+    m68k_dbgt,                                          /**< Decrement and branch if greater than */
+    m68k_dble,                                          /**< Decrement and branch if less than or equal */
+    m68k_divs,                                          /**< Signed divide */
+    m68k_divu,                                          /**< Unsigned divide */
+    m68k_eor,                                           /**< Exclusive-OR logical */
+    m68k_eori,                                          /**< Exclusive-OR immediate */
+    m68k_exg,                                           /**< Exchange registers */
+    m68k_ext,                                           /**< Sign extend */
+    m68k_extb,                                          /**< Sign extend byte to longword */
+//    m68k_fabs,
+//    m68k_fadd,
+//    m68k_fcmp,
+//    m68k_fdabs,
+//    m68k_fdadd,
+//    m68k_fddiv,
+//    m68k_fdiv,
+//    m68k_fdmove,
+//    m68k_fdmul,
+//    m68k_fdneg,
+//    m68k_fdsqrt,
+//    m68k_fdsub,
+//    m68k_ff1,                           /**< Find first one in register */
+//    m68k_fint,
+//    m68k_fintrz,
+//    m68k_fmove,
+//    m68k_fmovem,
+//    m68k_fmul,
+//    m68k_fneg,
+//    m68k_fnop,
+//    m68k_frestore,
+//    m68k_fsabs,
+//    m68k_fsadd,
+//    m68k_fsave,
+//    m68k_fsdiv,
+//    m68k_fsmove,
+//    m68k_fsmul,
+//    m68k_fsneg,
+//    m68k_fsqrt,
+//    m68k_fssqrt,
+//    m68k_fssub,
+//    m68k_fsub,
+//    m68k_ftst,
+//    m68k_halt,                          /**< Halt the CPU */
+    m68k_illegal,                                       /**< Take illegal instruction trap */
+//    m68k_intouch,
+    m68k_jmp,                                           /**< Jump */
+    m68k_jsr,                                           /**< Jump to subroutine */
+    m68k_lea,                                           /**< Load effective address */
+    m68k_link,                                          /**< Link and allocate */
+    m68k_lsl,                                           /**< Logical shift left */
+    m68k_lsr,                                           /**< Logical shift right */
+//    m68k_mac,                           /**< Multiply accumulate */
+//    m68k_mov3q,                         /**< Move 3-bit data quick */
+//    m68k_movclr,
+    m68k_move,                                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */
+    m68k_move16,                                        /**< Move 16-byte block */
+    m68k_movea,                                         /**< Move address from source to destination */
+//    m68k_movec,
+    m68k_movem,                                         /**< Move multiple registers */
+    m68k_movep,                                         /**< Move peripheral data */
+    m68k_moveq,                                         /**< Move quick */
+//    m68k_msac,                          /**< Multiply subtract */
+    m68k_muls,                                          /**< Signed multiply */
+    m68k_mulu,                                          /**< Unsigned multiply */
+//    m68k_mvs,                           /**< Move with sign extend */
+//    m68k_mvz,                           /**< Move with zero fill */
+    m68k_nbcd,                                          /**< Negate decimal with extend */
+    m68k_neg,                                           /**< Negate */
+    m68k_negx,                                          /**< Negate with extend */
+    m68k_nop,                                           /**< No operation */
+    m68k_not,                                           /**< Logical complement */
+    m68k_or,                                            /**< Inclusive-OR logical */
+    m68k_ori,                                           /**< Inclusive-OR immediate */
+    m68k_pack,                                          /**< Pack */
+    m68k_pea,                                           /**< Push effective address */
+//    m68k_pulse,                         /**< Generate unique processor status */
+    m68k_rems,                                          /**< Signed divide remainder */
+    m68k_remu,                                          /**< Unsigned divide remainder */
+    m68k_rol,                                           /**< Rotate left without extend */
+    m68k_ror,                                           /**< Rotate right without extend */
+    m68k_roxl,                                          /**< Rotate left with extend */
+    m68k_roxr,                                          /**< Rotate right with extend */
+    m68k_rtd,                                           /**< Return and deallocate */
+    m68k_rtm,                                           /**< Return from module */
+//    m68k_rte,                           /**< Return from exception */
+    m68k_rtr,                                           /**< Return and restore condition codes */
+    m68k_rts,                                           /**< Return from subroutine */
+//    m68k_sats,                          /**< Signed saturate */
+    m68k_sbcd,                                          /**< Subtract decimal with extend */
+    m68k_st,                                            /**< Set if true */
+    m68k_sf,                                            /**< Set if false */
+    m68k_shi,                                           /**< Set if high */
+    m68k_sls,                                           /**< Set if lower or same */
+    m68k_scc,                                           /**< Set if carry clear (HS) */
+    m68k_scs,                                           /**< Set if carry set (LO) */
+    m68k_sne,                                           /**< Set if not equal */
+    m68k_seq,                                           /**< Set if equal */
+    m68k_svc,                                           /**< Set if overflow clear */
+    m68k_svs,                                           /**< Set if overflow set */
+    m68k_spl,                                           /**< Set if plus */
+    m68k_smi,                                           /**< Set if minus */
+    m68k_sge,                                           /**< Set if greater or equal */
+    m68k_slt,                                           /**< Set if less than */
+    m68k_sgt,                                           /**< Set if greater than */
+    m68k_sle,                                           /**< Set if less or equal */
+//    m68k_stop,
+    m68k_sub,                                           /**< Subtract */
+    m68k_suba,                                          /**< Subtract address */
+    m68k_subi,                                          /**< Subtract immediate */
+    m68k_subq,                                          /**< Subtract quick */
+    m68k_subx,                                          /**< Subtract extended */
+    m68k_swap,                                          /**< Swap register halves */
+    m68k_tas,                                           /**< Test and set an operand */
+//    m68k_tpf,                           /**< Trap false (no operation) */
+    m68k_trap,                                          /**< Trap */
+    m68k_trapt,                                         /**< Trap if true */
+    m68k_trapf,                                         /**< Trap if false */
+    m68k_traphi,                                        /**< Trap if high */
+    m68k_trapls,                                        /**< Trap if lower or same */
+    m68k_trapcc,                                        /**< Trap if carry clear (HS) */
+    m68k_trapcs,                                        /**< Trap if carry set (LO) */
+    m68k_trapne,                                        /**< Trap if not equal */
+    m68k_trapeq,                                        /**< Trap if equal */
+    m68k_trapvc,                                        /**< Trap if overflow clear */
+    m68k_trapvs,                                        /**< Trap if overflow set */
+    m68k_trappl,                                        /**< Trap if plus */
+    m68k_trapmi,                                        /**< Trap if minus */
+    m68k_trapge,                                        /**< Trap if greater or equal */
+    m68k_traplt,                                        /**< Trap if less than */
+    m68k_trapgt,                                        /**< Trap if greater than */
+    m68k_traple,                                        /**< Trap if less or equal */
+    m68k_trapv,                                         /**< Trap on overflow */
+    m68k_tst,                                           /**< Test an operand */
+    m68k_unlk,                                          /**< Unlink */
+    m68k_unpk,                                          /**< Unpack binary coded decimal */
+//    m68k_wddata,                        /**< Write to debug data */
+//    m68k_wdebug,
 
     // must be last
     m68k_last_instruction
