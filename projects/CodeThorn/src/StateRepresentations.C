@@ -276,8 +276,17 @@ bool PState::varIsTop(VariableId varId) const {
  */
 string PState::varValueToString(VariableId varId) const {
   stringstream ss;
-  AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
+  AValue val=varValue(varId);
   return val.toString();
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
+AValue PState::varValue(VariableId varId) const {
+  AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
+  return val;
 }
 
 /*! 

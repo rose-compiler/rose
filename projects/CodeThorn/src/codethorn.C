@@ -36,6 +36,12 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgRshiftOp, true);
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
+  // Polyhedral test codes
+  setAstNodeVariant(V_SgMultAssignOp, true);
+  setAstNodeVariant(V_SgPntrArrRefExp, true);
+  setAstNodeVariant(V_SgPlusAssignOp, true);
+  setAstNodeVariant(V_SgPragmaDeclaration, true);
+  setAstNodeVariant(V_SgPragma, true);
 }
 
 
@@ -388,6 +394,78 @@ string readableruntime(double time) {
 
 static Analyzer* global_analyzer=0;
 
+void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+  typedef pair<SgExpression*,int> SubstitutionPair;
+  typedef list<SubstitutionPair > SubstitutionList;
+  SubstitutionList substitutionList;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+	  VariableId varRefId=variableIdMapping->variableId(varRef);
+	  if(pstate->varIsConst(varRefId)) {
+		AValue varVal=pstate->varValue(varRefId);
+		int varIntValue=varVal.getIntValue();
+		SubstitutionPair p=make_pair(varRef,varIntValue);
+		substitutionList.push_back(p);
+	  }
+	}
+  }
+  for(SubstitutionList::iterator i=substitutionList.begin();
+	  i!=substitutionList.end();
+	  ++i) {
+	// buildSignedIntType()
+	// buildFloatType()
+	// buildDoubleType()
+	// SgIntVal* buildIntVal(int)
+	// replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
+	//cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
+	SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
+  }
+}
+
+void extractArrayUpdateOperations(Analyzer* ana) {
+  ofstream myfile;
+  myfile.open("arrayupdates.txt");
+  Labeler* labeler=ana->getLabeler();
+  VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
+  TransitionGraph* tg=ana->getTransitionGraph();
+  const EState* estate=tg->getStartEState();
+  EStatePtrSet succSet=tg->succ(estate);
+  while(succSet.size()>=1) {
+	if(succSet.size()>1) {
+	  cerr<<"Error: STG-States with more than one successor not supported yet."<<endl;
+	  exit(1);
+	} else {
+	  EStatePtrSet::iterator i=succSet.begin();
+	  estate=*i;
+	}
+	// investigate state
+	Label lab=estate->label();
+	const PState* pstate=estate->pstate();
+	SgNode* node=labeler->getNode(lab);
+	// eliminate superfluous root nodes
+	if(isSgExprStatement(node))
+	  node=SgNodeHelper::getExprStmtChild(node);
+	if(isSgExpressionRoot(node))
+	  node=SgNodeHelper::getExprRootChild(node);
+	if(SgExpression* exp=isSgExpression(node)) {
+	  if(SgNodeHelper::isArrayElementAssignment(node)) {
+		SgNode* expCopy=SageInterface::copyExpression(exp);
+		// print for temporary info purpose
+		cout<<"-------------------------------------------------------------------"<<endl;
+		cout<<pstate->toString(variableIdMapping)<<endl;
+		cout<<expCopy->unparseToString()<<endl;
+		substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
+		cout<<expCopy->unparseToString()<<endl;
+		myfile<<expCopy->unparseToString()<<endl;
+	  }
+	}
+	// next successor set
+	succSet=tg->succ(estate);
+  }
+  myfile.close();
+}
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -464,6 +542,7 @@ int main( int argc, char * argv[] ) {
     ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
+    ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -529,6 +608,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
+  boolOptions.registerOption("dump1",false);
 
   boolOptions.processOptions();
 
@@ -862,6 +942,10 @@ int main( int argc, char * argv[] ) {
     AstAnnotator ara(analyzer.getLabeler());
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
+  }
+
+  if(boolOptions["dump1"]) {
+	extractArrayUpdateOperations(&analyzer);
   }
 
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());

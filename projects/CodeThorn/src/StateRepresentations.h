@@ -49,6 +49,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
   bool varIsTop(VariableId varId) const;
+  AValue varValue(VariableId varname) const;
   string varValueToString(VariableId varname) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
