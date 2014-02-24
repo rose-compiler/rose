@@ -14,6 +14,8 @@
 #include "jni_token.h"
 #include "Utf8.h"
 
+using namespace Rose::Frontend::Java::Ecj;
+
 SgProject *project = NULL;
 SgGlobal *globalScope = NULL;
 SgSourceFile *currentSourceFile = NULL;
@@ -21,7 +23,9 @@ SgClassType *ObjectClassType = NULL;
 SgClassType *StringClassType = NULL;
 SgClassType *ClassClassType = NULL;
 SgClassDefinition *ObjectClassDefinition = NULL;
-extern SgName java_lang = "java.lang";
+SgVariableSymbol *lengthSymbol = NULL;
+SgName java_lang = "java.lang";
+
 
 // TODO: Remove this !!!
 /*
@@ -77,6 +81,56 @@ string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string) {
 }
 */
 
+bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr) {
+    if (type_arg_list == NULL && new_args_ptr == NULL) { // two null argument list? ... then they compare.
+        return true;
+    }
+    if (type_arg_list == NULL || new_args_ptr == NULL) { // Only one of the argument lists is null?
+        return false;
+    }
+    ROSE_ASSERT(type_arg_list != NULL && new_args_ptr != NULL);
+
+    SgTemplateParameterPtrList args = type_arg_list -> get_args();
+    if (args.size() != new_args_ptr -> size()) {
+        return false;
+    }
+    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
+                                         new_arg_it = new_args_ptr -> begin();
+    for (; arg_it != args.end(); arg_it++, new_arg_it++) {
+        SgType *type1 = (*arg_it) -> get_type(),
+               *type2 = (*new_arg_it) -> get_type();
+        if (type1 != type2) {
+            break;
+        }
+    }
+    return (arg_it == args.end()); // The two argument lists match?
+}
+
+SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(SgTemplateParameterPtrList *new_args_ptr) {
+    //
+    // Keep track of parameterized types in a table so as not to duplicate them.
+    //
+    for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+        if (argumentsMatch((*type_it) -> get_type_list(), new_args_ptr)) {
+            return (*type_it);
+        }
+    }
+
+    //
+    // This parameterized type does not yet exist. Create it, store it in the table and return it.
+    //
+    SgClassDeclaration *classDeclaration = isSgClassDeclaration(genericType -> getAssociatedDeclaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    SgTemplateParameterList *typeParameterList = (new_args_ptr == NULL ? NULL : new SgTemplateParameterList());
+    if (new_args_ptr != NULL) {
+        typeParameterList -> set_args(*new_args_ptr);
+    }
+    SgJavaParameterizedType *parameterized_type = new SgJavaParameterizedType(classDeclaration, genericType, typeParameterList);
+    parameterizedTypes.push_front(parameterized_type);
+
+    return parameterized_type;
+}
+
 //
 // This function converts a Java string into its Utf8 representation.
 //
@@ -125,57 +179,20 @@ class_symbol = NULL; // Ignore this error !!!?
 }
 
 
-// TODO: Remove this !!!
-/*
-//
-// Initially, found_atype is set to true if a file with the name in question is visible locally.
-//
-bool isConflictingType(string simple_name, SgClassType *found_type) {
-// TODO: Remove this !!!
-//if(found_type){
-//cout << "The type " << found_type -> get_qualified_name().getString() << " is visible locally" << endl;
-//cout.flush();
-//}
-    if (::currentSourceFile != NULL) { // We are processing a source file
-        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_types");
-        if (attribute) {
-            for (int i = 0; i < attribute -> size(); i++) {
-                SgClassType *imported_type = isSgClassType(attribute -> getNode(i));
-                ROSE_ASSERT(imported_type);
-                if (imported_type -> get_name().getString() == simple_name) { // definitely an imported type
-// TODO: Remove this !!!
-//cout << "Found imported type " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                    if (found_type && found_type != imported_type) { // a second hit?
-// TODO: Remove this !!!
-//cout << "Found Conflicting types: " << found_type -> get_qualified_name().getString() << "  AND  " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                        return true;
-                    }
-                    found_type = imported_type;
-                }
-            }
-        }
-
-        attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_packages");
-        if (attribute) {
-            for (int i = 0; i < attribute -> size(); i++) {
-                SgClassDefinition *on_demand_package_definition = isSgClassDefinition(attribute -> getNode(i));
-                ROSE_ASSERT(on_demand_package_definition);
-                SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_package_definition, simple_name);
+bool isImportedTypeOnDemand(AstSgNodeListAttribute *attribute, SgClassDefinition *containing_definition, SgClassType *class_type) {
+    if (attribute) {
+        for (int i = 0; i < attribute -> size(); i++) {
+            SgClassDefinition *on_demand_definition = isSgClassDefinition(attribute -> getNode(i));
+            ROSE_ASSERT(on_demand_definition);
+            if (containing_definition == on_demand_definition) {
+                SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_definition, class_type -> get_name());
                 if (class_symbol) { // an on-demand imported type?
 // TODO: Remove this !!!
-//cout << "Found on-demand imported type " << isSgClassType(class_symbol -> get_type()) -> get_qualified_name().getString() << endl;
+//cout << "Type " << class_type -> get_qualified_name().getString() << " is imported on demand in file " << ::currentSourceFile -> getFileName() << endl;
+//ROSE_ASSERT(isSgClassType(class_symbol -> get_type()));
 //cout.flush();
-                    SgClassType *imported_type = isSgClassType(class_symbol -> get_type());
-                    ROSE_ASSERT(imported_type);
-                    if (found_type && found_type != imported_type) { // a second hit?
-// TODO: Remove this !!!
-//cout << "Found Conflicting types: " << found_type -> get_qualified_name().getString() << "  AND  " << imported_type -> get_qualified_name().getString() << endl;
-//cout.flush();
-                        return true;
-                    }
-                    found_type = imported_type;
+                    ROSE_ASSERT(class_symbol -> get_type() == class_type);
+                    return true;
                 }
             }
         }
@@ -183,19 +200,17 @@ bool isConflictingType(string simple_name, SgClassType *found_type) {
 
     return false;
 }
-*/
-
 
 bool isImportedType(SgClassType *class_type) {
     if (::currentSourceFile != NULL) { // We are processing a source file
-        SgClassDeclaration *new_class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
-        ROSE_ASSERT(new_class_declaration);
-        SgClassDefinition *new_package_definition = isSgClassDefinition(new_class_declaration -> get_parent());
-        if (new_package_definition) { // The type in question is closed in a package or it's an inner type
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgClassDefinition *containing_definition = isSgClassDefinition(class_declaration -> get_parent());
+        if (containing_definition) { // The type in question is enclosed in a package or a type (class member type)
             AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_types");
             if (attribute) {
                 for (int i = 0; i < attribute -> size(); i++) {
-                    SgClassType *imported_type = isSgClassType(attribute -> getNode(i));
+                    SgNamedType *imported_type = isSgNamedType(attribute -> getNode(i));
                     ROSE_ASSERT(imported_type);
                     if (imported_type == class_type) { // definitely an imported type
 // TODO: Remove this !!!
@@ -207,24 +222,11 @@ bool isImportedType(SgClassType *class_type) {
                 }
             }
 
-            attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_packages");
-            if (attribute) {
-                for (int i = 0; i < attribute -> size(); i++) {
-                    SgClassDefinition *on_demand_package_definition = isSgClassDefinition(attribute -> getNode(i));
-                    ROSE_ASSERT(on_demand_package_definition);
-                    if (new_package_definition == on_demand_package_definition) {
-                        SgClassSymbol *class_symbol = lookupClassSymbolInScope(on_demand_package_definition, class_type -> get_name());
-                        if (class_symbol) { // an on-demand imported type?
-// TODO: Remove this !!!
-//cout << "Type " << class_type -> get_qualified_name().getString() << " is imported on demand in file " << ::currentSourceFile -> getFileName() << endl;
-//ROSE_ASSERT(isSgClassType(class_symbol -> get_type()));
-//cout.flush();
-                            ROSE_ASSERT(class_symbol -> get_type() == class_type);
-                            return true;
-                        }
-                    }
-                }
+            if (isImportedTypeOnDemand((AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_packages"), containing_definition, class_type)) {
+                return true;
             }
+
+            return isImportedTypeOnDemand((AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_types"), containing_definition, class_type);
         }
     }
 
@@ -234,25 +236,26 @@ bool isImportedType(SgClassType *class_type) {
 
 SgArrayType *getUniqueArrayType(SgType *base_type, int num_dimensions) {
     ROSE_ASSERT(num_dimensions > 0);
-    ostringstream convert;     // stream used for the conversion
-    convert << num_dimensions; // insert the textual representation of num_dimensions in the characters in the stream
-    string dimensions = convert.str();
+    if (num_dimensions > 1) {
+        base_type = getUniqueArrayType(base_type, num_dimensions - 1);
+    }
 
-    AstArrayTypeAttribute *attribute = (AstArrayTypeAttribute *) base_type -> getAttribute(dimensions);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
     if (attribute == NULL) {
         SgArrayType *array_type = SageBuilder::buildArrayType(base_type);
         array_type -> set_rank(num_dimensions);
-        attribute = new AstArrayTypeAttribute(array_type);
-        base_type -> setAttribute(dimensions, attribute);
+        attribute = new AstSgNodeAttribute(array_type);
+        base_type -> setAttribute("array", attribute);
     }
 
-    return attribute -> getArrayType();
+    return isSgArrayType(attribute -> getNode());
 }
 
 
 //
 // Turn Java array into a pointer to make it look like C++ in order to please the consistency check in Cxx_Grammar.C
 //
+/*
 SgPointerType *getUniquePointerType(SgType *base_type, int num_dimensions) {
     ROSE_ASSERT(base_type);
     ROSE_ASSERT(num_dimensions > 0);
@@ -277,18 +280,58 @@ SgPointerType *getUniquePointerType(SgType *base_type, int num_dimensions) {
 
     return attribute -> getPointerType();
 }
+*/
 
-
-SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgTemplateParameterPtrList &newArgs) {
-    if (! raw_type -> attributeExists("parameterized types")) {
-        raw_type -> setAttribute("parameterized types", new AstParameterizedTypeAttribute(raw_type) );
+SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *generic_type, SgTemplateParameterPtrList *new_args) {
+    AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) generic_type -> getAttribute("parameterized types");
+    if (! attribute) {
+        attribute = new AstParameterizedTypeAttribute(generic_type);
+        generic_type -> setAttribute("parameterized types", attribute);
     }
-    AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) raw_type -> getAttribute("parameterized types");
     ROSE_ASSERT(attribute);
 
-    return attribute -> findOrInsertParameterizedType(newArgs);
+    return attribute -> findOrInsertParameterizedType(new_args);
 }
 
+
+SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *class_declaration, SgType *parent_type, SgType *type) {
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) type -> getAttribute("qualified types");
+    if (! attribute) {
+        attribute = new AstSgNodeListAttribute();
+        type -> setAttribute("qualified types", attribute);
+    }
+    ROSE_ASSERT(attribute);
+
+    for (int i = 0; i < attribute -> size(); i++) {
+        SgJavaQualifiedType *qualified_type = isSgJavaQualifiedType(attribute -> getNode(i));
+// TODO: Remove this !!!
+/*
+cout << "I found "
+     << getFullyQualifiedTypeName(qualified_type)
+     << endl;
+cout.flush();
+*/
+        ROSE_ASSERT(qualified_type);
+        if (qualified_type -> get_parent_type() == parent_type &&  qualified_type -> get_type() == type) {
+            return qualified_type;
+        }
+    }
+
+    SgJavaQualifiedType *qualified_type = new SgJavaQualifiedType(class_declaration);
+    qualified_type -> set_parent_type(parent_type);
+    qualified_type -> set_type(type);
+// TODO: Remove this !!!
+/*
+cout << "I built qualified type "
+     << getFullyQualifiedTypeName(qualified_type)
+     << endl;
+cout.flush();
+*/
+
+    attribute -> addNode(qualified_type);
+
+    return qualified_type;
+}
 
 //
 // Generate the unbound wildcard if it does not yet exist and return it.  Once the unbound Wildcard
@@ -298,11 +341,7 @@ SgJavaWildcardType *getUniqueWildcardUnbound() {
     ROSE_ASSERT(::ObjectClassType);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ::ObjectClassType -> getAttribute("unbound");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType();
-        wildcard -> set_is_unbound(true);
-        wildcard -> set_has_extends(false);
-        wildcard -> set_has_super(false);
-
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(::ObjectClassDefinition -> get_declaration());
         attribute = new AstSgNodeAttribute(wildcard);
         ::ObjectClassType -> setAttribute("unbound", attribute);
     }
@@ -318,10 +357,22 @@ SgJavaWildcardType *getUniqueWildcardExtends(SgType *type) {
     ROSE_ASSERT(type);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("extends");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
-        wildcard -> set_is_unbound(false);
-        wildcard -> set_has_extends(true);
-        wildcard -> set_has_super(false);
+        SgNamedType *named_type = (isSgArrayType(type) ? ::ObjectClassType : isSgNamedType(type));
+if (! named_type){
+cout << "The type " << getTypeName(type)
+     << " is of type "
+     << type -> class_name()
+     << " in file "
+     << ::currentSourceFile -> getFileName()
+     << endl;
+cout.flush();
+}
+
+        ROSE_ASSERT(named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(named_type -> getAssociatedDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration);
+        wildcard -> set_extends_type(type);
 
         attribute = new AstSgNodeAttribute(wildcard);
         type -> setAttribute("extends", attribute);
@@ -338,10 +389,12 @@ SgJavaWildcardType *getUniqueWildcardSuper(SgType *type) {
     ROSE_ASSERT(type);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("super");
     if (! attribute) {
-        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
-        wildcard -> set_is_unbound(false);
-        wildcard -> set_has_extends(false);
-        wildcard -> set_has_super(true);
+        SgNamedType *named_type = isSgNamedType(type);
+        ROSE_ASSERT(named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(named_type -> getAssociatedDeclaration());
+        ROSE_ASSERT(class_declaration);
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration);
+        wildcard -> set_super_type(type);
 
         attribute = new AstSgNodeAttribute(wildcard);
         type -> setAttribute("super", attribute);
@@ -352,19 +405,67 @@ SgJavaWildcardType *getUniqueWildcardSuper(SgType *type) {
 
 
 //
+//
+//
+string getExtensionNames( std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class) {
+    string extension_names = "";
+    for ( std::vector<SgNode *>::iterator i = extension_list.begin(); i != extension_list.end(); ) {
+        SgType *type = isSgType(*i);
+        ROSE_ASSERT(type);
+
+        if (i == extension_list.begin()) { // the first element
+            i++;
+            if (class_declaration -> get_explicit_interface()) {
+                extension_names += " extends "; // We are processing an interface.
+                extension_names += getTypeName(type);
+                if (i != extension_list.end())
+                    extension_names += ", ";
+            }
+            else if (! has_super_class) {
+                extension_names += " implements ";
+                extension_names += getTypeName(type);
+                if (i != extension_list.end())
+                    extension_names += ", ";
+            }
+            else {
+                if (type != ::ObjectClassType && (! class_declaration -> get_explicit_enum())) { // Don't process super class for enumeration.
+                    extension_names += " extends ";
+                    extension_names += getTypeName(type);
+                }
+                if (i != extension_list.end())
+                    extension_names += " implements ";
+            }
+        }
+        else {
+            i++;
+            extension_names += getTypeName(type);
+            if (i != extension_list.end())
+                extension_names += ", ";
+        }
+    }
+
+    return extension_names;
+}
+
+
+//
 // Always map the Rose SgTypeString into java.lang.String before making comparison. This is required
 // because Rose assigns the the type SgTypeString by default to a string constant (an SgStringVal).
 //
 bool isCompatibleTypes(SgType *source_type, SgType *target_type) {
+    if (isSgJavaQualifiedType(source_type))
+        source_type = isSgJavaQualifiedType(source_type) -> get_type();
+    if (isSgJavaQualifiedType(source_type))
+        target_type = isSgJavaQualifiedType(target_type) -> get_type();
     if (isSgJavaParameterizedType(source_type))
         source_type = isSgJavaParameterizedType(source_type) -> get_raw_type();
     if (isSgJavaParameterizedType(target_type))
         target_type = isSgJavaParameterizedType(target_type) -> get_raw_type();
 
     if (isSgTypeString(source_type))
-        source_type = StringClassType;
+        source_type = ::StringClassType;
     if (isSgTypeString(target_type))
-        target_type = StringClassType;
+        target_type = ::StringClassType;
 
     return source_type == target_type;
 }
@@ -403,7 +504,7 @@ string getPrimitiveTypeName(SgType *type) {
         type_name = "void";
     }
     else if (isSgTypeString(type)) {
-        type_name = getTypeName(StringClassType);
+        type_name = getTypeName(::StringClassType);
     }
     else {
         ROSE_ASSERT(type);
@@ -425,9 +526,15 @@ string getPrimitiveTypeName(SgType *type) {
 string getWildcardTypeName(SgJavaWildcardType *wild_type) {
     string name = "?";
 
-    if (! wild_type -> get_is_unbound()) {
-        name += (wild_type -> get_has_extends() ? " extends " : " super ");
-        name += getTypeName(wild_type -> get_bound_type());
+    SgType *extends_type = wild_type -> get_extends_type(),
+           *super_type = wild_type -> get_super_type();
+    if (extends_type) {
+        name += " extends ";
+        name += getTypeName(extends_type);
+    }
+    else if (super_type) {
+        name += " super ";
+        name += getTypeName(super_type);
     }
 
     return name;
@@ -437,7 +544,26 @@ string getWildcardTypeName(SgJavaWildcardType *wild_type) {
 //
 //
 //
+string getUnionTypeName(SgJavaUnionType *union_type) {
+    string name = "";
+    SgTypePtrList type_list = union_type -> get_type_list();
+    for (int i = 0; i < type_list.size(); i++) {
+        if (i > 0) {
+            name += " | ";
+        }
+        name += getTypeName(type_list[i]);
+    }
+
+    return name;
+}
+
+
+//
+//
+//
+/*
 string getFullyQualifiedName(SgClassDefinition *definition) {
+*/
 // TODO: Remove this !!!
 /*
     string name = definition -> get_declaration() -> get_name();
@@ -453,28 +579,36 @@ string getFullyQualifiedName(SgClassDefinition *definition) {
 
     return "";
 */
-
+/*
     SgScopeStatement *scope = definition -> get_scope();
-    if (isSgGlobal(scope) || isSgFunctionDefinition(scope) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
+    if (isSgFunctionDefinition(scope) || definition -> get_declaration() -> get_type() -> attributeExists("is_parameter_type")) {
         return definition -> get_declaration() -> get_name();
     }
 
     return definition -> get_qualified_name().getString();
 }
+*/
+
 
 //
 //
 //
 string getFullyQualifiedTypeName(SgClassType *class_type) {
-    AstRegExAttribute *attribute = (AstRegExAttribute *) class_type -> getAttribute("name");
-    if (! attribute) {
+   AstRegExAttribute *attribute = (AstRegExAttribute *) class_type -> getAttribute("name"); 
+   if (! attribute) {
+        string name;
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration());
         ROSE_ASSERT(declaration);
         SgClassDeclaration *defining_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
         ROSE_ASSERT(defining_declaration);
         SgClassDefinition *definition = defining_declaration -> get_definition();
         ROSE_ASSERT(definition);
-        attribute = new AstRegExAttribute(getFullyQualifiedName(definition));
+        SgScopeStatement *scope = definition -> get_scope();
+        if (isSgFunctionDefinition(scope) || isSgJavaParameterType(definition -> get_declaration() -> get_type())) { // -> attributeExists("is_parameter_type")) {
+            name = definition -> get_declaration() -> get_name().getString();
+        }
+        else name = definition -> get_qualified_name().getString();
+        attribute = new AstRegExAttribute(name); // getFullyQualifiedName(definition));
         class_type -> setAttribute("name", attribute);
     }
 
@@ -482,90 +616,313 @@ string getFullyQualifiedTypeName(SgClassType *class_type) {
 }
 
 string getFullyQualifiedTypeName(SgJavaParameterizedType *parm_type) {
-    ROSE_ASSERT(isSgClassType(parm_type -> get_raw_type()));
-    string result = getFullyQualifiedTypeName(isSgClassType(parm_type -> get_raw_type()));
+    SgNamedType *generic_type = isSgNamedType(parm_type -> get_raw_type());
+    ROSE_ASSERT(generic_type);
 
-    result += "<";
-    SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-    for (int i = 0; i < arg_list.size(); i++) {
-        SgTemplateParameter *templateParameter = arg_list[i];
-        SgType *argument_type = templateParameter -> get_type();
-        SgJavaParameterizedType *p_type = isSgJavaParameterizedType(argument_type);
-        SgClassType *c_type = isSgClassType(argument_type);
-        result += (p_type ? getFullyQualifiedTypeName(p_type)
-                          : c_type ? getFullyQualifiedTypeName(c_type)
-                                   : getTypeName(argument_type));
-        if (i + 1 < arg_list.size()) {
-            result += ", ";
-        }
+    string result;
+// TODO: Review this !!! ... may not be needed!
+/*
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) parm_type -> getAttribute("enclosing_type");
+    if (attribute) {
+        result = (isSgJavaParameterizedType(attribute -> getNode())
+                      ? getFullyQualifiedTypeName((SgJavaParameterizedType *) attribute -> getNode())
+                      : getFullyQualifiedTypeName((SgClassType *) attribute -> getNode()));
+        result += ".";
+        result += generic_type -> get_name().getString();
     }
-    result += ">";
+    else {
+*/
+
+        SgClassType *c_type = isSgClassType(generic_type);
+        SgJavaQualifiedType *q_type = isSgJavaQualifiedType(generic_type);
+        result = (c_type ? getFullyQualifiedTypeName(c_type) : getFullyQualifiedTypeName(q_type));
+
+//    }
+
+    if (parm_type -> get_type_list()) { // This type has parameters?
+        result += "<";
+        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
+        for (int i = 0; i < arg_list.size(); i++) {
+            SgTemplateParameter *templateParameter = arg_list[i];
+            SgType *argument_type = templateParameter -> get_type();
+            SgJavaParameterizedType *p_type = isSgJavaParameterizedType(argument_type);
+            q_type = isSgJavaQualifiedType(argument_type);
+            c_type = isSgClassType(argument_type);
+            result += (p_type ? getFullyQualifiedTypeName(p_type)
+                              : q_type ? getFullyQualifiedTypeName(q_type)
+                                       : c_type ? getFullyQualifiedTypeName(c_type)
+                                                : getTypeName(argument_type));
+            if (i + 1 < arg_list.size()) {
+                result += ", ";
+            }
+        }
+        result += ">";
+    }
 
     return result;
 }
 
 
-string getTypeName(SgClassType *class_type) {
-    SgName type_name = class_type -> get_name();
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration());
-    ROSE_ASSERT(class_declaration);
-    SgScopeStatement *scope = class_declaration -> get_definingDeclaration() -> get_scope();
-    ROSE_ASSERT(scope);
-    string package_name = scope -> get_qualified_name().getString(),
-           class_simple_name = type_name.getString();
+//
+// TODO: Write this function!!!
+//
+string getFullyQualifiedTypeName(SgJavaQualifiedType *qualified_type) {
+    SgJavaParameterizedType *parent_p_type = isSgJavaParameterizedType(qualified_type -> get_parent_type());
+    SgJavaQualifiedType *parent_q_type = isSgJavaQualifiedType(qualified_type -> get_parent_type());
+    SgClassType *parent_c_type = isSgClassType(qualified_type -> get_parent_type());
+    ROSE_ASSERT(parent_p_type || parent_q_type || parent_c_type);
 
+    SgJavaParameterizedType *p_type = isSgJavaParameterizedType(qualified_type -> get_type());
+    SgClassType *c_type = isSgClassType(qualified_type -> get_type());
+    ROSE_ASSERT(p_type || c_type);
+
+    return (parent_p_type ? getFullyQualifiedTypeName(parent_p_type) : parent_q_type ? getFullyQualifiedTypeName(parent_q_type) : getFullyQualifiedTypeName(parent_c_type)) + 
+            "." +
+            (p_type ? getUnqualifiedTypeName(p_type) : c_type -> get_name().getString());
+}
+
+
+//
+// Does the type associated with this class declaration require qualification?
+//
+bool hasConflicts(SgClassDeclaration *class_declaration) {
+    SgScopeStatement *scope = class_declaration -> get_scope();
+    ROSE_ASSERT(scope);
+    string type_name = class_declaration -> get_name().getString();
+    while (isSgClassDefinition(scope) && (! isSgJavaPackageDeclaration(scope -> get_parent()))) {
+        class_declaration = isSgClassDeclaration(scope -> get_parent());
+        ROSE_ASSERT(class_declaration);
+        type_name = class_declaration -> get_name().getString() + "." + type_name;
+        scope = class_declaration -> get_scope();
+    }
+    if (isSgClassDefinition(scope)) {
+        string package_name = scope -> get_qualified_name().getString();
+
+        //
+        // Check whether or not there is a class with this name that is visible and belongs to 2 or more separate packages.
+        // This test is calculated by calling the Java function JavaTraversal with two arguments: the source
+        // filename and the class name.  If false is returned then we can use the type name without qualification.
+        //
+        ROSE_ASSERT(::currentSourceFile);
+        ROSE_ASSERT(::currentEnvironment);
+        ROSE_ASSERT(::currentJavaTraversalClass);
+        ROSE_ASSERT(::classHasConflictsMethod);
+        return (::currentEnvironment -> CallBooleanMethod(::currentJavaTraversalClass,
+                                                          ::classHasConflictsMethod,
+                                                          jserver_getJavaString(::currentSourceFile -> getFileName().c_str()),
+                                                          jserver_getJavaString(package_name.c_str()),
+                                                          jserver_getJavaString(type_name.c_str())));
+    }
+
+    return false;
+}
+
+
+bool isVisibleSimpleTypeName(SgNamedType *named_type) {
+    if (isSgJavaParameterType(named_type)) { // -> attributeExists("is_parameter_type")) { // a parameter type?
+        return true;
+    }
+    SgJavaQualifiedType *q_type = isSgJavaQualifiedType(named_type);
+    if (q_type) {
+        named_type = isSgNamedType(q_type -> get_type());
+        ROSE_ASSERT(named_type);
+    }
+    list<SgClassSymbol *> locally_accessible_class_symbol;
+    SgClassType *class_type = isSgClassType(named_type);
+    ROSE_ASSERT(class_type);
+    SgName class_name = class_type -> get_name(); // do a local lookup of the type.
+    lookupLocalTypeSymbols(locally_accessible_class_symbol, class_name); // do a local lookup of the type.
+    bool imported_type = isImportedType(class_type);
+    return ((imported_type && locally_accessible_class_symbol.size() == 0) ||  // an imported type that does not conflict with a local type?
+            ((! imported_type) && locally_accessible_class_symbol.size() == 1 && locally_accessible_class_symbol.front() -> get_type() == class_type));  // a locally visible type?
+}
+
+
+bool mustBeFullyQualified(SgClassType *class_type) {
+    if (::currentSourceFile != NULL) {
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("must_be_qualified");
+        if (attribute != NULL) {
+            for (int i = 0; i < attribute -> size(); i++) {
+                if (isSgClassType(attribute -> getNode(i)) == class_type) {
+                    return true;
+                }
+            }
+        }
+    }
+    return (::currentSourceFile == NULL);
+}
+
+string markAndGetQualifiedTypeName(SgClassType *class_type) {
+    if (::currentSourceFile != NULL) {
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("must_be_qualified");
+        if (attribute == NULL) { // if not yet allocated then allocate it!
+            attribute = new AstSgNodeListAttribute();
+            ::currentSourceFile -> setAttribute("must_be_qualified", attribute);
+        }
+
+        int i;
+        for (i = 0; i < attribute -> size(); i++) {
+            if (isSgClassType(attribute -> getNode(i)) == class_type) {
+                break;
+            }
+        }
+        if (i == attribute -> size()) {
+            attribute -> addNode(class_type);
+        }
+    }
+    return getFullyQualifiedTypeName(class_type);
+}
+
+
+//
+// Compute a usable minimally-qualified name for this type in this context.
+//
+string getTypeName(SgClassType *class_type) {
+/*
+cout << "***Getting name for type "
+     << class_type -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+*/
     //
-    // Check whether or not there is a class with this name that belongs to 2 or more separate packages.
-    // This test is calculated by calling the Java function JavaTraversal with two arguments: the source
-    // filename and the class name.
+    // If we are not currently processing a compilation unit or this type was already tagged as must-be fully qualified in this source file, ...
+    // TODO: I think this is necessary because of a javac bug... Check on that.
     //
-    ROSE_ASSERT(::currentEnvironment);
-    ROSE_ASSERT(::currentJavaTraversalClass);
-    ROSE_ASSERT(::classHasConflictsMethod);
-    if (::currentSourceFile == NULL || ::currentEnvironment -> CallBooleanMethod(::currentJavaTraversalClass,
-                                                                                 ::classHasConflictsMethod,
-                                                                                 jserver_getJavaString(::currentSourceFile -> getFileName().c_str()),
-                                                                                 jserver_getJavaString(package_name.c_str()),
-                                                                                 jserver_getJavaString(class_simple_name.c_str()))) {
+    if (mustBeFullyQualified(class_type)) {
         return getFullyQualifiedTypeName(class_type);
     }
 
     //
+    // If this type conflictc within the compilation unit then it requires qualification.
+    //
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration());
+    ROSE_ASSERT(class_declaration);
+    if (hasConflicts(class_declaration)) {
+        return markAndGetQualifiedTypeName(class_type);
+    }
+
     //
     //
-    if (class_type -> attributeExists("is_parameter_type")) { // a parameter
-// TODO: Remove this !!!
-//cout << "Type " << class_simple_name << " is a parameter" << endl;
-//cout.flush();
-        return class_simple_name;
-    }
-    if (isImportedType(class_type)) { // an imported type?
-// TODO: Remove this !!!
-//cout << "Type " << class_simple_name << " is imported" << endl;
-//cout.flush();
-        return class_simple_name;
-    }
+    //
+    SgName class_name = class_type -> get_name(), // do a local lookup of the type.
+           class_simple_name = class_type -> get_name().getString();
 
-    SgClassSymbol *locally_accessible_class_symbol = lookupTypeSymbol(type_name); // do a local lookup of the type.
-    if (locally_accessible_class_symbol && locally_accessible_class_symbol -> get_type() == class_type) { // the type is visible
+    if (isSgJavaParameterType(class_type)) { // -> attributeExists("is_parameter_type")) { // a parameter type?
 // TODO: Remove this !!!
-//cout << "Type " << class_type -> get_qualified_name().getString() << " is visible" << endl;
-//SgDeclarationStatement *declaration = isSgClassType(locally_accessible_class_symbol -> get_type()) -> get_declaration() -> get_definingDeclaration();
-//SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration);
-//ROSE_ASSERT(class_declaration);
-//SgClassDefinition *package_definition = isSgClassDefinition(class_declaration -> get_parent());
-//ROSE_ASSERT(package_definition);
-//cout << "The type found is " << isSgClassType(locally_accessible_class_symbol -> get_type()) -> get_qualified_name().getString() << " and it's in package " << package_definition -> get_qualified_name().getString() << endl;
-//cout.flush();
-
+/*
+cout << "The class "
+     << class_type -> get_qualified_name().getString()
+     << " is a parameter"
+<< endl;
+cout.flush();
+*/
         return class_simple_name;
     }
 
+    //
+    // Check whether or not the class is visible locally.
+    //
+    list<SgClassSymbol *> locally_accessible_class_symbol; 
+    lookupLocalTypeSymbols(locally_accessible_class_symbol, class_name); // do a local lookup of the type.
+    if (isImportedType(class_type) && locally_accessible_class_symbol.size() == 0) { // an imported type that does not conflict with a local type?
+// TODO: Remove this !!!
+/*
+cout << "The class "
+     << class_type -> get_qualified_name().getString()
+     << " is imported"
+<< endl;
+cout.flush();
+*/
+        return class_simple_name;
+    }
+    else if (locally_accessible_class_symbol.size() > 0) { // 1 or more local types with this class_name is visible
+// TODO: Remove this !!!
+/*
+cout << "The class "
+     << class_type -> get_qualified_name().getString()
+     << " was found locally"
+<< endl;
+cout.flush();
+*/
+        if (locally_accessible_class_symbol.size() == 1) { // the type is visible
+            SgClassSymbol *class_symbol = locally_accessible_class_symbol.front();
+            if (class_symbol -> get_type() == class_type) {
+                return class_simple_name;
+            }
+/*
+cout << "Locally found class "
+     << class_symbol -> get_declaration() -> get_qualified_name().getString()
+     << " does not match "
+     << class_type -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+*/
+        }
+        else {
+/*
+cout << "Found " << locally_accessible_class_symbol.size()
+     << " local classes with the name "
+     << class_type -> get_name().getString()
+     << endl;
+cout.flush();
+*/
+/*
+for (list<SgClassSymbol *>::iterator i = locally_accessible_class_symbol.begin(); i != locally_accessible_class_symbol.end(); i++) {
+SgClassSymbol *class_symbol = (*i);
+SgJavaParameterizedType *p_type = isSgJavaParameterizedType(class_symbol -> get_type());
+SgJavaQualifiedType *q_type = isSgJavaQualifiedType(class_symbol -> get_type());
+SgClassType *c_type = isSgClassType(class_symbol -> get_type());
+ROSE_ASSERT(p_type || c_type || q_type);
+ cout << "    "
+      << (p_type ? getFullyQualifiedTypeName(p_type)
+                 : q_type ? getFullyQualifiedTypeName(q_type)
+                          : getFullyQualifiedTypeName(c_type))
+      << endl;
+ cout.flush();
+}
+*/
 
-    string result = class_simple_name,
-           last_classname = result;
+            for (list<SgClassSymbol *>::iterator i = locally_accessible_class_symbol.begin(); i != locally_accessible_class_symbol.end(); i++) {
+                SgClassSymbol *class_symbol = (*i);
+                if (class_symbol -> get_type() == class_type) {
+/*
+cout << "Locally found class "
+     << class_symbol -> get_declaration() -> get_qualified_name().getString()
+     << "  *matches* "
+     << class_type -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+*/
+                    SgClassDefinition *containing_definition = isSgClassDefinition(class_symbol -> get_scope());
+                    ROSE_ASSERT(containing_definition);
+//                    SgClassType *parent_type  = containing_definition -> get_declaration() -> get_type();
+//                    ROSE_ASSERT(parent_type);
+//                    return (mustBeFullyQualified(parent_type) ? getFullyQualifiedTypeName(parent_type) : containing_definition -> get_declaration() -> get_name().getString()) + "." + class_simple_name;
+                    return containing_definition -> get_qualified_name().getString() + "." + class_simple_name;
+                }
+/*
+cout << "Locally found class "
+     << class_symbol -> get_declaration() -> get_qualified_name().getString()
+     << " does not match "
+     << class_type -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+*/
+            }
 
-    for (scope = class_declaration -> get_definingDeclaration() -> get_scope(); scope != ::globalScope; scope = class_declaration -> get_scope()) {
+//cout << "No match found for type  "
+//     << class_type -> get_qualified_name().getString()
+//     << " with some local types of the same name"
+//     << endl;
+//cout.flush();
+
+        }
+    }
+
+    string result = class_simple_name;
+//cout << "Starting with simple name " << class_simple_name << endl;
+//cout.flush();
+    for (SgScopeStatement *scope = class_declaration -> get_scope(); scope != ::globalScope; scope = class_declaration -> get_scope()) {
         SgClassDefinition *class_definition = isSgClassDefinition(scope);
         if ((! class_definition) || class_definition == astJavaScopeStack.top()) {
 // TODO: Remove this !!!
@@ -577,51 +934,126 @@ string getTypeName(SgClassType *class_type) {
         class_declaration = isSgClassDeclaration(class_definition -> get_parent());
         ROSE_ASSERT(class_declaration);
         SgJavaPackageDeclaration *package_declaration = isSgJavaPackageDeclaration(class_declaration);
-        if (package_declaration) {
-//cout << "Bumped into package " << package_declaration -> get_qualified_name().getString() << endl;
-//cout.flush();
-            continue;
-        }
-        else last_classname = class_declaration -> get_name().getString();
-        result = last_classname + "." + result;
-
-        if (/*(! package_declaration) && */ isImportedType(class_declaration -> get_type())) {
+        if (package_declaration || hasConflicts(class_declaration)) {
+            result = markAndGetQualifiedTypeName(class_type); // this type requires full qualification in this file
 // TODO: Remove this !!!
-//if (!package_declaration){
-//cout << "Type " << class_simple_name << " was imported" << endl;
+/*
+if (package_declaration){
+cout << "Bumped into package " << package_declaration -> get_qualified_name().getString() << " ... returning " << result << endl;
+cout.flush();
+}
+*/
+            break;
+        }
+        else {
+            SgClassType *parent_type  = class_declaration -> get_type();
+            ROSE_ASSERT(parent_type);
+            if (mustBeFullyQualified(parent_type)) {
+                result = getFullyQualifiedTypeName(parent_type) + "." + result;
+                break;
+            }
+            else result = class_declaration -> get_name().getString() + "." + result;
+        }
+        
+        if (isImportedType(class_declaration -> get_type())) {
+// TODO: Remove this !!!
+//cout << "Type " << class_declaration -> get_type() -> get_qualified_name().getString() << " was imported" << endl;
 //cout.flush();
-//}
             break;
         }
     }
 
 // TODO: Remove this !!!
-//if (scope != ::globalScope){
-//cout << "Type " << class_simple_name << " was found before we reached the global scope" << endl;
+//cout << "Type " << result << " was found before we reached the global scope" << endl;
 //cout.flush();
-//}
 
-    return (scope == ::globalScope ? getFullyQualifiedTypeName(class_type) : result);
+    return result;
 }
 
 
-string getTypeName(SgJavaParameterizedType *parm_type) {
-    ROSE_ASSERT(isSgClassType(parm_type -> get_raw_type()));
-    string result = getTypeName(isSgClassType(parm_type -> get_raw_type()));
-
-    result += "<";
-    SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
-    for (int i = 0; i < arg_list.size(); i++) {
-        SgTemplateParameter *templateParameter = arg_list[i];
-        SgType *argument_type = templateParameter -> get_type();
-        result += getTypeName(argument_type);
-        if (i + 1 < arg_list.size()) {
-            result += ", ";
+string getParameters(SgJavaParameterizedType *parm_type) {
+    string result = "";
+    if (parm_type -> get_type_list()) {
+        result += "<";
+        SgTemplateParameterPtrList arg_list = parm_type -> get_type_list() -> get_args();
+        for (int i = 0; i < arg_list.size(); i++) {
+            SgTemplateParameter *templateParameter = arg_list[i];
+            SgType *argument_type = templateParameter -> get_type();
+            result += getTypeName(argument_type);
+            if (i + 1 < arg_list.size()) {
+                result += ", ";
+            }
         }
+        result += ">";
     }
-    result += ">";
-
     return result;
+}
+
+
+string getUnqualifiedTypeName(SgJavaParameterizedType *param_type) {
+    SgNamedType *c_type = isSgNamedType(param_type -> get_raw_type());
+    ROSE_ASSERT(c_type);
+    return c_type -> get_name().getString() + getParameters(param_type);
+}
+
+
+string getTypeName(SgJavaParameterizedType *param_type) {
+    SgNamedType *generic_type = isSgNamedType(param_type -> get_raw_type());
+    ROSE_ASSERT(generic_type);
+/*
+cout << "Looking up a name for "
+     << getFullyQualifiedTypeName(param_type)
+     << " ; Its generic type is ("
+     << generic_type -> class_name()
+     << ") "
+     << (isSgClassType(generic_type) ?  getFullyQualifiedTypeName(isSgClassType(generic_type)) :  getFullyQualifiedTypeName(isSgJavaQualifiedType(generic_type)))
+     << endl;
+cout.flush();
+*/
+// TODO: Review this !!! ... may not be needed!
+/*
+    string result = getTypeName(parm_type -> get_generic_type());
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) parm_type -> getAttribute("enclosing_type");
+    string result = getTypeName(attribute != NULL ? ((SgType *) attribute -> getNode()) :  parm_type -> get_generic_type());
+    if (attribute) {
+        result += ".";
+        result += generic_type -> get_name().getString();
+    }
+*/
+
+    return getTypeName(generic_type) + getParameters(param_type);
+}
+
+
+string getTypeName(SgJavaQualifiedType *qualified_type) {
+/*
+cout << "Looking up a name for "
+     << getFullyQualifiedTypeName(qualified_type)
+     << endl;
+cout.flush();
+*/
+
+    SgJavaParameterizedType *p_type = isSgJavaParameterizedType(qualified_type -> get_type());
+    SgClassType *c_type = isSgClassType(qualified_type -> get_type());
+    ROSE_ASSERT(p_type || c_type);
+    string type_name = (p_type ? getUnqualifiedTypeName(p_type) : c_type -> get_name().getString());
+/**
+    bool simply_visible = isVisibleSimpleTypeName(c_type ? c_type : (SgNamedType *) p_type -> get_raw_type());
+**/
+/*
+if(simply_visible) {
+  cout << " Its simple type is visible"
+       << endl;
+  cout.flush();
+}
+else {
+  cout << " Its simple type is NOT visible"
+       << endl;
+  cout.flush();
+}
+*/
+/**    return (simply_visible ? type_name : (getTypeName(qualified_type -> get_parent_type()) + "." + type_name)); **/
+    return getTypeName(qualified_type -> get_parent_type()) + "." + type_name;
 }
 
 
@@ -629,23 +1061,31 @@ string getTypeName(SgJavaParameterizedType *parm_type) {
 //
 //
 string getTypeName(SgType *type) {
-    SgJavaParameterizedType *parm_type = isSgJavaParameterizedType(type); 
+    SgJavaParameterizedType *param_type = isSgJavaParameterizedType(type); 
+    SgJavaQualifiedType *qualified_type = isSgJavaQualifiedType(type); 
+    SgArrayType *array_type = isSgArrayType(type);
     SgClassType *class_type = isSgClassType(type);
-    SgPointerType *pointer_type = isSgPointerType(type);
     SgJavaWildcardType *wild_type = isSgJavaWildcardType(type);
+    SgJavaUnionType *union_type = isSgJavaUnionType(type);
     string result;
 
-    if (parm_type) {
-         result = getTypeName(parm_type);
+    if (param_type) {
+         result = getTypeName(param_type);
+    }
+    else if (qualified_type) {
+         result = getTypeName(qualified_type);
+    }
+    else if (array_type) {
+         result = getTypeName(array_type -> get_base_type()) + "[]";
     }
     else if (class_type) {
          result = getTypeName(class_type);
     }
-    else if (pointer_type) {
-         result = getTypeName(pointer_type -> get_base_type()) + "[]";
-    }
     else if (wild_type) {
          result = getWildcardTypeName(wild_type);
+    }
+    else if (union_type) {
+         result = getUnionTypeName(union_type);
     }
     else result = getPrimitiveTypeName(type);
 
@@ -655,7 +1095,7 @@ string getTypeName(SgType *type) {
 // 
 // Global stack of scopes.
 // 
-extern ScopeStack astJavaScopeStack;
+ScopeStack astJavaScopeStack;
 
 // 
 // Global stack of expressions and statements
@@ -843,6 +1283,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
     locatedNode -> get_startOfConstruct() -> unsetCompilerGenerated();
     locatedNode -> get_endOfConstruct() -> unsetCompilerGenerated();
 
+/* // TODO: This code causes problems for Annotations!!!
     // DQ (8/16/2011): Added support for setting the operator source code position 
     // (Note that for expressions get_file_info() returns get_operatorPosition()).
     SgExpression *expression = isSgExpression(locatedNode);
@@ -854,6 +1295,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
         expression -> get_operatorPosition() -> unsetTransformation();
         expression -> get_operatorPosition() -> unsetCompilerGenerated();
     }
+*/
 }
 
 
@@ -921,7 +1363,7 @@ SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *scope, const
 }
 
 
-SgClassDeclaration *buildDefiningClassDeclaration(SgName class_name, SgScopeStatement *scope) {
+SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName class_name, SgScopeStatement *scope) {
     ROSE_ASSERT(scope);
     SgClassSymbol *class_symbol = lookupClassSymbolInScope(scope, class_name);
 //
@@ -934,12 +1376,8 @@ cout << "Class symbol "
      << " already exists!!!"
      << endl;
 if (class_symbol -> get_declaration()){
-cout << "The qualified type name for class symbol "
-     << class_name.getString()
-     << " is "
+cout << "The qualified type name is "
      << class_symbol -> get_declaration() -> get_qualified_name().getString()
-     << " declared in "
-     << (isSgClassDefinition(scope) ? isSgClassDefinition(scope) -> get_qualified_name().getString() : scope -> class_name())
      << endl;
 }
 }
@@ -950,7 +1388,7 @@ cout << "The qualified type name for class symbol "
     bool buildTemplateInstantiation                  = false;
     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
 
-    SgClassDeclaration* class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_class, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    SgClassDeclaration* class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, kind, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
     ROSE_ASSERT(class_declaration);
     class_declaration -> set_parent(scope);
     class_declaration -> set_scope(scope);
@@ -968,11 +1406,15 @@ SgClassDefinition *findOrInsertPackage(SgScopeStatement *scope, const SgName &pa
     if (package_symbol == NULL) {
         package_declaration = buildPackageDeclaration(scope, package_name, env, loc);
         package_definition = package_declaration -> get_definition();
+        setJavaSourcePosition(package_declaration, env, loc);
+        setJavaSourcePosition(package_definition, env, loc);
 // TODO: Remove this !!!
+/*
 cout << "*** Inserting package "
 << package_definition -> get_qualified_name().getString()
 << endl;
 cout.flush();
+*/
         ROSE_ASSERT(package_definition);
         SgClassDefinition *class_scope = isSgClassDefinition(scope);
         SgGlobal *global_scope = isSgGlobal(scope);
@@ -1090,37 +1532,61 @@ cout.flush();
     unsigned int mfunc_specifier = 0;
     SgMemberFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(return_type, typeList, class_definition, mfunc_specifier);
     ROSE_ASSERT(member_function_type != NULL);
+// TODO: Remove this !!!
+
+if (member_function_type -> get_return_type() != return_type){
+cout << "Mismatch in the return type of "
+     << inputName.getString()
+     << " in class "
+     << class_definition -> get_qualified_name().getString()
+     << "; The types are "
+     << getTypeName(member_function_type -> get_return_type())
+     << " ("
+     << member_function_type -> get_return_type() -> class_name()
+     << ")  and  "
+     << getTypeName(return_type)
+     << " ("
+     << return_type -> class_name()
+     << ")"
+<< endl;
+cout.flush();
+}
+
+    ROSE_ASSERT(member_function_type -> get_return_type() == return_type);
 
     // parameterlist = SageBuilder::buildFunctionParameterList(typeList);
     ROSE_ASSERT(parameterlist != NULL);
 
-    //
-    // PC: This needs to be reviewed.  Is it needed? 04-03-13
-    //
-    // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
-    // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
-    SgName name = inputName;
-    SgFunctionSymbol *func_symbol = NULL;
-    bool func_symbol_found = true;
-    while (func_symbol_found == true) {
-        // DQ (3/24/2011): This function should not already exist (else it should be an error).
-        func_symbol = class_definition -> lookup_function_symbol(name, member_function_type);
-        // ROSE_ASSERT(func_symbol == NULL);
-
-        if (func_symbol != NULL) {
-            func_symbol_found = true;
-
-            // This is a temporary mean to force overloaded functions to have unique names.
-            name += "_overloaded_";
-            if (SgProject::get_verbose() > 0)
-                printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n", name.str());
-        }
-        else {
-            func_symbol_found = false;
-        }
-    }
 // TODO: remove this !!!
-/*
+//
+// PC (12/19/13) This old code is DEFINITELY NOT NEEDED for translation.  However, it is a useful fot detecting
+// member methods that have been accidentally entered more than once in a scope.
+//
+//
+// PC: This needs to be reviewed.  Is it needed? 04-03-13
+//
+// DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
+// a unique name. It is temporary until we can handle correct mangled name support using the argument types.
+SgName name = inputName;
+SgFunctionSymbol *func_symbol = NULL;
+bool func_symbol_found = true;
+while (func_symbol_found == true) {
+    // DQ (3/24/2011): This function should not already exist (else it should be an error).
+    func_symbol = class_definition -> lookup_function_symbol(name, member_function_type);
+    // ROSE_ASSERT(func_symbol == NULL);
+
+    if (func_symbol != NULL) {
+        func_symbol_found = true;
+
+        // This is a temporary mean to force overloaded functions to have unique names.
+        name += "_overloaded_";
+        if (SgProject::get_verbose() > 0)
+            printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n", name.str());
+    }
+    else {
+        func_symbol_found = false;
+    }
+}
 if (name.getString().compare(inputName.getString()) != 0) { // PC - 04-03-13 - added this check because I don't understand the reason for the code above.
 cout << "In class "
      << class_definition -> get_qualified_name().getString()
@@ -1131,8 +1597,7 @@ cout << "In class "
      << endl;
 cout.flush();
 }
-*/
-    ROSE_ASSERT(name.getString().compare(inputName.getString()) == 0); // PC - 04-03-13 - added this check because I don't understand the reason for the code above.
+ROSE_ASSERT(name.getString().compare(inputName.getString()) == 0); // PC - 04-03-13 - added this check because I don't understand the reason for the code above.
 
     //SgMemberFunctionDeclaration*
     //buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
@@ -1180,38 +1645,31 @@ cout.flush();
  * it is in fact correct since ECJ has already chosen the correct function and what we are doing
  * here is to look for a "perfect" mach with the function that was chosen.
  */
+/*
 SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *>& formal_types) {
     SgMemberFunctionDeclaration *method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, formal_types);
     if (method_declaration == NULL) {
         const SgBaseClassPtrList &inheritance = class_definition->get_inheritances();
         for (SgBaseClassPtrList::const_iterator it = inheritance.begin(); method_declaration == NULL && it != inheritance.end(); it++) { // Iterate over super class, if any, then the interfaces, if any.
             SgClassDeclaration *decl = (*it) -> get_base_class();
-// TODO: Remove this !
-/*
-cout << "Looking for method "
-     << function_name.getString()
-     << " in class "
-     << decl -> get_definition() -> get_qualified_name()
-     << endl;
-cout.flush();
-*/
             method_declaration = findMemberFunctionDeclarationInClass(decl -> get_definition(), function_name, formal_types);
         }
     }
     return method_declaration;
 }
+*/
 
 /**
  * Lookup a member function in current class only (doesn't look in super and interfaces classes)
  */
+/*
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *>& types) {
     int num_arguments = types.size();
     SgMemberFunctionDeclaration *method_declaration = NULL;
-    vector<SgDeclarationStatement *> declarations = class_definition -> get_members();
-    for (int i = 0; i < declarations.size(); i++, method_declaration = NULL) {
-        SgDeclarationStatement *declaration = declarations[i];
-        method_declaration = isSgMemberFunctionDeclaration(declaration);
-        if (method_declaration && method_declaration -> get_name().getString().compare(function_name.getString()) == 0) {
+    for (SgFunctionSymbol *function_symbol = class_definition -> lookup_function_symbol(function_name); function_symbol != NULL;  function_symbol = class_definition -> next_function_symbol()) {
+        method_declaration = isSgMemberFunctionDeclaration(function_symbol -> get_declaration());
+        if (method_declaration -> get_name().getString().compare(function_name.getString()) == 0) {
+ROSE_ASSERT(method_declaration -> get_parent() == class_definition);
 // TODO: REMOVE THIS !
 //cout << "Found a match for function " << function_name.getString() << " in class " << class_definition -> get_qualified_name().getString() << endl;
 //cout.flush();
@@ -1222,15 +1680,32 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
                 for (k = 0; k < num_arguments; k++, j++) {
                     SgType *type = (*j);
                     if (! isCompatibleTypes(type, args[k] -> get_type())) {
-// TODO: REMOVE THIS !
-//cout << "    No match between types " << (isSgClassType(type) ?  isSgClassType(type) -> get_qualified_name().getString() : type -> class_name()) << " and " <<  (isSgClassType(args[k] -> get_type()) ? isSgClassType(args[k] -> get_type()) -> get_qualified_name().getString() : args[k] -> get_type() -> class_name()) << endl;
-//cout.flush();
                         // Not all types are compatible, continue to look
                         break;
                     }
                 }
 
-                if (k == num_arguments) {// all the arguments match?
+                //
+                // If we have a mismatch, it's possible that the method signature was updated.
+                // In such a case, we check the updated list of parameter types.
+                //
+                if (k < num_arguments) {
+                    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) method_declaration -> getAttribute("updated-parameter-types");
+                    if (attribute) {
+                        ROSE_ASSERT(attribute -> size() == num_arguments);
+                        for ( j = types.begin(), k = 0; k < num_arguments; j++, k++) {
+                            SgType *type = isSgType(attribute -> getNode(k));
+                            if (! isCompatibleTypes((*j), type)) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                //
+                // All the arguments match?  If so, we are done!
+                //
+                if (k == num_arguments) {
                     break;
                 }
             }
@@ -1239,7 +1714,9 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
 
     return method_declaration;
 }
+*/
 
+/*
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *class_definition, const SgName &function_name, int num_arguments) {
     ROSE_ASSERT(class_definition != NULL);
 
@@ -1255,26 +1732,13 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
 
     SgMemberFunctionDeclaration *method_declaration = NULL;
     method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, types);
-// TODO: REMOVE THIS !
-if (!method_declaration){
-cout << "Could not find function " << function_name.getString() << "(";
-std::list<SgType*>::iterator i = types.begin();
-if (i != types.end()) {
-cout << getTypeName(*i);
-for (i++; i != types.end(); i++) {
-cout << ", " << getTypeName(*i);
-}
-}
-cout << ") in class " 
-<< class_definition -> get_qualified_name()
-<< endl;
-cout.flush();
-}
     ROSE_ASSERT(method_declaration != NULL);
 
     return method_declaration;
 }
+*/
 
+/*
 SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *> &formal_types) {
     ROSE_ASSERT(class_definition != NULL);
 
@@ -1284,7 +1748,8 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
     }
 
 // TODO: Remove this !!!
-if ((!method_declaration) /* || function_name.getString() == "eq" */){
+
+if (! method_declaration){
 cout << "Could not find function " << function_name.getString() << "(";
 std::list<SgType*>::iterator i = formal_types.begin();
 if (i != formal_types.end()) {
@@ -1299,6 +1764,22 @@ cout << ") in class "
 << ::currentSourceFile -> getFileName()
 << endl;
 cout.flush();
+
+cout << endl
+<< "The scope "
+<< class_definition -> get_qualified_name().getString()
+<< " contains:"
+<< endl;
+for (SgFunctionSymbol *function_symbol = class_definition -> first_function_symbol(); function_symbol != NULL; function_symbol = class_definition -> next_function_symbol()) {
+  SgMemberFunctionDeclaration *decl = isSgMemberFunctionDeclaration(function_symbol -> get_declaration());
+  ROSE_ASSERT(decl);
+  cout << "    " << function_symbol -> get_name().getString()
+       << "(";
+SgInitializedNamePtrList &args = decl -> get_args();
+for (int i = 0; i < args.size(); i++)
+   cout << getTypeName(args[i] -> get_type());
+cout << ")" << endl;
+}
 }
 
     ROSE_ASSERT(method_declaration);
@@ -1310,6 +1791,8 @@ cout.flush();
 
     return function_symbol;
 }
+*/
+
 
 list<SgName> generateQualifierList (const SgName &classNameWithQualification) {
     list<SgName> returnList;
@@ -1378,8 +1861,51 @@ list<SgName> generateQualifierList (const SgName &classNameWithQualification) {
 //
 //
 //
+/*
+SgClassSymbol *lookupParameterTypeByName(const SgName &name) {
+    SgClassSymbol *class_symbol = NULL;
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && i != astJavaScopeStack.end(); i++) {
+        if ((*i) == ::globalScope) // ignore the global scope... It may appear in the middle of the stack for inner classes...
+            continue;
+
+        SgScopeStatement *scope = (*i);
+// TODO: Remove this !!!
+//cout << "Looking for " << name.getString() << " in scope " << (isSgClassDefinition(scope) ? isSgClassDefinition(scope) -> get_qualified_name().getString() : scope -> class_name()) << endl;
+//cout.flush();
+        class_symbol = lookupClassSymbolInScope(scope, name);
+        if (! class_symbol) {
+            SgClassDefinition *class_definition = isSgClassDefinition(scope);
+            if (class_definition) {
+//cout << "Looking for " << name.getString() << " in " << class_definition -> get_qualified_name().getString() << endl;
+//cout.flush();
+                class_symbol = lookupUniqueSimpleNameTypeInClass(name, class_definition);
+            }
+            else {
+                SgFunctionDefinition *method_definition = isSgFunctionDefinition(scope);
+                if (method_definition) {
+                    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_definition -> get_declaration() -> getAttribute("type_space");
+                    if (type_space_attribute) { // Initializer blocks don't have a type_space attribute
+                        SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());
+                        ROSE_ASSERT(type_space);
+//cout << "Looking for " << name.getString() << " in " << method_definition -> get_declaration() -> get_name().getString() << endl;
+//cout.flush();
+                        class_symbol = lookupClassSymbolInScope(type_space, name);
+                    }
+                }
+            }
+        }
+    }
+
+    return class_symbol;
+}
+*/
+
+
 //
-SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *class_definition) {
+//
+//
+//
+SgClassSymbol *lookupUniqueSimpleNameTypeInClass(const SgName &name, SgClassDefinition *class_definition) {
     ROSE_ASSERT(class_definition);
     ROSE_ASSERT(class_definition -> get_declaration());
 
@@ -1392,7 +1918,9 @@ SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration);
 ROSE_ASSERT(class_declaration);
 SgScopeStatement *scope = isSgClassDefinition(class_declaration -> get_parent());
 ROSE_ASSERT(scope);
- cout << "Symbol " << name.getString() << " was found Right Away in scope " << class_definition -> get_qualified_name().getString() << " but it is in scope " << scope -> get_qualified_name().getString() << endl;
+cout << "Symbol " << name.getString() << " was found right away in scope " << class_definition -> get_qualified_name().getString() 
+//<< " but it is in scope " << scope -> get_qualified_name().getString() 
+<< endl;
 cout.flush();
 }
 */
@@ -1400,7 +1928,7 @@ cout.flush();
     for (int k = 0; class_symbol == NULL && k < (int) inheritances.size(); k++) {
         SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
         class_definition = super_declaration -> get_definition(); // get the super class definition
-        class_symbol = lookupSimpleNameTypeInClass(name, class_definition);
+        class_symbol = lookupUniqueSimpleNameTypeInClass(name, class_definition);
     }
 
 // TODO: Remove this!
@@ -1424,11 +1952,47 @@ cout.flush();
 }
 
 
+//
+// Compute the list of all local classes with the given name that is visible in this class_definition.
+// The result is placed in class_list.
+//
+void lookupAllSimpleNameTypesInClass(list<SgClassSymbol *> &class_list, const SgName &name, SgClassDefinition *class_definition) {
+    ROSE_ASSERT(class_definition);
+    SgClassSymbol *class_symbol = lookupClassSymbolInScope(class_definition, name);
+    if (class_symbol) {
+        class_list.push_back(class_symbol);
+// TODO: Remove this!
+/*
+if (class_symbol != NULL){
+SgDeclarationStatement *declaration = class_symbol -> get_declaration() -> get_definingDeclaration();
+SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration);
+ROSE_ASSERT(class_declaration);
+SgScopeStatement *scope = isSgClassDefinition(class_declaration -> get_parent());
+ROSE_ASSERT(scope);
+cout << "Symbol " << name.getString() << " was found in scope " << class_definition -> get_qualified_name().getString() 
+<< endl;
+cout.flush();
+}
+*/
+        return; // if the type is an inner type in this scope then it hides the name in any super classes
+    }
+
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
+    for (int k = 0; k < (int) inheritances.size(); k++) {
+        SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+        lookupAllSimpleNameTypesInClass(class_list, name, class_definition);
+    }
+
+    return;
+}
+
+
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *class_definition) {
     ROSE_ASSERT(class_definition);
     ROSE_ASSERT(class_definition -> get_declaration());
-
     SgVariableSymbol *symbol = class_definition -> lookup_variable_symbol(name);
+
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
     for (int k = 0; symbol == NULL && k < (int) inheritances.size(); k++) {
         SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
@@ -1450,23 +2014,52 @@ SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDef
 SgVariableSymbol *lookupVariableByName(const SgName &name) {
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    SgSymbol *symbol = NULL;
-
     //
     // Iterate over the scope stack... At each point, look to see if the variable is there.
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && (*i) != ::globalScope /* astJavaScopeStack.end() */; i++) {
+    SgSymbol *symbol = NULL;
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && i != astJavaScopeStack.end(); i++) {
+        if ((*i) == ::globalScope) // ignore the global scope... It may appear in the middle of the stack for inner classes...
+            continue;
+
         symbol = (isSgClassDefinition(*i)
                       ? lookupSimpleNameVariableInClass(name, (SgClassDefinition *) (*i))
                    // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
                    // lookup_variable_symbol() should have been called in place of the more general lookup_symbol() function.
                    // : (*i) -> lookup_symbol(name));
                       : (*i) -> lookup_variable_symbol(name));
-        if ((*i) == ::globalScope)
-            break;
     }
+
+    //
+    // If we still have not found the name, check to see if it is a static field that can be imported on-demand.
+    //
+    if (symbol == NULL && ::currentSourceFile != NULL) { // We are processing a source file
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("imported_fields");
+        if (attribute) {
+            for (int i = 0; i < attribute -> size(); i++) {
+                SgVariableSymbol *variable_symbol = isSgVariableSymbol(attribute -> getNode(i));
+                ROSE_ASSERT(variable_symbol);
+                if (variable_symbol -> get_name().getString().compare(name.getString()) == 0) {
+                    return variable_symbol;
+                }
+            }
+        }
+
+        attribute = (AstSgNodeListAttribute *) ::currentSourceFile -> getAttribute("import_on_demand_types");
+        if (attribute) {
+            for (int i = 0; i < attribute -> size(); i++) {
+                SgClassDefinition *on_demand_definition = isSgClassDefinition(attribute -> getNode(i));
+                ROSE_ASSERT(on_demand_definition);
+                SgVariableSymbol *variable_symbol = on_demand_definition -> lookup_variable_symbol(name);
+                if (variable_symbol) {
+                    return variable_symbol;
+                }
+            }
+        }
+    }
+
 
     return isSgVariableSymbol(symbol);
 }
@@ -1485,12 +2078,15 @@ SgJavaLabelSymbol *lookupLabelByName(const SgName &name) {
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgJavaLabelSymbol(symbol))) && (*i) != ::globalScope /* astJavaScopeStack.end() */; i++) {
-        if (isSgClassDefinition(*i))
-            break;
-     // DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
-     // symbol = (*i) -> lookup_symbol(name);
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgJavaLabelSymbol(symbol))) && i != astJavaScopeStack.end(); i++) {
+        if ((*i) == ::globalScope) // ignore the global scope... It may appear in the middle of the stack for inner classes...
+            continue;
+
+// DQ (8/16/2013): The API for this function has changed slightly and I expect that the more specific 
+// symbol = (*i) -> lookup_symbol(name);
+
         symbol = (*i) -> lookup_symbol(name,NULL,NULL);
+
 // TODO: Remove this!
 //        if ((*i) == ::globalScope)
 //            break;
@@ -1501,72 +2097,176 @@ SgJavaLabelSymbol *lookupLabelByName(const SgName &name) {
 
 
 
-SgClassSymbol *lookupTypeSymbol(SgName &type_name) {
-    SgClassSymbol *class_symbol = NULL;
-
+void lookupLocalTypeSymbols(list<SgClassSymbol *> &local_class_symbols, SgName &type_name) {
+    ROSE_ASSERT(local_class_symbols.size() == 0); // I am creating a fresh list!
+// TODO: Remove this !!!
+/*
+cout << "Here is the stack: " << endl;
+for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); i != astJavaScopeStack.end(); i++) {
+cout << "    "
+<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
+                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
+                                                         : (*i) -> class_name())
+<< " ("
+<< ((unsigned long) (*i))
+<< ")"
+<< endl;
+cout.flush();
+}
+*/
     //
     // Iterate over the scope stack... At each point, look to see if the variable is there.
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && (*i) != ::globalScope /* astJavaScopeStack.end() */; i++) {
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (*i) != ::globalScope; i++) {
         SgClassDefinition *class_definition = isSgClassDefinition(*i);
 
 // TODO: Remove this!
-//cout << "Looking for type "
-//<< type_name
-//<< " in "
-//<< (class_definition ? class_definition -> get_qualified_name().getString()
-//                     : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) -> get_qualified_name().getString()
-//                                                  : (*i) -> class_name())
-//<< endl;
-
+/*
+cout << "Looking for type "
+<< type_name
+<< " in "
+<< (class_definition ? class_definition -> get_qualified_name().getString()
+    : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
+                                                  : (*i) -> class_name())
+<< endl;
+*/
         if (class_definition) {
-            class_symbol = lookupSimpleNameTypeInClass(type_name, class_definition);
+            if (isSgJavaPackageDeclaration(class_definition -> get_parent())) { // Have we reached a package
+// TODO: Remove this !!!
+/*
+cout << "Stopping the search at package "
+     << class_definition -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+*/
+                break;
+            }
+
+            lookupAllSimpleNameTypesInClass(local_class_symbols, type_name, class_definition);
+
 // TODO: Remove this!
-//if (class_symbol != NULL){
-//cout << "Symbol " << class_symbol -> class_name() << " was found for " << type_name.getString() << " in class definition " << class_definition -> get_qualified_name().getString() << endl;
-//cout.flush();
-//}
+/*
+if (local_class_symbols.size() > 0){ // any classes?  print the first one
+cout << local_class_symbols.size() << " symbol(s) named " << local_class_symbols.front() -> class_name() << " was found for " << type_name.getString() << " in class definition " << class_definition -> get_qualified_name().getString() << endl;
+cout.flush();
+}
+*/
+            SgClassDeclaration *class_declaration = isSgClassDeclaration(class_definition -> get_declaration());
+            ROSE_ASSERT(class_declaration);
+            if (class_declaration -> get_explicit_interface() || class_declaration -> get_explicit_enum() || class_declaration -> get_declarationModifier().get_storageModifier().isStatic()) {
+// TODO: Remove this!
+/*
+cout << "I encountered a static region: "
+     << class_declaration -> get_qualified_name().getString()
+     << " while looking for "
+     << type_name.getString()
+     << " #found_types = "
+     << local_class_symbols.size()
+     << endl;
+cout.flush();
+cout << "Here is the stack: " << endl;
+for (std::list<SgScopeStatement*>::iterator e = astJavaScopeStack.begin(); e != astJavaScopeStack.end(); e++) {
+cout << "    "
+<< (isSgClassDefinition(*e) ? isSgClassDefinition(*e) -> get_qualified_name().getString()
+                            : isSgFunctionDefinition(*e) ? (isSgFunctionDefinition(*e) -> get_declaration() -> get_name().getString() + "(...)")
+                                                         : (*e) -> class_name())
+<< " ("
+<< ((unsigned long) (*e))
+<< ")"
+<< endl;
+cout.flush();
+}
+*/
+                SgClassSymbol *class_symbol = NULL;
+                if (class_declaration -> get_name().getString().compare(type_name.getString()) == 0) {
+                    class_symbol = isSgClassSymbol(class_declaration -> search_for_symbol_from_symbol_table());
+                    ROSE_ASSERT(class_symbol);
+                    local_class_symbols.push_back(class_symbol);
+                }
+                break;
+            }
         }
         else {
-            class_symbol =  lookupClassSymbolInScope((*i), type_name);
+            SgClassSymbol *class_symbol = lookupClassSymbolInScope((*i), type_name);
+            if (class_symbol) {
 // TODO: Remove this!
-//if (class_symbol != NULL){
-//SgDeclarationStatement *declaration = class_symbol -> get_declaration() -> get_definingDeclaration();
-//SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration);
-//ROSE_ASSERT(class_declaration);
-//SgScopeStatement *scope = isSgScopeStatement(class_declaration -> get_parent());
-//ROSE_ASSERT(scope);
-//cout << "Symbol " << class_symbol -> class_name() << " was found for " << type_name.getString() << " in scope " << (isSgClassDefinition(scope) ? isSgClassDefinition(scope) -> get_qualified_name().getString() : scope -> class_name()) << endl;
-//cout.flush();
-//}
-        }
+/*
+cout << "Symbol " << class_symbol -> class_name() << " was found for " << type_name.getString()
+<< " in "
+<< (isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
+                : isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString() : (*i) -> class_name())
+ << endl;
+cout.flush();
+*/
+                local_class_symbols.push_back(class_symbol);
+            }
 
-//        class_symbol = (isSgClassDefinition(*i)
-//                            ? lookupSimpleNameTypeInClass(type_name, (SgClassDefinition *) (*i))
-//                            : lookupClassSymbolInScope((*i), type_name));
+            SgFunctionDefinition *method_definition = isSgFunctionDefinition(*i);
+            if (method_definition) {
+                if (local_class_symbols.size() > 0) { // if we've reached a method header and at least one type was found, we're done!
 // TODO: Remove this!
-//        if ((*i) == ::globalScope)
-//            break;
+/*
+cout << "Am I here !? ... exiting at "
+  << method_definition -> get_declaration() -> get_name().getString() << " with "
+  << local_class_symbols.size()
+  << " instances of type "
+  << type_name.getString()
+  << " found ?"
+  << endl;
+cout.flush();
+*/
+                    break;
+                }
+
+                //
+                // Check to see if the type is a parameter type.
+                //
+                AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_definition -> get_declaration() -> getAttribute("type_space");
+                if (type_space_attribute) { // Initializer blocks don't have a type_space attribute
+                    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());
+                    ROSE_ASSERT(type_space);
+                    class_symbol = lookupClassSymbolInScope(type_space, type_name);
+                    if (class_symbol) {
+// TODO: Remove this!
+/*
+cout << "Looking for " << type_name.getString() << " in " << method_definition -> get_declaration() -> get_name().getString() << endl;
+cout.flush();
+*/
+                        local_class_symbols.push_back(class_symbol);
+                        break;
+                    }
+                }
+            }
+
+// TODO: Remove this!
+/*
+if (class_symbol != NULL){
+SgDeclarationStatement *declaration = class_symbol -> get_declaration() -> get_definingDeclaration();
+SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration);
+ROSE_ASSERT(class_declaration);
+SgScopeStatement *scope = isSgScopeStatement(class_declaration -> get_parent());
+ROSE_ASSERT(scope);
+cout << "Symbol " << class_symbol -> class_name() << " was found for " << type_name.getString() << " in scope " << (isSgClassDefinition(scope) ? isSgClassDefinition(scope) -> get_qualified_name().getString() : scope -> class_name()) << endl;
+cout.flush();
+}
+*/
+        }
     }
 
-    return class_symbol;
+    return;
 }
 
 
 SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimensions) {
     SgType *type = NULL;
  
-   list<SgName> qualifiedTypeName = generateQualifierList(type_name);
-
     ROSE_ASSERT(! astJavaScopeStack.empty());
-    ROSE_ASSERT(qualifiedTypeName.size());
 
-    SgClassSymbol *class_symbol = NULL;
-
-    list<SgName>::iterator name = qualifiedTypeName.begin();
-
+    //
+    // First check to see if the type is a primitive type.
+    //
     if (package_name.getString().size() == 0) {
         if (type_name.getString().compare("boolean") == 0) {
             type = SgTypeBool::createType();
@@ -1595,68 +2295,117 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         else if (type_name.getString().compare("void") == 0) {
             type = SgTypeVoid::createType();
         }
-        else {
-            class_symbol = lookupTypeSymbol(*name);
+    }
 
-            //
-            // If the class_symbol still has not been found, look for it in java.lang!
-            // At this point, the type_symbol in qustion must be a class_symbol.
-            //
-            if (class_symbol == NULL) {
-                SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(::java_lang);
-                ROSE_ASSERT(package_declaration);
-                SgClassDefinition *package = package_declaration -> get_definition();
-                ROSE_ASSERT(package);
-                class_symbol = lookupClassSymbolInScope(package, type_name);
-            }
-        }
-    }
-    else {
-        SgJavaPackageDeclaration *declaration = findPackageDeclaration(package_name);
-// TODO: Remove this!!!
-if (! declaration){
-cout << "The package : " << package_name << " does not exist in the global scope."
-     << endl;
-cout.flush();
-}        
-        SgClassDefinition *package = declaration -> get_definition();
-        ROSE_ASSERT(package);
-        class_symbol = lookupClassSymbolInScope(package, *name);
-// TODO: Remove this!!!
-if (! class_symbol){
-cout << "The name is: " << *name << "; "
-     << "The package symbol is: " << package -> get_qualified_name() << "; "
-     << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << (*name) << endl;
-cout.flush();
-}
-    }
 
     //
-    // If we are dealing with an instantiable type, we only have a class_symbol at this point.
+    // If we are dealing with Reference type ...
     //
     if (type == NULL) { // not a primitive type
+        list<SgName> qualifiedTypeName = generateQualifierList(type_name);
+        ROSE_ASSERT(qualifiedTypeName.size());
+        list<SgName>::iterator name = qualifiedTypeName.begin();
+
+        //
+        // If no package was specified, we first check to see if the type is a local type.
+        //
+        list<SgClassSymbol *> local_class_symbols;
+        if (package_name.getString().size() == 0 && qualifiedTypeName.size() == 1) { // No package?  Check to see if this is a local type.
+            SgName short_name = *name;
+// TODO: Remove this!
+/*
+cout << "Checking for local type "
+     << (*name).getString()
+     << endl;
+cout.flush();
+*/
+            lookupLocalTypeSymbols(local_class_symbols, short_name);
+        }
+        SgClassSymbol *class_symbol = (local_class_symbols.size() == 1 ? local_class_symbols.front() : NULL);
+
+        //
+        // ... Continue Search ...
+        //
+        if (class_symbol == NULL) {
+            SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(package_name);
 // TODO: Remove this!!!
+/*
+if (! package_declaration){
+  cout << "The package : \"" << package_name.getString() << "\" does not exist in the global scope."
+     << endl;
+cout.flush();
+}
+*/
+            ROSE_ASSERT(package_declaration);
+            SgClassDefinition *package_definition = package_declaration -> get_definition();
+            ROSE_ASSERT(package_definition);
+            class_symbol = lookupClassSymbolInScope(package_definition, *name);
+
+            //
+            // If the class_symbol still has not been found and no package was specified, look for the type
+            //  in java.lang.
+            //
+            if (class_symbol == NULL && package_name.getString().size() == 0) {
+                // TODO: check the imported files and packages...
+                package_declaration = findPackageDeclaration(::java_lang);
+                ROSE_ASSERT(package_declaration);
+                package_definition = package_declaration -> get_definition();
+                ROSE_ASSERT(package_definition);
+                class_symbol = lookupClassSymbolInScope(package_definition, type_name);
+            }
+
+// TODO: Remove this!!!
+
 if (! class_symbol){
-cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() << endl;
+cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() 
+     << " in file "
+     << (::currentSourceFile ? ::currentSourceFile  -> getFileName(): "???")
+<< endl;
 cout.flush();
 cout << "Here is the stack: " << endl;
 for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); i != astJavaScopeStack.end(); i++) {
 cout << "    "
 << (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) -> get_qualified_name().getString()
+                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
                                                          : (*i) -> class_name())
+<< " ("
+<< ((unsigned long) (*i))
+<< ")"
 << endl;
 cout.flush();
 }
 }
-        ROSE_ASSERT(class_symbol);
 
-        for (name++; name != qualifiedTypeName.end(); name++) {
-            SgClassDeclaration *declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
-            ROSE_ASSERT(declaration);
-            SgClassDefinition *definition = declaration -> get_definition();
-            class_symbol = lookupSimpleNameTypeInClass((*name), definition);
             ROSE_ASSERT(class_symbol);
+
+            for (name++; name != qualifiedTypeName.end(); name++) {
+                SgClassDeclaration *declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
+                ROSE_ASSERT(declaration);
+                SgClassDefinition *definition = declaration -> get_definition();
+                class_symbol = lookupUniqueSimpleNameTypeInClass((*name), definition);
+
+// TODO: Remove this!!!
+/*
+if (! class_symbol){
+cout << "Type " << (*name).getString() << " not found in " << definition -> get_qualified_name().getString()
+     << endl;
+cout.flush();
+cout << "Here is the stack: " << endl;
+for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); i != astJavaScopeStack.end(); i++) {
+cout << "    "
+<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
+                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
+                                                         : (*i) -> class_name())
+<< " ("
+<< ((unsigned long) (*i))
+<< ")"
+<< endl;
+cout.flush();
+}
+}
+*/
+                ROSE_ASSERT(class_symbol);
+            }
         }
 
         type = class_symbol -> get_type();
@@ -1673,7 +2422,7 @@ cout.flush();
     // If we are dealing with an array, build the Array type...
     //
     if (num_dimensions > 0) {
-        type = getUniquePointerType(type, num_dimensions); // getUniqueArrayType(type, num_dimensions);
+        type = getUniqueArrayType(type, num_dimensions);
     }
 
     ROSE_ASSERT(type);
@@ -1709,6 +2458,7 @@ SgClassDefinition *getCurrentTypeDefinition() {
 //
 //
 //
+/*
 SgScopeStatement *get_scope_from_symbol(SgSymbol *symbol) {
     SgScopeStatement *currentScope = NULL;
     if (isSgClassSymbol(symbol)) {
@@ -1722,7 +2472,7 @@ SgScopeStatement *get_scope_from_symbol(SgSymbol *symbol) {
 
         currentScope = class_declaration -> get_definition();
     }
-
+*/
 // TODO: Remove this !
 /*
     else if (isSgNamespaceSymbol(symbol)) {
@@ -1737,8 +2487,10 @@ SgScopeStatement *get_scope_from_symbol(SgSymbol *symbol) {
         currentScope = namespace_declaration -> get_definition();
     }
 */
-
+/*
     ROSE_ASSERT(currentScope != NULL);
 
     return currentScope;
 }
+*/
+

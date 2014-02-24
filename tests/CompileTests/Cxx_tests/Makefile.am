@@ -60,7 +60,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_296.C \
    test2014_01.C \
    test2014_02.C \
-   test2014_03.C
+   test2014_03.C \
+   test2014_04.C \
+   test2014_05.C \
+   test2014_06.C
+
+# Note that these will not compile with the GNU 4.7 header files.
+# It might be a boost issue.  The error is always the same.
+# test2013_234.C
+# test2013_235.C
+# test2013_240.C
+# test2013_241.C
+# test2013_242.C
+# test2013_246.C
 
 # Current problem test codes:
 #  test2013_262.C 
@@ -584,7 +596,9 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
+# DQ (2/4/2014): Unparse the asm commands as a test.
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
+# SKIP_UNPARSE_C_ASM_STATEMENTS = 
 
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)

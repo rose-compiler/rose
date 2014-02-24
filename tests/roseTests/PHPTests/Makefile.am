@@ -22,7 +22,7 @@ TEST_TARGETS += runTest.passed
 runTest.passed: simpletest.php runTest
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/runTest $<" \
+		CMD="$$(pwd)/runTest $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------

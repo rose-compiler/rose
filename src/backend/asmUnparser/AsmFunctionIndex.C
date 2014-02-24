@@ -8,6 +8,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+using namespace rose;
+
 void
 AsmFunctionIndex::OutputCallback::set_prefix(const std::string &header, const std::string &separator, const std::string &data)
 {

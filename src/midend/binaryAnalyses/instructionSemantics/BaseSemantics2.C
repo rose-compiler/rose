@@ -88,7 +88,7 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
 void
 Exception::print(std::ostream &o) const
 {
-    o <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<mesg;
+    o <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
         o <<": " <<unparseInstructionWithAddress(insn);
     o <<"\n";
@@ -243,7 +243,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             size_t nbits = next_offset - offset;
             part = get_protoval()->undefined_(nbits);
         }
-        retval = retval==NULL ? part : ops->concat(part, retval);
+        retval = retval==NULL ? part : ops->concat(retval, part);
         offset += part->get_width();
     }
 
@@ -930,13 +930,26 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
     operators->startInstruction(insn);
     InsnProcessor *iproc = iproc_lookup(insn);
-    if (!iproc)
-        throw Exception("no dispatch ability for instruction", insn);
     try {
+        if (!iproc)
+            throw Exception("no dispatch ability for instruction", insn);
         iproc->process(shared_from_this(), insn);
     } catch (Exception &e) {
+        // If the exception was thrown by something that didn't have an instruction available, then add the instruction
         if (!e.insn)
             e.insn = insn;
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
+        if (e.insn) {
+            std::string what = StringUtility::trim(e.what());
+            std::string insn_s = StringUtility::addrToString(e.insn->get_address()) + ": " + unparseInstruction(e.insn);
+            if (what.empty()) {
+                what = insn_s;
+            } else {
+                what += " (" + insn_s + ")";
+            }
+            throw Exception(what, e.insn);
+        }
+#endif
         throw e;
     }
     operators->finishInstruction(insn);

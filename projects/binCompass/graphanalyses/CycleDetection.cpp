@@ -97,9 +97,9 @@ CycleDetection::run(string& name, SgGraphNode* node,
       SgAsmx86Instruction* nextSg = isSgAsmx86Instruction(next->get_SgNode());
       if (debug) {
       std::cerr << "Found possible cycle between  " << 
-	stringifyX86InstructionKind(nodeSg->get_kind()) << " (" << 
+        rose::stringifyX86InstructionKind(nodeSg->get_kind()) << " (" << 
 	RoseBin_support::HexToString(nodeSg->get_address()) << ") and " <<
-	stringifyX86InstructionKind(nextSg->get_kind()) << " (" << 
+        rose::stringifyX86InstructionKind(nextSg->get_kind()) << " (" << 
 	RoseBin_support::HexToString(nextSg->get_address()) << ")" << std::endl;
       }
 

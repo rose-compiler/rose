@@ -38,6 +38,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 /*! \file
 
@@ -2016,7 +2017,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
                     name.c_str(),mangledName.c_str());
              }
           ROSE_ASSERT(mangledName.find('>') == string::npos);
-
+/*
        // DQ (4/3/2011): This is a fix to permit Java names that can include '$' to be handled properly.
        // When the simpler test fails we compute what the current langauge is (relatively expensive so 
        // we don't want to do so for each IR node) and the rerun the test with java specified explicitly.
@@ -2047,6 +2048,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
              }
        // ROSE_ASSERT(isValidMangledName(mangledName) == true);
           ROSE_ASSERT(anErrorHasOccured == false);
+*/
         }
 
   // DQ (4/27/2005): Check out the mangled name for functions
@@ -2076,6 +2078,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
 
      ROSE_ASSERT(mangledName.find('#') == string::npos);
 
+/*
   // DQ (4/3/2011): Java allows for '$' so we have to exclude this test when Java is used.
   // note that if it was isValidMangledName() failed (could be many reasons) then file has
   // been computed and is available.
@@ -2101,6 +2104,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find('^') == string::npos);
      ROSE_ASSERT(mangledName.find('&') == string::npos);
      ROSE_ASSERT(mangledName.find('*') == string::npos);
+*/
 
   // DQ (8/13/2005): this is an error in KULL (use of siloswigtypecheck.cc)
   // Commented out this tests so that I can defer it to later!
@@ -2415,7 +2419,10 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                if (locatedNode->get_file_info()->isShared() == false)
                   {
                     printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
-                    locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+                    if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                       {
+                         locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
+                       }
                   }
                  else
                   {
@@ -2442,14 +2449,17 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
             else
              {
-               printf ("Warning: found a shared IR node = %p = %s in the AST (not a SgLocatedNode) \n",node,node->class_name().c_str());
+               if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                    printf ("Warning: found a shared IR node = %p = %s in the AST (not a SgLocatedNode) \n",node,node->class_name().c_str());
              }
 
-          printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+               printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+
           SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
           if (declarationStatement != NULL)
              {
-               printf ("*** declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+               printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
                ROSE_ASSERT(declarationStatement->get_parent() != NULL);
                printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
                printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
@@ -6108,22 +6118,34 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
                if (node->get_parent() != stack.back())
                   {
                  // output << prefix << "node's parent property does not match traversal parent\n";
-                    printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (node->get_parent() != stack.back()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
-
-                    printf ("traversal parent = %p = %s \n",stack.back(),stack.back()->class_name().c_str());
+                    if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                       {
+                         printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (node->get_parent() != stack.back()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
+                         printf ("traversal parent = %p = %s \n",stack.back(),stack.back()->class_name().c_str());
+                       }
                     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(stack.back());
 
                     if (namespaceDefinition != NULL)
                        {
-                         printf ("node = %p = %s node->get_parent() = %p = %s \n",node,node->class_name().c_str(),node->get_parent(),node->get_parent()->class_name().c_str());
+                         if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                            {
+                              printf ("node = %p = %s node->get_parent() = %p = %s \n",node,node->class_name().c_str(),node->get_parent(),node->get_parent()->class_name().c_str());
+                            }
 
                          SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
-                         printf ("Found a namespaceDefinition = %p = %s \n",namespaceDefinition,namespaceDeclaration->get_name().str());
+                         if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                            {
+                              printf ("Found a namespaceDefinition = %p = %s \n",namespaceDefinition,namespaceDeclaration->get_name().str());
+                            }
 
                          SgNamespaceDefinitionStatement* previousNamespaceDefinition = namespaceDefinition;
                          while (previousNamespaceDefinition != NULL)
                             {
-                              printf ("previousNamespaceDefinition = %p \n",previousNamespaceDefinition);
+                              if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+                                 {
+                                   printf ("previousNamespaceDefinition = %p \n",previousNamespaceDefinition);
+                                 }
+
                               previousNamespaceDefinition = previousNamespaceDefinition->get_previousNamespaceDefinition();
                             }
                        }
@@ -6147,30 +6169,41 @@ TestForParentsMatchingASTStructure::postOrderVisit(SgNode *node)
 void
 TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node) 
    {
-     output <<prefix <<"AST path (including node) when inconsistency was detected:\n";
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+        {
+          output <<prefix <<"AST path (including node) when inconsistency was detected:\n";
+        }
+
      for (size_t i = 0; i < stack.size(); ++i)
         {
-          output << prefix
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
+               output << prefix
                  << "    #" << std::setw(4) << std::left << i << " " << stringifyVariantT(stack[i]->variantT(), "V_")
                  << " " << stack[i] << "; parent=" << stack[i]->get_parent()
                  << "\n";
 
-       // DQ (9/21/2013): Avoid redundant output of debug info.
-       // printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
-          if (stack[i]->get_parent() != NULL)
-             {
-               printf ("   stack[i]->get_parent() = %p = %s \n",stack[i]->get_parent(),stack[i]->get_parent()->class_name().c_str());
-             }
-            else
-             {
-               printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
+            // DQ (9/21/2013): Avoid redundant output of debug info.
+            // printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
+               if (stack[i]->get_parent() != NULL)
+                  {
+                    printf ("   stack[i]->get_parent() = %p = %s \n",stack[i]->get_parent(),stack[i]->get_parent()->class_name().c_str());
+                  }
+                 else
+                  {
+                    printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
+                  }
              }
         }
-     output << prefix
+
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+        {
+          output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()
             << " = " << ((node->get_parent() != NULL) ? node->get_parent()->class_name() : string("null"))
             << "\n";
+        }
 
      if (++nproblems >= limit)
         {
@@ -6187,7 +6220,10 @@ TestForParentsMatchingASTStructure::test( SgProject* project )
      std::ostringstream ss;
      if (!TestForParentsMatchingASTStructure(ss, "    ").check(project, 10))
         {
-          std::cerr <<"Detected AST parent/child relationship problems after AST post processing:\n" <<ss.str();
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
+               std::cerr <<"Detected AST parent/child relationship problems after AST post processing:\n" <<ss.str();
+             }
 #if 0
           ROSE_ASSERT(false);
 #endif

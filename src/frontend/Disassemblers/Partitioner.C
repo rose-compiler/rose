@@ -6,6 +6,7 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
+#include "BinaryLoader.h"
 #include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
 
@@ -16,6 +17,8 @@
 #include <fcntl.h>
 #include <math.h>
 #include <stdarg.h>
+
+using namespace rose;
 
 /* See header file for full documentation. */
 
@@ -130,6 +133,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
             bits = SgAsmFunction::FUNC_IMPORT;
+        } else if (word=="export") {
+            bits = SgAsmFunction::FUNC_EXPORT;
         } else if (word=="symbol") {
             bits = SgAsmFunction::FUNC_SYMBOL;
         } else if (word=="pattern") {
@@ -1202,7 +1207,15 @@ Partitioner::mark_ipd_configuration()
 void
 Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
 {
+    assert(fhdr!=NULL);
     SgRVAList entries = fhdr->get_entry_rvas();
+
+    // Libraries don't have entry addresses
+    if ((entries.empty() || (1==entries.size() && 0==entries[0].get_rva())) &&
+        SgAsmExecutableFileFormat::PURPOSE_LIBRARY==fhdr->get_exec_format()->get_purpose()) {
+        return;
+    }
+
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
         if (find_instruction(entry_va))
@@ -1339,17 +1352,42 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
                 symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                 symbol->get_value()!=0) {
-                rose_addr_t value = symbol->get_value();
-                if (find_instruction(value))
-                    add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
-
-                /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
-                 * the value is used directly (the above code handled that case). */
+                rose_addr_t value = fhdr->get_base_va() + symbol->get_value();
                 SgAsmGenericSection *section = symbol->get_bound();
+
+                // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
+                // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                rose_addr_t va_1 = value;
+                if (section!=NULL && section->is_mapped() &&
+                    section->get_mapped_preferred_va()!=section->get_mapped_actual_va()) {
+                    va_1 += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                }
+                if (find_instruction(va_1))
+                    add_function(va_1, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+
+                // Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
+                // the value is used directly (the above code handled that case). */
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+            }
+        }
+    }
+}
+
+/* Adds PE exports as function entry points. */
+void
+Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
+{
+    SgAsmGenericSectionList *sections = fhdr->get_sections();
+    for (size_t i=0; i<sections->get_sections().size(); ++i) {
+        if (SgAsmPEExportSection *export_section = isSgAsmPEExportSection(sections->get_sections()[i])) {
+            const SgAsmPEExportEntryPtrList &exports = export_section->get_exports()->get_exports();
+            for (SgAsmPEExportEntryPtrList::const_iterator ei=exports.begin(); ei!=exports.end(); ++ei) {
+                rose_addr_t va = (*ei)->get_export_rva().get_va();
+                if (find_instruction(va))
+                    add_function(va, SgAsmFunction::FUNC_EXPORT, (*ei)->get_name()->get_string());
             }
         }
     }
@@ -2647,6 +2685,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
                 mark_func_symbols(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_IMPORT)
                 mark_elf_plt_entries(headers[i]);
+            if (func_heuristics & SgAsmFunction::FUNC_EXPORT)
+                mark_export_entries(headers[i]);
         }
     }
     if (func_heuristics & SgAsmFunction::FUNC_PATTERN)
@@ -3155,6 +3195,7 @@ Partitioner::detach_thunk(Function *func)
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
             BasicBlock *new_bb = find_bb_starting(second_va);
+            assert(new_bb!=NULL);
             if (new_bb->function==func) {
                 remove(func, new_bb);
                 append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
@@ -3262,15 +3303,6 @@ Partitioner::merge_function_fragments()
             fragment_index[gnum].push_back(fi->second);
         }
     }
-#if 0 /* DEBUGGING [RPM 2012-04-18] */
-    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
-    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
-        fprintf(stderr, "  group-%zu:", gnum);
-        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
-            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
-        fprintf(stderr, "\n");
-    }
-#endif
             
     /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
      * the fragment group has a single predecessor. */
@@ -4115,6 +4147,68 @@ Partitioner::get_instructions() const
         retval.insert(std::make_pair(ii->first, insn));
     }
     return retval;
+}
+
+// class method
+void
+Partitioner::disassembleInterpretation(SgAsmInterpretation *interp)
+{
+    assert(interp!=NULL);
+    if (interp->get_global_block())
+        return;
+
+    // Map segments into virtual memory if this hasn't been done yet
+    MemoryMap *map = interp->get_map();
+    if (map==NULL) {
+        map = new MemoryMap;
+        interp->set_map(map);
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        loader->remap(interp);
+    }
+
+    // Obtain a disassembler based on the type of file we're disassembling and configure it according to the
+    // -rose:disassembler_search switches stored in the enclosing SgFile node.
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    if (!disassembler)
+        throw std::runtime_error("no valid disassembler for this interpretation");
+    disassembler = disassembler->clone();               // so we can change settings without affecting the registry
+    SgFile *file = SageInterface::getEnclosingNode<SgFile>(interp);
+    assert(file!=NULL);
+    disassembler->set_search(file->get_disassemblerSearchHeuristics());
+
+    // Obtain a partitioner to organize instructions into basic blocks and basic blocks into functions.
+    Partitioner *partitioner = new Partitioner();
+    partitioner->set_search(file->get_partitionerSearchHeuristics());
+    partitioner->load_config(file->get_partitionerConfigurationFileName());
+
+    // Decide what to disassemble. Include at least the entry addresses.
+    Disassembler::AddressSet worklist;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
+        for (size_t i=0; i<entry_rvalist.size(); ++i) {
+            rose_addr_t entry_va = (*hi)->get_base_va() + entry_rvalist[i].get_rva();
+            worklist.insert(entry_va);
+        }
+        if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
+            disassembler->search_function_symbols(&worklist, map, *hi);
+    }
+
+    // Run the disassembler first to populate the instruction map for the partitioner. This will allow the partitioner to do
+    // pattern recognition to find function boundaries if desired.
+    Disassembler::BadMap errors;
+    Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &errors);
+    partitioner->add_instructions(insns);
+
+    // Organize the instructions into basic blocks and functions. This will call the disassembler to get any additional
+    // instructions that are needed (the partitioner does deeper analysis than the disassembler).
+    if (SgAsmBlock *block = partitioner->partition(interp, disassembler, map)) {
+        interp->set_global_block(block);
+        block->set_parent(interp);
+    }
+
+    delete partitioner;
+    delete disassembler;
 }
 
 /* FIXME: Deprecated 2010-01-01 */

@@ -896,7 +896,7 @@ memory:
       value = { v31107[32] }
       flags = { size=4; read-only }
 
-0x8048345:and    esp, 0xf0<-0x10>
+0x8048345:and    esp, 0xf0<-16>
 registers:
     ax      = { v31060[32] }
     cx      = { v31064+0x4[32] }
@@ -1973,7 +1973,7 @@ memory:
       value = { v31408[32] }
       flags = { size=4; read-only }
 
-0x804836f:add    ebx, 0x0000135a
+0x804836f:add    ebx, 0x0000135a<4954>
 registers:
     ax      = { v31362[32] }
     cx      = { v31363[32] }
@@ -2027,7 +2027,7 @@ memory:
       value = { v31408[32] }
       flags = { size=4; read-only }
 
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
     ax      = { v31362[32] }
     cx      = { v31363[32] }
@@ -4709,7 +4709,7 @@ memory:
       value = { v32699[32] }
       flags = { size=4 }
 
-0x804841b:and    esp, 0xf0<-0x10>
+0x804841b:and    esp, 0xf0<-16>
 registers:
     ax      = { v32694[32] }
     cx      = { v32695[32] }
@@ -6938,7 +6938,7 @@ memory:
       value = { v33741[32] }
       flags = { size=4; read-only }
 
-0x80484bf:add    ebx, 0x0000120a
+0x80484bf:add    ebx, 0x0000120a<4618>
 registers:
     ax      = { v33695[32] }
     cx      = { v33696[32] }
@@ -7049,7 +7049,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
     ax      = { v33815-0xe0[32] }
     cx      = { v33813[32] }
@@ -7100,7 +7100,7 @@ registers:
     ip      = { 0x80484d0[32] }
 memory:
 
-0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
     ax      = { v33815-0xe0[32] }
     cx      = { v33813[32] }
@@ -7253,7 +7253,7 @@ registers:
     ip      = { 0x80484db[32] }
 memory:
 
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { 0x0[32] }
     cx      = { v33813[32] }
@@ -8207,7 +8207,7 @@ memory:
       value = { v34101[32] }
       flags = { size=4; read-only }
 
-0x804852f:add    ebx, 0x0000119a
+0x804852f:add    ebx, 0x0000119a<4506>
 registers:
     ax      = { v34055[32] }
     cx      = { v34056[32] }
@@ -8261,7 +8261,7 @@ memory:
       value = { v34101[32] }
       flags = { size=4; read-only }
 
-0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
     ax      = { v34101+0x10ba[32] }
     cx      = { v34056[32] }
@@ -8315,7 +8315,7 @@ memory:
       value = { v34101[32] }
       flags = { size=4; read-only }
 
-0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
     ax      = { v34101+0x10ba[32] }
     cx      = { v34056[32] }
@@ -8477,7 +8477,7 @@ memory:
       value = { v34101[32] }
       flags = { size=4; read-only }
 
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { 0x0[32] }
     cx      = { v34056[32] }
@@ -8591,7 +8591,7 @@ memory:
       value = { 0x0[32] }
       flags = { size=4 }
 
-0x804854a:cmp    eax, 0xff<-0x01>
+0x804854a:cmp    eax, 0xff<-1>
 registers:
     ax      = { 0xffffffff (-0x1)[32] }
     cx      = { v34056[32] }
@@ -9131,7 +9131,7 @@ registers:
     ip      = { 0x8048566[32] }
 memory:
 
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
     ax      = { v34276[32] }
     cx      = { v34277[32] }
@@ -9935,7 +9935,7 @@ memory:
       value = { v34627[32] }
       flags = { size=4; read-only }
 
-0x8048591:cmp    eax, 0xff<-0x01>
+0x8048591:cmp    eax, 0xff<-1>
 registers:
     ax      = { v34627[32] }
     cx      = { v34560[32] }
@@ -10322,7 +10322,7 @@ memory:
       value = { v34861[32] }
       flags = { size=4; read-only }
 
-0x80485a7:cmp    eax, 0xff<-0x01>
+0x80485a7:cmp    eax, 0xff<-1>
 registers:
     ax      = { v34861[32] }
     cx      = { v34816[32] }
@@ -11015,7 +11015,7 @@ memory:
       value = { v35171[32] }
       flags = { size=4; read-only }
 
-0x80485bb:add    ebx, 0x0000110e
+0x80485bb:add    ebx, 0x0000110e<4366>
 registers:
     ax      = { v35125[32] }
     cx      = { v35126[32] }

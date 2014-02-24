@@ -277,7 +277,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     if (valid) {
                         valid_values |= mask;
                     } else {
-                        valid_values &= mask;
+                        valid_values &= ~mask;
                     }
                 }
             };
