@@ -883,7 +883,7 @@ endif()
 # enable rose hpct, which is not desired since there are other subdirs under
 # roseExtensions. 
 set(failsafe_SRC
-  ${CMAKE_SOURCE_DIR}/roseExtensions/failSafe/failSafePragma.C 
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
  )
 
 set(mstl_SRC
