@@ -402,11 +402,16 @@ static Analyzer* global_analyzer=0;
 
 void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
   cout<<"Rewriting AST:"<<endl;
+  bool someTransformationApplied=false;
   bool transformationApplied=false;
   AstMatching m;
+  // outer loop (overall fixpoint on all transformations)
+  do{
+    someTransformationApplied=false;
   do {
     // the following rules guarantee convergence
 
+    // REWRITE: re-ordering (normalization) of expressions
     // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
     //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
     transformationApplied=false;
@@ -428,37 +433,60 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
             SageInterface::replaceExpression(val,other_copy,false);
             cout<<"REPLACED: "<<op1->unparseToString()<<endl;
             transformationApplied=true;
+            someTransformationApplied=true;
           }       
         }
       }
     }
   } while(transformationApplied);
 
-#if 0  
+  // REWRITE: constant folding of constant integer (!) expressions
+  // we intentionally avoid folding of float values
 do {
     // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
     //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
     transformationApplied=false;
-    MatchResult res=m.performMatching("$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)",root);
+    MatchResult res=m.performMatching(
+                                      "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+                                      |$BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+                                      |$BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+                                      |$BinaryOp1=SgDivideOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+                                      ",root);
     if(res.size()>0) {
       for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
         // match found
-        SgNode* op1=(*i)["$BinaryOp1"];
-        SgExpression* val1=isSgExpression((*i)["$IntVal1"]);
-        SgExpression* val2=isSgExpression((*i)["$IntVal2"]);
-        cout<<"FOUND: "<<op1->unparseToString()<<endl;
-        //val1->get_value();
-        // replace op1-rhs with op2-rhs
-        SgExpression* other_copy=SageInterface::copyExpression(other);
-        SgExpression* val_copy=SageInterface::copyExpression(val);
-        SageInterface::replaceExpression(other,val_copy,false);
-        SageInterface::replaceExpression(val,other_copy,false);
-        cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+        SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
+        SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
+        SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
+        cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
+        int rawval1=val1->get_value();
+        int rawval2=val2->get_value();
+        // replace with folded value (using integer semantics)
+        switch(op1->variantT()) {
+        case V_SgAddOp:
+          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
+          break;
+        case V_SgSubtractOp:
+          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
+          break;
+        case V_SgMultiplyOp:
+          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
+          break;
+        case V_SgDivideOp:
+          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
+          break;
+        default:
+          cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
+          exit(1);
+        }
         transformationApplied=true;
+        someTransformationApplied=true;
       }
     }
-  } while(transformationApplied);
-#endif
+ } while(transformationApplied);
+  if(someTransformationApplied)
+    cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
+  } while(someTransformationApplied);
 }
 
 void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
