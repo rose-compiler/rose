@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = build-model
+bin_PROGRAMS = build-model static-initializer
 
 $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la:
 	$(MAKE) -C $(top_builddir)/src/backend/MFB/lib/sage libMFB-sage.la
@@ -19,42 +19,26 @@ build_model_LDADD= \
   $(top_builddir)/src/midend/MDCG/lib/libMDCG.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-check-model: build-model
-	echo "one bar $(srcdir) h" > test.dat
-	./build-model test.dat model_test.dot
-	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >  acc_internal.dat
-	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one compiler $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one mem-manager $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one opencl-debug $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one opencl-init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> acc_internal.dat
-	./build-model acc_internal.dat model_acc_internal.dot -I$(top_srcdir)/../libopenacc/include/ -I/export/tmp.vanderbrugge1/scratch/
-	echo "one openacc $(top_srcdir)/../libopenacc/include/OpenACC/ h" >  openacc.dat
-	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one debug $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/private h" >> openacc.dat
-	echo "one kernel $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >>  openacc.dat
-	echo "one loop $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one region $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one compiler $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one data-env $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one mem-manager $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one opencl-debug $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one opencl-init $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	echo "one runtime $(top_srcdir)/../libopenacc/include/OpenACC/internal h" >> openacc.dat
-	./build-model openacc.dat model_openacc.dot -I$(top_srcdir)/../libopenacc/include/ -I/export/tmp.vanderbrugge1/scratch/
+static_initializer_SOURCES = static-initializer.cpp
+static_initializer_CXXFLAGS = \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -g \
+  $(ROSE_INCLUDES)
+static_initializer_LDADD= \
+  $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la \
+  $(top_builddir)/src/midend/MDCG/lib/libMDCG.la \
+  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-check-local: build-model
+check-model: build-model test_01.h test_02.h test_02.c
+	./build-model $(srcdir)
+
+check-static-init: static-initializer test_02.h
+	./static-initializer $(srcdir)
+
+check-local:
 	$(MAKE) check-model
+	$(MAKE) check-static-init
 
 clean-local:
 	rm -f *.hpp *.cpp *.dat *.png *.dot

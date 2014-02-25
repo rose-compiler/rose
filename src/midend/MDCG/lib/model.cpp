@@ -50,7 +50,7 @@ model_t::model_t(const model_t & model) :
   /// \todo copy
 }
 
-variable_t model_t::lookup_variable_by(SgVariableSymbol * symbol) const {
+variable_t model_t::lookup_variable(SgVariableSymbol * symbol) const {
   std::vector<variable_t>::const_iterator it;
   for (it = variables.begin(); it != variables.end(); it++)
     if ((*it)->node->symbol == symbol)
@@ -59,7 +59,7 @@ variable_t model_t::lookup_variable_by(SgVariableSymbol * symbol) const {
   return NULL;
 }
 
-function_t model_t::lookup_function_by(SgFunctionSymbol * symbol) const {
+function_t model_t::lookup_function(SgFunctionSymbol * symbol) const {
   std::vector<function_t>::const_iterator it;
   for (it = functions.begin(); it != functions.end(); it++)
     if ((*it)->node->symbol == symbol)
@@ -68,7 +68,7 @@ function_t model_t::lookup_function_by(SgFunctionSymbol * symbol) const {
   return NULL;
 }
 
-type_t model_t::lookup_type_by(SgType * type) const {
+type_t model_t::lookup_type(SgType * type) const {
   std::vector<type_t>::const_iterator it;
   for (it = types.begin(); it != types.end(); it++)
     if ((*it)->node->type == type)
@@ -77,7 +77,7 @@ type_t model_t::lookup_type_by(SgType * type) const {
   return NULL;
 }
 
-class_t model_t::lookup_class_by(SgClassSymbol * symbol) const {
+class_t model_t::lookup_class(SgClassSymbol * symbol) const {
   std::vector<class_t>::const_iterator it;
   for (it = classes.begin(); it != classes.end(); it++)
     if ((*it)->node->symbol == symbol)
@@ -86,7 +86,7 @@ class_t model_t::lookup_class_by(SgClassSymbol * symbol) const {
   return NULL;
 }
 
-field_t model_t::lookup_field_by(SgVariableSymbol * symbol) const {
+field_t model_t::lookup_field(SgVariableSymbol * symbol) const {
   std::vector<field_t>::const_iterator it;
   for (it = fields.begin(); it != fields.end(); it++)
     if ((*it)->node->symbol == symbol)
@@ -95,7 +95,7 @@ field_t model_t::lookup_field_by(SgVariableSymbol * symbol) const {
   return NULL;
 }
 
-method_t model_t::lookup_method_by(SgMemberFunctionSymbol * symbol) const {
+method_t model_t::lookup_method(SgMemberFunctionSymbol * symbol) const {
   std::vector<method_t>::const_iterator it;
   for (it = methods.begin(); it != methods.end(); it++)
     if ((*it)->node->symbol == symbol)
@@ -104,13 +104,61 @@ method_t model_t::lookup_method_by(SgMemberFunctionSymbol * symbol) const {
   return NULL;
 }
 
-namespace_t model_t::lookup_namespace_by(SgNamespaceSymbol * symbol) const {
+namespace_t model_t::lookup_namespace(SgNamespaceSymbol * symbol) const {
   std::vector<namespace_t>::const_iterator it;
   for (it = namespaces.begin(); it != namespaces.end(); it++)
     if ((*it)->node->symbol == symbol)
       return *it;
 
   return NULL;
+}
+  
+template <>
+void model_t::lookup<Model::variable_t>(const std::string & name, std::set<Model::variable_t> & result) const {
+  std::vector<Model::variable_t>::const_iterator it_variable;
+  for (it_variable = variables.begin(); it_variable != variables.end(); it_variable++)
+    if ((*it_variable)->node->symbol->get_name().getString() == name)
+      result.insert(*it_variable);
+}
+  
+template <>
+void model_t::lookup<Model::field_t>(const std::string & name, std::set<Model::field_t> & result) const {
+  std::vector<Model::field_t>::const_iterator it_field;
+  for (it_field = fields.begin(); it_field != fields.end(); it_field++)
+    if ((*it_field)->node->symbol->get_name().getString() == name)
+      result.insert(*it_field);
+}
+  
+template <>
+void model_t::lookup<Model::function_t>(const std::string & name, std::set<Model::function_t> & result) const {
+  std::vector<Model::function_t>::const_iterator it_function;
+  for (it_function = functions.begin(); it_function != functions.end(); it_function++)
+    if ((*it_function)->node->symbol->get_name().getString() == name)
+      result.insert(*it_function);
+}
+  
+template <>
+void model_t::lookup<Model::method_t>(const std::string & name, std::set<Model::method_t> & result) const {
+  std::vector<Model::method_t>::const_iterator it_method;
+  for (it_method = methods.begin(); it_method != methods.end(); it_method++)
+    if ((*it_method)->node->symbol->get_name().getString() == name)
+      result.insert(*it_method);
+}
+  
+template <>
+void model_t::lookup<Model::class_t>(const std::string & name, std::set<Model::class_t> & result) const {
+  std::vector<Model::class_t>::const_iterator it_class;
+  for (it_class = classes.begin(); it_class != classes.end(); it_class++)
+    if ((*it_class)->node->symbol->get_name().getString() == name)
+      result.insert(*it_class);
+}
+  
+template <>
+void model_t::lookup<Model::namespace_t>(const std::string & name, std::set<Model::namespace_t> & result) const {
+  std::vector<Model::namespace_t>::const_iterator it_namespace;
+  for (it_namespace = namespaces.begin(); it_namespace != namespaces.end(); it_namespace++)
+    if ((*it_namespace)->node->symbol->get_name().getString() == name)
+      result.insert(*it_namespace);
 }
 
 template <Model::model_elements_e kind>
@@ -301,49 +349,93 @@ void toDotNode<Model::e_model_namespace>(std::ostream & out, Model::namespace_t 
   /// \todo
 }
 
-void model_t::toDot(std::ostream & out, std::string prefix_filter, bool variable_root, bool function_root, bool class_root) const {
-  out << "digraph {" << std::endl;
+void model_t::toDot(std::ostream & out) const {
+  std::set<Model::variable_t>  variable_set  ( variables.begin(),  variables.end()  );
+  std::set<Model::function_t>  function_set  ( functions.begin(),  functions.end()  );
+  std::set<Model::field_t>     field_set     ( fields.begin(),     fields.end()     );
+  std::set<Model::method_t>    method_set    ( methods.begin(),    methods.end()    );
+  std::set<Model::type_t>      type_set      ( types.begin(),      types.end()      );
+  std::set<Model::class_t>     class_set     ( classes.begin(),    classes.end()    );
+  std::set<Model::namespace_t> namespace_set ( namespaces.begin(), namespaces.end() );
 
-  std::set<void *> processed_nodes;
+  Model::toDot(out, variable_set, function_set, field_set, method_set, type_set, class_set, namespace_set);
+}
+
+void model_t::toDot(std::ostream & out, std::string prefix_filter, bool variable_root, bool function_root, bool class_root) const {
+  std::set<Model::variable_t>  variable_set;
+  std::set<Model::function_t>  function_set;
+  std::set<Model::field_t>     field_set;
+  std::set<Model::method_t>    method_set;
+  std::set<Model::type_t>      type_set;
+  std::set<Model::class_t>     class_set;
+  std::set<Model::namespace_t> namespace_set;
 
   if (variable_root) {
     std::vector<Model::variable_t>::const_iterator it_variable;
     for (it_variable = variables.begin(); it_variable != variables.end(); it_variable++)
       if ((*it_variable)->node->symbol->get_name().getString().find(prefix_filter) != std::string::npos)
-        toDotNode<Model::e_model_variable>(out, *it_variable, processed_nodes);
+        variable_set.insert(*it_variable);
   }
 
   if (function_root) {
     std::vector<Model::function_t>::const_iterator it_function;
     for (it_function = functions.begin(); it_function != functions.end(); it_function++)
       if ((*it_function)->node->symbol->get_name().getString().find(prefix_filter) != std::string::npos)
-        toDotNode<Model::e_model_function>(out, *it_function, processed_nodes);
+        function_set.insert(*it_function);
   }
-/*
-  std::vector<Model::field_t>::const_iterator it_field;
-  for (it_field = fields.begin(); it_field != fields.end(); it_field++)
-    toDotNode<Model::e_model_field>(out, *it_field);
-
-  std::vector<Model::method_t>::const_iterator it_method;
-  for (it_method = methods.begin(); it_method != methods.end(); it_method++)
-    toDotNode<Model::e_model_method>(out, *it_method);
-
-  std::vector<Model::type_t>::const_iterator it_type;
-  for (it_type = types.begin(); it_type != types.end(); it_type++)
-    toDotNode<Model::e_model_type>(out, *it_type);
-*/
 
   if (class_root) {
     std::vector<Model::class_t>::const_iterator it_class;
     for (it_class = classes.begin(); it_class != classes.end(); it_class++)
       if ((*it_class)->node->symbol->get_name().getString().find(prefix_filter) != std::string::npos)
-        toDotNode<Model::e_model_class>(out, *it_class, processed_nodes);
+        class_set.insert(*it_class);
   }
-/*
-  std::vector<Model::namespace_t>::const_iterator it_namespace;
-  for (it_namespace = namespaces.begin(); it_namespace != namespaces.end(); it_namespace++)
-    toDotNode<Model::e_model_namespace>(out, *it_namespace);
-*/
+  
+  Model::toDot(out, variable_set, function_set, field_set, method_set, type_set, class_set, namespace_set);
+}
+
+void toDot(
+  std::ostream & out,
+  const std::set<Model::variable_t>  & variable_set,
+  const std::set<Model::function_t>  & function_set,
+  const std::set<Model::field_t>     & field_set,
+  const std::set<Model::method_t>    & method_set,
+  const std::set<Model::type_t>      & type_set,
+  const std::set<Model::class_t>     & class_set,
+  const std::set<Model::namespace_t> & namespace_set
+) {
+  out << "digraph {" << std::endl;
+
+  std::set<void *> processed_nodes;
+
+  std::set<Model::variable_t>::const_iterator it_variable;
+  for (it_variable = variable_set.begin(); it_variable != variable_set.end(); it_variable++)
+    toDotNode<Model::e_model_variable>(out, *it_variable, processed_nodes);
+
+  std::set<Model::function_t>::const_iterator it_function;
+  for (it_function = function_set.begin(); it_function != function_set.end(); it_function++)
+    toDotNode<Model::e_model_function>(out, *it_function, processed_nodes);
+
+  std::set<Model::field_t>::const_iterator it_field;
+  for (it_field = field_set.begin(); it_field != field_set.end(); it_field++)
+    toDotNode<Model::e_model_field>(out, *it_field, processed_nodes);
+
+  std::set<Model::method_t>::const_iterator it_method;
+  for (it_method = method_set.begin(); it_method != method_set.end(); it_method++)
+    toDotNode<Model::e_model_method>(out, *it_method, processed_nodes);
+
+  std::set<Model::type_t>::const_iterator it_type;
+  for (it_type = type_set.begin(); it_type != type_set.end(); it_type++)
+    toDotNode<Model::e_model_type>(out, *it_type, processed_nodes);
+
+  std::set<Model::class_t>::const_iterator it_class;
+  for (it_class = class_set.begin(); it_class != class_set.end(); it_class++)
+    toDotNode<Model::e_model_class>(out, *it_class, processed_nodes);
+
+  std::set<Model::namespace_t>::const_iterator it_namespace;
+  for (it_namespace = namespace_set.begin(); it_namespace != namespace_set.end(); it_namespace++)
+    toDotNode<Model::e_model_namespace>(out, *it_namespace, processed_nodes);
+
   out << "}" << std::endl;
 }
 

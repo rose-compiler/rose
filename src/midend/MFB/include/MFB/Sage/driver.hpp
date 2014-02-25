@@ -112,6 +112,9 @@ class Driver<Sage> {
     /// Create or load a file
     unsigned add(const boost::filesystem::path & path);
 
+    /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
+    void setUnparsedFile(unsigned file_id) const;
+
     /// Build API of one file
     api_t * getAPI(unsigned file_id) const;
 

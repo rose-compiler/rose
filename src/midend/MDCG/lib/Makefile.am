@@ -5,7 +5,8 @@ lib_LTLIBRARIES=libMDCG.la
 
 libMDCG_la_SOURCES= \
   model.cpp \
-  model-builder.cpp
+  model-builder.cpp \
+  code-generator.cpp
 libMDCG_la_CXXFLAGS= \
   -g \
   -I$(srcdir)/../include \
@@ -22,6 +23,8 @@ libMDCG_la_include_HEADERS= \
   $(srcdir)/../include/MDCG/model-class.hpp \
   $(srcdir)/../include/MDCG/model-field.hpp \
   $(srcdir)/../include/MDCG/model-method.hpp \
-  $(srcdir)/../include/MDCG/model-namespace.hpp
+  $(srcdir)/../include/MDCG/model-namespace.hpp \
+  $(srcdir)/../include/MDCG/model-builder.hpp \
+  $(srcdir)/../include/MDCG/code-generator.hpp
 
 

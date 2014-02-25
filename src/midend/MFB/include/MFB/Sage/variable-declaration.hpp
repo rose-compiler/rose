@@ -1,5 +1,5 @@
 /** 
- * \file MFB/include/MFB.hpp
+ * \file include/MFB/Sage/variable-declaration.hpp
  *
  * \author Tristan Vanderbruggen
  *

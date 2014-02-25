@@ -131,6 +131,12 @@ unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
   }
 }
 
+void Driver<Sage>::setUnparsedFile(unsigned file_id) const {
+  std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
+  assert(it_file != id_to_file_map.end());
+  it_file->second->set_skip_unparse(false);
+}
+
 void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header_file_id) {
   std::string header_file_name;
 

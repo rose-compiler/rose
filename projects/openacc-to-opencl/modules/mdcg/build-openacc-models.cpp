@@ -38,66 +38,50 @@ int main(int argc, char ** argv) {
 
   unsigned openacc_model = model_builder.create();
 
-  model_builder.add(openacc_model, "openacc", libopenacc_dir + "include/OpenACC/", "h");
-  model_builder.add(openacc_model, "data-env", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "debug", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "init", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "kernel", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "loop", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "region", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "runtime", libopenacc_dir + "include/OpenACC/private", "h");
-  model_builder.add(openacc_model, "compiler", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "data-env", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "init", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "kernel", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "loop", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "mem-manager", libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "openacc",      libopenacc_dir + "include/OpenACC/",         "h");
+  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "debug",        libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "compiler",     libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "include/OpenACC/internal", "h");
   model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "opencl-init", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "region", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "runtime", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "api", libopenacc_dir + "include/OpenACC/device", "cl");
+  model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "api",          libopenacc_dir + "include/OpenACC/device",   "cl");
+
+  std::set<MDCG::Model::variable_t>  variable_set;
+  std::set<MDCG::Model::function_t>  function_set;
+  std::set<MDCG::Model::field_t>     field_set;
+  std::set<MDCG::Model::method_t>    method_set;
+  std::set<MDCG::Model::type_t>      type_set;
+  std::set<MDCG::Model::class_t>     class_set;
+  std::set<MDCG::Model::namespace_t> namespace_set;
 
   std::ofstream ofs;
 
-  ofs.open("openacc_model_var.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_", true, false, false);
-  ofs.close();
-
-  ofs.open("openacc_model_func.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_", false, true, false);
-  ofs.close();
-
-  ofs.open("openacc_model_class.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_", false, false, true);
-  ofs.close();
-
-  ofs.open("openacc_model_kernel.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_kernel", false, false, true);
-  ofs.close();
-
-  ofs.open("openacc_model_region.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_region", false, false, true);
-  ofs.close();
-
-  ofs.open("openacc_model_loop.dot");
-  assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_loop", false, false, true);
-  ofs.close();
-
   ofs.open("openacc_model_kernel_desc.dot");
   assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_kernel_desc", false, false, true);
+  
+  model_builder.get(openacc_model).lookup<MDCG::Model::class_t>("acc_kernel_desc_t_", class_set);
+  MDCG::Model::toDot(ofs, variable_set, function_set, field_set, method_set, type_set, class_set, namespace_set);
+
   ofs.close();
 
   ofs.open("openacc_model_region_desc.dot");
   assert(ofs.is_open());
-  model_builder.get(openacc_model).toDot(ofs, "acc_region_desc", false, false, true);
+  
+  model_builder.get(openacc_model).lookup<MDCG::Model::class_t>("acc_region_desc_t_", class_set);
+  MDCG::Model::toDot(ofs, variable_set, function_set, field_set, method_set, type_set, class_set, namespace_set);
+
   ofs.close();
 
   return 0;

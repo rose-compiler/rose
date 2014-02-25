@@ -39,48 +39,81 @@ struct model_t {
 
   std::vector<variable_t> variables;
 
-  variable_t lookup_variable_by(SgVariableSymbol * symbol) const;
+  variable_t lookup_variable(SgVariableSymbol * symbol) const;
 
   // Functions
 
   std::vector<function_t> functions;
 
-  function_t lookup_function_by(SgFunctionSymbol * symbol) const;
+  function_t lookup_function(SgFunctionSymbol * symbol) const;
 
   // Types
 
   std::vector<type_t> types;
 
-  type_t lookup_type_by(SgType * type) const;
+  type_t lookup_type(SgType * type) const;
 
   // Classes
 
   std::vector<class_t> classes;
 
-  class_t lookup_class_by(SgClassSymbol * symbol) const;
+  class_t lookup_class(SgClassSymbol * symbol) const;
 
   // Fields
 
   std::vector<field_t> fields;
 
-  field_t lookup_field_by(SgVariableSymbol * symbol) const;
+  field_t lookup_field(SgVariableSymbol * symbol) const;
 
   // Methods
 
   std::vector<method_t> methods;
 
-  method_t lookup_method_by(SgMemberFunctionSymbol * symbol) const;
+  method_t lookup_method(SgMemberFunctionSymbol * symbol) const;
 
   // Namespaces
 
   std::vector<namespace_t> namespaces;
 
-  namespace_t lookup_namespace_by(SgNamespaceSymbol * symbol) const;
+  namespace_t lookup_namespace(SgNamespaceSymbol * symbol) const;
+  
+  template <typename element_t>
+  void lookup(const std::string & name, std::set<element_t> & result) const;
 
   // Printer
 
+  void toDot(std::ostream & out) const;
   void toDot(std::ostream & out, std::string prefix_filter, bool, bool, bool) const;
 };
+
+void toDot(
+  std::ostream & out,
+  const std::set<Model::variable_t>  & variable_set,
+  const std::set<Model::function_t>  & function_set,
+  const std::set<Model::field_t>     & field_set,
+  const std::set<Model::method_t>    & method_set,
+  const std::set<Model::type_t>      & type_set,
+  const std::set<Model::class_t>     & class_set,
+  const std::set<Model::namespace_t> & namespace_set
+);
+
+template <>
+void model_t::lookup<Model::variable_t>(const std::string & name, std::set<Model::variable_t> & result) const;
+
+template <>
+void model_t::lookup<Model::field_t>(const std::string & name, std::set<Model::field_t> & result) const;
+
+template <>
+void model_t::lookup<Model::function_t>(const std::string & name, std::set<Model::function_t> & result) const;
+
+template <>
+void model_t::lookup<Model::method_t>(const std::string & name, std::set<Model::method_t> & result) const;
+
+template <>
+void model_t::lookup<Model::class_t>(const std::string & name, std::set<Model::class_t> & result) const;
+
+template <>
+void model_t::lookup<Model::namespace_t>(const std::string & name, std::set<Model::namespace_t> & result) const;
 
 /** @} */
 
