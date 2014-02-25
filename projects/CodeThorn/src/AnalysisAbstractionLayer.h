@@ -5,12 +5,11 @@
 
 #include "VariableIdMapping.h"
 
-using namespace CodeThorn;
-
 namespace AnalysisAbstractionLayer {
   VariableIdSet globalVariables(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet useVariables(SgNode* node, VariableIdMapping& vidm);
   VariableIdSet defVariables(SgNode* node, VariableIdMapping& vidm);
+  VariableIdSet astSubTreeVariables(SgNode* node, VariableIdMapping& vidm);
 }
 #endif

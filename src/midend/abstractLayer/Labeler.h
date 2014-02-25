@@ -2,22 +2,18 @@
 #define LABELER_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
+ * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
-#include "Miscellaneous.h"
 
 using namespace std;
 
 #define NO_STATE -3
 #define NO_ESTATE -4
-
-namespace CodeThorn {
 
 typedef size_t Label;
 
@@ -25,44 +21,55 @@ typedef size_t Label;
   * \author Markus Schordan
   * \date 2012.
  */
- class LabelProperty {
+
+// internal data structure (not used in Labeler's interface)
+class LabelProperty {
  public:
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
                     LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND
    };
-   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUTVAR, LABELIO_STDOUTCONST, LABELIO_STDERR
-   };
-
    LabelProperty();
+   LabelProperty(SgNode* node);
+   LabelProperty(SgNode* node, LabelType labelType);
    LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping);
    LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping);
-   void initialize(VariableIdMapping* variableIdMapping);
    string toString();
-
-   void makeTerminationIrrelevant(bool t);
-   bool isTerminationRelevant();
-   bool isLTLRelevant();
    SgNode* getNode();
-   bool isStdOutLabel();
-   bool isStdOutVarLabel();
-   bool isStdOutConstLabel();
-   bool isStdInLabel();
-   bool isStdErrLabel();
-   bool isIOLabel();
    bool isFunctionCallLabel();
    bool isFunctionCallReturnLabel();
    bool isFunctionEntryLabel();
    bool isFunctionExitLabel();
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
+
+ public:
+   void initializeIO(VariableIdMapping* variableIdMapping);
+
+ public:
+   enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUTVAR, LABELIO_STDOUTCONST, LABELIO_STDERR
+   };
+
+   bool isStdOutLabel();
+   bool isStdOutVarLabel();
+   bool isStdOutConstLabel();
+   bool isStdInLabel();
+   bool isStdErrLabel();
+   bool isIOLabel();
    VariableId getIOVarId();
    int getIOConst();
+
+   void makeTerminationIrrelevant(bool t);
+   bool isTerminationRelevant();
+   bool isLTLRelevant();
+
  private:
    bool _isValid;
    SgNode* _node;
    LabelType _labelType;
+
+ private:
    IOType _ioType;
    VariableId _variableId;
    int _ioValue;
@@ -117,12 +124,12 @@ LabelSet& operator+=(LabelSet& s2) {
  */
 class Labeler {
  public:
+  Labeler();
   static const Label NO_LABEL=-1;
-
-  Labeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  Labeler(SgNode* start);
   static string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
-  void createLabels(SgNode* node);
+  virtual void createLabels(SgNode* node);
 
   /* Labels are numbered 0..n-1 where n is the number of labeled nodes (not all nodes are labeled).
      A return value of NO_LABEL means that this node has no label.
@@ -148,22 +155,49 @@ class Labeler {
   bool isBlockEndLabel(Label lab);
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
+  bool isConditionLabel(Label lab);
+
+  class iterator {
+  public:
+    iterator();
+    iterator(Label start, size_t numLabels);
+    bool operator==(const iterator& x) const;
+    bool operator!=(const iterator& x) const;
+    Label operator*() const;
+    iterator& operator++(); // prefix
+    iterator operator++(int); // postfix
+  private:
+    bool is_past_the_end() const;
+    Label _currentLabel;
+    size_t _numLabels;
+  };
+  iterator begin();
+  iterator end();
+
+ protected:
+  void computeNodeToLabelMapping();
+  void registerLabel(LabelProperty);
+  typedef vector<LabelProperty> LabelToLabelPropertyMapping;
+  LabelToLabelPropertyMapping mappingLabelToLabelProperty;
+  typedef  map<SgNode*,Label> NodeToLabelMapping;
+  NodeToLabelMapping mappingNodeToLabel;
+  bool _isValidMappingNodeToLabel;
+  void ensureValidNodeToLabelMapping();
+};
+
+class IOLabeler : public Labeler {
+ public:
+  IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+
+ public:
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label); // deprecated
   bool isStdOutVarLabel(Label label, VariableId* id=0);
   bool isStdOutConstLabel(Label label, int* constvalue=0);
   bool isStdErrLabel(Label label, VariableId* id=0);
-  bool isConditionLabel(Label lab);
 
  private:
-  void computeNodeToLabelMapping();
-  void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToLabelProperty;
-  map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
-  bool _isValidMappingNodeToLabel;
 };
-
-} // end of namespace CodeThorn
 
 #endif

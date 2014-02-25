@@ -15,14 +15,17 @@ struct State
 	int count;
 };
 
-
-int reverseMe(int in, State* state)
+class WirelessLink {
+public:
+int Handle(int in, State* state)
 {
 	in = state->x;
 
-	int a = 12 * in + in;
+	int a;
+        a = 12 * in + in;
 	in = state->y;
-	int b = in / 4;
+	int b;
+        b= in / 4;
 
 	int i;
 	i = 3;
@@ -46,14 +49,15 @@ int reverseMe(int in, State* state)
 
 	return a;
 }
-
+};
 
 
 
 int main()
 {
 	State s;
-	reverseMe(10, &s);
+        WirelessLink w;
+	w.Handle(10, &s);
 
 	return 0;
 }

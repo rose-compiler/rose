@@ -3,6 +3,7 @@
 #include "utilities/utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
+#include <iostream>
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -17,13 +18,26 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 	if (definitions.size() > 1)
 	{
 		//TODO: We don't support resolving multiple definitions yet.
+  	    ROSE_ASSERT("Error: Variable with more than one RD. Not supported by Backstroke.");
 		return results;
 	}
-	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
+
+	// MS:
+	//	ROSE_ASSERT(definitions.size() > 0 && "Why doesn't the variable have any reaching definitions?");
+	if(definitions.size()==0) {
+	  //	  std::cout<<"WARNING: variable without RDs."<<std::endl;
+	  // MS: note that: typedef std::vector<SgInitializedName*> VarName (!)
+	  ROSE_ASSERT(destroyedVarName.size()==1);
+	  printf("WARNING: The reaching definition for \"%s\" : is empty\n", VariableRenaming::keyToString(destroyedVarName).c_str());
+	  SgExpression* workaroundExp=destroyedVarName[0]->get_initializer();
+	  ROSE_ASSERT(workaroundExp);
+	  //results.push_back(workaroundExp);
+	  return results; // return empty vector
+	}
 
 	SgNode* reachingDefinition = definitions.begin()->second;
 
-	printf("The reaching definition for %s is %s: %s on line %d\n", VariableRenaming::keyToString(destroyedVarName).c_str(), reachingDefinition->class_name().c_str(),
+	printf("The reaching definition for \"%s\" : class %s :: RD:%s on line %d\n", VariableRenaming::keyToString(destroyedVarName).c_str(), reachingDefinition->class_name().c_str(),
 			reachingDefinition->unparseToString().c_str(),
 			reachingDefinition->get_file_info()->get_line());
 
@@ -170,7 +184,7 @@ vector<SgExpression*> RedefineValueRestorer::handleAssignOp(VariableRenaming::Va
 	ROSE_ASSERT(isSgAssignOp(reachingDefinition) || isSgInitializedName(reachingDefinition));
 	vector<SgExpression*> results;
 
-	SgExpression* definitionExpression;
+	SgExpression* definitionExpression=0; // MS
 	if (SgAssignOp * assignOp = isSgAssignOp(reachingDefinition))
 	{
 		//Check that this assign op is for the same variable
@@ -207,6 +221,9 @@ vector<SgExpression*> RedefineValueRestorer::handleAssignOp(VariableRenaming::Va
 			return results;
 		}
 	}
+
+        // MS
+        ROSE_ASSERT(definitionExpression);
 
 	//Ok, so the variable was previously defined by assignment to initExpression.
 	//Now we need to see if we can re-execute that expression

@@ -62,7 +62,7 @@ namespace UnifiedLTL {
     bool operator<(const LTLState& other) const {
       if (estate  < other.estate) return true;
       if (estate == other.estate)
-    return (valstack  < other.valstack);
+	return (valstack  < other.valstack);
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);
@@ -110,10 +110,9 @@ namespace UnifiedLTL {
     /// verify the LTL formula f
     BoolLattice verify(const CodeThorn::LTL::Formula& f);
 
-    Label collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
+    void collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
 
   protected:
-    Label start;
     BoostTransitionGraph g;
     TransitionGraph& transitionGraph;
     EStateSet& eStateSet;

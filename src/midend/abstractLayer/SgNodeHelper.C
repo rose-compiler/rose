@@ -11,7 +11,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace CodeThorn;
 
 /*! 
   * \author Markus Schordan
@@ -101,6 +100,20 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
+vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
+  vector<SgVarRefExp*> varVec;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgVarRefExp* v=isSgVarRefExp(node)) {
+	  varVec.push_back(v);
+	}
+  }
+  return varVec;
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -244,10 +257,10 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
 bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
-    // TODO: refine this to also check for name, paramters, etc.
-    if(isSgConditionalExp(node))
-      return true;
   }
+  // TODO: refine this to also check for name, paramters, etc.
+  if(isSgConditionalExp(node))
+	return true;
   return false;
 }
 
@@ -1125,7 +1138,26 @@ SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
   return SgNodeHelper::getFirstChild(node);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+SgNode* SgNodeHelper::getExprRootChild(SgNode* node) {
+  if(!isSgExpressionRoot(node)) {
+    cerr << "Error: improper type in getExprStmtChild ("<<node->class_name()<<")"<<endl;
+    exit(1);
+  }
+  return SgNodeHelper::getFirstChild(node);
+}
 
+bool SgNodeHelper::isArrayElementAssignment(SgNode* node) {
+  if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
+	SgNode* lhs=getLhs(node);
+	if(isSgPntrArrRefExp(lhs))
+	  return true;
+  }
+  return false;
+}
 
 /*! 
   * \author Markus Schordan

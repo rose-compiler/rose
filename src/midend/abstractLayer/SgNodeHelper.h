@@ -4,15 +4,12 @@
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
 #include <string>
 
 using namespace std;
-
-namespace CodeThorn {
 
 namespace SgNodeHelper {
 
@@ -46,6 +43,9 @@ namespace SgNodeHelper {
 
   //! returns filename information of AST fragment in format "line:col". Used for generating readable output
   std::string sourceLineColumnToString(SgNode* node);
+
+  //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
+  vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
 
   /*! computes a list representing the nesting structure of classes (including structs and unions). 
     It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
@@ -271,6 +271,12 @@ namespace SgNodeHelper {
   */
   list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
+  /*!
+	checks whether the expression 'node' represents an assignment to an array's element
+	considers all assignment operators and arrays of any size
+  */
+  bool isArrayElementAssignment(SgNode* node);
+
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
     //! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.
@@ -305,7 +311,5 @@ namespace SgNodeHelper {
   } // end of namespace Pattern
 
 } // end of namespace SgNodeHelper
-
-} // end of namespace CodeThorn
 
 #endif
