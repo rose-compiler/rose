@@ -137,7 +137,7 @@ struct WorldModelTraversal {
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
         type = type->node->base_type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createArrayPointer<LaticeModelTraversal>(type->node->base_class, input.latices.size(), input.latices.begin(), input.latices.end(), file_id);
+        return codegen.createPointerArrayPointer<LaticeModelTraversal>(type->node->base_class, input.latices.size(), input.latices.begin(), input.latices.end(), file_id);
       }
       default:
         assert(false);
@@ -158,7 +158,7 @@ int main(int argc, char ** argv) {
 
   MFB::Driver<MFB::Sage> driver(project);
 
-  unsigned output_file_id = driver.add(boost::filesystem::path(std::string(argv[1]) + "/gen_02.c"));
+  unsigned output_file_id = driver.add(boost::filesystem::path(std::string("gen_02.c")));
   driver.setUnparsedFile(output_file_id);
 
   MDCG::ModelBuilder model_builder(driver);
@@ -220,7 +220,7 @@ int main(int argc, char ** argv) {
 
   codegen.addDeclaration<WorldModelTraversal>(world_class, input, output_file_id, "my_world");
 
-  project->unparse();
+  driver.project->unparse();
 
   return 0;
 }

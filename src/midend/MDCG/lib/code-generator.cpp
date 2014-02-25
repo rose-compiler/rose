@@ -6,7 +6,6 @@
  */
 
 #include "MDCG/code-generator.hpp"
-#include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/variable-declaration.hpp"
 
 #include <cassert>
@@ -18,6 +17,7 @@ namespace MDCG {
  * @{
 */
 
+unsigned CodeGenerator::s_var_gen_cnt = 0;
 
 CodeGenerator::CodeGenerator(MFB::Driver<MFB::Sage> & mfb_driver) :
   p_mfb_driver(mfb_driver)

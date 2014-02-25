@@ -34,6 +34,7 @@ check-model: build-model test_01.h test_02.h test_02.c
 	./build-model $(srcdir)
 
 check-static-init: static-initializer test_02.h
+	rm -f gen_02.c
 	./static-initializer $(srcdir)
 
 check-local:
