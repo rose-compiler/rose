@@ -332,9 +332,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+		case V_SgPntrArrRefExp: {
+		  // assume top for array elements (array elements are not stored in state)
+		  res.result=AType::Top();
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+		  break;
+		}
         default:
-          cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
-          throw "Error: evalConstInt::unkown binary operatio.";
+			cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+          throw "Error: evalConstInt::unkown binary operation.";
         }
       }
     }
@@ -398,6 +405,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       return listify(res);
     }
     break;
+  }
+  case V_SgDoubleVal: {
+    SgDoubleVal* doubleValNode=isSgDoubleVal(node);
+	// floating point values are currently not computed
+	res.result=AType::Top();
+    return listify(res);
   }
   case V_SgIntVal: {
     SgIntVal* intValNode=isSgIntVal(node);

@@ -23,6 +23,7 @@
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
 #include "AType.h"
+#include "AstMatching.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
@@ -42,6 +43,7 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgPlusAssignOp, true);
   setAstNodeVariant(V_SgPragmaDeclaration, true);
   setAstNodeVariant(V_SgPragma, true);
+  setAstNodeVariant(V_SgDoubleVal, true);
 }
 
 
@@ -394,32 +396,95 @@ string readableruntime(double time) {
 
 static Analyzer* global_analyzer=0;
 
+// rewrites an AST
+// requirements: all variables have been replaced by constants
+// uses AstMatching to match patterns.
+
+void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
+  cout<<"Rewriting AST:"<<endl;
+  bool transformationApplied=false;
+  AstMatching m;
+  do {
+    // the following rules guarantee convergence
+
+    // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+    //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
+    transformationApplied=false;
+    MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
+    if(res.size()>0) {
+      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+        // match found
+        SgExpression* other=isSgExpression((*i)["$Other"]);
+        if(other) {
+          if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
+            SgNode* op1=(*i)["$BinaryOp1"];
+            SgExpression* val=isSgExpression((*i)["$IntVal"]);
+            cout<<"FOUND: "<<op1->unparseToString()<<endl;
+            
+            // replace op1-rhs with op2-rhs
+            SgExpression* other_copy=SageInterface::copyExpression(other);
+            SgExpression* val_copy=SageInterface::copyExpression(val);
+            SageInterface::replaceExpression(other,val_copy,false);
+            SageInterface::replaceExpression(val,other_copy,false);
+            cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+            transformationApplied=true;
+          }       
+        }
+      }
+    }
+  } while(transformationApplied);
+
+#if 0  
+do {
+    // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
+    //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
+    transformationApplied=false;
+    MatchResult res=m.performMatching("$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)",root);
+    if(res.size()>0) {
+      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+        // match found
+        SgNode* op1=(*i)["$BinaryOp1"];
+        SgExpression* val1=isSgExpression((*i)["$IntVal1"]);
+        SgExpression* val2=isSgExpression((*i)["$IntVal2"]);
+        cout<<"FOUND: "<<op1->unparseToString()<<endl;
+        //val1->get_value();
+        // replace op1-rhs with op2-rhs
+        SgExpression* other_copy=SageInterface::copyExpression(other);
+        SgExpression* val_copy=SageInterface::copyExpression(val);
+        SageInterface::replaceExpression(other,val_copy,false);
+        SageInterface::replaceExpression(val,other_copy,false);
+        cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+        transformationApplied=true;
+      }
+    }
+  } while(transformationApplied);
+#endif
+}
+
 void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
   typedef pair<SgExpression*,int> SubstitutionPair;
   typedef list<SubstitutionPair > SubstitutionList;
   SubstitutionList substitutionList;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-	  VariableId varRefId=variableIdMapping->variableId(varRef);
-	  if(pstate->varIsConst(varRefId)) {
-		AValue varVal=pstate->varValue(varRefId);
-		int varIntValue=varVal.getIntValue();
-		SubstitutionPair p=make_pair(varRef,varIntValue);
-		substitutionList.push_back(p);
-	  }
-	}
+    if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+      VariableId varRefId=variableIdMapping->variableId(varRef);
+      if(pstate->varIsConst(varRefId)) {
+        AValue varVal=pstate->varValue(varRefId);
+        int varIntValue=varVal.getIntValue();
+        SubstitutionPair p=make_pair(varRef,varIntValue);
+        substitutionList.push_back(p);
+      }
+    }
   }
-  for(SubstitutionList::iterator i=substitutionList.begin();
-	  i!=substitutionList.end();
-	  ++i) {
-	// buildSignedIntType()
-	// buildFloatType()
-	// buildDoubleType()
-	// SgIntVal* buildIntVal(int)
-	// replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
-	//cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
-	SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
+  for(SubstitutionList::iterator i=substitutionList.begin(); i!=substitutionList.end(); ++i) {
+    // buildSignedIntType()
+    // buildFloatType()
+    // buildDoubleType()
+    // SgIntVal* buildIntVal(int)
+    // replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
+    //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
+    SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
   }
 }
 
@@ -432,36 +497,38 @@ void extractArrayUpdateOperations(Analyzer* ana) {
   const EState* estate=tg->getStartEState();
   EStatePtrSet succSet=tg->succ(estate);
   while(succSet.size()>=1) {
-	if(succSet.size()>1) {
-	  cerr<<"Error: STG-States with more than one successor not supported yet."<<endl;
-	  exit(1);
-	} else {
-	  EStatePtrSet::iterator i=succSet.begin();
-	  estate=*i;
-	}
-	// investigate state
-	Label lab=estate->label();
-	const PState* pstate=estate->pstate();
-	SgNode* node=labeler->getNode(lab);
-	// eliminate superfluous root nodes
-	if(isSgExprStatement(node))
-	  node=SgNodeHelper::getExprStmtChild(node);
-	if(isSgExpressionRoot(node))
-	  node=SgNodeHelper::getExprRootChild(node);
-	if(SgExpression* exp=isSgExpression(node)) {
-	  if(SgNodeHelper::isArrayElementAssignment(node)) {
-		SgNode* expCopy=SageInterface::copyExpression(exp);
-		// print for temporary info purpose
-		cout<<"-------------------------------------------------------------------"<<endl;
-		cout<<pstate->toString(variableIdMapping)<<endl;
-		cout<<expCopy->unparseToString()<<endl;
-		substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
-		cout<<expCopy->unparseToString()<<endl;
-		myfile<<expCopy->unparseToString()<<endl;
-	  }
-	}
-	// next successor set
-	succSet=tg->succ(estate);
+    if(succSet.size()>1) {
+	  cerr<<estate->toString()<<endl;
+      cerr<<"Error: STG-States with more than one successor not supported yet."<<endl;
+      exit(1);
+    } else {
+      EStatePtrSet::iterator i=succSet.begin();
+      estate=*i;
+    }
+    // investigate state
+    Label lab=estate->label();
+    const PState* pstate=estate->pstate();
+    SgNode* node=labeler->getNode(lab);
+    // eliminate superfluous root nodes
+    if(isSgExprStatement(node))
+      node=SgNodeHelper::getExprStmtChild(node);
+    if(isSgExpressionRoot(node))
+      node=SgNodeHelper::getExprRootChild(node);
+    if(SgExpression* exp=isSgExpression(node)) {
+      if(SgNodeHelper::isArrayElementAssignment(node)) {
+        SgNode* expCopy=SageInterface::copyExpression(exp);
+        // print for temporary info purpose
+        cout<<"-------------------------------------------------------------------"<<endl;
+        cout<<pstate->toString(variableIdMapping)<<endl;
+        cout<<expCopy->unparseToString()<<endl;
+        substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
+        rewriteAst(expCopy, variableIdMapping);
+        cout<<expCopy->unparseToString()<<endl;
+        myfile<<expCopy->unparseToString()<<endl;
+      }
+    }
+    // next successor set
+    succSet=tg->succ(estate);
   }
   myfile.close();
 }

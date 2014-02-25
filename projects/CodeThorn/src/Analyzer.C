@@ -1038,8 +1038,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));
         } else {
+		  if(isSgPntrArrRefExp(lhs)) {
+			// for now we ignore array refs on lhs
+			// TODO: assignments in index computations of ignored array ref
+			// since nothing can change (because of being ignored) state remains the same
+			EState estate=(*i).estate;
+			PState oldPState=*estate.pstate();
+			ConstraintSet oldcset=*estate.constraints();			
+			estateList.push_back(createEState(edge.target,oldPState,oldcset));			
+		  } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
+		  }
         }
       }
       return estateList;
@@ -1758,12 +1768,12 @@ void Analyzer::runSolver3() {
         assert(currentEStatePtr);
       
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
           newEStateList=transferFunction(e,currentEStatePtr);
-          //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
