@@ -113,9 +113,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
 	list<SingleEvalResultConstInt> resultList;
-	//res.result=(lhsResult.result*rhsResult.result);
-	//res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-	//list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,estate,useConstraints,safeConstraintPropagation);
 	SgExpression* cond=condExp->get_conditional_exp();
 	list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
 	if(condResultList.size()!=1) {

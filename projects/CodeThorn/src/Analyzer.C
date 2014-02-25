@@ -1768,12 +1768,12 @@ void Analyzer::runSolver3() {
         assert(currentEStatePtr);
       
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
+        //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
           newEStateList=transferFunction(e,currentEStatePtr);
-          cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
