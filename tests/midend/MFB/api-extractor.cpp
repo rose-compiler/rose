@@ -15,7 +15,7 @@ int main(int argc, char ** argv) {
   MFB::Driver<MFB::Sage> driver(project);
 
   // Load a pair header and source files
-  unsigned long loaded_file_id = driver.loadPairOfFiles(argv[1], "", "");
+  unsigned long loaded_file_id = driver.add(boost::filesystem::path(std::string(argv[1]) + ".hpp"));
 
   MFB::api_t * api = driver.getAPI(loaded_file_id);
 

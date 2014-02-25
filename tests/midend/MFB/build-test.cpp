@@ -20,7 +20,11 @@ int main(int argc, char ** argv) {
   MFB::Driver<MFB::Sage> driver(project);
 
 // Create class A in files A.hpp and A.cpp
-  unsigned long lib_A_file_id = driver.createPairOfFiles("A");
+  unsigned lib_A_header_id = driver.add(boost::filesystem::path("A.hpp"));
+  driver.setUnparsedFile(lib_A_header_id);
+  unsigned lib_A_source_id = driver.add(boost::filesystem::path("A.cpp"));
+  driver.setUnparsedFile(lib_A_source_id);
+  
   SgClassSymbol * class_A_symbol = NULL;
   SgMemberFunctionSymbol * A_member_function_foo_symbol = NULL;
   SgMemberFunctionSymbol * A_member_function_bar_symbol = NULL;
@@ -113,7 +117,7 @@ int main(int argc, char ** argv) {
   }
 
 // Create Main in main.cpp
-  unsigned long main_file_id = driver.createStandaloneSourceFile("main", ".", "cpp");
+  unsigned long main_file_id = driver.add(boost::filesystem::path("main.cpp"));
   SgFunctionSymbol * main_symbol = NULL;
   {
     MFB::Sage<SgFunctionDeclaration>::object_desc_t desc(

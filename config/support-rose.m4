@@ -867,9 +867,6 @@ ROSE_SUPPORT_VISUALIZATION
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
 
-# support for Unified Parallel Runtime, check for CUDA and OpenCL
-ROSE_SUPPORT_UPR
-
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
@@ -1035,6 +1032,14 @@ if test "x$enable_candl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
+
+# *****************************************************************
+#            Accelerator Support (CUDA, OpenCL, OpenACC)
+# *****************************************************************
+
+ROSE_CHECK_CUDA
+ROSE_CHECK_OPENCL
+ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1696,18 +1701,6 @@ src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
-src/3rdPartyLibraries/UPR/Makefile
-src/3rdPartyLibraries/UPR/docs/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/doxy.conf
-src/3rdPartyLibraries/UPR/examples/Makefile
-src/3rdPartyLibraries/UPR/examples/cuda/Makefile
-src/3rdPartyLibraries/UPR/examples/opencl/Makefile
-src/3rdPartyLibraries/UPR/examples/xomp/Makefile
-src/3rdPartyLibraries/UPR/include/Makefile
-src/3rdPartyLibraries/UPR/include/UPR/Makefile
-src/3rdPartyLibraries/UPR/lib/Makefile
-src/3rdPartyLibraries/UPR/tools/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
@@ -2033,6 +2026,7 @@ projects/openacc-to-opencl/modules/Makefile
 projects/openacc-to-opencl/modules/dlx/Makefile
 projects/openacc-to-opencl/modules/klt/Makefile
 projects/openacc-to-opencl/modules/mdcg/Makefile
+projects/openacc-to-opencl/compiler/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
 projects/LineDeleter/Makefile

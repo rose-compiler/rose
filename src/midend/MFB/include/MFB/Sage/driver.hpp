@@ -121,6 +121,9 @@ class Driver<Sage> {
     /// Build API of a collection of files
     api_t * getAPI(const std::set<unsigned> & file_ids) const;
 
+    /// Build API for all loaded files
+    api_t * getAPI() const;
+
     /// Add needed include statement or forward definition to use a symbol in a file (from file ID)
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, unsigned file_id, bool need_forward_only = false);

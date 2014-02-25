@@ -20,9 +20,9 @@ looptree_to_kernel_LDADD = \
 
 check-local: looptree-to-kernel
 	rm -rf *.cpp *.hpp
-	./looptree-to-kernel $(top_srcdir)/../tests/101-vector-constant-addition/101-klt.lt 101-klt.out $(top_srcdir)/../libopenacc/include
-	./looptree-to-kernel $(top_srcdir)/../tests/102-vector-constant-product/102-klt.lt  102-klt.out $(top_srcdir)/../libopenacc/include
-	./looptree-to-kernel $(top_srcdir)/../tests/103-vector-vector-addition/103-klt.lt   103-klt.out $(top_srcdir)/../libopenacc/include
+	./looptree-to-kernel $(top_srcdir)/../tests/101/101-klt.lt 101-klt.out $(top_srcdir)/../libopenacc/include
+	./looptree-to-kernel $(top_srcdir)/../tests/102/102-klt.lt 102-klt.out $(top_srcdir)/../libopenacc/include
+	./looptree-to-kernel $(top_srcdir)/../tests/103/103-klt.lt 103-klt.out $(top_srcdir)/../libopenacc/include
 
 $(top_builddir)/src/backend/KLT/lib/libKLT.la:
 	make -C $(top_builddir)/src/backend/KLT/lib libKLT.la

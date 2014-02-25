@@ -139,7 +139,7 @@ unsigned long Generator<
   Runtime::OpenACC,
   MFB::KLT_Driver
 >::createFile() {
-  return p_sage_driver.createStandaloneSourceFile(p_file_name, "cl");
+  return p_sage_driver.add(boost::filesystem::path(p_file_name));
 }
 
 template <>

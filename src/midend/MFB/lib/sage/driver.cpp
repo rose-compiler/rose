@@ -227,6 +227,8 @@ api_t * Driver<Sage>::getAPI(unsigned file_id) const {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
+    std::cerr << "Scanning class/struct " << (*it_class_symbol)->get_name() << " from file " << it_sym_decl_file_id->second << std::endl;
+
     if (it_sym_decl_file_id->second == file_id)
       api->class_symbols.insert(*it_class_symbol);
   }
@@ -260,11 +262,41 @@ api_t * Driver<Sage>::getAPI(const std::set<unsigned> & file_ids) const {
   api_t * api = getAPI(*it);
   it++;
 
-  while (it != file_ids.begin()) {
+  while (it != file_ids.end()) {
+
+    std::cerr << "Add file " << *it << " to API..." << std::endl;
+
     api_t * tmp = getAPI(*it);
     merge_api(api, tmp);
     delete tmp;
+    it++;
   }
+
+  return api;
+}
+
+api_t * Driver<Sage>::getAPI() const {
+  api_t * api = new api_t();
+
+  std::set<SgNamespaceSymbol *>::const_iterator it_namespace_symbol;
+  for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++)
+    api->namespace_symbols.insert(*it_namespace_symbol);
+
+  std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
+  for (it_function_symbol = p_function_symbols.begin(); it_function_symbol != p_function_symbols.end(); it_function_symbol++)
+    api->function_symbols.insert(*it_function_symbol);
+
+  std::set<SgClassSymbol *>::const_iterator it_class_symbol;
+  for (it_class_symbol = p_class_symbols.begin(); it_class_symbol != p_class_symbols.end(); it_class_symbol++)
+    api->class_symbols.insert(*it_class_symbol);
+
+  std::set<SgVariableSymbol *>::const_iterator it_variable_symbol;
+  for (it_variable_symbol = p_variable_symbols.begin(); it_variable_symbol != p_variable_symbols.end(); it_variable_symbol++)
+    api->variable_symbols.insert(*it_variable_symbol);
+
+  std::set<SgMemberFunctionSymbol *>::const_iterator it_member_function_symbol;
+  for (it_member_function_symbol = p_member_function_symbols.begin(); it_member_function_symbol != p_member_function_symbols.end(); it_member_function_symbol++)
+    api->member_function_symbols.insert(*it_member_function_symbol);
 
   return api;
 }

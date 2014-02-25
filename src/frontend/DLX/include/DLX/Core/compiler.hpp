@@ -32,27 +32,16 @@ namespace Compiler {
  * @{
  */
 
-template <class language_tpl, class TransformationHandler_tpl>
+template <class language_tpl>
 class Compiler {
   public:
     typedef language_tpl language_t;
-    typedef TransformationHandler_tpl TransformationHandler;
 
     typedef Directives::directive_t<language_t> directive_t;
     typedef std::vector<directive_t *> directives_ptr_set_t;
 
-    typedef typename language_t::compiler_module_handlers_t module_handlers_t;
-
-  protected:
-    TransformationHandler & p_transformation_handler;
-
-    module_handlers_t & p_module_handlers;
-
   public:
-    Compiler(TransformationHandler & transformation_handler, module_handlers_t & module_handlers) :
-      p_transformation_handler(transformation_handler),
-      p_module_handlers(module_handlers)
-    {}
+    Compiler() {}
 
     /*!
      * \brief It applies the transformation associated with the directives.

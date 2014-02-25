@@ -19,8 +19,10 @@ build_openacc_models_LDADD= \
   $(top_builddir)/src/midend/MDCG/lib/libMDCG.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+if ROSE_HAVE_OPENCL_INC
 check-local: build-openacc-models
-	./build-openacc-models $(top_srcdir)/../libopenacc/ /export/tmp.vanderbrugge1/scratch/OpenCL/
+	./build-openacc-models $(top_srcdir)/../libopenacc/ $(OPENCL_INC_DIR)
+endif
 
 clean-local:
 	rm -f *.hpp *.cpp *.dat *.png *.dot

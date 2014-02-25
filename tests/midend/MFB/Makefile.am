@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = api-extractor build-test load-test
+bin_PROGRAMS = api-extractor # build-test load-test
 
 $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la:
 	$(MAKE) -C $(top_builddir)/src/midend/MFB/lib/sage libMFB-sage.la
@@ -46,9 +46,9 @@ check-api: api-extractor
 	cp $(srcdir)/foo-bar.* .
 	./api-extractor foo-bar
 
-check-local: build-test load-test api-extractor
-	$(MAKE) check-load
-	$(MAKE) check-build
+check-local: api-extractor # build-test load-test
+#	$(MAKE) check-load
+#	$(MAKE) check-build
 	$(MAKE) check-api
 
 clean-local:

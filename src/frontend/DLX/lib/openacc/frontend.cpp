@@ -399,7 +399,8 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_gang> * clause
 ) {
-  return false;
+  assert(directive_str.size() == 0 || directive_str[0] != '(');
+  return true;
 }
 
 template <>
@@ -409,7 +410,8 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_worker> * clause
 ) {
-  return false;
+  assert(directive_str.size() == 0 || directive_str[0] != '(');
+  return true;
 }
 
 template <>
@@ -419,6 +421,7 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_vector> * clause
 ) {
+  assert(directive_str.size() == 0 || directive_str[0] != '(');
   return false;
 }
 
@@ -464,7 +467,7 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
 
 template <>
 bool Frontend<OpenACC::language_t>::build_graph() {
-  // TODO Frontend<OpenACC::language_t>::build_graph()
+  /// \todo Frontend<OpenACC::language_t>::build_graph()
   return false;
 }
 

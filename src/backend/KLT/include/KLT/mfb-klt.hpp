@@ -75,6 +75,7 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     SageBuilder::buildVoidType(),
     kernel_function_params,
     NULL,
+    object.file_id,
     object.file_id
   );
 

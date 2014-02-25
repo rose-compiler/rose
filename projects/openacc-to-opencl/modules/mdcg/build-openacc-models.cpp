@@ -7,11 +7,6 @@
 
 #include <cassert>
 
-/**
- * \note The test files represent sequences of call to either ModelBuilder::addOne and ModelBuilder::addPair.
- *       Each line starts with the method to call followed by the arguments.
- */
-
 int main(int argc, char ** argv) {
 
   assert(argc == 3);
@@ -31,10 +26,6 @@ int main(int argc, char ** argv) {
   MFB::Driver<MFB::Sage> driver(project);
 
   MDCG::ModelBuilder model_builder(driver);
-
-  std::ifstream data;
-  data.open(argv[1]);
-  assert(data.is_open());
 
   unsigned openacc_model = model_builder.create();
 

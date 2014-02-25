@@ -26,9 +26,11 @@ OpenACC::runtime_kernel_loop_symbols_t     OpenACC::runtime_kernel_loop_symbols 
 OpenACC::runtime_loop_desc_symbols_t       OpenACC::runtime_loop_desc_symbols = { NULL, NULL, NULL, NULL };
 
 void OpenACC::loadAPI(MFB::Driver<MFB::Sage> & mfb_driver, std::string inc_path) {
-  unsigned long loaded_file_id = mfb_driver.loadStandaloneSourceFile("api", inc_path + "/OpenACC/device/", "cl");
+  // Make sure MFB's Driver have loaded OpenACC Device API (from OpenCL file, to get OCL's preinclude)
+  mfb_driver.add(boost::filesystem::path(inc_path + "/OpenACC/device/api.cl"));
 
-  MFB::api_t * api = mfb_driver.getAPI(loaded_file_id);
+  // Get entire API because MDCG might have already loaded some declaration through other headers...
+  MFB::api_t * api = mfb_driver.getAPI();
 
   std::set<SgClassSymbol *>::const_iterator it_class;
   for (it_class = api->class_symbols.begin(); it_class != api->class_symbols.end(); it_class++)

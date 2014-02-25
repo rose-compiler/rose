@@ -48,7 +48,7 @@ int main(int argc, char ** argv) {
 
   KLT::Runtime::OpenACC::loadAPI(driver, argv[3]);
 
-  KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, std::string(argv[2]));
+  KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, std::string(argv[2]) + ".cl");
 
   std::set<std::list<Kernel *> > kernel_lists;
 

@@ -242,12 +242,13 @@ namespace AstFromString
  // DQ (8/16/2013): Updated use of new API for symbol table support.
  // SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope);
     SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope,NULL,NULL);
-
+/* TV (02/25/2014) : remove type as when it find something it asserts (I had an issue with 'i' recognized as 'int'...)
     // type?
     SgTypeTable * gtt = SgNode::get_globalTypeTable();
     assert (gtt != NULL);
     SgType* t = gtt->lookup_type(SgName(buffer)); 
     //assert (!(sym &&t)); // can be both a type or a variable? TODO global type table stores variables and their type info.!!??
+*/
     if (sym) 
     {
       assert (sym!=NULL);
@@ -271,12 +272,14 @@ namespace AstFromString
             assert(false);
           }
       }
-    } 
+    }
+/* TV (02/25/2014) : remove type as when it find something it asserts (I had an issue with 'i' recognized as 'int'...)
     else  if (t)
     {
       assert (0); // TODO global type table stores variables and their type info.It does not store type names !!!!??
       c_parsed_node = t;
     }
+*/
     else
     {
       //printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);

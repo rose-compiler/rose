@@ -1,7 +1,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAM= 
+bin_PROGRAMS= openacc-parser
 
 openacc_parser_SOURCES= \
   openacc-parser.cpp
@@ -17,6 +17,9 @@ openacc_parser_LDADD = \
   $(LIBS_WITH_RPATH) \
   $(ROSE_LIBS)
 
+if ROSE_HAVE_OPENCL_INC
 check-local: openacc-parser
-	./openacc-parser $(srcdir)/matmul-acc.cpp
-
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/101/101-kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/102/102-kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/103/103-kernel-openacc.c
+endif
