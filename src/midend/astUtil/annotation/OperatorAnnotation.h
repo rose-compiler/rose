@@ -41,7 +41,7 @@ class OperatorAnnotCollection
        && !fa.IsFunctionDefinition(exp,&fname,&args,0,0, &params))
         return false;
     std::string sig = OperatorDeclaration::get_signiture(fa, fname, params);
-    if (known_type( sig, desc)) {
+    if (this->known_type( sig, desc)) {
        if (argp != 0)
           *argp = args;
        if (desc != 0 && replpar) {
