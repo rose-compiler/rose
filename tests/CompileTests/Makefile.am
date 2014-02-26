@@ -40,7 +40,7 @@ endif
 # DQ (11/3/2011): For now we don't want to worry about these tests with the EDG 4.3 based support in ROSE.
 # if !ROSE_USE_EDG_VERSION_4_4
 
-SUBDIRS += OpenMP_tests
+SUBDIRS += OpenMP_tests FailSafe_tests
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT

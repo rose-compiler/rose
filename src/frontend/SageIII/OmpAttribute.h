@@ -411,6 +411,7 @@ namespace OmpSupport
       // there could be multiple map clause with the same variant type: alloc, in, out , and inout.
       std::vector<omp_construct_enum> map_variants; 
       //enum omp_construct_enum map_variant; 
+      
       //variable lists------------------- 
       //appeared within some directives and clauses
       //The clauses/directive are: flush, threadprivate, private, firstprivate, 
