@@ -440,6 +440,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstWarnings.C
  ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstPerformance.C
  ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
+ ${CMAKE_SOURCE_DIR}/src/midend/astMatching/RoseAst.C
 )
 
 
