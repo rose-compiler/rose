@@ -406,8 +406,41 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
   bool transformationApplied=false;
   AstMatching m;
   // outer loop (overall fixpoint on all transformations)
+  /* Transformations:
+     1) eliminate unary operator -(integer) in tree
+     2) normalize expressions (reordering of inner nodes and leave nodes)
+     3) constant folding (leave nodes)
+  */
   do{
     someTransformationApplied=false;
+do {
+    // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
+    transformationApplied=false;
+    MatchResult res=m.performMatching(
+                                      "$UnaryOp=SgMinusOp($IntVal=SgIntVal)\
+                                      ",root);
+    if(res.size()>0) {
+      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+        // match found
+        SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
+        SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
+        cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+        int rawval=val->get_value();
+        // replace with folded value (using integer semantics)
+        switch(op->variantT()) {
+        case V_SgMinusOp:
+          SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+          break;
+        default:
+          cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+          exit(1);
+        }
+        transformationApplied=true;
+        someTransformationApplied=true;
+      }
+    }
+ } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
+
   do {
     // the following rules guarantee convergence
 
