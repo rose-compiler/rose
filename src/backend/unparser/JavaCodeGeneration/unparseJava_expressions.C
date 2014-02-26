@@ -170,15 +170,6 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
             curprint (")");
         }
     }
-
-    //
-    // An Expression may contain a name suffix stored in the "suffix" attribute.
-    //
-    if (expr -> attributeExists("suffix")) {
-        curprint(".");
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
-        curprint(attribute -> expression);
-    }
 }
 
 PrecedenceSpecifier
@@ -936,14 +927,14 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
      */
-     if (isSgPointerType(new_op->get_specified_type())) {
-         SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
-         while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
-             pointer_type = isSgPointerType(pointer_type -> get_base_type());
+     if (isSgArrayType(new_op -> get_specified_type())) {
+         SgArrayType *array_type = isSgArrayType(new_op -> get_specified_type());
+         while(isSgArrayType(array_type -> get_base_type())) { // find the base type...
+             array_type = isSgArrayType(array_type -> get_base_type());
          }
 
-         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
-             SgClassType *class_type = isSgClassType(pointer_type -> get_base_type());
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op -> get_specified_type())) {
+             SgClassType *class_type = isSgClassType(array_type -> get_base_type());
              ROSE_ASSERT(class_type);
              curprint(class_type -> get_name().getString());
          }
@@ -1005,7 +996,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          curprint (")");
 
          //
-         // If this is an allocation expression for an anonymous class, output the body of the class.
+         // Check if this is an allocation expression for an anonymous class. In such a case, output the body of the class.
          //
          if (new_op -> attributeExists("body")) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");

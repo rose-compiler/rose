@@ -8,6 +8,7 @@
 
 using std::string;
 using namespace std;
+using namespace Rose::Frontend::Java::Ecj;
 
 jclass currentJavaTraversalClass = NULL;
 JNIEnv *currentEnvironment = NULL;
@@ -156,3 +157,4 @@ static jmethodID jofp_get_error_method() {
         errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
     return errorMethod;
 }
+

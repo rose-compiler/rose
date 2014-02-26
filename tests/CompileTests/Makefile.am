@@ -38,9 +38,9 @@ endif
 endif
 
 # DQ (11/3/2011): For now we don't want to worry about these tests with the EDG 4.3 based support in ROSE.
-if !ROSE_USE_EDG_VERSION_4_4
+# if !ROSE_USE_EDG_VERSION_4_4
 
-SUBDIRS += OpenMP_tests
+SUBDIRS += OpenMP_tests FailSafe_tests
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -84,8 +84,11 @@ SUBDIRS += CudaTests
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += frontend_integration
 
+# DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
+SUBDIRS += systemc_tests
+
 # end of ROSE_USE_CLANG_FRONTEND
-endif
+# endif
 
 check-local:
 	@echo "*************************************************************************************"
