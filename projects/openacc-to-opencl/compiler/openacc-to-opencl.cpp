@@ -232,10 +232,10 @@ struct RegionDesc {
 unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_dir) {
   unsigned openacc_model = model_builder.create();
 
-  model_builder.add(openacc_model, "api",          libopenacc_dir + "include/OpenACC/device",   "cl");
   model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/internal", "h");
   model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/internal", "h");
   model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "api",          libopenacc_dir + "include/OpenACC/device",   "cl");
 //model_builder.add(openacc_model, "compiler",     libopenacc_dir + "include/OpenACC/internal", "h");
 //model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/internal", "h");
 //model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/internal", "h");
