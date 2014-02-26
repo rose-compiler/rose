@@ -58,16 +58,12 @@ string markAndGetQualifiedTypeName(SgClassType *class_type);
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
 string getUnionTypeName(SgJavaUnionType *);
-string getFullyQualifiedTypeName(SgClassType *);
 string getParameters(SgJavaParameterizedType *);
-string getUnqualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaQualifiedType *);
 bool hasConflicts(SgClassDeclaration *class_declaration);
 string getTypeName(SgClassType *class_type);
-string getTypeName(SgJavaParameterizedType *parm_type);
-string getTypeName(SgJavaQualifiedType *);
 string getTypeName(SgType *);
+string getUnqualifiedTypeName(SgType *);
+string getFullyQualifiedTypeName(SgType *);
 
 //
 // This class is kept here as documentation. IT is declared in:  ./src/midend/astProcessing/AstAttributeMechanism.h
