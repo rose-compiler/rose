@@ -86,7 +86,7 @@ SgAsmInterpretation::get_instruction_map(bool recompute)
 }
 
 /** Caches the specified instruction map in this interpretation.  The contents of the supplied map are copied into the
- *  interpretation. */
+ *  interpretation, erasing all previously stored instructions. */
 void
 SgAsmInterpretation::set_instruction_map(const InstructionMap &imap)
 {

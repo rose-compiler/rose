@@ -93,7 +93,6 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
     }
 }
 
-
 std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
                                  const RegisterDictionary *registers, bool leaMode) {
     std::string result = "";
@@ -139,7 +138,14 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             assert(ival!=NULL);
             uint64_t value = ival->get_absolute_value(); // not sign extended
-            result = StringUtility::addrToString(value, ival->get_significant_bits(), true/*signed*/);
+
+            // If the value looks like it might be an address, then don't bother showing the decimal form.
+            if ((32==ival->get_significant_bits() || 64==ival->get_significant_bits()) &&
+                value > 0x0000ffff && value < 0xffff0000) {
+                result = StringUtility::addrToString(value, ival->get_significant_bits());
+            } else {
+                result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+            }
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
@@ -148,8 +154,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
                 label =x86ValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();
-            if (!label.empty())
-                result += "<" + label + ">";
+            result = StringUtility::appendAsmComment(result, label);
             break;
         }
 
@@ -159,15 +164,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
     }
 
-    if (expr->get_replacement() != "") {
-        result += " <" + expr->get_replacement() + ">";
-    }
-#if 0
-    if (expr->get_bit_size()>0) {
-        result += " <@" + StringUtility::numberToString(expr->get_bit_offset()) +
-                  "+" + StringUtility::numberToString(expr->get_bit_size()) + ">";
-    }
-#endif
+    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     return result;
 }
 

@@ -3,6 +3,8 @@
 #include "AsmUnparser_compat.h"
 #include "Registers.h"
 
+using namespace rose;
+
 static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();
     if (!registers)
@@ -205,7 +207,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
                 if (li!=labels->end())
-                    result += "<" + li->second + ">";
+                    result = StringUtility::appendAsmComment(result, li->second);
             }
             break;
         }
@@ -224,9 +226,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
     if (suffix)
         *suffix = extra;
 
-    if (expr->get_replacement() != "") {
-        result += " <" + expr->get_replacement() + ">";
-    }
+    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     return result;
 }
 

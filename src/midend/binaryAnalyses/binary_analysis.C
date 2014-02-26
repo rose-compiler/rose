@@ -8,6 +8,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+using namespace rose;
+
 /*********************************
 * Find root nodes in the graph. A root node is a node with no in edges.
 *********************************/

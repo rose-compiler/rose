@@ -90,7 +90,7 @@ class DepInfoSetGraphCreate : public VirtualGraphCreateTemplate<Node,DepInfoSetE
          DepInfoSetEdge *e = p.ReachEnd()? 0 : p.Current();
          if (e == 0) {
            e = new DepInfoSetEdge(this, tmp);
-           AddEdge(n1,n2, e);
+           this->AddEdge(n1,n2, e);
          }
          else
            e->GetInfo() |= tmp;

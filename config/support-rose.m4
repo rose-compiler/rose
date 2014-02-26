@@ -1801,6 +1801,7 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
@@ -2045,6 +2046,7 @@ tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/FailSafe_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
 tests/CompileTests/OpenMP_tests/cvalidation/Makefile
@@ -2066,6 +2068,7 @@ tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
+tests/CompileTests/systemc_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
