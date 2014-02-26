@@ -401,7 +401,7 @@ static Analyzer* global_analyzer=0;
 // uses AstMatching to match patterns.
 
 void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
-  cout<<"Rewriting AST:"<<endl;
+  //  cout<<"Rewriting AST:"<<endl;
   bool someTransformationApplied=false;
   bool transformationApplied=false;
   AstMatching m;
@@ -549,7 +549,8 @@ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PS
   }
 }
 
-typedef vector<pair<const EState*, SgExpression*> > ArrayUpdatesSequence;
+typedef pair<const EState*, SgExpression*> EStateExprPair;
+typedef vector<EStateExprPair> ArrayUpdatesSequence;
 
 void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates) {
   Labeler* labeler=ana->getLabeler();
@@ -579,12 +580,16 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       if(SgNodeHelper::isArrayElementAssignment(node)) {
         SgNode* expCopy=SageInterface::copyExpression(exp);
         // print for temporary info purpose
+#if 0		
         cout<<"-------------------------------------------------------------------"<<endl;
         cout<<pstate->toString(variableIdMapping)<<endl;
         cout<<expCopy->unparseToString()<<endl;
+#endif
         substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
         rewriteAst(expCopy, variableIdMapping);
+#if 0
         cout<<expCopy->unparseToString()<<endl;
+#endif
 		SgExpression* expCopy2=isSgExpression(expCopy);
 		if(!expCopy2) {
 		  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<expCopy->class_name()<<endl;
@@ -595,6 +600,65 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
     }
     // next successor set
     succSet=tg->succ(estate);
+  }
+}
+
+struct ArrayElementAccessData {
+  VariableId varId;
+  vector<int> subscripts;
+};
+
+ArrayElementAccessData arrayElementAccessData(SgPntrArrRefExp* ref) {
+  ArrayElementAccessData access;
+  // TODO-1: determine data
+  return access;
+}
+
+// searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
+SgPntrArrRefExp* findDefOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos) {
+  ArrayElementAccessData useRefData=arrayElementAccessData(useRefNode);
+  SgPntrArrRefExp* found=0;
+  cout<<"@RHS:"<<useRefNode->unparseToString();
+  cout<<"@POS:"<<(*pos).second->unparseToString();
+  // TODO-2: check search backwards
+#if 0
+  do {
+	SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
+	ArrayElementAccessData defData=arrayElementAccessData(isSgPntrArrRefExp(lhs));
+	if(defData==useRefData) {
+	  return isSgPntrArrRefExp(lhs);
+	}
+	--pos;
+  } while (pos!=arrayUpdates.end());
+#endif  
+  return found;
+}
+
+
+void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates) {
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+	SgExpression* exp=(*i).second;
+	SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+	SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+	ROSE_ASSERT(isSgPntrArrRefExp(lhs));
+	cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
+#if 0
+	// does not work
+	SgExpression* arrayNameExp;
+	std::vector<SgExpression*> *subscripts;
+	SageInterface::isArrayReference(lhs, &arrayNameExp, &subscripts);
+	cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size();
+#endif
+	RoseAst rhsast(rhs);
+	for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+	  if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+		j.skipChildrenOnForward();
+		// search for def here
+		SgPntrArrRefExp* def=findDefOfArrayElementUse(useRef, arrayUpdates, i);
+	    // TODO: if(def!=0) replace 'useRef' with 'def'
+	  }
+	}
+	cout<<endl;
   }
 }
 
@@ -1088,6 +1152,7 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["dump1"]) {
 	ArrayUpdatesSequence arrayUpdates;
 	extractArrayUpdateOperations(&analyzer,arrayUpdates);
+	substituteArrayRefs(arrayUpdates);
 	string filename="arrayupdates.txt";
 	writeArrayUpdatesToFile(arrayUpdates, filename);
   }
