@@ -237,6 +237,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
      -I$(top_srcdir)/src/util/graphs \
+     -I$(top_srcdir)/src/roseExtensions/failSafe \
      $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA 
 else
 # ROSE_INCLUDES = 
@@ -350,6 +351,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/libltdl \
+     -I$(top_srcdir)/src/roseExtensions/failSafe \
      $(ROSE_PHP_INCLUDES) \
      $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
