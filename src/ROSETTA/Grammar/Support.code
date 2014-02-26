@@ -8105,7 +8105,26 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                        printf ("-----    --- --- These are NOT the same initializedName values and should have resolved to be the same pointer value if there were the same initializedName! (really?) \n");
                                                        printf ("WARNING: initializedName associated with same different initializedName was not checked... (might be different initializedName with the same name and type) \n");
 #endif
-                                                       isTemplateType = false;
+                                                    // DQ (2/16/2014): test2014_17.C demonstrates that the SgInitializedName pointers need not match for this to be the same template parameter.
+                                                    // I think it is enough that they are the same type, but it migh also be required that the names match as well (but I don't think this is 
+                                                    // required for C++).
+                                                    // isTemplateType = false;
+                                                       if (templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type())
+                                                          {
+                                                            isTemplateType = true;
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                            printf ("-----    --- --- These are NOT the same initializedName pointers, but they match in type! \n");
+#endif
+                                                         // DQ (2/16/2014): I am not certain that the names have to match, but assert this for now as part of testing!
+                                                            ROSE_ASSERT (templateParameterOrArgumentLocal->get_initializedName()->get_name() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_name());
+                                                          }
+                                                         else
+                                                          {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                            printf ("-----    --- --- These are NOT the same initializedName pointers OR the same type! \n");
+#endif
+                                                            isTemplateType = false;
+                                                          }
                                                      }
                                                 }
                                            }
@@ -9031,7 +9050,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // if ( functionSymbol != NULL )
             // if ( original_aliased_symbol != NULL )
             // if ( (original_aliased_symbol != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type))
-               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || (type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type) ) )
+            // if ( (original_aliased_symbol != NULL) && ( (type == NULL) || (type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type) ) )
+               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type)) ) )
                   {
                  // printf ("Found a valid functionSymbol = %p = %s \n",functionSymbol,functionSymbol->get_name().str());
                     p_name    = nm;

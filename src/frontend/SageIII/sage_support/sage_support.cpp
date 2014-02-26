@@ -10,6 +10,7 @@
 #include "sage_support.h"
 #include "dwarfSupport.h"
 #include "keep_going.h"
+#include "failSafePragma.h"
 #include "cmdline.h"
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -20,7 +21,9 @@
 
 #include <algorithm>
 
-#define BOOST_FILESYSTEM_VERSION 2
+// DQ (2/10/2014): We now want to avoid specifying this explicitly if possible.
+// #define BOOST_FILESYSTEM_VERSION 2
+
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
@@ -2611,11 +2614,11 @@ SgFile::secondaryPassOverSourceFile()
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
-  // This pass collects extra information about the soruce file thay may not have
+  // This pass collects extra information about the source file that may not have
   // been available from previous tools that operated on the file. For example:
   //    1) EDG ignores comments and so we collect the whole token stream in this phase.
   //    2) OFP ignores comments similarly to EDG and so we collect the whole token stream.
-  //    3) Binary disassemblily ignores the binary format so we collect this information
+  //    3) Binary disassembly ignores the binary format so we collect this information
   //       about the structure of the ELF binary separately.
   // For source code (C,C++,Fortran) we collect the whole token stream, for example:
   //    1) Comments
@@ -2693,6 +2696,9 @@ SgFile::secondaryPassOverSourceFile()
             // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
 #endif
+               // Liao, 1/29/2014, handle failsafe pragmas for resilience work
+               if (sourceFile->get_failsafe())
+                 FailSafe::process_fail_safe_directives (sourceFile); 
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)

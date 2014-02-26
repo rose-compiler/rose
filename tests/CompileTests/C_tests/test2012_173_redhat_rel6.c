@@ -1,7 +1,7 @@
 // DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
-#include <linux/types.h>
+// #include <linux/types.h>
 
-#if 0
+#if 1
 // DQ (2/22/2014): These are required for RedHat 6, but are redundant for RedHat 5 and cause an error.
 // The solution has been to build a special RedHat 6 version of this test and to used an automake
 // conditional to include one or the other in the regression tests.  This will allow the Jenkins
