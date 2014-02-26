@@ -215,7 +215,8 @@ cout.flush();
     // Each method in a class definition is mapped into a unique method index.  This is done via 
     // the attribute
     class_definition -> setAttribute("method-members-map", new AstSgNodeListAttribute());
-    class_definition -> setAttribute("method-type-parameter-scopes", new AstSgNodeListAttribute());
+// TODO: Remove this! 12/09/13
+//    class_definition -> setAttribute("method-type-parameter-scopes", new AstSgNodeListAttribute());
 
 // TODO: Remove this! 12/09/13
 //    astJavaComponentStack.push(class_definition); // To mark the end of the list of components in this type.
@@ -269,8 +270,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateClassSupportStart(JNIEnv *en
     //    class_definition -> setAttribute("method-members-map", new AstSgNodeListAttribute());
     //    class_definition -> setAttribute("method-type-parameter-scopes", new AstSgNodeListAttribute());
 */
+
     ROSE_ASSERT(class_definition -> attributeExists("method-members-map"));
-    ROSE_ASSERT(class_definition -> attributeExists("method-type-parameter-scopes"));
+
+// TODO: Remove this! 12/09/13
+//    ROSE_ASSERT(class_definition -> attributeExists("method-type-parameter-scopes"));
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Java_JavaParser_cactionUpdateClassSupportStart(): %s \n", name.str());
@@ -306,9 +310,10 @@ cout.flush();
     setJavaSourcePosition(parameter_declaration, env, jToken);
     setJavaSourcePosition(parameter_definition, env, jToken);
 
-    SgJavaParameterType *parameter_type = isSgJavaParameterType(parameter_declaration -> get_type());
-    parameter_type -> setAttribute("is_parameter_type", new AstRegExAttribute(""));
-
+// TODO: Remove this
+//    SgJavaParameterType *parameter_type = isSgJavaParameterType(parameter_declaration -> get_type());
+//    parameter_type -> setAttribute("is_parameter_type", new AstRegExAttribute(""));
+//
     if (SgProject::get_verbose() > 2)
         printf ("Done Building a Type Parameter \n");
 }
@@ -334,20 +339,32 @@ cout.flush();
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     ROSE_ASSERT(class_definition);
  
-    SgScopeStatement *type_space = NULL;
-    SgClassSymbol *class_symbol = NULL;
+// TODO: Remove this
+/*
+    AstSgNodeAttribute *type_space_attribute = NULL;
     if (method_index >= 0) { // The type parameter is enclosed in a method in the enclosing type?
-        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-        ROSE_ASSERT(method_index < attribute -> size());
-        type_space = isSgScopeStatement(attribute -> getNode(method_index));
+// TODO: Remove this! 12/09/13
+//        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
+//        ROSE_ASSERT(method_index < attribute -> size());
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+        ROSE_ASSERT(attribute);
+        SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
+        ROSE_ASSERT(method_definition);
+        SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
+        ROSE_ASSERT(method_declaration);
+        type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
     }
     else {
-        AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
-        type_space = isSgScopeStatement(attribute -> getNode());
+        type_space_attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
     }
 
+    ROSE_ASSERT(type_space_attribute);
+    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());
     ROSE_ASSERT(type_space);
-    class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
+*/
+    SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.top());
+    ROSE_ASSERT(type_space && (! isSgClassDefinition(type_space)) && (! isSgFunctionDefinition(type_space)) && (! isSgBasicBlock(type_space)));
+    SgClassSymbol *class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
 
     SgClassDeclaration *parameter_declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
     ROSE_ASSERT(parameter_declaration);
@@ -403,26 +420,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePushMethodParameterScope(JNI
 
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
-    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-    ROSE_ASSERT(attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(method_index));
 
-/*
-    SgFunctionDefinition *method_definition = isSgFunctionDefinition(astJavaScopeStack.top());
-    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration()); 
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+    ROSE_ASSERT(attribute);
+    SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
+    ROSE_ASSERT(method_definition);
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
     ROSE_ASSERT(method_declaration);
     AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
-    ROSE_ASSERT(type_space_attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode()); // This scope will be used to store Type Parameters, if there are any.
-    ROSE_ASSERT(type_space);
-*/
-// TODO: Remove this!
-/*
-cout << "Adding type space " << ((long unsigned) type_space) << " for method "
-     << method_declaration -> get_name().getString()
-     << endl;
-cout.flush();
-*/
+    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());
+
     astJavaScopeStack.push(type_space);
 
     if (SgProject::get_verbose() > 2)
@@ -945,11 +952,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportStart(JNIEnv *en
     type_space -> setAttribute("name", new AstRegExAttribute(method_name.getString())); // TODO: temporary patch used for mangling!
     setJavaSourcePosition(type_space, env, method_location);
 
+// TODO: Remove this
+/*
     if (method_index >= 0) {
         AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
         ROSE_ASSERT(attribute);
         attribute -> setNode(type_space, method_index);
     }
+*/
 
 // TODO: Remove this
 /*
@@ -1031,17 +1041,15 @@ cout.flush();
         method_declaration -> setAttribute("alternate-return-type", new AstRegExAttribute(getTypeName(return_type))); // TODO: This is a temporary patch to replace the commented code above until the bug is fixed!
     }
 
-    astJavaScopeStack.push(method_definition);
-
-    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
-    ROSE_ASSERT(type_space_attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode()); // This scope will be used to store Type Parameters, if there are any.
-    ROSE_ASSERT(type_space);
-    if (method_index >= 0) { // Save the type_space in the class. Make it indexable by the method index.
+// TODO: Remove this!
+/*
+   if (method_index >= 0) { // Save the type_space in the class. Make it indexable by the method index.
         AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
         ROSE_ASSERT(attribute);
         attribute -> setNode(type_space, method_index);
     }
+*/
+
 // TODO: Remove this!
 /*
 cout << "Introducing type space " << ((long unsigned) type_space) << " for method "
@@ -1049,6 +1057,9 @@ cout << "Introducing type space " << ((long unsigned) type_space) << " for metho
      << endl;
 cout.flush();
 */
+
+    astJavaScopeStack.push(method_definition);
+
     if (SgProject::get_verbose() > 1)
         printf ("Exiting UpdateMethodSupportStart for method = %s \n", name.str());
 }
@@ -1361,25 +1372,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env,
     // There is no reason to distinguish between defining and non-defining declarations in Java...
     //
     SgMemberFunctionDeclaration *method_declaration = buildDefiningMemberFunction(is_constructor ? "<init>" : method_name, class_definition, number_of_arguments, env, method_location, args_location);
+    method_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
     setJavaSourcePosition(method_declaration, env, method_location);
     ROSE_ASSERT(method_declaration != NULL);
     if (is_compiler_generated) {
         method_declaration -> setAttribute("compiler-generated", new AstRegExAttribute("")); // TODO: This is needed because the ROSE flag below cannot be tested.
         method_declaration -> setCompilerGenerated();
     }
-    method_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
 
     SgFunctionDefinition *method_definition = method_declaration -> get_definition();
     ROSE_ASSERT(method_definition);
+
     if (method_index >= 0) {
 // TODO: Remove this !!!
 //        method_definition -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
 //        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
 //        ROSE_ASSERT(attribute);
 //        attribute -> setNode(method_definition, method_index);
-
-        method_definition -> setAttribute("index", new AstIntAttribute(method_index));
-
+//
+//        method_definition -> setAttribute("index", new AstIntAttribute(method_index));
+//
         AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
         ROSE_ASSERT(attribute);
         attribute -> setNode(method_definition, method_index);
@@ -1492,13 +1504,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateMethodSupportEnd(JNIEnv *env
         method_declaration -> setAttribute("updated-parameter-types", attribute);
     }
 
-    //
-    //
-    //
-    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
-    ROSE_ASSERT(type_space_attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode()); // This scope will be used to store Type Parameters, if there are any.
-    ROSE_ASSERT(type_space);
     if (method_index >= 0) {
 // TODO: Remove this !!!
 //        method_definition -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
@@ -2536,16 +2541,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration(JNIEnv *env
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
 
-    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-    ROSE_ASSERT(attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(constructor_index));
-    ROSE_ASSERT(type_space);
-    astJavaScopeStack.push(type_space);
-
-    attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
     ROSE_ASSERT(attribute);
     SgFunctionDefinition *constructor_definition = isSgFunctionDefinition(attribute -> getNode(constructor_index));
     ROSE_ASSERT(constructor_definition);
+    SgMemberFunctionDeclaration *constructor_declaration = isSgMemberFunctionDeclaration(constructor_definition -> get_declaration());
+    ROSE_ASSERT(constructor_declaration);
+    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) constructor_declaration -> getAttribute("type_space");
+    ROSE_ASSERT(type_space_attribute);
+    SgScopeStatement *type_space = (SgScopeStatement *) type_space_attribute -> getNode();
+    ROSE_ASSERT(type_space);
+    astJavaScopeStack.push(type_space);
     astJavaScopeStack.push(constructor_definition);
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
@@ -2871,35 +2877,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration(JNIEnv *env, jcl
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
 
-    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-// TODO: Remove this
-/*!
-if (! attribute) {
-cout << "Looking at method " << name.getString() << " in class " << class_definition -> get_qualified_name().getString() << " in source file " << ::currentSourceFile -> getFileName() << endl;
-cout.flush();
-}
-*/
-    ROSE_ASSERT(attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(method_index));
-// TODO: Remove this
-/*
-if (!type_space){
-cout << "Could not find type space for method " 
-     << name.getString()
-     << " with index "
-     << method_index
-     << endl;
-cout.flush();
-}
-*/
-    ROSE_ASSERT(type_space);
-
-    attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
     ROSE_ASSERT(attribute);
     SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
     ROSE_ASSERT(method_definition);
     SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
     ROSE_ASSERT(method_declaration);
+    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
+    ROSE_ASSERT(type_space_attribute);
+    SgScopeStatement *type_space = (SgScopeStatement *) type_space_attribute -> getNode();
+    ROSE_ASSERT(type_space);
     ROSE_ASSERT(method_declaration -> get_type());
     ROSE_ASSERT(method_declaration -> get_type() -> get_return_type());
     method_declaration -> setAttribute("type", new AstRegExAttribute(method_declaration -> attributeExists("alternate-return-type") // TODO: This is here to bypass a bug!!!  See Java_JavaParser_cactionUpdateMethodSupportStart.
@@ -3258,32 +3245,35 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     ROSE_ASSERT(class_definition);
  
-    SgScopeStatement *type_space = NULL;
-    SgClassSymbol *class_symbol = NULL;
-    if (method_index >= 0) { // The type parameter is enclosed in a method in the enclosing type?
-        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-        ROSE_ASSERT(method_index < attribute -> size());
-        type_space = isSgScopeStatement(attribute -> getNode(method_index));
-    }
-    else {
-        AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
-        type_space = isSgScopeStatement(attribute -> getNode());
-    }
-
-    ROSE_ASSERT(type_space);
-    class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
-
-// TODO: Remove this !!!
-/*
     //
     // Look in the type parameter scopes for the type in question.
     //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && i != astJavaScopeStack.end(); i++) {
-        if (isSgScopeStatement(*i)) { // a type parameter scope?
-            class_symbol = lookupClassSymbolInScope(*i, type_parameter_name); // lookupSimpleNameTypeInClass(type_parameter_name, class_definition);
+    SgClassSymbol *class_symbol = NULL;
+    if (method_index >= 0) { // The type parameter is enclosed in a method in the enclosing type?
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+        ROSE_ASSERT(attribute);
+        SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
+        if (method_definition) { // The method header is available!
+            SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
+            ROSE_ASSERT(method_declaration);
+            AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) method_declaration -> getAttribute("type_space");
+            ROSE_ASSERT(type_space_attribute);
+            SgScopeStatement *type_space = (SgScopeStatement *) type_space_attribute -> getNode();
+            ROSE_ASSERT(type_space);
+            class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
+        }
+        else { // The method header not yet available, look for type in the Scope Stack!
+            for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && i != astJavaScopeStack.end(); i++) {
+                class_symbol = lookupClassSymbolInScope(*i, type_parameter_name);
+            }
         }
     }
-*/
+    else {
+        AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
+        SgScopeStatement *type_space = isSgScopeStatement(type_space_attribute -> getNode());
+        ROSE_ASSERT(type_space);
+        class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
+    }
 
 // TODO:  Remove this!
 //    SgClassSymbol *class_symbol = lookupParameterTypeByName(type_parameter_name); // lookupSimpleNameTypeInClass(type_parameter_name, class_definition);
@@ -3316,6 +3306,8 @@ cout << "Could not find parameter "
      << type_parameter_name.getString()
      << " in type "
      << class_declaration -> get_qualified_name().getString()
+     << " in file "
+     << ::currentSourceFile -> getFileName()
 << endl;
 cout.flush();
 }
@@ -3990,19 +3982,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNI
 
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
-// TODO: Remove this!
-/*
-cout << "Looking at Annotation method " << name.getString() << " in class " << class_definition -> get_qualified_name().getString() << " in source file " << ::currentSourceFile -> getFileName() << endl;
-cout.flush();
-*/
 
-    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-
-    ROSE_ASSERT(attribute);
-    SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(method_index));
-    ROSE_ASSERT(type_space);
-
-    attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
     ROSE_ASSERT(attribute);
     SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
     ROSE_ASSERT(method_definition);
@@ -6084,13 +6065,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(J
     constInit -> set_parent(newExpression);
 
     //
-    // TODO: Temporary patch until the SgNewExp can handle a prefix.
-    //
-    if (expression_prefix) {
-        newExpression -> setAttribute("new_prefix", new AstSgNodeAttribute(expression_prefix));
-    }
-
-    //
     // TODO: Temporary patch until the SgNewExp can handle anonymous types.
     //
     if (is_anonymous) {
@@ -6099,13 +6073,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(J
 
     setJavaSourcePosition(newExpression, env, jToken);
 
-    string type_name = getTypeName(type);
-// TODO: Remove this !!!
-//cout << "(3) Allocating a method of type " << type_name << endl;
-//cout.flush();
-    newExpression -> setAttribute("type", new AstRegExAttribute(type_name));
-
-    astJavaComponentStack.push(newExpression);
+    SgExpression *result = newExpression;
+    if (expression_prefix) {
+        newExpression -> setAttribute("type", new AstRegExAttribute(getUnqualifiedTypeName(type)));
+        result = SageBuilder::buildBinaryExpression<SgDotExp>(expression_prefix, newExpression);
+        setJavaSourcePosition(result, env, jToken);
+    }
+    else {
+        newExpression -> setAttribute("type", new AstRegExAttribute(getTypeName(type)));
+    }
+    astJavaComponentStack.push(result);
 }
 
 
