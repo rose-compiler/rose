@@ -227,8 +227,6 @@ api_t * Driver<Sage>::getAPI(unsigned file_id) const {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
     assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    std::cerr << "Scanning class/struct " << (*it_class_symbol)->get_name() << " from file " << it_sym_decl_file_id->second << std::endl;
-
     if (it_sym_decl_file_id->second == file_id)
       api->class_symbols.insert(*it_class_symbol);
   }

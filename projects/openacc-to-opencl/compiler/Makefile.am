@@ -24,5 +24,10 @@ openacc_to_opencl_LDADD = \
 
 if ROSE_HAVE_OPENCL_INC
 check-local: openacc-to-opencl
+	rm -f host-data.c kernels.cl
 	./openacc-to-opencl $(top_srcdir)/../tests/101/101-klt.lt $(top_srcdir)/../libopenacc/ $(OPENCL_INC_DIR)
 endif
+
+clean-local:
+	rm -f host-data.c kernels.cl
+

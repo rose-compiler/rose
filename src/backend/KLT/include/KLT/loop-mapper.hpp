@@ -39,6 +39,7 @@ void LoopMapper<Annotation, Language, Runtime>::createKernels(
   std::list<Kernel<Annotation, Language, Runtime> *> kernel_list;
 
   Kernel<Annotation, Language, Runtime> * kernel = new Kernel<Annotation, Language, Runtime>();
+    kernel->num_loops = loop_trees.numberLoops();
   kernel_list.push_back(kernel);
 
   kernel->getRoots().insert(kernel->getRoots().end(), trees.begin(), trees.end());

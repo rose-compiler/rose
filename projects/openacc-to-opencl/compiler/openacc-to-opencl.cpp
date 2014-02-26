@@ -33,10 +33,39 @@ namespace MDCG {
 
 namespace OpenACC {
 
-struct RegionDesc {
-  struct input_t {
-    
-  };
+struct LoopDesc {
+  typedef Runtime::a_loop input_t;
+
+  static SgExpression * createFieldInitializer(
+    const MDCG::CodeGenerator & codegen,
+    MDCG::Model::field_t element,
+    unsigned field_id,
+    const input_t & input,
+    unsigned file_id
+  ) {
+
+    switch (field_id) {
+      case 0:
+        /// /todo unsigned long tiles[7];
+        return SageBuilder::buildAggregateInitializer(
+                 SageBuilder::buildExprListExp(
+                   SageBuilder::buildIntVal(input.tile_0),
+                   SageBuilder::buildIntVal(input.gang),
+                   SageBuilder::buildIntVal(input.tile_1),
+                   SageBuilder::buildIntVal(input.worker),
+                   SageBuilder::buildIntVal(input.tile_2),
+                   SageBuilder::buildIntVal(input.vector),
+                   SageBuilder::buildIntVal(input.tile_3)
+                 )
+               );
+      default:
+        assert(false);
+    }
+  }
+};
+
+struct KernelVersion {
+  typedef Kernel::a_kernel * input_t;
 
   static SgExpression * createFieldInitializer(
     const MDCG::CodeGenerator & codegen,
@@ -47,9 +76,149 @@ struct RegionDesc {
   ) {
     switch (field_id) {
       case 0:
-        /// \todo
+        /// /todo unsigned long num_gang;
+        return SageBuilder::buildIntVal(0);
       case 1:
-        /// todo
+        /// /todo unsigned long num_worker;
+        return SageBuilder::buildIntVal(0);
+      case 2:
+        /// /todo unsigned long vector_length;
+        return SageBuilder::buildIntVal(1);
+      case 3:
+      {
+        /// struct acc_loop_t_ * loops;
+        MDCG::Model::type_t type = element->node->type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+        return codegen.createArrayPointer<LoopDesc>(type->node->base_class, input->loops.size(), input->loops.begin(), input->loops.end(), file_id);
+      }
+      case 4:
+        /// char * suffix;
+        return SageBuilder::buildStringVal(input->kernel_name);
+      default:
+        assert(false);
+    }
+  }
+};
+
+struct KernelDesc {
+  typedef Kernel * input_t;
+
+  static SgExpression * createFieldInitializer(
+    const MDCG::CodeGenerator & codegen,
+    MDCG::Model::field_t element,
+    unsigned field_id,
+    const input_t & input,
+    unsigned file_id
+  ) {
+    const Kernel::arguments_t & args = input->getArguments();
+    const std::vector<Kernel::a_kernel *> & versions = input->getKernels();
+
+    switch (field_id) {
+      case 0:
+        /// unsigned id;
+        return SageBuilder::buildIntVal(input->id);
+      case 1:
+        /// size_t num_scalars;
+        return SageBuilder::buildIntVal(args.scalars.size());
+      case 2:
+        /// size_t * size_scalars;
+        return SageBuilder::buildIntVal(0); /// \todo
+      case 3:
+        /// size_t num_datas;
+        return SageBuilder::buildIntVal(args.datas.size());
+      case 4:
+        /// size_t num_loops;
+        return SageBuilder::buildIntVal(input->num_loops);
+      case 5:
+        /// \todo size_t num_devices;
+        return SageBuilder::buildIntVal(1);
+      case 6:
+        /// unsigned num_versions;
+        return SageBuilder::buildIntVal(versions.size());
+      case 7:
+      {
+        /// acc_kernel_version_t * versions;
+        MDCG::Model::type_t type = element->node->type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+        return codegen.createPointerArrayPointer<KernelVersion>(type->node->base_class, versions.size(), versions.begin(), versions.end(), file_id);
+      }
+      case 8:
+      {
+        /// \todo acc_loop_splitter_t * splitted_loop;
+        return SageBuilder::buildIntVal(0);
+      }
+      default:
+        assert(false);
+    }
+  }
+};
+
+struct RegionDesc {
+  struct input_t {
+    unsigned id;
+    std::string file;
+    std::set<std::list<Kernel *> > kernel_lists;
+  };
+
+  static SgExpression * createFieldInitializer(
+    const MDCG::CodeGenerator & codegen,
+    MDCG::Model::field_t element,
+    unsigned field_id,
+    const input_t & input,
+    unsigned file_id
+  ) {
+    assert(input.kernel_lists.size() == 1);
+    const std::list<Kernel *> & kernels = *(input.kernel_lists.begin());
+
+    switch (field_id) {
+      case 0:
+        /// unsigned id;
+        return SageBuilder::buildIntVal(input.id);
+      case 1:
+        /// char * file;
+        return SageBuilder::buildStringVal(input.file.c_str());
+      case 2:
+        /// \todo size_t num_options;
+        return SageBuilder::buildIntVal(0);
+      case 3:
+        /// \todo char ** options;
+        return SageBuilder::buildIntVal(0);
+      case 4:
+        /// size_t num_kernels;
+        return SageBuilder::buildIntVal(kernels.size());
+      case 5:
+      {
+        /// acc_kernel_desc_t * kernels;
+        MDCG::Model::type_t type = element->node->type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+        return codegen.createPointerArrayPointer<KernelDesc>(type->node->base_class, kernels.size(), kernels.begin(), kernels.end(), file_id);
+      }
+      case 6:
+        /// \todo size_t num_devices;
+        return SageBuilder::buildIntVal(0);
+      case 7:
+        /// \todo struct { acc_device_t kind; size_t num; } * devices;
+        return SageBuilder::buildIntVal(0); // NULL
+      case 8:
+        /// \todo size_t num_distributed_datas;
+        return SageBuilder::buildIntVal(0);
+      case 9:
+        /// \todo struct acc_data_distribution_t_ * data_distributions;
+        return SageBuilder::buildIntVal(0); // NULL
       default:
         assert(false);
     }
@@ -63,25 +232,25 @@ struct RegionDesc {
 unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_dir) {
   unsigned openacc_model = model_builder.create();
 
-  model_builder.add(openacc_model, "openacc",      libopenacc_dir + "include/OpenACC/",         "h");
-  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "debug",        libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "compiler",     libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "api",          libopenacc_dir + "include/OpenACC/device",   "cl");
+  model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/internal", "h");
   model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/internal", "h");
   model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "api",          libopenacc_dir + "include/OpenACC/device",   "cl");
+//model_builder.add(openacc_model, "compiler",     libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/internal", "h");
+//model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "debug",        libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/private",  "h");
+//model_builder.add(openacc_model, "openacc",      libopenacc_dir + "include/OpenACC/",         "h");
 
   return openacc_model;
 }
@@ -125,7 +294,7 @@ int main(int argc, char ** argv) {
   // Read OpenACC Model
   unsigned model = readOpenaccModel(model_builder, libopenacc_dir);
 
-  unsigned host_data_file_id = driver.add(boost::filesystem::path(std::string("host_data.c")));
+  unsigned host_data_file_id = driver.add(boost::filesystem::path(std::string("host-data.c")));
   driver.setUnparsedFile(host_data_file_id);
 
   // Load OpenACC API for KLT
@@ -139,16 +308,17 @@ int main(int argc, char ** argv) {
   );
 
   // Call the generator
-  std::set<std::list<Kernel *> > kernel_lists;
-  generator.generate(loop_trees, kernel_lists, cg_config);
+
+  MDCG::OpenACC::RegionDesc::input_t input;
+  input.id = 0;
+  input.file = std::string("kernels.cl");
+  generator.generate(loop_trees, input.kernel_lists, cg_config);
 
   // Get model element for Region Descriptor
   std::set<MDCG::Model::class_t> classes;
   model_builder.get(model).lookup<MDCG::Model::class_t>("acc_region_desc_t_", classes);
   assert(classes.size() == 1);
   MDCG::Model::class_t region_desc_class = *(classes.begin());
-
-  MDCG::OpenACC::RegionDesc::input_t input;
 
   codegen.addDeclaration<MDCG::OpenACC::RegionDesc>(region_desc_class, input, host_data_file_id, "regions");
 /*

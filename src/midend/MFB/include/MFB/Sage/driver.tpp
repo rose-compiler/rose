@@ -26,7 +26,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   std::map<SgSymbol *, unsigned>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
   assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-  unsigned long sym_decl_file_id = it_sym_decl_file_id->second;
+  unsigned sym_decl_file_id = it_sym_decl_file_id->second;
 
   bool need_include_directive = !need_forward_only;
 

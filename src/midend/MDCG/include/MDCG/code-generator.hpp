@@ -41,6 +41,8 @@ class CodeGenerator {
     SgInitializer * createInitializer(Model::class_t element, const typename ModelTraversal::input_t & input, unsigned file_id) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+      p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
+
       std::vector<Model::field_t>::const_iterator it_field;
       unsigned field_id = 0;
       for (it_field = element->scope->field_children.begin(); it_field != element->scope->field_children.end(); it_field++)
@@ -142,6 +144,8 @@ class CodeGenerator {
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
       SgType * type = element->node->symbol->get_type();
+      assert(type != NULL);
+      type = SageBuilder::buildPointerType(type);
       assert(type != NULL);
       type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
       assert(type != NULL);

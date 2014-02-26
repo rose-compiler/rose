@@ -125,6 +125,8 @@ class LoopTrees {
     
     /// Write a lisp like text
     void toText(std::ostream & out) const;
+    
+    unsigned numberLoops() const;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -669,6 +671,29 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
     for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
       symbols.insert((*it_var_ref)->get_symbol());
   }
+}
+
+template <class Annotation> 
+unsigned LoopTrees<Annotation>::numberLoops() const {
+  std::list<loop_t *> loops;
+  typename std::list<node_t *>::const_iterator it_node;
+  for (it_node = p_trees.begin(); it_node != p_trees.end(); it_node++) {
+    loop_t * loop = dynamic_cast<loop_t *>(*it_node);
+    if (loop != NULL)
+      loops.push_back(loop);
+  }
+
+  typename std::list<loop_t *>::iterator it_loop = loops.begin();
+  while (it_loop != loops.end()) {
+    for (it_node = (*it_loop)->children.begin(); it_node != (*it_loop)->children.end(); it_node++) {
+      loop_t * loop = dynamic_cast<loop_t *>(*it_node);
+      if (loop != NULL)
+        loops.push_back(loop);
+    }
+    it_loop++;
+  }
+
+  return loops.size();
 }
 
 /** @} */

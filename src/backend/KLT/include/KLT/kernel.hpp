@@ -23,6 +23,8 @@ template <class Annotation, class Language, class Runtime>
 class Kernel {
   public:
     const unsigned long id;
+    
+    unsigned num_loops;
 
   public:
     struct dataflow_t {
@@ -83,6 +85,7 @@ class Kernel {
   public:
     Kernel() :
       id(id_cnt++),
+      num_loops(0),
       p_looptree_roots(),
       p_data_flow(),
       p_arguments(),
