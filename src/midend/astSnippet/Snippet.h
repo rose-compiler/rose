@@ -110,12 +110,12 @@ protected:
  *
  *  This class implements a simple API for inserting crafted statements into locations in a (typically) larger specimen. It
  *  isn't intended to handle all possible cases, but rather to be an alternative to the more complicated SageBuilder
- *  interface.
+ *  interface. See "Limitations" below.
  *
  * @section S1 What is a snippet?
  *
  *  A snippet is a function in a snippet source file (SnippetFile) along with prerequisites in its global scope. The statements
- *  of the snippet are injected into a specimen function at a chosen insertion point akin to inlining, and the snippets global
+ *  of the snippet are injected into a specimen function at a chosen insertion point akin to inlining, and the snippet's global
  *  prerequisites are injected ino the specimen's global scope. For C source code, each function definition in the snippet file
  *  is a snippet.
  *
@@ -139,15 +139,15 @@ protected:
  *
  * @code
  *  SgStatement *cursor = ...;                    // statement before which snippet is inserted
- *  SgInitializedName *var_a = ..., *var_b = ...; // insertion point variables bound to snippet
- *  SgExpression *expr_1 = ...;                   // insertion point expression bound to snippet
+ *  SgInitializedName *var_a = ..., *var_b = ...; // insertion point variables to be bound to snippet
+ *  SgExpression *expr_1 = ...;                   // insertion point expression to be bound to snippet
  *
- *  foo->insert(cursor);                          // insert foo() with no arguments
- *  bar->insert(cursor, var_a);                   // 1st arg of bar() is bound to var_a
+ *  foo->insert(cursor);                          // insert snippet foo() with no arguments
+ *  bar->insert(cursor, var_a);                   // 1st arg of snippet bar() is bound to var_a
  *  bannana->insert(cursor, var_a, expr_1, var_b);// 3 args of bannana() are bound to things
  * @endcode
  *
- *  Two modes of insertion are supported: The INJECT_BODY mode copies the snippets body scope into the insertion point so that
+ *  Two modes of insertion are supported: The INJECT_BODY mode copies the snippet's body scope into the insertion point so that
  *  all snippet local variables remain in the same (new) scope as the rest of the inserted snippet statements.  This is quick
  *  and easy, but doesn't allow two snippets that are inserted at the same level in a function to share any local variables
  *  (but they can still both refer to variables at the injection site via argument binding in the insert() method).  The
@@ -162,7 +162,7 @@ protected:
  *  that has a special name.  If the snippet has a formal argument named "a" then a typedef for "typeof_a" will be modified so
  *  its base type is the same type as the actual value bound to "a". This only works when the type of the actaul value is
  *  consistent with the default value provided in the typedef.  For instance, here's the implementation of a snippet that swaps
- *  the value of two variables regardless of the type of the variables (this works as long as 'char' can be replaced with the
+ *  the value of two variables regardless of the type of the variables (this works as long as 'int' can be replaced with the
  *  actual type and still be syntactically correct):
  *
  * @code
@@ -257,6 +257,21 @@ protected:
  *      copy_string10(heap_storage, s);
  *  }
  * @endcode
+ *
+ * @section S6 Limitations
+ *
+ *  Since snippet ASTs are simply copied from the snippet file's AST and planted into the application AST they still point to
+ *  symbols that are part of the snippet file, not part of the application.  Therefore, one should not expect any kind of
+ *  complex analysis to be able to be performed on the result.  All you should expect is to be able to unparse the AST to
+ *  generate source code.  Also, if the copied snippet AST refers to entities that were not copied into the application AST
+ *  then the unparsed code probably won't compile.  In fact, even when one would expect things to work, the backend unparser
+ *  may still get confused by some of the nodes point across from the application to the snippet file.
+ *
+ *  Some problems may occur when a snippet's definition in the snippet file is adjacent to C preprocessor directives.
+ *  Preprocessor directives are always attached to nearby AST nodes, so copying such a node from a snippet AST to an
+ *  application AST will copy the preprocessor directives also.  As a special case, if the top node of a copied AST has an
+ *  attached include directive, the include directive is removed.
+ * 
  */
 class Snippet {
     friend class SnippetFile;                           // for protected constructor
@@ -367,6 +382,9 @@ protected:
 
     /** Replace a variable reference with some other expression. */
     static void replaceVariable(SgVarRefExp*, SgExpression*);
+
+    /** Remove C preprocessor #include directives from the specified node. */
+    static void removeIncludeDirectives(SgNode*);
     
     /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
      *  aren't already inserted. */
