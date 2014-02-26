@@ -2251,7 +2251,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
             else
              {
 #if 0
-               curprint("\n /* Output the qualified class name */ \n");
+               curprint("\n /* Output the qualified class name: mfunc_ref->get_need_qualifier() == true */ \n");
 #endif
             // printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
             // DQ (6/1/2011): Use the newly generated qualified names.
@@ -2274,6 +2274,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
             // DQ (5/19/2012): This case also happens for test2005_112.C. This case is now supported.
             // When the address of a member function is take it must use the qualified name.
                SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
+#if 0
+               curprint("\n /* Output the qualified class name for SgAddressOfOp */ \n");
+#endif
                curprint (nameQualifier);
             // printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
                print_colons = true;
@@ -2288,7 +2291,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      string full_function_name = func_name;
 
 #if MFuncRefSupport_DEBUG
-     curprint ( "\n /* Inside of unparseMFuncRef (after name qualification) func_name = " + func_name + " */ \n");
+ // DQ (2/8/2014): This is a problem when we output comments in the func_name and comments will not nest.
+ // curprint ( "\n /* Inside of unparseMFuncRef (after name qualification) func_name = " + func_name + " */ \n");
 #endif
 #if MFuncRefSupport_DEBUG
      printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
@@ -2662,6 +2666,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               curprint("/* In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output */ \n");
 #endif
                               curprint(" " + func_name + " ");
+                           // curprint(" /* In unparseMFuncRefSupport(): function name is NOT output (not overloaded reference or dereference operator) */ " + func_name + " ");
+                           // curprint(" /* In unparseMFuncRefSupport(): after output of function_name */ ");
                             }
                            else
                             {
@@ -4208,6 +4214,11 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(cast_op != NULL);
 
 #if 0
+     printf ("In unparseCastOp(): expr = %p \n",expr);
+     curprint("/* In unparseCastOp() */ \n ");
+#endif
+
+#if 0
      cast_op->get_file_info()->display("In unparseCastOp(): debug");
 #endif
 
@@ -4539,6 +4550,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
         {
           curprint(")");
         }
+
+#if 0
+     printf ("Leaving unparseCastOp(): expr = %p \n",expr);
+#endif
    }
 
 
@@ -5327,6 +5342,53 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
    }
 
 
+SgName
+Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName)
+   {
+  // This approach might not work since more complex qualified names will include template with 
+  // template parameters that have qualified names.  So we will have to support building the 
+  // name qualification string differently for this special case of a SgConstructorInitializer.
+  // Alternatively we can truncate the output of "::<class name>".
+
+  // This function is used in both the unparseOneElemConInit() and unparseConInit() functions.
+
+  // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
+     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+#ifndef _MSC_VER
+     if (backEndCompiler == "g++")
+        {
+       // Now check the version of the identified GNU g++ compiler.
+          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+             {
+            // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
+            // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.
+               string temp_nameQualifier = nameQualifier.str();
+#if 0
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): g++ version 4.5 or greater: temp_nameQualifier = %s \n",temp_nameQualifier.c_str());
+#endif
+            // trim the trailing "A::" from the end of the nameQualifier.
+               size_t temp_nameQualifier_last  = temp_nameQualifier.find_last_not_of("::");
+#if 0
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %zu \n",temp_nameQualifier_last);
+#endif
+               if (temp_nameQualifier_last != string::npos)
+                  {
+                    string temp_nameQualifier_substring = temp_nameQualifier.substr(0,temp_nameQualifier_last+1);
+#if 0
+                    printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_substring = %s \n",temp_nameQualifier_substring.c_str());
+#endif
+                    nameQualifier = temp_nameQualifier_substring.c_str();
+                    skipOutputOfFunctionName = true;
+                  }
+             }
+        }
+#else
+  // DQ (2/21/2014): Not clear if this is a similar compiler specific bug to address for Visual MSC++.
+#endif
+
+     return nameQualifier;
+   }
+
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -5526,6 +5588,12 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                curprint(con_init->get_declaration()->get_name().str());
 #else
             // DQ (5/26/2013): This is the newer version of the code.
+#if 0
+               printf("In unparseConInit(): nameQualifier = %s (must be modified for GNU g++ 4.5 compilers) \n",nameQualifier.str());
+#endif
+            // DQ (2/8/2014): Added support to generate names that are suitable for the later versions of the GNU g++ compiler.
+               bool skipOutputOfFunctionName = false;
+               nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
 
             // DQ (5/26/2013): Output the name qualification for the class.
                curprint(nameQualifier.str());
@@ -5551,6 +5619,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
 #endif
+
+               if (skipOutputOfFunctionName == false)
+                  {
             // If this is a template then the name will include template arguments which require name qualification and the name 
             // qualification will depend on where the name is referenced in the code.  So we have generate the non-canonical name 
             // with all possible qualifications and save it to be reused by the unparser when it unparses the tempated function name.
@@ -5584,6 +5655,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                     curprint(func_name);
                   }
 #endif
+                  }
              }
             else
              {
@@ -5600,6 +5672,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                     printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
 #endif
+                 // DQ (2/8/2014): I think this process of trimming the generated name is not required where there is not 
+                 // associated member function and we are using the class name directly.
+                    bool skipOutputOfFunctionName = false;
+                 // nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
+
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
                     curprint(nameQualifier.str());
 #if 0
@@ -5616,7 +5693,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                     printf ("In unparseConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
 #endif
-                    unp->u_type->unparseType(con_init->get_type(),newinfo);
+                 // unp->u_type->unparseType(con_init->get_type(),newinfo);
+                    if (skipOutputOfFunctionName == false)
+                       {
+                         unp->u_type->unparseType(con_init->get_type(),newinfo);
+                       }
 #if 0
                     printf ("DONE: In unparseConInit(): unparseType() \n");
 #endif

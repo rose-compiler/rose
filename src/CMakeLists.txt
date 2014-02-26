@@ -7,6 +7,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
@@ -880,6 +881,13 @@ if(enable-rosehpct)
     )
 endif()
 
+# Liao, 1/27/2014,roseExtensions_SRC defined before is conditionalized by
+# enable rose hpct, which is not desired since there are other subdirs under
+# roseExtensions. 
+set(failsafe_SRC
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
+ )
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -939,6 +947,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
+ ${failsafe_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}
