@@ -549,9 +549,9 @@ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PS
   }
 }
 
-void extractArrayUpdateOperations(Analyzer* ana) {
-  ofstream myfile;
-  myfile.open("arrayupdates.txt");
+typedef vector<pair<const EState*, SgExpression*> > ArrayUpdatesSequence;
+
+void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates) {
   Labeler* labeler=ana->getLabeler();
   VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
   TransitionGraph* tg=ana->getTransitionGraph();
@@ -585,11 +585,24 @@ void extractArrayUpdateOperations(Analyzer* ana) {
         substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
         rewriteAst(expCopy, variableIdMapping);
         cout<<expCopy->unparseToString()<<endl;
-        myfile<<expCopy->unparseToString()<<endl;
+		SgExpression* expCopy2=isSgExpression(expCopy);
+		if(!expCopy2) {
+		  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<expCopy->class_name()<<endl;
+		  exit(1);
+		}
+		arrayUpdates.push_back(make_pair(estate,expCopy2));
       }
     }
     // next successor set
     succSet=tg->succ(estate);
+  }
+}
+
+void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename) {
+  ofstream myfile;
+  myfile.open(filename.c_str());
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+	myfile<<(*i).second->unparseToString()<<endl;
   }
   myfile.close();
 }
@@ -1073,7 +1086,10 @@ int main( int argc, char * argv[] ) {
   }
 
   if(boolOptions["dump1"]) {
-	extractArrayUpdateOperations(&analyzer);
+	ArrayUpdatesSequence arrayUpdates;
+	extractArrayUpdateOperations(&analyzer,arrayUpdates);
+	string filename="arrayupdates.txt";
+	writeArrayUpdatesToFile(arrayUpdates, filename);
   }
 
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
