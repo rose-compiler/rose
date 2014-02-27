@@ -394,6 +394,7 @@ if (enable-java)
   set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
   set(USE_ROSE_INTERNAL_JAVA_SUPPORT 1)
   get_filename_component(BACKEND_JAVA_COMPILER ${Java_JAVAC_EXECUTABLE} NAME)
+  install(FILES ${JAVA_JVM_LIBRARY} DESTINATION lib)
 endif()
 
 option(enable-opencl "Enable OpenCL support in ROSE." ON)
