@@ -197,6 +197,9 @@ protected:
  *    <li>Include directives, conditionally (see below).</li>
  *  </ul>
  *
+ *  A declaration/definition is not copied if it (or anything below it in the AST) contains a comment whose text has a
+ *  substring matching "DO_NOT_INSERT".
+ *
  *  Include directives in a snippet file may be followed by a comment whose first word is the name of a function or
  *  typedef. The include directive is inserted only if no typedef or function declaration exists with that name.  If the
  *  include directive isn't followed by a comment, then it is inserted unconditionally.
@@ -385,7 +388,11 @@ protected:
 
     /** Remove C preprocessor #include directives from the specified node. */
     static void removeIncludeDirectives(SgNode*);
-    
+
+    /** Returns true if the comment is found.  Traverses the AST and looks for any comment that has a substring that matches
+     *  @p toMatch. */
+    bool hasCommentMatching(SgNode *ast, const std::string &toMatch);
+
     /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
      *  aren't already inserted. */
     void insertGlobalStuff(SgStatement *insertionPoint);
