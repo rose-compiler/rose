@@ -18,7 +18,7 @@ main(int argc, char *argv[])
     SgProject *project = frontend(args);
     
 
-    std::string snippetFileName = SnippetTests::findSnippetFile("snippets4");
+    std::string snippetFileName = SnippetTests::findSnippetFile("snippets4.c");
     SnippetPtr storeString = Snippet::instanceFromFile("store"+what, snippetFileName);
     SnippetPtr loadString  = Snippet::instanceFromFile("load"+what,  snippetFileName);
 

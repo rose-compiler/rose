@@ -11,7 +11,7 @@ namespace SnippetTests {
 std::string findSnippetFile(const std::string &fileName);
 
 /** Find a function definition having the specified name. */
-SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string functionName);
+SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string fullyQualifiedFunctionName);
 
 /** Find the last statement in a function definition after which we can reasonably insert another statement. */
 SgStatement *findLastAppendableStatement(SgFunctionDefinition*);

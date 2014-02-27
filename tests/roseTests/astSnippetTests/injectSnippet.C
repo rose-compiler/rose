@@ -9,16 +9,15 @@ usage(const std::string &arg0)
     std::cerr <<"usage: " <<arg0 <<" --test:snippet=[FILE_NAME.]SNIPPET_NAME --test:ipoint-function=NAME [TEST_SWITCHES] [ROSE_SWITCHES] SPECIMEN\n"
               <<"  These two switches are required since they describe what to inject and\n"
               <<"  where to inject it:\n"
-              <<"    --test:snippet=[FILE_NAME.]SNIPPET_NAME\n"
+              <<"    --test:snippet=[FILE_NAME,]SNIPPET_NAME\n"
               <<"        The name of the snippet, a function name.  The snippet name can\n"
-              <<"        optionally be prefixed by the base name of the source file which\n"
+              <<"        optionally be prefixed by the name of the source file which\n"
               <<"        contains the snippet and the test will search various places for that\n"
-              <<"        file.  The file name should not include the \".c\" suffix.  For\n"
-              <<"        example, \"--test:snippet=file1.snippet1\" will find a file named\n"
+              <<"        file.  For example, \"--test:snippet=file1.c,snippet1\" will find a file named\n"
               <<"        \"file1.c\" which contains a function named \"snippet1\".\n"
-              <<"    --test:ipoint-function=NAME\n"
-              <<"        The name of the specimen function where the snippet is to be inserted.\n"
-              <<"        this switch is required.  The snippet is inserted before the first\n"
+              <<"    --test:ipoint-function=FQNAME\n"
+              <<"        The fully qualified name of the specimen function where the snippet is to be\n"
+              <<"        inserted. This switch is required.  The snippet is inserted before the first\n"
               <<"        statement in the ipoint-function that references a variable named\n"
               <<"        \"INSERT_HERE\" (normally one would find an insertion point by\n"
               <<"        matching some pattern in the specimen, but this is only a test).\n"
@@ -103,11 +102,11 @@ main(int argc, char *argv[])
             usage(argv0);
         } else if (!strncmp(argv[argno], "--test:snippet=", 15)) {
             std::string s = argv[argno]+15;
-            size_t dot = s.find_first_of('.');
+            size_t dot = s.find_first_of(',');
             if (dot==std::string::npos) {
                 snippet_name = s;
             } else {
-                snippet_file_name = s.substr(0, dot) + ".c";
+                snippet_file_name = s.substr(0, dot);
                 snippet_name = s.substr(dot+1);
             }
         } else if (!strcmp(argv[argno], "--test:insert-mechanism=body")) {
