@@ -236,16 +236,22 @@ void removeConstantFoldedValue( SgNode* node )
      printf ("Processing the array types and bitfields \n");
      printf ("**************************************** \n");
 #endif
-
+     
+     {
+     TimingPerformance timer1 ("Fixup Constant Folded Values (catch all expresions via memory pool traversal):");
   // DQ (9/17/2011): Use a traversal over the memory pool so that we can catch all 
   // expressions, even those not in the AST traversal such as those in array types.
      RemoveConstantFoldedValueViaParent astFixupTraversal_2;
      astFixupTraversal_2.traverseMemoryPool();
-
+     }
+     
   // DQ (10/12/2012): Turn on the verification that expression trees have been removed...previously commented out.
 #if 1
+     {
+     TimingPerformance timer1 ("Fixup Constant Folded Values (verifyFixup):");
      VerifyOriginalExpressionTreesSetToNull verifyFixup;
      verifyFixup.traverseMemoryPool();
+     }
 #endif
    }
 
@@ -649,7 +655,9 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
 #else
                  // The ROSE AST needs to be fixed to handle more general expressions for bitfield widths (this does not effect the CFG).
                  // TODO: Change the data type of the bitfield data member in SgVariableDefinition.
-                    printf ("Member data bitfield widths need to be changed (in the ROSE IR) to support more general expressions (can't fix this original expression tree) \n");
+
+                 // DQ (1/20/2014): This has been done now.
+                 // printf ("Member data bitfield widths need to be changed (in the ROSE IR) to support more general expressions (can't fix this original expression tree) \n");
 #endif
 #if 0
                  // This case is not handled yet!

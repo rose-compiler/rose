@@ -320,7 +320,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
                                   file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
                                   file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
-
+#endif
+#if 0
      file->display("file: Unparser::unparseFile");
 #endif
 
@@ -639,8 +640,14 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
   // Note that these are the SgToken IR nodes and we have generated a token stream via the type: LexTokenStreamType.
   // ROSE_ASSERT(file->get_token_list().empty() == true);
-     ROSE_ASSERT(file->get_token_list().empty() == false);
 
+
+  // ROSE_ASSERT(file->get_token_list().empty() == false);
+     if (file->get_token_list().empty() == true)
+        {
+          printf ("Warning: unparseFileUsingTokenStream(): In no tokens found \n");
+          return;
+        }
 #if 0
      ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
      ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -1459,9 +1466,20 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
 #if ROSE_GCC_OMP
 #pragma omp critical (unparser)
 #endif
-     {
-       returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
-     }
+        {
+          if (inputUnparseInfoPointer != NULL)
+             {
+#if 0
+               printf ("In globalUnparseToString(): inputUnparseInfoPointer->SkipClassDefinition() = %s \n",(inputUnparseInfoPointer->SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In globalUnparseToString(): inputUnparseInfoPointer->SkipEnumDefinition()  = %s \n",(inputUnparseInfoPointer->SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inputUnparseInfoPointer->SkipClassDefinition() == inputUnparseInfoPointer->SkipEnumDefinition());
+             }
+
+          returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+        }
+
      return returnString;
    }
 
@@ -1697,6 +1715,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
      printf ("In globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
+#if 0
+     printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipClassDefinition() = %s \n",(inheritedAttributeInfo.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipEnumDefinition()  = %s \n",(inheritedAttributeInfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+  // DQ (1/13/2014): These should have been setup to be the same.
+     ROSE_ASSERT(inheritedAttributeInfo.SkipClassDefinition() == inheritedAttributeInfo.SkipEnumDefinition());
+
   // Both SgProject and SgFile are handled via recursive calls
      if ( (isSgProject(astNode) != NULL) || (isSgSourceFile(astNode) != NULL) )
         {
@@ -1786,6 +1811,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
           if (isSgType(astNode) != NULL)
              {
                const SgType* type = isSgType(astNode);
+
+#if 0
+               printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipClassDefinition() = %s \n",(inheritedAttributeInfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipEnumDefinition()  = %s \n",(inheritedAttributeInfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inheritedAttributeInfo.SkipClassDefinition() == inheritedAttributeInfo.SkipEnumDefinition());
 
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
@@ -2528,9 +2560,20 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
                   << "signal in Unparser::unparseFile()"
                   << std::endl;
 
-              file->set_unparserErrorCode(-1);
-              status_of_function =
-                  max(1, status_of_function);
+              if (file != NULL)
+              {
+                  file->set_unparserErrorCode(100);
+                  status_of_function =
+                      max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
           }
       #else
       if (false) {}

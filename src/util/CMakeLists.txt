@@ -58,5 +58,5 @@ execute_process(
 
 install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h
                compilationFileDatabase.h Map.h rose_getline.h rose_strtoull.h
-               roseTraceLib.c
+               roseTraceLib.c Stopwatch.h ParallelSort.h
         DESTINATION ${INCLUDE_INSTALL_DIR})

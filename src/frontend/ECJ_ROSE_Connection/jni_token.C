@@ -1,11 +1,11 @@
-#include<string>
-
 #include "jni_token.h"
 #include "jni_utils.h"
 #include "jni_JavaSourceCodePosition.h"
 #include <assert.h>
 #include <iostream>
-  
+
+using namespace std;
+
 Token_t *convert_Java_token(JNIEnv *env, jobject token) {
     assert(env != NULL);
 
