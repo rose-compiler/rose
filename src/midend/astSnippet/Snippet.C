@@ -2,6 +2,7 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
@@ -580,9 +581,6 @@ Snippet::insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *
 
     // Insert the include if necessary
     if (!exists || m2.empty()) {
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-02-27]*/
-        std::cerr <<"ROBB: Inserting " <<inc <<"\n";
-#endif
 #if 0
         // [Robb P. Matzke 2014-02-27]: this attaches it too late in the file; we need it before the globals we inserted
         SageInterface::insertHeader(filename, PreprocessingInfo::before, is_system_header, ipoint_globscope);
@@ -609,6 +607,36 @@ Snippet::removeIncludeDirectives(SgNode *node)
             }
         }
     }
+}
+
+bool
+Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
+{
+    struct Visitor: AstSimpleProcessing {
+        std::string toMatch;
+        bool foundComment;
+        Visitor(const std::string &toMatch): toMatch(toMatch), foundComment(false) {}
+        void visit(SgNode *node) {
+            if (!foundComment) {
+                if (SgLocatedNode *lnode = isSgLocatedNode(node)) {
+                    if (AttachedPreprocessingInfoType *cpplist = lnode->getAttachedPreprocessingInfo()) {
+                        BOOST_FOREACH (PreprocessingInfo *cpp, *cpplist) {
+                            switch (cpp->getTypeOfDirective()) {
+                                case PreprocessingInfo::C_StyleComment:
+                                case PreprocessingInfo::CplusplusStyleComment:
+                                case PreprocessingInfo::F90StyleComment:
+                                    foundComment = boost::contains(cpp->getString(), toMatch);
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } visitor(toMatch);
+    visitor.traverse(ast, preorder);
+    return visitor.foundComment;
 }
 
 void
@@ -661,6 +689,10 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
         // the snippet file itself.
         if (!snippetStmt->get_file_info()->isSameFile(ast->get_file_info()))
             continue; // this came from some included file rather than the snippet itself.
+
+        // If a declaration is blacklisted in the snippet file then don't insert it.
+        if (hasCommentMatching(snippetStmt, "DO_NOT_INSERT"))
+            continue;
 
         if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(snippetStmt)) {
             if (!vdecl->get_declarationModifier().get_storageModifier().isExtern()) {

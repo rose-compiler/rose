@@ -9,6 +9,10 @@ void randomOffByOne(int arg1)
     arg1 += tmp_offset;
 }
 
+void shouldNotBeInserted()                              // DO_NOT_INSERT
+{}
+
+
 void addWithError(int addend1, int addend2, int result)
 {
     typedef int typeof_result;
