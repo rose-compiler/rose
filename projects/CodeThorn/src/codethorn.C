@@ -394,6 +394,38 @@ string readableruntime(double time) {
   return s.str();
 }
 
+//! Check if an expression is an array access (SgPntrArrRefExp) . If so, return its name and subscripts if requested. 
+// FOR TESTING ONLY
+  bool myisArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
+  {
+    SgExpression* arrayRef=NULL;
+    if (ref->variantT() == V_SgPntrArrRefExp) {
+      if (subscripts != 0 || arrayName != 0) {
+        SgExpression* n = ref;
+        while (true) {
+          SgPntrArrRefExp *arr = isSgPntrArrRefExp(n);
+          if (arr == 0)
+            break;
+          n = arr->get_lhs_operand();
+          // store left hand for possible reference exp to array variable
+          if (arrayName!= 0)
+            arrayRef = n;
+          // right hand stores subscripts
+          if (subscripts != 0) {// must insert to be the first here !! The last visited rhs will be the first dimension!!
+            (*subscripts)->insert( (*subscripts)->begin(),  arr->get_rhs_operand());
+            //(*subscripts)->push_back(arr->get_rhs_operand());
+          }
+        } // end while
+        if  (arrayName !=NULL)
+        {
+          *arrayName = arrayRef;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
 static Analyzer* global_analyzer=0;
 
 // rewrites an AST
@@ -549,6 +581,14 @@ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PS
   }
 }
 
+struct EStateExprInfo {
+  const EState* first;
+  SgExpression* second;
+  bool mark;
+  EStateExprInfo():first(0),second(0),mark(false){}
+  EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
+};
+
 typedef pair<const EState*, SgExpression*> EStateExprPair;
 typedef vector<EStateExprPair> ArrayUpdatesSequence;
 
@@ -606,59 +646,107 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
 struct ArrayElementAccessData {
   VariableId varId;
   vector<int> subscripts;
+  ArrayElementAccessData();
+  ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping);
+  string toString(VariableIdMapping* variableIdMapping);
+  //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
+  bool isValid();
+  bool operator==(ArrayElementAccessData& other) {
+    for(size_t i=0;i<subscripts.size();++i)
+      if(subscripts[i]!=other.subscripts[i])
+        return false;
+    return varId==other.varId;
+  }
 };
 
-ArrayElementAccessData arrayElementAccessData(SgPntrArrRefExp* ref) {
-  ArrayElementAccessData access;
-  // TODO-1: determine data
-  return access;
+ArrayElementAccessData::ArrayElementAccessData() {
+}
+
+string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
+  if(isValid()) {
+    stringstream ss;
+    ss<< variableIdMapping->uniqueShortVariableName(varId);
+    for(vector<int>::iterator i=subscripts.begin();i!=subscripts.end();++i) {
+      ss<<"["<<*i<<"]";
+    }
+    return ss.str();
+  } else {
+    return "$non-valid-array-access$";
+  }
+}
+
+bool ArrayElementAccessData::isValid() {
+  return varId.isValid() && subscripts.size()>0;
+}
+
+ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping) {
+  // determine data
+  SgExpression* arrayNameExp;
+  std::vector<SgExpression*> subscriptsvec;
+  std::vector<SgExpression*> *subscripts=&subscriptsvec;
+  SageInterface::isArrayReference(ref, &arrayNameExp, &subscripts);
+  //cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size()<<"subscripts:";
+  varId=variableIdMapping->variableId(SageInterface::convertRefToInitializedName(ref));
+  //cout<<"NameCheck:"<<variableIdMapping->uniqueShortVariableName(access.varId)<<" ";
+  for(size_t i=0;i<(*subscripts).size();++i) {
+    //cout<<(*subscripts)[i]<<":"<<(*subscripts)[i]->unparseToString()<<" ";
+    if(SgIntVal* subscriptint=isSgIntVal((*subscripts)[i])) {
+      //cout<<"VAL:"<<subscriptint->get_value();
+      this->subscripts.push_back(subscriptint->get_value());
+    }
+  }
 }
 
 // searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
-SgPntrArrRefExp* findDefOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos) {
-  ArrayElementAccessData useRefData=arrayElementAccessData(useRefNode);
-  SgPntrArrRefExp* found=0;
-  cout<<"@RHS:"<<useRefNode->unparseToString();
+SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping) {
+  ArrayElementAccessData useRefData(useRefNode,variableIdMapping);
+  cout<<"@RHS:"<<useRefNode->unparseToString()<<" ";
+  cout<<"@RHS-CHECK:"<<useRefData.toString(variableIdMapping)<<" ";
   cout<<"@POS:"<<(*pos).second->unparseToString();
+  cout<<endl;
   // TODO-2: check search backwards
-#if 0
-  do {
-	SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
-	ArrayElementAccessData defData=arrayElementAccessData(isSgPntrArrRefExp(lhs));
-	if(defData==useRefData) {
-	  return isSgPntrArrRefExp(lhs);
-	}
-	--pos;
-  } while (pos!=arrayUpdates.end());
-#endif  
-  return found;
+  while (pos!=arrayUpdates.begin()) {
+    SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
+    ROSE_ASSERT(lhs);
+    ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
+    if(defData==useRefData) {
+      //return isSgPntrArrRefExp(lhs);
+      return (*pos).second; // return pointer to assignment expression (instead directly to def);
+    }
+    ArrayUpdatesSequence::iterator t=arrayUpdates.begin();
+    --pos;
+  };
+  return 0;
 }
 
 
-void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates) {
-  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-	SgExpression* exp=(*i).second;
-	SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
-	SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-	ROSE_ASSERT(isSgPntrArrRefExp(lhs));
-	cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
-#if 0
-	// does not work
-	SgExpression* arrayNameExp;
-	std::vector<SgExpression*> *subscripts;
-	SageInterface::isArrayReference(lhs, &arrayNameExp, &subscripts);
-	cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size();
-#endif
-	RoseAst rhsast(rhs);
-	for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
-	  if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
-		j.skipChildrenOnForward();
-		// search for def here
-		SgPntrArrRefExp* def=findDefOfArrayElementUse(useRef, arrayUpdates, i);
-	    // TODO: if(def!=0) replace 'useRef' with 'def'
-	  }
-	}
-	cout<<endl;
+void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  //  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+  ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
+  ++i; // we start at element 2 because no substitutions can be performed in the first one AND this simplifies passing the previous element (i-1) when starting the backward search
+  for(;i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+    ROSE_ASSERT(isSgPntrArrRefExp(lhs));
+    cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
+    RoseAst rhsast(rhs);
+    for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+      if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+        j.skipChildrenOnForward();
+        // search for def here
+        ArrayUpdatesSequence::iterator i_copy=i;
+        --i_copy; // necessary and guaranteed to not decrement i=begin() because the loop starts at (i=begin())++
+        SgNode* defAssign=findDefAssignOfArrayElementUse(useRef, arrayUpdates, i_copy, variableIdMapping);
+        if(defAssign) {
+          SgExpression* defRhs=isSgExpression(SgNodeHelper::getRhs(defAssign));
+          ROSE_ASSERT(defRhs);
+          //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
+          SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+        }
+      }
+    }
+    cout<<endl;
   }
 }
 
@@ -1152,7 +1240,7 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["dump1"]) {
 	ArrayUpdatesSequence arrayUpdates;
 	extractArrayUpdateOperations(&analyzer,arrayUpdates);
-	substituteArrayRefs(arrayUpdates);
+	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping());
 	string filename="arrayupdates.txt";
 	writeArrayUpdatesToFile(arrayUpdates, filename);
   }
