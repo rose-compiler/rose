@@ -443,8 +443,64 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
      2) normalize expressions (reordering of inner nodes and leave nodes)
      3) constant folding (leave nodes)
   */
+
+  {
+    // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
+	if(isSgCompoundAssignOp(root)) {
+	  SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+	  SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+	  SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
+	  SgExpression* newExp;
+	  switch(root->variantT()) {
+	  case V_SgPlusAssignOp:
+	   newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
+	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+	   break;
+	  case V_SgDivAssignOp:
+	   newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
+	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+		break;
+	  case V_SgMinusAssignOp:
+	   newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
+	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+		break;
+	  case V_SgMultAssignOp:
+	   newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
+	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+		break;
+	  default: /* ignore all other cases - all other expr remain unmodified */
+		;
+	  }
+	}
+
+    MatchResult res=m.performMatching(
+                                      "SgSgMinusOp($IntVal=SgIntVal)\
+                                      ",root);
+    if(res.size()>0) {
+      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+        // match found
+        SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
+        SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
+        cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+        int rawval=val->get_value();
+        // replace with folded value (using integer semantics)
+        switch(op->variantT()) {
+        case V_SgMinusOp:
+          SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+          break;
+        default:
+          cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+          exit(1);
+        }
+        someTransformationApplied=true;
+      }
+    }
+ }
+
   do{
     someTransformationApplied=false;
+
+
 do {
     // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
     transformationApplied=false;
@@ -549,8 +605,7 @@ do {
       }
     }
  } while(transformationApplied);
-  if(someTransformationApplied)
-    cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
+//if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
   } while(someTransformationApplied);
 }
 
@@ -589,8 +644,8 @@ struct EStateExprInfo {
   EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
 };
 
-typedef pair<const EState*, SgExpression*> EStateExprPair;
-typedef vector<EStateExprPair> ArrayUpdatesSequence;
+//typedef pair<const EState*, SgExpression*> EStateExprPair;
+typedef vector<EStateExprInfo> ArrayUpdatesSequence;
 
 void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates) {
   Labeler* labeler=ana->getLabeler();
@@ -635,7 +690,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
 		  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<expCopy->class_name()<<endl;
 		  exit(1);
 		}
-		arrayUpdates.push_back(make_pair(estate,expCopy2));
+		arrayUpdates.push_back(EStateExprInfo(estate,expCopy2));
       }
     }
     // next successor set
@@ -700,10 +755,12 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
 // searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
 SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping) {
   ArrayElementAccessData useRefData(useRefNode,variableIdMapping);
+#if 0
   cout<<"@RHS:"<<useRefNode->unparseToString()<<" ";
   cout<<"@RHS-CHECK:"<<useRefData.toString(variableIdMapping)<<" ";
   cout<<"@POS:"<<(*pos).second->unparseToString();
   cout<<endl;
+#endif
   // TODO-2: check search backwards
   while (pos!=arrayUpdates.begin()) {
     SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
@@ -711,16 +768,48 @@ SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdates
     ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
     if(defData==useRefData) {
       //return isSgPntrArrRefExp(lhs);
+	  (*pos).mark=true; // mark each used definition
       return (*pos).second; // return pointer to assignment expression (instead directly to def);
     }
-    ArrayUpdatesSequence::iterator t=arrayUpdates.begin();
     --pos;
   };
   return 0;
 }
 
+class NumberAstAttribute : public AstAttribute {
+public:
+  int index;
+  NumberAstAttribute():index(-1){}
+  NumberAstAttribute(int index):index(index){}
+  string toString() {
+	stringstream ss;
+	ss<<index;
+	return ss.str();
+  }
+};
 
-void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+#include <map>
+
+void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  std::map<string,int> defVarNumbers;
+  for(size_t i=0;i<arrayUpdates.size();++i) {
+	SgExpression* exp=arrayUpdates[i].second;
+	SgNode* lhs=SgNodeHelper::getLhs(exp);
+	SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs);
+	ROSE_ASSERT(arr);
+	ArrayElementAccessData access(arr,variableIdMapping);
+	if(defVarNumbers.count(access.toString(variableIdMapping))==0) {
+	  defVarNumbers[access.toString(variableIdMapping)]=1;
+	} else {
+	  defVarNumbers[access.toString(variableIdMapping)]=defVarNumbers[access.toString(variableIdMapping)]+1;
+	}
+	arr->setAttribute("Number",new NumberAstAttribute(defVarNumbers[access.toString(variableIdMapping)]));
+  }
+}
+
+enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
+
+void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
   //  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
   ++i; // we start at element 2 because no substitutions can be performed in the first one AND this simplifies passing the previous element (i-1) when starting the backward search
@@ -729,7 +818,7 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
     ROSE_ASSERT(isSgPntrArrRefExp(lhs));
-    cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
+    //cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
     RoseAst rhsast(rhs);
     for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
       if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
@@ -742,19 +831,68 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
           SgExpression* defRhs=isSgExpression(SgNodeHelper::getRhs(defAssign));
           ROSE_ASSERT(defRhs);
           //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
-          SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+		  switch(sarMode) {
+		  case SAR_SUBSTITUTE: {
+			SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+			break;
+		  }
+		  case SAR_SSA: {
+			AstAttribute* attr=SgNodeHelper::getLhs(defAssign)->getAttribute("Number");
+			if(attr) {
+			  //cout<<"DEBUG: found attr:"<<attr->toString();
+			  useRef->setAttribute("Number",attr);
+			}
+			break;
+		  }
+		  }
         }
       }
     }
-    cout<<endl;
+    //cout<<endl;
   }
 }
 
-void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename) {
+bool compare_array_accesses(EStateExprInfo& e1, EStateExprInfo& e2) {
+  //ArrayElementAccessData d1(SgNodeHelper::getLhs(e1.second));
+  //SgNodeHelper::getLhs(e2.second);
+  return false;
+}
+
+#include<algorithm>
+void sortArrayUpdates(ArrayUpdatesSequence& arrayUpdates) {
+  //std::stable_sort(arrayUpdates.begin(), arrayUpdates.end(), compare_array_accesses);
+}
+
+void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode) {
+  // 1) create vector of generated assignments (preparation for sorting)
+  vector<string> assignments;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+	switch(sarMode) {
+	case SAR_SSA: {
+	  // annotate AST for unparsing Array-SSA form
+	  RoseAst ast((*i).second);
+	  for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+		if((*j)->attributeExists("Number")) {
+		  ROSE_ASSERT(isSgPntrArrRefExp(*j));
+		  AstUnparseAttribute* ssaNameAttribute=new AstUnparseAttribute(string("_")+(*j)->getAttribute("Number")->toString()+"_"+(*j)->unparseToString(),AstUnparseAttribute::e_replace);
+		  (*j)->setAttribute("AstUnparseAttribute",ssaNameAttribute);
+		}			
+	  }
+	  assignments.push_back((*i).second->unparseToString());
+	  break;
+	}
+	case SAR_SUBSTITUTE: {
+	  if(!(*i).mark)
+		assignments.push_back((*i).second->unparseToString());
+	}
+	}
+  }
+
+  sort(assignments.begin(),assignments.end());
   ofstream myfile;
   myfile.open(filename.c_str());
-  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-	myfile<<(*i).second->unparseToString()<<endl;
+  for(vector<string>::iterator i=assignments.begin();i!=assignments.end();++i) {
+	myfile<<(*i)<<endl;
   }
   myfile.close();
 }
@@ -1239,10 +1377,16 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["dump1"]) {
 	ArrayUpdatesSequence arrayUpdates;
+	cout<<"STATUS: performing array analysis on STG."<<endl;
+	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 	extractArrayUpdateOperations(&analyzer,arrayUpdates);
-	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping());
+	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
+	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
+	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
+	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
+	sortArrayUpdates(arrayUpdates);
 	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename);
+	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
   }
 
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());

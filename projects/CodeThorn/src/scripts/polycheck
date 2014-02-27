@@ -5,7 +5,7 @@
 function check {
 testname=$1
 ./codethorn tests/polyhedral/${testname}.c --dump1=yes >& /dev/null
-sort arrayupdates.txt > ${testname}.check
+sort -k1,1 -s arrayupdates.txt > ${testname}.check
 echo -n "$testname : "
 if(diff test.check ${testname}.check); then
 echo "PASS"
@@ -16,7 +16,7 @@ fi
 
 
 ./codethorn tests/polyhedral/test.c --dump1=yes >& /dev/null
-sort arrayupdates.txt > test.check
+sort -k1,1 -s arrayupdates.txt > test.check
 
 check rose_test_fuse
 check rose_test_1Dtile
