@@ -908,6 +908,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao, 1/30/2014: Support for FAIL-SAFE resilience pragma
+     File.setDataPrototype         ( "bool", "failsafe", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran
   // support in ROSE this corresponds to the "--dump" option in the Open Fortran Parser (OFP).
   // There is no corresponding action with EDG for the C and C++ support in ROSE, so for C/C++
