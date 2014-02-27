@@ -89,7 +89,6 @@ template<class RandomAccessIterator, class Compare>
 struct Worker {
     Job<RandomAccessIterator, Compare> &job;
     size_t id;                                          // only for debugging
-    static const bool debug = false;                    // make true if you want to see some debugging on std::cerr
     Worker(Job<RandomAccessIterator, Compare> &job, size_t id): job(job), id(id) {}
     void operator()() {
         boost::unique_lock<boost::mutex> lock(job.mutex);
@@ -104,13 +103,9 @@ struct Worker {
             ++job.npending;
 
             // Sort that unit of work
-            if (debug)
-                std::cerr <<id <<" sorting " <<(work.end-work.begin) <<" items\n";
             lock.unlock();
             quicksort(job, work);
             lock.lock();
-            if (debug)
-                std::cerr <<id <<" sorted\n";
 
             // Indicate that the work is completed
             assert(job.npending>0);

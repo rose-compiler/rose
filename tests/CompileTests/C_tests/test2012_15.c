@@ -13189,7 +13189,6 @@ typedef struct {
 
     ngx_uint_t deferred_accept;
 
-
     u_char addr[(sizeof("unix:") - 1 + (sizeof(struct sockaddr_un) - __builtin_offsetof (struct sockaddr_un, sun_path))) + 1];
 } ngx_http_listen_opt_t;
 
