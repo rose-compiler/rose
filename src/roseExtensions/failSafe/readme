@@ -1,0 +1,6 @@
+By Liao, 1/27/2014
+This directory has source files for supporting the FAIL-SAFE project, which uses a set of annotations to guide compiler/runtime
+to detect and recovery from faults.
+
+
+
