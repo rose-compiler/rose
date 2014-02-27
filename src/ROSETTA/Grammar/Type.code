@@ -357,9 +357,25 @@ HEADER_JAVA_PARAMETERIZED_TYPE_START
 HEADER_JAVA_PARAMETERIZED_TYPE_END
 
 
+HEADER_JAVA_QUALIFIED_TYPE_START
+          SgJavaQualifiedType ( const SgJavaQualifiedType & X );
+HEADER_JAVA_QUALIFIED_TYPE_END
+
+
 HEADER_JAVA_WILDCARD_TYPE_START
           SgJavaWildcardType ( const SgJavaWildcardType & X );
+          bool is_unbound();
 HEADER_JAVA_WILDCARD_TYPE_END
+
+
+HEADER_JAVA_UNION_TYPE_START
+          SgJavaUnionType ( const SgJavaUnionType & X );
+HEADER_JAVA_UNION_TYPE_END
+
+
+HEADER_JAVA_PARAMETER_TYPE_START
+          SgJavaParameterType ( const SgJavaParameterType & X );
+HEADER_JAVA_PARAMETER_TYPE_END
 
 
 HEADER_ENUM_TYPE_START
@@ -2896,10 +2912,12 @@ $CLASSNAME::get_mangled(void) const
              }
 */
              mangled_name = get_raw_type() -> get_mangled();
-             SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
-             for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
-                 mangled_name += "_";
-                 mangled_name += (*i) -> get_type() -> get_mangled();
+             if (get_type_list() != NULL) {
+                 SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+                 for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                     mangled_name += "_";
+                     mangled_name += (*i) -> get_type() -> get_mangled();
+                 }
              }
         }
 
@@ -2908,11 +2926,81 @@ $CLASSNAME::get_mangled(void) const
 SOURCE_JAVA_PARAMETERIZED_TYPE_END
 
 
-SOURCE_JAVA_WILDCARD_TYPE_START
-SgJavaWildcardType::SgJavaWildcardType ( const SgJavaWildcardType & X )
-   : SgType(X)
+SOURCE_JAVA_QUALIFIED_TYPE_START
+SgJavaQualifiedType::SgJavaQualifiedType ( const SgJavaQualifiedType & X )
+   : SgNamedType(X)
    {
    }
+
+SgName
+SgJavaQualifiedType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+  // if (get_name().get_length() != 0) // not anonymous
+     if (get_name().is_null() == false) // not anonymous
+        {
+ // TODO: Remove this !
+ /*
+          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
+       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+          if (class_decl != NULL)
+             {
+            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
+               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
+               if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
+#if 0
+                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
+#endif
+#if 0
+                    printf ("Need to get the mangled names of the template arguments \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // This is for just a simple SgClassDeclaration.
+                    mangled_name = class_decl->get_mangled_name();
+                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+                  }
+             }
+*/
+             mangled_name = get_parent_type() -> get_mangled();
+             mangled_name += "_";
+             mangled_name += get_type() -> get_mangled();
+        }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_QUALIFIED_TYPE_END
+
+
+SOURCE_JAVA_WILDCARD_TYPE_START
+SgJavaWildcardType::SgJavaWildcardType ( const SgJavaWildcardType & X )
+   : SgNamedType(X)
+   {
+   }
+
+bool
+SgJavaWildcardType::is_unbound() {
+    return p_extends_type == NULL && p_super_type == NULL;
+}
+
 
 SgName
 SgJavaWildcardType::get_name() const
@@ -2925,19 +3013,109 @@ SgJavaWildcardType::get_mangled (void) const
    {
      ROSE_ASSERT(this != NULL);
 
-     SgName mangled_name;
-     mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
-                  << get_name().str() // name of wildcard type is "?"
-                  << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
+     string mangled_name = "__MANGLED_ID_WILDCARD_TYPEb__";
+     mangled_name += get_name().str(); // name of wildcard type is "?"
+     if (p_extends_type != NULL) {
+         mangled_name += "_extends_" ;
+         mangled_name += p_extends_type -> get_mangled();
+     }
+     if (p_super_type != NULL) {
+         mangled_name += "_super_" ;
+         mangled_name += p_super_type -> get_mangled();
+     }
+     mangled_name += ("__MANGLED_ID_WILDCARD_TYPEe__"); // end tag
 
 #if 0
      printf ("LEAVING: In SgJavaWildcardType::get_mangled(): mangled_name = %s \n",mangled_name.str());
 #endif
 
-     return mangled_name;
+     return SgName(mangled_name);
    }
 
 SOURCE_JAVA_WILDCARD_TYPE_END
+
+
+SOURCE_JAVA_UNION_TYPE_START
+SgJavaUnionType::SgJavaUnionType ( const SgJavaUnionType & X )
+   : SgType(X)
+   {
+   }
+
+
+SgName
+SgJavaUnionType::get_name() const {
+    string name = "";
+    for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+      if (i > 0) { // != p_type_list.begin())
+            name += " | ";
+        }
+        name += isSgClassDeclaration(isSgNamedType(p_type_list[i]) -> getAssociatedDeclaration()) -> get_name();
+    }
+    return SgName(name); //. c_str()
+}
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+
+     for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+         if (i > 0) { // != p_type_list.begin())
+             mangled_name += "_|_";
+         }
+         mangled_name += p_type_list[i] -> get_mangled();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_UNION_TYPE_END
+
+
+SOURCE_JAVA_PARAMETER_TYPE_START
+SgJavaParameterType::SgJavaParameterType ( const SgJavaParameterType & X )
+   : SgClassType(X)
+   {
+   }
+
+
+SgName
+SgJavaParameterType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+  // DQ (2/10/2014): We want to iterate over the list of types and output a name from the concatination of the type names.
+  //   printf ("Implementation of SgJavaParameterType::get_mangled(void) not complete! \n");
+
+     SgClassDeclaration *class_declaration = isSgClassDeclaration(get_declaration() -> get_definingDeclaration());
+     ROSE_ASSERT(class_declaration);
+     SgName mangled_name = class_declaration -> get_mangled_name();
+     SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
+     for (int i = 0; i < bases.size(); i++) {
+         mangled_name += "_";
+         SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
+         mangled_name += super_type -> get_mangled_name();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_PARAMETER_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
@@ -5438,19 +5616,73 @@ SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optio
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
 
 
+SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaQualifiedType*
+SgJavaQualifiedType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE_END
+
+
 SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_START
 
 SgJavaWildcardType*
-SgJavaWildcardType::createType(SgType *bound_type /*=NULL*/, SgExpression* optional_fortran_type_kind)
+SgJavaWildcardType::createType(SgClassDeclaration *cd, SgExpression* optional_fortran_type_kind)
    {
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-     SgJavaWildcardType* returnType = new SgJavaWildcardType(bound_type, true);
+     SgJavaWildcardType* returnType = new SgJavaWildcardType(cd);
 
      return returnType;
    }
 SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_UNION_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaUnionType*
+SgJavaUnionType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_UNION_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaParameterType*
+SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+     if (! cd -> get_type()) {
+         $CLASSNAME *newType = new $CLASSNAME(cd);
+         cd -> set_type(newType);
+     }
+     return ($CLASSNAME *) cd -> get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START

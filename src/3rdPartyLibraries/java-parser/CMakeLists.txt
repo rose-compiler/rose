@@ -110,4 +110,5 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/JavaToken.class
     ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
   DESTINATION lib)
+install(FILES  ecj-3.8.2.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
 

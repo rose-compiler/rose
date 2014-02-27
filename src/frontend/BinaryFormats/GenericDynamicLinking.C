@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Accessors for "name" like ROSETTA's except setting name reparents the SgAsmGenericString. */
 SgAsmGenericString *
 SgAsmGenericDLL::get_name() const 

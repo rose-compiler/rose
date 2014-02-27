@@ -374,7 +374,9 @@ class UnparseLanguageIndependentConstructs
           bool isRequiredOperator( SgBinaryOp* binary_op, bool current_function_call_uses_operator_syntax, bool parent_function_call_uses_operator_syntax );
 
        // DQ (10/29/2013): Adding support to unparse statements using the token stream.
-          int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
+       // int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
+          int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+
           bool canBeUnparsedFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
 
        // DQ (11/29/2013): Added support to detect redundant statements (e.g. variable declarations 
@@ -383,6 +385,10 @@ class UnparseLanguageIndependentConstructs
 
        // DQ (11/30/2013): Adding support to suppress redundant unparsing of CPP directives and comments.
        // bool isTransitionFromTokenUnparsingToASTunparsing(SgStatement* statement);
+
+      // DQ (1/23/2014): This function support detecting when the supress the output of the SgDotExp
+      // in the access of data members from un-named unions.
+         bool isDotExprWithAnonymousUnion(SgExpression* expr);
    };
 
 #endif

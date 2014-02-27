@@ -1483,6 +1483,9 @@ Unparse_ExprStmt::unparseStatementExpression (SgExpression* expr, SgUnparse_Info
   // (so they are exceptions, see test2007_51.C).
      info2.unset_SkipClassDefinition();
 
+  // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+     info2.unset_SkipEnumDefinition();
+
      curprint ( "(");
      unparseStatement(statement,info2);
      curprint ( ")");
@@ -1527,6 +1530,14 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
 
+#if 0
+     printf ("In unparseBinaryOperator(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseBinaryOperator(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      unparseBinaryExpr(expr, newinfo);
 
 #if 0
@@ -1537,6 +1548,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 
 void
 Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
+
 
 void
 Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
@@ -1594,6 +1606,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           nameQualifier = var_ref->get_qualified_name_prefix();
         }
 
+  // DQ (1/22/2014): Adding support for generated names used in un-named variables.
+     bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+     printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+
+#if 0
   // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
   // DQ (11/9/2007): Need to ignore these sorts of generated names
      if (nameQualifier.getString().find("__unnamed_class") == string::npos)
@@ -1601,8 +1620,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
 #endif
-          curprint ( nameQualifier.str());
+          curprint(nameQualifier.str());
         }
+#else
+     curprint(nameQualifier.str());
+#endif
 
   // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
   // curprint (  var_ref->get_symbol()->get_name().str());
@@ -1615,7 +1637,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-          curprint (var_ref->get_symbol()->get_name().str());
+       // curprint (var_ref->get_symbol()->get_name().str());
+          if (isAnonymousName == false)
+             {
+               curprint (var_ref->get_symbol()->get_name().str());
+             }
         }
 
 #if 0
@@ -2225,7 +2251,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
             else
              {
 #if 0
-               curprint("\n /* Output the qualified class name */ \n");
+               curprint("\n /* Output the qualified class name: mfunc_ref->get_need_qualifier() == true */ \n");
 #endif
             // printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
             // DQ (6/1/2011): Use the newly generated qualified names.
@@ -2248,6 +2274,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
             // DQ (5/19/2012): This case also happens for test2005_112.C. This case is now supported.
             // When the address of a member function is take it must use the qualified name.
                SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
+#if 0
+               curprint("\n /* Output the qualified class name for SgAddressOfOp */ \n");
+#endif
                curprint (nameQualifier);
             // printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
                print_colons = true;
@@ -2262,7 +2291,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      string full_function_name = func_name;
 
 #if MFuncRefSupport_DEBUG
-     curprint ( "\n /* Inside of unparseMFuncRef (after name qualification) func_name = " + func_name + " */ \n");
+ // DQ (2/8/2014): This is a problem when we output comments in the func_name and comments will not nest.
+ // curprint ( "\n /* Inside of unparseMFuncRef (after name qualification) func_name = " + func_name + " */ \n");
 #endif
 #if MFuncRefSupport_DEBUG
      printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
@@ -2636,6 +2666,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               curprint("/* In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output */ \n");
 #endif
                               curprint(" " + func_name + " ");
+                           // curprint(" /* In unparseMFuncRefSupport(): function name is NOT output (not overloaded reference or dereference operator) */ " + func_name + " ");
+                           // curprint(" /* In unparseMFuncRefSupport(): after output of function_name */ ");
                             }
                            else
                             {
@@ -2747,8 +2779,16 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
         {
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
-               curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
+               curprint("L");
+
+       // curprint("\"" + str_val->get_value() + "\"");
+          string s = string("\"") + str_val->get_value() + string("\"");
+#if 0
+          printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
+#endif
+          curprint(s);
         }
 #endif
 #endif
@@ -4174,8 +4214,21 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(cast_op != NULL);
 
 #if 0
+     printf ("In unparseCastOp(): expr = %p \n",expr);
+     curprint("/* In unparseCastOp() */ \n ");
+#endif
+
+#if 0
      cast_op->get_file_info()->display("In unparseCastOp(): debug");
 #endif
+
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      SgUnparse_Info newinfo(info);
      newinfo.unset_PrintName();
@@ -4483,12 +4536,24 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      info.set_reference_node_for_qualification(cast_op->get_operand());
      ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
 
+#if 0
+     printf ("In unparseCastOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseCastOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/9/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      unparseExpression(cast_op->get_operand(), info); 
 
      if (addParens == true)
         {
           curprint(")");
         }
+
+#if 0
+     printf ("Leaving unparseCastOp(): expr = %p \n",expr);
+#endif
    }
 
 
@@ -5004,7 +5069,9 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
                  // Then the comment is in between the start of the construct and the end of the construct.
                     if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                        {
+#if 0
                          printf ("Found cpp include directive \n");
+#endif
                          returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
@@ -5040,7 +5107,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(aggr_init != NULL);
 
 #if 0
-  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
+  // DQ (1/26/2014): This would not be as portabile of a solution, but it is more robus in other ways. So this is a compromize.
+  // DQ (9/11/2013): It is a better solution to always unparse the ggregate attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
@@ -5078,6 +5146,15 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
                newinfo.unset_SkipClassDefinition();
+
+            // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
+               newinfo.unset_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+            // DQ (1/9/2014): These should have been setup to be the same.
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
              }
             else
              {
@@ -5105,7 +5182,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
+
 #if 0
   // DQ (7/27/2013): Commented this out since we do need it now that we support the compound literals.
      if (aggr_init->get_need_explicit_braces())
@@ -5261,6 +5341,53 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
      curprint(")");
    }
 
+
+SgName
+Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName)
+   {
+  // This approach might not work since more complex qualified names will include template with 
+  // template parameters that have qualified names.  So we will have to support building the 
+  // name qualification string differently for this special case of a SgConstructorInitializer.
+  // Alternatively we can truncate the output of "::<class name>".
+
+  // This function is used in both the unparseOneElemConInit() and unparseConInit() functions.
+
+  // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
+     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+#ifndef _MSC_VER
+     if (backEndCompiler == "g++")
+        {
+       // Now check the version of the identified GNU g++ compiler.
+          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+             {
+            // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
+            // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.
+               string temp_nameQualifier = nameQualifier.str();
+#if 0
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): g++ version 4.5 or greater: temp_nameQualifier = %s \n",temp_nameQualifier.c_str());
+#endif
+            // trim the trailing "A::" from the end of the nameQualifier.
+               size_t temp_nameQualifier_last  = temp_nameQualifier.find_last_not_of("::");
+#if 0
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %zu \n",temp_nameQualifier_last);
+#endif
+               if (temp_nameQualifier_last != string::npos)
+                  {
+                    string temp_nameQualifier_substring = temp_nameQualifier.substr(0,temp_nameQualifier_last+1);
+#if 0
+                    printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_substring = %s \n",temp_nameQualifier_substring.c_str());
+#endif
+                    nameQualifier = temp_nameQualifier_substring.c_str();
+                    skipOutputOfFunctionName = true;
+                  }
+             }
+        }
+#else
+  // DQ (2/21/2014): Not clear if this is a similar compiler specific bug to address for Visual MSC++.
+#endif
+
+     return nameQualifier;
+   }
 
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
@@ -5461,6 +5588,12 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                curprint(con_init->get_declaration()->get_name().str());
 #else
             // DQ (5/26/2013): This is the newer version of the code.
+#if 0
+               printf("In unparseConInit(): nameQualifier = %s (must be modified for GNU g++ 4.5 compilers) \n",nameQualifier.str());
+#endif
+            // DQ (2/8/2014): Added support to generate names that are suitable for the later versions of the GNU g++ compiler.
+               bool skipOutputOfFunctionName = false;
+               nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
 
             // DQ (5/26/2013): Output the name qualification for the class.
                curprint(nameQualifier.str());
@@ -5486,6 +5619,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
 #endif
+
+               if (skipOutputOfFunctionName == false)
+                  {
             // If this is a template then the name will include template arguments which require name qualification and the name 
             // qualification will depend on where the name is referenced in the code.  So we have generate the non-canonical name 
             // with all possible qualifications and save it to be reused by the unparser when it unparses the tempated function name.
@@ -5519,6 +5655,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                     curprint(func_name);
                   }
 #endif
+                  }
              }
             else
              {
@@ -5535,6 +5672,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                     printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
 #endif
+                 // DQ (2/8/2014): I think this process of trimming the generated name is not required where there is not 
+                 // associated member function and we are using the class name directly.
+                    bool skipOutputOfFunctionName = false;
+                 // nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
+
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
                     curprint(nameQualifier.str());
 #if 0
@@ -5551,7 +5693,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                     printf ("In unparseConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
 #endif
-                    unp->u_type->unparseType(con_init->get_type(),newinfo);
+                 // unp->u_type->unparseType(con_init->get_type(),newinfo);
+                    if (skipOutputOfFunctionName == false)
+                       {
+                         unp->u_type->unparseType(con_init->get_type(),newinfo);
+                       }
 #if 0
                     printf ("DONE: In unparseConInit(): unparseType() \n");
 #endif
@@ -5883,6 +6029,14 @@ Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
 
      ROSE_ASSERT (operand != NULL);
      ROSE_ASSERT (type != NULL);
+
+#if 0
+     printf ("In unparseVarArgOp(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarArgOp(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      curprint ( "va_arg(");
      unparseExpression(operand,info);

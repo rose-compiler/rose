@@ -100,7 +100,7 @@ check-local:
 
 
 # DQ (1/21/2009): Used as part of demos (since zgrviewer takes too long to visualize the associated dot file (25 minutes).
-EXTRA_DIST = CMakeLists.txt astEquivalenceGraphForBinaryCode3.png
+EXTRA_DIST = CMakeLists.txt #astEquivalenceGraphForBinaryCode3.png
 
 clean-local:
 	rm -f *.o rose_*.[s] rose_*.? *.dot *.png *.pdf *~ *.ps *.out *.new *.dump sqlite-database-name.* *.stderr *.stdout *.exe testProgram rose_performance_report_lockfile.lock

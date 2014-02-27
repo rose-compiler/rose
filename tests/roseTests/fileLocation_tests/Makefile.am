@@ -629,7 +629,7 @@ $(fileLocation_test_targets): fileLocation_%.passed: $(TESTCODES_DIRECTORY)/% fi
 	@$(RTH_RUN) \
 		TITLE="fileLocation $(notdir $<) [$@]" \
 		EXE="$$(pwd)/fileLocation $(fileLocation_test_flags)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/fileLocation.conf $@
 
 #------------------------------------------------------------------------------------------------------------------------
