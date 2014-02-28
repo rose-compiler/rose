@@ -13,12 +13,13 @@ template <class Annotation, class Language, class Runtime> class Kernel;
 
 template <class Annotation, class Language, class Runtime>
 class IterationMapper {
-  private:
-    void computeValidShapes(
+  protected:
+    virtual void computeValidShapes(
       typename LoopTrees<Annotation>::loop_t * loop,
       std::vector<typename Runtime::loop_shape_t *> & shapes
     ) const;
 
+  private:
     void determineLoopShapes(
       Kernel<Annotation, Language, Runtime> * kernel,
       typename LoopTrees<Annotation>::loop_t * loop,

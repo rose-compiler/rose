@@ -285,11 +285,14 @@ SgFunctionParameterList * createParameterList<
     result->append_arg(SageBuilder::buildInitializedName("data_" + data_name, field_type, NULL));
   }
 
-  result->append_arg(SageBuilder::buildInitializedName(
-    "context",
-    Runtime::OpenACC::runtime_device_context_symbol->get_declaration()->get_type(),
-    NULL
-  ));
+  SgModifierType * context_type = SageBuilder::buildModifierType(
+    SageBuilder::buildPointerType(
+      Runtime::OpenACC::runtime_device_context_symbol->get_declaration()->get_type()
+    )
+  );
+  context_type->get_typeModifier().setOpenclConstant();
+
+  result->append_arg(SageBuilder::buildInitializedName("context", context_type, NULL));
   
   return result;
 }
@@ -558,7 +561,6 @@ std::pair<SgStatement *, SgScopeStatement *> generateLoops<
   else {
     assert(shape != NULL);
 
-    Runtime::OpenACC::a_loop loop_desc;
     std::pair<SgStatement *, SgScopeStatement *> result(NULL, NULL);
     SgExpression * runtime_loop_desc = SageBuilder::buildArrowExp(
                                          SageBuilder::buildVarRefExp(local_symbol_maps.context),
@@ -707,6 +709,17 @@ std::pair<SgStatement *, SgScopeStatement *> generateLoops<
         result.second = tile.second;
       }
     }
+
+    Runtime::OpenACC::a_loop loop_desc;
+      loop_desc.lb = loop->lower_bound;
+      loop_desc.ub = loop->upper_bound;
+      loop_desc.tile_0 = shape->tile_0;
+      loop_desc.gang   = shape->gang;
+      loop_desc.tile_1 = shape->tile_1;
+      loop_desc.worker = shape->worker;
+      loop_desc.tile_2 = shape->tile_2;
+      loop_desc.vector = shape->vector;
+      loop_desc.tile_3 = shape->tile_3;
 
     loop_descriptors.push_back(loop_desc);
     loop_id++;

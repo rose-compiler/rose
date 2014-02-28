@@ -37,6 +37,8 @@ class CodeGenerator {
   public:
     CodeGenerator(MFB::Driver<MFB::Sage> & mfb_driver);
 
+    MFB::Driver<MFB::Sage> & getDriver() const;
+
     template <class ModelTraversal>
     SgInitializer * createInitializer(Model::class_t element, const typename ModelTraversal::input_t & input, unsigned file_id) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
