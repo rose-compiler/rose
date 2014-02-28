@@ -1,0 +1,40 @@
+#!/bin/bash 
+
+# Author: Markus Schordan, 2014.
+
+function check {
+dirname=$1 # directory where to test
+origtestresult=$2 # result file
+benchname=$3 # name of program
+echo "analyzing: ${benchname}.c" 
+./codethorn --threads=6 ${benchname}.c -I${dirname} --dump1=yes >& /dev/null
+cp arrayupdates.txt ${benchname}.check
+echo -n "checking : ${origtestresult} vs ${benchname}.check: "
+if(diff ${origtestresult} ${benchname}.check >& /dev/null); then
+echo "PASS"
+else
+echo "FAIL"
+fi
+}
+
+
+for k in tests/polyhedralTest/stencils ; do
+  if [ -d "$k" ]; then
+    echo "-------------------------"
+    echo "CHECKING $k"
+    for i in ${k}/* ; do
+      if [ -d "$i" ]; then
+        benchname=`basename "$i"`;
+        echo "Checking: ${benchname}"
+
+        # create orig-benchmark result
+        echo "analyzing: ${i}/${benchname}.c"
+        ./codethorn --threads=6 ${i}/${benchname}.c -I${i} --dump1=yes # >& /dev/null
+        cp arrayupdates.txt ${i}/${benchname}.check
+
+        # check with variants
+        check "${i}" "${i}/${benchname}.check" "${i}/fused_rose_${benchname}"
+      fi
+    done
+  fi
+done

@@ -1,0 +1,207 @@
+#   define N ARRAYSIZE
+#   define M ARRAYSIZE
+# define _PB_N ARRAYSIZE
+# define _PB_M ARRAYSIZE
+/**
+ * covariance.c: This file is part of the PolyBench/C 3.2 test suite.
+ *
+ *
+ * Contact: Louis-Noel Pouchet <pouchet@cse.ohio-state.edu>
+ * Web address: http://polybench.sourceforge.net
+ */
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+
+int main(int argc,char **argv)
+{
+/* Retrieve problem size. */
+  int n = 16;
+  int m = 16;
+  double float_n = 1.2;
+  double data[m][n];
+  double symmat[m][n];
+  double mean[m];
+  int i;
+  int j;
+  int j1;
+  int j2;
+  
+#pragma scop
+{
+    int c2;
+    int c1;
+    int c6;
+    int c3;
+    
+#pragma omp parallel for private(c6, c2)
+    for (c1 = 0; c1 <= 2; c1++) {
+      for (c2 = 7 * c1; c2 <= 15; c2++) {
+        
+#pragma ivdep
+        
+#pragma vector always
+        
+#pragma simd
+{
+          int c0;
+          int c3;
+          if (7 * c1 <= c2) {
+#pragma omp parallel for private(c3)
+            for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+              for (c3 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c3 <= ((((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) < 7 * c1 + 6?((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) : 7 * c1 + 6)); c3++) {
+                symmat[c3][c2] = 0.0;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c6)
+    for (c1 = 0; c1 <= 2; c1++) {
+      
+#pragma ivdep
+      
+#pragma vector always
+      
+#pragma simd
+{
+        int c0;
+        int c2;
+        if (c1 <= 2) {
+#pragma omp parallel for private(c2)
+          for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((3 < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?3 : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+            for (c2 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c2 <= ((((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) < 7 * c1 + 6?((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) : 7 * c1 + 6)); c2++) {
+              mean[c2] = 0.0;
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c6, c2)
+    for (c1 = 0; c1 <= 2; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        
+#pragma ivdep
+        
+#pragma vector always
+        
+#pragma simd
+{
+          int c3;
+          int c0;
+          if (c1 <= 2) {
+#pragma omp parallel for private(c3)
+            for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((3 < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?3 : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+              for (c3 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c3 <= ((((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) < 7 * c1 + 6?((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) : 7 * c1 + 6)); c3++) {
+                mean[c3] += data[c2][c3];
+              }
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c6)
+    for (c1 = 0; c1 <= 2; c1++) {
+      
+#pragma ivdep
+      
+#pragma vector always
+      
+#pragma simd
+{
+        int c0;
+        int c2;
+        if (c1 <= 2) {
+#pragma omp parallel for private(c2)
+          for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((3 < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?3 : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+            for (c2 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c2 <= ((((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) < 7 * c1 + 6?((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) : 7 * c1 + 6)); c2++) {
+              mean[c2] /= float_n;
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c6, c2)
+    for (c1 = 0; c1 <= 2; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        
+#pragma ivdep
+        
+#pragma vector always
+        
+#pragma simd
+{
+          int c3;
+          int c0;
+          if (c1 <= 2) {
+#pragma omp parallel for private(c3)
+            for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((3 < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?3 : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+              for (c3 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c3 <= ((((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) < 7 * c1 + 6?((15 < 5 * c0 + 4?15 : 5 * c0 + 4)) : 7 * c1 + 6)); c3++) {
+                data[c3][c2] -= mean[c2];
+              }
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c3, c6, c2)
+    for (c1 = 0; c1 <= 2; c1++) {
+      for (c2 = 7 * c1; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          
+#pragma ivdep
+          
+#pragma vector always
+          
+#pragma simd
+{
+            int c4;
+            int c0;
+            if (7 * c1 <= c2) {
+#pragma omp parallel for private(c4)
+              for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+                for (c4 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c4 <= ((((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) < 7 * c1 + 6?((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) : 7 * c1 + 6)); c4++) {
+                  symmat[c4][c2] += data[c3][c4] * data[c3][c2];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+#pragma omp parallel for private(c6, c2)
+    for (c1 = 0; c1 <= 2; c1++) {
+      for (c2 = 7 * c1; c2 <= 15; c2++) {
+        
+#pragma ivdep
+        
+#pragma vector always
+        
+#pragma simd
+{
+          int c3;
+          int c0;
+          if (7 * c1 <= c2) {
+#pragma omp parallel for private(c3)
+            for (c0 = ((7 * c1 + -4) * 5 < 0?-(-(7 * c1 + -4) / 5) : ((5 < 0?(-(7 * c1 + -4) + - 5 - 1) / - 5 : (7 * c1 + -4 + 5 - 1) / 5))); c0 <= ((((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) < (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5))?((c2 * 5 < 0?((5 < 0?-((-c2 + 5 + 1) / 5) : -((-c2 + 5 - 1) / 5))) : c2 / 5)) : (((7 * c1 + 6) * 5 < 0?((5 < 0?-((-(7 * c1 + 6) + 5 + 1) / 5) : -((-(7 * c1 + 6) + 5 - 1) / 5))) : (7 * c1 + 6) / 5)))); c0++) {
+              for (c3 = (5 * c0 > 7 * c1?5 * c0 : 7 * c1); c3 <= ((((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) < 7 * c1 + 6?((c2 < 5 * c0 + 4?c2 : 5 * c0 + 4)) : 7 * c1 + 6)); c3++) {
+                symmat[c2][c3] = symmat[c3][c2];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+#pragma endscop
+  return 0;
+}

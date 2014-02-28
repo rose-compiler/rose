@@ -481,7 +481,7 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
         // match found
         SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
         SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
-        cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+        //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
         int rawval=val->get_value();
         // replace with folded value (using integer semantics)
         switch(op->variantT()) {
@@ -512,7 +512,7 @@ do {
         // match found
         SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
         SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
-        cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+        //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
         int rawval=val->get_value();
         // replace with folded value (using integer semantics)
         switch(op->variantT()) {
@@ -543,16 +543,16 @@ do {
         SgExpression* other=isSgExpression((*i)["$Other"]);
         if(other) {
           if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
-            SgNode* op1=(*i)["$BinaryOp1"];
+            //SgNode* op1=(*i)["$BinaryOp1"];
             SgExpression* val=isSgExpression((*i)["$IntVal"]);
-            cout<<"FOUND: "<<op1->unparseToString()<<endl;
+            //cout<<"FOUND: "<<op1->unparseToString()<<endl;
             
             // replace op1-rhs with op2-rhs
             SgExpression* other_copy=SageInterface::copyExpression(other);
             SgExpression* val_copy=SageInterface::copyExpression(val);
             SageInterface::replaceExpression(other,val_copy,false);
             SageInterface::replaceExpression(val,other_copy,false);
-            cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+            //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
             transformationApplied=true;
             someTransformationApplied=true;
           }       
@@ -579,7 +579,7 @@ do {
         SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
         SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
         SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
-        cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
+        //cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
         int rawval1=val1->get_value();
         int rawval2=val2->get_value();
         // replace with folded value (using integer semantics)

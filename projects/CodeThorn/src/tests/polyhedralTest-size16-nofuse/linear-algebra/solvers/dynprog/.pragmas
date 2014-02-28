@@ -1,0 +1,1 @@
+c4 #pragma omp parallel for shared(c0,c1,c2,c3,lb1,ub1) private(ubv,lbv,c4,c5,c6,c7,c8)
