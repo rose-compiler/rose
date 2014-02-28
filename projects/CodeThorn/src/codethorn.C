@@ -762,7 +762,7 @@ SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdates
   cout<<endl;
 #endif
   // TODO-2: check search backwards
-  while (pos!=arrayUpdates.begin()) {
+  do {
     SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
     ROSE_ASSERT(lhs);
     ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
@@ -771,8 +771,12 @@ SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdates
 	  (*pos).mark=true; // mark each used definition
       return (*pos).second; // return pointer to assignment expression (instead directly to def);
     }
-    --pos;
-  };
+    // there is no concept for before-the-start iterator (therefore this is checked this way)
+    if(pos==arrayUpdates.begin()) 
+      break;
+    --pos; 
+  } while (1);
+
   return 0;
 }
 
