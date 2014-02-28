@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "cmdline.h"
 #include "commandline_processing.h"
 
 #include "jserver.h"
@@ -17,10 +18,12 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-// This is set in cmdline.cpp when the program's arguments are handled
-bool roseJavaRemoteDebug;
-
 using namespace std;
+
+namespace Rose {
+namespace Frontend {
+namespace Fortran {
+namespace Ofp {
 
 typedef struct {
    JavaVM * jvm;
@@ -136,38 +139,47 @@ get_env()
    return (get_jvmEnv())->env;
 }
 
-// DQ (4/5/2010): Centralize the specification of the class path.
-extern string global_build_classpath();
-
 void 
 jserver_start(JvmT* je)
-{ 
+{
   JavaVMInitArgs jvm_args;  /* VM initialization args.  */
+  jvm_args.version = JNI_VERSION_1_4;
+  jvm_args.ignoreUnrecognized = JNI_FALSE;
 
-  // DQ (3/12/2010): We can't use this since we don't include the ROSE header files 
-  // (however, this might simplify the design).
-  // string classpath = SgSourceFile::build_classpath();
-     string classpath = global_build_classpath();
+  //----------------------------------------------------------------------------
+  // Add all our JVM options
+  //----------------------------------------------------------------------------
+  // TOO1 (2/11/2014): JVM options now stored in the Cmdline::Fortran::Ofp namespace.
+  std::list<std::string> jvm_options =
+      Rose::Cmdline::Fortran::Ofp::jvm_options;
 
-     bool hasDebugOption = roseJavaRemoteDebug;
-     jvm_args.version = JNI_VERSION_1_4;
-     jvm_args.nOptions = 1;
-     if (hasDebugOption) {
-         jvm_args.nOptions++;
-     }
-     jvm_args.options = new JavaVMOption[jvm_args.nOptions];
-     jvm_args.options[0].optionString = strdup(classpath.c_str());
-     jvm_args.ignoreUnrecognized = JNI_FALSE;
-     if (hasDebugOption) {
-         jvm_args.options[1].optionString = "-agentlib:jdwp=transport=dt_socket,server=y,address=8000";
-     }
+  std::string classpath =
+      Rose::Cmdline::Fortran::Ofp::GetRoseClasspath();
+  jvm_options.push_back(classpath);
 
-  /* Create and load the Java VM.  */
-     int res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
+  jvm_args.nOptions = jvm_options.size();
+  jvm_args.options = new JavaVMOption[jvm_args.nOptions];
+  for(int i=0; i < jvm_args.nOptions; ++i)
+  {
+      std::string jvm_option = jvm_options.front();
 
-     if (res<0 || je->jvm==NULL || je->env==NULL)
-          exit(1);  
-   return ;
+      jvm_args.options[i].optionString =
+          strdup(jvm_option.c_str());
+
+      jvm_options.pop_front();
+  }
+
+  //----------------------------------------------------------------------------
+  // Create and load the Java VM.
+  //----------------------------------------------------------------------------
+  int res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
+
+  if (res<0 || je->jvm==NULL || je->env==NULL)
+  {
+      exit(1);
+  }
+
+  return ;
 }
 
 void 
@@ -247,3 +259,9 @@ jserver_getJavaStringClass()
       JNIEnv * env = get_env();
        return env->FindClass("java/lang/String");
 }
+
+}// ::Rose::Frontend::Fortran::Ofp
+}// ::Rose::Frontend::Fortran
+}// ::Rose::Frontend
+}// ::Rose
+

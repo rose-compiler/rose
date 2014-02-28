@@ -992,12 +992,15 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 */
 
-     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
-
      if (mfuncdecl_stmt->get_functionModifier().isJavaInitializer()) { // If this is an initializer block, process it here and return.
-         unparseBasicBlockStmt(mfuncdecl_stmt->get_definition() -> get_body(), info);
+         if (mfuncdecl_stmt -> get_declarationModifier().get_storageModifier().isStatic()) {
+             curprint("static ");
+         }
+         unparseBasicBlockStmt(mfuncdecl_stmt -> get_definition() -> get_body(), info);
          return;
      }
+
+     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
 
      unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 
@@ -1008,17 +1011,13 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseTypeParameters(type_list, info);
      }
 
-     //TODO remove when specialFxnModifier.isConstructor works
-     bool constructor = mfuncdecl_stmt->get_specialFunctionModifier().isConstructor();
-     bool name_match = mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name();
-     if (name_match && !constructor) {
-         cout << "unparser: method " << mfuncdecl_stmt->get_qualified_name().getString()
-              << " should be marked isConstructor" << endl;
-         constructor = true;
+     //
+     // Unparse type, unless this a constructor then unparse name
+     //
+     if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
+         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
      }
-
-     // unparse type, unless this a constructor
-     if (! constructor) {
+     else {
 // TODO: Remove this !
 /*
          ROSE_ASSERT(mfuncdecl_stmt->get_type());
@@ -1044,9 +1043,9 @@ else {
          curprint(attribute -> expression);
 }
          curprint(" ");
+         unparseName(mfuncdecl_stmt->get_name(), info);
      }
 
-     unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
 
 
@@ -1761,12 +1760,17 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
                 }
             }
 
-            curprint(i + 1 == last_enum_constant_index ? ";" : ",");
+            if (i + 1 != last_enum_constant_index) {
+                curprint(",");
+            }
             unp -> cur.insert_newline();
             info.dec_nestingLevel();
         }
     }
 
+    unp->cur.insert_newline();
+    info.dec_nestingLevel();
+    curprint(";");
     unp->cur.insert_newline();
 
     //

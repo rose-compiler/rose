@@ -262,7 +262,7 @@ public:
             assert(top!=NULL);
             while (top->get_parent()) top = top->get_parent();
             m->multipart("FunctionIndex", "FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
-                         top?stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
+                         top?rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
             m->more("    Key for reason(s) address is a suspected function:\n");
             m->more("      E = entry address         C = function call(*)      X = exception frame\n");
             m->more("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
@@ -427,7 +427,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            std::string operation = stringifyMemoryMapProtection(args.how, "MM_PROT_");
+            std::string operation = rose::stringifyMemoryMapProtection(args.how, "MM_PROT_");
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
             mesg->mesg("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",

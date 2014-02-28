@@ -363,7 +363,7 @@ SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
 
-//! Build super pointer
+//! Build class pointer
 SgClassExp* buildClassExp(SgClassSymbol* sym);
 SgClassExp* buildClassExp_nfi(SgClassSymbol* sym);
 

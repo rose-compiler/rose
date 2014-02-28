@@ -30,7 +30,7 @@ public:
         assert(insn);
         ninsns++;
 
-        std::string kind = stringifyX86InstructionKind(insn->get_kind(), "x86_");
+        std::string kind = rose::stringifyX86InstructionKind(insn->get_kind(), "x86_");
         std::pair<Histogram::iterator, bool> inserted = insns.insert(std::make_pair<std::string, size_t>(kind, 1));
         if (!inserted.second)
             inserted.first->second++;

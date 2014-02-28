@@ -3,6 +3,7 @@ if(SQLITE3_FOUND)
 endif()
 add_subdirectory(dataStructureTraversal)
 add_subdirectory(highLevelGrammar)
+add_subdirectory(failSafe)
 
 if(enable-rosehpct)
   add_subdirectory(roseHPCToolkit)
