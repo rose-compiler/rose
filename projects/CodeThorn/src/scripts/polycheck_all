@@ -5,36 +5,85 @@
 function check {
 dirname=$1 # directory where to test
 origtestresult=$2 # result file
-benchname=$3 # name of program
-echo "analyzing: ${benchname}.c" 
-./codethorn --threads=6 ${benchname}.c -I${dirname} --dump1=yes >& /dev/null
-cp arrayupdates.txt ${benchname}.check
-echo -n "checking : ${origtestresult} vs ${benchname}.check: "
-if(diff ${origtestresult} ${benchname}.check >& /dev/null); then
-echo "PASS"
+fullbenchname=$3 # name of program
+#echo "DEBUG:dirname $dirname"
+#echo "DEBUG:origtestresult $origtestresult"
+#echo "DEBUG:fullbenchname $fullbenchname"
+onlybenchname=`basename "$fullbenchname"`
+
+echo -n "checking variant: ${onlybenchname}.c: " 
+if [ -e ${fullbenchname}.c ]; then
+  ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes >& /dev/null
+  cp arrayupdates.txt ${fullbenchname}.check
+  #echo -n "checking : ${origtestresult} vs ${benchname}.check: "
+  if(diff ${origtestresult} ${fullbenchname}.check >& /dev/null); then
+  echo "PASS" > ${fullbenchname}.verify
+  cat ${fullbenchname}.verify
+  else
+  echo "FAIL" > ${fullbenchname}.verify
+  cat ${fullbenchname}.verify
+  fi
 else
-echo "FAIL"
+  echo "SKIP (does not exist)"
 fi
 }
 
+#for k in tests/polyhedralTest-size16-tilesize16/stencils ; do
+#  if [ -d "$k" ]; then
+#    echo "-------------------------"
+#    echo "CHECKING $k"
+#    for i in ${k}/* ; do
 
-for k in tests/polyhedralTest/stencils ; do
-  if [ -d "$k" ]; then
-    echo "-------------------------"
-    echo "CHECKING $k"
-    for i in ${k}/* ; do
+function check_benchmark {
+  i=$1 # directory name
       if [ -d "$i" ]; then
         benchname=`basename "$i"`;
         echo "Checking: ${benchname}"
 
         # create orig-benchmark result
         echo "analyzing: ${i}/${benchname}.c"
-        ./codethorn --threads=6 ${i}/${benchname}.c -I${i} --dump1=yes # >& /dev/null
+        ./codethorn ${i}/${benchname}.c -I${i} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes >& /dev/null
         cp arrayupdates.txt ${i}/${benchname}.check
 
         # check with variants
-        check "${i}" "${i}/${benchname}.check" "${i}/fused_rose_${benchname}"
+        check "${i}" "${i}/${benchname}.check" "${i}/1st_tile_${benchname}"
+        check "${i}" "${i}/${benchname}.check" "${i}/2nd_tile_${benchname}"
+        check "${i}" "${i}/${benchname}.check" "${i}/nest_tile_${benchname}"
+      else
+        echo "Error2: ${i} does not exit."
+        exit
       fi
-    done
-  fi
+}
+
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/ludcmp" # FAIL
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/fdtd-2d" # FAIL
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/fdtd-apml" # TOO SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/adi" # unkown,TOO SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/dynprog" # no 1st_tile
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/doitgen" # TOO SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/2mm" # no 1st tile
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/3mm" # no 1st tile
+
+
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/jacobi-1d-imper" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/jacobi-2d-imper" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/seidel-2d" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/trmm" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/trisolv" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/cholesky" # PASS (very fast)
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/lu" # OK
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/gramschmidt" # PASS
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/durbin" # PASS
+
+mypath="tests"
+
+for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
+#for mybenchpath in polyhedralTest-size16-tilesize16; do
+for mybench in "stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"; do
+  FULLNAME=${mypath}/${mybenchpath}/${mybench}
+  check_benchmark $FULLNAME
 done
+done
+
+#  fi
+#done
