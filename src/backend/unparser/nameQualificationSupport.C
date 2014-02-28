@@ -5102,7 +5102,7 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
-     string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+     string qualifier = setNameQualificationSupport(declaration->get_scope(), amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      constructorInitializer->set_global_qualification_required(outputGlobalQualification);
      constructorInitializer->set_name_qualification_length(outputNameQualificationLength);
@@ -5123,7 +5123,6 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
           printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),constructorInitializer,constructorInitializer->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(constructorInitializer,qualifier));
-
         }
        else
         {

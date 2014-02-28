@@ -5,35 +5,71 @@
 #include <cassert>
 
 std::string escapeString(const std::string & s) {
+
+// DQ (2/4/2014): Note that this function can not be used on the asm strings
+// for the unparser.  When it can frequently work, the present of "\n" and "\t"
+// substrings causes the transformation to "\\n" and \\t" which is a bug when
+// used with the asmembler.  So a special version of this function that does
+// not process "\n" to "\\n" is defined in the unparser.  Note that we still
+// need to process '\n' to "\n" and this behavior is still preserved.
+// Test codes demonstrating this are in test2014_83-87.c.
+
   std::string result;
   for (size_t i = 0; i < s.length(); ++i) 
   {
     switch (s[i]) {
       case '\\': 
+#if 0
+        printf ("In escapeString(): processing \\\\ character \n");
+#endif
         result += "\\\\";
         break;
       case '"':
+#if 0
+        printf ("In escapeString(): processing \\\" character \n");
+#endif
         result += "\\\"";
         break;
       case '\a':
+#if 0
+        printf ("In escapeString(): processing \\a character \n");
+#endif
         result += "\\a";
         break;
       case '\f':
+#if 0
+        printf ("In escapeString(): processing \\f character \n");
+#endif
         result += "\\f";
         break;
       case '\n':
+#if 0
+        printf ("In escapeString(): processing \\n character \n");
+#endif
         result += "\\n";
         break;
       case '\r':
+#if 0
+        printf ("In escapeString(): processing \\r character \n");
+#endif
         result += "\\r";
         break;
       case '\t':
+#if 0
+        printf ("In escapeString(): processing \\t character \n");
+#endif
         result += "\\t";
         break;
       case '\v':
+#if 0
+        printf ("In escapeString(): processing \\v character \n");
+#endif
         result += "\\v";
         break;
       default:
+#if 0
+        printf ("In escapeString(): processing default case character \n");
+#endif
         if (isprint(s[i])) {
           result.push_back(s[i]);
         } else {

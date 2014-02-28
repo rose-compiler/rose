@@ -2,6 +2,9 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -586,7 +589,7 @@ Snippet::insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *
     SgGlobal *ipoint_globscope = SageInterface::getEnclosingNode<SgGlobal>(insertionPoint);
     assert(ipoint_globscope!=NULL);
 
-    // match regular expression:  ^\s*#\s*include\s*["<]([^">]*)[">]\s*(.*)
+    // match "#include <filename> ...."
     std::string filename, m2;
     bool is_system_header = false;
 #if 1
@@ -614,8 +617,8 @@ Snippet::insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *
     } while (0);
 #else
     boost::regex re("(\\s*#\\s*include\\s*[\"<][^\">]*[\">])\\s*(.*)");
-    boost::cmatch match_data;
-    if (boost::regex_match(inc.c_str(), match_data, re)) {
+    boost::smatch match_data;
+    if (boost::regex_match(inc, match_data, re)) {
         filename = std::string(match_data[1].first, match_data[1].second);
         m2 = std::string(match_data[2].first, match_data[2].second);
     }
@@ -662,8 +665,63 @@ Snippet::insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *
     }
 
     // Insert the include if necessary
-    if (!exists || m2.empty())
-        SageInterface::insertHeader(filename, PreprocessingInfo::after, is_system_header, ipoint_globscope);
+    if (!exists || m2.empty()) {
+#if 0
+        // [Robb P. Matzke 2014-02-27]: this attaches it too late in the file; we need it before the globals we inserted
+        SageInterface::insertHeader(filename, PreprocessingInfo::before, is_system_header, ipoint_globscope);
+#else
+        insertionPoint->addToAttachedPreprocessingInfo(includeDirective, PreprocessingInfo::before);
+#endif
+    }
+}
+
+void
+Snippet::removeIncludeDirectives(SgNode *node)
+{
+    if (SgLocatedNode *locnode = isSgLocatedNode(node)) {
+        // AttachedPreprocessingInfoType is std::vector<PreprocessingInfo>
+        if (AttachedPreprocessingInfoType *cpp = locnode->getAttachedPreprocessingInfo()) {
+            AttachedPreprocessingInfoType::iterator iter=cpp->begin();
+            while (iter!=cpp->end()) {
+                if ((*iter)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
+                    (*iter)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration) {
+                    iter = cpp->erase(iter);
+                } else {
+                    ++iter;
+                }
+            }
+        }
+    }
+}
+
+bool
+Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
+{
+    struct Visitor: AstSimpleProcessing {
+        std::string toMatch;
+        bool foundComment;
+        Visitor(const std::string &toMatch): toMatch(toMatch), foundComment(false) {}
+        void visit(SgNode *node) {
+            if (!foundComment) {
+                if (SgLocatedNode *lnode = isSgLocatedNode(node)) {
+                    if (AttachedPreprocessingInfoType *cpplist = lnode->getAttachedPreprocessingInfo()) {
+                        BOOST_FOREACH (PreprocessingInfo *cpp, *cpplist) {
+                            switch (cpp->getTypeOfDirective()) {
+                                case PreprocessingInfo::C_StyleComment:
+                                case PreprocessingInfo::CplusplusStyleComment:
+                                case PreprocessingInfo::F90StyleComment:
+                                    foundComment = boost::contains(cpp->getString(), toMatch);
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } visitor(toMatch);
+    visitor.traverse(ast, preorder);
+    return visitor.foundComment;
 }
 
 void
@@ -672,67 +730,94 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
     assert(this!=NULL);
     assert(insertionPoint!=NULL);
 
-    // Where should it be inserted?
-    SgGlobal *ipoint_globscope = SageInterface::getEnclosingNode<SgGlobal>(insertionPoint);
-    assert(ipoint_globscope!=NULL);
-    assert(!ipoint_globscope->get_declarations().empty());
-    SgDeclarationStatement *dst_cursor = ipoint_globscope->get_declarations().front();
-
-    // Have we inserted stuff here already (and mark that we've now done so)?
-    if (file->globallyInjected(ipoint_globscope))
+    // Have we inserted stuff here already? Also mark that we've now done so.
+    SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
+    assert(ipointGlobalScope!=NULL);
+    if (file->globallyInjected(ipointGlobalScope))
         return;
 
-    // What should be inserted?
-    SgGlobal *snippet_globscope = SageInterface::getEnclosingNode<SgGlobal>(ast);
-    assert(snippet_globscope!=NULL);
-    const SgDeclarationStatementPtrList &stmts = snippet_globscope->get_declarations();
-
-    // Do the insertion
-    for (size_t i=0; i<stmts.size(); ++i) {
-        if (SgLocatedNode *loc = isSgLocatedNode(stmts[i])) {
-            if (AttachedPreprocessingInfoType *cpp = loc->getAttachedPreprocessingInfo()) {
-                for (AttachedPreprocessingInfoType::iterator cppi=cpp->begin(); cppi!=cpp->end(); ++cppi) {
-                    if ((*cppi)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
-                        (*cppi)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration) {
-                        insertIncludeDirective(dst_cursor, *cppi);
+    // The insertionPoint was where we inserted the snippet. To insert related global stuff, we need another insertion point
+    // that's near the top of the same file where the snippet was inserted.  We want to insert stuff after all the #include
+    // directives, so look for the last global declaration that has #include attached in this file. That's where we'll do our
+    // inserting.
+    const SgDeclarationStatementPtrList &stmtList = ipointGlobalScope->get_declarations();
+    SgStatement *firstDeclSameFile = NULL;              // first declaration in the insertion point's file
+    SgStatement *lastDeclWithIncludes = NULL;           // last declaration in this file that has attached #include
+    BOOST_FOREACH (SgStatement *decl, stmtList) {
+        if (decl->get_file_info()->isSameFile(ipointGlobalScope->get_file_info())) {
+            if (NULL==firstDeclSameFile)
+                firstDeclSameFile = decl;
+            if (AttachedPreprocessingInfoType *cpplist = decl->getAttachedPreprocessingInfo()) {
+                BOOST_FOREACH (PreprocessingInfo *cpp, *cpplist) {
+                    if (cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
+                        cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration) {
+                        lastDeclWithIncludes = decl;
+                        break;
                     }
                 }
             }
-
-            if (loc->get_startOfConstruct()->get_file_id() != ast->get_startOfConstruct()->get_file_id())
-                continue; // this came from some included file rather than the snippet itself.
         }
+    }
+    SgStatement *topInsertionPoint = lastDeclWithIncludes ? lastDeclWithIncludes : firstDeclSameFile;
+    ROSE_ASSERT(topInsertionPoint || !"cannot find an insertion point for snippet global declarations");
+        
+    // What should be inserted?
+    SgGlobal *snippetGlobalScope = SageInterface::getEnclosingNode<SgGlobal>(ast);
+    assert(snippetGlobalScope!=NULL);
+    const SgDeclarationStatementPtrList &snippetStmts = snippetGlobalScope->get_declarations();
 
-        if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(stmts[i])) {
+    // Do the insertion for non-preprocessor stuff
+    SgStatement *firstInserted = NULL;
+    BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
+
+        // If this node came from a file included by the snippet file, then skip it.  We only ever insert things that came from
+        // the snippet file itself.
+        if (!snippetStmt->get_file_info()->isSameFile(ast->get_file_info()))
+            continue; // this came from some included file rather than the snippet itself.
+
+        // If a declaration is blacklisted in the snippet file then don't insert it.
+        if (hasCommentMatching(snippetStmt, "DO_NOT_INSERT"))
+            continue;
+
+        if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(snippetStmt)) {
             if (!vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
                 // Insert non-extern variable declaration
                 SgTreeCopy deep;
-                SgStatement *stmt = isSgStatement(stmts[i]->copy(deep));
-                causeUnparsing(stmt, dst_cursor->get_file_info());
-                SageInterface::insertStatementBefore(dst_cursor, stmt);
+                SgStatement *newStmt = isSgStatement(snippetStmt->copy(deep));
+                removeIncludeDirectives(newStmt);
+                causeUnparsing(newStmt, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
+                if (!firstInserted)
+                    firstInserted = newStmt;
                 continue;
             }
         }
         
-        if (SgClassDeclaration *class_decl = isSgClassDeclaration(stmts[i])) {
+        if (SgClassDeclaration *class_decl = isSgClassDeclaration(snippetStmt)) {
             if (class_decl->get_definition()!=NULL) {
                 SgTreeCopy deep;
-                SgStatement *stmt = isSgClassDeclaration(class_decl);
-                causeUnparsing(stmt, dst_cursor->get_file_info());
-                SageInterface::insertStatementBefore(dst_cursor, stmt);
+                SgStatement *newStmt = isSgClassDeclaration(class_decl);
+                removeIncludeDirectives(newStmt);
+                causeUnparsing(newStmt, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
+                if (!firstInserted)
+                    firstInserted = newStmt;
                 continue;
             }
         }
 
-        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(stmts[i])) {
+        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(snippetStmt)) {
             SgFunctionDefinition *fdef = fdecl->get_definition();
             
             if (copyAllSnippetDefinitions && fdef!=NULL &&
                 fdef->get_startOfConstruct()->get_file_id()==ast->get_startOfConstruct()->get_file_id()) {
                 SgTreeCopy deep;
                 SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
-                causeUnparsing(fdecl_copy, dst_cursor->get_file_info());
-                SageInterface::insertStatementBefore(dst_cursor, fdecl_copy);
+                removeIncludeDirectives(fdecl_copy);
+                causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
+                if (!firstInserted)
+                    firstInserted = fdecl_copy;
                 continue;
             }
 
@@ -745,9 +830,35 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 // Insert function declaration.
                 SgTreeCopy deep;
                 SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
-                causeUnparsing(fdecl_copy, dst_cursor->get_file_info());
-                SageInterface::insertStatementBefore(dst_cursor, fdecl_copy);
+                removeIncludeDirectives(fdecl_copy);
+                causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
+                if (!firstInserted)
+                    firstInserted = fdecl_copy;
                 continue;
+            }
+        }
+    }
+
+    // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
+    // and reattached to the first node we inserted.
+    if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
+        SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
+
+    // Insert #include directives above the first thing we already inserted.
+    if (firstInserted)
+        topInsertionPoint = firstInserted;
+    BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
+        if (!snippetStmt->get_file_info()->isSameFile(ast->get_file_info()))
+            continue; // this came from some included file rather than the snippet itself.
+        if (AttachedPreprocessingInfoType *cpplist = snippetStmt->getAttachedPreprocessingInfo()) {
+            // We apparently can't use the cpplist directly because some of the functions in SageInterface modify it while
+            // we're trying to iterate.  So make a copy.
+            AttachedPreprocessingInfoType cpplist_copy = *cpplist;
+            BOOST_FOREACH (PreprocessingInfo *cpp, cpplist_copy) {
+                if (cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
+                    cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration)
+                    insertIncludeDirective(topInsertionPoint, cpp); // attaches it to an existing node
             }
         }
     }

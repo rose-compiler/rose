@@ -4384,6 +4384,13 @@ SgPointerDerefExp::get_type() const
                break;
              }
 #endif
+       // DQ (2/16/2014): Added this for the case of the new EDG interface (sometimes this case is required).
+          case V_SgTypeUnknown:
+             {
+               returnType = someType;
+               break;
+             }
+
           default:
              {
 // #ifndef ROSE_USE_EDG_VERSION_4

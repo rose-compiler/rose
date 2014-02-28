@@ -908,6 +908,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao, 1/30/2014: Support for FAIL-SAFE resilience pragma
+     File.setDataPrototype         ( "bool", "failsafe", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran
   // support in ROSE this corresponds to the "--dump" option in the Open Fortran Parser (OFP).
   // There is no corresponding action with EDG for the C and C++ support in ROSE, so for C/C++
@@ -1250,6 +1253,12 @@ Grammar::setUpSupport ()
   // generate patches (useful on large scale projects to design new tools).
      File.setDataPrototype ("bool", "unparse_tokens", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/30/2014): Support testing of unparsing using tokens with synthetic marking of 
+  // statements to be transformations.  This is used the test the transition steps between
+  // unparsing from the AST vs. the token stream.
+     File.setDataPrototype ("int", "unparse_tokens_testing", "= 0",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
   // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
@@ -1735,6 +1744,9 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Project.setDataPrototype ("std::list<std::string>", "Fortran_ofp_jvm_options", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/11/2010): Added initial Java support.
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1751,6 +1763,9 @@ Grammar::setUpSupport ()
   // Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
      Project.setDataPrototype ( "bool", "openmp_linking", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype ("std::list<std::string>", "Java_ecj_jvm_options", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1821,6 +1836,20 @@ Grammar::setUpSupport ()
   // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
      Project.setDataPrototype("bool", "mode_32_bit", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/31/2014): Added optimization for a few wireshark files. This post-processing is 
+  // not required for C, but is only usefule for C++ (name qualification).  Still it is 
+  // only a performance problem on a handfull of files in wireshark application. So we
+  // need to provide an option to supress.  This is currently being investigated further.
+  // not that this option is inconsistant with OpenMP usage, but not a problem for any
+  // other C code (the C++ aspect of this could also be fixed). This is related to a 
+  // problem when the original expression trees were a part of the AST traversal, but 
+  // this issue was fixed in 2012 (or so). There is as a result, less need for this
+  // post-processing phase, except that it appears to be relied upon by the OpenMP and 
+  // C++ support (both of which can be fixed).
+     Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
