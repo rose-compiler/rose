@@ -182,6 +182,14 @@ main(int argc, char *argv[])
 #if 1 /*DEBUGGING [Robb P. Matzke 2013-12-03]*/
     generateDOT(*project);
 #endif
+#if 1
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     printf ("Generate the Whole AST graph! \n");
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+     printf ("DONE: Generate the Whole AST graph! \n");
+#endif
+
     backend(project);
     return 0;
 }

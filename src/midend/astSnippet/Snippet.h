@@ -378,6 +378,11 @@ protected:
     /** Rename snippet local variables so they don't interfere with names visible at the insertion point. Only local variables
      * whose names begin with "tmp" are renamed. */
     void renameTemporaries(SgNode *ast);
+
+    // DQ (2/26/2014): Added functionality to address requirement to make snippet AST conform to expectations for any new transforamtion.
+    /** Fixup the AST fragement being inserted into the target AST to reset all possible references to the original snippet file. */
+    // void fixupSnippetInNewTargetAST(SgStatement *insertionPoint, SgStatement *toInsert);
+
 };
 
 } // namespace

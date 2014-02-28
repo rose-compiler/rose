@@ -1272,6 +1272,10 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
 
+//! Fixup any AST moved from one file two another (references to symbols, types, etc.).
+ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy, std::map<SgNode*,SgNode*> & translationMap);
+ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap);
+
 //@}
 
 } // end of namespace
