@@ -4,7 +4,9 @@
 outputfile=all-rewrite.stats.tex
 
 echo "Benchmark & States & ArrayUpd & ElimMinusOp & ElimAssign & AddReord & CF & VarElim \\\\\hline\hline" > ${outputfile}
-allstatsfiles=`ls polyhedralTest-size16*/*/*/*.stats | tr "\n" " "`
+allstatsfiles1=`ls polyhedralTest-size16*/*/*/*.stats | tr "\n" " "`
+allstatsfiles2=`ls polyhedralTest-size16*/*/*/*/*.stats | tr "\n" " "`
+allstatsfiles="${allstatsfiles1} ${allstatsfiles2}"
 for stat in $allstatsfiles; do
   mybasename=`basename "$stat"|sed 's/.stats//g'|tr "_" "-"`
   echo -n "$mybasename & " >> ${outputfile}
