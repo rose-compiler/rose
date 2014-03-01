@@ -660,7 +660,7 @@ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PS
     //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
     SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
   }
-  dump1_stats.numVariableElim=substitutionList.size();
+  dump1_stats.numVariableElim+=substitutionList.size();
 }
 
 struct EStateExprInfo {
