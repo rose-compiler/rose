@@ -32,22 +32,30 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
-    int c5;
     int c4;
     int c1;
-    for (c0 = 0; c0 <= 15; c0++) {
-      for (c1 = 0; c1 <= 15; c1++) {
-        for (c4 = 0; c4 <= 15; c4++) {
-          sum[c0][c1][c4] = 0;
+    int c3;
+    int c2;
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          sum[c1][c2][c3] = 0;
         }
-        for (c4 = 0; c4 <= 15; c4++) {
-          for (c5 = 0; c5 <= 15; c5++) {
-            sum[c0][c1][c4] = sum[c0][c1][c4] + A[c0][c1][c5] * C4[c5][c4];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          for (c4 = 0; c4 <= 15; c4++) {
+            sum[c1][c2][c3] = sum[c1][c2][c3] + A[c1][c2][c4] * C4[c4][c3];
           }
         }
-        for (c4 = 0; c4 <= 15; c4++) {
-          A[c0][c1][c4] = sum[c0][c1][c4];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          A[c1][c2][c3] = sum[c1][c2][c3];
         }
       }
     }

@@ -31,12 +31,12 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c3;
-    int c2;
     int c4;
+    int c2;
 {
-      int c6;
-      int c7;
       int c5;
+      int c7;
+      int c6;
       for (c5 = 0; c5 <= 15; c5++) {
         for (c7 = 0; c7 <= 15; c7++) {
           C[c5][c7] *= beta;

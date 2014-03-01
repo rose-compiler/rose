@@ -30,9 +30,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
     int c2;
     int c6;
+    int c3;
     for (c2 = 0; c2 <= 15; c2++) {
       
 #pragma ivdep
@@ -41,8 +41,8 @@ int main(int argc,char **argv)
       
 #pragma simd
 {
-        int c0;
         int c1;
+        int c0;
         if (c2 >= 0) {
 #pragma omp parallel for private(c1)
           for (c0 = 0; c0 <= ((c2 * 16 < 0?((16 < 0?-((-c2 + 16 + 1) / 16) : -((-c2 + 16 - 1) / 16))) : c2 / 16)); c0++) {
@@ -153,8 +153,8 @@ int main(int argc,char **argv)
       
 #pragma simd
 {
-        int c0;
         int c1;
+        int c0;
         if (c2 >= 0) {
 #pragma omp parallel for private(c1)
           for (c0 = 0; c0 <= ((c2 * 16 < 0?((16 < 0?-((-c2 + 16 + 1) / 16) : -((-c2 + 16 - 1) / 16))) : c2 / 16)); c0++) {

@@ -26,9 +26,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
+    int c0;
     int c1;
     int c2;
-    int c0;
     for (c0 = 1; c0 <= 15; c0++) {
       for (c1 = 0; c1 <= c0 + 29; c1++) {
         

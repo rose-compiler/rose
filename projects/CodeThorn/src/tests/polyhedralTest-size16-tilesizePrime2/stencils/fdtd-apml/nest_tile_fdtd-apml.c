@@ -54,7 +54,7 @@ int main(int argc,char **argv)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c5 = 11 * c2; c5 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c5++) {
+          for (c5 = 13 * c2; c5 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
@@ -71,7 +71,7 @@ int main(int argc,char **argv)
 #pragma omp parallel for private(c2, c5, c6)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
-        for (c5 = 11 * c2; c5 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c5++) {
+        for (c5 = 13 * c2; c5 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
@@ -88,7 +88,7 @@ int main(int argc,char **argv)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c5 = 11 * c2; c5 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c5++) {
+          for (c5 = 13 * c2; c5 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
@@ -105,7 +105,7 @@ int main(int argc,char **argv)
 #pragma omp parallel for private(c2, c5, c6)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
-        for (c5 = 11 * c2; c5 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c5++) {
+        for (c5 = 13 * c2; c5 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd

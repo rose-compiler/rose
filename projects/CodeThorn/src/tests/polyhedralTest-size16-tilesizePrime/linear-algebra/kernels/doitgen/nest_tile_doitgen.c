@@ -32,17 +32,17 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c6;
-    int c1;
-    int c2;
     int c3;
     int c7;
     int c5;
-#pragma omp parallel for private(c5, c3, c2, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+    int c6;
+    int c1;
+    int c2;
+#pragma omp parallel for private(c2, c6, c5, c3)
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c5 = 5 * c1; c5 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c5++) {
+          for (c5 = 7 * c1; c5 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c5++) {
             for (c6 = 7 * c2; c6 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c6++) {
               sum[c5][c6][c3] = 0;
             }
@@ -50,11 +50,11 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c5, c7, c3, c2, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+#pragma omp parallel for private(c2, c6, c5, c7, c3)
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c5 = 5 * c1; c5 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c5++) {
+          for (c5 = 7 * c1; c5 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c5++) {
             for (c6 = 7 * c2; c6 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c6++) {
               for (c7 = 0; c7 <= 15; c7++) {
                 sum[c5][c6][c3] = sum[c5][c6][c3] + A[c5][c6][c7] * C4[c7][c3];
@@ -64,11 +64,11 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c5, c3, c2, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+#pragma omp parallel for private(c2, c6, c5, c3)
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c5 = 5 * c1; c5 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c5++) {
+          for (c5 = 7 * c1; c5 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c5++) {
             for (c6 = 7 * c2; c6 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c6++) {
               A[c5][c6][c3] = sum[c5][c6][c3];
             }

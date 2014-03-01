@@ -35,9 +35,9 @@ int main(int argc,char **argv)
     int c1;
     int c2;
 {
-      int c3;
-      int c5;
       int c4;
+      int c5;
+      int c3;
       for (c3 = 0; c3 <= 15; c3++) {
         for (c4 = 0; c4 <= 15; c4++) {
           C[c3][c4] *= beta;

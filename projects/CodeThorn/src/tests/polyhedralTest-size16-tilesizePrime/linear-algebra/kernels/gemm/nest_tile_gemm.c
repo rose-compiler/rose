@@ -34,15 +34,15 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c4;
-    int c6;
     int c3;
+    int c6;
     int c1;
+    int c4;
     int c2;
-#pragma omp parallel for private(c2, c6, c4)
-    for (c1 = 0; c1 <= 3; c1++) {
+#pragma omp parallel for private(c2, c4, c6)
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
-        for (c4 = 5 * c1; c4 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c4++) {
+        for (c4 = 7 * c1; c4 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c4++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
@@ -52,11 +52,11 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c3, c6, c4)
-    for (c1 = 0; c1 <= 3; c1++) {
+#pragma omp parallel for private(c2, c4, c6, c3)
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
-          for (c4 = 5 * c1; c4 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c4++) {
+          for (c4 = 7 * c1; c4 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c4++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd

@@ -38,23 +38,23 @@ int main(int argc,char **argv)
     }
     R[k][k] = sqrt(nrm);
 {
+      int c4;
       int c1;
       int c8;
       int c5;
-      int c4;
       if (k >= 0) {
 #pragma omp parallel for private(c8)
-        for (c1 = 0; c1 <= 3; c1++) {
+        for (c1 = 0; c1 <= 2; c1++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c8 = 5 * c1; c8 <= ((((15 < k?15 : k)) < 5 * c1 + 4?((15 < k?15 : k)) : 5 * c1 + 4)); c8++) {
+          for (c8 = 7 * c1; c8 <= ((((15 < k?15 : k)) < 7 * c1 + 6?((15 < k?15 : k)) : 7 * c1 + 6)); c8++) {
             Q[c8][k] = A[c8][k] / R[k][k];
           }
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c8 = (5 * c1 > k + 1?5 * c1 : k + 1); c8 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c8++) {
+          for (c8 = (7 * c1 > k + 1?7 * c1 : k + 1); c8 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c8++) {
             Q[c8][k] = A[c8][k] / R[k][k];
             R[k][c8] = 0;
           }
@@ -62,31 +62,31 @@ int main(int argc,char **argv)
       }
       if (k <= -1) {
 #pragma omp parallel for private(c8)
-        for (c1 = ((k + -3) * 5 < 0?-(-(k + -3) / 5) : ((5 < 0?(-(k + -3) + - 5 - 1) / - 5 : (k + -3 + 5 - 1) / 5))); c1 <= 3; c1++) {
+        for (c1 = ((k + -5) * 7 < 0?-(-(k + -5) / 7) : ((7 < 0?(-(k + -5) + - 7 - 1) / - 7 : (k + -5 + 7 - 1) / 7))); c1 <= 2; c1++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c8 = (5 * c1 > k + 1?5 * c1 : k + 1); c8 <= ((-1 < 5 * c1 + 4?-1 : 5 * c1 + 4)); c8++) {
+          for (c8 = (7 * c1 > k + 1?7 * c1 : k + 1); c8 <= ((-1 < 7 * c1 + 6?-1 : 7 * c1 + 6)); c8++) {
             R[k][c8] = 0;
           }
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c8 = (0 > 5 * c1?0 : 5 * c1); c8 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c8++) {
+          for (c8 = (0 > 7 * c1?0 : 7 * c1); c8 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c8++) {
             Q[c8][k] = A[c8][k] / R[k][k];
             R[k][c8] = 0;
           }
         }
       }
       if (k <= 14) {
-#pragma omp parallel for private(c4, c5, c8)
-        for (c1 = ((k + -3) * 5 < 0?-(-(k + -3) / 5) : ((5 < 0?(-(k + -3) + - 5 - 1) / - 5 : (k + -3 + 5 - 1) / 5))); c1 <= 3; c1++) {
+#pragma omp parallel for private(c5, c8, c4)
+        for (c1 = ((k + -5) * 7 < 0?-(-(k + -5) / 7) : ((7 < 0?(-(k + -5) + - 7 - 1) / - 7 : (k + -5 + 7 - 1) / 7))); c1 <= 2; c1++) {
           for (c4 = 0; c4 <= 2; c4++) {
             for (c5 = 7 * c4; c5 <= ((15 < 7 * c4 + 6?15 : 7 * c4 + 6)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-              for (c8 = (5 * c1 > k + 1?5 * c1 : k + 1); c8 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c8++) {
+              for (c8 = (7 * c1 > k + 1?7 * c1 : k + 1); c8 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c8++) {
                 R[k][c8] += Q[c5][k] * A[c5][c8];
               }
             }
@@ -96,7 +96,7 @@ int main(int argc,char **argv)
 #pragma ivdep
 #pragma vector always
 #pragma simd
-              for (c8 = (5 * c1 > k + 1?5 * c1 : k + 1); c8 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c8++) {
+              for (c8 = (7 * c1 > k + 1?7 * c1 : k + 1); c8 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c8++) {
                 A[c5][c8] = A[c5][c8] - Q[c5][k] * R[k][c8];
               }
             }

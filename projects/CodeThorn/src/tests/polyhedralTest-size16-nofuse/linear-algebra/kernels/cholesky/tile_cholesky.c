@@ -26,12 +26,12 @@ int main(int argc,char **argv)
   
 #pragma scop
   for (i = 0; i < 16; ++i) {{
-      int c0;
+      int c1;
 {
-        int c1;
+        int c2;
         x = A[i][i];
-        for (c1 = 0; c1 <= i + -1; c1++) {
-          x = x - A[i][c1] * A[i][c1];
+        for (c2 = 0; c2 <= i + -1; c2++) {
+          x = x - A[i][c2] * A[i][c2];
         }
       }
     }
@@ -40,30 +40,32 @@ int main(int argc,char **argv)
       int c0;
       int c1;
 {
-        int c2;
         int c3;
+        int c4;
         if (i <= 14) {
-          for (c2 = i + 1; c2 <= 1; c2++) {
-            A[c2][i] = x * p[i];
-            x = A[i][c2];
+          for (c3 = i + 1; c3 <= 1; c3++) {
+            x = A[i][c3];
+            A[c3][i] = x * p[i];
           }
           if (i <= 0) {
             x = A[i][2];
+          }
+          if (i <= 0) {
             A[2][i] = x * p[i];
           }
           if (i <= 0) {
-            for (c2 = 3; c2 <= 15; c2++) {
-              x = A[i][c2];
-              A[c2][i] = x * p[i];
+            for (c3 = 3; c3 <= 15; c3++) {
+              A[c3][i] = x * p[i];
+              x = A[i][c3];
             }
           }
           if (i >= 1) {
-            for (c2 = i + 1; c2 <= 15; c2++) {
-              x = A[i][c2];
-              for (c3 = 2; c3 <= i + 1; c3++) {
-                x = x - A[c2][c3 + - 2] * A[i][c3 + - 2];
+            for (c3 = i + 1; c3 <= 15; c3++) {
+              x = A[i][c3];
+              for (c4 = 2; c4 <= i + 1; c4++) {
+                x = x - A[c3][c4 + - 2] * A[i][c4 + - 2];
               }
-              A[c2][i] = x * p[i];
+              A[c3][i] = x * p[i];
             }
           }
         }

@@ -28,13 +28,13 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c0;
-    int c3;
     int c2;
+    int c3;
 {
-      int c6;
-      int c5;
       int c1;
-#pragma omp parallel for private(c5, c6)
+      int c5;
+      int c6;
+#pragma omp parallel for private(c6, c5)
       for (c1 = 1; c1 <= 15; c1++) {
         for (c5 = (c1 + 1 > 2 * c1 + -13?c1 + 1 : 2 * c1 + -13); c5 <= ((c1 + 15 < 2 * c1 + 13?c1 + 15 : 2 * c1 + 13)); c5++) {
           for (c6 = (((0 > c1 + -14?0 : c1 + -14)) > -1 * c1 + c5 + -14?((0 > c1 + -14?0 : c1 + -14)) : -1 * c1 + c5 + -14); c6 <= ((((1 < c1 + -1?1 : c1 + -1)) < -1 * c1 + c5 + -1?((1 < c1 + -1?1 : c1 + -1)) : -1 * c1 + c5 + -1)); c6++) {

@@ -29,8 +29,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c4;
     int c3;
+    int c4;
 #pragma ivdep
 #pragma vector always
 #pragma simd

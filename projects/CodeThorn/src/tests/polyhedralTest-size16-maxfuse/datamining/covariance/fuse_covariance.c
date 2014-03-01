@@ -31,8 +31,8 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c4;
-    int c3;
     int c0;
+    int c3;
     for (c0 = 0; c0 <= 15; c0++) {
       for (c3 = c0; c3 <= 15; c3++) {
         symmat[c0][c3] = 0.0;

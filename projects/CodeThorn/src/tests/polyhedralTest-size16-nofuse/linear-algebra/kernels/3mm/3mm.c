@@ -21,10 +21,6 @@
 #include <string.h>
 #include <math.h>
 
-/* Include polybench common header. */
-#include <polybench.h>
-
-
 
 int main(int argc, char** argv)
 {

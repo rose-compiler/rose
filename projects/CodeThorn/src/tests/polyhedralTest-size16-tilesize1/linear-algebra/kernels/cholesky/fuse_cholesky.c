@@ -26,44 +26,30 @@ int main(int argc,char **argv)
   
 #pragma scop
   for (i = 0; i < 16; ++i) {{
-      int c0;
+      int c1;
       x = A[i][i];
-      for (c0 = 0; c0 <= i + -1; c0++) {
-        x = x - A[i][c0] * A[i][c0];
+      for (c1 = 0; c1 <= i + -1; c1++) {
+        x = x - A[i][c1] * A[i][c1];
       }
     }
     p[i] = 1.0 / sqrt(x);
 {
-      int c0;
       int c1;
+      int c3;
       if (i <= 14) {
         if (i >= 1) {
-          for (c0 = i + 1; c0 <= 15; c0++) {
-            x = A[i][c0];
-            for (c1 = 2; c1 <= i + 1; c1++) {
-              x = x - A[c0][c1 + -2] * A[i][c1 + -2];
+          for (c1 = i + 1; c1 <= 15; c1++) {
+            x = A[i][c1];
+            for (c3 = 0; c3 <= i + -1; c3++) {
+              x = x - A[c1][c3] * A[i][c3];
             }
-            A[c0][i] = x * p[i];
+            A[c1][i] = x * p[i];
           }
         }
         if (i <= 0) {
-          for (c0 = i + 1; c0 <= 15; c0++) {
-            if (c0 == 2) {
-              x = A[i][2];
-              A[2][i] = x * p[i];
-            }
-            if (c0 >= 3) {
-              x = A[i][c0];
-            }
-            if (c0 >= 3) {
-              A[c0][i] = x * p[i];
-            }
-            if (c0 <= 1) {
-              A[c0][i] = x * p[i];
-            }
-            if (c0 <= 1) {
-              x = A[i][c0];
-            }
+          for (c1 = i + 1; c1 <= 15; c1++) {
+            x = A[i][c1];
+            A[c1][i] = x * p[i];
           }
         }
       }

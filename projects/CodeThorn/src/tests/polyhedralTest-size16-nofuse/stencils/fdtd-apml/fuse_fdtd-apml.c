@@ -45,31 +45,59 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
-    int c4;
-    for (c0 = 0; c0 <= 15; c0++) {
-      for (c1 = 0; c1 <= 15; c1++) {
-        for (c4 = 0; c4 <= 15; c4++) {
-          clf[c0][c1] = Ex[c0][c1][c4] - Ex[c0][c1 + 1][c4] + Ey[c0][c1][c4 + 1] - Ey[c0][c1][c4];
-          tmp[c0][c1] = cymh[c1] / cyph[c1] * Bza[c0][c1][c4] - ch / cyph[c1] * clf[c0][c1];
-          Hz[c0][c1][c4] = cxmh[c4] / cxph[c4] * Hz[c0][c1][c4] + mui * czp[c0] / cxph[c4] * tmp[c0][c1] - mui * czm[c0] / cxph[c4] * Bza[c0][c1][c4];
-          Bza[c0][c1][c4] = tmp[c0][c1];
+    int c3;
+    int c2;
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          clf[c1][c2] = Ex[c1][c2][c3] - Ex[c1][c2 + 1][c3] + Ey[c1][c2][c3 + 1] - Ey[c1][c2][c3];
+          tmp[c1][c2] = cymh[c2] / cyph[c2] * Bza[c1][c2][c3] - ch / cyph[c2] * clf[c1][c2];
+          Hz[c1][c2][c3] = cxmh[c3] / cxph[c3] * Hz[c1][c2][c3] + mui * czp[c1] / cxph[c3] * tmp[c1][c2] - mui * czm[c1] / cxph[c3] * Bza[c1][c2][c3];
+          Bza[c1][c2][c3] = tmp[c1][c2];
         }
-        clf[c0][c1] = Ex[c0][c1][16] - Ex[c0][c1 + 1][16] + Ry[c0][c1] - Ey[c0][c1][16];
-        tmp[c0][c1] = cymh[c1] / cyph[c1] * Bza[c0][c1][16] - ch / cyph[c1] * clf[c0][c1];
-        Hz[c0][c1][16] = cxmh[16] / cxph[16] * Hz[c0][c1][16] + mui * czp[c0] / cxph[16] * tmp[c0][c1] - mui * czm[c0] / cxph[16] * Bza[c0][c1][16];
-        Bza[c0][c1][16] = tmp[c0][c1];
-        for (c4 = 0; c4 <= 15; c4++) {
-          clf[c0][c1] = Ex[c0][16][c4] - Ax[c0][c4] + Ey[c0][16][c4 + 1] - Ey[c0][16][c4];
-          tmp[c0][c1] = cymh[16] / cyph[c1] * Bza[c0][c1][c4] - ch / cyph[c1] * clf[c0][c1];
-          Hz[c0][16][c4] = cxmh[c4] / cxph[c4] * Hz[c0][16][c4] + mui * czp[c0] / cxph[c4] * tmp[c0][c1] - mui * czm[c0] / cxph[c4] * Bza[c0][16][c4];
-          Bza[c0][16][c4] = tmp[c0][c1];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        clf[c1][c2] = Ex[c1][c2][16] - Ex[c1][c2 + 1][16] + Ry[c1][c2] - Ey[c1][c2][16];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        tmp[c1][c2] = cymh[c2] / cyph[c2] * Bza[c1][c2][16] - ch / cyph[c2] * clf[c1][c2];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        Hz[c1][c2][16] = cxmh[16] / cxph[16] * Hz[c1][c2][16] + mui * czp[c1] / cxph[16] * tmp[c1][c2] - mui * czm[c1] / cxph[16] * Bza[c1][c2][16];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        Bza[c1][c2][16] = tmp[c1][c2];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          clf[c1][c2] = Ex[c1][16][c3] - Ax[c1][c3] + Ey[c1][16][c3 + 1] - Ey[c1][16][c3];
+          tmp[c1][c2] = cymh[16] / cyph[c2] * Bza[c1][c2][c3] - ch / cyph[c2] * clf[c1][c2];
+          Hz[c1][16][c3] = cxmh[c3] / cxph[c3] * Hz[c1][16][c3] + mui * czp[c1] / cxph[c3] * tmp[c1][c2] - mui * czm[c1] / cxph[c3] * Bza[c1][16][c3];
+          Bza[c1][16][c3] = tmp[c1][c2];
         }
-        clf[c0][c1] = Ex[c0][16][16] - Ax[c0][16] + Ry[c0][16] - Ey[c0][16][16];
-        tmp[c0][c1] = cymh[16] / cyph[16] * Bza[c0][16][16] - ch / cyph[16] * clf[c0][c1];
-        Hz[c0][16][16] = cxmh[16] / cxph[16] * Hz[c0][16][16] + mui * czp[c0] / cxph[16] * tmp[c0][c1] - mui * czm[c0] / cxph[16] * Bza[c0][16][16];
-        Bza[c0][16][16] = tmp[c0][c1];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        clf[c1][c2] = Ex[c1][16][16] - Ax[c1][16] + Ry[c1][16] - Ey[c1][16][16];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        tmp[c1][c2] = cymh[16] / cyph[16] * Bza[c1][16][16] - ch / cyph[16] * clf[c1][c2];
+        Hz[c1][16][16] = cxmh[16] / cxph[16] * Hz[c1][16][16] + mui * czp[c1] / cxph[16] * tmp[c1][c2] - mui * czm[c1] / cxph[16] * Bza[c1][16][16];
+        Bza[c1][16][16] = tmp[c1][c2];
       }
     }
   }

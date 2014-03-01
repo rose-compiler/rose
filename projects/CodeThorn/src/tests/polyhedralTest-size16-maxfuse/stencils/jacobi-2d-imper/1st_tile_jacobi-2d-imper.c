@@ -17,9 +17,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
+    int c2;
     int c0;
     int c3;
-    int c2;
     for (c0 = 1; c0 <= 17; c0++) {
       for (c2 = (1 > c0 + -13?1 : c0 + -13); c2 <= ((17 < c0 + 13?17 : c0 + 13)); c2++) {
         if (c0 <= c2 + -1 && c2 >= 15) {

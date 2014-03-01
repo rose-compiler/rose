@@ -31,15 +31,15 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c1;
-    int c2;
     int c3;
+    int c2;
 #pragma omp parallel for private(c2)
     for (c1 = 0; c1 <= 15; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
         C[c1][c2] *= beta;
       }
     }
-#pragma omp parallel for private(c3, c2)
+#pragma omp parallel for private(c2, c3)
     for (c1 = 0; c1 <= 15; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {

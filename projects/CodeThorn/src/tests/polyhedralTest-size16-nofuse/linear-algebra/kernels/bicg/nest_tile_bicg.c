@@ -29,10 +29,10 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
-    int c4;
     int c1;
+    int c3;
     int c2;
+    int c4;
 #pragma omp parallel for private(c4)
     for (c1 = 0; c1 <= 7; c1++) {
 #pragma ivdep
@@ -42,7 +42,7 @@ int main(int argc,char **argv)
         q[c4] = 0;
       }
     }
-#pragma omp parallel for private(c2, c4, c3)
+#pragma omp parallel for private(c4, c2, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = 0; c2 <= 3; c2++) {
         for (c3 = 4 * c2; c3 <= 4 * c2 + 3; c3++) {
@@ -64,7 +64,7 @@ int main(int argc,char **argv)
         s[c4] = 0;
       }
     }
-#pragma omp parallel for private(c2, c4, c3)
+#pragma omp parallel for private(c4, c2, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = 0; c2 <= 3; c2++) {
         for (c3 = 4 * c2; c3 <= 4 * c2 + 3; c3++) {

@@ -26,10 +26,10 @@ int main(int argc,char **argv)
   
 #pragma scop
   for (i = 0; i < 16; ++i) {{
-      int c0;
+      int c1;
       x = A[i][i];
-      for (c0 = 0; c0 <= i + -1; c0++) {
-        x = x - A[i][c0] * A[i][c0];
+      for (c1 = 0; c1 <= i + -1; c1++) {
+        x = x - A[i][c1] * A[i][c1];
       }
     }
     p[i] = 1.0 / sqrt(x);

@@ -45,35 +45,63 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
-    int c4;
+    int c3;
+    int c2;
 {
-      int c2;
-      int c3;
-      int c7;
-      for (c2 = 0; c2 <= 15; c2++) {
-        for (c3 = 0; c3 <= 15; c3++) {
-          for (c7 = 0; c7 <= 15; c7++) {
-            clf[c2][c3] = Ex[c2][c3][c7] - Ex[c2][c3 + 1][c7] + Ey[c2][c3][c7 + 1] - Ey[c2][c3][c7];
-            tmp[c2][c3] = cymh[c3] / cyph[c3] * Bza[c2][c3][c7] - ch / cyph[c3] * clf[c2][c3];
-            Hz[c2][c3][c7] = cxmh[c7] / cxph[c7] * Hz[c2][c3][c7] + mui * czp[c2] / cxph[c7] * tmp[c2][c3] - mui * czm[c2] / cxph[c7] * Bza[c2][c3][c7];
-            Bza[c2][c3][c7] = tmp[c2][c3];
+      int c4;
+      int c5;
+      int c6;
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          for (c6 = 0; c6 <= 15; c6++) {
+            clf[c4][c5] = Ex[c4][c5][c6] - Ex[c4][c5 + 1][c6] + Ey[c4][c5][c6 + 1] - Ey[c4][c5][c6];
+            tmp[c4][c5] = cymh[c5] / cyph[c5] * Bza[c4][c5][c6] - ch / cyph[c5] * clf[c4][c5];
+            Hz[c4][c5][c6] = cxmh[c6] / cxph[c6] * Hz[c4][c5][c6] + mui * czp[c4] / cxph[c6] * tmp[c4][c5] - mui * czm[c4] / cxph[c6] * Bza[c4][c5][c6];
+            Bza[c4][c5][c6] = tmp[c4][c5];
           }
-          clf[c2][c3] = Ex[c2][c3][16] - Ex[c2][c3 + 1][16] + Ry[c2][c3] - Ey[c2][c3][16];
-          tmp[c2][c3] = cymh[c3] / cyph[c3] * Bza[c2][c3][16] - ch / cyph[c3] * clf[c2][c3];
-          Hz[c2][c3][16] = cxmh[16] / cxph[16] * Hz[c2][c3][16] + mui * czp[c2] / cxph[16] * tmp[c2][c3] - mui * czm[c2] / cxph[16] * Bza[c2][c3][16];
-          Bza[c2][c3][16] = tmp[c2][c3];
-          for (c7 = 0; c7 <= 15; c7++) {
-            clf[c2][c3] = Ex[c2][16][c7] - Ax[c2][c7] + Ey[c2][16][c7 + 1] - Ey[c2][16][c7];
-            tmp[c2][c3] = cymh[16] / cyph[c3] * Bza[c2][c3][c7] - ch / cyph[c3] * clf[c2][c3];
-            Hz[c2][16][c7] = cxmh[c7] / cxph[c7] * Hz[c2][16][c7] + mui * czp[c2] / cxph[c7] * tmp[c2][c3] - mui * czm[c2] / cxph[c7] * Bza[c2][16][c7];
-            Bza[c2][16][c7] = tmp[c2][c3];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          clf[c4][c5] = Ex[c4][c5][16] - Ex[c4][c5 + 1][16] + Ry[c4][c5] - Ey[c4][c5][16];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          tmp[c4][c5] = cymh[c5] / cyph[c5] * Bza[c4][c5][16] - ch / cyph[c5] * clf[c4][c5];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          Hz[c4][c5][16] = cxmh[16] / cxph[16] * Hz[c4][c5][16] + mui * czp[c4] / cxph[16] * tmp[c4][c5] - mui * czm[c4] / cxph[16] * Bza[c4][c5][16];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          Bza[c4][c5][16] = tmp[c4][c5];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          for (c6 = 0; c6 <= 15; c6++) {
+            clf[c4][c5] = Ex[c4][16][c6] - Ax[c4][c6] + Ey[c4][16][c6 + 1] - Ey[c4][16][c6];
+            tmp[c4][c5] = cymh[16] / cyph[c5] * Bza[c4][c5][c6] - ch / cyph[c5] * clf[c4][c5];
+            Hz[c4][16][c6] = cxmh[c6] / cxph[c6] * Hz[c4][16][c6] + mui * czp[c4] / cxph[c6] * tmp[c4][c5] - mui * czm[c4] / cxph[c6] * Bza[c4][16][c6];
+            Bza[c4][16][c6] = tmp[c4][c5];
           }
-          clf[c2][c3] = Ex[c2][16][16] - Ax[c2][16] + Ry[c2][16] - Ey[c2][16][16];
-          tmp[c2][c3] = cymh[16] / cyph[16] * Bza[c2][16][16] - ch / cyph[16] * clf[c2][c3];
-          Hz[c2][16][16] = cxmh[16] / cxph[16] * Hz[c2][16][16] + mui * czp[c2] / cxph[16] * tmp[c2][c3] - mui * czm[c2] / cxph[16] * Bza[c2][16][16];
-          Bza[c2][16][16] = tmp[c2][c3];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          clf[c4][c5] = Ex[c4][16][16] - Ax[c4][16] + Ry[c4][16] - Ey[c4][16][16];
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          tmp[c4][c5] = cymh[16] / cyph[16] * Bza[c4][16][16] - ch / cyph[16] * clf[c4][c5];
+          Hz[c4][16][16] = cxmh[16] / cxph[16] * Hz[c4][16][16] + mui * czp[c4] / cxph[16] * tmp[c4][c5] - mui * czm[c4] / cxph[16] * Bza[c4][16][16];
+          Bza[c4][16][16] = tmp[c4][c5];
         }
       }
     }

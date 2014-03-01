@@ -30,8 +30,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c6;
     int c3;
+    int c6;
     int c5;
     for (c5 = 0; c5 <= 15; c5++) {
 #pragma ivdep

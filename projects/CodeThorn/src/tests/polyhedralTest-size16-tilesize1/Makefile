@@ -32,7 +32,7 @@ export ARRAYSIZE := 16
 export STEPSIZE := 2
 export CC := /home/lin32/Development/projects/polyopt-c-0.2.1/src/PolyOpt
 #export CFLAGS := -O3 --polyopt-verbose --polyopt-scop-extractor-verbose=3 --polyopt-pluto-fuse-maxfuse --polyopt-fixed-tiling
-export CMAXFUSEFLAGS := -O3 --polyopt-pluto-fuse-maxfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
+export CMAXFUSEFLAGS := -O3 --polyopt-pluto-fuse-smartfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
 export CSMARTFUSEFLAGS := -O3 --polyopt-pluto-fuse-smartfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE) 
 export CTILEFLAGS := -O3 --polyopt-fixed-tiling --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
 export INCLUDES := -I.

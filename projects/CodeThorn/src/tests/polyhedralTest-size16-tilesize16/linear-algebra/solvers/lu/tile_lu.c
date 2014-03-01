@@ -24,18 +24,20 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
-    int c2;
     int c1;
+    int c5;
+    int c3;
 {
-      int c5;
-      int c3;
-      int c4;
-      for (c3 = 0; c3 <= 14; c3++) {
-        for (c4 = c3 + 1; c4 <= 15; c4++) {
-          A[c3][c4] = A[c3][c4] / A[c3][c3];
-          for (c5 = c3 + 1; c5 <= 15; c5++) {
-            A[c5][c4] = A[c5][c4] - A[c5][c3] * A[c3][c4];
+      int c6;
+      int c2;
+      int c8;
+      for (c2 = 0; c2 <= 14; c2++) {
+        for (c6 = c2 + 1; c6 <= 15; c6++) {
+          A[c2][c6] = A[c2][c6] / A[c2][c2];
+        }
+        for (c6 = c2 + 1; c6 <= 15; c6++) {
+          for (c8 = c2 + 1; c8 <= 15; c8++) {
+            A[c6][c8] = A[c6][c8] - A[c6][c2] * A[c2][c8];
           }
         }
       }

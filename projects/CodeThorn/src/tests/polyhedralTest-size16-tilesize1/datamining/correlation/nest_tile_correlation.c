@@ -74,8 +74,8 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c1;
     int c3;
+    int c1;
     int c2;
     symmat[16 - 1][16 - 1] = 1.0;
 #pragma omp parallel for private(c2)

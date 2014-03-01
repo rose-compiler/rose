@@ -31,8 +31,8 @@ int main(int argc,char **argv)
     int c0;
     int c1;
 {
-      int c2;
       int c5;
+      int c2;
       for (c2 = 0; c2 <= 1; c2++) {
         for (c5 = 2 * c2 + 2; c5 <= 2 * c2 + 14; c5++) {
           B[- 2 * c2 + c5] = 0.33333 * (A[- 2 * c2 + c5 - 1] + A[- 2 * c2 + c5] + A[- 2 * c2 + c5 + 1]);

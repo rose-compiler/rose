@@ -30,38 +30,32 @@ int main(int argc,char **argv)
   
 #pragma scop
   for (k = 0; k < 16; k++) {{
-      int c0;
+      int c1;
 {
-        int c1;
+        int c2;
         nrm = 0;
-        for (c1 = 0; c1 <= 15; c1++) {
-          nrm += A[c1][k] * A[c1][k];
+        for (c2 = 0; c2 <= 15; c2++) {
+          nrm += A[c2][k] * A[c2][k];
         }
       }
     }
     R[k][k] = sqrt(nrm);
 {
-      int c2;
-      int c5;
+      int c3;
+      int c1;
 {
-        int c0;
-        int c1;
-        for (c0 = 0; c0 <= ((15 < k?15 : k)); c0++) {
-          Q[c0][k] = A[c0][k] / R[k][k];
+        int c2;
+        int c5;
+        for (c2 = 0; c2 <= 15; c2++) {
+          Q[c2][k] = A[c2][k] / R[k][k];
         }
-        for (c0 = k + 1; c0 <= -1; c0++) {
-          R[k][c0] = 0;
-          for (c1 = 0; c1 <= 15; c1++) {
-            R[k][c0] += Q[c1][k] * A[c1][c0];
-            A[c1][c0] = A[c1][c0] - Q[c1][k] * R[k][c0];
+        for (c2 = k + 1; c2 <= 15; c2++) {
+          R[k][c2] = 0;
+          for (c5 = 0; c5 <= 15; c5++) {
+            R[k][c2] += Q[c5][k] * A[c5][c2];
           }
-        }
-        for (c0 = (0 > k + 1?0 : k + 1); c0 <= 15; c0++) {
-          Q[c0][k] = A[c0][k] / R[k][k];
-          R[k][c0] = 0;
-          for (c1 = 0; c1 <= 15; c1++) {
-            R[k][c0] += Q[c1][k] * A[c1][c0];
-            A[c1][c0] = A[c1][c0] - Q[c1][k] * R[k][c0];
+          for (c5 = 0; c5 <= 15; c5++) {
+            A[c5][c2] = A[c5][c2] - Q[c5][k] * R[k][c2];
           }
         }
       }

@@ -27,16 +27,16 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c1;
-    int c0;
-    int c2;
+    int c5;
+    int c3;
 {
-      int c3;
-      int c4;
-      int c5;
-      for (c3 = 1; c3 <= 15; c3++) {
-        for (c4 = 0; c4 <= 15; c4++) {
-          for (c5 = c4; c5 <= c3 + c4 + -1; c5++) {
-            B[c3][c4] += alpha * A[c3][- 1 * c4 + c5] * B[c4][- 1 * c4 + c5];
+      int c8;
+      int c6;
+      int c2;
+      for (c2 = 1; c2 <= 15; c2++) {
+        for (c6 = 0; c6 <= 15; c6++) {
+          for (c8 = 0; c8 <= c2 + -1; c8++) {
+            B[c2][c6] += alpha * A[c2][c8] * B[c6][c8];
           }
         }
       }

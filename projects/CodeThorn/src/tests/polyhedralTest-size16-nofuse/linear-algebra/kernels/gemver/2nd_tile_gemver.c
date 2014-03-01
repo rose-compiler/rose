@@ -65,8 +65,8 @@ int main(int argc,char **argv)
       
 #pragma simd
 {
-        int c2;
         int c0;
+        int c2;
 #pragma omp parallel for private(c2)
         for (c0 = 4 * c1; c0 <= 4 * c1 + 3; c0++) {
           for (c2 = 2 * c0; c2 <= 2 * c0 + 1; c2++) {

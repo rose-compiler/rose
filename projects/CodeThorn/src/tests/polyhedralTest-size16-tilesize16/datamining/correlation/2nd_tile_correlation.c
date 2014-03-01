@@ -110,13 +110,13 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c4;
-    int c2;
     int c3;
+    int c2;
+    int c4;
 {
+      int c5;
       int c6;
       int c7;
-      int c5;
       for (c7 = 0; c7 <= 14; c7++) {
         symmat[c7][c7] = 1.0;
       }

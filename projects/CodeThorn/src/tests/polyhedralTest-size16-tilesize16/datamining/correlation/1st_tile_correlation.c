@@ -80,9 +80,9 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c4;
-    int c2;
     int c3;
+    int c2;
+    int c4;
     symmat[16 - 1][16 - 1] = 1.0;
     for (c2 = 1; c2 <= 15; c2++) {
       for (c4 = 0; c4 <= c2 + -1; c4++) {

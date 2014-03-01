@@ -58,7 +58,7 @@ int main(int argc,char **argv)
       }
       if (k <= -1) {
 #pragma omp parallel for private(c8)
-        for (c1 = ((k + -22) * 24 < 0?-(-(k + -22) / 24) : ((24 < 0?(-(k + -22) + - 24 - 1) / - 24 : (k + -22 + 24 - 1) / 24))); c1 <= 0; c1++) {
+        for (c1 = ((k + -30) * 32 < 0?-(-(k + -30) / 32) : ((32 < 0?(-(k + -30) + - 32 - 1) / - 32 : (k + -30 + 32 - 1) / 32))); c1 <= 0; c1++) {
           if (c1 == 0) {
 #pragma ivdep
 #pragma vector always
@@ -71,19 +71,19 @@ int main(int argc,char **argv)
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c8 = (24 * c1 > k + 1?24 * c1 : k + 1); c8 <= ((-1 < 24 * c1 + 23?-1 : 24 * c1 + 23)); c8++) {
+          for (c8 = (32 * c1 > k + 1?32 * c1 : k + 1); c8 <= ((-1 < 32 * c1 + 31?-1 : 32 * c1 + 31)); c8++) {
             R[k][c8] = 0;
           }
         }
       }
       if (k <= 14) {
 #pragma omp parallel for private(c8, c5)
-        for (c1 = ((k + -22) * 24 < 0?-(-(k + -22) / 24) : ((24 < 0?(-(k + -22) + - 24 - 1) / - 24 : (k + -22 + 24 - 1) / 24))); c1 <= 0; c1++) {
+        for (c1 = ((k + -30) * 32 < 0?-(-(k + -30) / 32) : ((32 < 0?(-(k + -30) + - 32 - 1) / - 32 : (k + -30 + 32 - 1) / 32))); c1 <= 0; c1++) {
           for (c5 = 0; c5 <= 15; c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-            for (c8 = (24 * c1 > k + 1?24 * c1 : k + 1); c8 <= ((15 < 24 * c1 + 23?15 : 24 * c1 + 23)); c8++) {
+            for (c8 = (32 * c1 > k + 1?32 * c1 : k + 1); c8 <= ((15 < 32 * c1 + 31?15 : 32 * c1 + 31)); c8++) {
               R[k][c8] += Q[c5][k] * A[c5][c8];
             }
           }
@@ -91,7 +91,7 @@ int main(int argc,char **argv)
 #pragma ivdep
 #pragma vector always
 #pragma simd
-            for (c8 = (24 * c1 > k + 1?24 * c1 : k + 1); c8 <= ((15 < 24 * c1 + 23?15 : 24 * c1 + 23)); c8++) {
+            for (c8 = (32 * c1 > k + 1?32 * c1 : k + 1); c8 <= ((15 < 32 * c1 + 31?15 : 32 * c1 + 31)); c8++) {
               A[c5][c8] = A[c5][c8] - Q[c5][k] * R[k][c8];
             }
           }

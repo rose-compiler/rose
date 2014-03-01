@@ -24,10 +24,10 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c2;
-    int c3;
     int c0;
     int c1;
+    int c2;
+    int c3;
     for (c0 = 1; c0 <= 16; c0++) {
 #pragma omp parallel for private(c3, c2)
       for (c1 = ((13 * c0 + 1) * 14 < 0?-(-(13 * c0 + 1) / 14) : ((14 < 0?(-(13 * c0 + 1) + - 14 - 1) / - 14 : (13 * c0 + 1 + 14 - 1) / 14))); c1 <= ((15 < c0?15 : c0)); c1++) {

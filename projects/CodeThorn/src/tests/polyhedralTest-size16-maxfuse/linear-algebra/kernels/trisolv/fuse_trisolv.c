@@ -25,8 +25,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
+    int c0;
     x[0] = c[0];
     x[0] = x[0] / A[0][0];
     for (c0 = 1; c0 <= 15; c0++) {

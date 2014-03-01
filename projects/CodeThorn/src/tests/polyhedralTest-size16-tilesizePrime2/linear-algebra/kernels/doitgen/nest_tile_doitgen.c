@@ -32,30 +32,30 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
+    int c7;
+    int c3;
+    int c5;
     int c6;
     int c1;
     int c2;
-    int c3;
-    int c7;
-    int c5;
-#pragma omp parallel for private(c5, c3, c2, c6)
+#pragma omp parallel for private(c2, c6, c5, c3)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
           for (c5 = 13 * c1; c5 <= ((15 < 13 * c1 + 12?15 : 13 * c1 + 12)); c5++) {
-            for (c6 = 11 * c2; c6 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c6++) {
+            for (c6 = 13 * c2; c6 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c6++) {
               sum[c5][c6][c3] = 0;
             }
           }
         }
       }
     }
-#pragma omp parallel for private(c5, c7, c3, c2, c6)
+#pragma omp parallel for private(c2, c6, c5, c3, c7)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
           for (c5 = 13 * c1; c5 <= ((15 < 13 * c1 + 12?15 : 13 * c1 + 12)); c5++) {
-            for (c6 = 11 * c2; c6 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c6++) {
+            for (c6 = 13 * c2; c6 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c6++) {
               for (c7 = 0; c7 <= 15; c7++) {
                 sum[c5][c6][c3] = sum[c5][c6][c3] + A[c5][c6][c7] * C4[c7][c3];
               }
@@ -64,12 +64,12 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c5, c3, c2, c6)
+#pragma omp parallel for private(c2, c6, c5, c3)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
           for (c5 = 13 * c1; c5 <= ((15 < 13 * c1 + 12?15 : 13 * c1 + 12)); c5++) {
-            for (c6 = 11 * c2; c6 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c6++) {
+            for (c6 = 13 * c2; c6 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c6++) {
               A[c5][c6][c3] = sum[c5][c6][c3];
             }
           }

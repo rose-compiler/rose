@@ -33,8 +33,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
     int c4;
+    int c3;
 #pragma ivdep
 #pragma vector always
 #pragma simd
@@ -80,8 +80,8 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c4;
     int c6;
+    int c4;
     int c3;
     symmat[16 - 1][16 - 1] = 1.0;
     for (c4 = 0; c4 <= 14; c4++) {

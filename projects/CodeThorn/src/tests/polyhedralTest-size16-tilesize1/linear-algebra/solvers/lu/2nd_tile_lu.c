@@ -24,15 +24,15 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c2;
     int c0;
     int c1;
+    int c2;
     for (c0 = 1; c0 <= 29; c0++) {
       
 #pragma omp parallel for private(c2)
 {
-        int c5;
         int c4;
+        int c5;
         if (c0 >= 1 && c0 <= 29) {
 #pragma ivdep
 #pragma vector always

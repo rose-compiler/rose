@@ -34,9 +34,9 @@ int main(int argc,char **argv)
     }
     p[i] = 1.0 / sqrt(x);
 {
-      int c0;
-      int c1;
       int c2;
+      int c1;
+      int c0;
       if (i <= 14) {
         for (c0 = ((i + -14) * 16 < 0?-(-(i + -14) / 16) : ((16 < 0?(-(i + -14) + - 16 - 1) / - 16 : (i + -14 + 16 - 1) / 16))); c0 <= 0; c0++) {
           if (c0 == 0 && i >= 1) {

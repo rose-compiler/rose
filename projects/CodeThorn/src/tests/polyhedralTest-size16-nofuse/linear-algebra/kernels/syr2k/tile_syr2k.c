@@ -31,19 +31,23 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
+    int c3;
     int c2;
 {
-      int c3;
       int c5;
+      int c6;
       int c4;
-      for (c3 = 0; c3 <= 15; c3++) {
-        for (c4 = 0; c4 <= 15; c4++) {
-          C[c3][c4] *= beta;
-          for (c5 = 0; c5 <= 15; c5++) {
-            C[c3][c4] += alpha * A[c3][c5] * B[c4][c5];
-            C[c3][c4] += alpha * B[c3][c5] * A[c4][c5];
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          C[c4][c5] *= beta;
+        }
+      }
+      for (c4 = 0; c4 <= 15; c4++) {
+        for (c5 = 0; c5 <= 15; c5++) {
+          for (c6 = 0; c6 <= 15; c6++) {
+            C[c4][c5] += alpha * A[c4][c6] * B[c5][c6];
+            C[c4][c5] += alpha * B[c4][c6] * A[c5][c6];
           }
         }
       }

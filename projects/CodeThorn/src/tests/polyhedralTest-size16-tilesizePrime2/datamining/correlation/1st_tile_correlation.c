@@ -33,9 +33,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
-    int c4;
     int c2;
+    int c4;
+    int c1;
 #pragma omp parallel for private(c4)
     for (c1 = 0; c1 <= 1; c1++) {
 #pragma ivdep
@@ -45,7 +45,7 @@ int main(int argc,char **argv)
         mean[c4] = 0.0;
       }
     }
-#pragma omp parallel for private(c2, c4)
+#pragma omp parallel for private(c4, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
 #pragma ivdep
@@ -90,12 +90,12 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c1;
     int c3;
-    int c4;
+    int c1;
     int c2;
+    int c4;
     symmat[16 - 1][16 - 1] = 1.0;
-#pragma omp parallel for private(c2, c4)
+#pragma omp parallel for private(c4, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1 + 1; c2 <= 15; c2++) {
         for (c4 = 13 * c1; c4 <= ((13 * c1 + 12 < c2 + -1?13 * c1 + 12 : c2 + -1)); c4++) {
@@ -103,7 +103,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c4, c3)
+#pragma omp parallel for private(c4, c2, c3)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1 + 1; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -113,7 +113,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c4)
+#pragma omp parallel for private(c4, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1 + 1; c2 <= 15; c2++) {
         for (c4 = 13 * c1; c4 <= ((13 * c1 + 12 < c2 + -1?13 * c1 + 12 : c2 + -1)); c4++) {
