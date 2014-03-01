@@ -38,12 +38,15 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
   // Polyhedral test codes
-  setAstNodeVariant(V_SgMultAssignOp, true);
-  setAstNodeVariant(V_SgPntrArrRefExp, true);
   setAstNodeVariant(V_SgPlusAssignOp, true);
+  setAstNodeVariant(V_SgMinusAssignOp, true);
+  setAstNodeVariant(V_SgMultAssignOp, true);
+  setAstNodeVariant(V_SgDivAssignOp, true);
+  setAstNodeVariant(V_SgPntrArrRefExp, true);
   setAstNodeVariant(V_SgPragmaDeclaration, true);
   setAstNodeVariant(V_SgPragma, true);
   setAstNodeVariant(V_SgDoubleVal, true);
+  //SgIntegerDivideAssignOp
 }
 
 
@@ -681,7 +684,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
   const EState* estate=tg->getStartEState();
   EStatePtrSet succSet=tg->succ(estate);
   int numProcessedArrayUpdates=0;
-  int numProcessedEStates=0;
+  vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
   while(succSet.size()>=1) {
     if(succSet.size()>1) {
 	  cerr<<estate->toString()<<endl;
@@ -691,10 +694,8 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       EStatePtrSet::iterator i=succSet.begin();
       estate=*i;
     }
-	numProcessedEStates++;
     // investigate state
     Label lab=estate->label();
-    const PState* pstate=estate->pstate();
     SgNode* node=labeler->getNode(lab);
     // eliminate superfluous root nodes
     if(isSgExprStatement(node))
@@ -703,25 +704,39 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       node=SgNodeHelper::getExprRootChild(node);
     if(SgExpression* exp=isSgExpression(node)) {
       if(SgNodeHelper::isArrayElementAssignment(node)) {
-        SgNode* expCopy=SageInterface::copyExpression(exp);
-        // print for temporary info purpose
-        substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
-        rewriteAst(expCopy, variableIdMapping);
-		SgExpression* expCopy2=isSgExpression(expCopy);
-		if(!expCopy2) {
-		  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<expCopy->class_name()<<endl;
-		  exit(1);
-		}
-		arrayUpdates.push_back(EStateExprInfo(estate,expCopy2));
-		numProcessedArrayUpdates++;
-		if(numProcessedArrayUpdates%100==0) {
-		  cout<<"INFO: extracted arrayUpdates: "<<numProcessedArrayUpdates<<" / estate "<< numProcessedEStates<<" of "<<ana->getEStateSet()->size()<<endl;
-		}
+		stgArrayUpdateSequence.push_back(make_pair(estate,exp));
       }
     }
     // next successor set
     succSet=tg->succ(estate);
   }
+
+  // stgArrayUpdateSequence is now a vector of all array update operations from the STG
+  // prepare array for parallel assignments of rewritten ASTs
+  arrayUpdates.resize(stgArrayUpdateSequence.size());
+  int N=stgArrayUpdateSequence.size();
+
+  // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
+  for(int i=0;i<N;++i) {
+	const EState* p_estate=stgArrayUpdateSequence[i].first;
+	const PState* p_pstate=p_estate->pstate();
+	SgExpression* p_exp=stgArrayUpdateSequence[i].second;
+	SgNode* p_expCopy=SageInterface::copyExpression(p_exp);
+	// print for temporary info purpose
+	substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+	rewriteAst(p_expCopy, variableIdMapping);
+	SgExpression* p_expCopy2=isSgExpression(p_expCopy);
+	if(!p_expCopy2) {
+	  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
+	  exit(1);
+	}
+	numProcessedArrayUpdates++;
+	if(numProcessedArrayUpdates%100==0) {
+	  cout<<"INFO: extracted arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+	}
+	arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
+  }	
+
 }
 
 struct ArrayElementAccessData {
