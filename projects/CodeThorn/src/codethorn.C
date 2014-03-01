@@ -978,6 +978,8 @@ int main( int argc, char * argv[] ) {
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
+    ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
+    ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1147,6 +1149,8 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--verify"
         || string(argv[i])=="--csv-ltl"
         || string(argv[i])=="--spot-stg"
+        || string(argv[i])=="--dump-sorted"
+        || string(argv[i])=="--dump-non-sorted3"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -1388,7 +1392,15 @@ int main( int argc, char * argv[] ) {
 	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
 	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
 	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
+        if (args.count("dump-non-sorted")) {
+          string filename=args["dump-non-sorted"].as<string>();
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+        }
 	sortArrayUpdates(arrayUpdates);
+        if (args.count("dump-sorted")) {
+          string filename=args["dump-sorted"].as<string>();
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+        }
 	string filename="arrayupdates.txt";
 	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
   }
