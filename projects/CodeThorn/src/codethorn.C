@@ -680,6 +680,8 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
   TransitionGraph* tg=ana->getTransitionGraph();
   const EState* estate=tg->getStartEState();
   EStatePtrSet succSet=tg->succ(estate);
+  int numProcessedArrayUpdates=0;
+  int numProcessedEStates=0;
   while(succSet.size()>=1) {
     if(succSet.size()>1) {
 	  cerr<<estate->toString()<<endl;
@@ -689,6 +691,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       EStatePtrSet::iterator i=succSet.begin();
       estate=*i;
     }
+	numProcessedEStates++;
     // investigate state
     Label lab=estate->label();
     const PState* pstate=estate->pstate();
@@ -702,22 +705,18 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       if(SgNodeHelper::isArrayElementAssignment(node)) {
         SgNode* expCopy=SageInterface::copyExpression(exp);
         // print for temporary info purpose
-#if 0		
-        cout<<"-------------------------------------------------------------------"<<endl;
-        cout<<pstate->toString(variableIdMapping)<<endl;
-        cout<<expCopy->unparseToString()<<endl;
-#endif
         substituteVariablesWithConst(variableIdMapping,pstate,expCopy);
         rewriteAst(expCopy, variableIdMapping);
-#if 0
-        cout<<expCopy->unparseToString()<<endl;
-#endif
 		SgExpression* expCopy2=isSgExpression(expCopy);
 		if(!expCopy2) {
 		  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<expCopy->class_name()<<endl;
 		  exit(1);
 		}
 		arrayUpdates.push_back(EStateExprInfo(estate,expCopy2));
+		numProcessedArrayUpdates++;
+		if(numProcessedArrayUpdates%100==0) {
+		  cout<<"INFO: extracted arrayUpdates: "<<numProcessedArrayUpdates<<" / estate "<< numProcessedEStates<<" of "<<ana->getEStateSet()->size()<<endl;
+		}
       }
     }
     // next successor set

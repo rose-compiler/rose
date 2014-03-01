@@ -15,7 +15,6 @@ echo -n "checking variant: ${onlybenchname}.c: "
 if [ -e ${fullbenchname}.c ]; then
   ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes --csv-stats=${fullbenchname}.stats >& /dev/null
   cp arrayupdates.txt ${fullbenchname}.check
-  #echo -n "checking : ${origtestresult} vs ${benchname}.check: "
   if(diff ${origtestresult} ${fullbenchname}.check >& /dev/null); then
   echo "PASS" > ${fullbenchname}.verify
   cat ${fullbenchname}.verify
