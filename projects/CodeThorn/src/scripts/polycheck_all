@@ -13,7 +13,7 @@ onlybenchname=`basename "$fullbenchname"`
 
 echo -n "checking variant: ${onlybenchname}.c: " 
 if [ -e ${fullbenchname}.c ]; then
-  ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes >& /dev/null
+  ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes --csv-stats=${fullbenchname}.stats >& /dev/null
   cp arrayupdates.txt ${fullbenchname}.check
   #echo -n "checking : ${origtestresult} vs ${benchname}.check: "
   if(diff ${origtestresult} ${fullbenchname}.check >& /dev/null); then
@@ -25,6 +25,10 @@ if [ -e ${fullbenchname}.c ]; then
   fi
 else
   echo "SKIP (does not exist)"
+  # generate empty stats file
+  echo "Sizes, -, -, -, -">${fullbenchname}.stats
+  echo "Runtime(readable), -, -, -, -, -">>${fullbenchname}.stats
+  echo "rewrite-stats, -, -, -, -, -,-">>${fullbenchname}.stats
 fi
 }
 
@@ -42,7 +46,7 @@ function check_benchmark {
 
         # create orig-benchmark result
         echo "analyzing: ${i}/${benchname}.c"
-        ./codethorn ${i}/${benchname}.c -I${i} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes >& /dev/null
+        ./codethorn ${i}/${benchname}.c -I${i} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes --csv-stats=${fullbenchname}.stats >& /dev/null
         cp arrayupdates.txt ${i}/${benchname}.check
 
         # check with variants
@@ -77,9 +81,10 @@ function check_benchmark {
 
 mypath="tests"
 
-for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
 #for mybenchpath in polyhedralTest-size16-tilesize16; do
-for mybench in "stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"; do
+for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
+#for mybench in "stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"; do
+for mybench in "/stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "stencils/seidel-2d" "linear-algebra/kernels/trmm" "linear-algebra/kernels/trisolv" "linear-algebra/kernels/cholesky" "linear-algebra/solvers/lu" "linear-algebra/solvers/gramschmidt" "linear-algebra/solvers/durbin"; do
   FULLNAME=${mypath}/${mybenchpath}/${mybench}
   check_benchmark $FULLNAME
 done

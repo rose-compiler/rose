@@ -428,6 +428,24 @@ string readableruntime(double time) {
 
 static Analyzer* global_analyzer=0;
 
+struct RewriteStatistics {
+  RewriteStatistics(){init();}
+  void init() {
+	numElimMinusOperator=0;
+	numElimAssignOperator=0;
+	numAddOpReordering=0;
+	numConstantFolding=0;
+	numVariableElim=0;
+	numArrayUpdates=0;
+  }
+  int numElimMinusOperator;
+  int numElimAssignOperator;
+  int numAddOpReordering;
+  int numConstantFolding;
+  int numVariableElim;
+  int numArrayUpdates; // number of array updates (i.e. assignments)
+} dump1_stats;
+
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
@@ -447,6 +465,7 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
   {
     // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
 	if(isSgCompoundAssignOp(root)) {
+	  dump1_stats.numElimAssignOperator++;
 	  SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
 	  SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
 	  SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
@@ -473,6 +492,7 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
 	  }
 	}
 
+#if 0
     MatchResult res=m.performMatching(
                                       "SgSgMinusOp($IntVal=SgIntVal)\
                                       ",root);
@@ -487,15 +507,18 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
         switch(op->variantT()) {
         case V_SgMinusOp:
           SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+
           break;
         default:
           cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
           exit(1);
         }
         someTransformationApplied=true;
+		dump1_stats.numElimOperator++;
       }
     }
- }
+#endif
+  }
 
   do{
     someTransformationApplied=false;
@@ -525,6 +548,7 @@ do {
         }
         transformationApplied=true;
         someTransformationApplied=true;
+ 	    dump1_stats.numElimMinusOperator++;
       }
     }
  } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
@@ -555,6 +579,7 @@ do {
             //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
             transformationApplied=true;
             someTransformationApplied=true;
+			dump1_stats.numAddOpReordering++;
           }       
         }
       }
@@ -602,6 +627,7 @@ do {
         }
         transformationApplied=true;
         someTransformationApplied=true;
+		dump1_stats.numConstantFolding++;
       }
     }
  } while(transformationApplied);
@@ -634,6 +660,7 @@ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PS
     //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
     SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
   }
+  dump1_stats.numVariableElim=substitutionList.size();
 }
 
 struct EStateExprInfo {
@@ -1326,6 +1353,42 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   cout <<color("normal");
 
+  // TEST
+  if (boolOptions["generate-assertions"]) {
+    AssertionExtractor assertionExtractor(&analyzer);
+    assertionExtractor.computeLabelVectorOfEStates();
+    assertionExtractor.annotateAst();
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
+    cout << "STATUS: Generated assertions."<<endl;
+  }
+
+  double arrayUpdateExtractionRunTime=0;
+  double arrayUpdateSsaNumberingRunTime=0;
+  double arrayUpdateMappingRunTime=0;
+  
+  if(boolOptions["dump1"]) {
+	ArrayUpdatesSequence arrayUpdates;
+	cout<<"STATUS: performing array analysis on STG."<<endl;
+	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+	timer.start();
+	extractArrayUpdateOperations(&analyzer,arrayUpdates);
+	arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+	dump1_stats.numArrayUpdates=arrayUpdates.size();
+	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
+	timer.start();
+	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
+	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
+	arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
+	timer.start();
+	sortArrayUpdates(arrayUpdates);
+	arrayUpdateMappingRunTime=timer.getElapsedTimeInMilliSec();
+	string filename="arrayupdates.txt";
+	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+arrayUpdateMappingRunTime;
+  }
+
   if(args.count("csv-stats")) {
     string filename=args["csv-stats"].as<string>().c_str();
     stringstream text;
@@ -1342,13 +1405,19 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(frontEndRunTime)<<", "
         <<readableruntime(initRunTime)<<", "
         <<readableruntime(analysisRunTime)<<", "
-        <<readableruntime(ltlRunTime)<<", "
+	  //<<readableruntime(ltlRunTime)<<", "
+		<<readableruntime(arrayUpdateExtractionRunTime)<<", "
+		<<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
+		<<readableruntime(arrayUpdateMappingRunTime)<<", "
         <<readableruntime(totalRunTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
         <<analysisRunTime<<", "
-        <<ltlRunTime<<", "
+	  //<<ltlRunTime<<", "
+		<<arrayUpdateExtractionRunTime<<", "
+		<<arrayUpdateSsaNumberingRunTime<<", "
+		<<arrayUpdateMappingRunTime<<", "
         <<totalRunTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
@@ -1361,34 +1430,18 @@ int main( int argc, char * argv[] ) {
     text<<"threads,"<<numberOfThreadsToUse<<endl;
     //    text<<"abstract-and-const-states,"
     //    <<"";
+	text<<"rewrite-stats, "
+		<<dump1_stats.numArrayUpdates<<", "
+		<<dump1_stats.numElimMinusOperator<<", "
+		<<dump1_stats.numElimAssignOperator<<", "
+		<<dump1_stats.numAddOpReordering<<", "
+		<<dump1_stats.numConstantFolding<<", "
+		<<dump1_stats.numVariableElim
+		<<endl;
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }
   
-  // TEST
-  if (boolOptions["generate-assertions"]) {
-    AssertionExtractor assertionExtractor(&analyzer);
-    assertionExtractor.computeLabelVectorOfEStates();
-    assertionExtractor.annotateAst();
-    AstAnnotator ara(analyzer.getLabeler());
-    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
-    cout << "STATUS: Generated assertions."<<endl;
-  }
-
-  if(boolOptions["dump1"]) {
-	ArrayUpdatesSequence arrayUpdates;
-	cout<<"STATUS: performing array analysis on STG."<<endl;
-	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-	extractArrayUpdateOperations(&analyzer,arrayUpdates);
-	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
-	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
-	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
-	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
-	sortArrayUpdates(arrayUpdates);
-	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
-  }
-
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
     cout << "generating graphviz files:"<<endl;
