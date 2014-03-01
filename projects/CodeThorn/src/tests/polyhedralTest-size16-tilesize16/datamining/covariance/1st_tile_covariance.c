@@ -30,9 +30,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
     int c2;
     int c6;
+    int c3;
     for (c2 = 0; c2 <= 15; c2++) {
 #pragma ivdep
 #pragma vector always

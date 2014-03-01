@@ -31,8 +31,8 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c3;
-    int c2;
     int c4;
+    int c2;
     for (c2 = 0; c2 <= 15; c2++) {
       for (c4 = 0; c4 <= 15; c4++) {
         C[c4][c2] *= beta;

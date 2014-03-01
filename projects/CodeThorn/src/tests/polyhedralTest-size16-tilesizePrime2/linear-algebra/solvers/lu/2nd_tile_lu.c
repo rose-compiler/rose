@@ -24,10 +24,10 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c2;
-    int c3;
     int c0;
     int c1;
+    int c2;
+    int c3;
     for (c0 = 1; c0 <= 16; c0++) {
       
 #pragma omp parallel for private(c3, c2)
@@ -37,8 +37,8 @@ int main(int argc,char **argv)
         int c5;
         int c4;
         if (c0 >= 1 && c0 <= 16) {
-          c4 = ((13 * c0 + -139) * 154 < 0?-(-(13 * c0 + -139) / 154) : ((154 < 0?(-(13 * c0 + -139) + - 154 - 1) / - 154 : (13 * c0 + -139 + 154 - 1) / 154)));
-          if (c4 <= ((c0 * 11 < 0?((11 < 0?-((-c0 + 11 + 1) / 11) : -((-c0 + 11 - 1) / 11))) : c0 / 11))) {
+          c4 = ((c0 + -12) * 14 < 0?-(-(c0 + -12) / 14) : ((14 < 0?(-(c0 + -12) + - 14 - 1) / - 14 : (c0 + -12 + 14 - 1) / 14)));
+          if (c4 <= ((c0 * 13 < 0?((13 < 0?-((-c0 + 13 + 1) / 13) : -((-c0 + 13 - 1) / 13))) : c0 / 13))) {
 #pragma ivdep
 #pragma vector always
 #pragma simd

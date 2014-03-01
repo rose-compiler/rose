@@ -44,8 +44,8 @@ int main(int argc,char **argv)
       int c2;
       int c5;
 {
-        int c0;
         int c1;
+        int c0;
         for (c0 = 0; c0 <= ((15 < k?15 : k)); c0++) {
           Q[c0][k] = A[c0][k] / R[k][k];
         }

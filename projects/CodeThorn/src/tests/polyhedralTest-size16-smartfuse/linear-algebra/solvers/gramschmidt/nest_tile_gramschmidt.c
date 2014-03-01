@@ -38,10 +38,10 @@ int main(int argc,char **argv)
     }
     R[k][k] = sqrt(nrm);
 {
-      int c4;
       int c1;
       int c8;
       int c5;
+      int c4;
       if (k >= 0) {
 #pragma omp parallel for private(c8)
         for (c1 = 0; c1 <= 7; c1++) {
@@ -78,7 +78,7 @@ int main(int argc,char **argv)
           }
         }
       }
-#pragma omp parallel for private(c5, c8, c4)
+#pragma omp parallel for private(c4, c5, c8)
       for (c1 = (k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2))); c1 <= 7; c1++) {
         for (c4 = 0; c4 <= 3; c4++) {
           for (c5 = 4 * c4; c5 <= 4 * c4 + 3; c5++) {

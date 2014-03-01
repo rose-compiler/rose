@@ -30,33 +30,32 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c4;
+    int c5;
+    int c1;
     int c3;
-    int c0;
 {
+      int c2;
+      int c8;
       int c6;
-      int c7;
-      int c1;
-      for (c1 = 0; c1 <= 15; c1++) {
-        mean[c1] = 0.0;
+      for (c2 = 0; c2 <= 15; c2++) {
+        mean[c2] = 0.0;
         for (c6 = 0; c6 <= 15; c6++) {
-          mean[c1] += data[c6][c1];
+          mean[c2] += data[c6][c2];
         }
-        mean[c1] /= float_n;
-        for (c6 = 0; c6 <= c1 + -1; c6++) {
-          data[c6][c1] -= mean[c1];
+        mean[c2] /= float_n;
+      }
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c6 = 0; c6 <= 15; c6++) {
+          data[c2][c6] -= mean[c6];
         }
-        for (c6 = c1; c6 <= 15; c6++) {
-          symmat[c1][c6] = 0.0;
-          data[c6][c1] -= mean[c1];
-        }
-        for (c6 = 0; c6 <= c1; c6++) {
-          for (c7 = 0; c7 <= 15; c7++) {
-            symmat[c6][c1] += data[c7][c6] * data[c7][c1];
+      }
+      for (c2 = 0; c2 <= 15; c2++) {
+        for (c6 = c2; c6 <= 15; c6++) {
+          symmat[c2][c6] = 0.0;
+          for (c8 = 0; c8 <= 15; c8++) {
+            symmat[c2][c6] += data[c8][c2] * data[c8][c6];
           }
-        }
-        for (c6 = 0; c6 <= c1; c6++) {
-          symmat[c1][c6] = symmat[c6][c1];
+          symmat[c6][c2] = symmat[c2][c6];
         }
       }
     }

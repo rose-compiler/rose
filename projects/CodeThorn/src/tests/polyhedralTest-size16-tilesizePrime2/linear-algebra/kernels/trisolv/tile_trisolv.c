@@ -25,17 +25,17 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
+    int c3;
     int c1;
 {
+      int c5;
       int c2;
-      int c3;
       x[0] = c[0];
       x[0] = x[0] / A[0][0];
       for (c2 = 1; c2 <= 15; c2++) {
         x[c2] = c[c2];
-        for (c3 = 1; c3 <= c2; c3++) {
-          x[c2] = x[c2] - A[c2][c3 + -1] * x[c3 + -1];
+        for (c5 = 0; c5 <= c2 + -1; c5++) {
+          x[c2] = x[c2] - A[c2][c5] * x[c5];
         }
         x[c2] = x[c2] / A[c2][c2];
       }

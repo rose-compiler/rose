@@ -24,13 +24,13 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
     int c0;
-    int c2;
-    int c4;
     int c3;
+    int c2;
+    int c1;
+    int c4;
     for (c0 = 0; c0 <= 10; c0++) {
-#pragma omp parallel for private(c3, c4, c2)
+#pragma omp parallel for private(c4, c2, c3)
       for (c1 = ((c0 + -1) * 3 < 0?-(-(c0 + -1) / 3) : ((3 < 0?(-(c0 + -1) + - 3 - 1) / - 3 : (c0 + -1 + 3 - 1) / 3))); c1 <= ((3 < c0?3 : c0)); c1++) {
         for (c2 = 2 * c0 + -2 * c1 + 1; c2 <= 15; c2++) {
           for (c3 = 2 * c0 + -2 * c1; c3 <= ((((4 * c1 + 2 < c2 + -2?4 * c1 + 2 : c2 + -2)) < 2 * c0 + -2 * c1 + 1?((4 * c1 + 2 < c2 + -2?4 * c1 + 2 : c2 + -2)) : 2 * c0 + -2 * c1 + 1)); c3++) {

@@ -25,11 +25,11 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c0;
-    int c2;
     int c1;
+    int c2;
 {
-      int c5;
       int c3;
+      int c5;
       int c4;
       for (c3 = 0; c3 <= 14; c3++) {
         for (c4 = c3 + 1; c4 <= 15; c4++) {

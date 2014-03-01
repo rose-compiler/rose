@@ -117,8 +117,8 @@ int main(int argc,char **argv)
     
 #pragma omp parallel for private(c2)
 {
-      int c0;
       int c3;
+      int c0;
 #pragma omp parallel for private(c3)
       for (c0 = 0; c0 <= 15; c0++) {
 #pragma ivdep

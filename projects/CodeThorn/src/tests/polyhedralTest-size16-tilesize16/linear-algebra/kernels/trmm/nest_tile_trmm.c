@@ -26,10 +26,10 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
-    int c1;
-    int c3;
     int c4;
+    int c0;
+    int c3;
+    int c1;
     for (c0 = 1; c0 <= 15; c0++) {
       for (c1 = 0; c1 <= (((c0 + 14) * 16 < 0?((16 < 0?-((-(c0 + 14) + 16 + 1) / 16) : -((-(c0 + 14) + 16 - 1) / 16))) : (c0 + 14) / 16)); c1++) {
         for (c3 = (0 > -1 * c0 + 16 * c1 + 1?0 : -1 * c0 + 16 * c1 + 1); c3 <= 15; c3++) {

@@ -32,23 +32,21 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
-    int c2;
-    for (c0 = 0; c0 <= 15; c0++) {
-      for (c1 = 0; c1 <= 1; c1++) {
+    int c3;
+    int c5;
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c3 = 0; c3 <= 1; c3++) {
         acc = 0;
-        C[c0][c1] = beta * C[c0][c1] + alpha * A[c0][c0] * B[c0][c1] + alpha * acc;
+        C[c1][c3] = beta * C[c1][c3] + alpha * A[c1][c1] * B[c1][c3] + alpha * acc;
       }
-      for (c1 = 2; c1 <= 15; c1++) {
-        C[0][c1] += alpha * A[0][c0] * B[c0][c1];
+      for (c3 = 2; c3 <= 15; c3++) {
         acc = 0;
-        acc += B[0][c1] * A[0][c0];
-        for (c2 = 1; c2 <= c1 + -2; c2++) {
-          C[c2][c1] += alpha * A[c2][c0] * B[c0][c1];
-          acc += B[c2][c1] * A[c2][c0];
+        for (c5 = 0; c5 <= c3 + -2; c5++) {
+          C[c5][c3] += alpha * A[c5][c1] * B[c1][c3];
+          acc += B[c5][c3] * A[c5][c1];
         }
-        C[c0][c1] = beta * C[c0][c1] + alpha * A[c0][c0] * B[c0][c1] + alpha * acc;
+        C[c1][c3] = beta * C[c1][c3] + alpha * A[c1][c1] * B[c1][c3] + alpha * acc;
       }
     }
   }

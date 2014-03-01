@@ -41,9 +41,9 @@ int main(int argc,char **argv)
     }
     R[k][k] = sqrt(nrm);
 {
+      int c4;
       int c1;
       int c8;
-      int c4;
       if (k >= 0) {
         
 #pragma omp parallel for private(c8)
@@ -55,8 +55,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c2;
             int c0;
+            int c2;
             if (8 * c1 <= k) {
 #pragma omp parallel for private(c2)
               for (c0 = 4 * c1; c0 <= ((((k * 2 < 0?((2 < 0?-((-k + 2 + 1) / 2) : -((-k + 2 - 1) / 2))) : k / 2)) < 4 * c1 + 3?((k * 2 < 0?((2 < 0?-((-k + 2 + 1) / 2) : -((-k + 2 - 1) / 2))) : k / 2)) : 4 * c1 + 3)); c0++) {
@@ -94,8 +94,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c0;
             int c2;
+            int c0;
             if (c1 <= -1 && k <= 8 * c1 + 6) {
 #pragma omp parallel for private(c2)
               for (c0 = (((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) > 4 * c1?((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) : 4 * c1); c0 <= 4 * c1 + 3; c0++) {
@@ -123,7 +123,7 @@ int main(int argc,char **argv)
         }
       }
       
-#pragma omp parallel for private(c4, c8)
+#pragma omp parallel for private(c8, c4)
       for (c1 = ((k + - 6) * 8 < 0?-(-(k + - 6) / 8) : ((8 < 0?(-(k + - 6) + - 8 - 1) / - 8 : (k + - 6 + 8 - 1) / 8))); c1 <= 1; c1++) {
         for (c4 = 0; c4 <= 15; c4++) {
           
@@ -133,8 +133,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c0;
             int c2;
+            int c0;
             if (k <= 8 * c1 + 6) {
 #pragma omp parallel for private(c2)
               for (c0 = (((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) > 4 * c1?((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) : 4 * c1); c0 <= 4 * c1 + 3; c0++) {
@@ -153,8 +153,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c0;
             int c2;
+            int c0;
             if (k <= 8 * c1 + 6) {
 #pragma omp parallel for private(c2)
               for (c0 = (((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) > 4 * c1?((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) : 4 * c1); c0 <= 4 * c1 + 3; c0++) {

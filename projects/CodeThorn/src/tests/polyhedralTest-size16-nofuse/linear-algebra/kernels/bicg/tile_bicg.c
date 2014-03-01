@@ -29,21 +29,25 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
+    int c2;
     int c1;
 {
       int c3;
-      int c2;
-      for (c2 = 0; c2 <= 15; c2++) {
-        s[c2] = 0;
-        s[c2] = s[c2] + r[0] * A[0][c2];
-        s[c2] = s[c2] + r[1] * A[1][c2];
-        q[c2] = 0;
-        q[c2] = q[c2] + A[c2][0] * p[0];
-        q[c2] = q[c2] + A[c2][1] * p[1];
-        for (c3 = 2; c3 <= 15; c3++) {
-          s[c2] = s[c2] + r[c3] * A[c3][c2];
-          q[c2] = q[c2] + A[c2][c3] * p[c3];
+      int c4;
+      for (c3 = 0; c3 <= 15; c3++) {
+        s[c3] = 0;
+      }
+      for (c3 = 0; c3 <= 15; c3++) {
+        for (c4 = 0; c4 <= 15; c4++) {
+          s[c3] = s[c3] + r[c4] * A[c4][c3];
+        }
+      }
+      for (c3 = 0; c3 <= 15; c3++) {
+        q[c3] = 0;
+      }
+      for (c3 = 0; c3 <= 15; c3++) {
+        for (c4 = 0; c4 <= 15; c4++) {
+          q[c3] = q[c3] + A[c3][c4] * p[c4];
         }
       }
     }

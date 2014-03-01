@@ -30,28 +30,40 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c4;
     int c3;
-    int c0;
-    for (c0 = 0; c0 <= 15; c0++) {
-      for (c3 = c0; c3 <= 15; c3++) {
-        symmat[c0][c3] = 0.0;
+    int c2;
+    int c1;
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = c1; c2 <= 15; c2++) {
+        symmat[c1][c2] = 0.0;
       }
-      mean[c0] = 0.0;
-      for (c3 = 0; c3 <= 15; c3++) {
-        mean[c0] += data[c3][c0];
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      mean[c1] = 0.0;
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        mean[c1] += data[c2][c1];
       }
-      mean[c0] /= float_n;
-      for (c3 = 0; c3 <= 15; c3++) {
-        data[c3][c0] -= mean[c0];
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      mean[c1] /= float_n;
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = 0; c2 <= 15; c2++) {
+        data[c1][c2] -= mean[c2];
       }
-      for (c3 = 0; c3 <= c0; c3++) {
-        for (c4 = 0; c4 <= 15; c4++) {
-          symmat[c3][c0] += data[c4][c3] * data[c4][c0];
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = c1; c2 <= 15; c2++) {
+        for (c3 = 0; c3 <= 15; c3++) {
+          symmat[c1][c2] += data[c3][c1] * data[c3][c2];
         }
       }
-      for (c3 = 0; c3 <= c0; c3++) {
-        symmat[c0][c3] = symmat[c3][c0];
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c2 = c1; c2 <= 15; c2++) {
+        symmat[c2][c1] = symmat[c1][c2];
       }
     }
   }

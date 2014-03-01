@@ -33,22 +33,22 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c3;
-    for (c0 = 0; c0 <= 15; c0++) {
-      mean[c0] = 0.0;
+    int c1;
+    for (c1 = 0; c1 <= 15; c1++) {
+      mean[c1] = 0.0;
       for (c3 = 0; c3 <= 15; c3++) {
-        mean[c0] += data[c3][c0];
+        mean[c1] += data[c3][c1];
       }
-      mean[c0] /= float_n;
+      mean[c1] /= float_n;
     }
   }
 /* Determine standard deviations of column vectors of data matrix. */
   for (j = 0; j < 16; j++) {{
-      int c2;
+      int c1;
       stddev[j] = 0.0;
-      for (c2 = 0; c2 <= 15; c2++) {
-        stddev[j] += (data[c2][j] - mean[j]) * (data[c2][j] - mean[j]);
+      for (c1 = 0; c1 <= 15; c1++) {
+        stddev[j] += (data[c1][j] - mean[j]) * (data[c1][j] - mean[j]);
       }
       stddev[j] /= float_n;
     }
@@ -67,20 +67,20 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c0;
-    int c2;
+    int c3;
+    int c5;
     int c1;
-    symmat[16 - 1][16 - 1] = 1.0;
-    for (c0 = 0; c0 <= 14; c0++) {
-      symmat[c0][c0] = 1.0;
-      for (c1 = c0 + 1; c1 <= 15; c1++) {
-        symmat[c0][c1] = 0.0;
-        for (c2 = 0; c2 <= 15; c2++) {
-          symmat[c0][c1] += data[c2][c0] * data[c2][c1];
+    for (c1 = 0; c1 <= 14; c1++) {
+      symmat[c1][c1] = 1.0;
+      for (c3 = c1 + 1; c3 <= 15; c3++) {
+        symmat[c1][c3] = 0.0;
+        for (c5 = 0; c5 <= 15; c5++) {
+          symmat[c1][c3] += data[c5][c1] * data[c5][c3];
         }
-        symmat[c1][c0] = symmat[c0][c1];
+        symmat[c3][c1] = symmat[c1][c3];
       }
     }
+    symmat[16 - 1][16 - 1] = 1.0;
   }
   
 #pragma endscop

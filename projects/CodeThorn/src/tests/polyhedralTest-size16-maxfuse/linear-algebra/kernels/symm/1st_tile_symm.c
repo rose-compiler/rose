@@ -32,9 +32,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
     int c2;
     int c0;
+    int c1;
     for (c0 = 0; c0 <= 15; c0++) {
       for (c1 = 0; c1 <= 1; c1++) {
         acc = 0;

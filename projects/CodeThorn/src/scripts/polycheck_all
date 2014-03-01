@@ -51,23 +51,22 @@ function check_benchmark {
 
         # check with variants
         check "${i}" "${i}/${benchname}.check" "${i}/1st_tile_${benchname}"
-        check "${i}" "${i}/${benchname}.check" "${i}/2nd_tile_${benchname}"
+        #check "${i}" "${i}/${benchname}.check" "${i}/2nd_tile_${benchname}"
         check "${i}" "${i}/${benchname}.check" "${i}/nest_tile_${benchname}"
+        check "${i}" "${i}/${benchname}.check" "${i}/fuse_${benchname}"
       else
         echo "Error2: ${i} does not exit."
         exit
       fi
 }
 
-#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/ludcmp" # FAIL
-#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/fdtd-2d" # FAIL
-#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/fdtd-apml" # TOO SLOW
-#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/adi" # unkown,TOO SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/doitgen" # SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/fdtd-apml" # SLOW
+#check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/adi" # unkown, SLOW
+
 #check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/solvers/dynprog" # no 1st_tile
-#check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/doitgen" # TOO SLOW
 #check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/2mm" # no 1st tile
 #check_benchmark "tests/polyhedralTest-size16-tilesize16/linear-algebra/kernels/3mm" # no 1st tile
-
 
 #check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/jacobi-1d-imper" # OK
 #check_benchmark "tests/polyhedralTest-size16-tilesize16/stencils/jacobi-2d-imper" # OK
@@ -81,10 +80,20 @@ function check_benchmark {
 
 mypath="tests"
 
-#for mybenchpath in polyhedralTest-size16-tilesize16; do
+#allbenchmarks="stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"
+allbenchmarks="stencils/jacobi-1d-imper stencils/jacobi-2d-imper stencils/seidel-2d linear-algebra/kernels/2mm linear-algebra/kernels/3mm linear-algebra/kernels/atax linear-algebra/kernels/bicg linear-algebra/kernels/cholesky linear-algebra/kernels/doitgen linear-algebra/kernels/gemm linear-algebra/kernels/gemver linear-algebra/kernels/gesummv linear-algebra/kernels/mvt linear-algebra/kernels/symm linear-algebra/kernels/syr2k linear-algebra/kernels/syrk linear-algebra/kernels/trisolv linear-algebra/kernels/trmm linear-algebra/solvers/durbin linear-algebra/solvers/dynprog linear-algebra/solvers/gramschmidt linear-algebra/solvers/lu linear-algebra/solvers/ludcmp datamining/correlation datamining/covariance linear-algebra/kernels linear-algebra/solvers stencils/adi stencils/fdtd-2d stencils/fdtd-apml"
+
+# all benchmarks for 3 above cases
+for mybenchpath in polyhedralTest-size16-smartfuse; do
+for mybench in ${allbenchmarks}; do
+  FULLNAME=${mypath}/${mybenchpath}/${mybench}
+  check_benchmark $FULLNAME
+done
+done
+
+# all corner cases
 for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
-#for mybench in "stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"; do
-for mybench in "/stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "stencils/seidel-2d" "linear-algebra/kernels/trmm" "linear-algebra/kernels/trisolv" "linear-algebra/kernels/cholesky" "linear-algebra/solvers/lu" "linear-algebra/solvers/gramschmidt" "linear-algebra/solvers/durbin"; do
+for mybench in "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky" "datamining/covariance"; do
   FULLNAME=${mypath}/${mybenchpath}/${mybench}
   check_benchmark $FULLNAME
 done

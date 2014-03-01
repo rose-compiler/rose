@@ -93,13 +93,13 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c4;
     int c1;
-    int c2;
-    int c6;
     int c3;
+    int c4;
+    int c6;
+    int c2;
     symmat[16 - 1][16 - 1] = 1.0;
-#pragma omp parallel for private(c6, c2, c4)
+#pragma omp parallel for private(c2, c6, c4)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = ((c1 + -1) * 2 < 0?-(-(c1 + -1) / 2) : ((2 < 0?(-(c1 + -1) + - 2 - 1) / - 2 : (c1 + -1 + 2 - 1) / 2))); c2 <= 3; c2++) {
         for (c4 = 2 * c1; c4 <= ((2 * c1 + 1 < 4 * c2 + 2?2 * c1 + 1 : 4 * c2 + 2)); c4++) {
@@ -112,7 +112,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c3, c6, c2, c4)
+#pragma omp parallel for private(c2, c6, c4, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = ((c1 + -1) * 2 < 0?-(-(c1 + -1) / 2) : ((2 < 0?(-(c1 + -1) + - 2 - 1) / - 2 : (c1 + -1 + 2 - 1) / 2))); c2 <= 3; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -127,7 +127,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c6, c2, c4)
+#pragma omp parallel for private(c2, c6, c4)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = ((c1 + -1) * 2 < 0?-(-(c1 + -1) / 2) : ((2 < 0?(-(c1 + -1) + - 2 - 1) / - 2 : (c1 + -1 + 2 - 1) / 2))); c2 <= 3; c2++) {
         for (c4 = 2 * c1; c4 <= ((2 * c1 + 1 < 4 * c2 + 2?2 * c1 + 1 : 4 * c2 + 2)); c4++) {

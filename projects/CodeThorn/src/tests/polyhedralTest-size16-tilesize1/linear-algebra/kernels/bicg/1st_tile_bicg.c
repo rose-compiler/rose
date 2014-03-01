@@ -29,8 +29,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
     int c2;
+    int c1;
 #pragma omp parallel for
     for (c1 = 0; c1 <= 15; c1++) {
       q[c1] = 0;

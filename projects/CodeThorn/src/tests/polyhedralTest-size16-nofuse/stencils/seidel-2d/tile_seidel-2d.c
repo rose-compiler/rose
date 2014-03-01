@@ -31,8 +31,8 @@ int main(int argc,char **argv)
     int c1;
     int c2;
 {
-      int c5;
       int c3;
+      int c5;
       int c4;
       for (c3 = 0; c3 <= 1; c3++) {
         for (c4 = c3 + 1; c4 <= c3 + 14; c4++) {

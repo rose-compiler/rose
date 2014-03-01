@@ -28,11 +28,11 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c2;
     int c1;
+    int c2;
 {
-      int c3;
       int c4;
+      int c3;
       y[0][0] = r[0];
       beta[0] = 1;
       alpha[0] = r[0];

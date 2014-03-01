@@ -30,25 +30,25 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
+    int c4;
+    int c6;
     int c3;
     int c2;
-    int c6;
     int c1;
-    int c4;
-#pragma omp parallel for private(c4, c6, c2)
+#pragma omp parallel for private(c2, c6, c4)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c4 = 13 * c1; c4 <= ((15 < 13 * c1 + 12?15 : 13 * c1 + 12)); c4++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c6 = 11 * c2; c6 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c6++) {
+          for (c6 = 13 * c2; c6 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c6++) {
             C[c4][c6] *= beta;
           }
         }
       }
     }
-#pragma omp parallel for private(c4, c6, c2, c3)
+#pragma omp parallel for private(c2, c3, c6, c4)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 1; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -56,7 +56,7 @@ int main(int argc,char **argv)
 #pragma ivdep
 #pragma vector always
 #pragma simd
-            for (c6 = 11 * c2; c6 <= ((15 < 11 * c2 + 10?15 : 11 * c2 + 10)); c6++) {
+            for (c6 = 13 * c2; c6 <= ((15 < 13 * c2 + 12?15 : 13 * c2 + 12)); c6++) {
               C[c4][c6] += alpha * A[c4][c3] * A[c6][c3];
             }
           }

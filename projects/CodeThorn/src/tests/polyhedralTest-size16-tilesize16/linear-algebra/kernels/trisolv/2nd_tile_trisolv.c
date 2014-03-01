@@ -25,8 +25,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
     int c3;
+    int c1;
 {
       int c5;
       int c2;

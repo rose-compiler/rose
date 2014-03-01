@@ -27,12 +27,16 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
-    for (c0 = 0; c0 <= 15; c0++) {
-      for (c1 = 0; c1 <= 15; c1++) {
-        x1[c0] = x1[c0] + A[c0][c1] * y_1[c1];
-        x2[c0] = x2[c0] + A[c1][c0] * y_2[c1];
+    int c3;
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c3 = 0; c3 <= 15; c3++) {
+        x1[c1] = x1[c1] + A[c1][c3] * y_1[c3];
+      }
+    }
+    for (c1 = 0; c1 <= 15; c1++) {
+      for (c3 = 0; c3 <= 15; c3++) {
+        x2[c1] = x2[c1] + A[c3][c1] * y_2[c3];
       }
     }
   }

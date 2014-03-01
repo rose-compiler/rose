@@ -33,28 +33,32 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
-    int c3;
+    int c2;
+    int c1;
 {
-      int c1;
-      int c5;
-      for (c1 = 0; c1 <= 15; c1++) {
-        mean[c1] = 0.0;
-        for (c5 = 0; c5 <= 15; c5++) {
-          mean[c1] += data[c5][c1];
+      int c3;
+      int c4;
+      for (c3 = 0; c3 <= 15; c3++) {
+        mean[c3] = 0.0;
+      }
+      for (c3 = 0; c3 <= 15; c3++) {
+        for (c4 = 0; c4 <= 15; c4++) {
+          mean[c3] += data[c4][c3];
         }
-        mean[c1] /= float_n;
+      }
+      for (c3 = 0; c3 <= 15; c3++) {
+        mean[c3] /= float_n;
       }
     }
   }
 /* Determine standard deviations of column vectors of data matrix. */
   for (j = 0; j < 16; j++) {{
-      int c2;
+      int c1;
 {
-        int c3;
+        int c2;
         stddev[j] = 0.0;
-        for (c3 = 0; c3 <= 15; c3++) {
-          stddev[j] += (data[c3][j] - mean[j]) * (data[c3][j] - mean[j]);
+        for (c2 = 0; c2 <= 15; c2++) {
+          stddev[j] += (data[c2][j] - mean[j]) * (data[c2][j] - mean[j]);
         }
         stddev[j] /= float_n;
       }
@@ -74,24 +78,34 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c0;
     int c2;
     int c1;
+    int c3;
 {
-      int c3;
       int c4;
       int c5;
-      symmat[16 - 1][16 - 1] = 1.0;
-      for (c3 = 0; c3 <= 14; c3++) {
-        symmat[c3][c3] = 1.0;
-        for (c4 = c3 + 1; c4 <= 15; c4++) {
-          symmat[c3][c4] = 0.0;
-          for (c5 = 0; c5 <= 15; c5++) {
-            symmat[c3][c4] += data[c5][c3] * data[c5][c4];
-          }
-          symmat[c4][c3] = symmat[c3][c4];
+      int c6;
+      for (c4 = 0; c4 <= 14; c4++) {
+        symmat[c4][c4] = 1.0;
+      }
+      for (c4 = 0; c4 <= 14; c4++) {
+        for (c5 = c4 + 1; c5 <= 15; c5++) {
+          symmat[c4][c5] = 0.0;
         }
       }
+      for (c4 = 0; c4 <= 14; c4++) {
+        for (c5 = c4 + 1; c5 <= 15; c5++) {
+          for (c6 = 0; c6 <= 15; c6++) {
+            symmat[c4][c5] += data[c6][c4] * data[c6][c5];
+          }
+        }
+      }
+      for (c4 = 0; c4 <= 14; c4++) {
+        for (c5 = c4 + 1; c5 <= 15; c5++) {
+          symmat[c5][c4] = symmat[c4][c5];
+        }
+      }
+      symmat[16 - 1][16 - 1] = 1.0;
     }
   }
   

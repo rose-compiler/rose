@@ -34,9 +34,9 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c0;
+    int c3;
     int c2;
     int c4;
-    int c3;
     for (c0 = 0; c0 <= 4; c0++) {
       for (c2 = 1; c2 <= 16; c2++) {
         if (c0 <= 3 && c2 == 1) {

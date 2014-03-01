@@ -33,8 +33,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
     int c4;
+    int c1;
     int c2;
 #pragma omp parallel for private(c4)
     for (c1 = 0; c1 <= 1; c1++) {
@@ -90,10 +90,10 @@ int main(int argc,char **argv)
       data[i][j] /= sqrt(float_n) * stddev[j];
     }
 {
-    int c1;
-    int c3;
     int c2;
     int c4;
+    int c3;
+    int c1;
     symmat[16 - 1][16 - 1] = 1.0;
 #pragma omp parallel for private(c4, c2)
     for (c1 = 0; c1 <= 1; c1++) {
@@ -103,7 +103,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c4, c2, c3)
+#pragma omp parallel for private(c3, c4, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 8 * c1 + 1; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {

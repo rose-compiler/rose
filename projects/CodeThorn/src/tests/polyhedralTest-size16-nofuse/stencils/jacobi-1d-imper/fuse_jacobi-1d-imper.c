@@ -28,8 +28,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c0;
     int c1;
+    int c0;
     for (c0 = 0; c0 <= 1; c0++) {
       B[1] = 0.33333 * (A[1 - 1] + A[1] + A[1 + 1]);
       for (c1 = 2 * c0 + 2; c1 <= 2 * c0 + 14; c1++) {

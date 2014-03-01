@@ -33,12 +33,12 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
-    int c2;
     int c0;
+    int c2;
+    int c1;
 {
-      int c5;
       int c4;
+      int c5;
       for (c4 = 1; c4 <= 2; c4++) {
         ex[0][c4] = ex[0][c4] - 0.5 * (hz[0][c4] - hz[0][c4 - 1]);
         ey[1][c4 + - 1] = ey[1][c4 + - 1] - 0.5 * (hz[1][c4 + - 1] - hz[1 - 1][c4 + - 1]);

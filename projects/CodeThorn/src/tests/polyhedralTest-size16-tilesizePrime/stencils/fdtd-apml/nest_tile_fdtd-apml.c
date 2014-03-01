@@ -51,14 +51,14 @@ int main(int argc,char **argv)
     int c2;
     int c1;
 #pragma omp parallel for private(c2, c3, c5, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
           for (c5 = 7 * c2; c5 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-            for (c6 = 5 * c1; c6 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c6++) {
+            for (c6 = 7 * c1; c6 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c6++) {
               clf[c6][c5] = Ex[c6][c5][c3] - Ex[c6][c5 + 1][c3] + Ey[c6][c5][c3 + 1] - Ey[c6][c5][c3];
               tmp[c6][c5] = cymh[c5] / cyph[c5] * Bza[c6][c5][c3] - ch / cyph[c5] * clf[c6][c5];
               Hz[c6][c5][c3] = cxmh[c3] / cxph[c3] * Hz[c6][c5][c3] + mui * czp[c6] / cxph[c3] * tmp[c6][c5] - mui * czm[c6] / cxph[c3] * Bza[c6][c5][c3];
@@ -69,13 +69,13 @@ int main(int argc,char **argv)
       }
     }
 #pragma omp parallel for private(c2, c5, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c5 = 7 * c2; c5 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c6 = 5 * c1; c6 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c6++) {
+          for (c6 = 7 * c1; c6 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c6++) {
             clf[c6][c5] = Ex[c6][c5][16] - Ex[c6][c5 + 1][16] + Ry[c6][c5] - Ey[c6][c5][16];
             tmp[c6][c5] = cymh[c5] / cyph[c5] * Bza[c6][c5][16] - ch / cyph[c5] * clf[c6][c5];
             Hz[c6][c5][16] = cxmh[16] / cxph[16] * Hz[c6][c5][16] + mui * czp[c6] / cxph[16] * tmp[c6][c5] - mui * czm[c6] / cxph[16] * Bza[c6][c5][16];
@@ -85,14 +85,14 @@ int main(int argc,char **argv)
       }
     }
 #pragma omp parallel for private(c2, c3, c5, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
           for (c5 = 7 * c2; c5 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-            for (c6 = 5 * c1; c6 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c6++) {
+            for (c6 = 7 * c1; c6 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c6++) {
               clf[c6][c5] = Ex[c6][16][c3] - Ax[c6][c3] + Ey[c6][16][c3 + 1] - Ey[c6][16][c3];
               tmp[c6][c5] = cymh[16] / cyph[c5] * Bza[c6][c5][c3] - ch / cyph[c5] * clf[c6][c5];
               Hz[c6][16][c3] = cxmh[c3] / cxph[c3] * Hz[c6][16][c3] + mui * czp[c6] / cxph[c3] * tmp[c6][c5] - mui * czm[c6] / cxph[c3] * Bza[c6][16][c3];
@@ -103,13 +103,13 @@ int main(int argc,char **argv)
       }
     }
 #pragma omp parallel for private(c2, c5, c6)
-    for (c1 = 0; c1 <= 3; c1++) {
+    for (c1 = 0; c1 <= 2; c1++) {
       for (c2 = 0; c2 <= 2; c2++) {
         for (c5 = 7 * c2; c5 <= ((15 < 7 * c2 + 6?15 : 7 * c2 + 6)); c5++) {
 #pragma ivdep
 #pragma vector always
 #pragma simd
-          for (c6 = 5 * c1; c6 <= ((15 < 5 * c1 + 4?15 : 5 * c1 + 4)); c6++) {
+          for (c6 = 7 * c1; c6 <= ((15 < 7 * c1 + 6?15 : 7 * c1 + 6)); c6++) {
             clf[c6][c5] = Ex[c6][16][16] - Ax[c6][16] + Ry[c6][16] - Ey[c6][16][16];
             tmp[c6][c5] = cymh[16] / cyph[16] * Bza[c6][16][16] - ch / cyph[16] * clf[c6][c5];
             Hz[c6][16][16] = cxmh[16] / cxph[16] * Hz[c6][16][16] + mui * czp[c6] / cxph[16] * tmp[c6][c5] - mui * czm[c6] / cxph[16] * Bza[c6][16][16];

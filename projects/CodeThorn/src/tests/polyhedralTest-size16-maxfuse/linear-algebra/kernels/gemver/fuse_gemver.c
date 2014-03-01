@@ -33,8 +33,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
     int c0;
+    int c3;
     for (c0 = 0; c0 <= 15; c0++) {
       for (c3 = 0; c3 <= 15; c3++) {
         A[c3][c0] = A[c3][c0] + u1[c3] * v1[c0] + u2[c3] * v2[c0];

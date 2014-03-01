@@ -26,8 +26,8 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c3;
-    int c1;
     int c2;
+    int c1;
     for (c1 = 0; c1 <= 1; c1++) {
       for (c3 = 8 * c1; c3 <= 8 * c1 + 7; c3++) {
         x[c3] = c[c3];

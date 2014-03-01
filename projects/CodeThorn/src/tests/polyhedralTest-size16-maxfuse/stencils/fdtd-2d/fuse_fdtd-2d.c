@@ -33,9 +33,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c1;
-    int c2;
     int c0;
+    int c2;
+    int c1;
     for (c0 = 0; c0 <= 1; c0++) {
       if (c0 == 1) {
         ey[0][0] = _fict_[1];

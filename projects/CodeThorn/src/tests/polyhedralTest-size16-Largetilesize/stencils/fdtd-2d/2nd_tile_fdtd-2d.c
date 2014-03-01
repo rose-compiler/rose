@@ -33,9 +33,9 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c3;
     int c0;
     int c2;
+    int c3;
 {
       int c6;
       int c4;

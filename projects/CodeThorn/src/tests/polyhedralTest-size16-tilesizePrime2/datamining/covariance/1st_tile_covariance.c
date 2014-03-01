@@ -31,10 +31,10 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c3;
-    int c6;
     int c2;
     int c1;
-#pragma omp parallel for private(c2, c6)
+    int c6;
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1; c2 <= 15; c2++) {
 #pragma ivdep
@@ -54,7 +54,7 @@ int main(int argc,char **argv)
         mean[c6] = 0.0;
       }
     }
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
 #pragma ivdep
@@ -74,7 +74,7 @@ int main(int argc,char **argv)
         mean[c6] /= float_n;
       }
     }
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
 #pragma ivdep
@@ -85,7 +85,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c6, c3)
+#pragma omp parallel for private(c6, c2, c3)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -98,7 +98,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 13 * c1; c2 <= 15; c2++) {
 #pragma ivdep

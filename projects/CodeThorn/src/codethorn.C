@@ -789,7 +789,7 @@ SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdates
   cout<<endl;
 #endif
   // TODO-2: check search backwards
-  while (pos!=arrayUpdates.begin()) {
+  do {
     SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
     ROSE_ASSERT(lhs);
     ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
@@ -798,8 +798,12 @@ SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdates
 	  (*pos).mark=true; // mark each used definition
       return (*pos).second; // return pointer to assignment expression (instead directly to def);
     }
-    --pos;
-  };
+    // there is no concept for before-the-start iterator (therefore this is checked this way)
+    if(pos==arrayUpdates.begin()) 
+      break;
+    --pos; 
+  } while (1);
+
   return 0;
 }
 
@@ -1001,6 +1005,8 @@ int main( int argc, char * argv[] ) {
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
+    ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
+    ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1170,6 +1176,8 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--verify"
         || string(argv[i])=="--csv-ltl"
         || string(argv[i])=="--spot-stg"
+        || string(argv[i])=="--dump-sorted"
+        || string(argv[i])=="--dump-non-sorted3"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -1365,7 +1373,6 @@ int main( int argc, char * argv[] ) {
 
   double arrayUpdateExtractionRunTime=0;
   double arrayUpdateSsaNumberingRunTime=0;
-  double arrayUpdateMappingRunTime=0;
   
   if(boolOptions["dump1"]) {
 	ArrayUpdatesSequence arrayUpdates;
@@ -1380,13 +1387,22 @@ int main( int argc, char * argv[] ) {
 	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
 	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
 	arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+
 	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
 	timer.start();
+	if (args.count("dump-non-sorted")) {
+	  string filename=args["dump-non-sorted"].as<string>();
+	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	}
 	sortArrayUpdates(arrayUpdates);
-	arrayUpdateMappingRunTime=timer.getElapsedTimeInMilliSec();
+	if (args.count("dump-sorted")) {
+	  string filename=args["dump-sorted"].as<string>();
+	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	}
 	string filename="arrayupdates.txt";
 	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
-    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+arrayUpdateMappingRunTime;
+	
+    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime;
   }
 
   if(args.count("csv-stats")) {
@@ -1408,7 +1424,6 @@ int main( int argc, char * argv[] ) {
 	  //<<readableruntime(ltlRunTime)<<", "
 		<<readableruntime(arrayUpdateExtractionRunTime)<<", "
 		<<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
-		<<readableruntime(arrayUpdateMappingRunTime)<<", "
         <<readableruntime(totalRunTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
@@ -1417,7 +1432,6 @@ int main( int argc, char * argv[] ) {
 	  //<<ltlRunTime<<", "
 		<<arrayUpdateExtractionRunTime<<", "
 		<<arrayUpdateSsaNumberingRunTime<<", "
-		<<arrayUpdateMappingRunTime<<", "
         <<totalRunTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
@@ -1442,6 +1456,38 @@ int main( int argc, char * argv[] ) {
     cout << "generated "<<filename<<endl;
   }
   
+  // TEST
+  if (boolOptions["generate-assertions"]) {
+    AssertionExtractor assertionExtractor(&analyzer);
+    assertionExtractor.computeLabelVectorOfEStates();
+    assertionExtractor.annotateAst();
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
+    cout << "STATUS: Generated assertions."<<endl;
+  }
+
+  if(boolOptions["dump1"]) {
+	ArrayUpdatesSequence arrayUpdates;
+	cout<<"STATUS: performing array analysis on STG."<<endl;
+	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+	extractArrayUpdateOperations(&analyzer,arrayUpdates);
+	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
+	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
+	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
+	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
+        if (args.count("dump-non-sorted")) {
+          string filename=args["dump-non-sorted"].as<string>();
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+        }
+	sortArrayUpdates(arrayUpdates);
+        if (args.count("dump-sorted")) {
+          string filename=args["dump-sorted"].as<string>();
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+        }
+	string filename="arrayupdates.txt";
+	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+  }
+
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
     cout << "generating graphviz files:"<<endl;

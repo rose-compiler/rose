@@ -37,8 +37,8 @@ int main(int argc,char **argv)
     }
     p[i] = 1.0 / sqrt(x);
 {
-      int c0;
       int c1;
+      int c0;
 {
         int c2;
         int c3;

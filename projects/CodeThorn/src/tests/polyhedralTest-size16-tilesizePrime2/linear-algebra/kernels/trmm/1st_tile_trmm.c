@@ -27,9 +27,9 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c0;
-    int c3;
     int c1;
     int c2;
+    int c3;
     for (c0 = 1; c0 <= 15; c0++) {
       for (c1 = 0; c1 <= c0 + 15; c1++) {
 #pragma omp parallel for private(c3)

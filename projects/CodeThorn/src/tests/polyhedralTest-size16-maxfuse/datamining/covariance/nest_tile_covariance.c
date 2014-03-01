@@ -31,10 +31,10 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c6;
-    int c1;
-    int c3;
     int c5;
+    int c1;
     int c2;
+    int c3;
 #pragma omp parallel for private(c2, c5, c6)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = ((c1 + -1) * 2 < 0?-(-(c1 + -1) / 2) : ((2 < 0?(-(c1 + -1) + - 2 - 1) / - 2 : (c1 + -1 + 2 - 1) / 2))); c2 <= 3; c2++) {
@@ -92,7 +92,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c2, c5, c3, c6)
+#pragma omp parallel for private(c3, c2, c5, c6)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = ((c1 + -1) * 2 < 0?-(-(c1 + -1) / 2) : ((2 < 0?(-(c1 + -1) + - 2 - 1) / - 2 : (c1 + -1 + 2 - 1) / 2))); c2 <= 3; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {

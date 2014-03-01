@@ -28,11 +28,11 @@ int main(int argc,char **argv)
     int c3;
     int c2;
 {
+      int c5;
       int c6;
       int c1;
-      int c5;
       int c4;
-#pragma omp parallel for private(c5, c6)
+#pragma omp parallel for private(c6, c5)
       for (c1 = 1; c1 <= 16; c1++) {
         c4 = ((16 * c1 + -1) * 17 < 0?-(-(16 * c1 + -1) / 17) : ((17 < 0?(-(16 * c1 + -1) + - 17 - 1) / - 17 : (16 * c1 + -1 + 17 - 1) / 17)));
         if (c4 <= ((15 < c1?15 : c1))) {

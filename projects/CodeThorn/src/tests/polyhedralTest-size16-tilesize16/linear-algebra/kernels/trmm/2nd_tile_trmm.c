@@ -30,11 +30,11 @@ int main(int argc,char **argv)
     int c1;
     int c3;
 {
-      int c5;
       int c4;
+      int c5;
       int c2;
       int c6;
-#pragma omp parallel for private(c6, c4, c5)
+#pragma omp parallel for private(c6, c5, c4)
       for (c2 = 1; c2 <= 15; c2++) {
 #pragma ivdep
 #pragma vector always

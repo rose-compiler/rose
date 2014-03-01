@@ -32,8 +32,8 @@ int main(int argc,char **argv)
     int c0;
     int c1;
 {
-      int c3;
       int c2;
+      int c3;
       for (c2 = 0; c2 <= 15; c2++) {
         s[c2] = 0;
         s[c2] = s[c2] + r[0] * A[0][c2];

@@ -51,10 +51,10 @@ int main(int argc,char **argv)
     
 #pragma omp parallel for private(c2, c3)
 {
-      int c5;
       int c0;
       int c4;
-#pragma omp parallel for private(c4, c5)
+      int c5;
+#pragma omp parallel for private(c5, c4)
       for (c0 = 0; c0 <= 15; c0++) {
         for (c4 = 0; c4 <= 15; c4++) {
 #pragma ivdep

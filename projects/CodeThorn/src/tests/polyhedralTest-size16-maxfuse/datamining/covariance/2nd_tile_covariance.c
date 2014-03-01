@@ -30,12 +30,12 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c6;
-    int c3;
     int c2;
     int c1;
+    int c6;
+    int c3;
     
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 8 * c1; c2 <= 15; c2++) {
         
@@ -45,8 +45,8 @@ int main(int argc,char **argv)
         
 #pragma simd
 {
-          int c0;
           int c3;
+          int c0;
           if (8 * c1 <= c2) {
 #pragma omp parallel for private(c3)
             for (c0 = 4 * c1; c0 <= ((((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) < 4 * c1 + 3?((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) : 4 * c1 + 3)); c0++) {
@@ -79,7 +79,7 @@ int main(int argc,char **argv)
       }
     }
     
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
         
@@ -89,8 +89,8 @@ int main(int argc,char **argv)
         
 #pragma simd
 {
-          int c0;
           int c3;
+          int c0;
 #pragma omp parallel for private(c3)
           for (c0 = 4 * c1; c0 <= 4 * c1 + 3; c0++) {
             for (c3 = 2 * c0; c3 <= 2 * c0 + 1; c3++) {
@@ -110,8 +110,8 @@ int main(int argc,char **argv)
       
 #pragma simd
 {
-        int c2;
         int c0;
+        int c2;
 #pragma omp parallel for private(c2)
         for (c0 = 4 * c1; c0 <= 4 * c1 + 3; c0++) {
           for (c2 = 2 * c0; c2 <= 2 * c0 + 1; c2++) {
@@ -121,7 +121,7 @@ int main(int argc,char **argv)
       }
     }
     
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 0; c2 <= 15; c2++) {
         
@@ -143,7 +143,7 @@ int main(int argc,char **argv)
       }
     }
     
-#pragma omp parallel for private(c2, c3, c6)
+#pragma omp parallel for private(c3, c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 8 * c1; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -154,8 +154,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c4;
             int c0;
+            int c4;
             if (8 * c1 <= c2) {
 #pragma omp parallel for private(c4)
               for (c0 = 4 * c1; c0 <= ((((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) < 4 * c1 + 3?((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) : 4 * c1 + 3)); c0++) {
@@ -169,7 +169,7 @@ int main(int argc,char **argv)
       }
     }
     
-#pragma omp parallel for private(c2, c6)
+#pragma omp parallel for private(c6, c2)
     for (c1 = 0; c1 <= 1; c1++) {
       for (c2 = 8 * c1; c2 <= 15; c2++) {
         
@@ -179,8 +179,8 @@ int main(int argc,char **argv)
         
 #pragma simd
 {
-          int c3;
           int c0;
+          int c3;
           if (8 * c1 <= c2) {
 #pragma omp parallel for private(c3)
             for (c0 = 4 * c1; c0 <= ((((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) < 4 * c1 + 3?((c2 * 2 < 0?((2 < 0?-((-c2 + 2 + 1) / 2) : -((-c2 + 2 - 1) / 2))) : c2 / 2)) : 4 * c1 + 3)); c0++) {

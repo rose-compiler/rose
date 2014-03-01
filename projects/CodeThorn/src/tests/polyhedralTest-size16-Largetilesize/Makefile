@@ -32,13 +32,13 @@ export ARRAYSIZE := 16
 export STEPSIZE := 2
 export CC := /home/lin32/Development/projects/polyopt-c-0.2.1/src/PolyOpt
 #export CFLAGS := -O3 --polyopt-verbose --polyopt-scop-extractor-verbose=3 --polyopt-pluto-fuse-maxfuse --polyopt-fixed-tiling
-export CMAXFUSEFLAGS := -O3 --polyopt-pluto-fuse-maxfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
+export CMAXFUSEFLAGS := -O3 --polyopt-pluto-fuse-smartfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
 export CSMARTFUSEFLAGS := -O3 --polyopt-pluto-fuse-smartfuse --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE) 
 export CTILEFLAGS := -O3 --polyopt-fixed-tiling --polyopt-quiet -DARRAYSIZE=$(ARRAYSIZE) -DSTEPSIZE=$(STEPSIZE)
 export INCLUDES := -I.
-export 1STTILE := echo "24 1 1" > tile.sizes 
+export 1STTILE := echo "32 1 1" > tile.sizes 
 export 2NDTILE := echo "32 1 1" > tile.sizes 
-export NESTTILE := echo "24 32 1" > tile.sizes
+export NESTTILE := echo "32 32 1" > tile.sizes
 .PHONY: all clean cleanROSE nest_tile fuse_tile
 
 all clean nest_tile fuse_tile cleanROSE: $(SUBDIRS)

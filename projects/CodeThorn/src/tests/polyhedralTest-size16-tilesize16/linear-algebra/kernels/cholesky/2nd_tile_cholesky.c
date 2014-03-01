@@ -37,14 +37,14 @@ int main(int argc,char **argv)
     }
     p[i] = 1.0 / sqrt(x);
 {
-      int c0;
-      int c1;
       int c2;
+      int c1;
+      int c0;
 {
-        int c8;
-        int c4;
         int c6;
         int c5;
+        int c8;
+        int c4;
         if (i <= 14) {
           if (i <= 0) {
             for (c4 = ((i + -254) * 256 < 0?-(-(i + -254) / 256) : ((256 < 0?(-(i + -254) + - 256 - 1) / - 256 : (i + -254 + 256 - 1) / 256))); c4 <= 0; c4++) {

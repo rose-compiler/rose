@@ -94,8 +94,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c0;
             int c2;
+            int c0;
             if (c1 <= -1 && k <= 8 * c1 + 6) {
 #pragma omp parallel for private(c2)
               for (c0 = (((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) > 4 * c1?((k * 2 < 0?-(-k / 2) : ((2 < 0?(-k + - 2 - 1) / - 2 : (k + 2 - 1) / 2)))) : 4 * c1); c0 <= 4 * c1 + 3; c0++) {

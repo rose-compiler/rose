@@ -18,8 +18,8 @@ int main(int argc,char **argv)
 #pragma scop
 {
     int c1;
-    int c0;
     int c2;
+    int c0;
     for (c0 = 0; c0 <= 1; c0++) {
       for (c2 = 2 * c0 + 1; c2 <= 2 * c0 + 14; c2++) {
         B[1][-2 * c0 + c2] = 0.2 * (A[1][-2 * c0 + c2] + A[1][-2 * c0 + c2 - 1] + A[1][1 + (-2 * c0 + c2)] + A[1 + 1][-2 * c0 + c2] + A[1 - 1][-2 * c0 + c2]);

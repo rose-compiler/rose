@@ -37,9 +37,9 @@ int main(int argc,char **argv)
     int c4;
     int c1;
 {
-      int c9;
       int c8;
       int c3;
+      int c9;
       int c2;
       for (c2 = 0; c2 <= 15; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {

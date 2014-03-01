@@ -38,9 +38,9 @@ int main(int argc,char **argv)
     }
     R[k][k] = sqrt(nrm);
 {
+      int c4;
       int c8;
       int c1;
-      int c4;
       if (k >= 0) {
 #pragma ivdep
 #pragma vector always
@@ -76,7 +76,7 @@ int main(int argc,char **argv)
           }
         }
       }
-#pragma omp parallel for private(c4, c8)
+#pragma omp parallel for private(c8, c4)
       for (c1 = ((k + -14) * 16 < 0?-(-(k + -14) / 16) : ((16 < 0?(-(k + -14) + - 16 - 1) / - 16 : (k + -14 + 16 - 1) / 16))); c1 <= 0; c1++) {
         for (c4 = 0; c4 <= 15; c4++) {
 #pragma ivdep

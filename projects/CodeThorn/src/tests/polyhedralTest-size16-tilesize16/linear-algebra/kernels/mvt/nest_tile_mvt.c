@@ -27,8 +27,8 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c4;
     int c3;
+    int c4;
     for (c3 = 0; c3 <= 15; c3++) {
 #pragma ivdep
 #pragma vector always
