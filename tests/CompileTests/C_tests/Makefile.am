@@ -782,9 +782,32 @@ test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
-             test2006_134.h test2010_08.h predict.def test2010_15.h \
-             test2009_18.c test2009_20.c grep_verify.h test2012_75.h \
-             test2012_78.h test2012_155.h test2012_156.h
+             predict.def test2009_18.c test2009_20.c test2014_20_inc.c test2014_27_inc.c test2014_28_inc.c \
+	     test2012_145.c conftest.c test2005_168.c \
+	     confdefs.h grep_verify.h verify.h \
+	     test2006_134.h \
+	     test2010_08.h \
+	     test2010_15.h \
+	     test2012_155.h \
+	     test2012_156.h \
+	     test2012_63.h \
+	     test2012_75.h \
+	     test2012_78.h \
+	     test2013_05.h \
+	     test2013_06.h \
+	     test2013_114.h \
+	     test2014_06.h \
+	     test2014_07.h \
+	     test2014_19.h \
+	     test2014_33.h \
+	     test2014_36.h \
+	     test2014_43.h \
+	     test2014_56.h \
+	     test2014_59.h \
+	     test2014_60_data_members.h \
+	     test2014_60_values.h \
+	     test2014_66.h \
+	     test2014_73.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
