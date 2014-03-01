@@ -46,6 +46,7 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgPragmaDeclaration, true);
   setAstNodeVariant(V_SgPragma, true);
   setAstNodeVariant(V_SgDoubleVal, true);
+  setAstNodeVariant(V_SgFloatVal, true);
   //SgIntegerDivideAssignOp
 }
 
@@ -732,7 +733,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
 	}
 	numProcessedArrayUpdates++;
 	if(numProcessedArrayUpdates%100==0) {
-	  cout<<"INFO: extracted arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+	  cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
 	}
 	arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
   }	
