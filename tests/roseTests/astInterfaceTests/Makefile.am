@@ -237,7 +237,7 @@ rose_inputBlank2.C: inputBlank2.C buildNondefiningFunction
 rose_inputbuildFunctionCalls.C: inputbuildFunctionCalls.C buildFunctionCalls
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildFunctionCalls$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
 		INPUT=$< \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -468,7 +468,7 @@ rose_inputreplaceMacroCalls.C: inputreplaceMacroCalls.C replaceMacroCalls
 rose_inputinsertStatementBeforeFunction.C: inputinsertStatementBeforeFunction.C insertStatementBeforeFunction $(srcdir)/inputinsertStatementBeforeFunction_1.h
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/insertStatementBeforeFunction$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
 		INPUT=$< \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -490,7 +490,7 @@ group3_headers = 						\
 $(group3): rose_%: % $(group3_headers)
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/removeStatementCommentRelocation$(EXEEXT)" \
-		FLAGS="$(TEST_CXX_FLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXX_FLAGS) -I$(abs_srcdir)" \
 		INPUT=$< \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -499,7 +499,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $<" \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)"  \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!
