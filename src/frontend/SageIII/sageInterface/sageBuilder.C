@@ -12381,6 +12381,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 
+  // This just adds the new file to the list of files stored internally (note: this sets the parent of the newFile).
+  // TOO1 (2/28/2014): This is definitely required for Java (ECJ frontend), though C passes without it (I think only
+  //                   by luck :-).
+  //                   The ECJ frontend uses the SgProject internally (via a global SgProject*). Therefore, the
+  //                   SgProject must contain this newly created SgFile, otherwise ECJ won't be able to find it.
+      project->set_file ( *result );
+
   // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
      result->runFrontend(nextErrorCode);
 
