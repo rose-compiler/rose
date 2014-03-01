@@ -13,7 +13,7 @@ onlybenchname=`basename "$fullbenchname"`
 
 echo -n "checking variant: ${onlybenchname}.c: " 
 if [ -e ${fullbenchname}.c ]; then
-  ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes --csv-stats=${fullbenchname}.stats >& /dev/null
+  ./codethorn ${fullbenchname}.c -I${dirname} -DARRAYSIZE=16 -DSTEPSIZE=2 --threads=6 --edg:no_warnings --dump1=yes --csv-stats=${fullbenchname}.stats #>& /dev/null
   cp arrayupdates.txt ${fullbenchname}.check
   if(diff ${origtestresult} ${fullbenchname}.check >& /dev/null); then
   echo "PASS" > ${fullbenchname}.verify
@@ -45,7 +45,7 @@ function check_benchmark {
 
         # create orig-benchmark result
         echo "analyzing: ${i}/${benchname}.c"
-        ./codethorn ${i}/${benchname}.c -I${i} -DARRAYSIZE=16 -DSTEPSIZE=2 --dump1=yes --csv-stats=${fullbenchname}.stats >& /dev/null
+        ./codethorn ${i}/${benchname}.c -I${i} -DARRAYSIZE=16 -DSTEPSIZE=2 --threads=6 --edg:no_warnings --dump1=yes --csv-stats=${i}/${benchname}.stats #>& /dev/null
         cp arrayupdates.txt ${i}/${benchname}.check
 
         # check with variants
@@ -79,17 +79,23 @@ function check_benchmark {
 
 mypath="tests"
 
-#allbenchmarks="stencils/jacobi-1d-imper" "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky"
-allbenchmarks="stencils/jacobi-1d-imper stencils/jacobi-2d-imper stencils/seidel-2d linear-algebra/kernels/2mm linear-algebra/kernels/3mm linear-algebra/kernels/atax linear-algebra/kernels/bicg linear-algebra/kernels/cholesky linear-algebra/kernels/doitgen linear-algebra/kernels/gemm linear-algebra/kernels/gemver linear-algebra/kernels/gesummv linear-algebra/kernels/mvt linear-algebra/kernels/symm linear-algebra/kernels/syr2k linear-algebra/kernels/syrk linear-algebra/kernels/trisolv linear-algebra/kernels/trmm linear-algebra/solvers/durbin linear-algebra/solvers/dynprog linear-algebra/solvers/gramschmidt linear-algebra/solvers/lu linear-algebra/solvers/ludcmp datamining/correlation datamining/covariance linear-algebra/kernels linear-algebra/solvers stencils/adi stencils/fdtd-2d stencils/fdtd-apml"
+# failing because of function call
+failing="datamining/correlation"
 
+allbenchmarks="stencils/jacobi-1d-imper stencils/jacobi-2d-imper stencils/seidel-2d linear-algebra/kernels/2mm linear-algebra/kernels/3mm linear-algebra/kernels/atax linear-algebra/kernels/bicg linear-algebra/kernels/cholesky linear-algebra/kernels/doitgen linear-algebra/kernels/gemm linear-algebra/kernels/gemver linear-algebra/kernels/gesummv linear-algebra/kernels/mvt linear-algebra/kernels/symm linear-algebra/kernels/syr2k linear-algebra/kernels/syrk linear-algebra/kernels/trisolv linear-algebra/kernels/trmm linear-algebra/solvers/durbin linear-algebra/solvers/dynprog linear-algebra/solvers/gramschmidt linear-algebra/solvers/lu linear-algebra/solvers/ludcmp datamining/correlation datamining/covariance stencils/adi stencils/fdtd-2d stencils/fdtd-apml"
+
+
+function runallgeneralbenchmarks {
 # all benchmarks for 3 above cases
 for mybenchpath in polyhedralTest-size16-smartfuse; do
 for mybench in ${allbenchmarks}; do
   FULLNAME=${mypath}/${mybenchpath}/${mybench}
-  check_benchmark $FULLNAME
+  check_benchmark $FULLNAME 
 done
 done
+}
 
+function runallcornercases {
 # all corner cases
 for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
 for mybench in "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky" "datamining/covariance"; do
@@ -97,6 +103,11 @@ for mybench in "stencils/jacobi-2d-imper" "linear-algebra/kernels/cholesky" "dat
   check_benchmark $FULLNAME
 done
 done
+}
+
+# to run the two test sets in parallel (use &)
+runallgeneralbenchmarks
+runallcornercases
 
 #  fi
 #done
