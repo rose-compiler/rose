@@ -105,9 +105,27 @@ done
 done
 }
 
-# to run the two test sets in parallel (use &)
-runallgeneralbenchmarks
-runallcornercases
+if [ "$#" -ne 1 ]; then
+    echo "Usage: polycheck_all --check1 | --check2 | --par | --seq"
+    exit
+fi
+   case "$1" in
+        --check1) runallgeneralbenchmarks
+            ;;
+        --check2) runallcornercases
+            ;;
+        --par) runallgeneralbenchmarks &
+               runallcornercases &
+            ;;
+        --seq)
+               runallgeneralbenchmarks
+               runallcornercases
+            ;;
 
-#  fi
-#done
+        --*) echo "bad option $1"
+            ;;
+        *) echo "argument $1"
+            ;;
+    esac
+
+
