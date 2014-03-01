@@ -44,8 +44,8 @@ int main(int argc,char **argv)
       A[0 + 1][(c3 + - 10) / 6] = w;
     }
     for (c1 = 1; c1 <= 15; c1++) {{
-        int c2;
         int c5;
+        int c2;
         int c0;
         if (c1 <= 15) {
           for (c0 = (c1 * 2 < 0?-(-c1 / 2) : ((2 < 0?(-c1 + - 2 - 1) / - 2 : (c1 + 2 - 1) / 2))); c0 <= 8; c0++) {

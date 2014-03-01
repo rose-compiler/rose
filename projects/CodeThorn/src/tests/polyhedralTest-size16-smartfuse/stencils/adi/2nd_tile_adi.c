@@ -45,8 +45,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c1;
             int c0;
+            int c1;
 #pragma omp parallel for private(c1)
             for (c0 = 4 * c2; c0 <= 4 * c2 + 3; c0++) {
 #pragma ivdep
@@ -156,8 +156,8 @@ int main(int argc,char **argv)
           
 #pragma simd
 {
-            int c0;
             int c1;
+            int c0;
 #pragma omp parallel for private(c1)
             for (c0 = 4 * c2; c0 <= 4 * c2 + 3; c0++) {
 #pragma ivdep

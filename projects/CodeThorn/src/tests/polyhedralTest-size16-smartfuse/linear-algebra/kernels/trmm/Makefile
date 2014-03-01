@@ -17,7 +17,7 @@ nest_tile: $(SRCS)
 
 
 fuse_tile: $(SRCS)
-	$(CC) $(CMAXFUSEFLAGS) $(INCLUDES) -c $< -rose:o fuse_$< -o $@
+	$(CC) $(CMAXFUSEFLAGS) $(INCLUDES) -c $< -rose:o fuse_$< 
 	$(1STTILE)
 	$(CC) $(CMAXFUSEFLAGS) $(INCLUDES) -c fuse_$< -rose:o tile_$< 
 clean: 

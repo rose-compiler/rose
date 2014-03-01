@@ -32,13 +32,13 @@ int main(int argc,char **argv)
   
 #pragma scop
 {
-    int c5;
+    int c3;
+    int c2;
     int c7;
+    int c5;
     int c6;
     int c1;
-    int c2;
-    int c3;
-#pragma omp parallel for private(c3, c2, c6, c5)
+#pragma omp parallel for private(c6, c5, c2, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = 0; c2 <= 3; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -50,7 +50,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c3, c2, c6, c7, c5)
+#pragma omp parallel for private(c6, c5, c7, c2, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = 0; c2 <= 3; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
@@ -64,7 +64,7 @@ int main(int argc,char **argv)
         }
       }
     }
-#pragma omp parallel for private(c3, c2, c6, c5)
+#pragma omp parallel for private(c6, c5, c2, c3)
     for (c1 = 0; c1 <= 7; c1++) {
       for (c2 = 0; c2 <= 3; c2++) {
         for (c3 = 0; c3 <= 15; c3++) {
