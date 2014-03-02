@@ -86,7 +86,7 @@ allbenchmarks="stencils/jacobi-1d-imper stencils/jacobi-2d-imper stencils/seidel
 
 
 function runallgeneralbenchmarks_param {
-selectedbenchmarks=$1
+selectedbenchmarks="$1"
 # all benchmarks for 3 above cases
 for mybenchpath in polyhedralTest-size16-smartfuse; do
 for mybench in ${selectedbenchmarks}; do
@@ -133,9 +133,11 @@ fi
                runallcornercases
             ;;
 	    --longcheck1)
-               runallgeneralbenchmarks_param stencils/fdtd-apml/fdtd-apml
+               runallgeneralbenchmarks_param "stencils/fdtd-apml"
+            ;;
 	    --longcheck2)
-               runallgeneralbenchmarks_param linear-algebra/kernels/doitgen
+               runallgeneralbenchmarks_param "linear-algebra/kernels/doitgen"
+            ;;
         --*) echo "bad option $1"
             ;;
         *) echo "argument $1"
