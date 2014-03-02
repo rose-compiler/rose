@@ -906,10 +906,10 @@ bool compare_array_accesses(EStateExprInfo& e1, EStateExprInfo& e2) {
 
 #include<algorithm>
 void sortArrayUpdates(ArrayUpdatesSequence& arrayUpdates) {
-  //std::stable_sort(arrayUpdates.begin(), arrayUpdates.end(), compare_array_accesses);
+
 }
 
-void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode) {
+void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
   // 1) create vector of generated assignments (preparation for sorting)
   vector<string> assignments;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
@@ -933,8 +933,9 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
 	}
 	}
   }
-
-  sort(assignments.begin(),assignments.end());
+  if(performSorting) {
+	sort(assignments.begin(),assignments.end());
+  }
   ofstream myfile;
   myfile.open(filename.c_str());
   for(vector<string>::iterator i=assignments.begin();i!=assignments.end();++i) {
@@ -1407,15 +1408,14 @@ int main( int argc, char * argv[] ) {
 	timer.start();
 	if (args.count("dump-non-sorted")) {
 	  string filename=args["dump-non-sorted"].as<string>();
-	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
 	}
-	sortArrayUpdates(arrayUpdates);
 	if (args.count("dump-sorted")) {
 	  string filename=args["dump-sorted"].as<string>();
-	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
 	}
 	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
 	
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime;
   }
@@ -1492,15 +1492,15 @@ int main( int argc, char * argv[] ) {
 	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
         if (args.count("dump-non-sorted")) {
           string filename=args["dump-non-sorted"].as<string>();
-          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,false);
         }
-	sortArrayUpdates(arrayUpdates);
+		//sortArrayUpdates(arrayUpdates);
         if (args.count("dump-sorted")) {
           string filename=args["dump-sorted"].as<string>();
-          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,true);
         }
 	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA);
+	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,true);
   }
 
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());

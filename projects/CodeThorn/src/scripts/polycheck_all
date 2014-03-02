@@ -85,6 +85,17 @@ failing="datamining/correlation"
 allbenchmarks="stencils/jacobi-1d-imper stencils/jacobi-2d-imper stencils/seidel-2d linear-algebra/kernels/2mm linear-algebra/kernels/3mm linear-algebra/kernels/atax linear-algebra/kernels/bicg linear-algebra/kernels/cholesky linear-algebra/kernels/doitgen linear-algebra/kernels/gemm linear-algebra/kernels/gemver linear-algebra/kernels/gesummv linear-algebra/kernels/mvt linear-algebra/kernels/symm linear-algebra/kernels/syr2k linear-algebra/kernels/syrk linear-algebra/kernels/trisolv linear-algebra/kernels/trmm linear-algebra/solvers/durbin linear-algebra/solvers/dynprog linear-algebra/solvers/gramschmidt linear-algebra/solvers/lu linear-algebra/solvers/ludcmp datamining/correlation datamining/covariance stencils/adi stencils/fdtd-2d stencils/fdtd-apml"
 
 
+function runallgeneralbenchmarks_param {
+selectedbenchmarks=$1
+# all benchmarks for 3 above cases
+for mybenchpath in polyhedralTest-size16-smartfuse; do
+for mybench in ${selectedbenchmarks}; do
+  FULLNAME=${mypath}/${mybenchpath}/${mybench}
+  check_benchmark $FULLNAME 
+done
+done
+}
+
 function runallgeneralbenchmarks {
 # all benchmarks for 3 above cases
 for mybenchpath in polyhedralTest-size16-smartfuse; do
@@ -121,7 +132,10 @@ fi
                runallgeneralbenchmarks
                runallcornercases
             ;;
-
+	    --longcheck1)
+               runallgeneralbenchmarks_param stencils/fdtd-apml/fdtd-apml
+	    --longcheck2)
+               runallgeneralbenchmarks_param linear-algebra/kernels/doitgen
         --*) echo "bad option $1"
             ;;
         *) echo "argument $1"
