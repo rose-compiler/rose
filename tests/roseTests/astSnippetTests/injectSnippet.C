@@ -186,7 +186,7 @@ main(int argc, char *argv[])
     snippet->insert(ipoint, args);
 
     // Unparse the modified source code
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-03]*/
+#if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
 #endif
     backend(project);
