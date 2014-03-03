@@ -543,6 +543,42 @@ testJavaCommandlineOptions: $(testTranslator)
 # Source Destdir
 	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/source_destdir"
 #-----------------------------
+# Source
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.5
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.7
+#-----------------------------
+# Target
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.6 -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.7 -source 1.7
+#-----------------------------
+# Encoding
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding UTF8
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding ISO8859-1
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding SJIS
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding EUCJIS
+#-----------------------------
+# -s
+#-----------------------------
+	mkdir -p "$(builddir)/tmp/generated_source_destdir" && \
+			$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -s "$(builddir)/generated_source_destdir"
+#-----------------------------
+# -nowarn
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -nowarn
+#-----------------------------
+# -verbose
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -verbose
+#-----------------------------
+# @argfile
+#-----------------------------
+	echo "$(top_srcdir)/tests/input_codes/minimal/minimal.java" > argfile.txt && \
+			$(testTranslator) @argfile.txt
+#-----------------------------
 # JVM Options
 #-----------------------------
 # Increase ECJ's JVM stack size
