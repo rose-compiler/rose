@@ -1,4 +1,5 @@
 #include "Snippet.h"
+#include "AstTraversal.h"
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
@@ -637,6 +638,44 @@ Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
     } visitor(toMatch);
     visitor.traverse(ast, preorder);
     return visitor.foundComment;
+}
+
+// Find the file that contains this node.  For most languages we simply traverse up the parent pointers until we find the
+// file. But in a Java AST the SgFile node participates only in the downward AST edges, not the back edges.  So we have to turn
+// the whole algorithm upside down: start at the project and traverse down until we find a path to the node we're looking for,
+// then find the SgFile our our path rather than in the parent pointers.  This is certainly not efficient!
+SgFile *
+Snippet::getEnclosingFileNode(SgNode *node)
+{
+    if (!SageInterface::is_Java_language())
+        return SageInterface::getEnclosingFileNode(node);
+        
+    struct Visitor: AstPrePostOrderTraversal {
+        SgNode *deepNode;                               // the node whose SgFile we're trying to find
+        SgFile *inFile;                                 // non-null if the traversal is inside a file
+        Visitor(SgNode *node): deepNode(node), inFile(NULL) {}
+
+        void preOrderVisit(SgNode *node) {
+            if (SgFile *file = isSgFile(node)) {
+                ROSE_ASSERT(NULL==inFile || !"SgFile nodes cannot be nested");
+                inFile = file;
+            }
+            if (node==deepNode)
+                throw inFile;                           // avoid long traversals
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (isSgFile(node))
+                inFile = NULL;
+        }
+    } visitor(node);
+
+    try {
+        visitor.traverse(SageInterface::getProject());
+    } catch (SgFile *file) {
+        return file;
+    }
+    return NULL;
 }
 
 void
