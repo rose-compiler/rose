@@ -252,6 +252,11 @@ public:
         VersionedSymbolMap p_versionedSymbolMap;
     };
 
+    /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
+     *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
+     *  pointer is returned if no suitable section can be found. */
+    virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
+
 protected:
     /** Returns mappable sections in a particular order.  Returns ELF Segments in the order they are defined in the segment
      *  table, followed by ELF Sections in the order they are defined in the section table but excluding those sections that
@@ -268,11 +273,6 @@ protected:
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
                                              ConflictResolution *resolve);
-
-    /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
-     *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
-     *  pointer is returned if no suitable section can be found. */
-    virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
      *  about all the symbols that might be necessary during that process.  The symbol table describes one entire

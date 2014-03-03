@@ -163,6 +163,43 @@ inline T rotateRight2(T value, size_t count, size_t width=8*sizeof(T)) {
 }
 /** @} */
 
+/** Returns true if the value is a power of two.  Zero is considered a power of two. */
+template <typename T>
+inline bool isPowerOfTwo(T value)
+{
+    assert(sizeof(T) <= sizeof(uint64_t));
+    if (0 != (value & SHL1<T, 8*sizeof(T)-1>::value))
+        value = ~value + 1;
+    uint64_t uval = value;
+    while (uval) {
+        if (uval & 1)
+            return 1==uval;
+        uval >>= 1u;
+    }
+    return true; // treat zero as a power of two
+}
+
+/** Returns the base-2 logorithm of @p value.  If @p value is not a power of two then the return value is rounded up to the
+ *  next integer. The @p value is treated as an unsigned value. Returns zero if @p value is zero. */
+template <typename T>
+inline T log2max(T value)
+{
+    assert(sizeof(T) <= sizeof(uint64_t));
+    uint64_t uval = value;
+    bool low_bits_set = false;
+    T retval = 0;
+    while (uval) {
+        if (1==uval)
+            return retval + (low_bits_set ? 1 : 0);
+        if (uval & 1)
+            low_bits_set = true;
+        ++retval;
+        uval >>= 1;
+    }
+    return retval;
+}
+
+
 template <typename T>
 inline T log2(T a) {
     T n = T(1);

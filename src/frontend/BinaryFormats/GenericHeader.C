@@ -5,6 +5,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Constructor.
  *  Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new
  *  header and the single file that contains this new header. This new header points to its file and the file contains a list

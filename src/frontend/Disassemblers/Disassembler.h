@@ -303,6 +303,8 @@ public:
      *  SgFile node above the interpretation (presumably the value set with ROSE's "-rose:disassembler_search" switch),
      *  and invokes the disassemble() method.
      *
+     *  See also, Partitioner::disassembleInterpretation() which does Partitioner-driven disassembly.
+     *
      *  Thread safety: This class method is not thread safe. */
     static void disassembleInterpretation(SgAsmInterpretation*);
 

@@ -40,6 +40,7 @@ std::map<std::string,ROSEAttributesList* > mapFilenameToAttributes;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // DQ (3/9/2013): Moved this function from the header file to support SWIG
 std::string

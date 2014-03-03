@@ -20,6 +20,7 @@
 
 #define EMACS
 
+using namespace rose;
 using namespace qrs;
 using namespace boost::filesystem;
 using namespace std;

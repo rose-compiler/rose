@@ -1,4 +1,15 @@
-#define BOOST_FILESYSTEM_VERSION 2
+#include "rose_config.h"
+
+// DQ (2/10/2014): I have fixed boost filesystem 3 issues so we now want to avoid specifying this explicitly if possible.
+// Non-windows support should used boost filesystem 2 if using GNU version less than 4.7.
+#ifndef _MSC_VER
+#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+  #define BOOST_FILESYSTEM_VERSION 2
+#endif
+#else
+// Windows support should be using boost file system 2 (for now).
+  #define BOOST_FILESYSTEM_VERSION 2
+#endif
 
 #include <boost/filesystem.hpp>
 
@@ -41,10 +52,27 @@ public:
         return boostPath.parent_path().string();
     }
 
+#ifndef _MSC_VER
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+ // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
     static string getFileName(const string& aPath) {
         path boostPath(aPath);
         return boostPath.filename();
     }
+#else
+    static string getFileName(const string& aPath) {
+        path boostPath(aPath);
+     // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
+        return boostPath.filename().generic_string();
+    }
+#endif
+#else
+ // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
+    static string getFileName(const string& aPath) {
+        path boostPath(aPath);
+        return boostPath.filename();
+    }
+#endif
 
     static string makeAbsoluteNormalizedPath(const string& path, const string& workingDirectory) {
         if (!isAbsolutePath(path)) {
@@ -97,10 +125,32 @@ public:
         }
         //All remaining path elements of toPath are appended to the relative path.
         if (toPathIterator != boostToPath.end()) {
+#ifndef _MSC_VER
+#if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
+         // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
             relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
+#else
+         // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
+            relativePath += toPathIterator->generic_string(); //The first path element comes without the leading path delimiter
+#endif
+#else
+         // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
+            relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
+#endif
             toPathIterator++;
             while (toPathIterator != boostToPath.end()) {
+#ifndef _MSC_VER
+#if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+             // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
                 relativePath += pathDelimiter + *toPathIterator;
+#else
+             // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
+                relativePath += pathDelimiter + toPathIterator->generic_string();
+#endif
+#else
+             // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
+                relativePath += pathDelimiter + *toPathIterator;
+#endif
                 toPathIterator++;
             }                
         } else if (relativePath.length() > 0) { //If any moves up were added, remove the trailing path delimiter

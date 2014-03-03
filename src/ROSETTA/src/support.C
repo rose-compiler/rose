@@ -908,6 +908,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Liao, 1/30/2014: Support for FAIL-SAFE resilience pragma
+     File.setDataPrototype         ( "bool", "failsafe", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran
   // support in ROSE this corresponds to the "--dump" option in the Open Fortran Parser (OFP).
   // There is no corresponding action with EDG for the C and C++ support in ROSE, so for C/C++
@@ -1741,6 +1744,9 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Project.setDataPrototype ("std::list<std::string>", "Fortran_ofp_jvm_options", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/11/2010): Added initial Java support.
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1757,6 +1763,9 @@ Grammar::setUpSupport ()
   // Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
      Project.setDataPrototype ( "bool", "openmp_linking", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype ("std::list<std::string>", "Java_ecj_jvm_options", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

@@ -2,6 +2,9 @@
 #include <rose_config.h>
 
 #include "string_functions.h"
+#include "Combinatorics.h"
+
+#include <iostream>
 
 static bool
 test_isLineTerminated()
@@ -396,6 +399,217 @@ test_removePseudoRedundentSubstrings() // sic
     return true;
 }
 
+// Here's another implementation of Damerau-Levenshtein edit distance which we can use to test the one in ROSE.
+// https://github.com/ugexe/Text--Levenshtein--Damerau--XS/blob/master/damerau-int.c
+namespace DamerauLevenshtein2 {
+struct dictionary {
+    unsigned int key;
+    unsigned int value;
+  struct dictionary* next;
+};
+typedef struct dictionary item;
+
+static __inline item* push(unsigned int key,item* curr) {
+    item* head;
+    head = new item;
+    head->key = key;
+    head->value = 0;
+    head->next = curr;
+    return head;
+}
+
+static __inline item* find(item* head,unsigned int key) {
+    item* iterator = head;
+    while (iterator) {
+        if (iterator->key == key) {
+            return iterator;
+        }
+        iterator = iterator->next;
+    }
+    return NULL;
+}
+
+static __inline item* uniquePush(item* head,unsigned int key) {
+    item* iterator = head;
+    while (iterator) {
+        if (iterator->key == key) {
+            return head;
+        }
+        iterator = iterator->next;
+    }
+    return push(key,head);
+}
+
+static void dict_free(item* head) {
+    item* iterator = head;
+    while (iterator) {
+        item* temp = iterator;
+        iterator = iterator->next;
+        delete temp;
+    }
+    head = NULL;
+}
+
+static int distance(const unsigned int *src, const unsigned int *tgt, unsigned int x, unsigned int y)
+{
+    item *head = NULL;
+    unsigned int swapCount, swapScore, targetCharCount, i, j;
+    unsigned int *scores = new unsigned int[(x+2)*(y+2)];
+    unsigned int score_ceil = x + y;
+ 
+    /* intialize matrix start values */
+    scores[0] = score_ceil;
+    scores[1 * (y + 2) + 0] = score_ceil;
+    scores[0 * (y + 2) + 1] = score_ceil;
+    scores[1 * (y + 2) + 1] = 0;
+    head = uniquePush(uniquePush(head,src[0]),tgt[0]);
+
+    /* work loops */
+    /* i = src index */
+    /* j = tgt index */
+    for (i=1;i<=x;i++) {
+        head = uniquePush(head,src[i]);
+        scores[(i+1) * (y + 2) + 1] = i;
+        scores[(i+1) * (y + 2) + 0] = score_ceil;
+        swapCount = 0;
+
+        for (j=1;j<=y;j++) {
+            if (i == 1) {
+                head = uniquePush(head,tgt[j]);
+                scores[1 * (y + 2) + (j + 1)] = j;
+                scores[0 * (y + 2) + (j + 1)] = score_ceil;
+            }
+
+            targetCharCount = find(head,tgt[j-1])->value;
+            swapScore = scores[targetCharCount * (y + 2) + swapCount] + i - targetCharCount - 1 + j - swapCount;
+
+            if (src[i-1] != tgt[j-1]) {
+                scores[(i+1) * (y + 2) + (j + 1)] = std::min(swapScore,
+                                                             std::min(scores[i * (y + 2) + j],
+                                                                      std::min(scores[(i+1) * (y + 2) + j],
+                                                                               scores[i * (y + 2) + (j + 1)])) + 1);
+            } else {
+                swapCount = j;
+                scores[(i+1) * (y + 2) + (j + 1)] = std::min(scores[i * (y + 2) + j], swapScore);
+            }
+        }
+        find(head,src[i-1])->value = i;
+    }
+
+    unsigned int score = scores[(x+1) * (y + 2) + (y + 1)];
+    dict_free(head);
+    delete[] scores;
+    return score;
+}
+} // namespace
+
+// Here's another implementation of Levenshtein edit distance so we can test the one in ROSE.
+namespace Levenshtein2 {
+template <class T>
+unsigned int edit_distance(const T& s1, const T& s2)
+{
+    const size_t len1 = s1.size(), len2 = s2.size();
+    std::vector<std::vector<unsigned int> > d(len1 + 1, std::vector<unsigned int>(len2 + 1));
+ 
+    d[0][0] = 0;
+    for (unsigned int i = 1; i <= len1; ++i)
+        d[i][0] = i;
+    for (unsigned int i = 1; i <= len2; ++i)
+        d[0][i] = i;
+ 
+    for (unsigned int i = 1; i <= len1; ++i) {
+        for (unsigned int j = 1; j <= len2; ++j) {
+            d[i][j] = std::min(std::min(d[i - 1][j] + 1,d[i][j - 1] + 1),
+                               d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1));
+        }
+    }
+    return d[len1][len2];
+}
+} // namespace
+
+static bool
+test_edit_distance()
+{
+    static const size_t sz_delta = 5;                   // max difference in lengths of vectors (v1 is longer than v2)
+    static const size_t sz_max = 20;                    // maximum length of vectors
+    static const unsigned int elmt_modulo = 8;          // modulo for choosing elements for the two vectors
+    static const bool show_every_run = true;            // set if you want to see every test
+    LinearCongruentialGenerator random;                 // source of pseudo-random numbers
+    size_t nfailures = 0;
+
+    // The first of two vectors
+    for (size_t sz1=sz_delta; sz1<sz_max; ++sz1) {
+        std::vector<unsigned int> v1(sz1, 0);
+        for (size_t i=0; i<sz1; ++i)
+            v1[i] = random() % elmt_modulo;
+
+        // The second of two vectors.
+        for (size_t sz2=sz1-sz_delta; sz2<sz1; ++sz2) {
+            std::vector<unsigned int> v2(sz2, 0);
+            for (size_t i=0; i<sz2; ++i)
+                v2[i] = v1[i];
+            Combinatorics::shuffle(v2);
+
+            if (show_every_run) {
+                std::cerr <<"using these vectors:\n"
+                          <<"    v1[" <<sz1 <<"] = {";
+                for (size_t i=0; i<sz1; ++i)
+                    std::cerr <<" " <<v1[i];
+                std::cerr <<"}\n"
+                          <<"    v2[" <<sz2 <<"] = {";
+                for (size_t i=0; i<sz2; ++i)
+                    std::cerr <<" " <<v2[i];
+                std::cerr <<"}\n";
+            }
+                
+
+            for (size_t algo=0; algo<2; ++algo) {
+                size_t d1, d2;
+                const char *name;
+                switch (algo) {
+                    case 0:
+                        name = "Levenshtein";
+                        d1 = Combinatorics::levenshtein_distance(v1, v2);
+                        d2 = Levenshtein2::edit_distance(v1, v2);
+                        break;
+                    case 1:
+                        name = "Damerau-Levenshtein";
+                        d1 = Combinatorics::damerau_levenshtein_distance(v1, v2);
+                        if (v1.empty())
+                            v1.push_back(911); // we need a pointer, and &v1[0] won't cut it if v1 is empty
+                        if (v2.empty())
+                            v2.push_back(911);
+                        d2 = DamerauLevenshtein2::distance(&v1[0], &v2[0], sz1, sz2);
+                        v1.resize(sz1);
+                        v2.resize(sz2);
+                        break;
+                }
+
+                if (d1!=d2) {
+                    std::cerr <<"failure for " <<name <<" edit distance:\n"
+                              <<"    v1[" <<sz1 <<"] = {";
+                    for (size_t i=0; i<sz1; ++i)
+                        std::cerr <<" " <<v1[i];
+                    std::cerr <<"}\n"
+                              <<"    v2[" <<sz2 <<"] = {";
+                    for (size_t i=0; i<sz2; ++i)
+                        std::cerr <<" " <<v2[i];
+                    std::cerr <<"}\n"
+                              <<"    rose implementation: distance=" <<d1 <<"\n"
+                              <<"    test implementation: disatnce=" <<d2 <<"\n";
+                    ++nfailures;
+                } else if (show_every_run) {
+                    std::cerr <<"    " <<name <<"\n"
+                              <<"        ROSE=" <<d1 <<", alternate=" <<d2 <<"\n";
+                }
+            }
+        }
+    }
+    return 0==nfailures;
+}
+
+
+            
 
 
 int
@@ -424,6 +638,8 @@ main()
     nfailures += test_prefixLines() ? 0 : 1;
 
     nfailures += test_makeOneLine() ? 0 : 1;
+
+    nfailures += test_edit_distance() ? 0 : 1;
 
     return 0==nfailures;
 }
