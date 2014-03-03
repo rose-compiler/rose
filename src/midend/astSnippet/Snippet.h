@@ -50,12 +50,13 @@ private:
 
 protected:
     /** Use instance() instead. */
-    explicit SnippetFile(const std::string &fileName): fileName(fileName), ast(NULL) {}
+    explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL): fileName(fileName), ast(ast) {}
 
 public:
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
-     * one.  No attempt is made to determine whether unequal names resolve to the same file. */
-    static SnippetFilePtr instance(const std::string &fileName);
+     *  one.  No attempt is made to determine whether unequal names resolve to the same file.  If a new SnippetFile needs to be
+     *  created then we either use the provided AST or we parse the file. */
+    static SnippetFilePtr instance(const std::string &fileName, SgSourceFile *snippetAst=NULL);
 
     /** Look up the SnippetFile for this file name. Returns the SnippetFile for this file if it exists, otherwise returns
      *  null. No attempt is made to determine whether unequal names resolve to teh same file. */
@@ -67,8 +68,8 @@ public:
     /** Returns the list of snippet names. */
     std::vector<std::string> getSnippetNames() const;
 
-    /** Return a Snippet having the specified name.  The snippet name is either a global function or a fully qualified function
-     *  name. Returns null if the snippet cannot be found in this SnippetFile. */
+    /** Return a Snippet having the specified name.  The name must be fully a fully qualified function name. Returns null if
+     *  the snippet cannot be found in this SnippetFile. */
     SnippetPtr findSnippet(const std::string &snippetName);
 
     /** Insert snippets in marked code. The specified AST is traversed and function calls to snippets which are defined in this
@@ -101,7 +102,10 @@ public:
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
      *  class method. Throws an std::runtime_error on failure. */
-    void parse();
+    static SgSourceFile* parse(const std::string &fileName);
+
+    /** Find all snippet functions (they are the top-level function definitions) and add them to this SnippetFile. */
+    void findSnippetFunctions();
 };
 
 
