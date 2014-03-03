@@ -21,14 +21,20 @@ std::vector<std::string> SnippetFile::varNameList;
 
 // Class method
 SnippetFilePtr
-SnippetFile::instance(const std::string &filename)
+SnippetFile::instance(const std::string &filename, SgSourceFile *snippetAst/*=NULL*/)
 {
     SnippetFilePtr retval = lookup(filename);
     if (retval!=NULL)
         return retval;
 
-    retval = registry[filename] = SnippetFilePtr(new SnippetFile(filename));
-    retval->parse();
+    if (!snippetAst) {
+        snippetAst = parse(filename);
+        assert(snippetAst!=NULL);
+    }
+
+    retval = registry[filename] = SnippetFilePtr(new SnippetFile(filename, snippetAst));
+    retval->findSnippetFunctions();
+    
     return retval;
 }
 
@@ -42,24 +48,27 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
-void
-SnippetFile::parse()
+// Class method
+SgSourceFile *
+SnippetFile::parse(const std::string &fileName)
 {
-    assert(this!=NULL);
     assert(!fileName.empty());
-    assert(ast==NULL);
     
     // We should never unparse the snippet to a separate file, so provide an invalid name to catch errors
     std::string outputName = "/SNIPPET_SHOULD_NOT_BE_UNPARSED/x";
 
     // Try to load the snippet by parsing its source file
     SgFile *file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
-    ast = isSgSourceFile(file);
-    assert(ast!=NULL);
-    attachPreprocessingInfo(ast);
-    ast->set_skip_unparse(true);
+    SgSourceFile *snippetAst = isSgSourceFile(file);
+    assert(snippetAst!=NULL);
+    attachPreprocessingInfo(snippetAst);
+    snippetAst->set_skip_unparse(true);
+    return snippetAst;
+}
 
-    // Find all snippet functions (they are the top-level function definitions)
+void
+SnippetFile::findSnippetFunctions()
+{
     struct SnippetFinder: AstSimpleProcessing {
         FunctionDefinitionMap &functions;
         SnippetFinder(FunctionDefinitionMap &functions): functions(functions) {}
