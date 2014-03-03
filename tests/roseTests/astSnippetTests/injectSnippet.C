@@ -164,7 +164,11 @@ main(int argc, char *argv[])
     }
 
     SnippetPtr snippet;
-    if (SageInterface::is_Java_language()) {
+    bool haveBug = false;
+#if 0 /* [Robb P. Matzke 2014-03-03] No longer needed--bug has been fixed; do not include snipet file on command-line */
+    haveBug = SageInterface::is_Java_language();
+#endif
+    if (haveBug) {
         // ROSE's java support doesn't currently let us parse another java file after we've called frontend().  Therefore, the
         // snippet file must have been passed as one of ROSE's command-line arguments so that it's been processed by frontend()
         // already. We just have to find it and create a Snippet object that points to that part of the AST.
@@ -173,6 +177,7 @@ main(int argc, char *argv[])
         // Load the snippet from its file.  This actually loads all the snippets in the file.
         snippet = Snippet::instanceFromFile(snippet_name, SnippetTests::findSnippetFile(snippet_file_name));
     }
+
     assert(snippet!=NULL);
 
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
