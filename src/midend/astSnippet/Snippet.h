@@ -376,6 +376,11 @@ public:
     void insert(SgStatement *insertionPoint, const std::vector<SgNode*> &args);
     /** @} */
 
+    // FIXME[Robb P. Matzke 2014-03-03]: move this to SageInterface when I know it works
+    /** Get SgFile node that encloses the specified node. Use this instead of SageInterface::getEnclosingFileNode because the
+     *  latter does not work for Java. */
+    static SgFile* getEnclosingFileNode(SgNode *node);
+
 protected:
     /** Mark nodes so they're unparsed when the insertion point is unparsed. */
     static void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
