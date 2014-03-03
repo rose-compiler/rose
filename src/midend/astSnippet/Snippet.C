@@ -393,7 +393,10 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         }
     }
 
-    insertGlobalStuff(insertionPoint);
+    // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
+    // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
+    // snippet, and others might completely unrelated but the user wants them copied anyway.
+    insertRelatedThings(insertionPoint);
 
     if (insertRecursively)
         file->expandSnippets(toInsert);
@@ -686,7 +689,7 @@ Snippet::getEnclosingFileNode(SgNode *node)
 }
 
 void
-Snippet::insertGlobalStuff(SgStatement *insertionPoint)
+Snippet::insertRelatedThings(SgStatement *insertionPoint)
 {
     assert(this!=NULL);
     assert(insertionPoint!=NULL);
@@ -697,10 +700,26 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
     if (file->globallyInjected(ipointGlobalScope))
         return;
 
+    // Language specific insertions
+    if (SageInterface::is_Java_language()) {
+        insertRelatedThingsForJava(insertionPoint);
+    } else if (SageInterface::is_C_language()) {
+        insertRelatedThingsForC(insertionPoint);
+    }
+}
+
+void
+Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
+{}
+
+void
+Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
+{
     // The insertionPoint was where we inserted the snippet. To insert related global stuff, we need another insertion point
     // that's near the top of the same file where the snippet was inserted.  We want to insert stuff after all the #include
     // directives, so look for the last global declaration that has #include attached in this file. That's where we'll do our
     // inserting.
+    SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
     const SgDeclarationStatementPtrList &stmtList = ipointGlobalScope->get_declarations();
     SgStatement *firstDeclSameFile = NULL;              // first declaration in the insertion point's file
     SgStatement *lastDeclWithIncludes = NULL;           // last declaration in this file that has attached #include
