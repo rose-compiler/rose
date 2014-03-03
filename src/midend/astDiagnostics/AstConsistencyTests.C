@@ -177,7 +177,7 @@ AstTests::runAllTests(SgProject* sageProject)
 
 #ifdef NDEBUG
   // DQ (6/30/20133): If we have compiled with NDEBUG then nothing identified in this function 
-  // will be cause because every place we detect a problem we expect to end with ROSE_ASSERT() 
+  // will be caught because every place we detect a problem we expect to end with ROSE_ASSERT() 
   // which is disabled when ROSE is compiled with NDEBUG.  So more approriate (and equvalent) 
   // semantics is that if ROSE is compiled with NDEBUG then we should just exit directly.
      TimingPerformance ndebug_timer ("AST Consistency Tests (disabled by NDEBUG):");
@@ -200,6 +200,29 @@ AstTests::runAllTests(SgProject* sageProject)
         {
           printf ("Note: In AstTests::runAllTests(): command line option used to skip AST consistancy tests \n");
           return;
+        }
+
+  // DQ (2/23/2014): Adding support for gathering statistics from boost hash tables.
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+  // if ( SgProject::get_verbose() >= 0 )
+        {
+          for (size_t i = 0; i < sageProject->get_fileList().size(); i++)
+             {
+               SgSourceFile* sourceFile = isSgSourceFile(sageProject->get_fileList()[i]);
+               if (sourceFile != NULL)
+                  {
+                    SgGlobal* globalScope = sourceFile->get_globalScope();
+                    ROSE_ASSERT(globalScope != NULL);
+                    size_t maxCollisions = globalScope->get_symbol_table()->maxCollisions();
+                    printf ("Symbol Table Statistics: sourceFile = %zu maxCollisions = %zu \n",i,maxCollisions);
+
+                    float load_factor     = globalScope->get_symbol_table()->get_table()->load_factor();
+                    printf ("Symbol Table Statistics: sourceFile = %zu load_factor = %f \n",i,load_factor);
+
+                    float max_load_factor = globalScope->get_symbol_table()->get_table()->max_load_factor();
+                    printf ("Symbol Table Statistics: sourceFile = %zu max_load_factor = %f \n",i,max_load_factor);
+                  }
+             }
         }
 
   // CH (2010/7/26):   

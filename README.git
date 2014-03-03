@@ -851,7 +851,6 @@ git commit --allow-empty
 # And then push the changes
 git push origin dq-cxx-rc
 
-
 New merged-builder branch specific instructions:
 
 Push to local repository:
