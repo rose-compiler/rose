@@ -402,9 +402,16 @@ protected:
      *  @p toMatch. */
     bool hasCommentMatching(SgNode *ast, const std::string &toMatch);
 
-    /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
-     *  aren't already inserted. */
-    void insertGlobalStuff(SgStatement *insertionPoint);
+    /** Insert other things from the snippet file into the target file. These are things like variables and functions that are
+     *  above the snippet function in the snippet files's AST and must be inserted above the snippet insertion point in the
+     *  target file. */
+    void insertRelatedThings(SgStatement *snippetInsertionPoint);
+
+    /** Java-specific things that need to be copied from the snippet file to the target file. */
+    void insertRelatedThingsForJava(SgStatement *snippetInsertionPoint);
+
+    /** C-specific things that need to be copied from the snippet file to the target file. */
+    void insertRelatedThingsForC(SgStatement *snippetInsertionPoint);
 
     /** Insert an #include directive from a snippet's file to the insertion point.. */
     void insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective);
