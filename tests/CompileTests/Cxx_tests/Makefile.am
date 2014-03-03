@@ -593,6 +593,7 @@ $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
+$(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING) \
 $(TESTCODE_CURRENTLY_FAILING_ON_OSX) \
@@ -780,7 +781,7 @@ test2005_56.qmt: $(TEST_TRANSLATOR)
 include $(top_srcdir)/config/QMTest_makefile.inc
 
 # Make sure that all the test codes end up in the distribution
-EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) test_CplusplusMacro_C.C test2006_137.C \
+EXTRA_DIST = $(ALL_TESTCODES) test_CplusplusMacro_C.C test2006_137.C \
      confdefs.h  test2001_05.h  test2001_11.h test2001_18A.h  test2003_08.h  test2003_12.h  test2003_24.h  test2004_40.h \
      test2005_154.h  test2005_158.h  test2005_15.h   test2005_26.h  test2005_81.h  test2006_33.h foo.h \
      test2001_15.h  test2001_18B.h  test2003_09.h  test2003_14.h  test2003_25.h  test2005_133.h  test2005_157.h \
