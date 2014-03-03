@@ -77,9 +77,7 @@ SnippetFile::findSnippet(const std::string &snippetName)
 {
     assert(this!=NULL);
     assert(!snippetName.empty());
-    std::string functionName =  snippetName.substr(0, 2)=="::" ? snippetName : "::" + snippetName;
-
-    if (SgFunctionDefinition *fdef = functions.get_value_or(functionName, NULL))
+    if (SgFunctionDefinition *fdef = functions.get_value_or(snippetName, NULL))
         return SnippetPtr(new Snippet(snippetName, shared_from_this(), fdef));
     return SnippetPtr();
 }
