@@ -366,6 +366,14 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgScopeStatement *toInsert = isSgScopeStatement(ast->get_body()->copy(deep));
     assert(toInsert!=NULL);
 
+ // DQ (3/4/2014): This is a test of the structural equality of the original snippet and it's copy.
+ // If they are different then we can't support fixing up the AST.  Transformations on the snippet 
+ // should have been made after insertion into the AST.  The complexity of this test is a traversal 
+ // of the copy of the snippet to be inserted (typically very small compared to the target application).
+// Note that we can enforce this test here, but not after calling the replaceArguments() function below.
+    bool isStructurallyEquivalent = SageInterface::isStructurallyEquivalentAST(toInsert,ast->get_body());
+    ROSE_ASSERT(isStructurallyEquivalent == true);
+
  // DQ (3/4/2014): I think this is untimately a fundamental problem later (e.g. for mangled name generation).
  // So we have to attached the current scope to the scope of the insertion point.  This will allow the 
  // SgStatement::get_scope() to work (which is a problem for some debugging code (at least).
@@ -379,7 +387,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 
     renameTemporaries(toInsert);
     causeUnparsing(toInsert, insertionPoint->get_file_info());
+
+#if 1
+ // DQ (3/4/2014): This appears to be invalidating the use of the AST iterator since it changes the 1-to-1 mapping of the copy if the snippet to the original snippet.
     replaceArguments(toInsert, bindings);
+#endif
 
  // insertionPoint->get_file_info()->display("insertionPoint: test 2: debug");
 
@@ -438,8 +450,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 
     if (insertMechanism == INSERT_BODY)
        {
+#if 0
          printf ("In Snippet::insert(): insertMechanism == INSERT_BODY: (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == false) \n");
-
+#endif
       // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the insertionPoint.
          if (translationMap.find(ast->get_body()) == translationMap.end());
               translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
@@ -465,8 +478,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                            {
                              case LOCDECLS_AT_BEGINNING:
                                // SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+#if 0
                                   printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): case LOCDECLS_AT_BEGINNING \n");
-
+#endif
                                // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the insertionPoint.
                                   if (translationMap.find(ast->get_body()) == translationMap.end());
                                        translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
@@ -476,8 +490,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 
                              case LOCDECLS_AT_END:
                                // SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+#if 0
                                   printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): case LOCDECLS_AT_END \n");
-
+#endif
                                // We are providing the scope instead of the declaration reference.
                                   insertionPointIsScope = true;
 
@@ -492,8 +507,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                      else 
                       {
                      // SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+#if 0
                         printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == NULL) \n");
-
+#endif
                      // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the insertionPoint.
                         if (translationMap.find(ast->get_body()) == translationMap.end());
                              translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );

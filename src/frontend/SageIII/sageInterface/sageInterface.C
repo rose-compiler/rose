@@ -58,6 +58,9 @@
    #include "transformationSupport.h"
 #endif
 
+// DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
+#include "RoseAst.h"
+
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
 
@@ -17331,5 +17334,62 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     return new_var_list;
 }
+
+
+
+bool
+SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
+   {
+  // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+
+  // This is AST container for the ROSE AST that will provide an iterator.
+  // We want two iterators (one for the copy of the snippet and one for the 
+  // original snippet so that we can query the original snippet's AST 
+  // as we process each IR node of the AST for the copy of the snippet.
+  // Only the copy of the snippet is inserted into the target AST.
+     RoseAst ast_of_copy(tree1);
+     RoseAst ast_of_original(tree2);
+
+  // printf ("ast_of_copy.size() = %zu \n",ast_of_copy.size());
+
+  // Build the iterators so that we can increment thorugh both ASTs one IR node at a time.
+     RoseAst::iterator i_copy     = ast_of_copy.begin();
+     RoseAst::iterator i_original = ast_of_original.begin();
+
+  // Iterate of the copy of the snippet's AST.
+     while (i_copy != ast_of_copy.end())
+        {
+#if 0
+          printf ("*i_copy = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
+          printf ("*i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
+#endif
+       // DQ (2/28/2014): This is a problem for some of the test codes (TEST   store/load heap string [test7a] and [test7a])
+       // ROSE_ASSERT((*i_copy)->variantT() == (*i_original)->variantT());
+          if ((*i_copy)->variantT() != (*i_original)->variantT())
+             {
+#if 0
+               printf ("ERROR: return from SageInterface::isStructurallyEquivalentAST(): (*i_copy)->variantT() != (*i_original)->variantT() \n");
+#endif
+#if 0
+               printf ("Making this an error! \n");
+               ROSE_ASSERT(false);
+#endif
+               return false;
+             }
+
+          i_copy++;
+
+       // Verify that we have not reached the end of the ast for the original (both the 
+       // copy and the original are the same structurally, and thus the same size).
+          ROSE_ASSERT(i_original != ast_of_original.end());
+          i_original++;
+        }
+
+  // We have reached the end of both ASTs.
+     ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
+
+     return true;
+   }
+
 
 #endif
