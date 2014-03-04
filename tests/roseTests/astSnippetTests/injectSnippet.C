@@ -201,26 +201,24 @@ main(int argc, char *argv[])
     std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
     SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
 
-    printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
-
     snippet->setInsertMechanism(insert_mechanism);
     snippet->setLocalDeclarationPosition(locdecls_position);
     snippet->setInsertRecursively(insert_recursively);
 
-    printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
-
     snippet->setCopyAllSnippetDefinitions(copy_definitions);
 
-    printf ("Test 3: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+#if 1
+    printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
          project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+#endif
 
  // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is not a problem, but is interesting).
     snippet->insert(ipoint, args);
 
-    printf ("Test 4: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+#if 1
+    printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
          project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+#endif
 
 #if 1
  // DQ (2/1/2014): delete the snippet AST as a test of the fixup of the target AST.
@@ -234,6 +232,7 @@ main(int argc, char *argv[])
 #if 0
  // DQ (4/4/2014): This fails for some header files (e.g. stdio.h).
  // So we can't use it in general (this will be scheduled to be worked on later).
+ // We can use it for specific testing when the snippet file is not too complex.
     SageInterface::deleteAST(snippetSourceFile);
 #endif
 
