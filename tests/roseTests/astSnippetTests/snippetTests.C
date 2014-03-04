@@ -8,23 +8,31 @@ std::string
 findSnippetFile(const std::string &fileName)
 {
     assert(!fileName.empty());
-    std::string fullName = '/'==fileName[0] ? fileName :
-                           ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/" + fileName;
-    if (fileName.size()<2 || fileName.substr(fileName.size()-2)!=".c")
-        fullName += ".c";
+    if (-1 != access(fileName.c_str(), R_OK))
+        return fileName;
+    std::string fullName = ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/" + fileName;
     if (-1 != access(fullName.c_str(), R_OK))
         return fullName;
     std::cerr <<"snippet file does not exist or is not readable: " <<fullName <<"\n";
     return "";
 }
 
+SnippetPtr
+findSnippetInAst(SgProject *project, const std::string &snippetFileName, const std::string &snippetName)
+{
+    SgFunctionDefinition *snippetDefn = findFunctionDefinition(project, snippetName);
+    ROSE_ASSERT(snippetDefn || !"cannot find snippet in existing AST");
+    SgSourceFile *snippetFileAst = isSgSourceFile(Snippet::getEnclosingFileNode(snippetDefn));
+    ROSE_ASSERT(snippetFileAst || !"snippet has no source file");
+
+    SnippetFilePtr snippetFile = SnippetFile::instance(snippetFileName, snippetFileAst);
+    return snippetFile->findSnippet(snippetName);
+}
+
 SgFunctionDefinition *
 findFunctionDefinition(SgNode *ast, std::string function_name)
 {
     assert(ast!=NULL);
-    if (function_name.substr(0, 2)!="::")
-        function_name = "::" + function_name;
-
     struct FindFunctionDef: AstSimpleProcessing {
         const std::string &name;
         FindFunctionDef(const std::string &name): name(name) {}

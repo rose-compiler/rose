@@ -9,16 +9,15 @@ usage(const std::string &arg0)
     std::cerr <<"usage: " <<arg0 <<" --test:snippet=[FILE_NAME.]SNIPPET_NAME --test:ipoint-function=NAME [TEST_SWITCHES] [ROSE_SWITCHES] SPECIMEN\n"
               <<"  These two switches are required since they describe what to inject and\n"
               <<"  where to inject it:\n"
-              <<"    --test:snippet=[FILE_NAME.]SNIPPET_NAME\n"
+              <<"    --test:snippet=[FILE_NAME,]SNIPPET_NAME\n"
               <<"        The name of the snippet, a function name.  The snippet name can\n"
-              <<"        optionally be prefixed by the base name of the source file which\n"
+              <<"        optionally be prefixed by the name of the source file which\n"
               <<"        contains the snippet and the test will search various places for that\n"
-              <<"        file.  The file name should not include the \".c\" suffix.  For\n"
-              <<"        example, \"--test:snippet=file1.snippet1\" will find a file named\n"
+              <<"        file.  For example, \"--test:snippet=file1.c,snippet1\" will find a file named\n"
               <<"        \"file1.c\" which contains a function named \"snippet1\".\n"
-              <<"    --test:ipoint-function=NAME\n"
-              <<"        The name of the specimen function where the snippet is to be inserted.\n"
-              <<"        this switch is required.  The snippet is inserted before the first\n"
+              <<"    --test:ipoint-function=FQNAME\n"
+              <<"        The fully qualified name of the specimen function where the snippet is to be\n"
+              <<"        inserted. This switch is required.  The snippet is inserted before the first\n"
               <<"        statement in the ipoint-function that references a variable named\n"
               <<"        \"INSERT_HERE\" (normally one would find an insertion point by\n"
               <<"        matching some pattern in the specimen, but this is only a test).\n"
@@ -103,11 +102,11 @@ main(int argc, char *argv[])
             usage(argv0);
         } else if (!strncmp(argv[argno], "--test:snippet=", 15)) {
             std::string s = argv[argno]+15;
-            size_t dot = s.find_first_of('.');
+            size_t dot = s.find_first_of(',');
             if (dot==std::string::npos) {
                 snippet_name = s;
             } else {
-                snippet_file_name = s.substr(0, dot) + ".c";
+                snippet_file_name = s.substr(0, dot);
                 snippet_name = s.substr(dot+1);
             }
         } else if (!strcmp(argv[argno], "--test:insert-mechanism=body")) {
@@ -168,8 +167,21 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    // Load the snippet from its file.  This actually loads all the snippets in the file.
-    SnippetPtr snippet = Snippet::instanceFromFile(snippet_name, SnippetTests::findSnippetFile(snippet_file_name));
+    SnippetPtr snippet;
+    bool haveBug = false;
+#if 0 /* [Robb P. Matzke 2014-03-03] No longer needed--bug has been fixed; do not include snipet file on command-line */
+    haveBug = SageInterface::is_Java_language();
+#endif
+    if (haveBug) {
+        // ROSE's java support doesn't currently let us parse another java file after we've called frontend().  Therefore, the
+        // snippet file must have been passed as one of ROSE's command-line arguments so that it's been processed by frontend()
+        // already. We just have to find it and create a Snippet object that points to that part of the AST.
+        snippet = SnippetTests::findSnippetInAst(project, snippet_file_name, snippet_name);
+    } else {
+        // Load the snippet from its file.  This actually loads all the snippets in the file.
+        snippet = Snippet::instanceFromFile(snippet_name, SnippetTests::findSnippetFile(snippet_file_name));
+    }
+
     assert(snippet!=NULL);
 
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
@@ -257,7 +269,7 @@ main(int argc, char *argv[])
 #endif
 
     // Unparse the modified source code
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-12-03]*/
+#if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
 #endif
 #if 1

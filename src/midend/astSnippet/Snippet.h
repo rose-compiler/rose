@@ -50,12 +50,13 @@ private:
 
 protected:
     /** Use instance() instead. */
-    explicit SnippetFile(const std::string &fileName): fileName(fileName), ast(NULL) {}
+    explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL): fileName(fileName), ast(ast) {}
 
 public:
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
-     * one.  No attempt is made to determine whether unequal names resolve to the same file. */
-    static SnippetFilePtr instance(const std::string &fileName);
+     *  one.  No attempt is made to determine whether unequal names resolve to the same file.  If a new SnippetFile needs to be
+     *  created then we either use the provided AST or we parse the file. */
+    static SnippetFilePtr instance(const std::string &fileName, SgSourceFile *snippetAst=NULL);
 
     /** Look up the SnippetFile for this file name. Returns the SnippetFile for this file if it exists, otherwise returns
      *  null. No attempt is made to determine whether unequal names resolve to teh same file. */
@@ -67,8 +68,8 @@ public:
     /** Returns the list of snippet names. */
     std::vector<std::string> getSnippetNames() const;
 
-    /** Return a Snippet having the specified name.  The snippet name is either a global function or a fully qualified function
-     *  name. Returns null if the snippet cannot be found in this SnippetFile. */
+    /** Return a Snippet having the specified name.  The name must be fully a fully qualified function name. Returns null if
+     *  the snippet cannot be found in this SnippetFile. */
     SnippetPtr findSnippet(const std::string &snippetName);
 
     /** Insert snippets in marked code. The specified AST is traversed and function calls to snippets which are defined in this
@@ -101,7 +102,10 @@ public:
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
      *  class method. Throws an std::runtime_error on failure. */
-    void parse();
+    static SgSourceFile* parse(const std::string &fileName);
+
+    /** Find all snippet functions (they are the top-level function definitions) and add them to this SnippetFile. */
+    void findSnippetFunctions();
 };
 
 
@@ -376,6 +380,11 @@ public:
     void insert(SgStatement *insertionPoint, const std::vector<SgNode*> &args);
     /** @} */
 
+    // FIXME[Robb P. Matzke 2014-03-03]: move this to SageInterface when I know it works
+    /** Get SgFile node that encloses the specified node. Use this instead of SageInterface::getEnclosingFileNode because the
+     *  latter does not work for Java. */
+    static SgFile* getEnclosingFileNode(SgNode *node);
+
 protected:
     /** Mark nodes so they're unparsed when the insertion point is unparsed. */
     static void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
@@ -393,9 +402,16 @@ protected:
      *  @p toMatch. */
     bool hasCommentMatching(SgNode *ast, const std::string &toMatch);
 
-    /** Insert stuff from the snippet's global scope into the insertion point's global scope. Only do this for things that
-     *  aren't already inserted. */
-    void insertGlobalStuff(SgStatement *insertionPoint);
+    /** Insert other things from the snippet file into the target file. These are things like variables and functions that are
+     *  above the snippet function in the snippet files's AST and must be inserted above the snippet insertion point in the
+     *  target file. */
+    void insertRelatedThings(SgStatement *snippetInsertionPoint);
+
+    /** Java-specific things that need to be copied from the snippet file to the target file. */
+    void insertRelatedThingsForJava(SgStatement *snippetInsertionPoint);
+
+    /** C-specific things that need to be copied from the snippet file to the target file. */
+    void insertRelatedThingsForC(SgStatement *snippetInsertionPoint);
 
     /** Insert an #include directive from a snippet's file to the insertion point.. */
     void insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective);

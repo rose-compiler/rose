@@ -10,8 +10,12 @@ namespace SnippetTests {
  *  a snippet source file. */
 std::string findSnippetFile(const std::string &fileName);
 
+/** Find a snippet that already exists in the ast.  This is mostly for Java since ROSE has a bug that prevents us from
+ *  parsing another java file after frontend() returns. */
+rose::SnippetPtr findSnippetInAst(SgProject*, const std::string &snippetFileName, const std::string &snippetName);
+
 /** Find a function definition having the specified name. */
-SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string functionName);
+SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string fullyQualifiedFunctionName);
 
 /** Find the last statement in a function definition after which we can reasonably insert another statement. */
 SgStatement *findLastAppendableStatement(SgFunctionDefinition*);

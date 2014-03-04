@@ -18,9 +18,9 @@ main(int argc, char *argv[])
     SgProject *project = frontend(args);
     
 
-    std::string snippetFileName = SnippetTests::findSnippetFile("snippets4");
-    SnippetPtr storeString = Snippet::instanceFromFile("store"+what, snippetFileName);
-    SnippetPtr loadString  = Snippet::instanceFromFile("load"+what,  snippetFileName);
+    std::string snippetFileName = SnippetTests::findSnippetFile("snippets4.c");
+    SnippetPtr storeString = Snippet::instanceFromFile("::store"+what, snippetFileName);
+    SnippetPtr loadString  = Snippet::instanceFromFile("::load"+what,  snippetFileName);
 
     // Find the insertion point in the big file.
     SgFunctionDefinition *func_ipoint1 = SnippetTests::findFunctionDefinition(project, "::main");
