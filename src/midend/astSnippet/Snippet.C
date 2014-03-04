@@ -1,4 +1,5 @@
 #include "Snippet.h"
+#include "AstTraversal.h"
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
@@ -20,14 +21,20 @@ std::vector<std::string> SnippetFile::varNameList;
 
 // Class method
 SnippetFilePtr
-SnippetFile::instance(const std::string &filename)
+SnippetFile::instance(const std::string &filename, SgSourceFile *snippetAst/*=NULL*/)
 {
     SnippetFilePtr retval = lookup(filename);
     if (retval!=NULL)
         return retval;
 
-    retval = registry[filename] = SnippetFilePtr(new SnippetFile(filename));
-    retval->parse();
+    if (!snippetAst) {
+        snippetAst = parse(filename);
+        assert(snippetAst!=NULL);
+    }
+
+    retval = registry[filename] = SnippetFilePtr(new SnippetFile(filename, snippetAst));
+    retval->findSnippetFunctions();
+    
     return retval;
 }
 
@@ -41,24 +48,27 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
-void
-SnippetFile::parse()
+// Class method
+SgSourceFile *
+SnippetFile::parse(const std::string &fileName)
 {
-    assert(this!=NULL);
     assert(!fileName.empty());
-    assert(ast==NULL);
     
     // We should never unparse the snippet to a separate file, so provide an invalid name to catch errors
     std::string outputName = "/SNIPPET_SHOULD_NOT_BE_UNPARSED/x";
 
     // Try to load the snippet by parsing its source file
     SgFile *file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
-    ast = isSgSourceFile(file);
-    assert(ast!=NULL);
-    attachPreprocessingInfo(ast);
-    ast->set_skip_unparse(true);
+    SgSourceFile *snippetAst = isSgSourceFile(file);
+    assert(snippetAst!=NULL);
+    attachPreprocessingInfo(snippetAst);
+    snippetAst->set_skip_unparse(true);
+    return snippetAst;
+}
 
-    // Find all snippet functions (they are the top-level function definitions)
+void
+SnippetFile::findSnippetFunctions()
+{
     struct SnippetFinder: AstSimpleProcessing {
         FunctionDefinitionMap &functions;
         SnippetFinder(FunctionDefinitionMap &functions): functions(functions) {}
@@ -76,9 +86,7 @@ SnippetFile::findSnippet(const std::string &snippetName)
 {
     assert(this!=NULL);
     assert(!snippetName.empty());
-    std::string functionName =  snippetName.substr(0, 2)=="::" ? snippetName : "::" + snippetName;
-
-    if (SgFunctionDefinition *fdef = functions.get_value_or(functionName, NULL))
+    if (SgFunctionDefinition *fdef = functions.get_value_or(snippetName, NULL))
         return SnippetPtr(new Snippet(snippetName, shared_from_this(), fdef));
     return SnippetPtr();
 }
@@ -405,9 +413,10 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         }
     }
 
- // insertionPoint->get_file_info()->display("insertionPoint: test 3: debug");
-
-    insertGlobalStuff(insertionPoint);
+    // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
+    // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
+    // snippet, and others might completely unrelated but the user wants them copied anyway.
+    insertRelatedThings(insertionPoint);
 
  // insertionPoint->get_file_info()->display("insertionPoint: test 4: debug");
 
@@ -761,8 +770,46 @@ Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
     return visitor.foundComment;
 }
 
+// Find the file that contains this node.  For most languages we simply traverse up the parent pointers until we find the
+// file. But in a Java AST the SgFile node participates only in the downward AST edges, not the back edges.  So we have to turn
+// the whole algorithm upside down: start at the project and traverse down until we find a path to the node we're looking for,
+// then find the SgFile our our path rather than in the parent pointers.  This is certainly not efficient!
+SgFile *
+Snippet::getEnclosingFileNode(SgNode *node)
+{
+    if (!SageInterface::is_Java_language())
+        return SageInterface::getEnclosingFileNode(node);
+        
+    struct Visitor: AstPrePostOrderTraversal {
+        SgNode *deepNode;                               // the node whose SgFile we're trying to find
+        SgFile *inFile;                                 // non-null if the traversal is inside a file
+        Visitor(SgNode *node): deepNode(node), inFile(NULL) {}
+
+        void preOrderVisit(SgNode *node) {
+            if (SgFile *file = isSgFile(node)) {
+                ROSE_ASSERT(NULL==inFile || !"SgFile nodes cannot be nested");
+                inFile = file;
+            }
+            if (node==deepNode)
+                throw inFile;                           // avoid long traversals
+        }
+
+        void postOrderVisit(SgNode *node) {
+            if (isSgFile(node))
+                inFile = NULL;
+        }
+    } visitor(node);
+
+    try {
+        visitor.traverse(SageInterface::getProject());
+    } catch (SgFile *file) {
+        return file;
+    }
+    return NULL;
+}
+
 void
-Snippet::insertGlobalStuff(SgStatement *insertionPoint)
+Snippet::insertRelatedThings(SgStatement *insertionPoint)
 {
     assert(this!=NULL);
     assert(insertionPoint!=NULL);
@@ -778,10 +825,26 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
     if (file->globallyInjected(ipointGlobalScope))
         return;
 
+    // Language specific insertions
+    if (SageInterface::is_Java_language()) {
+        insertRelatedThingsForJava(insertionPoint);
+    } else if (SageInterface::is_C_language()) {
+        insertRelatedThingsForC(insertionPoint);
+    }
+}
+
+void
+Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
+{}
+
+void
+Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
+{
     // The insertionPoint was where we inserted the snippet. To insert related global stuff, we need another insertion point
     // that's near the top of the same file where the snippet was inserted.  We want to insert stuff after all the #include
     // directives, so look for the last global declaration that has #include attached in this file. That's where we'll do our
     // inserting.
+    SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
     const SgDeclarationStatementPtrList &stmtList = ipointGlobalScope->get_declarations();
     SgStatement *firstDeclSameFile = NULL;              // first declaration in the insertion point's file
     SgStatement *lastDeclWithIncludes = NULL;           // last declaration in this file that has attached #include

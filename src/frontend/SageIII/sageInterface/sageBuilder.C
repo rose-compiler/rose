@@ -12384,6 +12384,23 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 
+  // DQ (3/4/2014): This fix is only for Java and for C will cause a second SgFile to be redundently added to the file list.
+  // For now I will provide a temporary fix and check is this is for a Java project so that we can continue. But the longer
+  // term fix would be to make the semantics for Java the same as that of C/C++ (or the other way around, whatever is the 
+  // cleaner semantics.
+  // This just adds the new file to the list of files stored internally (note: this sets the parent of the newFile).
+  // TOO1 (2/28/2014): This is definitely required for Java (ECJ frontend), though C passes without it (I think only
+  //                   by luck :-).
+  //                   The ECJ frontend uses the SgProject internally (via a global SgProject*). Therefore, the
+  //                   SgProject must contain this newly created SgFile, otherwise ECJ won't be able to find it.
+  // project->set_file ( *result );
+     if (project->get_Java_only() == true)
+        {
+       // DQ (3/4/2014): For now we want to output a message and clean this up afterward (likely in the Java language support).
+          printf ("WARNING: Java specific action to add new file to SgProject (using set_file()) (more uniform language handling symantics would avoid this problem) \n");
+          project->set_file ( *result );
+        }
+
   // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
      result->runFrontend(nextErrorCode);
 
