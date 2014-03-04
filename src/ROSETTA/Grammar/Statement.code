@@ -10469,6 +10469,19 @@ SgFunctionDeclaration::get_symbol_from_symbol_table() const
    {
      SgScopeStatement* scope = get_scope();
      ROSE_ASSERT(scope != NULL);
+
+  // DQ (3/1/2014): This could be a scope from a deleted AST and if we would like to 
+  // think that the SgFunctionDeclaration would have been deleted, but it could have
+  // been the first non-defining declaration constructed to support the symbol), and 
+  // thus not strictly in the AST. In this case so we would like return NULL.
+  // The test for if this is a deletec IR node is if the variant is V_SgNode.
+     if (scope->variantT() == V_SgNode)
+        {
+          printf ("SgFunctionDeclaration::get_symbol_from_symbol_table(): This is a deleted IR node (returning NULL) \n");
+          return NULL;
+        }
+     ROSE_ASSERT(scope->variantT() != V_SgNode);
+
   // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
 #if 0
      printf ("In SgFunctionDeclaration::get_symbol_from_symbol_table(): this = %p = %s = %s scope = %p = %s scope->get_symbol_table() = %p \n",

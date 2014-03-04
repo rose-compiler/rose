@@ -2247,6 +2247,10 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsTrivial(const SgType * const inputType);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
+
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+
 }// end of namespace
 
 #endif
