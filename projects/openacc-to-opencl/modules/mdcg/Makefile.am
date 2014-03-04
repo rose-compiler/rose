@@ -21,7 +21,7 @@ build_openacc_models_LDADD= \
 
 if ROSE_HAVE_OPENCL_INC
 check-local: build-openacc-models
-	./build-openacc-models $(top_srcdir)/../libopenacc/ $(OPENCL_INC_DIR)
+	./build-openacc-models $(top_srcdir)/../libopenacc/include/ $(OPENCL_INC_DIR)
 endif
 
 clean-local:

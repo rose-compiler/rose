@@ -40,7 +40,11 @@ class CodeGenerator {
     MFB::Driver<MFB::Sage> & getDriver() const;
 
     template <class ModelTraversal>
-    SgInitializer * createInitializer(Model::class_t element, const typename ModelTraversal::input_t & input, unsigned file_id) const {
+    SgInitializer * createInitializer(
+      Model::class_t element,
+      const typename ModelTraversal::input_t & input,
+      unsigned file_id
+    ) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
@@ -54,19 +58,21 @@ class CodeGenerator {
     }
 
     template <class ModelTraversal>
-    SgExpression * createPointer(Model::class_t element, const typename ModelTraversal::input_t & input, unsigned file_id) const {
+    SgExpression * createPointer(
+      Model::class_t element,
+      const typename ModelTraversal::input_t & input,
+      unsigned file_id,
+      const std::string & decl_name
+    ) const {
       SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);
       assert(initializer != NULL);
 
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id, false);
 
-      std::ostringstream decl_name;
-      decl_name << "gen_p_" << element->node->symbol->get_name().getString() << "_" << s_var_gen_cnt++;
-
       SgType * type = element->node->symbol->get_type();
       assert(type != NULL);
 
-      SgVariableSymbol * symbol = instantiateDeclaration(decl_name.str(), file_id, type, initializer);
+      SgVariableSymbol * symbol = instantiateDeclaration(decl_name, file_id, type, initializer);
       assert(symbol != NULL);
 
       return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(symbol));
@@ -93,13 +99,19 @@ class CodeGenerator {
       Model::class_t element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id
+      unsigned file_id,
+      const std::string & decl_prefix
     ) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+      unsigned cnt = 0;
+
       Iterator it;
-      for (it = input_begin; it != input_end; it++)
-        expr_list->append_expression(createPointer<ModelTraversal>(element, *it, file_id));
+      for (it = input_begin; it != input_end; it++) {
+        std::ostringstream decl_name;
+        decl_name << decl_prefix << "_" << cnt++;
+        expr_list->append_expression(createPointer<ModelTraversal>(element, *it, file_id, decl_name.str()));
+      }
 
       return SageBuilder::buildAggregateInitializer(expr_list);
     }
@@ -110,21 +122,19 @@ class CodeGenerator {
       unsigned num_element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id
+      unsigned file_id,
+      const std::string & decl_name
     ) const {
       SgAggregateInitializer * aggr_init = createArray<ModelTraversal, Iterator>(element, input_begin, input_end, file_id);
 
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
-
-      std::ostringstream decl_name;
-      decl_name << "gen_ap_" << element->node->symbol->get_name().getString() << "_" << s_var_gen_cnt++;
 
       SgType * type = element->node->symbol->get_type();
       assert(type != NULL);
       type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
       assert(type != NULL);
 
-      SgVariableSymbol * symbol = instantiateDeclaration(decl_name.str(), file_id, type, aggr_init);
+      SgVariableSymbol * symbol = instantiateDeclaration(decl_name, file_id, type, aggr_init);
       assert(symbol != NULL);
 
       return SageBuilder::buildVarRefExp(symbol);
@@ -136,12 +146,17 @@ class CodeGenerator {
       unsigned num_element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id
+      unsigned file_id,
+      const std::string & decl_name,
+      const std::string & sub_decl_prefix
     ) const {
-      SgAggregateInitializer * aggr_init = createPointerArray<ModelTraversal, Iterator>(element, input_begin, input_end, file_id);
-
-      std::ostringstream decl_name;
-      decl_name << "gen_pap_" << element->node->symbol->get_name().getString() << "_" << s_var_gen_cnt++;
+      SgAggregateInitializer * aggr_init = createPointerArray<ModelTraversal, Iterator>(
+                                             element,
+                                             input_begin,
+                                             input_end,
+                                             file_id,
+                                             sub_decl_prefix
+                                           );
 
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
@@ -152,14 +167,19 @@ class CodeGenerator {
       type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
       assert(type != NULL);
 
-      SgVariableSymbol * symbol = instantiateDeclaration(decl_name.str(), file_id, type, aggr_init);
+      SgVariableSymbol * symbol = instantiateDeclaration(decl_name, file_id, type, aggr_init);
       assert(symbol != NULL);
 
       return SageBuilder::buildVarRefExp(symbol);
     }
 
     template <class ModelTraversal>
-    SgVariableSymbol * addDeclaration(Model::class_t element, typename ModelTraversal::input_t & input, unsigned file_id, std::string decl_name) const {
+    SgVariableSymbol * addDeclaration(
+      Model::class_t element,
+      typename ModelTraversal::input_t & input,
+      unsigned file_id,
+      std::string decl_name
+    ) const {
       SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);
       assert(initializer != NULL);
 

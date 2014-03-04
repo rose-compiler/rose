@@ -69,6 +69,10 @@ function_t model_t::lookup_function(SgFunctionSymbol * symbol) const {
 }
 
 type_t model_t::lookup_type(SgType * type) const {
+  SgModifierType * modifier_type = isSgModifierType(type);
+  if (modifier_type != NULL)
+    return lookup_type(modifier_type->get_base_type());
+
   std::vector<type_t>::const_iterator it;
   for (it = types.begin(); it != types.end(); it++)
     if ((*it)->node->type == type)

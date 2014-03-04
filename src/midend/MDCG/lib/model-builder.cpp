@@ -310,6 +310,12 @@ void ModelBuilder::add(Model::model_t & model, SgMemberFunctionSymbol * member_f
 }
 
 void ModelBuilder::add(Model::model_t & model, SgType * sg_type) {
+  SgModifierType * modifier_type  = isSgModifierType(sg_type);
+  if (modifier_type != NULL) {
+    add(model, modifier_type->get_base_type());
+    return;
+  }
+
   Model::type_t element = Model::build<Model::e_model_type>();
 
   element->node->type = sg_type;

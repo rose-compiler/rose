@@ -55,7 +55,7 @@ class SingleVersionItMapper : public IterationMapper<Annotation, Language::OpenC
     {}
 
   private:
-    virtual void computeValidShapes(
+    void computeValidShapes(
       LoopTrees<Annotation>::loop_t * loop,
       std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
     ) const {
@@ -123,11 +123,21 @@ struct KernelVersion {
       case 3:
       {
         /// struct acc_loop_t_ * loops;
+        std::ostringstream decl_name;
+          decl_name << "loops_" << input;
+
         MDCG::Model::type_t type = element->node->type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
         type = type->node->base_type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createArrayPointer<LoopDesc>(type->node->base_class, input->loops.size(), input->loops.begin(), input->loops.end(), file_id);
+        return codegen.createArrayPointer<LoopDesc>(
+                 type->node->base_class,
+                 input->loops.size(),
+                 input->loops.begin(),
+                 input->loops.end(),
+                 file_id,
+                 decl_name.str()
+               );
       }
       case 4:
         /// char * suffix;
@@ -186,27 +196,30 @@ struct KernelDesc {
         /// unsigned id;
         return SageBuilder::buildIntVal(input->id);
       case 1:
+        /// char * name;
+        return SageBuilder::buildStringVal("");
+      case 2:
         /// size_t num_params;
         return SageBuilder::buildIntVal(args.parameters.size());
-      case 2:
+      case 3:
         /// size_t * size_params;
         return createArrayOfTypeSize(codegen, args.parameters, std::string("param_sizes") + names_suffix.str(), file_id);
-      case 3:
+      case 4:
         /// size_t num_scalars;
         return SageBuilder::buildIntVal(args.scalars.size());
-      case 4:
+      case 5:
         /// size_t * size_scalars;
         return createArrayOfTypeSize(codegen, args.scalars, std::string("scalar_sizes") + names_suffix.str(), file_id);
-      case 5:
+      case 6:
         /// size_t num_datas;
         return SageBuilder::buildIntVal(args.datas.size());
-      case 6:
+      case 7:
         /// size_t num_loops;
         return SageBuilder::buildIntVal(input->num_loops);
-      case 7:
+      case 8:
         /// unsigned num_versions;
         return SageBuilder::buildIntVal(versions.size());
-      case 8:
+      case 9:
       {
         /// acc_kernel_version_t * versions;
         MDCG::Model::type_t type = element->node->type;
@@ -217,9 +230,17 @@ struct KernelDesc {
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
         type = type->node->base_type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createPointerArrayPointer<KernelVersion>(type->node->base_class, versions.size(), versions.begin(), versions.end(), file_id);
+        return codegen.createPointerArrayPointer<KernelVersion>(
+                 type->node->base_class,
+                 versions.size(),
+                 versions.begin(),
+                 versions.end(),
+                 file_id,
+                 "versions",
+                 "version"
+               );
       }
-      case 9:
+      case 10:
       {
         /// \todo acc_loop_splitter_t * splitted_loop;
         return SageBuilder::buildIntVal(0);
@@ -246,6 +267,11 @@ struct RegionDesc {
   ) {
     assert(input.kernel_lists.size() == 1);
     const std::list<Kernel *> & kernels = *(input.kernel_lists.begin());
+
+    std::ostringstream decl_name;
+      decl_name << "kernels_" << input.id;
+    std::ostringstream decl_prefix;
+      decl_prefix << "kernel_desc_" << input.id;
 
     switch (field_id) {
       case 0:
@@ -274,7 +300,15 @@ struct RegionDesc {
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
         type = type->node->base_type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createPointerArrayPointer<KernelDesc>(type->node->base_class, kernels.size(), kernels.begin(), kernels.end(), file_id);
+        return codegen.createPointerArrayPointer<KernelDesc>(
+                 type->node->base_class,
+                 kernels.size(),
+                 kernels.begin(),
+                 kernels.end(),
+                 file_id,
+                 decl_name.str(),
+                 decl_prefix.str()
+               );
       }
       case 6:
         /// \todo size_t num_devices;
@@ -294,6 +328,61 @@ struct RegionDesc {
   }
 };
 
+struct CompilerData {
+  struct input_t {
+    std::string runtime_dir;
+    std::string ocl_runtime;
+    std::string kernels_dir;
+    std::vector<RegionDesc::input_t> regions;
+  };
+
+  static SgExpression * createFieldInitializer(
+    const MDCG::CodeGenerator & codegen,
+    MDCG::Model::field_t element,
+    unsigned field_id,
+    const input_t & input,
+    unsigned file_id
+  ) {
+    switch (field_id) {
+      case 0:
+        /// const char * acc_runtime_dir;
+        return SageBuilder::buildStringVal(input.runtime_dir.c_str());
+      case 1:
+        /// const char * acc_runtime_ocl;
+        return SageBuilder::buildStringVal(input.ocl_runtime.c_str());
+      case 2:
+        /// const char * acc_kernels_dir;
+        return SageBuilder::buildStringVal(input.kernels_dir.c_str());
+      case 3:
+        /// const unsigned long num_regions;
+        return SageBuilder::buildIntVal(input.regions.size());
+      case 4:
+      {
+        /// const acc_region_desc_t * regions;
+        MDCG::Model::type_t type = element->node->type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+        type = type->node->base_type;
+        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+        return codegen.createPointerArrayPointer<RegionDesc>(
+                 type->node->base_class,
+                 input.regions.size(),
+                 input.regions.begin(),
+                 input.regions.end(),
+                 file_id,
+                 "regions",
+                 "region_desc"
+               );
+      }
+      default:
+        assert(false);
+    }
+  }
+};
+
 }
 
 }
@@ -301,26 +390,27 @@ struct RegionDesc {
 unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_dir) {
   unsigned openacc_model = model_builder.create();
 
+  model_builder.add(openacc_model, "compiler",     libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "region",       libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "kernel",       libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "loop",         libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "api",          libopenacc_dir + "/OpenACC/device",   "cl");
-//model_builder.add(openacc_model, "compiler",     libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/internal", "h");
-//model_builder.add(openacc_model, "data-env",     libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "debug",        libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "init",         libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "kernel",       libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "loop",         libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "region",       libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "runtime",      libopenacc_dir + "include/OpenACC/private",  "h");
-//model_builder.add(openacc_model, "openacc",      libopenacc_dir + "include/OpenACC/",         "h");
-
+/*
+  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "init",         libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "debug",        libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "init",         libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "loop",         libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "region",       libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "/OpenACC/private",  "h");
+  model_builder.add(openacc_model, "openacc",      libopenacc_dir + "/OpenACC/",         "h");
+*/
   return openacc_model;
 }
 
@@ -380,18 +470,26 @@ int main(int argc, char ** argv) {
   );
 
   // Call the generator
-  MDCG::OpenACC::RegionDesc::input_t input;
-  input.id = 0;
-  input.file = std::string("kernels.cl");
-  generator.generate(loop_trees, input.kernel_lists, cg_config);
+  MDCG::OpenACC::RegionDesc::input_t input_region;
+    input_region.id = 0;
+    input_region.file = std::string("kernels.cl");
+    generator.generate(loop_trees, input_region.kernel_lists, cg_config);
+
+  MDCG::OpenACC::CompilerData::input_t input;
+    input.runtime_dir = libopenacc_dir + "/../";
+    input.ocl_runtime = "lib/opencl/libopenacc.cl";
+    input.kernels_dir = boost::filesystem::current_path().string();
+    input.regions.push_back(input_region);
 
   // Get model element for Region Descriptor
   std::set<MDCG::Model::class_t> classes;
-  model_builder.get(model).lookup<MDCG::Model::class_t>("acc_region_desc_t_", classes);
+//model_builder.get(model).lookup<MDCG::Model::class_t>("acc_region_desc_t_", classes);
+  model_builder.get(model).lookup<MDCG::Model::class_t>("acc_compiler_data_t_", classes);
   assert(classes.size() == 1);
   MDCG::Model::class_t region_desc_class = *(classes.begin());
 
-  codegen.addDeclaration<MDCG::OpenACC::RegionDesc>(region_desc_class, input, host_data_file_id, "regions");
+//codegen.addDeclaration<MDCG::OpenACC::RegionDesc>(region_desc_class, input, host_data_file_id, "regions");
+  codegen.addDeclaration<MDCG::OpenACC::CompilerData>(region_desc_class, input, host_data_file_id, "compiler_data");
 
   project->unparse(); // Cannot call the backend directly because of OpenCL files. There is a warning when trying, just have to trace it.
 

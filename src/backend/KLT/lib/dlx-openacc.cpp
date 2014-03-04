@@ -501,7 +501,7 @@ std::pair<SgStatement *, SgScopeStatement *> makeTile(
                                ); // 'base' + 'runtime_loop_desc'.tiles['tile_id'].length
 
   SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(tile_iterator), lower_bound));
-  SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));;
+  SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessThanOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));;
   SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
                               SageBuilder::buildVarRefExp(tile_iterator),
                               SageBuilder::buildDotExp(
