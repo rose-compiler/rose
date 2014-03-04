@@ -2610,6 +2610,17 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
         }
    }
 
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+void
+SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
+   {
+     SgSymbolTable* symbolTable = scope->get_symbol_table();
+     ROSE_ASSERT(symbolTable != NULL);
+
+     supportForVariableLists(scope,symbolTable,variableList);
+   }
+
+
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
    {
@@ -2657,8 +2668,6 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           supportForBaseTypeDefiningDeclaration ( symbolTable, variableDeclaration->get_baseTypeDefiningDeclaration() );
         }
    }
-
-
 
 void
 supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable )
@@ -15198,11 +15207,33 @@ SageInterface::deleteAST ( SgNode* n )
                                 /*////////////////////////////////////////////////
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
-
-#if 0
+#if 1
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
-
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgScopeStatement(node) !=NULL)
+                                   {
+                                     SgScopeStatement* scope = isSgScopeStatement(node);
+#if 1
+                                     printf ("Deleting the scopes type table: scope->get_type_table() = %p \n",scope->get_type_table());
+#endif
+                                     delete scope->get_type_table();
+                                   }
+#endif
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgTypeTable(node) !=NULL)
+                                   {
+                                     SgTypeTable* typeTable = isSgTypeTable(node);
+#if 1
+                                     printf ("Deleting the type table (SgSymbolTable): typeTable->get_type_table() = %p \n",typeTable->get_type_table());
+#endif
+                                     delete typeTable->get_type_table();
+                                   }
+#endif
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
@@ -15670,11 +15701,14 @@ SageInterface::deleteAST ( SgNode* n )
                                 }
 
 #endif
-#if 0
-                        printf ("Deleting node = %p = %s \n",node,node->class_name().c_str());
+#if 1
+                        printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
                         delete node;
+#if 1
+                        printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
+#endif
                         }
                 };
 
@@ -15683,6 +15717,10 @@ SageInterface::deleteAST ( SgNode* n )
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
+
+#if 1
+     printf ("Leaving SageInterface::deleteAST(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
    }
 
 

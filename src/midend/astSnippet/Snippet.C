@@ -172,7 +172,11 @@ SnippetFile::loadVariableNames(const std::string &fileName)
                 ++nread;
             }
         }
-        free(line);
+
+     // DQ (2/28/2014): This causes my test code to fail (specimen2014_01.c in 
+     // ResetParentPointers::evaluateInheritedAttribute() with a memory problem).
+     // free(line);
+
         fclose(dict);
     }
     return nread;
@@ -347,13 +351,29 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
     t1.traverse(file->getAst(), preorder);
 
+  // insertionPoint->get_file_info()->display("insertionPoint: test 1: debug");
+
     // Insert the snippet body after the insertion point
     SgTreeCopy deep;
     SgScopeStatement *toInsert = isSgScopeStatement(ast->get_body()->copy(deep));
     assert(toInsert!=NULL);
+
+ // DQ (3/4/2014): I think this is untimately a fundamental problem later (e.g. for mangled name generation).
+ // So we have to attached the current scope to the scope of the insertion point.  This will allow the 
+ // SgStatement::get_scope() to work (which is a problem for some debugging code (at least).
+ // Note that the semantics of the AST copy mechanism is that the parent of the copy is set to NULL 
+ // (which is assumed to be fixed up when the copy is inserted into the AST).
+    ROSE_ASSERT(toInsert->get_parent() == NULL);
+    SgScopeStatement* new_scope = isSgScopeStatement(insertionPoint->get_parent());
+    ROSE_ASSERT(new_scope != NULL);
+    toInsert->set_parent(new_scope);
+    ROSE_ASSERT(toInsert->get_parent() != NULL);
+
     renameTemporaries(toInsert);
     causeUnparsing(toInsert, insertionPoint->get_file_info());
     replaceArguments(toInsert, bindings);
+
+ // insertionPoint->get_file_info()->display("insertionPoint: test 2: debug");
 
     switch (insertMechanism) {
         case INSERT_BODY: {
@@ -385,11 +405,16 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         }
     }
 
+ // insertionPoint->get_file_info()->display("insertionPoint: test 3: debug");
+
     insertGlobalStuff(insertionPoint);
+
+ // insertionPoint->get_file_info()->display("insertionPoint: test 4: debug");
 
     if (insertRecursively)
         file->expandSnippets(toInsert);
 
+#if 1
  // DQ (2/26/2014): Adding support to fixup the AST fragment (toInsert) that is being inserted into the target AST.
 
  // Build a translation map so that we can save the mapping of scopes between the target AST and the snippet AST.
@@ -474,6 +499,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
               ROSE_ASSERT(false);
             }
        }
+#else
+     printf ("Skipping code to call the SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst() function \n");
+#endif
 }
 
 // class method
@@ -507,7 +535,16 @@ Snippet::renameTemporaries(SgNode *ast)
             if (SgInitializedName *vdecl = isSgInitializedName(node)) {
                 if (0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
                     std::string newName = SnippetFile::randomVariableName();
+
+                 // DQ (3/2/2014): Need to unload the associated symbol from the symbol tabel and reinsert it using the new name.
+                 // I assume this can not be a function parameter (else there will be no symbol).
+                    SgSymbol* variableSymbol = vdecl->search_for_symbol_from_symbol_table();
+                    ROSE_ASSERT(variableSymbol != NULL);
+                    vdecl->get_scope()->remove_symbol(variableSymbol);
+
                     vdecl->set_name(newName);
+
+                    vdecl->get_scope()->insert_symbol(newName,variableSymbol);
                 }
             }
         }
@@ -730,6 +767,11 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
     assert(this!=NULL);
     assert(insertionPoint!=NULL);
 
+#if 0
+    printf ("Snippet::insertGlobalStuff(): Skip calling this function: insertionPoint = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str());
+    return;
+#endif
+
     // Have we inserted stuff here already? Also mark that we've now done so.
     SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
     assert(ipointGlobalScope!=NULL);
@@ -787,6 +829,38 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 removeIncludeDirectives(newStmt);
                 causeUnparsing(newStmt, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
+
+             // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
+             // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
+             // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
+             // been inserted).
+                SgScopeStatement* scope = isSgScopeStatement(topInsertionPoint->get_parent());
+                ROSE_ASSERT(scope != NULL);
+
+                printf ("In Snippet::insertGlobalStuff(): Insert symbols into scope = %p = %s \n",scope,scope->class_name().c_str());
+                SgVariableDeclaration* new_vdecl = isSgVariableDeclaration(newStmt);
+                ROSE_ASSERT(new_vdecl != NULL);
+                SgInitializedNamePtrList & initializedNameList = new_vdecl->get_variables();
+
+             // We have to set the scope explicitly.
+                for (size_t i = 0; i < initializedNameList.size(); i++)
+                   {
+                  // Build symbols for each fo the variables (typically one for C/C++).
+                     SgInitializedName* initializedName = initializedNameList[i];
+                     ROSE_ASSERT(initializedName != NULL);
+
+                  // Set the scope since it is still set to the scope in the original AST (because the scope is external to the copy fo a stmt).
+                     initializedName->set_scope(scope);
+
+                  // This is set by the AST copy, but we need to unset it when we move the variable to a new file.
+                     initializedName->set_prev_decl_item(NULL);
+
+                  // SgVariableSymbol* buildVariableSymbol(initializedName);
+                   }
+
+             // fixup the symbol table (add symbols for each SgInitializedName).
+                SageInterface::supportForInitializedNameLists(scope,initializedNameList);
+
                 if (!firstInserted)
                     firstInserted = newStmt;
                 continue;
@@ -800,6 +874,40 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 removeIncludeDirectives(newStmt);
                 causeUnparsing(newStmt, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
+
+             // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
+             // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
+             // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
+             // been inserted).
+                SgScopeStatement* scope = isSgScopeStatement(topInsertionPoint->get_parent());
+                ROSE_ASSERT(scope != NULL);
+                ROSE_ASSERT(scope->get_parent() != NULL);
+
+                SgClassDeclaration* cdecl_copy = isSgClassDeclaration(newStmt);
+                cdecl_copy->set_scope(scope);
+
+             // Lookup the symbol in the parent scopes of the insertion point in the traget program (must exist).
+                SgClassSymbol* classSymbolInTargetAST = SageInterface::lookupClassSymbolInParentScopes(class_decl->get_name(),scope);
+                if (classSymbolInTargetAST == NULL)
+                   {
+                     printf ("Error: Can't find SgClassSymbol for class_decl = %p = %s \n",class_decl,class_decl->get_name().str());
+                   }
+                ROSE_ASSERT(classSymbolInTargetAST != NULL);
+                SgDeclarationStatement* decl = classSymbolInTargetAST->get_declaration();
+                ROSE_ASSERT(decl != NULL);
+
+                ROSE_ASSERT(cdecl_copy->get_scope() == scope);
+                ROSE_ASSERT(decl->get_scope() == scope);
+
+             // Set the first nondefining declaration to the declaration that exists for the target file (not the snippet file).
+                cdecl_copy->set_firstNondefiningDeclaration(decl);
+
+             // I assume this is true for classes defined in header files.
+                ROSE_ASSERT(cdecl_copy->get_definingDeclaration() != NULL);
+#if 0
+                printf ("SgClassDeclaration: Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
                 if (!firstInserted)
                     firstInserted = newStmt;
                 continue;
@@ -816,6 +924,39 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 removeIncludeDirectives(fdecl_copy);
                 causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
+
+             // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
+             // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
+             // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
+             // been inserted).
+                SgScopeStatement* scope = isSgScopeStatement(topInsertionPoint->get_parent());
+                ROSE_ASSERT(scope != NULL);
+                ROSE_ASSERT(scope->get_parent() != NULL);
+
+                fdecl_copy->set_scope(scope);
+
+             // Lookup the symbol in the parent scopes of the insertion point in the traget program (must exist).
+                SgFunctionSymbol* functionSymbolInTargetAST = SageInterface::lookupFunctionSymbolInParentScopes(fdecl->get_name(),scope);
+                if (functionSymbolInTargetAST == NULL)
+                   {
+                     printf ("In Snippet::insertGlobalStuff(): Can't location function: name = %s in parent scopes of insertion point \n",fdecl->get_name().str());
+                   }
+                ROSE_ASSERT(functionSymbolInTargetAST != NULL);
+                SgDeclarationStatement* decl = functionSymbolInTargetAST->get_declaration();
+                ROSE_ASSERT(decl != NULL);
+
+                ROSE_ASSERT(fdecl_copy->get_scope() == scope);
+                ROSE_ASSERT(decl->get_scope() == scope);
+
+             // Set the first nondefining declaration to the declaration that exists for the target file (not the snippet file).
+                fdecl_copy->set_firstNondefiningDeclaration(decl);
+
+             // I assume this is true for function defined in libraries (fails test5c, OK).
+             // ROSE_ASSERT(fdecl_copy->get_definingDeclaration() == NULL);
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
                 if (!firstInserted)
                     firstInserted = fdecl_copy;
                 continue;
@@ -833,6 +974,35 @@ Snippet::insertGlobalStuff(SgStatement *insertionPoint)
                 removeIncludeDirectives(fdecl_copy);
                 causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
+
+             // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
+             // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
+             // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
+             // been inserted).
+                SgScopeStatement* scope = isSgScopeStatement(topInsertionPoint->get_parent());
+                ROSE_ASSERT(scope != NULL);
+                ROSE_ASSERT(scope->get_parent() != NULL);
+
+                fdecl_copy->set_scope(scope);
+
+             // Lookup the symbol in the parent scopes of the insertion point in the traget program (must exist).
+                SgFunctionSymbol* functionSymbolInTargetAST = SageInterface::lookupFunctionSymbolInParentScopes(fdecl->get_name(),scope);
+                ROSE_ASSERT(functionSymbolInTargetAST != NULL);
+                SgDeclarationStatement* decl = functionSymbolInTargetAST->get_declaration();
+                ROSE_ASSERT(decl != NULL);
+
+                ROSE_ASSERT(fdecl_copy->get_scope() == scope);
+                ROSE_ASSERT(decl->get_scope() == scope);
+
+             // Set the first nondefining declaration to the declaration that exists for the target file (not the snippet file).
+                fdecl_copy->set_firstNondefiningDeclaration(decl);
+
+             // I assume this is true for function defined in libraries.
+                ROSE_ASSERT(fdecl_copy->get_definingDeclaration() == NULL);
+#if 0
+                printf ("(fdecl->get_definition()==NULL): Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
                 if (!firstInserted)
                     firstInserted = fdecl_copy;
                 continue;
