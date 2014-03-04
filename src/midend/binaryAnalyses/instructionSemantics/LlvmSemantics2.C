@@ -1,6 +1,5 @@
 #include "sage3basic.h"
 #include "LlvmSemantics2.h"
-#include "RoseAst.h"
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -1338,58 +1337,47 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     assert(this!=NULL);
     if (!bb)
         return 0;
-    size_t ninsns = 0;                                  // number of instructions emitted
-    RoseAst ast(bb);
+    std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(bb);
     operators->reset();
-    SgAsmInstruction *last_insn = NULL;
-    for (RoseAst::iterator ai=ast.begin().withoutNullValues(); ai!=ast.end(); ++ai) {
-        if (SgAsmInstruction *insn = isSgAsmInstruction(*ai)) {
-            ai.skipChildrenOnForward();
-            if (0==ninsns++)
-                o <<"\n" <<operators->prefix() <<operators->addr_label(bb->get_address()) <<":\n";
-            o <<operators->prefix() <<"; " <<StringUtility::addrToString(insn->get_address())
-              <<": " <<unparseInstruction(insn) <<"\n";
-            last_insn = insn;
-            try {
-                dispatcher->processInstruction(insn);
-            } catch (const BaseSemantics::Exception &e) {
-                if (quiet_errors) {
-                    // Try to make sure that the LLVM is still valid.  That means we need to make sure the instruction pointer
-                    // is a reasonable value otherwise we might try to branch to the failed instruction, which could be in the
-                    // middle of a basic block.  It's more likely that the fall-through address will be a valid basic block,
-                    // although not guaranteed.
-                    o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
-                    RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
-                    BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.get_nbits(),
-                                                                                 insn->get_address() + insn->get_size());
-                    operators->get_state()->get_register_state()->writeRegister(IP_REG, fallthrough_va, operators.get());
-                } else {
-                    throw;
-                }
+    for (size_t i=0; i<insns.size(); ++i) {
+        SgAsmInstruction *insn = insns[i];
+        if (0==i)
+            o <<"\n" <<operators->prefix() <<operators->addr_label(bb->get_address()) <<":\n";
+        o <<operators->prefix() <<"; " <<StringUtility::addrToString(insn->get_address())
+          <<": " <<unparseInstruction(insn) <<"\n";
+        try {
+            dispatcher->processInstruction(insn);
+        } catch (const BaseSemantics::Exception &e) {
+            if (quiet_errors) {
+                // Try to make sure that the LLVM is still valid.  That means we need to make sure the instruction pointer is a
+                // reasonable value otherwise we might try to branch to the failed instruction, which could be in the middle of
+                // a basic block.  It's more likely that the fall-through address will be a valid basic block, although not
+                // guaranteed.
+                o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
+                RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
+                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.get_nbits(),
+                                                                             insn->get_address() + insn->get_size());
+                operators->get_state()->get_register_state()->writeRegister(IP_REG, fallthrough_va, operators.get());
+            } else {
+                throw;
             }
+        }
             
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-01-14]*/
-            std::ostringstream ss;
-            ss <<*operators->get_state();
-            o <<StringUtility::prefixLines(ss.str(), operators->prefix() + "    ;; ");
-#endif
-            // In order to avoid issues of memory aliasing, whenever a write occurs we dump the current machine state to
-            // LLVM. We're assuming that a machine instruction performs at most one write and if it performs a memory write
-            // then it doesn't also perform a memory read (or it performs the memory read first, as in test-and-set).
-            if (!operators->get_memory_writes().empty()) {
-                RiscOperators::Indent indent2(operators);
-                operators->emit_changed_state(o);
-            }
+        // In order to avoid issues of memory aliasing, whenever a write occurs we dump the current machine state to
+        // LLVM. We're assuming that a machine instruction performs at most one write and if it performs a memory write then it
+        // doesn't also perform a memory read (or it performs the memory read first, as in test-and-set).
+        if (!operators->get_memory_writes().empty()) {
+            RiscOperators::Indent indent2(operators);
+            operators->emit_changed_state(o);
         }
     }
 
-    if (ninsns>0) {
+    if (!insns.empty()) {
         RiscOperators::Indent indent2(operators);
         operators->emit_changed_state(o);
-        if (last_insn)
-            operators->emit_next_eip(o, last_insn);
+        operators->emit_next_eip(o, insns.back());
     }
-    return ninsns;
+    return insns.size();
 }
 
 std::string
