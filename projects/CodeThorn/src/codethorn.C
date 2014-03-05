@@ -1412,38 +1412,6 @@ int main( int argc, char * argv[] ) {
     cout << "generated "<<filename<<endl;
   }
   
-  // TEST
-  if (boolOptions["generate-assertions"]) {
-    AssertionExtractor assertionExtractor(&analyzer);
-    assertionExtractor.computeLabelVectorOfEStates();
-    assertionExtractor.annotateAst();
-    AstAnnotator ara(analyzer.getLabeler());
-    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
-    cout << "STATUS: Generated assertions."<<endl;
-  }
-
-  if(boolOptions["dump1"]) {
-	ArrayUpdatesSequence arrayUpdates;
-	cout<<"STATUS: performing array analysis on STG."<<endl;
-	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-	extractArrayUpdateOperations(&analyzer,arrayUpdates);
-	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
-	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
-	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
-	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
-        if (args.count("dump-non-sorted")) {
-          string filename=args["dump-non-sorted"].as<string>();
-          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,false);
-        }
-		//sortArrayUpdates(arrayUpdates);
-        if (args.count("dump-sorted")) {
-          string filename=args["dump-sorted"].as<string>();
-          writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,true);
-        }
-	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA,true);
-  }
-
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
     cout << "generating graphviz files:"<<endl;
