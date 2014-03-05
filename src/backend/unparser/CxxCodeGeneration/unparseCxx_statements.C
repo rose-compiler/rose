@@ -6259,15 +6259,51 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Output the "asm" keyword.
   // DQ (8/31/2013): We have to output either "__asm__" or "asm" (for MSVisual C++ I think we might need "__asm").
+#if 0
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
      if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
         {
-          curprint("__asm__ ");
+       // curprint("__asm__ ");
+          curprint("asm ");
         }
        else
         {
           curprint("asm ");
         }
+#else
+
+// DQ (2/25/2014): Note that the 4.2.4 compiler will define both BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+// So we need to use another macro BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM that will work uniformally on both 4.4.7 and 4.2.4 versions of 
+// the GNU compiler.  This is truely strange behavior.
+// DQ (2/25/2014): This is the new support for use of "asm" or "__asm__" (which should maybe be refactored).
+// #if (defined(BACKEND_C_COMPILER_SUPPORTS_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+//    #error "Error: BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
+// #endif
+#ifndef _MSC_VER
+#if (defined(BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+// DQ (2/26/2014): Allow the CMake tests to pass for now.
+   #warning "Warning: BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
+#endif
+
+// #ifdef BACKEND_C_COMPILER_SUPPORTS_ASM
+#ifdef BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM
+     curprint("asm ");
+#else
+#ifdef BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+     curprint("__asm__ ");
+#else
+   #warning "Warning: either BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM or BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM should be defined (but not both)!"
+
+  // DQ (2/26/2014): Allow the default behavior on CMake build systems to use the GNU compiler specific version or "__asm__".
+     curprint("__asm__ ");
+#endif
+#endif
+#else
+  // DQ (2/26/2014): I assume that MSVC would use the C standard representation.
+     curprint("asm ");
+#endif
+
+#endif
 
      curprint("(");
 
