@@ -830,8 +830,12 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
 
     curprint("(");
     AstRegExAttribute *attribute = (AstRegExAttribute *) cast -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(cast -> get_type(), info);
+    }
     curprint(") ");
 
     curprint("(");
@@ -946,9 +950,18 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 */
 // TODO: Remove this!
 //             unparseType(pointer_type -> get_base_type(), info);
-             ROSE_ASSERT(new_op -> attributeExists("type"));
+
              AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             curprint(attribute -> expression);
+             if (attribute) {
+                 curprint(attribute -> expression);
+             }
+             else {
+                 SgType *type = new_op -> get_specified_type();
+                 do {
+                     SgType *type = isSgArrayType(type) -> get_base_type();
+                 } while (isSgArrayType(type));
+                 unparseType(type, info);
+             }
 //         }
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
@@ -986,9 +999,14 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 // TODO: Remove this!
 //             unparseType(new_op->get_specified_type(), info);
 
-             ROSE_ASSERT(new_op -> attributeExists("type"));
+
              AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             curprint(attribute -> expression);
+             if (attribute) {
+                 curprint(attribute -> expression);
+             }
+             else {
+                 unparseType(new_op -> get_specified_type(), info);
+             }
 //         }
 
          curprint ("(");
@@ -1278,9 +1296,13 @@ Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
     unparseExpression(inst_op->get_operand_expr(), info);
     curprint(" instanceof ");
 
-    ROSE_ASSERT(inst_op -> attributeExists("type"));
     AstRegExAttribute *attribute = (AstRegExAttribute *) inst_op -> getAttribute("type");
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(inst_op -> get_operand_type(), info);
+    }
 }
 
 void
@@ -1490,9 +1512,14 @@ Unparse_Java::unparseJavaMarkerAnnotation(SgExpression *expr, SgUnparse_Info& in
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) marker_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(marker_annotation -> get_type(), info);
+    }
 }
+
 
 void
 Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
@@ -1503,8 +1530,12 @@ Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_In
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) single_member_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(single_member_annotation -> get_type(), info);
+    }
 
     curprint("(");
     unparseExpression(single_member_annotation -> get_value(), info);
@@ -1520,8 +1551,12 @@ Unparse_Java::unparseJavaNormalAnnotation(SgExpression *expr, SgUnparse_Info& in
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) normal_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(normal_annotation -> get_type(), info);
+    }
 
     SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
     curprint("(");
@@ -1542,6 +1577,10 @@ void
 Unparse_Java::unparseJavaTypeExpression(SgExpression *expr, SgUnparse_Info& info) {
     SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
     AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(type_expression -> get_type(), info);
+    }
 }

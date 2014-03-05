@@ -9,7 +9,6 @@
 #include <jni.h>
 
 // Support functions declaration of function defined in this file.
-#include "ecj.h"
 #include "java_support.h"
 #include "jni_token.h"
 #include "Utf8.h"
@@ -528,9 +527,9 @@ bool hasConflicts(SgClassDeclaration *class_declaration) {
         ROSE_ASSERT(::currentSourceFile);
         ROSE_ASSERT(::currentEnvironment);
         ROSE_ASSERT(::currentJavaTraversalClass);
-        ROSE_ASSERT(::classHasConflictsMethod);
+        ROSE_ASSERT(::hasConflictsMethod);
         return (::currentEnvironment -> CallBooleanMethod(::currentJavaTraversalClass,
-                                                          ::classHasConflictsMethod,
+                                                          ::hasConflictsMethod,
                                                           jserver_getJavaString(::currentSourceFile -> getFileName().c_str()),
                                                           jserver_getJavaString(package_name.c_str()),
                                                           jserver_getJavaString(type_name.c_str())));
@@ -540,6 +539,8 @@ bool hasConflicts(SgClassDeclaration *class_declaration) {
 }
 
 
+// TODO: Remove this !
+/*
 bool isVisibleSimpleTypeName(SgNamedType *named_type) {
     if (isSgJavaParameterType(named_type)) { // -> attributeExists("is_parameter_type")) { // a parameter type?
         return true;
@@ -558,6 +559,7 @@ bool isVisibleSimpleTypeName(SgNamedType *named_type) {
     return ((imported_type && locally_accessible_class_symbol.size() == 0) ||  // an imported type that does not conflict with a local type?
             ((! imported_type) && locally_accessible_class_symbol.size() == 1 && locally_accessible_class_symbol.front() -> get_type() == class_type));  // a locally visible type?
 }
+*/
 
 
 bool mustBeFullyQualified(SgClassType *class_type) {
@@ -1046,7 +1048,7 @@ void setJavaSourcePosition(SgLocatedNode*locatedNode, Token_t *token) {
         if (locatedNode -> get_endOfConstruct() == NULL){
             locatedNode -> set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
         }
-        setJavaSourcePositionUnavailableInFrontend(locatedNode);
+        SageInterface::setSourcePosition(locatedNode); // setJavaSourcePositionUnavailableInFrontend(locatedNode);
         return;
     }
 
@@ -1143,6 +1145,7 @@ void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jTok
 }
 
 
+/*
 //
 //
 //
@@ -1165,7 +1168,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
 
     locatedNode -> get_startOfConstruct() -> unsetCompilerGenerated();
     locatedNode -> get_endOfConstruct() -> unsetCompilerGenerated();
-
+*/
 /* // TODO: This code causes problems for Annotations!!!
     // DQ (8/16/2011): Added support for setting the operator source code position 
     // (Note that for expressions get_file_info() returns get_operatorPosition()).
@@ -1179,7 +1182,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
         expression -> get_operatorPosition() -> unsetCompilerGenerated();
     }
 */
-}
+//}
 
 
 //
