@@ -157,11 +157,15 @@ main(int argc, char *argv[])
               <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n"
               <<"    copy related things:      " <<(copy_related_things ? "yes" : "no") <<"\n";
 
+#if 0
+    // DQ (2/28/2014): This code is causing memory problems.
     // Load replacement variable names (optional). If this isn't present then variables will have random names.
     SnippetFile::loadVariableNames("/usr/share/dict/words");
+#endif
 
     // Parse the source code into which the snippet will be inserted and find a place to insert.
     SgProject *project = frontend(frontend_args);
+
     assert(project!=NULL);
     if (ipoint_function_name.empty()) {
         std::cerr <<"use --test:ipoint-function=NAME to specify a fully qualified insertion point function\n"
@@ -194,19 +198,100 @@ main(int argc, char *argv[])
     snippetFile->setCopyAllSnippetDefinitions(copy_definitions);
     snippetFile->setCopyRelatedThings(copy_related_things);
 
+    SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
+
+#if 0
+    printf ("Test the use of the SageInterface::deleteAST() function (appears to fail for snippet file that include stdio.h) \n");
+    SageInterface::deleteAST(tmp_snippetSourceFile);
+    printf ("Exiting after test of deleteAST on new file \n");
+    ROSE_ASSERT(false);
+#endif
+
+    printf ("After reading snippet file: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
     size_t nargs = snippet->numberOfArguments();
     std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
     SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
+
     snippet->setInsertMechanism(insert_mechanism);
     snippet->setLocalDeclarationPosition(locdecls_position);
     snippet->setInsertRecursively(insert_recursively);
+
+#if 1
+    printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+#endif
+
+ // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is not a problem, but is interesting).
     snippet->insert(ipoint, args);
+
+#if 1
+    printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+#endif
+
+#if 1
+ // DQ (2/1/2014): delete the snippet AST as a test of the fixup of the target AST.
+ // SgSourceFile* snippetSourceFile = (*snippet).getAst();
+    ROSE_ASSERT(snippet->getFile() != NULL);
+    SgFile* snippetSourceFile = snippet->getFile()->getAst();
+    ROSE_ASSERT(snippetSourceFile != NULL);
+    printf ("Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+         project->get_fileList().size(),snippetSourceFile,snippetSourceFile->class_name().c_str(),snippetSourceFile->getFileName().c_str());
+
+#if 0
+ // DQ (4/4/2014): This fails for some header files (e.g. stdio.h).
+ // So we can't use it in general (this will be scheduled to be worked on later).
+ // We can use it for specific testing when the snippet file is not too complex.
+    SageInterface::deleteAST(snippetSourceFile);
+#endif
+
+ // Disconnect the snippetSourceFile from the SgProject.
+    std::vector<SgFilePtrList::iterator> eraseTheseFiles;
+    SgFilePtrList::iterator i = project->get_fileList().begin();
+    while (i != project->get_fileList().end())
+       {
+      // Find the snippet file.
+         if (*i == snippetSourceFile)
+            {
+              printf ("Removing snippetSourceFile = %p from project \n",snippetSourceFile);
+              eraseTheseFiles.push_back(i);
+           // *i = NULL;
+            }
+
+         i++;
+       }
+
+    snippetSourceFile = NULL;
+    for (size_t j = 0; j < eraseTheseFiles.size(); j++)
+       {
+         project->get_fileList().erase(eraseTheseFiles[j]);
+       }
+
+    printf ("DONE: Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p \n",project->get_fileList().size(),snippetSourceFile);
+
+    for (size_t i = 0; i < project->get_fileList().size(); i++)
+       {
+         SgFile* file = project->get_fileList()[i];
+         printf ("Remaining file = %p = %s = %s \n",file,file->class_name().c_str(),file->getFileName().c_str());
+       }
+#endif
 
     // Unparse the modified source code
 #if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
 #endif
+#if 1
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     printf ("Generate the Whole AST graph! \n");
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+     printf ("DONE: Generate the Whole AST graph! \n");
+#endif
+
     backend(project);
+
     return 0;
 }
