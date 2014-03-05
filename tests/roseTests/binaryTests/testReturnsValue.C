@@ -9,7 +9,7 @@ using namespace rose::BinaryAnalysis;
 int main(int argc, char *argv[]) {
     SgProject *project = frontend(argc, argv);
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-    assert(interps.empty());                            // specimem must have at least one binary interpretation;
+    assert(!interps.empty());                            // specimem must have at least one binary interpretation;
     SgAsmInterpretation *interp = interps.back();
 
     ReturnValueUsed::Results results = ReturnValueUsed::analyze(interp);
