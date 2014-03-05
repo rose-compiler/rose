@@ -155,7 +155,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_user_defined_class, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
-    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
+//    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
     bool user_defined_class = java_user_defined_class;
     bool is_interface = java_is_interface;
     bool is_enum = java_is_enum;
@@ -198,16 +198,18 @@ cout.flush();
 
     class_declaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
     class_declaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
+    if (is_anonymous) {
+        class_declaration -> setAttribute("anonymous", new AstRegExAttribute(""));
+    }
 
+// TODO: Remove this!
+/*
     SgClassType *class_type = class_declaration -> get_type();
     if (external_name.getString().size() > 0) {
         ROSE_ASSERT(class_type);
         class_type -> setAttribute("name", new AstRegExAttribute(external_name.getString()));
-        if (is_anonymous) {
-            class_type -> setAttribute("anonymous", new AstRegExAttribute(""));
-            class_declaration -> setAttribute("anonymous", new AstRegExAttribute(""));
-        }
     }
+*/
 
     //
     // If this type is a user-defined class, we may need to keep track of some of its class members.
@@ -1638,10 +1640,8 @@ cout.flush();
     ROSE_ASSERT(variable_declaration != NULL);
     variable_declaration -> set_parent(astJavaScopeStack.top());
     setJavaSourcePosition(variable_declaration, env, jToken);
-    vector<SgInitializedName *> vars = variable_declaration -> get_variables();
-    for (vector<SgInitializedName *>::iterator name_it = vars.begin(); name_it != vars.end(); name_it++) {
-        setJavaSourcePosition(*name_it, env, jToken);
-    }
+    SgInitializedName *initialized_name = *(variable_declaration -> get_variables().begin());
+    setJavaSourcePosition(initialized_name, env, jToken);
 
 // TODO: Remove this !!!
 /*
@@ -1694,12 +1694,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateFieldSupport(JNIEnv *env, jc
     }
 
     setJavaSourcePosition(variable_declaration, env, jToken);
-    vector<SgInitializedName *> vars = variable_declaration -> get_variables();
-    for (vector<SgInitializedName *>::iterator name_it = vars.begin(); name_it != vars.end(); name_it++) {
-        ROSE_ASSERT((*name_it) -> get_file_info() -> get_line() == 0);
-        ROSE_ASSERT((*name_it) -> get_file_info() -> get_col() == 0);
-        setJavaSourcePosition(*name_it, env, jToken);
-    }
+    SgInitializedName *initialized_name = *(variable_declaration -> get_variables().begin());
+    ROSE_ASSERT(initialized_name -> get_file_info() -> get_line() == 0);
+    ROSE_ASSERT(initialized_name -> get_file_info() -> get_col() == 0);
+    setJavaSourcePosition(initialized_name, env, jToken);
 
     astJavaComponentStack.push(variable_declaration);
 
@@ -2028,11 +2026,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetupBasicTypes(JNIEnv *env, jclas
     SgVariableDeclaration *variable_declaration = SageBuilder::buildVariableDeclaration ("length", SgTypeInt::createType(), NULL, ::ObjectClassDefinition);
     ROSE_ASSERT(variable_declaration != NULL);
     variable_declaration -> set_parent(::ObjectClassDefinition);
-    setJavaSourcePositionUnavailableInFrontend(variable_declaration);
-    vector<SgInitializedName *> vars = variable_declaration -> get_variables();
-    for (vector<SgInitializedName *>::iterator name_it = vars.begin(); name_it != vars.end(); name_it++) { // only one element.
-        setJavaSourcePositionUnavailableInFrontend(*name_it);
-    }
+    SageInterface::setSourcePosition(variable_declaration); // setJavaSourcePositionUnavailableInFrontend(variable_declaration);
+    SgInitializedName *initialized_name = *(variable_declaration -> get_variables().begin());
+    SageInterface::setSourcePosition(initialized_name); // setJavaSourcePositionUnavailableInFrontend(initialized_name);
+
     ::lengthSymbol = ::ObjectClassDefinition -> lookup_variable_symbol("length");
     ROSE_ASSERT(::lengthSymbol);
 
@@ -2119,7 +2116,7 @@ cout.flush();
     // Actually, there are derived from SgSupport instead of SgLocatedNode, so they don't have a source position, but they do have a parent.
     //
     SgJavaImportStatementList* import_statement_list = new SgJavaImportStatementList();
-    import_statement_list -> set_parent(package_definition);
+    import_statement_list -> set_parent(::currentSourceFile);
     // setJavaSourcePosition(import_statement_list, env, jToken);
     ::currentSourceFile -> set_import_list(import_statement_list);
 
@@ -2351,6 +2348,7 @@ cout.flush();
         class_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
+    class_declaration -> setAttribute("sourcefile", new AstSgNodeAttribute(::currentSourceFile));
     class_declaration -> setAttribute("user-defined-type", new AstRegExAttribute(type_name));
     class_declaration -> set_explicit_annotation_interface(is_annotation_interface);      // Identify whether or not this is an annotation interface.
     class_declaration -> set_explicit_interface(is_annotation_interface || is_interface); // Identify whether or not this is an interface.
@@ -6051,6 +6049,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(J
                                                                                    false,
                                                                                    false,
                                                                                    ! (isSgNamedType(type))); // ! (isSgClassType(type)));
+    setJavaSourcePosition(constInit, env, jToken);
 
     // TODO: I think a SgJavaParameterizedType should be a SgClassType.  Currrently, it is not!
 

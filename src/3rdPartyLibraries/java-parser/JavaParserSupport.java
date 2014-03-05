@@ -19,6 +19,7 @@ import org.eclipse.jdt.internal.compiler.util.*;
 
 class JavaParserSupport {
     public int verboseLevel = 0;
+    public boolean temporaryImportProcessing = false;
     
     class DuplicateTypeException extends Throwable {
         DuplicateTypeException(String s) {
@@ -273,9 +274,10 @@ e.printStackTrace();
      * @param classpath
      * @param input_verbose_level
      */
-    public JavaParserSupport(int input_verbose_level) {
+    public JavaParserSupport(int input_verbose_level, boolean temporary_import_processing) {
         // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
         this.verboseLevel = input_verbose_level;
+        this.temporaryImportProcessing = temporary_import_processing;
     }
 
     /**
@@ -399,7 +401,12 @@ e.printStackTrace();
             }
             else if (binding instanceof ReferenceBinding) {
                 ReferenceBinding type_binding = (ReferenceBinding) binding;
-                setupClass(type_binding, unit_info);
+                if (temporaryImportProcessing) {
+                	preprocessClass(type_binding, unit_info);
+                }
+                else {
+                    setupClass(type_binding, unit_info);
+                }
                 if (import_binding.onDemand)
                      JavaParser.cactionInsertImportedTypeOnDemand(getPackageName(type_binding), getTypeName(type_binding), location);
                 else JavaParser.cactionInsertImportedType(getPackageName(type_binding), getTypeName(type_binding), location);
@@ -2288,13 +2295,15 @@ e.printStackTrace();
 // -------------------------------------------------------------------------------------------
     
     public void translate(ArrayList<CompilationUnitDeclaration> units, String language_level) {
+        if (units.size() == 0) { // nothing to do?
+        	return;
+        }
+        
         // Debugging support...
         if (verboseLevel > 0)
             System.out.println("Start translating");
 
         this.languageLevel = language_level;
-
-        assert(units.size() > 0);
         
         //
         //
