@@ -305,27 +305,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     for (size_t i=0; targetFirstDeclaration==NULL && i<targetStatements.size(); ++i)
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
 
-    // Build a map binding formal argument symbols to their actual values
-    ArgumentBindings bindings;
-    SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
-    const SgInitializedNamePtrList &formals = snippet_fdecl->get_parameterList()->get_args();
-    if (actuals.size()!=formals.size()) {
-        throw std::runtime_error("rose::Snippet: mismatched snippet arguments: expected " +
-                                 plural(formals.size(), "arguments") + " but got " +
-                                 numberToString(actuals.size()));
-    }
-    for (size_t i=0; i<formals.size(); ++i) {
-        SgSymbol *symbol = formals[i]->search_for_symbol_from_symbol_table();
-        assert(symbol!=NULL);
-        if (actuals[i]==NULL)
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
-        if (!isSgInitializedName(actuals[i]) && !isSgExpression(actuals[i]))
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
-                                     " must be a variable declaration or expression"
-                                     " but has type "+actuals[i]->class_name());
-        bindings[symbol] = actuals[i];
-    }
-
     // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
     // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
     // the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file and
@@ -361,7 +340,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     assert(toInsert!=NULL);
     renameTemporaries(toInsert);
     causeUnparsing(toInsert, insertionPoint->get_file_info());
-    replaceArguments(toInsert, bindings);
 
     switch (insertMechanism) {
         case INSERT_BODY: {
@@ -393,11 +371,39 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         }
     }
 
+    // Build a map binding formal argument symbols to their actual values.  The goal is, in the statements we just inserted, to
+    // replace all references to snippet formal arguments with the actual arguments supplied to the Snippet::insert() call. The
+    // actual arguments are SgInitializedName or SgExpression nodes from the context in which the snippet was inserted; the
+    // references to formal arguments are the SgInitializedName nodes in the AST's that we just copied above (the
+    // *declarations* for the formal arguments were *not* copied because they are the get_parameterList() of the snippet
+    // functionin the snippet file--which we didn't insert into the target).
+    ArgumentBindings bindings; // map from formal arg references to actual arguments
+    SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
+    const SgInitializedNamePtrList &formals = snippet_fdecl->get_parameterList()->get_args();
+    if (actuals.size()!=formals.size()) {
+        throw std::runtime_error("rose::Snippet: mismatched snippet arguments: expected " +
+                                 plural(formals.size(), "arguments") + " but got " +
+                                 numberToString(actuals.size()));
+    }
+    for (size_t i=0; i<formals.size(); ++i) {
+        SgSymbol *formalSymbol = formals[i]->search_for_symbol_from_symbol_table();
+        assert(formalSymbol!=NULL);
+        if (actuals[i]==NULL)
+            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
+        if (!isSgInitializedName(actuals[i]) && !isSgExpression(actuals[i]))
+            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
+                                     " must be a variable declaration or expression"
+                                     " but has type "+actuals[i]->class_name());
+        bindings[formalSymbol] = actuals[i];
+    }
+    replaceArguments(toInsert, bindings);
+
     // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
     // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
     // snippet, and others might completely unrelated but the user wants them copied anyway.
     insertRelatedThings(insertionPoint);
 
+    // Optionally insert the snippets that our newly-inserted snippet calls.  This has to be after the replaceArguments().
     if (insertRecursively)
         file->expandSnippets(toInsert);
 }
