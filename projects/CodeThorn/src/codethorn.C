@@ -398,38 +398,6 @@ string readableruntime(double time) {
   return s.str();
 }
 
-//! Check if an expression is an array access (SgPntrArrRefExp) . If so, return its name and subscripts if requested. 
-// FOR TESTING ONLY
-  bool myisArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
-  {
-    SgExpression* arrayRef=NULL;
-    if (ref->variantT() == V_SgPntrArrRefExp) {
-      if (subscripts != 0 || arrayName != 0) {
-        SgExpression* n = ref;
-        while (true) {
-          SgPntrArrRefExp *arr = isSgPntrArrRefExp(n);
-          if (arr == 0)
-            break;
-          n = arr->get_lhs_operand();
-          // store left hand for possible reference exp to array variable
-          if (arrayName!= 0)
-            arrayRef = n;
-          // right hand stores subscripts
-          if (subscripts != 0) {// must insert to be the first here !! The last visited rhs will be the first dimension!!
-            (*subscripts)->insert( (*subscripts)->begin(),  arr->get_rhs_operand());
-            //(*subscripts)->push_back(arr->get_rhs_operand());
-          }
-        } // end while
-        if  (arrayName !=NULL)
-        {
-          *arrayName = arrayRef;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
 static Analyzer* global_analyzer=0;
 
 struct RewriteStatistics {
@@ -495,33 +463,6 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
 		;
 	  }
 	}
-
-#if 0
-    MatchResult res=m.performMatching(
-                                      "SgSgMinusOp($IntVal=SgIntVal)\
-                                      ",root);
-    if(res.size()>0) {
-      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-        // match found
-        SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
-        SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
-        //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
-        int rawval=val->get_value();
-        // replace with folded value (using integer semantics)
-        switch(op->variantT()) {
-        case V_SgMinusOp:
-          SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
-
-          break;
-        default:
-          cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
-          exit(1);
-        }
-        someTransformationApplied=true;
-		dump1_stats.numElimOperator++;
-      }
-    }
-#endif
   }
 
   do{
