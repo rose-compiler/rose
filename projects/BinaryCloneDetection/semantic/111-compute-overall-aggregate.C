@@ -551,6 +551,25 @@ int main(int argc, char *argv[])
       " similarity_high double precision, percent double precision);");
 
 
+   //Aggregate of how many calls are made by a function at a specific level
+  r_transaction->execute("drop table IF EXISTS dpath_ncalls;");
+  r_transaction->execute("create table dpath_ncalls(db_name text, program_name text, ncalls integer, num_output_call_vecs integer);");
+  SqlDatabase::StatementPtr ncalls_stmt = r_transaction->statement("insert into dpath_ncalls"
+      // 0        1         2           3          4
+      "(db_name, program_name, ncalls, num_output_call_vecs ) "
+      " values (?, ?, ?, ?)");
+
+  r_transaction->execute("drop table IF EXISTS ougroup_nelem;");
+  r_transaction->execute("create table ogroup_nelem(db_name text, program_name text, noutputs  integer, num_ogroups integer);");
+  SqlDatabase::StatementPtr noutputs_stmt = r_transaction->statement("insert into ogroup_nelem"
+      // 0        1         2           3          4
+      "(db_name, program_name, noutputs, num_ogroups ) "
+      " values (?, ?, ?, ?)");
+
+
+
+
+
   std::map<std::string, std::set<std::string> >  db_groups = get_database_groups(prefix);
  
   //Iterate over each group and compute mean and variance of recall, specificity and precision
@@ -601,8 +620,53 @@ int main(int argc, char *argv[])
         compute_percent_similarity_statistics(bucket_size, increment, it->first, *m_it, transaction, r_transaction);
         compute_mean_similarity_statistics(bucket_size,  increment, it->first, *m_it, transaction, r_transaction);
       }
+ 
+      SqlDatabase::StatementPtr count_dyncalls_stmt = transaction->statement(
+		      "select ncalls, count(*) as num_output_call_vecs from ("
+		      " select sum(ncalls) as ncalls from semantic_fio_calls  group by func_id, igroup_id order by func_id" 
+		      " ) as calls_by_function group by ncalls order by ncalls; "
+		      );
+ 
+      for (SqlDatabase::Statement::iterator row=count_dyncalls_stmt->begin(); row!=count_dyncalls_stmt->end(); ++row) {
+           int ncalls = row.get<int>(0); 
+           int num_output_call_vecs = row.get<int>(1);
+ 
+           std::string full_db_name     = *m_it;
+           std::string cur_program_name = full_db_name.substr(0, full_db_name.size() - 5);
+
+           ncalls_stmt->bind(0, full_db_name);
+           ncalls_stmt->bind(1, cur_program_name);
+           ncalls_stmt->bind(2,ncalls);
+           ncalls_stmt->bind(3,num_output_call_vecs);
+           ncalls_stmt->execute();
+      }
+
+
+      SqlDatabase::StatementPtr count_outputvalues_stmt = transaction->statement(
+      "select noutputs, count(*) as num_ogroups from ( "
+      " select count(*) as noutputs from semantic_fio as fio "
+      "     join semantic_outputvalues as out on out.hashkey = fio.ogroup_id " 
+      "     group by fio.func_id, fio.igroup_id "
+      ") as aggregate_outputvalues group by noutputs;"
+      );
+
+      for (SqlDatabase::Statement::iterator row=count_outputvalues_stmt->begin(); row!=count_outputvalues_stmt->end(); ++row) {
+           int noutputs = row.get<int>(0); 
+           int num_ogroups = row.get<int>(1);
+ 
+           std::string full_db_name     = *m_it;
+           std::string cur_program_name = full_db_name.substr(0, full_db_name.size() - 5);
+
+           noutputs_stmt->bind(0, full_db_name);
+           noutputs_stmt->bind(1, cur_program_name);
+           noutputs_stmt->bind(2, noutputs);
+           noutputs_stmt->bind(3, num_ogroups);
+           noutputs_stmt->execute();
+      }
+
 
       transaction->commit();
+
     }
 
     insert_stmt->bind(0, it->first);
