@@ -4126,6 +4126,8 @@ HEADER_SYMBOL_TABLE_START
           SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
 #endif
 
+          size_t maxCollisions();
+
 HEADER_SYMBOL_TABLE_END
 
 
@@ -10059,6 +10061,25 @@ SgSymbolTable::get_symbols() const
 
      return returnSet;
    }
+
+
+size_t
+SgSymbolTable::maxCollisions() 
+   {
+     ROSE_ASSERT(p_table != NULL);
+
+     unsigned nbuckets = p_table->bucket_count();
+     size_t maxColl = 0;
+     for (unsigned i = 0; i < nbuckets; ++i)
+        {
+          if(p_table->bucket_size(i)>maxColl)
+               maxColl = p_table->bucket_size(i);
+        }
+
+     return maxColl;
+   }
+
+
 
 SOURCE_SYMBOL_TABLE_END
 
