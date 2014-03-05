@@ -2,6 +2,8 @@
 #include <assert.h>
 int INSERT_HERE;
 
+#include "snippetsRelated.h"
+
 int main()
 {
     const char *s, *t;

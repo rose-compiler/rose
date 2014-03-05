@@ -47,10 +47,13 @@ private:
     static Registry registry;
 
     static std::vector<std::string> varNameList; // list of variable names to use when renaming things
+    bool copyAllSnippetDefinitions;              // should all snippet definitions be copied to global scope?
+    bool copyRelatedThings;                      // whether to copy other declarations from the snippet file
 
 protected:
     /** Use instance() instead. */
-    explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL): fileName(fileName), ast(ast) {}
+    explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL)
+        : fileName(fileName), ast(ast), copyAllSnippetDefinitions(false), copyRelatedThings(true) {}
 
 public:
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
@@ -98,6 +101,23 @@ public:
     /** Get the AST for the entire snippet file. */
     SgFile *getAst() const { return ast; }
 
+    /** Accessor for the property that controls whether snippet definitions are copied into the global scope. If true, then all
+     *  function definitions in the snippet file are copied into the global scope of the file into which the snippet is being
+     *  inserted.
+     *  @{ */
+    bool getCopyAllSnippetDefinitions() const { return copyAllSnippetDefinitions; }
+    void setCopyAllSnippetDefinitions(bool b=true) { copyAllSnippetDefinitions = b; }
+    void clearCopyAllSnippetDefinitions() { copyAllSnippetDefinitions = false; }
+    /** @} */
+
+    /** Accessor for the property that controls copying of related declarations.  When this is true (the default) then certain
+     *  global declarations are copied from the snippet file to the target file when a snippet is inserted. See the the "Global
+     *  Declarations" section of the Snippet class documentation for details.
+     * @{ */
+    bool getCopyRelatedThings() const { return copyRelatedThings; }
+    void setCopyRelatedThings(bool b=true) { copyRelatedThings = b; }
+    void clearCopyRelatedThings() { copyRelatedThings = false; }
+    /** @} */
 
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
@@ -191,15 +211,14 @@ protected:
  *
  *  Snippets often require additional support in the form of global variables, data types, and function declarations. Whenever
  *  a snippet is inserted, certain things in the snippet's global scope are copied into the global scope of the insertion
- *  point.  This copying happens only once per snippet + insertion file pair.  The things copied are:
+ *  point.  This copying happens at most once per snippet + insertion file pair and can be turned off with
+ *  <code>SnippetFile.setCopyRelatedThings(false)</code>.  The things copied are:
  *
- *  <ul>
- *    <li>Function declarations.</li>
- *    <li>Function definitions if desired (see setCopyAllSnippetDefinitions), including the defintion of the snippet that's
- *        being inserted (because it might be needed by other snippets).</li>
- *    <li>Global variables, but not extern declarations.</li>
- *    <li>Include directives, conditionally (see below).</li>
- *  </ul>
+ *  @li Function declarations.
+ *  @li Function definitions if desired (see SnippetFile::setCopyAllSnippetDefinitions), including the defintion of the snippet
+ *      that's being inserted (because it might be needed by other snippets).
+ *  @li Global variables, but not extern declarations.
+ *  @li Include directives, conditionally (see below).
  *
  *  A declaration/definition is not copied if it (or anything below it in the AST) contains a comment whose text has a
  *  substring matching "DO_NOT_INSERT".
@@ -309,13 +328,12 @@ private:
     InsertMechanism insertMechanism;                    // how snippet is inserted
     LocalDeclarationPosition locDeclsPosition;          // position for local declarations for INSERT_STMTS mode
     bool insertRecursively;                             // is the insert() operation recursive?
-    bool copyAllSnippetDefinitions;                     // should all snippet definitions be copied to global scope?
 
 protected:
     // Use one of the "instance" methods instead.
     Snippet(const std::string &name, const SnippetFilePtr &file, SgFunctionDefinition *ast)
         : name(name), file(file), ast(ast), insertMechanism(INSERT_STMTS), locDeclsPosition(LOCDECLS_AT_END),
-          insertRecursively(true), copyAllSnippetDefinitions(false) {
+          insertRecursively(true) {
         assert(!name.empty());
         assert(file!=NULL);
         assert(ast!=NULL);
@@ -359,15 +377,6 @@ public:
     void clearInsertRecursively() { insertRecursively = false; }
     /** @} */
 
-    /** Accessor for the property that controls whether snippet definitions are copied into the global scope. If true, then all
-     *  function definitions in the snippet file are copied into the global scope of the file into which the snippet is being
-     *  inserted.
-     *  @{ */
-    bool getCopyAllSnippetDefinitions() const { return copyAllSnippetDefinitions; }
-    void setCopyAllSnippetDefinitions(bool b=true) { copyAllSnippetDefinitions = b; }
-    void clearCopyAllSnippetDefinitions() { copyAllSnippetDefinitions = false; }
-    /** @} */
-    
     /** Insert a snippet into the project.  Inserts the snippet before the @p insertionPoint statement.  The remaining arguments
      *  of this method are bound to formal arguments in the snippet code; they can be either variable declarations
      *  (SgInitializedName) or expressions (SgExpression).
