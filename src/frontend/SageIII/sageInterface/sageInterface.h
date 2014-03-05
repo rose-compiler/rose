@@ -2247,6 +2247,13 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsTrivial(const SgType * const inputType);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
+
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+
+// DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+   bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
 }// end of namespace
 
 #endif
