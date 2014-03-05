@@ -6627,24 +6627,135 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
 
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
-{
-    ROSE_ASSERT (astNode != NULL);
+   {
+  // DQ (3/4/2014): This new version of this function supports both C/C++ and also Java.
+  // If the SgJavaPackageDeclaration is noticed then the previous parent is a 
+  // SgClassDefinition and the previous previous parent is a SgClassDeclaration whose
+  // name can be used to match the filename in the SgProject's list of files.
+  // A better implementation usign an attribute (not in place until tomorrow) and
+  // from the attribute the pointer to the associated file is directly available.
+  // The later implementation is as fast as possible.
+
+     ROSE_ASSERT (astNode != NULL);
 
   // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
      ROSE_ASSERT (isSgProject(astNode) == NULL);
 
+     SgNode* previous_parent = NULL;
+     SgNode* previous_previous_parent = NULL;
+
      SgNode* parent = astNode;
-     while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+  // while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+     while ( (parent != NULL) && (isSgFile(parent) == NULL) && isSgJavaPackageDeclaration(parent) == NULL)
         {
-       // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#if 1
+          printf ("In getEnclosingFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+          previous_previous_parent = previous_parent;
+          previous_parent = parent;
+
           parent = parent->get_parent();
         }
- if (!parent)
-   return NULL;
- else return isSgFile(parent);
 
-}
+     if (previous_previous_parent != NULL && previous_parent != NULL && isSgJavaPackageDeclaration(parent) != NULL)
+        {
+       // This is for a Java program and is contained within a SgJavaPackageDeclaration
+#if 1
+          printf ("parent                   = %p = %s \n",parent,parent->class_name().c_str());
+          printf ("previous_parent          = %p = %s \n",previous_parent,previous_parent->class_name().c_str());
+          printf ("previous_previous_parent = %p = %s \n",previous_previous_parent,previous_previous_parent->class_name().c_str());
+#endif
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(previous_previous_parent);
+          if (classDeclaration != NULL)
+             {
+#if 1
+               printf ("Class name = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+            // Find the associated Java class file.
+#if 1
+            // DQ (3/4/2014): This is the code we want to use until we get Philippe's branch in place with the attribute.
+               SgProject* project = TransformationSupport::getProject(parent);
+               ROSE_ASSERT(project != NULL);
+               SgFileList* fileList = project->get_fileList_ptr();
+               ROSE_ASSERT(fileList != NULL);
+               SgFilePtrList & vectorFile = fileList->get_listOfFiles();
+#if 1
+               printf ("Output list of files: \n");
+#endif
+               SgFilePtrList::iterator i = vectorFile.begin();
+               while (i != vectorFile.end())
+                  {
+                    SgFile* file = *i;
+                    ROSE_ASSERT(file != NULL);
+#if 1
+                    printf ("   --- filename = %s \n",file->getFileName().c_str());
+#endif
+                    string filename            = file->getFileName();
+                    string filenameWithoutPath = file->get_sourceFileNameWithoutPath();
+                    string classname           = classDeclaration->get_name();
+                    string matchingfilename    = classname + ".java";
+#if 1
+                    printf ("   ---   --- filename            = %s \n",filename.c_str());
+                    printf ("   ---   --- filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+                    printf ("   ---   --- classname           = %s \n",classname.c_str());
+                    printf ("   ---   --- matchingfilename    = %s \n",matchingfilename.c_str());
+#endif
+                    if (filenameWithoutPath == matchingfilename)
+                       {
+                         return file;
+                       }
+
+                    i++;
+                  }
+#else
+            // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
+               AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
+               if (attribute) 
+                  {
+                 // true for all user-specified classes and false for all classes fom libraries
+                    SgSourceFile *sourcefile = isSgSourceFile(attribute->getNode());
+                    ROSE_ASSERT(sourcefile != NULL);
+                    return sourcefile;
+                  }
+#endif
+             }
+        }
+       else
+        {
+       // previous_parent was uninitialized to a non-null value or astNode is a SgJavaPackageDeclaration or SgFile.
+          if (previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+             {
+            // The input was a SgJavaPackageDeclaration (so there is no associated SgFile).
+               ROSE_ASSERT(isSgJavaPackageDeclaration(astNode) != NULL);
+               return NULL;
+             }
+            else
+             {
+               if (previous_previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+                  {
+                 // The input was a SgClassDefinition (so there is no associated SgFile).
+                    ROSE_ASSERT(isSgClassDefinition(astNode) != NULL);
+                    return NULL;
+                  }
+                 else
+                  {
+                 // This could be a C/C++ file (handled below).
+                  }
+             }
+        }
+
+  // This is where we handle the C/C++ files.
+  // if (!parent)
+     if (parent == NULL)
+        {
+          return NULL;
+        }
+       else
+        {
+          return isSgFile(parent);
+        }
+   }
 
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();

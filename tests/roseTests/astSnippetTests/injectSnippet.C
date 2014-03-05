@@ -186,6 +186,16 @@ main(int argc, char *argv[])
 
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
 
+#if 1
+    ROSE_ASSERT(project->get_fileList_ptr() != NULL);
+    SgFilePtrList & vectorFile = project->get_fileList_ptr()->get_listOfFiles();
+    printf ("project files (size = %zu): \n",vectorFile.size());
+    for (size_t i = 0; i < vectorFile.size(); i++)
+       {
+         printf ("--- filename = %s \n",vectorFile[i]->getFileName().c_str());
+       }
+#endif
+
 #if 0
     printf ("Test the use of the SageInterface::deleteAST() function (appears to fail for snippet file that include stdio.h) \n");
     SageInterface::deleteAST(tmp_snippetSourceFile);
