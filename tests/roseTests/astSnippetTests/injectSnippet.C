@@ -194,6 +194,8 @@ main(int argc, char *argv[])
        {
          printf ("--- filename = %s \n",vectorFile[i]->getFileName().c_str());
        }
+
+    ROSE_ASSERT(vectorFile.size() == 2);
 #endif
 
 #if 0
