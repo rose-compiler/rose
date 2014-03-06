@@ -53,6 +53,10 @@
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#   include "ecj.h"
+#   include "jni.h"
+#endif
 
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
@@ -5993,8 +5997,8 @@ bool SageInterface::isMain(const SgNode* n)
  else
  {
    if (isSgFunctionDeclaration(n) &&
-     isSgGlobal(isSgStatement(n)->get_scope())&&
-     isSgFunctionDeclaration(n)->get_name() == "main")
+       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
+       isSgFunctionDeclaration(n)->get_name() == "main")
    result = true;
  }
 
@@ -17295,3 +17299,169 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 }
 
 #endif
+
+//------------------------------------------------------------------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+
+/**
+ * Create a temporary directory if it does not yet exist and return its name.
+ */
+string SageInterface::getTempDirectory() {
+    jstring temp_directory = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, ::getTempDirectoryMethod);
+    return ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+}
+
+
+/**
+ * Use the system command to remove the temporary directory and all its containing files.
+ */
+void SageInterface::destroyTempDirectory(string directory_name) {
+    string command = string("rm -fr ") + directory_name;
+    int status = system(command.c_str());
+    ROSE_ASSERT(status == 0);
+}
+
+
+/**
+ * Invoke JavaRose to translate given file and put the resulting AST in the global space of the project.
+ */
+void SageInterface::processFile(SgProject *project, string filename) {
+    //
+    // Set up the new source file for processing "a la Rose".
+    //
+    project -> get_sourceFileNameList().push_back(filename);
+    Rose_STL_Container<std::string> arg_list = project -> get_originalCommandLineArgumentList();
+    arg_list.push_back(filename);
+    Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arg_list, false);
+    CommandlineProcessing::removeAllFileNamesExcept(arg_list, fileList, filename);
+    int error_code = 0; // need this because determineFileType takes a reference "error_code" argument.
+    SgFile *file = determineFileType(arg_list, error_code, project);
+    SgSourceFile *sourcefile = isSgSourceFile(file);
+    ROSE_ASSERT(sourcefile);
+    sourcefile -> set_parent(project);
+
+    //
+    // Note that we do NOT really want to add these artificial "import" files to the list of files to be unparsed in the project.
+    // So after we are done building the AST, we remove the file from the project's list of files.
+    //
+    project -> get_fileList_ptr() -> get_listOfFiles().push_back(sourcefile);
+    ROSE_ASSERT(sourcefile == isSgSourceFile((*project)[filename]));
+
+    sourcefile -> build_Java_AST(arg_list, project -> get_originalCommandLineArgumentList());
+
+    project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove the temporary sourcefile we just pushed.
+    ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
+}
+
+
+/**
+ * Using the import_string parameter, load the relevant Java class, build its AST and
+ * add it to the project.
+ */
+string SageInterface::preprocessPackage(SgProject *project, string package_name) {
+    string command = "package " + package_name + ";";
+
+    //
+    // Call the Java side to create an input file with the relevant package statement, translate the file and return the file name.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename);
+
+    return package_name;
+}
+
+
+/**
+ * Using the import_string parameter, load the relevant Java class, build its AST and
+ * add it to the project.
+ */
+string SageInterface::preprocessImport(SgProject *project, string import_string) {
+    string command = "import " + import_string + ";";
+
+    //
+    // Call the Java side to create an input file with the relevant import statement.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename); // translate the file 
+
+    return import_string;
+}
+
+
+/**
+ * Using the file_content_string, create a file with the content in question, build its AST and
+ * add it to the project.
+ */
+void SageInterface::preprocessCompilationUnit(SgProject *project, string file_content_string) {
+    //
+    // Call the Java side to create an input file with the relevant import statement.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(file_content_string.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename); // translate the file 
+}
+
+
+/**
+ * Look for a qualified package name in the given scope and return its package definition.
+ */
+SgClassDefinition *SageInterface::findJavaPackage(SgScopeStatement *scope, string package_name) {
+    ROSE_ASSERT(scope);
+    SgClassDefinition *package_definition = NULL;
+    for (int index = 0, length = package_name.size(); index < length; index++) {
+        int n;
+        for (n = index; n < length; n++) {
+            if (package_name[n] == '.') {
+                break;
+            }
+        }
+        string name = package_name.substr(index, n - index);
+
+        SgClassSymbol *package_symbol = scope -> lookup_class_symbol(name);
+        if (package_symbol == NULL) { // package not found?
+            return NULL;
+        }
+
+        SgJavaPackageDeclaration *package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(package_declaration);
+        package_definition = package_declaration -> get_definition();
+        ROSE_ASSERT(package_definition);
+        scope = package_definition;
+
+        index = n;
+    }
+
+    return package_definition;
+}
+
+
+/**
+ * Process a qualified package name, if needed, and return its package definition.
+ */
+SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, string package_name) {
+    SgGlobal *global_scope = project -> get_globalScopeAcrossFiles();
+    SgClassDefinition *package_definition = findJavaPackage(global_scope, package_name);
+    if (package_definition == NULL) { // try again after loading the package
+        preprocessPackage(project, package_name);
+        package_definition = findJavaPackage(global_scope, package_name);
+    }
+
+    return package_definition;
+}
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+
+
