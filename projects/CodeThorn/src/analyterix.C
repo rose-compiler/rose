@@ -53,8 +53,119 @@ const char* csvConstResultFileName=0;
 //boost::program_options::variables_map args;
 
 
+int countSubTreeNodes(SgNode* root) {
+  int num=0;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	num++;
+  }
+  return num;
+}
+
+vector<VariantT> variantVector;
+
+void storeTreeStructure(SgNode* root) {
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	variantVector.push_back((*i)->variantT());
+  }
+}
+
+int checkTreeStructure(SgNode* root) {
+  int num=0;
+  RoseAst ast(root);
+  vector<VariantT>::iterator vecIter=variantVector.begin();
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	//cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
+	if((*i)->variantT()!=(*vecIter)) {
+	  cout<<"Error: AST structure changed!"<<endl;
+	  cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
+	  exit(1);
+	}
+  }
+  return num;
+}
+
+void myRewrite(SgExpression* oldExp, SgExpression* newExp,bool keepOld) {
+  if (oldExp==newExp)
+	return;
+  SgNode* parent=oldExp->get_parent();
+  if(!parent) {
+	cout<<"Rewrite: parent pointer is null: @"<<oldExp->class_name()<<endl;
+	return;
+  }
+  ROSE_ASSERT(parent!=oldExp);
+  cout<<"REWRITE: parent: "<<parent->unparseToString()<<"["<<parent->class_name()<<"]"<<" : @node:"<<oldExp->class_name()<<endl;
+
+  // not supported yet
+  if(isSgInitializedName(parent)) {
+	cerr<<"Rewrite: SgInitializedName: not supported yet."<<endl;
+	return;
+  }
+  if(isSgExprListExp(parent)) {
+	cerr<<"Rewrite: isSgExprListExp: not supported yet."<<endl;
+	return;	
+  }
+  if(isSgConditionalExp(parent)) {
+	cerr<<"Rewrite: isSgConditionalExp: not supported yet."<<endl;
+	return;
+  }
+  if(isSgAssignInitializer(parent)) {
+	cerr<<"Rewrite: isSgAssignInitializer: not supported yet."<<endl;
+	return;
+  }
+
+  // supported
+  if(SgExprStatement* p=isSgExprStatement(parent)) {
+	newExp->set_parent(parent);
+    p->set_expression(newExp);
+	return;
+  } 
+  if(SgReturnStmt* p=isSgReturnStmt(parent)) {
+	newExp->set_parent(parent);
+    p->set_expression(newExp);
+	return;
+  }
+  //  if(SgBinaryOp* p=isSgBinaryOp(parent)) {
+  if(SgBinaryOp* p=dynamic_cast<SgBinaryOp*>(parent)) {
+	if(SgExpression* lhs=p->get_lhs_operand()) {
+	  if(oldExp==lhs) {
+		newExp->set_parent(parent);
+		p->set_lhs_operand(newExp);
+		return;
+	  }
+	}
+	if(SgExpression* rhs=p->get_rhs_operand()) {
+	  if(oldExp==rhs) {
+		newExp->set_parent(parent);
+		p->set_rhs_operand(newExp);
+		return;
+	  }
+	}
+	cout<<"Error: child of binary op is lost."<<endl;
+  }
+  return;
+
+  if(SgUnaryOp* p=isSgUnaryOp(parent)) {
+	if (oldExp==p->get_operand_i()) {
+	  newExp->set_parent(parent);
+	  p->set_operand_i(newExp);
+	  return;
+	} else {
+	  cerr<<"Error: unary operand does not match with child."<<endl;
+	  exit(1);
+	}
+  }
+  cerr<<"Error: rewrite unsupported. parent: "<<parent->class_name()<<" node: "<<oldExp->class_name()<<endl;
+  cerr<<"parent isBinaryOp:"<<(isSgBinaryOp(parent))<<endl;
+  exit(1);
+}
+
 bool checkAstExpressionRewrite(SgNode* root) {
   // 1 determine all root nodes of expressions in given AST
+  int numOrig=countSubTreeNodes(root);
+  SgNode* origAst=root;
+  storeTreeStructure(root);
   AstTests::runAllTests(isSgProject(root));
   cout<<"STATUS: AST is consistent."<<endl;
   RoseAst ast(root);
@@ -70,9 +181,12 @@ bool checkAstExpressionRewrite(SgNode* root) {
         ROSE_ASSERT(node);
         if(isSgExpression(node)) {
           cout<<"DEBUG: "<<node->unparseToString()<<endl;
-          //if(!isSgAssignInitializer(node) && (!isSgEnumVal(node)))
+          if(!isSgAssignInitializer(node) && (!isSgEnumVal(node)))
             //  if(!dynamic_cast<SgAssignInitializer*>(node) && !dynamic_cast<SgEnumVal*>(node)) {
             //if(isSgExpression(*j)) 
+			if(node->get_parent()==0) {
+			  cout<<"Error: parent==0: "<<node->class_name()<<endl;
+			}
             subExprList.push_back(isSgExpression(node));
         } else {
           cout<<"ERROR: Non-expression inside an expression!?."<<endl;
@@ -102,9 +216,17 @@ bool checkAstExpressionRewrite(SgNode* root) {
           break;
         }
         cout<<"Rewriting now.."<<endl;
-        SageInterface::replaceExpression(*j,exprCopy1,false);
-        SageInterface::replaceExpression(exprCopy1,exprCopy2,false);
+        //SageInterface::replaceExpression(*j,exprCopy1,false);
+        //SageInterface::replaceExpression(exprCopy1,exprCopy2,false);
+		myRewrite(*j,exprCopy1,false);
+		myRewrite(exprCopy1,exprCopy2,false);
         AstTests::runAllTests(isSgProject(root));
+		int numRewritten=countSubTreeNodes(root);
+		if(numOrig!=numRewritten) {
+		  cout<<"ERROR: Ast size has changed - orig: "<<numOrig<<" now:"<<"numRewritten"<<endl;
+		  exit(1);
+		}
+		//checkTreeStructure(origAst);
         cout<<"STATUS: AST is consistent."<<endl;
       }
     }
