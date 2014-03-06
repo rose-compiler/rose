@@ -877,6 +877,17 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
                 continue;
             }
         }
+
+        if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(decl)) {
+            if (file->getCopyRelatedThings()) {
+                // Insert non-extern variable declaration
+                SgTreeCopy deep;
+                SgStatement *newStmt = isSgStatement(vdecl->copy(deep));
+                causeUnparsing(newStmt, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
+                continue;
+            }
+        }
     }
 
     // Copy import statements from the snippet's file into the target file.
@@ -891,6 +902,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         BOOST_FOREACH (SgJavaImportStatement *snippetImport, snippetImports->get_java_import_list()) {
             SgTreeCopy deep;
             SgJavaImportStatement *newImport = isSgJavaImportStatement(snippetImport->copy(deep));
+            causeUnparsing(newImport, topInsertionPoint->get_file_info());
             targetImports->get_java_import_list().push_back(newImport);
             newImport->set_parent(targetImports);
         }
@@ -945,7 +957,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
             continue;
 
         if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(snippetStmt)) {
-            if (file->getCopyRelatedThings()&& !vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
+            if (file->getCopyRelatedThings() && !vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
                 // Insert non-extern variable declaration
                 SgTreeCopy deep;
                 SgStatement *newStmt = isSgStatement(snippetStmt->copy(deep));

@@ -7475,7 +7475,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
         if (func1->get_name() == func2->get_name())
           result = true;
       }
-      else if (is_Cxx_language())
+      else if (is_Cxx_language() || is_Java_language())
       {
          if (func1->get_qualified_name().getString() +
             func1->get_mangled_name().getString() ==
