@@ -3,8 +3,6 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
-#include "ecj.h"
-#include "jni.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -55,6 +53,10 @@
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#   include "ecj.h"
+#   include "jni.h"
+#endif
 
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
@@ -17298,6 +17300,9 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
 #endif
 
+//------------------------------------------------------------------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
 
 /**
  * Create a temporary directory if it does not yet exist and return its name.
@@ -17474,6 +17479,9 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 
     return package_definition;
 }
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
 
 
 /**
