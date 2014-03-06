@@ -1,4 +1,4 @@
-// Author: Markus Schordan, 2013.
+// Author: Markus Schordan, 2013, 2014.
 
 #include "rose.h"
 
@@ -51,6 +51,67 @@ bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
 
 //boost::program_options::variables_map args;
+
+
+bool checkAstExpressionRewrite(SgNode* root) {
+  // 1 determine all root nodes of expressions in given AST
+  AstTests::runAllTests(isSgProject(root));
+  cout<<"STATUS: AST is consistent."<<endl;
+  RoseAst ast(root);
+  typedef list<SgExpression*> ExprList;
+  typedef list<ExprList> ExprListList;
+  list<list<SgExpression*> > exprListList;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isSgExpression(*i)) {
+      list<SgExpression*> subExprList;
+      RoseAst subAst(*i);
+      for(RoseAst::iterator j=subAst.begin().withoutNullValues();j!=subAst.end();++j) {
+        SgNode* node=*j;
+        ROSE_ASSERT(node);
+        if(isSgExpression(node)) {
+          cout<<"DEBUG: "<<node->unparseToString()<<endl;
+          //if(!isSgAssignInitializer(node) && (!isSgEnumVal(node)))
+            //  if(!dynamic_cast<SgAssignInitializer*>(node) && !dynamic_cast<SgEnumVal*>(node)) {
+            //if(isSgExpression(*j)) 
+            subExprList.push_back(isSgExpression(node));
+        } else {
+          cout<<"ERROR: Non-expression inside an expression!?."<<endl;
+        }
+      }
+      exprListList.push_back(subExprList);
+    }
+  }
+  cout<<"STATUS: checking rewrite on "<<exprListList.size()<<" expressions."<<endl;
+  // print
+  for(ExprListList::iterator i=exprListList.begin();i!=exprListList.end();++i) {
+    ExprList exprList=*i;
+    if((*i).begin()!=(*i).end()) {
+      SgNode* node=(*(*i).begin());
+      cout<<"CHECKING EXPR:"<<node->unparseToString()<<":"<<node->class_name()<<endl;
+      for(ExprList::reverse_iterator j=exprList.rbegin();j!=exprList.rend();++j) {
+        ROSE_ASSERT(*j);
+        cout<<"CHECKING SUBEXPR:"<<(*j)->unparseToString()<<":"<<(*j)->class_name()<<endl;
+        SgExpression* exprCopy1=SageInterface::copyExpression(*j);
+        if(!(exprCopy1)) {
+          cout<<"ERROR: expr1 copy is null (skipping replace)"<<endl;
+          break;
+        }
+        SgExpression* exprCopy2=SageInterface::copyExpression(*j);
+        if(!(exprCopy1)) {
+          cout<<"ERROR: expr2 copy is null (skipping replace)"<<endl;
+          break;
+        }
+        cout<<"Rewriting now.."<<endl;
+        SageInterface::replaceExpression(*j,exprCopy1,false);
+        SageInterface::replaceExpression(exprCopy1,exprCopy2,false);
+        AstTests::runAllTests(isSgProject(root));
+        cout<<"STATUS: AST is consistent."<<endl;
+      }
+    }
+  }
+  return true;
+}
+
 
 template<typename T>
 void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {
@@ -318,6 +379,7 @@ int main(int argc, char* argv[]) {
       ("fi-constanalysis", "perform flow-insensitive constant analysis.")
       ("varidmapping", "prints variableIdMapping")
       ("write-varidmapping", "writes variableIdMapping to a file variableIdMapping.csv")
+      ("check-ast-expr-rewrite", "checks all expression in an ast with a generic rewrite operation.")
       ("csv-fi-constanalysis",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
@@ -361,8 +423,6 @@ int main(int argc, char* argv[]) {
       csvConstResultFileName=args["csv-fi-constanalysis"].as<string>().c_str();
       option_fi_constanalysis=true;
     }
-  
-
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
       if (string(argv[i]) == "--prefix" 
@@ -432,6 +492,17 @@ int main(int argc, char* argv[]) {
       //varRen.printRenameTable();
 	  generateRoseRDDotFile2(labeler,&varRen,"rose-rd2.dot");
   }
+  if (args.count("check-ast-expr-rewrite")) {
+    bool result=checkAstExpressionRewrite(root);
+    string s="CHECK: Ast expression rewrite: ";
+    if(result) {
+      cout<<s<<"PASS."<<endl;
+    } else {
+      cout<<s<<"FAIL."<<endl;
+    }
+  }
+
+
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch
