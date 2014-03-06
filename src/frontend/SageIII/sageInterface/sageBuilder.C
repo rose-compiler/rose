@@ -12306,6 +12306,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
       // SgProject is created on the fly
       // Make up an arglist in order to reuse the code inside SgFile::setupSourceFilename()
         {
+#if 0
+          printf ("In SageBuilder::buildFile(): build the SgProject \n");
+#endif
           project = new SgProject();
           ROSE_ASSERT(project);
           project->get_fileList().clear();
@@ -12356,7 +12359,6 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
      arglist.push_back(sourceFilename);
 
-#if 1
   // DQ (2/6/2009): Modified.
   // There is output file name specified for rose translators
      if (outputFileName.empty() == false)
@@ -12365,7 +12367,6 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
        // arglist.push_back("-o");
           arglist.push_back(outputFileName);
         }
-#endif
 
   // DQ (4/15/2010): Turn on verbose mode
      arglist.push_back("-rose:verbose 2");
@@ -12384,6 +12385,11 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 
+#if 0
+     printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+
+#if 0
   // DQ (3/4/2014): This fix is only for Java and for C will cause a second SgFile to be redundently added to the file list.
   // For now I will provide a temporary fix and check is this is for a Java project so that we can continue. But the longer
   // term fix would be to make the semantics for Java the same as that of C/C++ (or the other way around, whatever is the 
@@ -12400,34 +12406,76 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           printf ("WARNING: Java specific action to add new file to SgProject (using set_file()) (more uniform language handling symantics would avoid this problem) \n");
           project->set_file ( *result );
         }
+#else
+  // DQ (3/6/2014): The code below adresses the specific bug faced in the use of the outliner (so we use it directly).
+  // This code was moved ahead of the call to "result->runFrontend(nextErrorCode);" because in the case of Java
+  // the file must be set to be a part of the SgProject before calling the runFrontend() function.
+  // project->set_file ( *result );
 
+     result->set_parent(project);
+
+#if 0
+     printf ("In SageBuilder::buildFile(): Outliner::use_dlopen = %s \n",Outliner::use_dlopen ? "true" : "false");
+#endif
+
+  // DQ (3/5/2014): I need to check with Liao to understand this part of the code better.
+  // I think that the default value for Outliner::use_dlopen is false, so that when the 
+  // Java support is used the true branch is taken.  However, if might be the we need
+  // to support the outliner using the code below and so this would be a bug for the 
+  // outliner.
+     if (!Outliner::use_dlopen)
+        {
+#if 0
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+       // DQ (3/5/2014): If we added the file above, then don't add it here since it is redundant.
+          project->set_file(*result);  // equal to push_back()
+#if 0
+          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+       // Liao, 5/1/2009, 
+       // if the original command line is: gcc -c -o my.o my.c and we want to  
+       // add a new file(mynew.c), the command line for the new file would become "gcc -c -o my.o mynew.c "
+       // which overwrites the object file my.o from my.c and causes linking error.
+       // To avoid this problem, I insert the file at the beginning and let the right object file to be the last generated one
+       //
+       // TODO This is not an elegant fix and it causes some strange assertion failure in addAssociatedNodes(): default case node 
+       // So we only turn this on if Outliner:: use_dlopen is used for now
+       // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
+       // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
+       // It will generated two command line: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
+       // This problem is very relevant to the bug.
+          SgFilePtrList& flist = project->get_fileList();
+          flist.insert(flist.begin(),result);
+#if 0
+          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+        }
+#endif
+
+#if 0
+     printf ("In SageBuilder::buildFile(): (after project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+
+  // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
+  // For C/C++ it does not appear to matter if the call is made before the SgFile has been added to the file list in the SgProject.
   // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
      result->runFrontend(nextErrorCode);
+
+#if 0
+     printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
 
 #if 0
      result->display("SageBuilder::buildFile()");
 #endif
 
-     result->set_parent(project);
-    if (!Outliner::use_dlopen)     
-       project->set_file(*result);  // equal to push_back()
-    else
-    {
-      // Liao, 5/1/2009, 
-      // if the original command line is: gcc -c -o my.o my.c and we want to  
-      // add a new file(mynew.c), the command line for the new file would become "gcc -c -o my.o mynew.c "
-      // which overwrites the object file my.o from my.c and causes linking error.
-      // To avoid this problem, I insert the file at the beginning and let the right object file to be the last generated one
-      //
-      // TODO This is not an elegant fix and it causes some strange assertion failure in addAssociatedNodes(): default case node 
-      // So we only turn this on if Outliner:: use_dlopen is used for now
-      // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
-      // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
-      // It will generated two command line: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
-      // This problem is very relevant to the bug.
-      SgFilePtrList& flist = project->get_fileList();
-      flist.insert(flist.begin(),result);
-    }
      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
 
   // Not sure why a warning shows up from astPostProcessing.C
@@ -12732,12 +12780,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                if (TransformationSupport::getFile(scope_original) != targetFile)
                   {
+#if 0
                     printf ("Warning: case V_SgInitializedName: scope_copy     = %p = %s \n",scope_copy,scope_copy->class_name().c_str());
                     printf ("Warning: case V_SgInitializedName: scope_original = %p = %s \n",scope_original,scope_original->class_name().c_str());
 
                     printf ("Warning: case V_SgInitializedName: initializedName_copy->get_parent()     = %p \n",initializedName_copy->get_parent());
                     printf ("Warning: case V_SgInitializedName: initializedName_original->get_parent() = %p \n",initializedName_original->get_parent());
-
+#endif
                     SgFile* snippetFile = TransformationSupport::getFile(scope_original);
 
                     ROSE_ASSERT(snippetFile != NULL);
@@ -12812,6 +12861,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                targetScope->insert_symbol(initializedName_copy->get_name(),variableSymbol);
 
+            // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
+               initializedName_copy->set_scope(targetScope);
+
                SgName mangledName = variableSymbol->get_mangled_name();
 #if 0
                printf ("initializedName_copy: mangledName = %s \n",mangledName.str());
@@ -12821,6 +12873,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                if (initializedName_copy->get_scope() != targetScope)
                   {
                     printf ("WARNING: initializedName_copy->get_scope() != targetScope: initializedName_copy->get_scope() = %p = %s \n",initializedName_copy->get_scope(),initializedName_copy->get_scope()->class_name().c_str());
+
+                    printf ("I think this should be an error! \n");
+                    ROSE_ASSERT(false);
                   }
 
                break;
@@ -13121,7 +13176,8 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
   // For Java support this might be NULL, if the insertion point was in global scope.
      ROSE_ASSERT(targetFile != NULL);
 
-     SgFile* snippetFile_of_copy = TransformationSupport::getFile(toInsert);
+  // SgFile* snippetFile_of_copy = TransformationSupport::getFile(toInsert);
+     SgFile* snippetFile_of_copy = getEnclosingFileNode(toInsert);
 
   // At this point the parent pointers are set so that the same SgFile is found via a traversal back to the SgProject.
   // Confirm that the SgFile found by a traversal of parents in the copy of rthe snippet's AST will return that of the 

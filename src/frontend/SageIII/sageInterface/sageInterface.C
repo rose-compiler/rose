@@ -6649,7 +6649,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
   // while ( (parent != NULL) && (isSgFile(parent) == NULL) )
      while ( (parent != NULL) && (isSgFile(parent) == NULL) && isSgJavaPackageDeclaration(parent) == NULL)
         {
-#if 1
+#if 0
           printf ("In getEnclosingFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
 #endif
           previous_previous_parent = previous_parent;
@@ -6661,7 +6661,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
      if (previous_previous_parent != NULL && previous_parent != NULL && isSgJavaPackageDeclaration(parent) != NULL)
         {
        // This is for a Java program and is contained within a SgJavaPackageDeclaration
-#if 1
+#if 0
           printf ("parent                   = %p = %s \n",parent,parent->class_name().c_str());
           printf ("previous_parent          = %p = %s \n",previous_parent,previous_parent->class_name().c_str());
           printf ("previous_previous_parent = %p = %s \n",previous_previous_parent,previous_previous_parent->class_name().c_str());
@@ -6669,7 +6669,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(previous_previous_parent);
           if (classDeclaration != NULL)
              {
-#if 1
+#if 0
                printf ("Class name = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
 #endif
             // Find the associated Java class file.
@@ -6680,7 +6680,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
                SgFileList* fileList = project->get_fileList_ptr();
                ROSE_ASSERT(fileList != NULL);
                SgFilePtrList & vectorFile = fileList->get_listOfFiles();
-#if 1
+#if 0
                printf ("Output list of files: \n");
 #endif
                SgFilePtrList::iterator i = vectorFile.begin();
@@ -6688,14 +6688,14 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
                   {
                     SgFile* file = *i;
                     ROSE_ASSERT(file != NULL);
-#if 1
+#if 0
                     printf ("   --- filename = %s \n",file->getFileName().c_str());
 #endif
                     string filename            = file->getFileName();
                     string filenameWithoutPath = file->get_sourceFileNameWithoutPath();
                     string classname           = classDeclaration->get_name();
                     string matchingfilename    = classname + ".java";
-#if 1
+#if 0
                     printf ("   ---   --- filename            = %s \n",filename.c_str());
                     printf ("   ---   --- filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
                     printf ("   ---   --- classname           = %s \n",classname.c_str());
@@ -6703,6 +6703,9 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 #endif
                     if (filenameWithoutPath == matchingfilename)
                        {
+#if 0
+                         printf ("   return file = %p \n",file);
+#endif
                          return file;
                        }
 
@@ -6711,6 +6714,9 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 #else
             // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
                AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
+
+#error "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
+
                if (attribute) 
                   {
                  // true for all user-specified classes and false for all classes fom libraries
@@ -15321,7 +15327,7 @@ SageInterface::deleteAST ( SgNode* n )
                                 /*////////////////////////////////////////////////
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
-#if 1
+#if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 #if 0
@@ -15815,12 +15821,12 @@ SageInterface::deleteAST ( SgNode* n )
                                 }
 
 #endif
-#if 1
+#if 0
                         printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
                         delete node;
-#if 1
+#if 0
                         printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
 #endif
                         }
@@ -15832,7 +15838,7 @@ SageInterface::deleteAST ( SgNode* n )
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
 
-#if 1
+#if 0
      printf ("Leaving SageInterface::deleteAST(): n = %p = %s \n",n,n->class_name().c_str());
 #endif
    }
