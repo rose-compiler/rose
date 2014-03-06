@@ -13114,7 +13114,9 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      printf ("   --- original_before_copy = %p = %s \n",original_before_copy,original_before_copy->class_name().c_str());
 #endif
 
-     SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+  // DQ (3/4/2014): Switch to using the SageInterface function.
+  // SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+     SgFile* targetFile = getEnclosingFileNode(insertionPoint);
 
   // For Java support this might be NULL, if the insertion point was in global scope.
      ROSE_ASSERT(targetFile != NULL);
