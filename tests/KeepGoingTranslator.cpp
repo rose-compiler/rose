@@ -164,7 +164,7 @@ main(int argc, char * argv[])
                           << "Expected failures file does not exist: "
                           << expectations_filename__fail
                           << std::endl;
-                      abort();
+                      exit(1);
                   }
               }
           }
@@ -191,7 +191,7 @@ main(int argc, char * argv[])
                           << "expected passes file does not exist: "
                           << expectations_filename__pass
                           << std::endl;
-                      abort();
+                      exit(1);
                   }
               }
           }
@@ -277,7 +277,7 @@ main(int argc, char * argv[])
           std::cout
               << "[ERROR] "
               << "ROSE encountered an error while processing this file: "
-              << "'" << filename << "'"
+              << "'" << path_prefix << filename << "'"
               << std::endl;
       }
 
@@ -285,6 +285,7 @@ main(int argc, char * argv[])
       std::stringstream ss;
       ss << filename << " "
          << file->get_frontendErrorCode() << " "
+         << file->get_javacErrorCode() << " "
          << file->get_unparserErrorCode() << " "
          << file->get_backendCompilerErrorCode() << " "
          << file->get_unparsedFileFailedCompilation();
@@ -304,7 +305,7 @@ main(int argc, char * argv[])
           std::cout
               << "[INFO] "
               << "ROSE successfully compiled this file: "
-              << "'" << filename << "'"
+              << "'" << path_prefix << filename << "'"
               << std::endl;
       }
 
@@ -327,7 +328,7 @@ main(int argc, char * argv[])
       //        << "Expected '" << expected_failures.size() << "' failures, but "
       //        << "encountered '" << files_with_errors.size() << "' failures"
       //        << std::endl;
-      //    abort();
+      //    exit(1);
       //}
 
       BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -342,9 +343,9 @@ main(int argc, char * argv[])
               std::cerr
                   << "[FATAL] "
                   << "File failed unexpectedly: "
-                  << "'" << filename << "'"
+                  << "'" << path_prefix << filename << "'"
                   << std::endl;
-              abort();
+              exit(1);
           }
           else
           {
@@ -353,7 +354,7 @@ main(int argc, char * argv[])
                   std::cout
                       << "[INFO] "
                       << "File failed as expected: "
-                      << "'" << filename << "'"
+                      << "'" << path_prefix << filename << "'"
                       << std::endl;
               }
           }
@@ -374,7 +375,7 @@ main(int argc, char * argv[])
       //        << "Expected '" << expected_passes.size() << "' passes, but "
       //        << "encountered '" << files_without_errors.size() << "' passes"
       //        << std::endl;
-      //    abort();
+      //    exit(1);
       //}
 
       BOOST_FOREACH(SgFile* file, files_without_errors)
@@ -389,7 +390,7 @@ main(int argc, char * argv[])
               std::cerr
                   << "[WARN] "
                   << "File passed unexpectedly: "
-                  << "'" << filename << "'"
+                  << "'" << path_prefix << filename << "'"
                   << std::endl;
           }
           else
@@ -399,7 +400,7 @@ main(int argc, char * argv[])
                   std::cout
                       << "[INFO] "
                       << "File passed as expected: "
-                      << "'" << filename << "'"
+                      << "'" << path_prefix << filename << "'"
                       << std::endl;
               }
           }
@@ -530,7 +531,7 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "'" << filename << "'"
           << std::endl;
 
-      abort();
+      exit(1);
   }
 
   std::ofstream fout(filename.c_str(), std::ios::app);
@@ -543,7 +544,7 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "'" << filename << "'"
           << std::endl;
       flock.unlock();
-      abort();
+      exit(1);
   }
 
   fout
@@ -569,7 +570,7 @@ CreateExpectationsMap(const std::string& filename)
           << "Couldn't open "
           << "'" << filename << "'"
           << std::endl;
-      abort();
+      exit(1);
   }
   else
   {
