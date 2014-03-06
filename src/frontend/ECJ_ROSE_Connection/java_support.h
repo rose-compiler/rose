@@ -3,6 +3,7 @@
 
 #include "jni_JavaSourceCodePosition.h"
 #include "token.h"
+#include "ecj.h"
 
 using namespace std;
 
@@ -47,7 +48,7 @@ extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType 
 
 string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
-bool isVisibleSimpleTypeName(SgNamedType *);
+//bool isVisibleSimpleTypeName(SgNamedType *);
 bool isConflictingType(string, SgClassType *);
 bool isImportedType(SgClassType *);
 bool isImportedTypeOnDemand(AstSgNodeListAttribute *, SgClassDefinition *, SgClassType *);
@@ -58,16 +59,12 @@ string markAndGetQualifiedTypeName(SgClassType *class_type);
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
 string getUnionTypeName(SgJavaUnionType *);
-string getFullyQualifiedTypeName(SgClassType *);
 string getParameters(SgJavaParameterizedType *);
-string getUnqualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaQualifiedType *);
 bool hasConflicts(SgClassDeclaration *class_declaration);
 string getTypeName(SgClassType *class_type);
-string getTypeName(SgJavaParameterizedType *parm_type);
-string getTypeName(SgJavaQualifiedType *);
 string getTypeName(SgType *);
+string getUnqualifiedTypeName(SgType *);
+string getFullyQualifiedTypeName(SgType *);
 
 //
 // This class is kept here as documentation. IT is declared in:  ./src/midend/astProcessing/AstAttributeMechanism.h
@@ -491,7 +488,7 @@ extern ScopeStack astJavaScopeStack;
 
 void setJavaSourcePosition(SgLocatedNode *locatedNode, Token_t *);
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
-void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
+//void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
 

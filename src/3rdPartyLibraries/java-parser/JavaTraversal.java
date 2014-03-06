@@ -326,8 +326,8 @@ for (int k = 0; k < stack.length; k++) {
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
 
-    	startJava();
-    	
+        startJava();
+
         assert(! processedFiles.contains(args[args.length - 1]));
 
         // Filter out ROSE specific options.
@@ -403,7 +403,7 @@ System.out.println("   " + new String(unit.getFileName()));
             //
             //
             try {
-                java_parser_support = new JavaParserSupport(verboseLevel);
+                java_parser_support = new JavaParserSupport(verboseLevel, (units.size() == 1 && tempImportFiles.contains(new String(units.get(0).getFileName()))));
                 java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
             }
             catch (Exception e) {
@@ -460,5 +460,66 @@ System.out.println("   " + new String(unit.getFileName()));
 
     public static boolean hasConflicts(String file_name, String package_name, String class_name) {
         return java_parser_support.hasConflicts(file_name, package_name, class_name);
+    }
+    
+    private static HashSet<String> tempImportFiles = new HashSet<String>();
+    
+    private static final String baseTempPath = System.getProperty("java.io.tmpdir");
+    private static int TEMP_DIR_ATTEMPTS = 10000;
+    private static File temp_directory = null;
+    private static String directory_name = null;
+    public static String getTempDirectory() {
+        if (directory_name ==  null) {
+            String base_name = baseTempPath + File.separator + "dir-" + System.currentTimeMillis();
+            for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) { // variation from Google's Files.createTempDir().
+                directory_name = base_name + counter;
+                temp_directory = new File(directory_name);
+                if (temp_directory.mkdir()) {
+                    temp_directory.deleteOnExit(); // This does not work if the directory is not empty.
+                    return directory_name;
+                }
+            }
+            throw new IllegalStateException("Unable to create a temporary directory: " + directory_name + "... java");
+        }
+        
+        return directory_name;
+    }
+    
+    /**
+     * 
+     * The command should be either a package or an import statement.  We write it out to a temporary file and
+     *  return the name of the temporary file.
+     * 
+     * @param command
+     * @return
+     */
+    public static String createTempFile(String command) {
+        String base_name = getTempDirectory() + File.separator + "tmp-";
+        assert(temp_directory != null);
+        try {
+            File temp_file = File.createTempFile(base_name, ".java", temp_directory); // new File(directory_name);
+            temp_file.deleteOnExit();
+            Writer writer = null;
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(temp_file), "utf-8"));
+                writer.write(command);
+                writer.write("\n");
+            }
+            catch (IOException ex) {
+               ex.printStackTrace();
+               throw ex;
+            }
+            finally {
+               try { writer.close(); } catch (Exception ex) { assert(false); }
+            }
+
+            String filename = temp_file.getCanonicalPath();
+            tempImportFiles.add(filename);
+
+            return filename;
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Unable to create a temporary import file: " + temp_directory.getAbsolutePath() + File.separator + base_name + "... java");
+        }
     }
 }

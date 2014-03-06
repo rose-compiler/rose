@@ -5,7 +5,10 @@
 
 extern jclass currentJavaTraversalClass;
 extern JNIEnv *currentEnvironment;
-extern jmethodID classHasConflictsMethod;
+extern jmethodID mainMethod;
+extern jmethodID hasConflictsMethod;
+extern jmethodID getTempDirectoryMethod;
+extern jmethodID createTempFileMethod;
 extern int jvm_ecj_processing(int argc,char** argv);
 
 #endif
