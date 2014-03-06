@@ -207,6 +207,5 @@ main(int argc, char *argv[])
 #if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
 #endif
-    backend(project);
-    return 0;
+    return backend(project);
 }
