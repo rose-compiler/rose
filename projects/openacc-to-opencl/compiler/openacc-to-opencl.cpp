@@ -330,9 +330,9 @@ struct RegionDesc {
 
 struct CompilerData {
   struct input_t {
-    std::string runtime_dir;
-    std::string ocl_runtime;
-    std::string kernels_dir;
+    SgExpression * runtime_dir;
+    SgExpression * ocl_runtime;
+    SgExpression * kernels_dir;
     std::vector<RegionDesc::input_t> regions;
   };
 
@@ -346,13 +346,13 @@ struct CompilerData {
     switch (field_id) {
       case 0:
         /// const char * acc_runtime_dir;
-        return SageBuilder::buildStringVal(input.runtime_dir.c_str());
+        return input.runtime_dir;
       case 1:
         /// const char * acc_runtime_ocl;
-        return SageBuilder::buildStringVal(input.ocl_runtime.c_str());
+        return input.ocl_runtime;
       case 2:
         /// const char * acc_kernels_dir;
-        return SageBuilder::buildStringVal(input.kernels_dir.c_str());
+        return input.kernels_dir;
       case 3:
         /// const unsigned long num_regions;
         return SageBuilder::buildIntVal(input.regions.size());
@@ -418,8 +418,11 @@ int main(int argc, char ** argv) {
 
   // Arguments
   assert(argc == 7);
+
   std::string libopenacc_dir(argv[2]);
+
   std::string opencl_dir(argv[3]);
+
   long t0 = atol(argv[4]);
   long t1 = atol(argv[5]);
   long t2 = atol(argv[6]);
@@ -476,9 +479,9 @@ int main(int argc, char ** argv) {
     generator.generate(loop_trees, input_region.kernel_lists, cg_config);
 
   MDCG::OpenACC::CompilerData::input_t input;
-    input.runtime_dir = libopenacc_dir + "/../";
-    input.ocl_runtime = "lib/opencl/libopenacc.cl";
-    input.kernels_dir = boost::filesystem::current_path().string();
+    input.runtime_dir = SageBuilder::buildVarRefExp("LIBOPENACC_DIR");
+    input.ocl_runtime = SageBuilder::buildStringVal("lib/opencl/libopenacc.cl");
+    input.kernels_dir = SageBuilder::buildVarRefExp("KERNEL_DIR");
     input.regions.push_back(input_region);
 
   // Get model element for Region Descriptor

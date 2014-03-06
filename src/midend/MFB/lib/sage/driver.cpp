@@ -151,6 +151,17 @@ void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header
   assert(header_file != NULL);
 
   header_file_name = header_file->getFileName(); /// \todo find minimum file name (based on include path...)
+  const std::vector<std::string> & arg_list = project->get_originalCommandLineArgumentList();
+  std::vector<std::string>::const_iterator it_arg;
+  for (it_arg = arg_list.begin(); it_arg != arg_list.end(); it_arg++) {
+    if ((*it_arg).find("-I") == 0) {
+      std::string inc_path = (*it_arg).substr(2);
+      if (header_file_name.find(inc_path) == 0) {
+        header_file_name = header_file_name.substr(inc_path.length());
+        break;
+      }
+    }
+  }
 
   SageInterface::insertHeader(target_file, header_file_name);
 }
