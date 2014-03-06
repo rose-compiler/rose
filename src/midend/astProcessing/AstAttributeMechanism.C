@@ -5,6 +5,8 @@
 
 #include "AstAttributeMechanism.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
 // Moved function definitions from header file to simplify debugging
 
 // ********************************************
@@ -257,6 +259,12 @@ AstRegExAttribute::AstRegExAttribute(const std::string & s)
      expression = s;
    }
 
+AstAttribute* AstRegExAttribute::copy() {
+    return new AstRegExAttribute(expression);
+}
+
+
+
 // ********************************************
 //              AstSgNodeAttribute
 // ********************************************
@@ -285,14 +293,18 @@ AstSgNodeListAttribute::AstSgNodeListAttribute(std::vector<SgNode *> &list) {
 
 void AstSgNodeListAttribute::addNode(SgNode *node) { nodeList.push_back(node); }
 
-void AstSgNodeListAttribute::setNode(SgNode *node, int index) {
+void AstSgNodeListAttribute::setNode(SgNode *node, int signedIndex) {
+    size_t index = boost::numeric_cast<size_t>(signedIndex);
     while (nodeList.size() <= index) { // make sure the element at the specified index is available
         nodeList.push_back(NULL); 
     }
     nodeList[index] = node;
 }
 
-SgNode *AstSgNodeListAttribute::getNode(int index) { return (index >= 0 && index < nodeList.size() ? nodeList[index] : NULL); }
+SgNode *AstSgNodeListAttribute::getNode(int signedIndex) {
+    size_t index = boost::numeric_cast<size_t>(signedIndex);
+    return (index >= 0 && index < nodeList.size() ? nodeList[index] : NULL);
+}
 
 std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; }
 

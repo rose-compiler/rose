@@ -2,6 +2,8 @@
 #include <assert.h>
 int INSERT_HERE;
 
+#include "snippetsRelated.h"
+
 #include <string.h>
 #include <stdlib.h>                                     // free
 #include <string.h>                                     // memcpy
@@ -15,17 +17,6 @@ void notNull(const void *x);
 
 // Function declarations required from snippet loadHeapString
 // void free(char* from);
-
-#if USE_ROSE
-// Function declarations required from snippet ?
-struct Struct1 {
-    int int_member;
-    char char_member;
-    const char *const_string_member;
-    char* string_member;
-    double double_member;
-};
-#endif
 
 // Function declarations required from snippet ?
 // void assert(bool);

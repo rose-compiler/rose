@@ -1,4 +1,5 @@
 static int INSERT_HERE;                 // a marker used by the injectSnippet test
+#include "snippetsRelated.h"
 #include <stdlib.h>
 #include <string.h>
 

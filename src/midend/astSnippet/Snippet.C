@@ -309,27 +309,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     for (size_t i=0; targetFirstDeclaration==NULL && i<targetStatements.size(); ++i)
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
 
-    // Build a map binding formal argument symbols to their actual values
-    ArgumentBindings bindings;
-    SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
-    const SgInitializedNamePtrList &formals = snippet_fdecl->get_parameterList()->get_args();
-    if (actuals.size()!=formals.size()) {
-        throw std::runtime_error("rose::Snippet: mismatched snippet arguments: expected " +
-                                 plural(formals.size(), "arguments") + " but got " +
-                                 numberToString(actuals.size()));
-    }
-    for (size_t i=0; i<formals.size(); ++i) {
-        SgSymbol *symbol = formals[i]->search_for_symbol_from_symbol_table();
-        assert(symbol!=NULL);
-        if (actuals[i]==NULL)
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
-        if (!isSgInitializedName(actuals[i]) && !isSgExpression(actuals[i]))
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
-                                     " must be a variable declaration or expression"
-                                     " but has type "+actuals[i]->class_name());
-        bindings[symbol] = actuals[i];
-    }
-
     // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
     // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
     // the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file and
@@ -388,13 +367,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     renameTemporaries(toInsert);
     causeUnparsing(toInsert, insertionPoint->get_file_info());
 
-#if 1
- // DQ (3/4/2014): This appears to be invalidating the use of the AST iterator since it changes the 1-to-1 mapping of the copy if the snippet to the original snippet.
-    replaceArguments(toInsert, bindings);
-#endif
-
- // insertionPoint->get_file_info()->display("insertionPoint: test 2: debug");
-
     switch (insertMechanism) {
         case INSERT_BODY: {
             // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
@@ -424,6 +396,33 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             break;
         }
     }
+
+    // Build a map binding formal argument symbols to their actual values.  The goal is, in the statements we just inserted, to
+    // replace all references to snippet formal arguments with the actual arguments supplied to the Snippet::insert() call. The
+    // actual arguments are SgInitializedName or SgExpression nodes from the context in which the snippet was inserted; the
+    // references to formal arguments are the SgInitializedName nodes in the AST's that we just copied above (the
+    // *declarations* for the formal arguments were *not* copied because they are the get_parameterList() of the snippet
+    // functionin the snippet file--which we didn't insert into the target).
+    ArgumentBindings bindings; // map from formal arg references to actual arguments
+    SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
+    const SgInitializedNamePtrList &formals = snippet_fdecl->get_parameterList()->get_args();
+    if (actuals.size()!=formals.size()) {
+        throw std::runtime_error("rose::Snippet: mismatched snippet arguments: expected " +
+                                 plural(formals.size(), "arguments") + " but got " +
+                                 numberToString(actuals.size()));
+    }
+    for (size_t i=0; i<formals.size(); ++i) {
+        SgSymbol *formalSymbol = formals[i]->search_for_symbol_from_symbol_table();
+        assert(formalSymbol!=NULL);
+        if (actuals[i]==NULL)
+            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
+        if (!isSgInitializedName(actuals[i]) && !isSgExpression(actuals[i]))
+            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
+                                     " must be a variable declaration or expression"
+                                     " but has type "+actuals[i]->class_name());
+        bindings[formalSymbol] = actuals[i];
+    }
+    replaceArguments(toInsert, bindings);
 
     // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
     // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
@@ -835,23 +834,68 @@ Snippet::insertRelatedThings(SgStatement *insertionPoint)
     return;
 #endif
 
-    // Have we inserted stuff here already? Also mark that we've now done so.
-    SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
-    assert(ipointGlobalScope!=NULL);
-    if (file->globallyInjected(ipointGlobalScope))
-        return;
+    if (file->getCopyAllSnippetDefinitions()|| file->getCopyRelatedThings()) {
+        // Have we inserted stuff here already? Also mark that we've now done so.
+        SgGlobal *ipointGlobalScope = SageInterface::getGlobalScope(insertionPoint);
+        assert(ipointGlobalScope!=NULL);
+        if (file->globallyInjected(ipointGlobalScope))
+            return;
 
-    // Language specific insertions
-    if (SageInterface::is_Java_language()) {
-        insertRelatedThingsForJava(insertionPoint);
-    } else if (SageInterface::is_C_language()) {
-        insertRelatedThingsForC(insertionPoint);
+        // Language specific insertions
+        if (SageInterface::is_Java_language()) {
+            insertRelatedThingsForJava(insertionPoint);
+        } else if (SageInterface::is_C_language()) {
+            insertRelatedThingsForC(insertionPoint);
+        }
     }
 }
 
 void
 Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
-{}
+{
+    // The insertionPoint is some statement in a SgMemberFunctionDeclaration where this snippet was already inserted.  The
+    // snippet's statements have already been inserted into the target function, and now we need to insert declarations that
+    // are siblings of this snippet (in the snippet file) as siblings of the target SgMemberFunctionDeclaration into which this
+    // snippet was inserted.
+    SgStatement *topInsertionPoint = SageInterface::getEnclosingNode<SgMemberFunctionDeclaration>(insertionPoint);
+    ROSE_ASSERT(topInsertionPoint || !"Java snippet must have been inserted into a SgMemberFunctionDeclaration");
+    
+    // Insert whole declarations from the snippet file into the target file.
+    SgClassDefinition *snippetClass = SageInterface::getEnclosingNode<SgClassDefinition>(ast); // snippet's class
+    ROSE_ASSERT(snippetClass || !"each java snippet must be a member of a class definition");
+    BOOST_FOREACH (SgDeclarationStatement *decl, snippetClass->get_members()) {
+        if (!decl->get_file_info()->isSameFile(ast->get_file_info()))
+            continue;                                   // this came from some other file than the snippet file
+
+        if (SgMemberFunctionDeclaration *fdecl = isSgMemberFunctionDeclaration(decl)) {
+            SgFunctionDefinition *fdef = fdecl->get_definition();
+            if (file->getCopyAllSnippetDefinitions() && fdef!=NULL) {
+                SgTreeCopy deep;
+                SgFunctionDeclaration *fdeclCopy = isSgFunctionDeclaration(fdecl->copy(deep));
+                causeUnparsing(fdeclCopy, topInsertionPoint->get_file_info());
+                SageInterface::insertStatementBefore(topInsertionPoint, fdeclCopy);
+                continue;
+            }
+        }
+    }
+
+    // Copy import statements from the snippet's file into the target file.
+    if (file->getCopyRelatedThings()) {
+        SgSourceFile *targetFile = isSgSourceFile(getEnclosingFileNode(insertionPoint));
+        ROSE_ASSERT(targetFile || !"snippet insertion point must belong to a file");
+        SgSourceFile *snippetFile = isSgSourceFile(getEnclosingFileNode(ast));
+        ROSE_ASSERT(snippetFile || !"snippet must belong to a file");
+        SgJavaImportStatementList *targetImports = targetFile->get_import_list();
+        SgJavaImportStatementList *snippetImports = snippetFile->get_import_list();
+        assert(targetImports!=NULL && snippetImports!=NULL);
+        BOOST_FOREACH (SgJavaImportStatement *snippetImport, snippetImports->get_java_import_list()) {
+            SgTreeCopy deep;
+            SgJavaImportStatement *newImport = isSgJavaImportStatement(snippetImport->copy(deep));
+            targetImports->get_java_import_list().push_back(newImport);
+            newImport->set_parent(targetImports);
+        }
+    }
+}
 
 void
 Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
@@ -901,7 +945,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
             continue;
 
         if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(snippetStmt)) {
-            if (!vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
+            if (file->getCopyRelatedThings()&& !vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
                 // Insert non-extern variable declaration
                 SgTreeCopy deep;
                 SgStatement *newStmt = isSgStatement(snippetStmt->copy(deep));
@@ -947,7 +991,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         }
         
         if (SgClassDeclaration *class_decl = isSgClassDeclaration(snippetStmt)) {
-            if (class_decl->get_definition()!=NULL) {
+            if (file->getCopyRelatedThings()&& class_decl->get_definition()!=NULL) {
                 SgTreeCopy deep;
                 SgStatement *newStmt = isSgClassDeclaration(class_decl);
                 removeIncludeDirectives(newStmt);
@@ -996,7 +1040,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(snippetStmt)) {
             SgFunctionDefinition *fdef = fdecl->get_definition();
             
-            if (copyAllSnippetDefinitions && fdef!=NULL &&
+            if (file->getCopyAllSnippetDefinitions()&& fdef!=NULL &&
                 fdef->get_startOfConstruct()->get_file_id()==ast->get_startOfConstruct()->get_file_id()) {
                 SgTreeCopy deep;
                 SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
@@ -1046,7 +1090,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 continue;
             }
 
-            if (fdecl->get_definition()==NULL) {
+            if (file->getCopyRelatedThings()&& fdecl->get_definition()==NULL) {
                 // Insert function declaration.
                 SgTreeCopy deep;
                 SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
@@ -1095,19 +1139,21 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
 
     // Insert #include directives above the first thing we already inserted.
-    if (firstInserted)
-        topInsertionPoint = firstInserted;
-    BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
-        if (!snippetStmt->get_file_info()->isSameFile(ast->get_file_info()))
-            continue; // this came from some included file rather than the snippet itself.
-        if (AttachedPreprocessingInfoType *cpplist = snippetStmt->getAttachedPreprocessingInfo()) {
-            // We apparently can't use the cpplist directly because some of the functions in SageInterface modify it while
-            // we're trying to iterate.  So make a copy.
-            AttachedPreprocessingInfoType cpplist_copy = *cpplist;
-            BOOST_FOREACH (PreprocessingInfo *cpp, cpplist_copy) {
-                if (cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
-                    cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration)
-                    insertIncludeDirective(topInsertionPoint, cpp); // attaches it to an existing node
+    if (file->getCopyRelatedThings()) {
+        if (firstInserted)
+            topInsertionPoint = firstInserted;
+        BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
+            if (!snippetStmt->get_file_info()->isSameFile(ast->get_file_info()))
+                continue; // this came from some included file rather than the snippet itself.
+            if (AttachedPreprocessingInfoType *cpplist = snippetStmt->getAttachedPreprocessingInfo()) {
+                // We apparently can't use the cpplist directly because some of the functions in SageInterface modify it while
+                // we're trying to iterate.  So make a copy.
+                AttachedPreprocessingInfoType cpplist_copy = *cpplist;
+                BOOST_FOREACH (PreprocessingInfo *cpp, cpplist_copy) {
+                    if (cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ||
+                        cpp->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeNextDeclaration)
+                        insertIncludeDirective(topInsertionPoint, cpp); // attaches it to an existing node
+                }
             }
         }
     }
