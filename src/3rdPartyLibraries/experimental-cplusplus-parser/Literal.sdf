@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
 %% and extended with rules covering the GNU compiler extensions (superset)                          %%
-%% Version 1.0                                                                                      %%
+%% Version: 1.2                                                                                     %%
 %% Author: Markus Schordan, 2013.                                                                   %%
 %% Copyright: Lawrence Livermore National Laboratory                                                %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -11,8 +11,11 @@ module Literal
 imports
 FloatingLiteral
 
-hiddens
-sorts
+exports
+sorts 
+Literal
+String-literal
+Single-string-literal
 Binary-digit
 Binary-literal
 Boolean-literal
@@ -32,11 +35,7 @@ Octal-literal
 Pointer-literal
 Quoted-char
 Simple-escape-sequence
-Solo-string-literal
 Universal-character-name
-
-exports
-sorts Literal String-literal
 
 context-free syntax
 
@@ -47,12 +46,13 @@ String-literal 			-> Literal
 Boolean-literal			-> Literal
 Pointer-literal			-> Literal
 
+(Single-string-literal)+	-> String-literal   %% for implicit string concatenation (C/C++). example: f("xxx" "xxx")
+
 Integer Integer-suffix?			-> Integer-literal
 Octal-literal Integer-suffix?		-> Integer-literal
 Hexadecimal-literal Integer-suffix?	-> Integer-literal
 Binary-literal Integer-suffix?		-> Integer-literal
 
-(Solo-string-literal)+	-> String-literal   %% for implicit string concatenation (C/C++). example: f("xxx" "xxx")
 
 lexical syntax
 
@@ -65,7 +65,7 @@ Quoted-char		-> C-char
 ~[\0-\31\n\t\\\"]	-> D-char  %% note the last character in the character set
 Quoted-char		-> D-char
 
-Encoding-prefix? [\"] D-char* [\"] -> Solo-string-literal
+Encoding-prefix? [\"] D-char* [\"] -> Single-string-literal
 
 [uUL]			-> Encoding-prefix
 "u8"			-> Encoding-prefix

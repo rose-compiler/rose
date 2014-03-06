@@ -282,6 +282,14 @@ AsmUnparser::line_prefix() const
  *                                      Main unparsing functions
  ******************************************************************************************************************************/
 
+std::string
+AsmUnparser::to_string(SgNode *ast)
+{
+    std::ostringstream ss;
+    unparse(ss, ast);
+    return ss.str();
+}
+
 size_t
 AsmUnparser::unparse(std::ostream &output, SgNode *ast)
 {
@@ -922,14 +930,20 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
         map.insert(Extent(args.data->get_address(), data.size()),
                    MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
                                       MemoryMap::MM_PROT_RX, "static data block"));
-        Disassembler::AddressSet worklist;
-        worklist.insert(args.data->get_address());
-        Disassembler::BadMap bad;
-        Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
         unparser->set_prefix_format(args.unparser->get_prefix_format());
-        for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            unparser->unparse(args.output, ii->second);
-            SageInterface::deleteAST(ii->second);
+        rose_addr_t offset=0, nskipped=0;
+        while (offset < data.size()) {
+            rose_addr_t insn_va = args.data->get_address() + offset;
+            SgAsmInstruction *insn = NULL;
+            try {
+                insn = disassembler->disassembleOne(&map, insn_va, NULL);
+                unparser->unparse(args.output, insn);
+                offset += insn->get_size();
+                SageInterface::deleteAST(insn);
+            } catch (...) {
+                offset += 1;
+                ++nskipped;
+            }
         }
     }
     return enabled;

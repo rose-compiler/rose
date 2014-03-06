@@ -23,6 +23,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 /* Define this if you want the class to do fairly extensive testing of the consistency of the map after every operation.  Note
  * that this substantially increases execution time.  The NDEBUG preprocessor symbol must not be defined, or else the check()
@@ -191,6 +192,48 @@ public:
         return Range::inin(first(), right.last());
     }
 
+    /** Erase part of a range to return zero, one, or two new ranges.  The possible situations are:
+     * <ol>
+     *   <li>The range to erase can be a superset of this range, in which case this entire range is erased and nothing is
+     *       returned.</li>
+     *   <li>The range to erase can be empty, in which case this range is returned.</li>
+     *   <li>The range to erase does not intersect this range, in which case this range is returned.</li>
+     *   <li>The range to erase can overlap the low end of this range, in which case only the non-overlapping high end of this
+     *       range is returned.</li>
+     *   <li>The range to erase can overlap the high end of this range, in which case only the non-overlapping low end of this
+     *       range is returned.</li>
+     *   <li> The range  to erase overlaps only the middle part of this range, in which case two ranges are returned: the
+     *        non-overlapping low end of this range, and the non-overlapping high end of this range.</li>
+     * </ol>
+     */
+    std::vector<Range> erase(const Range &to_erase) const {
+        std::vector<Range> retval;
+        if (to_erase.empty() || distinct(to_erase)) {
+            retval.push_back(*this);
+        } else if (contained_in(to_erase)) {
+            // void
+        } else {
+            if (begins_before(to_erase))
+                retval.push_back(Range::inin(first(), to_erase.first()-1));
+            if (ends_after(to_erase))
+                retval.push_back(Range::inin(to_erase.last()+1, last()));
+        }
+        return retval;
+    }
+
+    /** Intersection of two ranges. */
+    Range intersect(const Range &other) const {
+        if (empty() || contains(other))
+            return other;
+        if (other.empty() || other.contains(*this))
+            return *this;
+        if (!overlaps(other))
+            return Range();
+        return Range::inin(
+        std::max(first(), other.first()),
+        std::min(last(), other.last()));
+    }
+    
     /** Returns true if this range is empty.  Note that many of the range comparison methods have special cases for empty
      *  ranges.  Note that due to overflow, the size() method may return zero for integer ranges if this range contains all
      *  possible values.  It follows, then that the expressions "empty()" and "0==size()" are not always equal. */
@@ -292,8 +335,8 @@ public:
      *
      *  They are equal if the start and end at the same place or if they are both empty. */
     bool congruent(const Range &x) const {
-        if (empty() && x.empty())
-            return true;
+        if (empty() || x.empty())
+            return empty() && x.empty();
         return first()==x.first() && last()==x.last();
     }
 
@@ -371,6 +414,13 @@ public:
         return Range::inin(minimum(), maximum());
     }
 
+    bool operator==(const Range &x) const {
+        return congruent(x);
+    }
+    bool operator!=(const Range &x) const {
+        return !congruent(x);
+    }
+    
     void print(std::ostream &o) const {
         if (empty()) {
             o <<"<empty>";
@@ -535,6 +585,72 @@ public:
         x.print(o);
         return o;
     }
+};
+
+/******************************************************************************************************************************
+ *                                      RangeMap numeric values
+ ******************************************************************************************************************************/
+
+/** Scalar value type for a RangeMap.  Values can be merged if they compare equal; splitting a value is done by copying it.
+ *  The removing() and truncate() methods are no-ops.  See the RangeMapVoid class for full documentation. */
+template<class R, class T>
+class RangeMapNumeric /*final*/ {
+public:
+    typedef R Range;
+    typedef T Value;
+
+    /** Constructor creates object whose underlying value is zero. */
+    RangeMapNumeric(): value(0) {}
+
+    /** Constructor creates object with specified value. */
+    RangeMapNumeric(Value v): value(v) {} // implicit
+    
+    /** Accessor for the value actually stored here.
+     *  @{ */
+    void set(Value v) /*final*/ {
+        value = v;
+    }
+    virtual Value get() const /*final*/ {
+        return value;
+    }
+    /** @} */
+
+
+    /** Called when this value is being removed from a RangeMap. */
+    void removing(const Range &my_range) /*final*/ {
+        assert(!my_range.empty());
+    }
+
+    /** Called when removing part of a value from a RangeMap. */
+    void truncate(const Range &my_range, const typename Range::Value &new_end) /*final*/ {
+        assert(new_end>my_range.first() && new_end<=my_range.last());
+    }
+
+    /** Called to merge two RangeMap values.  The values can be merged only if they compare equal. */
+    bool merge(const Range &my_range, const Range &other_range, RangeMapNumeric other_value) /*final*/ {
+        assert(!my_range.empty() && !other_range.empty());
+        return get()==other_value.get();
+    }
+
+    /** Split a RangeMap value into two parts. */
+    RangeMapNumeric split(const Range &my_range, typename Range::Value new_end) /*final*/ {
+        assert(my_range.contains(Range(new_end)));
+        return *this;
+    }
+
+    /** Print a RangeMap value.
+     *  @{ */
+    void print(std::ostream &o) const /*final*/ {
+        o <<value;
+    }
+    friend std::ostream& operator<<(std::ostream &o, const RangeMapNumeric &x) {
+        x.print(o);
+        return o;
+    }
+    /** @} */
+    
+private:
+    Value value;
 };
 
 /******************************************************************************************************************************
@@ -947,14 +1063,12 @@ public:
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
-    #undef min
     typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
-    #undef max
     typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
@@ -1122,6 +1236,12 @@ public:
             return false;
         const_iterator found = lower_bound(r.first());
         return found!=end() && r.overlaps(found->first);
+    }
+
+    /** Determines if a range map does not contain any part of the specified range.  Returns false if any part of the range
+     *  @p r is present in the map.  An empty range is always distinct from the map. */
+    bool distinct(const Range &r) const {
+        return !overlaps(r);
     }
 
     /** Determines if two range maps are distinct.  Returns true iff there is no range in this map that overlaps with any range

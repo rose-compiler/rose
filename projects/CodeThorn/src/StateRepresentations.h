@@ -29,9 +29,7 @@ typedef int EStateId;
 
 //using namespace CodeThorn;
 
-using CodeThorn::VariableId;
 using CodeThorn::CppCapsuleAValue;
-using CodeThorn::Label;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using CodeThorn::Edge;
@@ -51,6 +49,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
   bool varIsTop(VariableId varId) const;
+  AValue varValue(VariableId varname) const;
   string varValueToString(VariableId varname) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
@@ -129,6 +128,7 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
   * \author Markus Schordan
   * \date 2012.
  */
+
 class EState {
  public:
  EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
@@ -150,6 +150,10 @@ class EState {
   InputOutput::OpType ioOp(Labeler*) const;
   // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
   AType::ConstIntLattice determineUniqueIOValue() const;
+  /* Predicate that determines whether all variables can be determined to be bound to a constant value.
+     This function uses the entire PState and all available constraints to determine constness.
+   */
+  bool isConst(VariableIdMapping* vid) const;
  private:
   Label _label;
   const PState* _pstate;
@@ -209,6 +213,7 @@ class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
   EStateId estateId(const EState estate) const;
   string estateIdString(const EState* estate) const;
   int numberOfIoTypeEStates(InputOutput::OpType) const;
+  int numberOfConstEStates(VariableIdMapping* vid) const;
  private:
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
@@ -267,13 +272,13 @@ class EStateList : public list<EState> {
 class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
    typedef set<const Transition*> TransitionPtrSet;
- TransitionGraph():_startLabel(CodeThorn::Labeler::NO_LABEL),_numberOfNodes(0){}
+ TransitionGraph():_startLabel(Labeler::NO_LABEL),_numberOfNodes(0){}
   EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
   EStatePtrSet estateSetOfLabel(Label lab);
   EStatePtrSet estateSet();
   void add(Transition trans);
   string toString() const;
-  CodeThorn::LabelSet labelSetOfIoOperations(InputOutput::OpType op);
+  LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   long removeDuplicates();
   Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }

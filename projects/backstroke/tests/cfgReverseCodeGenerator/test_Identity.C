@@ -72,4 +72,11 @@ void reverseMe(int in, State* state)
 #endif
 }
 
+int main()
+{
+	State s;
+	reverseMe(10, &s);
+
+	return 0;
+}
 

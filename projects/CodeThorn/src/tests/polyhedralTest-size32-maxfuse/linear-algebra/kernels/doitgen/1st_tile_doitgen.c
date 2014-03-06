@@ -1,0 +1,76 @@
+#   define NQ ARRAYSIZE
+#   define NR ARRAYSIZE
+#   define NP ARRAYSIZE
+# define _PB_NQ ARRAYSIZE
+# define _PB_NR ARRAYSIZE
+# define _PB_NP ARRAYSIZE
+/**
+ * doitgen.c: This file is part of the PolyBench/C 3.2 test suite.
+ *
+ *
+ * Contact: Louis-Noel Pouchet <pouchet@cse.ohio-state.edu>
+ * Web address: http://polybench.sourceforge.net
+ */
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+
+int main(int argc,char **argv)
+{
+/* Retrieve problem size. */
+  int nr = 32;
+  int nq = 32;
+  int np = 32;
+  double A[32][32][32];
+  double sum[32][32][32];
+  double C4[32][32];
+  int r;
+  int q;
+  int p;
+  int s;
+  
+#pragma scop
+{
+    int c7;
+    int c5;
+    int c2;
+    int c3;
+    int c1;
+#pragma omp parallel for private(c3, c2, c5)
+    for (c1 = 0; c1 <= 3; c1++) {
+      for (c2 = 0; c2 <= 31; c2++) {
+        for (c3 = 0; c3 <= 31; c3++) {
+          for (c5 = 8 * c1; c5 <= 8 * c1 + 7; c5++) {
+            sum[c5][c2][c3] = 0;
+          }
+        }
+      }
+    }
+#pragma omp parallel for private(c3, c2, c5, c7)
+    for (c1 = 0; c1 <= 3; c1++) {
+      for (c2 = 0; c2 <= 31; c2++) {
+        for (c3 = 0; c3 <= 31; c3++) {
+          for (c5 = 8 * c1; c5 <= 8 * c1 + 7; c5++) {
+            for (c7 = 0; c7 <= 31; c7++) {
+              sum[c5][c2][c3] = sum[c5][c2][c3] + A[c5][c2][c7] * C4[c7][c3];
+            }
+          }
+        }
+      }
+    }
+#pragma omp parallel for private(c3, c2, c5)
+    for (c1 = 0; c1 <= 3; c1++) {
+      for (c2 = 0; c2 <= 31; c2++) {
+        for (c3 = 0; c3 <= 31; c3++) {
+          for (c5 = 8 * c1; c5 <= 8 * c1 + 7; c5++) {
+            A[c5][c2][c3] = sum[c5][c2][c3];
+          }
+        }
+      }
+    }
+  }
+  
+#pragma endscop
+  return 0;
+}

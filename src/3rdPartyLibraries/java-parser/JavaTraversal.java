@@ -20,155 +20,55 @@ import org.eclipse.jdt.internal.compiler.util.*;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 
-// import JavaParser.*;
-
-// DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
-// class JavaTraversal {
-
 import java.util.concurrent.Callable;
 class JavaTraversal implements Callable<Boolean> {
     // The function JavaTraversal::main() is what is called using the JVM from ROSE.
 
-    // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
-    // of the AST.  As a result it should be renamed.
-
-// TODO: remove this !!!
-// Not clear what this means!
-// static Main main;
-    static BufferedWriter out;
+    static {
+        System.loadLibrary("JavaTraversal");
+        ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
+    }
 
     static int verboseLevel = 0;
 
-    // -------------------------------------------------------------------------------------------
-    /* tps: Invoke C Code , the int nr represents a unique nr for a node which is used for DOT representation*/
-    private native void invokeINIT();
-    private native void invokeEND ();
-    private native void invokeNODE(String className, int nr);
-    private native void invokeEDGE(String className1, int nr, String className2, int nr2);
+    static HashSet<String> processedFiles = new HashSet<String>();
+    static JavaParserSupport java_parser_support = null;
 
     // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
     // private static boolean hasErrorOccurred = false;
     public static boolean hasErrorOccurred = false;
 
-    static {
-        System.loadLibrary("JavaTraversal");
+    public static String languageLevel(long level) {
+        String language_level = "";
+
+        if (level == ClassFileConstants.JDK1_1)
+             language_level = "JDK1_1";
+        else if (level == ClassFileConstants.JDK1_2)
+             language_level = "JDK1_2";
+        else if (level == ClassFileConstants.JDK1_3)
+             language_level = "JDK1_3";
+        else if (level == ClassFileConstants.JDK1_4)
+             language_level = "JDK1_4";
+        else if (level == ClassFileConstants.JDK1_5)
+             language_level = "JDK1_5";
+        else if (level == ClassFileConstants.JDK1_6)
+             language_level = "JDK1_6";
+        else if (level == ClassFileConstants.JDK1_7)
+             language_level = "JDK1_7";
+        else language_level = "???";
+
+        return language_level;
     }
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: Creating a hashmap to keep track of nodes that we have already seen. Needed for DOT graph */
-    static HashMap<Integer, Integer> hashm = new HashMap<Integer, Integer>();
-    static int hashcounter = 0;
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: A class is represented as x.y.z.f.g --> this function returns the last string after the last dot */
-    public String getLast(String s) {
-        int index = s.lastIndexOf(".");
-        if (index == -1)
-            return s;
-        return s.substring(index + 1, s.length());
-    }
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: For any Node we print its String representation. This function returns up to 30 characters of the String for DOT */
-    public String getLine(ASTNode current) {
-        int length = current.toString().length();
-        int pos = current.toString().indexOf("\n");
-        if (pos != -1)
-            length = pos - 1;
-        if (length > 30)
-            length = 30;
-        String substr = (current.toString()).substring(0, length); 
-        return substr.replace("\"", "'");
-    } 
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: Add nodes into a HashMap. We need this to connect edges between Nodes for DOT */
-    public int getHashValue(ASTNode current) {
-        int valc = 0;
-        Integer hashc = (Integer) hashm.get(current.hashCode()); 
-        if (hashc != null) {
-            valc = (hashc).intValue();
-        }
-        else {
-            valc = hashcounter;
-            hashm.put(current.hashCode(), hashcounter++);
-        }
-        return valc;
-    }
-
-    // -------------------------------------------------------------------------------------------
-    /* tps : print to DOT   */
-    public void printToDOT(ASTNode current) {
-        ASTNode before=null;
-        if (! stack.empty())
-            before = (ASTNode)stack.peek();
-        try {
-            if (before == null) {
-                // System.out.println("---------------------------------------------");
-                // System.out.println("******** Root Node: "+getLast(current.getClass().toString())+"   Adding node to hashmap: "+hashcounter);
-                int valc = getHashValue(current);
-                out.write(" \""+valc+getLast(current.getClass().toString())+"\" [label=\""+getLast(current.getClass().toString())+"\\n"+getLine(current) +"\"];\n");
-                invokeNODE(getLast(current.getClass().toString()), valc);
-            }
-            else {
-                // System.out.println("-----------------------");
-                // System.out.println("New Node: "+getLast(current.getClass().toString()));
-                // System.out.println("New Edge: "+getLast(before.getClass().toString())+" -- "+getLast(current.getClass().toString()));
-                Integer valbint = ((Integer)hashm.get(before.hashCode()));
-                if (valbint == null) {
-                    System.err.println("Error : hashvalue valbint == null for node :" + before.getClass()); 
-                    throw new RuntimeException(); 
-                }
-                int valb = valbint.intValue();
-                int valc = getHashValue(current);
-                out.write(" \"" + valc + "" + getLast(current.getClass().toString()) +
-                         "\" [label=\"" + getLast(current.getClass().toString()) + "\\n" + getLine(current) + "\"];\n");
-                out.write("    \"" + valb + "" + getLast(before.getClass().toString()) + "\" -> \"" + valc + "" + getLast(current.getClass().toString()) + "\";\n");
-                invokeEDGE(getLast(before.getClass().toString()), valb, getLast(current.getClass().toString()), valc);
-                invokeNODE(getLast(current.getClass().toString()), valc);
-            }
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error: " + e.getMessage());
-        }
-    }
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: Stack that is keeping track of the traversal we perform to connect children with parents in the DOT graph */
-    private Stack<ASTNode> stack = new Stack<ASTNode>();
-
-    public void pushNode(ASTNode node) {
-        stack.push(node);
-    }
-
-    public ASTNode popNode() {
-        if (! stack.empty())
-            stack.pop();
-        else {
-            System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
-            throw new RuntimeException();
-        }
-
-        if (! stack.empty())
-            return (ASTNode)stack.peek();
-
-        return null;
-    }
-
 
     // Added support for command line processing to set the verbose level (passed directly from ROSE "--rose:verbose n").
-    public static String [] filterCommandline(String args[]) {
+    public static String[] filterCommandline(String args[]) {
         int commandlineErrorLevel = 0;
 
         if (commandlineErrorLevel > 0)
             System.out.println("Processing the command line in ECJ/ROSE connection ...");
 
         String argsForECJ[];
-        // int ROSE_veboseLevel = 0;
 
-        // ArrayList<String> argsList = CreateStringList(args);
         ArrayList<String> argsList = new ArrayList<String>();
         Collections.addAll(argsList, args);
 
@@ -176,8 +76,8 @@ class JavaTraversal implements Callable<Boolean> {
         // for (String arg: args)
         int max = args.length;
         for (int j = 0; j < max; j++) {
-             if (commandlineErrorLevel > 0)
-                 System.out.println("ROSE Argument found: " + args[j]);
+            if (commandlineErrorLevel > 0)
+                System.out.println("ROSE Argument found: " + args[j]);
 
             // String matchingString = "-rose";
             // Java substring uses index 0 ... 5 (the upper bound "6" is not used.
@@ -210,7 +110,7 @@ class JavaTraversal implements Callable<Boolean> {
 
                     // It might be better to rethrow the exception
                     System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
-                    throw new RuntimeException();
+                    System.exit(1);
                 }
             }
             else {
@@ -236,52 +136,99 @@ class JavaTraversal implements Callable<Boolean> {
         return args;
     }
 
-    /**
-     * Compile the source files specified and all its dependent source files and generate
-     * all the associatd class files.
-     *  
-     * @param args
+    /** 
+     * This method was copied from Compiler.java as it is not directly accessible there.
      */
-    static boolean compile(String args[]) {
-        if (verboseLevel > 0)
-            System.out.println("Compiling ...");
+    static protected synchronized void addCompilationUnit(Compiler compiler,
+            ICompilationUnit sourceUnit,
+            CompilationUnitDeclaration parsedUnit) {
 
-        // This line of code will run, but the first use of "main" fails ...working now!
-        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+            if (compiler.unitsToProcess == null)
+                return; // not collecting units
 
-        //
-        try {
-            main.configure(args);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error in main.configure(args): " + e.getMessage()); 
-            throw new RuntimeException();
-        }
-        main.compilerOptions = new CompilerOptions(main.options);
-        main.compilerOptions.performMethodsFullRecovery = false;
-        main.compilerOptions.performStatementsRecovery = false;
-        // main.compilerOptions.verbose = true;
-        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
-        main.compilerOptions.generateClassFiles = true;
-
-        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
-                                           main.getHandlingPolicy(),
-                                           main.compilerOptions,
-                                           main.getBatchRequestor(),
-                                           main.getProblemFactory(),
-                                           null,
-                                           main.progress
-                                          );
-
-        ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-        if (verboseLevel > 2)
-            System.out.println("We got " + sourceUnits.length + " compilation units");
-
-        main.batchCompiler.compile(sourceUnits); // generate all class files that are needed for these source units.
-
-        return main.globalErrorsCount == 0; // return whether or not the compilation was successful.
+            // append the unit to the list of ones to process later on
+            int size = compiler.unitsToProcess.length;
+            if (compiler.totalUnits == size)
+                // when growing reposition units starting at position 0
+                System.arraycopy(
+                    compiler.unitsToProcess,
+                    0,
+                    (compiler.unitsToProcess = new CompilationUnitDeclaration[size * 2]),
+                    0,
+                    compiler.totalUnits);
+            compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
     }
+
+
+    /** 
+     * This method was copied from Compiler.java as it is not directly accessible there.
+     */
+    static protected void internalBeginToCompile(Compiler compiler, ICompilationUnit[] sourceUnits, int maxUnits) {
+        if (! compiler.useSingleThread && maxUnits >= ReadManager.THRESHOLD)
+            compiler.parser.readManager = new ReadManager(sourceUnits, maxUnits);
+
+        // Switch the current policy and compilation result for this unit to the requested one.
+        for (int i = 0; i < maxUnits; i++) {
+            CompilationResult unitResult = null;
+            try {
+                /*
+                if (compiler.options.verbose) {
+                    compiler.out.println(
+                        Messages.bind(Messages.compilation_request,
+                        new String[] {
+                            String.valueOf(i + 1),
+                            String.valueOf(maxUnits),
+                            new String(sourceUnits[i].getFileName())
+                        }));
+                }
+                */
+
+                // diet parsing for large collection of units
+                CompilationUnitDeclaration parsedUnit;
+                unitResult = new CompilationResult(sourceUnits[i], i, maxUnits, compiler.options.maxProblemsPerUnit);
+                long parseStart = System.currentTimeMillis();
+                if (compiler.totalUnits < compiler.parseThreshold) {
+                    parsedUnit = compiler.parser.parse(sourceUnits[i], unitResult);
+                } else {
+                    parsedUnit = compiler.parser.dietParse(sourceUnits[i], unitResult);
+                }
+                long resolveStart = System.currentTimeMillis();
+                compiler.stats.parseTime += resolveStart - parseStart;
+                // initial type binding creation
+                compiler.lookupEnvironment.buildTypeBindings(parsedUnit, null /*no access restriction*/);
+                compiler.stats.resolveTime += System.currentTimeMillis() - resolveStart;
+                addCompilationUnit(compiler, sourceUnits[i], parsedUnit);
+                ImportReference currentPackage = parsedUnit.currentPackage;
+                if (currentPackage != null) {
+                    unitResult.recordPackageName(currentPackage.tokens);
+                }
+                //} catch (AbortCompilationUnit e) {
+                // requestor.acceptResult(unitResult.tagAsAccepted());
+            } catch (AbortCompilation a) {
+                // best effort to find a way for reporting this problem:
+                if (a.compilationResult == null)
+                    a.compilationResult = unitResult;
+/*
+System.out.println("ECJ error: " + a.getMessage());
+System.out.println("ECJ cause: " + a.getCause().getClass().getCanonicalName());
+StackTraceElement stack[] = a.getCause().getStackTrace();
+for (int k = 0; k < stack.length; k++) {
+    System.out.println(stack[k].toString());
+}
+*/
+                throw a;
+            } finally {
+                sourceUnits[i] = null; // no longer hold onto the unit
+            }
+        }
+        if (compiler.parser.readManager != null) {
+            compiler.parser.readManager.shutdown();
+            compiler.parser.readManager = null;
+        }
+        // binding resolution
+        compiler.lookupEnvironment.completeTypeBindings();
+    }
+
 
     /**
      * Compile and generate an AST for each input file specified in args.
@@ -289,7 +236,7 @@ class JavaTraversal implements Callable<Boolean> {
      * @param args
      */
     static Main generateAst(String args[]) {
-        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
         if (verboseLevel > 0)
@@ -304,15 +251,13 @@ class JavaTraversal implements Callable<Boolean> {
         }
         catch (Exception e) {
             e.printStackTrace();
-            System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
-            throw new RuntimeException();
+            System.out.println("(2) Error in main.configure(args): " + e.getMessage()); 
+            System.exit(1);
         }
 
         main.compilerOptions = new CompilerOptions(main.options);
-        main.compilerOptions.performMethodsFullRecovery = false;
         main.compilerOptions.performStatementsRecovery = false;
-     // main.compilerOptions.verbose = true;
-        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
+        main.compilerOptions.generateClassFiles = false;
 
         main.batchCompiler =  new Compiler(main.getLibraryAccess(),
                                            main.getHandlingPolicy(),
@@ -323,32 +268,60 @@ class JavaTraversal implements Callable<Boolean> {
                                            main.progress
                                           );
 
+        /**
+         * Add the initial set of compilation units into the loop
+         *  ->  build compilation unit declarations, their bindings and record their results.
+         */
         /* tps : handle compilation units--------------------------------------------- */
+        /*
+         *  Expand above protected function from ECJ's Compiler class.
+         */
         ICompilationUnit[] sourceUnits = main.getCompilationUnits();
         int maxUnits = sourceUnits.length;
-
         main.batchCompiler.totalUnits = 0;
         main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-        main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
 
-        try {
-            // writing to the DOT file
-            FileWriter fstream = new FileWriter("ast.dot");
-            out = new BufferedWriter(fstream);
-            out.write("Digraph G {\n");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error: " + e.getMessage()); 
-        }
+        internalBeginToCompile(main.batchCompiler, sourceUnits, maxUnits);
 
         return main;
     }
 
+    // TODO: Remove this !
+    static int totalUnits = 0;
+    static Runtime runtime = Runtime.getRuntime();
+    static long r1, r2, f1, f2;
+    
+    public static void startJava() {
+        System.gc();
+
+        r1 = runtime.totalMemory();
+        f1 = runtime.freeMemory();
+    }
+    
+    public static void endJava(ArrayList<CompilationUnitDeclaration> units) {
+        r2 = runtime.totalMemory();
+        f2 = runtime.freeMemory();
+        int size = units.size();
+        System.out.println();
+        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");    
+        System.out.println();
+        for (CompilationUnitDeclaration unit : units) {
+            System.out.println("   " + new String(unit.getFileName()));
+        }
+        System.out.println();
+        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+        System.out.println("**** Total Number of Units Processed: " + totalUnits);
+        System.out.println();
+    }
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
+
+    	startJava();
+    	
+        assert(! processedFiles.contains(args[args.length - 1]));
 
         // Filter out ROSE specific options.
         args = filterCommandline(args);
@@ -356,106 +329,105 @@ class JavaTraversal implements Callable<Boolean> {
         //
         // Generate all necessary classfiles if no errors are detected
         //
-        if (! compile(args)) { // errors are detected?
-            System.out.flush();
-            System.err.flush();
-
-            System.err.println();
-            System.err.println();
-            System.err.println("ECJ front-end errors detected in input java program");
-            throw new RuntimeException();
-        }
-        
         Main main = generateAst(args); // get compiler to generate AST.
+        if (main.globalErrorsCount > 0) { // errors were detected?
+            System.out.flush();
+            System.out.println();
+            System.out.println(main.globalErrorsCount + " ECJ front-end errors detected in input java program with " + main.getCompilationUnits().length + " compilation units");
+            System.exit(1);
+        }
+
         Compiler batchCompiler = main.batchCompiler; // get compiler to generate AST.
-        int maxUnits = main.getCompilationUnits().length;
+//        int maxUnits = main.getCompilationUnits().length;
         
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+        ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
         try {
             if (verboseLevel > 2)
                 System.out.println("test 7 ...");
 
-            JavaParser.cactionCompilationUnitList(maxUnits, args);
+            JavaParser.cactionCompilationUnitList();
 
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
 
             //
-            // What is the class path for these compilation units?
+            // To process the source files that were specified by the user iterate up to
+            // maxUnits. To iterate over all units, including the ones that are pulled 
+            // in by closure, iterate up to batchCompiler.totalUnits.
             //
-            String classpath = "";
-            for (int i = 0; i < args.length; i++) {
-                if (args[i].equals("-classpath") || args[i].equals("-cp")) {
-                    classpath = args[i+1];
-                    break;
-                }
-            }
-            JavaParserSupport java_parser_support = new JavaParserSupport(classpath, verboseLevel);
-
-            //
-            // Note the original commented out limit.  This is wrong!  We only want to process
-            // the source files that were specified by the user and not the ones that were 
-            // pulled in by closure.
-            //
-            for (int i = 0; i < maxUnits /*batchCompiler.totalUnits*/; i++) {
+            for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert(unit != null);
 
                 if (verboseLevel > 2)
                     System.out.println("calling batchCompiler.process(unit, i) ..." + new String(unit.getFileName()));
 
+                String filename = new String(unit.getFileName());
+                if (! processedFiles.contains(filename) && JavaParser.cactionIsSpecifiedSourceFile(filename)) {
                     batchCompiler.process(unit, i);
+                    processedFiles.add(filename);
+                    units.add(unit);
+                }
 
                 if (unit.compilationResult.hasSyntaxError || unit.compilationResult.hasErrors()) {
                     System.out.flush();
-                    System.err.flush();
-
-                    System.err.println();
-                    System.err.println();
-                    System.err.println("ECJ front-end errors detected in input java program");
-                    throw new RuntimeException();
+                    System.out.println();
+                    System.out.println("*** ECJ front-end errors detected in input java program:");
+                    System.out.println(unit.compilationResult.toString());
+                    System.out.println();
+//                    for (int k = 0; k < args.length; k++) {
+//                        System.out.println("    " + args[k]);
+//                    }
+//                    System.exit(1);
                 }
+            }
 
-                java_parser_support.preprocess(unit);
+            totalUnits += units.size();
+// TODO: Remove this !
+/*
+//System.out.println("MaxUnits = " + maxUnits);
+System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");    
+for (CompilationUnitDeclaration unit : units) {
+System.out.println("   " + new String(unit.getFileName()));
+}
+*/
+            //
+            //
+            //
+            try {
+                java_parser_support = new JavaParserSupport(verboseLevel);
+                java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+
+                // This should output the call stack.
+                System.out.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
             }
 
             //
-            // We only process the main unit to prevent the Unparser from generating multiple
-            // compilation units in the same file.
             //
-            /* for ( */ int i = 0; /* i < main.batchCompiler.totalUnits; i++)*/
-            {
+            //
+            for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
-                try {
-                    // **************************************************
-                    // This is where the traveral of the ECJ AST is done.
-                    // **************************************************
-                    java_parser_support.translate(unit);
-
-                    if (verboseLevel > 2)
-                        System.out.println("test 10 ...");
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
-
-                    // This should output the call stack.
-                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
-                }
-                finally {
-                    // cleanup compilation unit result
-                    unit.cleanUp();
-                }
+                unit.cleanUp();
                 batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                // TODO: Not sure why the next two lines are needed ... PC
                 batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
                 batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
             }
         }
+        catch (UnsatisfiedLinkError e) {
+            e.printStackTrace();
+            System.out.println("Ouch !!! Make sure that the signature of all native (jni?) methods match their corresponding Java headers. " + e.getMessage());
+        }
         catch (Exception e) {
             // DQ (11/1/2010): Added more aggressive termination of program...
             e.printStackTrace();
-            System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-            // throw new RuntimeException();
+            System.out.println("Error in JavaTraversal::main(): " + e.getMessage());
+            // System.exit(1);
 
             hasErrorOccurred = true;
             return;
@@ -463,33 +435,23 @@ class JavaTraversal implements Callable<Boolean> {
 
         JavaParser.cactionCompilationUnitListEnd();
 
-// TODO: REMOVE THIS !
-//        jt.invokeEND();
-        try {
-            // closing the DOT file
-            out.write("}\n");
-            out.close();
-        } 
-        catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error: " + e.getMessage());
-        }
-
+        endJava(units);
+        
         if (verboseLevel > 2)
             System.out.println("Done compiling");
     }
 
     // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
     public Boolean call() throws Exception {
-        if (verboseLevel > 0)
-            System.out.println("Parser exiting normally");
-
-        // return new Boolean(error);
         return Boolean.TRUE;
-    }// end call()
+    }
 
     // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
     public static boolean getError() {
         return hasErrorOccurred;
+    }
+
+    public static boolean hasConflicts(String file_name, String package_name, String class_name) {
+        return java_parser_support.hasConflicts(file_name, package_name, class_name);
     }
 }

@@ -56,7 +56,7 @@ endif
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
-	if test -f ompparser.hh; then $(LN_S) ompparser.hh ompparser.h; fi;
+	if test -f ompparser.hh; then $(LN_S) -f ompparser.hh ompparser.h; fi;
 
 # Force sage.docs to be make by default 
 # (if sage.docs.in is modified)
@@ -159,6 +159,7 @@ $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libsage3Sources = \
+   Utf8.C \
    rose_attributes_list.C \
    attachPreprocessingInfo.C \
    attachPreprocessingInfoTraversal.C \
@@ -171,6 +172,7 @@ libsage3Sources = \
    $(fSageSupport_la_sources)
 else
 libsage3Sources = \
+   Utf8.C \
    rose_attributes_list.C \
    attachPreprocessingInfo.C \
    attachPreprocessingInfoTraversal.C \

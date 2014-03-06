@@ -4329,7 +4329,7 @@ yyreduce:
 
 /* Line 1464 of yacc.c  */
 #line 362 "poet_yacc.y"
-    {(yyval).ptr = (yyvsp[(0) - (2)]).ptr + 1; }
+    {(yyval).ptr = ((char*)(yyvsp[(0) - (2)]).ptr) + 1; }
     break;
 
   case 242:

@@ -267,7 +267,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_170.c \
      test2012_171.c \
      test2012_172.c \
-     test2012_173.c \
      test2012_174.c \
      test2012_175.c \
      test2013_01.c \
@@ -343,6 +342,128 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_72.c \
      test2013_73.c \
      test2013_74.c \
+     test2013_75.c \
+     test2013_76.c \
+     test2013_77.c \
+     test2013_78.c \
+     test2013_79.c \
+     test2013_80.c \
+     test2013_81.c \
+     test2013_82.c \
+     test2013_83.c \
+     test2013_84.c \
+     test2013_85.c \
+     test2013_86.c \
+     test2013_87.c \
+     test2013_88.c \
+     test2013_89.c \
+     test2013_90.c \
+     test2013_91.c \
+     test2013_92.c \
+     test2013_93.c \
+     test2013_94.c \
+     test2013_95.c \
+     test2013_96.c \
+     test2013_97.c \
+     test2013_98.c \
+     test2013_99.c \
+     test2013_100.c \
+     test2013_101.c \
+     test2013_102.c \
+     test2013_103.c \
+     test2013_104.c \
+     test2013_105.c \
+     test2013_106.c \
+     test2013_107.c \
+     test2013_108.c \
+     test2013_109.c \
+     test2013_110.c \
+     test2013_111.c \
+     test2013_112.c \
+     test2013_113.c \
+     test2014_01.c \
+     test2014_02.c \
+     test2014_04.c \
+     test2014_05.c \
+     test2014_06.c \
+     test2014_07.c \
+     test2014_08.c \
+     test2014_09.c \
+     test2014_12.c \
+     test2014_13.c \
+     test2014_14.c \
+     test2014_15.c \
+     test2014_16.c \
+     test2014_17.c \
+     test2014_18.c \
+     test2014_19.c \
+     test2014_20.c \
+     test2014_21.c \
+     test2014_22.c \
+     test2014_23.c \
+     test2014_24.c \
+     test2014_25.c \
+     test2014_26.c \
+     test2014_27.c \
+     test2014_28.c \
+     test2014_29.c \
+     test2014_30.c \
+     test2014_31.c \
+     test2014_32.c \
+     test2014_33.c \
+     test2014_34.c \
+     test2014_35.c \
+     test2014_36.c \
+     test2014_37.c \
+     test2014_38.c \
+     test2014_39.c \
+     test2014_40.c \
+     test2014_41.c \
+     test2014_42.c \
+     test2014_43.c \
+     test2014_44.c \
+     test2014_46.c \
+     test2014_47.c \
+     test2014_48.c \
+     test2014_49.c \
+     test2014_50.c \
+     test2014_51.c \
+     test2014_52.c \
+     test2014_53.c \
+     test2014_55.c \
+     test2014_56.c \
+     test2014_57.c \
+     test2014_58.c \
+     test2014_60.c \
+     test2014_62.c \
+     test2014_63.c \
+     test2014_64.c \
+     test2014_65.c \
+     test2014_66.c \
+     test2014_67.c \
+     test2014_68.c \
+     test2014_69.c \
+     test2014_70.c \
+     test2014_72.c \
+     test2014_76.c \
+     test2014_77.c \
+     test2014_78.c \
+     test2014_79.c \
+     test2014_80.c \
+     test2014_81.c \
+     test2014_82.c \
+     test2014_83.c \
+     test2014_84.c \
+     test2014_85.c \
+     test2014_86.c \
+     test2014_87.c \
+     test2014_88.c \
+     test2014_89.c \
+     test2014_91.c \
+     test2014_92.c \
+     test2014_93.c \
+     test2014_94.c \
+     test2014_95.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -353,7 +474,33 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_12.c \
      test2010_11.c \
      test2010_14.c \
-     constants.c
+     constants.c \
+     $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+if OS_VENDOR_REDHAT_REL5
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173.c
+endif
+
+if OS_VENDOR_REDHAT_REL6
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173_redhat_rel6.c
+endif
+
+
+
+# DQ (1/5/2014): Some failing test codes:
+#     test2014_03.c  (demonstrates nested functions (not supported in EDG))
+#     test2014_10.c  (demonstrates enum type declaration at top of switch body (before first case); bug in ROSE switch implementation)
+#     test2014_11.c  (simpler case of test2014_10.c)
+#     test2014_45.c  (inconsitant function declarations, but consistant through typedefs)
+#     test2014_54.c  (old-stype C function parameters in wrong order, appears to be legal C but a problem for ROSE)
+#     test2014_59.c  (complex macro handling where variables are named using the __LINE__ macro)
+#     test2014_61.c  (example of assigned goto (gnu extension))
+#     test2014_71.c  (macro namespace intrudes into application namespace (macro suppression using "()")
+#     test2014_73.c  (example of anonymous union in an initializer)
+#     test2014_74.c  (another example similar to test2014_73.c)
+#     test2014_75.c  (incomplete code from application example, will not compile with gcc).
+#     test2014_90.c  (asm command that is incomplete -- the version built using CPP is in test2014_91.c).
+
 
 # DQ (9/9/2013): This is a problem for the new block support.
 #     test2012_23.c 
@@ -505,8 +652,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS)
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 # ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) $(OLD_TESTCODES_REQUIRED_TO_PASS)
@@ -519,6 +665,7 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # to explicitly specify the C89 behavior for make of the C test codes in this directory.
 # ROSE_FLAGS = -rose:C
 ROSE_FLAGS = -rose:C89
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -597,6 +744,22 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 #	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
 	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
 
+test_tokenMapping: 
+#	rm -f test2003_12.c.mapping.passed
+#	@$(MAKE) test2003_12.c.mapping.passed
+	$(testTranslator) -rose:C89 -rose:unparse_tokens -c $(top_srcdir)/tests/CompileTests/C_tests/test2003_12.c
+
+# DQ (1/19/2014): Test the use of the gnu "-S" option.
+test_gnu_S_option:
+	$(testTranslator) -S -o test2014_41.s $(top_srcdir)/tests/CompileTests/C_tests/test2014_41.c
+
+test_link_using_alias_attribute: $(testTranslator)
+	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
+
+# DQ (2/17/2014): Added to force test of two week old asm fix for linking that didn't make it out in github.
+test_link_using_asm_symbol_injection: $(testTranslator)
+	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -649,6 +812,8 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_link_using_asm_symbol_injection
+	@$(MAKE) test_link_using_alias_attribute
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
@@ -665,6 +830,8 @@ clean-local:
 	rm -rf test_directory
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
+	rm -f token_trailing_*.c token_leading_*.c
+
 
 ################################################################################
 #

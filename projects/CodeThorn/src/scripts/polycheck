@@ -1,0 +1,24 @@
+#!/bin/bash 
+
+# Author: Markus Schordan, 2014.
+
+function check {
+testname=$1
+./codethorn tests/polyhedral/${testname}.c --dump1=yes >& /dev/null
+sort -k1,1 -s arrayupdates.txt > ${testname}.check
+echo -n "$testname : "
+if(diff test.check ${testname}.check); then
+echo "PASS"
+else
+echo "FAIL"
+fi
+}
+
+
+./codethorn tests/polyhedral/test.c --dump1=yes >& /dev/null
+sort -k1,1 -s arrayupdates.txt > test.check
+
+check rose_test_fuse
+check rose_test_1Dtile
+check rose_test_2Dtile
+

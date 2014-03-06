@@ -1042,6 +1042,15 @@ HEADER_SUPER_EXPRESSION_START
 
 HEADER_SUPER_EXPRESSION_END
 
+HEADER_CLASS_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_CLASS_EXPRESSION_END
+
 HEADER_TUPLE_EXP_START
 HEADER_TUPLE_EXP_END
 
@@ -1438,6 +1447,39 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
+
+HEADER_JAVA_ANNOTATION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_ANNOTATION_END
+
+HEADER_JAVA_MARKER_ANNOTATION_START
+HEADER_JAVA_MARKER_ANNOTATION_END
+
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_START
+HEADER_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+HEADER_JAVA_NORMAL_ANNOTATION_START
+
+  // DQ (1/13/2014): Added append and prepend member functions to support Java annotations.
+     void append_value_pair (SgJavaMemberValuePair *what);
+     void prepend_value_pair(SgJavaMemberValuePair *what);
+
+HEADER_JAVA_NORMAL_ANNOTATION_END
+
+HEADER_JAVA_TYPE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_JAVA_TYPE_EXPRESSION_END
+
 
 // #########################################################
 // #########################################################
@@ -4342,6 +4384,13 @@ SgPointerDerefExp::get_type() const
                break;
              }
 #endif
+       // DQ (2/16/2014): Added this for the case of the new EDG interface (sometimes this case is required).
+          case V_SgTypeUnknown:
+             {
+               returnType = someType;
+               break;
+             }
+
           default:
              {
 // #ifndef ROSE_USE_EDG_VERSION_4
@@ -4992,6 +5041,9 @@ SOURCE_THIS_EXPRESSION_END
 SOURCE_SUPER_EXPRESSION_START
 SOURCE_SUPER_EXPRESSION_END
 
+SOURCE_CLASS_EXPRESSION_START
+SOURCE_CLASS_EXPRESSION_END
+
 SOURCE_TUPLE_EXP_START
 SOURCE_TUPLE_EXP_END
 
@@ -5269,34 +5321,40 @@ SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 SgClassDeclaration*
 SgConstructorInitializer::get_class_decl () const
 {
-    SgClassDeclaration *cdecl = NULL;
+    SgClassDeclaration *class_decl = NULL;
 
     if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
         // The constructor is declared (and is a member of a class type)
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
-        cdecl = isSgClassDeclaration(cdef->get_parent());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(cdef->get_parent());
+        assert(class_decl!=NULL);
     } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
         // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
         // p_expression_type's declaration.
-        cdecl = isSgClassDeclaration(expr_type->get_declaration());
-        assert(cdecl!=NULL);
+        class_decl = isSgClassDeclaration(expr_type->get_declaration());
+        assert(class_decl!=NULL);
     } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
 	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
 	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
 	    // SAGE Representation.
-        cdecl = isSgClassDeclaration(parmType->get_declaration());
-        ROSE_ASSERT(cdecl != NULL);    
+        class_decl = isSgClassDeclaration(parmType->get_declaration());
+        ROSE_ASSERT(class_decl != NULL);    
+    } else if (SgJavaQualifiedType *qualType = isSgJavaQualifiedType(p_expression_type)) {
+	    // 01/24/15 PC added case of SgJavaQualifiedType... Note that Strictly speaking,
+	    // an SgJavaQualifiedType is a class.  However, this is not the case in the current
+	    // SAGE Representation.
+        class_decl = isSgClassDeclaration(qualType->get_declaration());
+        ROSE_ASSERT(class_decl != NULL);    
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
 
-    if (cdecl) {
-        cdecl = isSgClassDeclaration(cdecl->get_firstNondefiningDeclaration());
-        assert(cdecl!=NULL);
+    if (class_decl) {
+        class_decl = isSgClassDeclaration(class_decl->get_firstNondefiningDeclaration());
+        assert(class_decl!=NULL);
     }
-    return cdecl;
+    return class_decl;
 }
 
 void
@@ -5309,7 +5367,8 @@ SgConstructorInitializer::post_construction_initialization()
        // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
        // an SgJavaParameterizedType is a class.  However, this is not the case in the current
        // SAGE Representation.
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+       //01/24/15 added case of SgJavaQualifiedType...
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
@@ -5959,6 +6018,18 @@ $CLASSNAME::get_type() const
    }
 
 SOURCE_GET_TYPE_SUPER_EXPRESSION_END
+
+SOURCE_GET_TYPE_CLASS_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     ROSE_ASSERT(get_class_symbol() != NULL);
+     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     return get_class_symbol() -> get_type();
+   }
+
+SOURCE_GET_TYPE_CLASS_EXPRESSION_END
 
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END
@@ -6777,3 +6848,59 @@ SgCudaKernelCallExp::post_construction_initialization()
 SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
+
+
+SOURCE_JAVA_ANNOTATION_START
+
+// DQ (1/13/2014): This function helps to provide a uniform interface even though 
+// the type is held in a field called p_expression_type.  This supports Java annotations
+// for the SgJavaMarkerAnnotation, SgJavaSingleMemberAnnotation, and SgJavaNormalAnnotation.
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_expression_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_JAVA_ANNOTATION_END
+
+SOURCE_JAVA_MARKER_ANNOTATION_START
+SOURCE_JAVA_MARKER_ANNOTATION_END
+
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_START
+SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION_END
+
+SOURCE_JAVA_NORMAL_ANNOTATION_START
+
+void
+SgJavaNormalAnnotation::append_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.push_back(what); }
+
+void
+SgJavaNormalAnnotation::prepend_value_pair(SgJavaMemberValuePair *what)
+   { what->set_parent(this); p_value_pair_list.insert(p_value_pair_list.begin(), what); }
+
+SOURCE_JAVA_NORMAL_ANNOTATION_END
+
+SOURCE_JAVA_TYPE_EXPRESSION_START
+
+//
+// Return the type associated with this Type expression.
+//
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_JAVA_TYPE_EXPRESSION_END
+

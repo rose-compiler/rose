@@ -4,12 +4,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "jserver.h"
 #include "ecj.h"
 
 using std::string;
 using namespace std;
+using namespace Rose::Frontend::Java::Ecj;
 
+jclass currentJavaTraversalClass = NULL;
+JNIEnv *currentEnvironment = NULL;
+jmethodID classHasConflictsMethod = NULL;
 static jmethodID jofp_get_method(int, const char*, const char*);
 
 // DQ (4/17/2011): This is not used.
@@ -68,29 +71,30 @@ static int jofp_invoke(int argc, char **argv) {
     if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
     // tps : this code is more transparent and easier to read
-    jclass cls = jserver_FindClass("JavaTraversal");
-    if (cls == NULL) {
+    ::currentJavaTraversalClass = jserver_FindClass("JavaTraversal");
+    if (::currentJavaTraversalClass == NULL) {
         fprintf(stderr,
                 "[ERROR] "
                 "Caught a JServer exception in the ECJ_ROSE_Connection.\n");
         jserver_handleException();
         throw std::runtime_error("[ECJ_ROSE_Connection] JServer Exception");
     }
-    jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
-    JNIEnv* env = getEnv();
+    jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, ::currentJavaTraversalClass, "main",  "([Ljava/lang/String;)V");
+    ::currentEnvironment = getEnv();
+    ::classHasConflictsMethod = jofp_get_method(STATIC_METHOD, "hasConflicts", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z");
 
-    (*env).CallStaticVoidMethod(cls, mainMethod,args);
-    if (env->ExceptionOccurred()) {
+    (*::currentEnvironment).CallStaticVoidMethod(::currentJavaTraversalClass, mainMethod, args);
+    if (::currentEnvironment -> ExceptionOccurred()) {
         fprintf(stderr,
                "[ERROR] "
                "Caught a JNI exception in the ECJ_ROSE_Connection.\n");
-        env->ExceptionDescribe();
-        env->ExceptionClear();
+        ::currentEnvironment -> ExceptionDescribe();
+        ::currentEnvironment -> ExceptionClear();
         throw std::runtime_error("[ECJ_ROSE_Connection] JNI Exception");
     }
 
     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
-    retval = (*env).CallBooleanMethod(cls, errorMethod);
+    retval = (*::currentEnvironment).CallBooleanMethod(::currentJavaTraversalClass, errorMethod);
     if (retval != 0) {
         fprintf(stderr,
                 "[ECJ_ROSE_Connection] [ERROR] JNI-C++ exception\n");
@@ -153,3 +157,4 @@ static jmethodID jofp_get_error_method() {
         errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
     return errorMethod;
 }
+

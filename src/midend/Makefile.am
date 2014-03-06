@@ -11,6 +11,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 include $(srcdir)/abstractHandle/Makefile_variables
+include $(srcdir)/abstractLayer/Makefile_variables
 include $(srcdir)/abstractMemoryObject/Makefile_variables
 include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
@@ -39,6 +40,7 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mAbstractHandlePath=abstractHandle#
+mAbstractLayerPath=abstractLayer#
 mAbstractMemoryObjectPath=abstractMemoryObject#
 mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
@@ -90,6 +92,7 @@ BUILT_SOURCES = $(mAstMatching_built_sources)
 
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \
+	$(mAbstractLayer_la_sources) \
 	$(mAbstractMemoryObject_la_sources) \
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
@@ -112,6 +115,7 @@ libmidend_la_DEPENDENCIES=\
 
 include_HEADERS = \
 	$(mAbstractHandle_includeHeaders) \
+	$(mAbstractLayer_includeHeaders) \
 	$(mAbstractMemoryObject_includeHeaders) \
 	$(mAstDiagnostics_includeHeaders) \
 	$(mAstProcessing_includeHeaders) \
@@ -128,6 +132,7 @@ include_HEADERS = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(mAbstractHandle_extraDist) \
+	$(mAbstractLayer_extraDist) \
 	$(mAbstractMemoryObject_extraDist) \
 	$(mAstDiagnostics_extraDist) \
 	$(mAstProcessing_extraDist) \
@@ -139,6 +144,7 @@ EXTRA_DIST = \
 
 clean-local:
 	$(mAbstractHandle_cleanLocal)
+	$(mAbstractLayer_cleanLocal)
 	$(mAbstractMemoryObject_cleanLocal)
 	$(mAstDiagnostics_cleanLocal)
 	$(mAstProcessing_cleanLocal)

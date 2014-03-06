@@ -23,8 +23,6 @@ addressTakenAnalysis_SOURCES = \
 	$(CODETHORN_SRC_ROOT)/Timer.cpp \
 	$(CODETHORN_SRC_ROOT)/AstTerm.C \
 	$(CODETHORN_SRC_ROOT)/AnalysisAbstractionLayer.C \
-	$(CODETHORN_SRC_ROOT)/SgNodeHelper.C \
-	$(CODETHORN_SRC_ROOT)/VariableIdMapping.C \
 	$(CODETHORN_SRC_ROOT)/Miscellaneous.C \
 	$(CODETHORN_SRC_ROOT)/CommandLineOptions.C \
 	addressTakenAnalysis.C \

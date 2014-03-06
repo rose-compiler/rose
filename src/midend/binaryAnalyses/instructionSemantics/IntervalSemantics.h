@@ -133,14 +133,20 @@ namespace BinaryAnalysis {              // documented elsewhere
                     p_intervals = intervals;
                 }
 
-                /** Print the value. */
-                void print(std::ostream &o, const BaseSemantics::SEMANTIC_NO_PRINT_HELPER *pr=NULL) const {
+                /** Print the value.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter&) const {
                     o <<p_intervals <<"[" <<nBits <<"]";
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
                     e.print(o);
                     return o;
                 }
+                /** @}*/
 
                 /** Returns true if the value is a known constant. */
                 bool is_known() const {
@@ -896,14 +902,20 @@ namespace BinaryAnalysis {              // documented elsewhere
                  **************************************************************************************************************/
             public:
 
-                /** Print the current state of this policy. */
+                /** Print the current state of this policy.
+                 * @{ */
                 void print(std::ostream &o) const {
-                    cur_state.template print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    cur_state.print(o, fmt);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
                     p.print(o);
                     return o;
                 }
+                /** @} */
             };
         } /*namespace*/
     } /*namespace*/

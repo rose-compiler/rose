@@ -1,6 +1,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80482c8:push   ebp
     ax = v64
     cx = v65
@@ -36,6 +37,7 @@
         size=4; addr=v68-0x4 [from 0x80482c8:push   ebp]; value=v69
     }
     ip = 0x80482c9 [from 0x80482c8:push   ebp]
+
 0x80482c9:mov    ebp, esp
     ax = v64
     cx = v65
@@ -71,6 +73,7 @@
         size=4; addr=v68-0x4 [from 0x80482c8:push   ebp]; value=v69
     }
     ip = 0x80482cb [from 0x80482c9:mov    ebp, esp]
+
 0x80482cb:sub    esp, 0x08
     ax = v64
     cx = v65
@@ -106,6 +109,7 @@
         size=4; addr=v68-0x4 [from 0x80482c8:push   ebp]; value=v69
     }
     ip = 0x80482ce [from 0x80482cb:sub    esp, 0x08]
+
 0x80482ce:call   0x08048364<call_gmon_start>
     ax = v64
     cx = v65
@@ -144,6 +148,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80482d3:call   0x080483d0<frame_dummy>
     ax = v449
     cx = v450
@@ -182,6 +187,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80482d8:call   0x08048580<__do_global_ctors_aux>
     ax = v675
     cx = v676
@@ -220,6 +226,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80482dd:leave  
     ax = v901
     cx = v902
@@ -253,6 +260,7 @@
     ?15 = v930
     memory = {}
     ip = 0x80482de [from 0x80482dd:leave  ]
+
 0x80482de:ret    
     ax = v901
     cx = v902
@@ -289,6 +297,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
     ax = v1051
     cx = v1052
@@ -325,6 +334,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
     ax = v1152
     cx = v1153
@@ -361,6 +371,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
     ax = v1253
     cx = v1254
@@ -397,6 +408,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
     ax = v1354
     cx = v1355
@@ -433,6 +445,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
     ax = v1455
     cx = v1456
@@ -469,6 +482,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048340:xor    ebp, ebp
     ax = v1556
     cx = v1557
@@ -502,6 +516,7 @@
     ?15 = v1585
     memory = {}
     ip = 0x8048342 [from 0x8048340:xor    ebp, ebp]
+
 0x8048342:pop    esi
     ax = v1556
     cx = v1557
@@ -535,6 +550,7 @@
     ?15 = v1585
     memory = {}
     ip = 0x8048343 [from 0x8048342:pop    esi]
+
 0x8048343:mov    ecx, esp
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -568,12 +584,13 @@
     ?15 = v1585
     memory = {}
     ip = 0x8048345 [from 0x8048343:mov    ecx, esp]
-0x8048345:and    esp, 0xf0<-0x10>
+
+0x8048345:and    esp, 0xf0<-16>
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
     dx = v1558
     bx = v1559
-    sp = v1761 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    sp = v1761 [from 0x8048345:and    esp, 0xf0<-16>]
     bp = 0x0 [from 0x8048340:xor    ebp, ebp]
     si = v1663 [from 0x8048342:pop    esi]
     di = v1563
@@ -583,24 +600,25 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
     ?15 = v1585
     memory = {}
-    ip = 0x8048348 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    ip = 0x8048348 [from 0x8048345:and    esp, 0xf0<-16>]
+
 0x8048348:push   eax
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -616,18 +634,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -636,6 +654,7 @@
         size=4; addr=v1761-0x4 [from 0x8048348:push   eax]; value=v1556
     }
     ip = 0x8048349 [from 0x8048348:push   eax]
+
 0x8048349:push   esp
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -651,18 +670,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -671,6 +690,7 @@
         size=4; addr=v1809-0x4 [from 0x8048349:push   esp]; value=v1809 [from 0x8048348:push   eax]
     }
     ip = 0x804834a [from 0x8048349:push   esp]
+
 0x804834a:push   edx
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -686,18 +706,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -706,6 +726,7 @@
         size=4; addr=v1851-0x4 [from 0x804834a:push   edx]; value=v1558
     }
     ip = 0x804834b [from 0x804834a:push   edx]
+
 0x804834b:push   0x08048520<__libc_csu_fini>
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -721,18 +742,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -741,6 +762,7 @@
         size=4; addr=v1893-0x4 [from 0x804834b:push   0x08048520<__libc_csu_fini>]; value=0x8048520 [from 0x804834b:push   0x08048520<__libc_csu_fini>]
     }
     ip = 0x8048350 [from 0x804834b:push   0x08048520<__libc_csu_fini>]
+
 0x8048350:push   0x080484b0<__libc_csu_init>
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -756,18 +778,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -776,6 +798,7 @@
         size=4; addr=v1935-0x4 [from 0x8048350:push   0x080484b0<__libc_csu_init>]; value=0x80484b0 [from 0x8048350:push   0x080484b0<__libc_csu_init>]
     }
     ip = 0x8048355 [from 0x8048350:push   0x080484b0<__libc_csu_init>]
+
 0x8048355:push   ecx
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -791,18 +814,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -811,6 +834,7 @@
         size=4; addr=v1977-0x4 [from 0x8048355:push   ecx]; value=v1700 [from 0x8048343:mov    ecx, esp]
     }
     ip = 0x8048356 [from 0x8048355:push   ecx]
+
 0x8048356:push   esi
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -826,18 +850,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -846,6 +870,7 @@
         size=4; addr=v2019-0x4 [from 0x8048356:push   esi]; value=v1663 [from 0x8048342:pop    esi]
     }
     ip = 0x8048357 [from 0x8048356:push   esi]
+
 0x8048357:push   0x08048410<main>
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -861,18 +886,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -881,6 +906,7 @@
         size=4; addr=v2061-0x4 [from 0x8048357:push   0x08048410<main>]; value=0x8048410 [from 0x8048357:push   0x08048410<main>]
     }
     ip = 0x804835c [from 0x8048357:push   0x08048410<main>]
+
 0x804835c:call   0x08048310<__libc_start_main@plt>
     ax = v1556
     cx = v1700 [from 0x8048343:mov    ecx, esp]
@@ -896,18 +922,18 @@
     ds = v1567
     fs = v1568
     gs = v1569
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     ?1 = v1571
-    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    pf = -v1754-0x1 [from 0x8048345:and    esp, 0xf0<-16>]
     ?3 = v1573
     af = <top>
     ?5 = v1575
-    zf = v1759 [from 0x8048345:and    esp, 0xf0<-0x10>]
-    sf = v1757 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    zf = v1759 [from 0x8048345:and    esp, 0xf0<-16>]
+    sf = v1757 [from 0x8048345:and    esp, 0xf0<-16>]
     tf = v1578
     if = v1579
     df = v1580
-    of = 0x0 [from 0x8048345:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0<-16>]
     iopl0 = v1582
     iopl1 = v1583
     nt = v1584
@@ -919,6 +945,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048361:hlt    
     ax = v2331
     cx = v2332
@@ -955,6 +982,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048364:push   ebp
     ax = v2429
     cx = v2430
@@ -990,6 +1018,7 @@
         size=4; addr=v2433-0x4 [from 0x8048364:push   ebp]; value=v2434
     }
     ip = 0x8048365 [from 0x8048364:push   ebp]
+
 0x8048365:mov    ebp, esp
     ax = v2429
     cx = v2430
@@ -1025,6 +1054,7 @@
         size=4; addr=v2433-0x4 [from 0x8048364:push   ebp]; value=v2434
     }
     ip = 0x8048367 [from 0x8048365:mov    ebp, esp]
+
 0x8048367:push   ebx
     ax = v2429
     cx = v2430
@@ -1060,6 +1090,7 @@
         size=4; addr=v2469-0x4 [from 0x8048367:push   ebx]; value=v2432
     }
     ip = 0x8048368 [from 0x8048367:push   ebx]
+
 0x8048368:push   ecx
     ax = v2429
     cx = v2430
@@ -1095,6 +1126,7 @@
         size=4; addr=v2548-0x4 [from 0x8048368:push   ecx]; value=v2430
     }
     ip = 0x8048369 [from 0x8048368:push   ecx]
+
 0x8048369:call   0x0804836e<<Insn>>
     ax = v2429
     cx = v2430
@@ -1133,6 +1165,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804836e:pop    ebx
     ax = v2728
     cx = v2729
@@ -1166,11 +1199,12 @@
     ?15 = v2757
     memory = {}
     ip = 0x804836f [from 0x804836e:pop    ebx]
-0x804836f:add    ebx, 0x0000135a
+
+0x804836f:add    ebx, 0x0000135a<4954>
     ax = v2728
     cx = v2729
     dx = v2730
-    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a]
+    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x804836e:pop    ebx]
     bp = v2733
     si = v2734
@@ -1181,29 +1215,30 @@
     ds = v2739
     fs = v2740
     gs = v2741
-    cf = v2838 [from 0x804836f:add    ebx, 0x0000135a]
+    cf = v2838 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?1 = v2743
-    pf = -v2829-0x1 [from 0x804836f:add    ebx, 0x0000135a]
+    pf = -v2829-0x1 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?3 = v2745
-    af = v2836 [from 0x804836f:add    ebx, 0x0000135a]
+    af = v2836 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?5 = v2747
-    zf = v2834 [from 0x804836f:add    ebx, 0x0000135a]
-    sf = v2832 [from 0x804836f:add    ebx, 0x0000135a]
+    zf = v2834 [from 0x804836f:add    ebx, 0x0000135a<4954>]
+    sf = v2832 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     tf = v2750
     if = v2751
     df = v2752
-    of = v2842 [from 0x804836f:add    ebx, 0x0000135a]
+    of = v2842 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     iopl0 = v2754
     iopl1 = v2755
     nt = v2756
     ?15 = v2757
     memory = {}
-    ip = 0x8048375 [from 0x804836f:add    ebx, 0x0000135a]
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+    ip = 0x8048375 [from 0x804836f:add    ebx, 0x0000135a<4954>]
+
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]]
-    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a]
+    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x804836e:pop    ebx]
     bp = v2733
     si = v2734
@@ -1214,29 +1249,30 @@
     ds = v2739
     fs = v2740
     gs = v2741
-    cf = v2838 [from 0x804836f:add    ebx, 0x0000135a]
+    cf = v2838 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?1 = v2743
-    pf = -v2829-0x1 [from 0x804836f:add    ebx, 0x0000135a]
+    pf = -v2829-0x1 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?3 = v2745
-    af = v2836 [from 0x804836f:add    ebx, 0x0000135a]
+    af = v2836 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     ?5 = v2747
-    zf = v2834 [from 0x804836f:add    ebx, 0x0000135a]
-    sf = v2832 [from 0x804836f:add    ebx, 0x0000135a]
+    zf = v2834 [from 0x804836f:add    ebx, 0x0000135a<4954>]
+    sf = v2832 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     tf = v2750
     if = v2751
     df = v2752
-    of = v2842 [from 0x804836f:add    ebx, 0x0000135a]
+    of = v2842 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     iopl0 = v2754
     iopl1 = v2755
     nt = v2756
     ?15 = v2757
     memory = {}
-    ip = 0x804837b [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]]
+    ip = 0x804837b [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+
 0x804837b:test   edx, edx
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]]
-    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a]
+    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x804836e:pop    ebx]
     bp = v2733
     si = v2734
@@ -1265,11 +1301,12 @@
     ?15 = v2757
     memory = {}
     ip = 0x804837d [from 0x804837b:test   edx, edx]
+
 0x804837d:je     0x08048384<<Insn>>
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]]
-    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a]
+    dx = v2885 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    bx = v2844 [from 0x804836f:add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x804836e:pop    ebx]
     bp = v2733
     si = v2734
@@ -1301,6 +1338,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804837f:call   0x08048330<__gmon_start__@plt>
     ax = v3115
     cx = v3116
@@ -1339,6 +1377,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048384:pop    eax
     ax = v3381 [from 0x8048384:pop    eax]
     cx = v3342
@@ -1372,6 +1411,7 @@
     ?15 = v3370
     memory = {}
     ip = 0x8048385 [from 0x8048384:pop    eax]
+
 0x8048385:pop    ebx
     ax = v3381 [from 0x8048384:pop    eax]
     cx = v3342
@@ -1405,6 +1445,7 @@
     ?15 = v3370
     memory = {}
     ip = 0x8048386 [from 0x8048385:pop    ebx]
+
 0x8048386:leave  
     ax = v3381 [from 0x8048384:pop    eax]
     cx = v3342
@@ -1438,6 +1479,7 @@
     ?15 = v3370
     memory = {}
     ip = 0x8048387 [from 0x8048386:leave  ]
+
 0x8048387:ret    
     ax = v3381 [from 0x8048384:pop    eax]
     cx = v3342
@@ -1474,6 +1516,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048390:push   ebp
     ax = v3575
     cx = v3576
@@ -1509,6 +1552,7 @@
         size=4; addr=v3579-0x4 [from 0x8048390:push   ebp]; value=v3580
     }
     ip = 0x8048391 [from 0x8048390:push   ebp]
+
 0x8048391:mov    ebp, esp
     ax = v3575
     cx = v3576
@@ -1544,6 +1588,7 @@
         size=4; addr=v3579-0x4 [from 0x8048390:push   ebp]; value=v3580
     }
     ip = 0x8048393 [from 0x8048391:mov    ebp, esp]
+
 0x8048393:sub    esp, 0x08
     ax = v3575
     cx = v3576
@@ -1579,6 +1624,7 @@
         size=4; addr=v3579-0x4 [from 0x8048390:push   ebp]; value=v3580
     }
     ip = 0x8048396 [from 0x8048393:sub    esp, 0x08]
+
 0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
     ax = v3575
     cx = v3576
@@ -1614,6 +1660,7 @@
         size=4; addr=v3579-0x4 [from 0x8048390:push   ebp]; value=v3580
     }
     ip = 0x804839d [from 0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+
 0x804839d:jne    0x080483cc<<Insn>>
     ax = v3575
     cx = v3576
@@ -1652,6 +1699,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
     ax = v4015 [from 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v3979
@@ -1685,6 +1733,7 @@
     ?15 = v4007
     memory = {}
     ip = 0x80483a4 [from 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+
 0x80483a4:mov    edx, DWORD PTR ds:[eax]
     ax = v4015 [from 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v3979
@@ -1718,6 +1767,7 @@
     ?15 = v4007
     memory = {}
     ip = 0x80483a6 [from 0x80483a4:mov    edx, DWORD PTR ds:[eax]]
+
 0x80483a6:test   edx, edx
     ax = v4015 [from 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v3979
@@ -1751,6 +1801,7 @@
     ?15 = v4007
     memory = {}
     ip = 0x80483a8 [from 0x80483a6:test   edx, edx]
+
 0x80483a8:je     0x080483c5<<Insn>>
     ax = v4015 [from 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v3979
@@ -1787,6 +1838,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483aa:lea    esi, [esi + 0x00000000]
     ax = v4284
     cx = v4285
@@ -1820,6 +1872,7 @@
     ?15 = v4313
     memory = {}
     ip = 0x80483b0 [from 0x80483aa:lea    esi, [esi + 0x00000000]]
+
 0x80483b0:add    eax, 0x04
     ax = v4397 [from 0x80483b0:add    eax, 0x04]
     cx = v4285
@@ -1853,6 +1906,7 @@
     ?15 = v4313
     memory = {}
     ip = 0x80483b3 [from 0x80483b0:add    eax, 0x04]
+
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
     ax = v4397 [from 0x80483b0:add    eax, 0x04]
     cx = v4285
@@ -1888,6 +1942,7 @@
         size=4; addr=0x80496f0 [from 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax]; value=v4397 [from 0x80483b0:add    eax, 0x04]
     }
     ip = 0x80483b8 [from 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax]
+
 0x80483b8:call   edx
     ax = v4397 [from 0x80483b0:add    eax, 0x04]
     cx = v4285
@@ -1926,6 +1981,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
     ax = v4671 [from 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v4635
@@ -1959,6 +2015,7 @@
     ?15 = v4663
     memory = {}
     ip = 0x80483bf [from 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+
 0x80483bf:mov    edx, DWORD PTR ds:[eax]
     ax = v4671 [from 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v4635
@@ -1992,6 +2049,7 @@
     ?15 = v4663
     memory = {}
     ip = 0x80483c1 [from 0x80483bf:mov    edx, DWORD PTR ds:[eax]]
+
 0x80483c1:test   edx, edx
     ax = v4671 [from 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v4635
@@ -2025,6 +2083,7 @@
     ?15 = v4663
     memory = {}
     ip = 0x80483c3 [from 0x80483c1:test   edx, edx]
+
 0x80483c3:jne    0x080483b0<<Insn>>
     ax = v4671 [from 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
     cx = v4635
@@ -2061,6 +2120,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
     ax = v4941
     cx = v4942
@@ -2096,6 +2156,7 @@
         size=1; addr=0x80496f4 [from 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
     }
     ip = 0x80483cc [from 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
+
 0x80483cc:leave  
     ax = v4941
     cx = v4942
@@ -2131,6 +2192,7 @@
         size=1; addr=0x80496f4 [from 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
     }
     ip = 0x80483cd [from 0x80483cc:leave  ]
+
 0x80483cd:ret    
     ax = v4941
     cx = v4942
@@ -2169,6 +2231,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483d0:push   ebp
     ax = v5130
     cx = v5131
@@ -2204,6 +2267,7 @@
         size=4; addr=v5134-0x4 [from 0x80483d0:push   ebp]; value=v5135
     }
     ip = 0x80483d1 [from 0x80483d0:push   ebp]
+
 0x80483d1:mov    ebp, esp
     ax = v5130
     cx = v5131
@@ -2239,6 +2303,7 @@
         size=4; addr=v5134-0x4 [from 0x80483d0:push   ebp]; value=v5135
     }
     ip = 0x80483d3 [from 0x80483d1:mov    ebp, esp]
+
 0x80483d3:sub    esp, 0x08
     ax = v5130
     cx = v5131
@@ -2274,6 +2339,7 @@
         size=4; addr=v5134-0x4 [from 0x80483d0:push   ebp]; value=v5135
     }
     ip = 0x80483d6 [from 0x80483d3:sub    esp, 0x08]
+
 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
     ax = v5326 [from 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
     cx = v5131
@@ -2309,6 +2375,7 @@
         size=4; addr=v5134-0x4 [from 0x80483d0:push   ebp]; value=v5135
     }
     ip = 0x80483db [from 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
+
 0x80483db:test   eax, eax
     ax = v5326 [from 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
     cx = v5131
@@ -2344,6 +2411,7 @@
         size=4; addr=v5134-0x4 [from 0x80483d0:push   ebp]; value=v5135
     }
     ip = 0x80483dd [from 0x80483db:test   eax, eax]
+
 0x80483dd:je     0x08048400<<Insn>>
     ax = v5326 [from 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
     cx = v5131
@@ -2382,6 +2450,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483df:mov    eax, 0x00000000
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2415,6 +2484,7 @@
     ?15 = v5585
     memory = {}
     ip = 0x80483e4 [from 0x80483df:mov    eax, 0x00000000]
+
 0x80483e4:test   eax, eax
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2448,6 +2518,7 @@
     ?15 = v5585
     memory = {}
     ip = 0x80483e6 [from 0x80483e4:test   eax, eax]
+
 0x80483e6:je     0x08048400<<Insn>>
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2481,6 +2552,7 @@
     ?15 = v5585
     memory = {}
     ip = 0x8048400 [from 0x80483e6:je     0x08048400<<Insn>>]
+
 0x8048400:mov    esp, ebp
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2514,6 +2586,7 @@
     ?15 = v5585
     memory = {}
     ip = 0x8048402 [from 0x8048400:mov    esp, ebp]
+
 0x8048402:pop    ebp
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2547,6 +2620,7 @@
     ?15 = v5585
     memory = {}
     ip = 0x8048403 [from 0x8048402:pop    ebp]
+
 0x8048403:ret    
     ax = 0x0 [from 0x80483df:mov    eax, 0x00000000]
     cx = v5557
@@ -2583,6 +2657,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
     ax = v5884
     cx = v5885
@@ -2618,6 +2693,7 @@
         size=4; addr=v5888; value=0x80495f8 [from 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>]
     }
     ip = 0x80483ef [from 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>]
+
 0x80483ef:call   0x00000000
     ax = v5884
     cx = v5885
@@ -2657,6 +2733,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80483f4:lea    esi, [esi + 0x00000000]
     ax = v6149
     cx = v6150
@@ -2690,6 +2767,7 @@
     ?15 = v6178
     memory = {}
     ip = 0x80483fa [from 0x80483f4:lea    esi, [esi + 0x00000000]]
+
 0x80483fa:lea    edi, [edi + 0x00000000]
     ax = v6149
     cx = v6150
@@ -2726,6 +2804,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048410:push   ebp
     ax = v6319
     cx = v6320
@@ -2761,6 +2840,7 @@
         size=4; addr=v6323-0x4 [from 0x8048410:push   ebp]; value=v6324
     }
     ip = 0x8048411 [from 0x8048410:push   ebp]
+
 0x8048411:mov    edx, 0x08048480<handler>
     ax = v6319
     cx = v6320
@@ -2796,6 +2876,7 @@
         size=4; addr=v6323-0x4 [from 0x8048410:push   ebp]; value=v6324
     }
     ip = 0x8048416 [from 0x8048411:mov    edx, 0x08048480<handler>]
+
 0x8048416:mov    ebp, esp
     ax = v6319
     cx = v6320
@@ -2831,6 +2912,7 @@
         size=4; addr=v6323-0x4 [from 0x8048410:push   ebp]; value=v6324
     }
     ip = 0x8048418 [from 0x8048416:mov    ebp, esp]
+
 0x8048418:sub    esp, 0x08
     ax = v6319
     cx = v6320
@@ -2866,12 +2948,13 @@
         size=4; addr=v6323-0x4 [from 0x8048410:push   ebp]; value=v6324
     }
     ip = 0x804841b [from 0x8048418:sub    esp, 0x08]
-0x804841b:and    esp, 0xf0<-0x10>
+
+0x804841b:and    esp, 0xf0<-16>
     ax = v6319
     cx = v6320
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
     bx = v6322
-    sp = v6574 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    sp = v6574 [from 0x804841b:and    esp, 0xf0<-16>]
     bp = v6433 [from 0x8048416:mov    ebp, esp]
     si = v6325
     di = v6326
@@ -2881,18 +2964,18 @@
     ds = v6330
     fs = v6331
     gs = v6332
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     ?1 = v6334
-    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-16>]
     ?3 = v6336
     af = <top>
     ?5 = v6338
-    zf = v6572 [from 0x804841b:and    esp, 0xf0<-0x10>]
-    sf = v6570 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    zf = v6572 [from 0x804841b:and    esp, 0xf0<-16>]
+    sf = v6570 [from 0x804841b:and    esp, 0xf0<-16>]
     tf = v6341
     if = v6342
     df = v6343
-    of = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     iopl0 = v6345
     iopl1 = v6346
     nt = v6347
@@ -2900,13 +2983,14 @@
     memory = {
         size=4; addr=v6323-0x4 [from 0x8048410:push   ebp]; value=v6324
     }
-    ip = 0x804841e [from 0x804841b:and    esp, 0xf0<-0x10>]
+    ip = 0x804841e [from 0x804841b:and    esp, 0xf0<-16>]
+
 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx
     ax = v6319
     cx = v6320
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
     bx = v6322
-    sp = v6574 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    sp = v6574 [from 0x804841b:and    esp, 0xf0<-16>]
     bp = v6433 [from 0x8048416:mov    ebp, esp]
     si = v6325
     di = v6326
@@ -2916,18 +3000,18 @@
     ds = v6330
     fs = v6331
     gs = v6332
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     ?1 = v6334
-    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-16>]
     ?3 = v6336
     af = <top>
     ?5 = v6338
-    zf = v6572 [from 0x804841b:and    esp, 0xf0<-0x10>]
-    sf = v6570 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    zf = v6572 [from 0x804841b:and    esp, 0xf0<-16>]
+    sf = v6570 [from 0x804841b:and    esp, 0xf0<-16>]
     tf = v6341
     if = v6342
     df = v6343
-    of = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     iopl0 = v6345
     iopl1 = v6346
     nt = v6347
@@ -2936,12 +3020,13 @@
         size=4; addr=v6574+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
     }
     ip = 0x8048422 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]
+
 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a
     ax = v6319
     cx = v6320
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
     bx = v6322
-    sp = v6574 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    sp = v6574 [from 0x804841b:and    esp, 0xf0<-16>]
     bp = v6433 [from 0x8048416:mov    ebp, esp]
     si = v6325
     di = v6326
@@ -2951,27 +3036,28 @@
     ds = v6330
     fs = v6331
     gs = v6332
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     ?1 = v6334
-    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-16>]
     ?3 = v6336
     af = <top>
     ?5 = v6338
-    zf = v6572 [from 0x804841b:and    esp, 0xf0<-0x10>]
-    sf = v6570 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    zf = v6572 [from 0x804841b:and    esp, 0xf0<-16>]
+    sf = v6570 [from 0x804841b:and    esp, 0xf0<-16>]
     tf = v6341
     if = v6342
     df = v6343
-    of = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     iopl0 = v6345
     iopl1 = v6346
     nt = v6347
     ?15 = v6348
     memory = {
-        size=4; addr=v6574 [from 0x804841b:and    esp, 0xf0<-0x10>]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
+        size=4; addr=v6574 [from 0x804841b:and    esp, 0xf0<-16>]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
         size=4; addr=v6574+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
     }
     ip = 0x8048429 [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
+
 0x8048429:call   0x080482f0<signal@plt>
     ax = v6319
     cx = v6320
@@ -2987,24 +3073,24 @@
     ds = v6330
     fs = v6331
     gs = v6332
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     ?1 = v6334
-    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    pf = -v6567-0x1 [from 0x804841b:and    esp, 0xf0<-16>]
     ?3 = v6336
     af = <top>
     ?5 = v6338
-    zf = v6572 [from 0x804841b:and    esp, 0xf0<-0x10>]
-    sf = v6570 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    zf = v6572 [from 0x804841b:and    esp, 0xf0<-16>]
+    sf = v6570 [from 0x804841b:and    esp, 0xf0<-16>]
     tf = v6341
     if = v6342
     df = v6343
-    of = 0x0 [from 0x804841b:and    esp, 0xf0<-0x10>]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0<-16>]
     iopl0 = v6345
     iopl1 = v6346
     nt = v6347
     ?15 = v6348
     memory = {
-        size=4; addr=v6574 [from 0x804841b:and    esp, 0xf0<-0x10>]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
+        size=4; addr=v6574 [from 0x804841b:and    esp, 0xf0<-16>]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
         size=4; addr=v6574+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x08048480<handler>]
         size=4; addr=v6574-0x4 [from 0x8048429:call   0x080482f0<signal@plt>]; value=0x804842e [from 0x8048429:call   0x080482f0<signal@plt>]
     }
@@ -3012,6 +3098,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804842e:mov    esp, ebp
     ax = v6888
     cx = v6889
@@ -3045,6 +3132,7 @@
     ?15 = v6917
     memory = {}
     ip = 0x8048430 [from 0x804842e:mov    esp, ebp]
+
 0x8048430:xor    eax, eax
     ax = 0x0 [from 0x8048430:xor    eax, eax]
     cx = v6889
@@ -3078,6 +3166,7 @@
     ?15 = v6917
     memory = {}
     ip = 0x8048432 [from 0x8048430:xor    eax, eax]
+
 0x8048432:pop    ebp
     ax = 0x0 [from 0x8048430:xor    eax, eax]
     cx = v6889
@@ -3111,6 +3200,7 @@
     ?15 = v6917
     memory = {}
     ip = 0x8048433 [from 0x8048432:pop    ebp]
+
 0x8048433:ret    
     ax = 0x0 [from 0x8048430:xor    eax, eax]
     cx = v6889
@@ -3147,6 +3237,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048440:push   ebp
     ax = v7140
     cx = v7141
@@ -3182,6 +3273,7 @@
         size=4; addr=v7144-0x4 [from 0x8048440:push   ebp]; value=v7145
     }
     ip = 0x8048441 [from 0x8048440:push   ebp]
+
 0x8048441:mov    ebp, esp
     ax = v7140
     cx = v7141
@@ -3217,6 +3309,7 @@
         size=4; addr=v7144-0x4 [from 0x8048440:push   ebp]; value=v7145
     }
     ip = 0x8048443 [from 0x8048441:mov    ebp, esp]
+
 0x8048443:sub    esp, 0x08
     ax = v7140
     cx = v7141
@@ -3252,6 +3345,7 @@
         size=4; addr=v7144-0x4 [from 0x8048440:push   ebp]; value=v7145
     }
     ip = 0x8048446 [from 0x8048443:sub    esp, 0x08]
+
 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v7140
     cx = v7141
@@ -3287,6 +3381,7 @@
         size=4; addr=v7297 [from 0x8048443:sub    esp, 0x08]; value=0x80485d4 [from 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
     ip = 0x804844d [from 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+
 0x804844d:call   0x08048300<puts@plt>
     ax = v7140
     cx = v7141
@@ -3326,6 +3421,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048452:mov    esp, ebp
     ax = v7564
     cx = v7565
@@ -3359,6 +3455,7 @@
     ?15 = v7593
     memory = {}
     ip = 0x8048454 [from 0x8048452:mov    esp, ebp]
+
 0x8048454:pop    ebp
     ax = v7564
     cx = v7565
@@ -3392,6 +3489,7 @@
     ?15 = v7593
     memory = {}
     ip = 0x8048455 [from 0x8048454:pop    ebp]
+
 0x8048455:ret    
     ax = v7564
     cx = v7565
@@ -3428,6 +3526,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048460:push   ebp
     ax = v7749
     cx = v7750
@@ -3463,6 +3562,7 @@
         size=4; addr=v7753-0x4 [from 0x8048460:push   ebp]; value=v7754
     }
     ip = 0x8048461 [from 0x8048460:push   ebp]
+
 0x8048461:mov    ebp, esp
     ax = v7749
     cx = v7750
@@ -3498,6 +3598,7 @@
         size=4; addr=v7753-0x4 [from 0x8048460:push   ebp]; value=v7754
     }
     ip = 0x8048463 [from 0x8048461:mov    ebp, esp]
+
 0x8048463:sub    esp, 0x08
     ax = v7749
     cx = v7750
@@ -3533,6 +3634,7 @@
         size=4; addr=v7753-0x4 [from 0x8048460:push   ebp]; value=v7754
     }
     ip = 0x8048466 [from 0x8048463:sub    esp, 0x08]
+
 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v7749
     cx = v7750
@@ -3568,6 +3670,7 @@
         size=4; addr=v7906 [from 0x8048463:sub    esp, 0x08]; value=0x80485d4 [from 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
     ip = 0x804846d [from 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+
 0x804846d:call   0x08048300<puts@plt>
     ax = v7749
     cx = v7750
@@ -3607,6 +3710,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000
     ax = v8173
     cx = v8174
@@ -3642,6 +3746,7 @@
         size=4; addr=v8177; value=0x0 [from 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000]
     }
     ip = 0x8048479 [from 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000]
+
 0x8048479:call   0x08048320<_exit@plt>
     ax = v8173
     cx = v8174
@@ -3681,6 +3786,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048480:push   ebp
     ax = v8438
     cx = v8439
@@ -3716,6 +3822,7 @@
         size=4; addr=v8442-0x4 [from 0x8048480:push   ebp]; value=v8443
     }
     ip = 0x8048481 [from 0x8048480:push   ebp]
+
 0x8048481:mov    ebp, esp
     ax = v8438
     cx = v8439
@@ -3751,6 +3858,7 @@
         size=4; addr=v8442-0x4 [from 0x8048480:push   ebp]; value=v8443
     }
     ip = 0x8048483 [from 0x8048481:mov    ebp, esp]
+
 0x8048483:sub    esp, 0x08
     ax = v8438
     cx = v8439
@@ -3786,6 +3894,7 @@
         size=4; addr=v8442-0x4 [from 0x8048480:push   ebp]; value=v8443
     }
     ip = 0x8048486 [from 0x8048483:sub    esp, 0x08]
+
 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
     ax = v8438
     cx = v8439
@@ -3821,6 +3930,7 @@
         size=4; addr=0x80496f8 [from 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]]; value=v8633+0x1 [from 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
     }
     ip = 0x804848c [from 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v8438
     cx = v8439
@@ -3856,6 +3966,7 @@
         size=4; addr=v8595 [from 0x8048483:sub    esp, 0x08]; value=0x80485d4 [from 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
     ip = 0x8048493 [from 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+
 0x8048493:call   0x08048300<puts@plt>
     ax = v8438
     cx = v8439
@@ -3895,6 +4006,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000
     ax = v8940
     cx = v8941
@@ -3930,6 +4042,7 @@
         size=4; addr=v8944; value=0x0 [from 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000]
     }
     ip = 0x804849f [from 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000]
+
 0x804849f:call   0x08048320<_exit@plt>
     ax = v8940
     cx = v8941
@@ -3969,6 +4082,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80484b0:push   ebp
     ax = v9205
     cx = v9206
@@ -4004,6 +4118,7 @@
         size=4; addr=v9209-0x4 [from 0x80484b0:push   ebp]; value=v9210
     }
     ip = 0x80484b1 [from 0x80484b0:push   ebp]
+
 0x80484b1:mov    ebp, esp
     ax = v9205
     cx = v9206
@@ -4039,6 +4154,7 @@
         size=4; addr=v9209-0x4 [from 0x80484b0:push   ebp]; value=v9210
     }
     ip = 0x80484b3 [from 0x80484b1:mov    ebp, esp]
+
 0x80484b3:push   edi
     ax = v9205
     cx = v9206
@@ -4074,6 +4190,7 @@
         size=4; addr=v9245-0x4 [from 0x80484b3:push   edi]; value=v9212
     }
     ip = 0x80484b4 [from 0x80484b3:push   edi]
+
 0x80484b4:push   esi
     ax = v9205
     cx = v9206
@@ -4109,6 +4226,7 @@
         size=4; addr=v9324-0x4 [from 0x80484b4:push   esi]; value=v9211
     }
     ip = 0x80484b5 [from 0x80484b4:push   esi]
+
 0x80484b5:push   ebx
     ax = v9205
     cx = v9206
@@ -4144,6 +4262,7 @@
         size=4; addr=v9366-0x4 [from 0x80484b5:push   ebx]; value=v9208
     }
     ip = 0x80484b6 [from 0x80484b5:push   ebx]
+
 0x80484b6:sub    esp, 0x0c
     ax = v9205
     cx = v9206
@@ -4179,6 +4298,7 @@
         size=4; addr=v9366-0x4 [from 0x80484b5:push   ebx]; value=v9208
     }
     ip = 0x80484b9 [from 0x80484b6:sub    esp, 0x0c]
+
 0x80484b9:call   0x080484be<<Insn>>
     ax = v9205
     cx = v9206
@@ -4217,6 +4337,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80484be:pop    ebx
     ax = v9626
     cx = v9627
@@ -4250,11 +4371,12 @@
     ?15 = v9655
     memory = {}
     ip = 0x80484bf [from 0x80484be:pop    ebx]
-0x80484bf:add    ebx, 0x0000120a
+
+0x80484bf:add    ebx, 0x0000120a<4618>
     ax = v9626
     cx = v9627
     dx = v9628
-    bx = v9742 [from 0x80484bf:add    ebx, 0x0000120a]
+    bx = v9742 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     sp = v9663 [from 0x80484be:pop    ebx]
     bp = v9631
     si = v9632
@@ -4265,29 +4387,30 @@
     ds = v9637
     fs = v9638
     gs = v9639
-    cf = v9736 [from 0x80484bf:add    ebx, 0x0000120a]
+    cf = v9736 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?1 = v9641
-    pf = -v9727-0x1 [from 0x80484bf:add    ebx, 0x0000120a]
+    pf = -v9727-0x1 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?3 = v9643
-    af = v9734 [from 0x80484bf:add    ebx, 0x0000120a]
+    af = v9734 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?5 = v9645
-    zf = v9732 [from 0x80484bf:add    ebx, 0x0000120a]
-    sf = v9730 [from 0x80484bf:add    ebx, 0x0000120a]
+    zf = v9732 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
+    sf = v9730 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     tf = v9648
     if = v9649
     df = v9650
-    of = v9740 [from 0x80484bf:add    ebx, 0x0000120a]
+    of = v9740 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     iopl0 = v9652
     iopl1 = v9653
     nt = v9654
     ?15 = v9655
     memory = {}
-    ip = 0x80484c5 [from 0x80484bf:add    ebx, 0x0000120a]
+    ip = 0x80484c5 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
+
 0x80484c5:call   0x080482c8<_init>
     ax = v9626
     cx = v9627
     dx = v9628
-    bx = v9742 [from 0x80484bf:add    ebx, 0x0000120a]
+    bx = v9742 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     sp = v9786 [from 0x80484c5:call   0x080482c8<_init>]
     bp = v9631
     si = v9632
@@ -4298,18 +4421,18 @@
     ds = v9637
     fs = v9638
     gs = v9639
-    cf = v9736 [from 0x80484bf:add    ebx, 0x0000120a]
+    cf = v9736 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?1 = v9641
-    pf = -v9727-0x1 [from 0x80484bf:add    ebx, 0x0000120a]
+    pf = -v9727-0x1 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?3 = v9643
-    af = v9734 [from 0x80484bf:add    ebx, 0x0000120a]
+    af = v9734 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     ?5 = v9645
-    zf = v9732 [from 0x80484bf:add    ebx, 0x0000120a]
-    sf = v9730 [from 0x80484bf:add    ebx, 0x0000120a]
+    zf = v9732 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
+    sf = v9730 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     tf = v9648
     if = v9649
     df = v9650
-    of = v9740 [from 0x80484bf:add    ebx, 0x0000120a]
+    of = v9740 [from 0x80484bf:add    ebx, 0x0000120a<4618>]
     iopl0 = v9652
     iopl1 = v9653
     nt = v9654
@@ -4321,8 +4444,9 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
-    ax = v10007 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
+
+0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
+    ax = v10007 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]]
     cx = v9971
     dx = v9972
     bx = v9973
@@ -4353,11 +4477,12 @@
     nt = v9998
     ?15 = v9999
     memory = {}
-    ip = 0x80484d0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
-0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
-    ax = v10007 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
+    ip = 0x80484d0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]]
+
+0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
+    ax = v10007 [from 0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]]
     cx = v9971
-    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
     bx = v9973
     sp = v9974
     bp = v9975
@@ -4386,11 +4511,12 @@
     nt = v9998
     ?15 = v9999
     memory = {}
-    ip = 0x80484d6 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    ip = 0x80484d6 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
+
 0x80484d6:sub    eax, edx
     ax = v10126 [from 0x80484d6:sub    eax, edx]
     cx = v9971
-    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
     bx = v9973
     sp = v9974
     bp = v9975
@@ -4420,10 +4546,11 @@
     ?15 = v9999
     memory = {}
     ip = 0x80484d8 [from 0x80484d6:sub    eax, edx]
+
 0x80484d8:sar    eax, 0x02
-    ax = v10220 [from 0x80484d8:sar    eax, 0x02]
+    ax = v10223 [from 0x80484d8:sar    eax, 0x02]
     cx = v9971
-    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
     bx = v9973
     sp = v9974
     bp = v9975
@@ -4435,14 +4562,14 @@
     ds = v9981
     fs = v9982
     gs = v9983
-    cf = v10173 [from 0x80484d8:sar    eax, 0x02]
+    cf = v10180 [from 0x80484d8:sar    eax, 0x02]
     ?1 = v9985
-    pf = -v10208-0x1 [from 0x80484d8:sar    eax, 0x02]
+    pf = -v10211-0x1 [from 0x80484d8:sar    eax, 0x02]
     ?3 = v9987
     af = <top>
     ?5 = v9989
-    zf = v10217 [from 0x80484d8:sar    eax, 0x02]
-    sf = v10213 [from 0x80484d8:sar    eax, 0x02]
+    zf = v10220 [from 0x80484d8:sar    eax, 0x02]
+    sf = v10216 [from 0x80484d8:sar    eax, 0x02]
     tf = v9992
     if = v9993
     df = v9994
@@ -4453,10 +4580,11 @@
     ?15 = v9999
     memory = {}
     ip = 0x80484db [from 0x80484d8:sar    eax, 0x02]
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
-    ax = v10220 [from 0x80484d8:sar    eax, 0x02]
+
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+    ax = v10223 [from 0x80484d8:sar    eax, 0x02]
     cx = v9971
-    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
     bx = v9973
     sp = v9974
     bp = v9975
@@ -4468,14 +4596,14 @@
     ds = v9981
     fs = v9982
     gs = v9983
-    cf = v10173 [from 0x80484d8:sar    eax, 0x02]
+    cf = v10180 [from 0x80484d8:sar    eax, 0x02]
     ?1 = v9985
-    pf = -v10208-0x1 [from 0x80484d8:sar    eax, 0x02]
+    pf = -v10211-0x1 [from 0x80484d8:sar    eax, 0x02]
     ?3 = v9987
     af = <top>
     ?5 = v9989
-    zf = v10217 [from 0x80484d8:sar    eax, 0x02]
-    sf = v10213 [from 0x80484d8:sar    eax, 0x02]
+    zf = v10220 [from 0x80484d8:sar    eax, 0x02]
+    sf = v10216 [from 0x80484d8:sar    eax, 0x02]
     tf = v9992
     if = v9993
     df = v9994
@@ -4485,13 +4613,14 @@
     nt = v9998
     ?15 = v9999
     memory = {
-        size=4; addr=v9975-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v10220 [from 0x80484d8:sar    eax, 0x02]
+        size=4; addr=v9975-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x80484d8:sar    eax, 0x02]
     }
-    ip = 0x80484de [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]
+    ip = 0x80484de [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]
+
 0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>
-    ax = v10220 [from 0x80484d8:sar    eax, 0x02]
+    ax = v10223 [from 0x80484d8:sar    eax, 0x02]
     cx = v9971
-    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    dx = v10046 [from 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]]
     bx = v9973
     sp = v9974
     bp = v9975
@@ -4503,14 +4632,14 @@
     ds = v9981
     fs = v9982
     gs = v9983
-    cf = v10173 [from 0x80484d8:sar    eax, 0x02]
+    cf = v10180 [from 0x80484d8:sar    eax, 0x02]
     ?1 = v9985
-    pf = -v10208-0x1 [from 0x80484d8:sar    eax, 0x02]
+    pf = -v10211-0x1 [from 0x80484d8:sar    eax, 0x02]
     ?3 = v9987
     af = <top>
     ?5 = v9989
-    zf = v10217 [from 0x80484d8:sar    eax, 0x02]
-    sf = v10213 [from 0x80484d8:sar    eax, 0x02]
+    zf = v10220 [from 0x80484d8:sar    eax, 0x02]
+    sf = v10216 [from 0x80484d8:sar    eax, 0x02]
     tf = v9992
     if = v9993
     df = v9994
@@ -4520,2415 +4649,2485 @@
     nt = v9998
     ?15 = v9999
     memory = {
-        size=4; addr=v9975-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v10220 [from 0x80484d8:sar    eax, 0x02]
+        size=4; addr=v9975-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x80484d8:sar    eax, 0x02]
     }
-    ip = v10301 [from 0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>]
+    ip = v10304 [from 0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80484e0:add    esp, 0x0c
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10429
-    sp = v10500 [from 0x80484e0:add    esp, 0x0c]
-    bp = v10431
-    si = v10432
-    di = v10433
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10432
+    sp = v10503 [from 0x80484e0:add    esp, 0x0c]
+    bp = v10434
+    si = v10435
+    di = v10436
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
     ip = 0x80484e3 [from 0x80484e0:add    esp, 0x0c]
+
 0x80484e3:pop    ebx
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10542 [from 0x80484e3:pop    ebx]
-    sp = v10539 [from 0x80484e3:pop    ebx]
-    bp = v10431
-    si = v10432
-    di = v10433
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10545 [from 0x80484e3:pop    ebx]
+    sp = v10542 [from 0x80484e3:pop    ebx]
+    bp = v10434
+    si = v10435
+    di = v10436
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
     ip = 0x80484e4 [from 0x80484e3:pop    ebx]
+
 0x80484e4:pop    esi
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10542 [from 0x80484e3:pop    ebx]
-    sp = v10581 [from 0x80484e4:pop    esi]
-    bp = v10431
-    si = v10584 [from 0x80484e4:pop    esi]
-    di = v10433
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10545 [from 0x80484e3:pop    ebx]
+    sp = v10584 [from 0x80484e4:pop    esi]
+    bp = v10434
+    si = v10587 [from 0x80484e4:pop    esi]
+    di = v10436
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
     ip = 0x80484e5 [from 0x80484e4:pop    esi]
+
 0x80484e5:pop    edi
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10542 [from 0x80484e3:pop    ebx]
-    sp = v10623 [from 0x80484e5:pop    edi]
-    bp = v10431
-    si = v10584 [from 0x80484e4:pop    esi]
-    di = v10626 [from 0x80484e5:pop    edi]
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10545 [from 0x80484e3:pop    ebx]
+    sp = v10626 [from 0x80484e5:pop    edi]
+    bp = v10434
+    si = v10587 [from 0x80484e4:pop    esi]
+    di = v10629 [from 0x80484e5:pop    edi]
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
     ip = 0x80484e6 [from 0x80484e5:pop    edi]
+
 0x80484e6:pop    ebp
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10542 [from 0x80484e3:pop    ebx]
-    sp = v10665 [from 0x80484e6:pop    ebp]
-    bp = v10668 [from 0x80484e6:pop    ebp]
-    si = v10584 [from 0x80484e4:pop    esi]
-    di = v10626 [from 0x80484e5:pop    edi]
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10545 [from 0x80484e3:pop    ebx]
+    sp = v10668 [from 0x80484e6:pop    ebp]
+    bp = v10671 [from 0x80484e6:pop    ebp]
+    si = v10587 [from 0x80484e4:pop    esi]
+    di = v10629 [from 0x80484e5:pop    edi]
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
     ip = 0x80484e7 [from 0x80484e6:pop    ebp]
+
 0x80484e7:ret    
-    ax = v10426
-    cx = v10427
-    dx = v10428
-    bx = v10542 [from 0x80484e3:pop    ebx]
-    sp = v10712 [from 0x80484e7:ret    ]
-    bp = v10668 [from 0x80484e6:pop    ebp]
-    si = v10584 [from 0x80484e4:pop    esi]
-    di = v10626 [from 0x80484e5:pop    edi]
-    es = v10434
-    cs = v10435
-    ss = v10436
-    ds = v10437
-    fs = v10438
-    gs = v10439
-    cf = v10494 [from 0x80484e0:add    esp, 0x0c]
-    ?1 = v10441
-    pf = -v10485-0x1 [from 0x80484e0:add    esp, 0x0c]
-    ?3 = v10443
-    af = v10492 [from 0x80484e0:add    esp, 0x0c]
-    ?5 = v10445
-    zf = v10490 [from 0x80484e0:add    esp, 0x0c]
-    sf = v10488 [from 0x80484e0:add    esp, 0x0c]
-    tf = v10448
-    if = v10449
-    df = v10450
-    of = v10498 [from 0x80484e0:add    esp, 0x0c]
-    iopl0 = v10452
-    iopl1 = v10453
-    nt = v10454
-    ?15 = v10455
+    ax = v10429
+    cx = v10430
+    dx = v10431
+    bx = v10545 [from 0x80484e3:pop    ebx]
+    sp = v10715 [from 0x80484e7:ret    ]
+    bp = v10671 [from 0x80484e6:pop    ebp]
+    si = v10587 [from 0x80484e4:pop    esi]
+    di = v10629 [from 0x80484e5:pop    edi]
+    es = v10437
+    cs = v10438
+    ss = v10439
+    ds = v10440
+    fs = v10441
+    gs = v10442
+    cf = v10497 [from 0x80484e0:add    esp, 0x0c]
+    ?1 = v10444
+    pf = -v10488-0x1 [from 0x80484e0:add    esp, 0x0c]
+    ?3 = v10446
+    af = v10495 [from 0x80484e0:add    esp, 0x0c]
+    ?5 = v10448
+    zf = v10493 [from 0x80484e0:add    esp, 0x0c]
+    sf = v10491 [from 0x80484e0:add    esp, 0x0c]
+    tf = v10451
+    if = v10452
+    df = v10453
+    of = v10501 [from 0x80484e0:add    esp, 0x0c]
+    iopl0 = v10455
+    iopl1 = v10456
+    nt = v10457
+    ?15 = v10458
     memory = {}
-    ip = v10710 [from 0x80484e7:ret    ]
+    ip = v10713 [from 0x80484e7:ret    ]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048520:push   ebp
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v10816 [from 0x8048520:push   ebp]
-    bp = v10781
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = v10790
-    ?1 = v10791
-    pf = v10792
-    ?3 = v10793
-    af = v10794
-    ?5 = v10795
-    zf = v10796
-    sf = v10797
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v10801
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v10819 [from 0x8048520:push   ebp]
+    bp = v10784
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = v10793
+    ?1 = v10794
+    pf = v10795
+    ?3 = v10796
+    af = v10797
+    ?5 = v10798
+    zf = v10799
+    sf = v10800
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v10804
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10780-0x4 [from 0x8048520:push   ebp]; value=v10781
+        size=4; addr=v10783-0x4 [from 0x8048520:push   ebp]; value=v10784
     }
     ip = 0x8048521 [from 0x8048520:push   ebp]
+
 0x8048521:mov    ebp, esp
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v10816 [from 0x8048520:push   ebp]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = v10790
-    ?1 = v10791
-    pf = v10792
-    ?3 = v10793
-    af = v10794
-    ?5 = v10795
-    zf = v10796
-    sf = v10797
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v10801
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v10819 [from 0x8048520:push   ebp]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = v10793
+    ?1 = v10794
+    pf = v10795
+    ?3 = v10796
+    af = v10797
+    ?5 = v10798
+    zf = v10799
+    sf = v10800
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v10804
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10780-0x4 [from 0x8048520:push   ebp]; value=v10781
+        size=4; addr=v10783-0x4 [from 0x8048520:push   ebp]; value=v10784
     }
     ip = 0x8048523 [from 0x8048521:mov    ebp, esp]
+
 0x8048523:push   edi
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v10895 [from 0x8048523:push   edi]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = v10790
-    ?1 = v10791
-    pf = v10792
-    ?3 = v10793
-    af = v10794
-    ?5 = v10795
-    zf = v10796
-    sf = v10797
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v10801
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v10898 [from 0x8048523:push   edi]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = v10793
+    ?1 = v10794
+    pf = v10795
+    ?3 = v10796
+    af = v10797
+    ?5 = v10798
+    zf = v10799
+    sf = v10800
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v10804
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10816-0x4 [from 0x8048523:push   edi]; value=v10783
+        size=4; addr=v10819-0x4 [from 0x8048523:push   edi]; value=v10786
     }
     ip = 0x8048524 [from 0x8048523:push   edi]
+
 0x8048524:push   esi
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v10937 [from 0x8048524:push   esi]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = v10790
-    ?1 = v10791
-    pf = v10792
-    ?3 = v10793
-    af = v10794
-    ?5 = v10795
-    zf = v10796
-    sf = v10797
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v10801
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v10940 [from 0x8048524:push   esi]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = v10793
+    ?1 = v10794
+    pf = v10795
+    ?3 = v10796
+    af = v10797
+    ?5 = v10798
+    zf = v10799
+    sf = v10800
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v10804
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10895-0x4 [from 0x8048524:push   esi]; value=v10782
+        size=4; addr=v10898-0x4 [from 0x8048524:push   esi]; value=v10785
     }
     ip = 0x8048525 [from 0x8048524:push   esi]
+
 0x8048525:push   ebx
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v10979 [from 0x8048525:push   ebx]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = v10790
-    ?1 = v10791
-    pf = v10792
-    ?3 = v10793
-    af = v10794
-    ?5 = v10795
-    zf = v10796
-    sf = v10797
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v10801
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v10982 [from 0x8048525:push   ebx]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = v10793
+    ?1 = v10794
+    pf = v10795
+    ?3 = v10796
+    af = v10797
+    ?5 = v10798
+    zf = v10799
+    sf = v10800
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v10804
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10937-0x4 [from 0x8048525:push   ebx]; value=v10779
+        size=4; addr=v10940-0x4 [from 0x8048525:push   ebx]; value=v10782
     }
     ip = 0x8048526 [from 0x8048525:push   ebx]
+
 0x8048526:sub    esp, 0x0c
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v11059 [from 0x8048526:sub    esp, 0x0c]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = -v11052-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?1 = v10791
-    pf = -v11042-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?3 = v10793
-    af = -v11049-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?5 = v10795
-    zf = v11047 [from 0x8048526:sub    esp, 0x0c]
-    sf = v11045 [from 0x8048526:sub    esp, 0x0c]
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v11057 [from 0x8048526:sub    esp, 0x0c]
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v11062 [from 0x8048526:sub    esp, 0x0c]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = -v11055-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?1 = v10794
+    pf = -v11045-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?3 = v10796
+    af = -v11052-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?5 = v10798
+    zf = v11050 [from 0x8048526:sub    esp, 0x0c]
+    sf = v11048 [from 0x8048526:sub    esp, 0x0c]
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v11060 [from 0x8048526:sub    esp, 0x0c]
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v10937-0x4 [from 0x8048525:push   ebx]; value=v10779
+        size=4; addr=v10940-0x4 [from 0x8048525:push   ebx]; value=v10782
     }
     ip = 0x8048529 [from 0x8048526:sub    esp, 0x0c]
+
 0x8048529:call   0x0804852e<<Insn>>
-    ax = v10776
-    cx = v10777
-    dx = v10778
-    bx = v10779
-    sp = v11103 [from 0x8048529:call   0x0804852e<<Insn>>]
-    bp = v10853 [from 0x8048521:mov    ebp, esp]
-    si = v10782
-    di = v10783
-    es = v10784
-    cs = v10785
-    ss = v10786
-    ds = v10787
-    fs = v10788
-    gs = v10789
-    cf = -v11052-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?1 = v10791
-    pf = -v11042-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?3 = v10793
-    af = -v11049-0x1 [from 0x8048526:sub    esp, 0x0c]
-    ?5 = v10795
-    zf = v11047 [from 0x8048526:sub    esp, 0x0c]
-    sf = v11045 [from 0x8048526:sub    esp, 0x0c]
-    tf = v10798
-    if = v10799
-    df = v10800
-    of = v11057 [from 0x8048526:sub    esp, 0x0c]
-    iopl0 = v10802
-    iopl1 = v10803
-    nt = v10804
-    ?15 = v10805
+    ax = v10779
+    cx = v10780
+    dx = v10781
+    bx = v10782
+    sp = v11106 [from 0x8048529:call   0x0804852e<<Insn>>]
+    bp = v10856 [from 0x8048521:mov    ebp, esp]
+    si = v10785
+    di = v10786
+    es = v10787
+    cs = v10788
+    ss = v10789
+    ds = v10790
+    fs = v10791
+    gs = v10792
+    cf = -v11055-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?1 = v10794
+    pf = -v11045-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?3 = v10796
+    af = -v11052-0x1 [from 0x8048526:sub    esp, 0x0c]
+    ?5 = v10798
+    zf = v11050 [from 0x8048526:sub    esp, 0x0c]
+    sf = v11048 [from 0x8048526:sub    esp, 0x0c]
+    tf = v10801
+    if = v10802
+    df = v10803
+    of = v11060 [from 0x8048526:sub    esp, 0x0c]
+    iopl0 = v10805
+    iopl1 = v10806
+    nt = v10807
+    ?15 = v10808
     memory = {
-        size=4; addr=v11059-0x4 [from 0x8048529:call   0x0804852e<<Insn>>]; value=0x804852e [from 0x8048529:call   0x0804852e<<Insn>>]
+        size=4; addr=v11062-0x4 [from 0x8048529:call   0x0804852e<<Insn>>]; value=0x804852e [from 0x8048529:call   0x0804852e<<Insn>>]
     }
     ip = 0x804852e [from 0x8048529:call   0x0804852e<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804852e:pop    ebx
-    ax = v11197
-    cx = v11198
-    dx = v11199
-    bx = v11237 [from 0x804852e:pop    ebx]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11211
-    ?1 = v11212
-    pf = v11213
-    ?3 = v11214
-    af = v11215
-    ?5 = v11216
-    zf = v11217
-    sf = v11218
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11222
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ax = v11200
+    cx = v11201
+    dx = v11202
+    bx = v11240 [from 0x804852e:pop    ebx]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11214
+    ?1 = v11215
+    pf = v11216
+    ?3 = v11217
+    af = v11218
+    ?5 = v11219
+    zf = v11220
+    sf = v11221
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11225
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
     ip = 0x804852f [from 0x804852e:pop    ebx]
-0x804852f:add    ebx, 0x0000119a
-    ax = v11197
-    cx = v11198
-    dx = v11199
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11307 [from 0x804852f:add    ebx, 0x0000119a]
-    ?1 = v11212
-    pf = -v11298-0x1 [from 0x804852f:add    ebx, 0x0000119a]
-    ?3 = v11214
-    af = v11305 [from 0x804852f:add    ebx, 0x0000119a]
-    ?5 = v11216
-    zf = v11303 [from 0x804852f:add    ebx, 0x0000119a]
-    sf = v11301 [from 0x804852f:add    ebx, 0x0000119a]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11311 [from 0x804852f:add    ebx, 0x0000119a]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+
+0x804852f:add    ebx, 0x0000119a<4506>
+    ax = v11200
+    cx = v11201
+    dx = v11202
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11310 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?1 = v11215
+    pf = -v11301-0x1 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?3 = v11217
+    af = v11308 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?5 = v11219
+    zf = v11306 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sf = v11304 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11314 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
-    ip = 0x8048535 [from 0x804852f:add    ebx, 0x0000119a]
-0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
-    ax = v11352 [from 0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
-    cx = v11198
-    dx = v11199
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11307 [from 0x804852f:add    ebx, 0x0000119a]
-    ?1 = v11212
-    pf = -v11298-0x1 [from 0x804852f:add    ebx, 0x0000119a]
-    ?3 = v11214
-    af = v11305 [from 0x804852f:add    ebx, 0x0000119a]
-    ?5 = v11216
-    zf = v11303 [from 0x804852f:add    ebx, 0x0000119a]
-    sf = v11301 [from 0x804852f:add    ebx, 0x0000119a]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11311 [from 0x804852f:add    ebx, 0x0000119a]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ip = 0x8048535 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+
+0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
+    ax = v11355 [from 0x8048535:lea    eax, [ebx + 0xffffff20<-224>]]
+    cx = v11201
+    dx = v11202
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11310 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?1 = v11215
+    pf = -v11301-0x1 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?3 = v11217
+    af = v11308 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?5 = v11219
+    zf = v11306 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sf = v11304 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11314 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
-    ip = 0x804853b [from 0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
-0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
-    ax = v11352 [from 0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11307 [from 0x804852f:add    ebx, 0x0000119a]
-    ?1 = v11212
-    pf = -v11298-0x1 [from 0x804852f:add    ebx, 0x0000119a]
-    ?3 = v11214
-    af = v11305 [from 0x804852f:add    ebx, 0x0000119a]
-    ?5 = v11216
-    zf = v11303 [from 0x804852f:add    ebx, 0x0000119a]
-    sf = v11301 [from 0x804852f:add    ebx, 0x0000119a]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11311 [from 0x804852f:add    ebx, 0x0000119a]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ip = 0x804853b [from 0x8048535:lea    eax, [ebx + 0xffffff20<-224>]]
+
+0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
+    ax = v11355 [from 0x8048535:lea    eax, [ebx + 0xffffff20<-224>]]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11310 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?1 = v11215
+    pf = -v11301-0x1 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?3 = v11217
+    af = v11308 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    ?5 = v11219
+    zf = v11306 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sf = v11304 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11314 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
-    ip = 0x8048541 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
+    ip = 0x8048541 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+
 0x8048541:sub    eax, edx
-    ax = v11471 [from 0x8048541:sub    eax, edx]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = -v11464-0x1 [from 0x8048541:sub    eax, edx]
-    ?1 = v11212
-    pf = -v11454-0x1 [from 0x8048541:sub    eax, edx]
-    ?3 = v11214
-    af = -v11461-0x1 [from 0x8048541:sub    eax, edx]
-    ?5 = v11216
-    zf = v11459 [from 0x8048541:sub    eax, edx]
-    sf = v11457 [from 0x8048541:sub    eax, edx]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11469 [from 0x8048541:sub    eax, edx]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ax = v11474 [from 0x8048541:sub    eax, edx]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = -v11467-0x1 [from 0x8048541:sub    eax, edx]
+    ?1 = v11215
+    pf = -v11457-0x1 [from 0x8048541:sub    eax, edx]
+    ?3 = v11217
+    af = -v11464-0x1 [from 0x8048541:sub    eax, edx]
+    ?5 = v11219
+    zf = v11462 [from 0x8048541:sub    eax, edx]
+    sf = v11460 [from 0x8048541:sub    eax, edx]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11472 [from 0x8048541:sub    eax, edx]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
     ip = 0x8048543 [from 0x8048541:sub    eax, edx]
+
 0x8048543:sar    eax, 0x02
-    ax = v11565 [from 0x8048543:sar    eax, 0x02]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11518 [from 0x8048543:sar    eax, 0x02]
-    ?1 = v11212
-    pf = -v11553-0x1 [from 0x8048543:sar    eax, 0x02]
-    ?3 = v11214
+    ax = v11571 [from 0x8048543:sar    eax, 0x02]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11528 [from 0x8048543:sar    eax, 0x02]
+    ?1 = v11215
+    pf = -v11559-0x1 [from 0x8048543:sar    eax, 0x02]
+    ?3 = v11217
     af = <top>
-    ?5 = v11216
-    zf = v11562 [from 0x8048543:sar    eax, 0x02]
-    sf = v11558 [from 0x8048543:sar    eax, 0x02]
-    tf = v11219
-    if = v11220
-    df = v11221
+    ?5 = v11219
+    zf = v11568 [from 0x8048543:sar    eax, 0x02]
+    sf = v11564 [from 0x8048543:sar    eax, 0x02]
+    tf = v11222
+    if = v11223
+    df = v11224
     of = <top>
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {}
     ip = 0x8048546 [from 0x8048543:sar    eax, 0x02]
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
-    ax = v11565 [from 0x8048543:sar    eax, 0x02]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11518 [from 0x8048543:sar    eax, 0x02]
-    ?1 = v11212
-    pf = -v11553-0x1 [from 0x8048543:sar    eax, 0x02]
-    ?3 = v11214
+
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+    ax = v11571 [from 0x8048543:sar    eax, 0x02]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11528 [from 0x8048543:sar    eax, 0x02]
+    ?1 = v11215
+    pf = -v11559-0x1 [from 0x8048543:sar    eax, 0x02]
+    ?3 = v11217
     af = <top>
-    ?5 = v11216
-    zf = v11562 [from 0x8048543:sar    eax, 0x02]
-    sf = v11558 [from 0x8048543:sar    eax, 0x02]
-    tf = v11219
-    if = v11220
-    df = v11221
+    ?5 = v11219
+    zf = v11568 [from 0x8048543:sar    eax, 0x02]
+    sf = v11564 [from 0x8048543:sar    eax, 0x02]
+    tf = v11222
+    if = v11223
+    df = v11224
     of = <top>
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {
-        size=4; addr=v11202-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v11565 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x8048543:sar    eax, 0x02]
     }
-    ip = 0x8048549 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]
+    ip = 0x8048549 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]
+
 0x8048549:dec    eax
-    ax = v11681 [from 0x8048549:dec    eax]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = v11518 [from 0x8048543:sar    eax, 0x02]
-    ?1 = v11212
-    pf = -v11667-0x1 [from 0x8048549:dec    eax]
-    ?3 = v11214
-    af = -v11674-0x1 [from 0x8048549:dec    eax]
-    ?5 = v11216
-    zf = v11672 [from 0x8048549:dec    eax]
-    sf = v11670 [from 0x8048549:dec    eax]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11679 [from 0x8048549:dec    eax]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ax = v11687 [from 0x8048549:dec    eax]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = v11528 [from 0x8048543:sar    eax, 0x02]
+    ?1 = v11215
+    pf = -v11673-0x1 [from 0x8048549:dec    eax]
+    ?3 = v11217
+    af = -v11680-0x1 [from 0x8048549:dec    eax]
+    ?5 = v11219
+    zf = v11678 [from 0x8048549:dec    eax]
+    sf = v11676 [from 0x8048549:dec    eax]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11685 [from 0x8048549:dec    eax]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {
-        size=4; addr=v11202-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v11565 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x8048543:sar    eax, 0x02]
     }
     ip = 0x804854a [from 0x8048549:dec    eax]
-0x804854a:cmp    eax, 0xff<-0x01>
-    ax = v11681 [from 0x8048549:dec    eax]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = -v11754-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?1 = v11212
-    pf = -v11744-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?3 = v11214
-    af = -v11751-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?5 = v11216
-    zf = v11749 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    sf = v11747 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11759 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+
+0x804854a:cmp    eax, 0xff<-1>
+    ax = v11687 [from 0x8048549:dec    eax]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = -v11760-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?1 = v11215
+    pf = -v11750-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?3 = v11217
+    af = -v11757-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?5 = v11219
+    zf = v11755 [from 0x804854a:cmp    eax, 0xff<-1>]
+    sf = v11753 [from 0x804854a:cmp    eax, 0xff<-1>]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11765 [from 0x804854a:cmp    eax, 0xff<-1>]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {
-        size=4; addr=v11202-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v11565 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x8048543:sar    eax, 0x02]
     }
-    ip = 0x804854d [from 0x804854a:cmp    eax, 0xff<-0x01>]
+    ip = 0x804854d [from 0x804854a:cmp    eax, 0xff<-1>]
+
 0x804854d:je     0x0804856b<<Insn>>
-    ax = v11681 [from 0x8048549:dec    eax]
-    cx = v11198
-    dx = v11391 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]]
-    bx = v11313 [from 0x804852f:add    ebx, 0x0000119a]
-    sp = v11234 [from 0x804852e:pop    ebx]
-    bp = v11202
-    si = v11203
-    di = v11204
-    es = v11205
-    cs = v11206
-    ss = v11207
-    ds = v11208
-    fs = v11209
-    gs = v11210
-    cf = -v11754-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?1 = v11212
-    pf = -v11744-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?3 = v11214
-    af = -v11751-0x1 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    ?5 = v11216
-    zf = v11749 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    sf = v11747 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    tf = v11219
-    if = v11220
-    df = v11221
-    of = v11759 [from 0x804854a:cmp    eax, 0xff<-0x01>]
-    iopl0 = v11223
-    iopl1 = v11224
-    nt = v11225
-    ?15 = v11226
+    ax = v11687 [from 0x8048549:dec    eax]
+    cx = v11201
+    dx = v11394 [from 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]]
+    bx = v11316 [from 0x804852f:add    ebx, 0x0000119a<4506>]
+    sp = v11237 [from 0x804852e:pop    ebx]
+    bp = v11205
+    si = v11206
+    di = v11207
+    es = v11208
+    cs = v11209
+    ss = v11210
+    ds = v11211
+    fs = v11212
+    gs = v11213
+    cf = -v11760-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?1 = v11215
+    pf = -v11750-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?3 = v11217
+    af = -v11757-0x1 [from 0x804854a:cmp    eax, 0xff<-1>]
+    ?5 = v11219
+    zf = v11755 [from 0x804854a:cmp    eax, 0xff<-1>]
+    sf = v11753 [from 0x804854a:cmp    eax, 0xff<-1>]
+    tf = v11222
+    if = v11223
+    df = v11224
+    of = v11765 [from 0x804854a:cmp    eax, 0xff<-1>]
+    iopl0 = v11226
+    iopl1 = v11227
+    nt = v11228
+    ?15 = v11229
     memory = {
-        size=4; addr=v11202-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax]; value=v11565 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x8048543:sar    eax, 0x02]
     }
-    ip = v11799 [from 0x804854d:je     0x0804856b<<Insn>>]
+    ip = v11805 [from 0x804854d:je     0x0804856b<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804854f:lea    esi, [edx + eax*0x04]
-    ax = v11924
-    cx = v11925
-    dx = v11926
-    bx = v11927
-    sp = v11928
-    bp = v11929
-    si = v11964 [from 0x804854f:lea    esi, [edx + eax*0x04]]
-    di = v11931
-    es = v11932
-    cs = v11933
-    ss = v11934
-    ds = v11935
-    fs = v11936
-    gs = v11937
-    cf = v11938
-    ?1 = v11939
-    pf = v11940
-    ?3 = v11941
-    af = v11942
-    ?5 = v11943
-    zf = v11944
-    sf = v11945
-    tf = v11946
-    if = v11947
-    df = v11948
-    of = v11949
-    iopl0 = v11950
-    iopl1 = v11951
-    nt = v11952
-    ?15 = v11953
+    ax = v11930
+    cx = v11931
+    dx = v11932
+    bx = v11933
+    sp = v11934
+    bp = v11935
+    si = v11970 [from 0x804854f:lea    esi, [edx + eax*0x04]]
+    di = v11937
+    es = v11938
+    cs = v11939
+    ss = v11940
+    ds = v11941
+    fs = v11942
+    gs = v11943
+    cf = v11944
+    ?1 = v11945
+    pf = v11946
+    ?3 = v11947
+    af = v11948
+    ?5 = v11949
+    zf = v11950
+    sf = v11951
+    tf = v11952
+    if = v11953
+    df = v11954
+    of = v11955
+    iopl0 = v11956
+    iopl1 = v11957
+    nt = v11958
+    ?15 = v11959
     memory = {}
     ip = 0x8048552 [from 0x804854f:lea    esi, [edx + eax*0x04]]
+
 0x8048552:xor    edi, edi
-    ax = v11924
-    cx = v11925
-    dx = v11926
-    bx = v11927
-    sp = v11928
-    bp = v11929
-    si = v11964 [from 0x804854f:lea    esi, [edx + eax*0x04]]
+    ax = v11930
+    cx = v11931
+    dx = v11932
+    bx = v11933
+    sp = v11934
+    bp = v11935
+    si = v11970 [from 0x804854f:lea    esi, [edx + eax*0x04]]
     di = 0x0 [from 0x8048552:xor    edi, edi]
-    es = v11932
-    cs = v11933
-    ss = v11934
-    ds = v11935
-    fs = v11936
-    gs = v11937
+    es = v11938
+    cs = v11939
+    ss = v11940
+    ds = v11941
+    fs = v11942
+    gs = v11943
     cf = 0x0 [from 0x8048552:xor    edi, edi]
-    ?1 = v11939
+    ?1 = v11945
     pf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
-    ?3 = v11941
+    ?3 = v11947
     af = <top>
-    ?5 = v11943
+    ?5 = v11949
     zf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
     sf = 0x0 [from 0x8048552:xor    edi, edi]
-    tf = v11946
-    if = v11947
-    df = v11948
+    tf = v11952
+    if = v11953
+    df = v11954
     of = 0x0 [from 0x8048552:xor    edi, edi]
-    iopl0 = v11950
-    iopl1 = v11951
-    nt = v11952
-    ?15 = v11953
+    iopl0 = v11956
+    iopl1 = v11957
+    nt = v11958
+    ?15 = v11959
     memory = {}
     ip = 0x8048554 [from 0x8048552:xor    edi, edi]
+
 0x8048554:lea    esi, [esi + 0x00000000]
-    ax = v11924
-    cx = v11925
-    dx = v11926
-    bx = v11927
-    sp = v11928
-    bp = v11929
-    si = v12070 [from 0x8048554:lea    esi, [esi + 0x00000000]]
+    ax = v11930
+    cx = v11931
+    dx = v11932
+    bx = v11933
+    sp = v11934
+    bp = v11935
+    si = v12076 [from 0x8048554:lea    esi, [esi + 0x00000000]]
     di = 0x0 [from 0x8048552:xor    edi, edi]
-    es = v11932
-    cs = v11933
-    ss = v11934
-    ds = v11935
-    fs = v11936
-    gs = v11937
+    es = v11938
+    cs = v11939
+    ss = v11940
+    ds = v11941
+    fs = v11942
+    gs = v11943
     cf = 0x0 [from 0x8048552:xor    edi, edi]
-    ?1 = v11939
+    ?1 = v11945
     pf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
-    ?3 = v11941
+    ?3 = v11947
     af = <top>
-    ?5 = v11943
+    ?5 = v11949
     zf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
     sf = 0x0 [from 0x8048552:xor    edi, edi]
-    tf = v11946
-    if = v11947
-    df = v11948
+    tf = v11952
+    if = v11953
+    df = v11954
     of = 0x0 [from 0x8048552:xor    edi, edi]
-    iopl0 = v11950
-    iopl1 = v11951
-    nt = v11952
-    ?15 = v11953
+    iopl0 = v11956
+    iopl1 = v11957
+    nt = v11958
+    ?15 = v11959
     memory = {}
     ip = 0x804855a [from 0x8048554:lea    esi, [esi + 0x00000000]]
+
 0x804855a:lea    edi, [edi + 0x00000000]
-    ax = v11924
-    cx = v11925
-    dx = v11926
-    bx = v11927
-    sp = v11928
-    bp = v11929
-    si = v12070 [from 0x8048554:lea    esi, [esi + 0x00000000]]
+    ax = v11930
+    cx = v11931
+    dx = v11932
+    bx = v11933
+    sp = v11934
+    bp = v11935
+    si = v12076 [from 0x8048554:lea    esi, [esi + 0x00000000]]
     di = 0x0 [from 0x804855a:lea    edi, [edi + 0x00000000]]
-    es = v11932
-    cs = v11933
-    ss = v11934
-    ds = v11935
-    fs = v11936
-    gs = v11937
+    es = v11938
+    cs = v11939
+    ss = v11940
+    ds = v11941
+    fs = v11942
+    gs = v11943
     cf = 0x0 [from 0x8048552:xor    edi, edi]
-    ?1 = v11939
+    ?1 = v11945
     pf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
-    ?3 = v11941
+    ?3 = v11947
     af = <top>
-    ?5 = v11943
+    ?5 = v11949
     zf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
     sf = 0x0 [from 0x8048552:xor    edi, edi]
-    tf = v11946
-    if = v11947
-    df = v11948
+    tf = v11952
+    if = v11953
+    df = v11954
     of = 0x0 [from 0x8048552:xor    edi, edi]
-    iopl0 = v11950
-    iopl1 = v11951
-    nt = v11952
-    ?15 = v11953
+    iopl0 = v11956
+    iopl1 = v11957
+    nt = v11958
+    ?15 = v11959
     memory = {}
     ip = 0x8048560 [from 0x804855a:lea    edi, [edi + 0x00000000]]
+
 0x8048560:call   DWORD PTR ds:[esi]
-    ax = v11924
-    cx = v11925
-    dx = v11926
-    bx = v11927
-    sp = v12155 [from 0x8048560:call   DWORD PTR ds:[esi]]
-    bp = v11929
-    si = v12070 [from 0x8048554:lea    esi, [esi + 0x00000000]]
+    ax = v11930
+    cx = v11931
+    dx = v11932
+    bx = v11933
+    sp = v12161 [from 0x8048560:call   DWORD PTR ds:[esi]]
+    bp = v11935
+    si = v12076 [from 0x8048554:lea    esi, [esi + 0x00000000]]
     di = 0x0 [from 0x804855a:lea    edi, [edi + 0x00000000]]
-    es = v11932
-    cs = v11933
-    ss = v11934
-    ds = v11935
-    fs = v11936
-    gs = v11937
+    es = v11938
+    cs = v11939
+    ss = v11940
+    ds = v11941
+    fs = v11942
+    gs = v11943
     cf = 0x0 [from 0x8048552:xor    edi, edi]
-    ?1 = v11939
+    ?1 = v11945
     pf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
-    ?3 = v11941
+    ?3 = v11947
     af = <top>
-    ?5 = v11943
+    ?5 = v11949
     zf = 0x1 (-0x1) [from 0x8048552:xor    edi, edi]
     sf = 0x0 [from 0x8048552:xor    edi, edi]
-    tf = v11946
-    if = v11947
-    df = v11948
+    tf = v11952
+    if = v11953
+    df = v11954
     of = 0x0 [from 0x8048552:xor    edi, edi]
-    iopl0 = v11950
-    iopl1 = v11951
-    nt = v11952
-    ?15 = v11953
+    iopl0 = v11956
+    iopl1 = v11957
+    nt = v11958
+    ?15 = v11959
     memory = {
-        size=4; addr=v11928-0x4 [from 0x8048560:call   DWORD PTR ds:[esi]]; value=0x8048562 [from 0x8048560:call   DWORD PTR ds:[esi]]
+        size=4; addr=v11934-0x4 [from 0x8048560:call   DWORD PTR ds:[esi]]; value=0x8048562 [from 0x8048560:call   DWORD PTR ds:[esi]]
     }
-    ip = v12153 [from 0x8048560:call   DWORD PTR ds:[esi]]
+    ip = v12159 [from 0x8048560:call   DWORD PTR ds:[esi]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048562:inc    edi
-    ax = v12309
-    cx = v12310
-    dx = v12311
-    bx = v12312
-    sp = v12313
-    bp = v12314
-    si = v12315
-    di = v12381 [from 0x8048562:inc    edi]
-    es = v12317
-    cs = v12318
-    ss = v12319
-    ds = v12320
-    fs = v12321
-    gs = v12322
-    cf = v12323
-    ?1 = v12324
-    pf = -v12368-0x1 [from 0x8048562:inc    edi]
-    ?3 = v12326
-    af = v12375 [from 0x8048562:inc    edi]
-    ?5 = v12328
-    zf = v12373 [from 0x8048562:inc    edi]
-    sf = v12371 [from 0x8048562:inc    edi]
-    tf = v12331
-    if = v12332
-    df = v12333
-    of = v12379 [from 0x8048562:inc    edi]
-    iopl0 = v12335
-    iopl1 = v12336
-    nt = v12337
-    ?15 = v12338
+    ax = v12315
+    cx = v12316
+    dx = v12317
+    bx = v12318
+    sp = v12319
+    bp = v12320
+    si = v12321
+    di = v12387 [from 0x8048562:inc    edi]
+    es = v12323
+    cs = v12324
+    ss = v12325
+    ds = v12326
+    fs = v12327
+    gs = v12328
+    cf = v12329
+    ?1 = v12330
+    pf = -v12374-0x1 [from 0x8048562:inc    edi]
+    ?3 = v12332
+    af = v12381 [from 0x8048562:inc    edi]
+    ?5 = v12334
+    zf = v12379 [from 0x8048562:inc    edi]
+    sf = v12377 [from 0x8048562:inc    edi]
+    tf = v12337
+    if = v12338
+    df = v12339
+    of = v12385 [from 0x8048562:inc    edi]
+    iopl0 = v12341
+    iopl1 = v12342
+    nt = v12343
+    ?15 = v12344
     memory = {}
     ip = 0x8048563 [from 0x8048562:inc    edi]
+
 0x8048563:sub    esi, 0x04
-    ax = v12309
-    cx = v12310
-    dx = v12311
-    bx = v12312
-    sp = v12313
-    bp = v12314
-    si = v12461 [from 0x8048563:sub    esi, 0x04]
-    di = v12381 [from 0x8048562:inc    edi]
-    es = v12317
-    cs = v12318
-    ss = v12319
-    ds = v12320
-    fs = v12321
-    gs = v12322
-    cf = -v12454-0x1 [from 0x8048563:sub    esi, 0x04]
-    ?1 = v12324
-    pf = -v12444-0x1 [from 0x8048563:sub    esi, 0x04]
-    ?3 = v12326
-    af = -v12451-0x1 [from 0x8048563:sub    esi, 0x04]
-    ?5 = v12328
-    zf = v12449 [from 0x8048563:sub    esi, 0x04]
-    sf = v12447 [from 0x8048563:sub    esi, 0x04]
-    tf = v12331
-    if = v12332
-    df = v12333
-    of = v12459 [from 0x8048563:sub    esi, 0x04]
-    iopl0 = v12335
-    iopl1 = v12336
-    nt = v12337
-    ?15 = v12338
+    ax = v12315
+    cx = v12316
+    dx = v12317
+    bx = v12318
+    sp = v12319
+    bp = v12320
+    si = v12467 [from 0x8048563:sub    esi, 0x04]
+    di = v12387 [from 0x8048562:inc    edi]
+    es = v12323
+    cs = v12324
+    ss = v12325
+    ds = v12326
+    fs = v12327
+    gs = v12328
+    cf = -v12460-0x1 [from 0x8048563:sub    esi, 0x04]
+    ?1 = v12330
+    pf = -v12450-0x1 [from 0x8048563:sub    esi, 0x04]
+    ?3 = v12332
+    af = -v12457-0x1 [from 0x8048563:sub    esi, 0x04]
+    ?5 = v12334
+    zf = v12455 [from 0x8048563:sub    esi, 0x04]
+    sf = v12453 [from 0x8048563:sub    esi, 0x04]
+    tf = v12337
+    if = v12338
+    df = v12339
+    of = v12465 [from 0x8048563:sub    esi, 0x04]
+    iopl0 = v12341
+    iopl1 = v12342
+    nt = v12343
+    ?15 = v12344
     memory = {}
     ip = 0x8048566 [from 0x8048563:sub    esi, 0x04]
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
-    ax = v12309
-    cx = v12310
-    dx = v12311
-    bx = v12312
-    sp = v12313
-    bp = v12314
-    si = v12461 [from 0x8048563:sub    esi, 0x04]
-    di = v12381 [from 0x8048562:inc    edi]
-    es = v12317
-    cs = v12318
-    ss = v12319
-    ds = v12320
-    fs = v12321
-    gs = v12322
-    cf = -v12538-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?1 = v12324
-    pf = -v12528-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?3 = v12326
-    af = -v12535-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?5 = v12328
-    zf = v12533 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    sf = v12531 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    tf = v12331
-    if = v12332
-    df = v12333
-    of = v12543 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    iopl0 = v12335
-    iopl1 = v12336
-    nt = v12337
-    ?15 = v12338
+
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+    ax = v12315
+    cx = v12316
+    dx = v12317
+    bx = v12318
+    sp = v12319
+    bp = v12320
+    si = v12467 [from 0x8048563:sub    esi, 0x04]
+    di = v12387 [from 0x8048562:inc    edi]
+    es = v12323
+    cs = v12324
+    ss = v12325
+    ds = v12326
+    fs = v12327
+    gs = v12328
+    cf = -v12544-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?1 = v12330
+    pf = -v12534-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?3 = v12332
+    af = -v12541-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?5 = v12334
+    zf = v12539 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    sf = v12537 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    tf = v12337
+    if = v12338
+    df = v12339
+    of = v12549 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    iopl0 = v12341
+    iopl1 = v12342
+    nt = v12343
+    ?15 = v12344
     memory = {}
-    ip = 0x8048569 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
+    ip = 0x8048569 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+
 0x8048569:jne    0x08048560<<Insn>>
-    ax = v12309
-    cx = v12310
-    dx = v12311
-    bx = v12312
-    sp = v12313
-    bp = v12314
-    si = v12461 [from 0x8048563:sub    esi, 0x04]
-    di = v12381 [from 0x8048562:inc    edi]
-    es = v12317
-    cs = v12318
-    ss = v12319
-    ds = v12320
-    fs = v12321
-    gs = v12322
-    cf = -v12538-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?1 = v12324
-    pf = -v12528-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?3 = v12326
-    af = -v12535-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    ?5 = v12328
-    zf = v12533 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    sf = v12531 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    tf = v12331
-    if = v12332
-    df = v12333
-    of = v12543 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi]
-    iopl0 = v12335
-    iopl1 = v12336
-    nt = v12337
-    ?15 = v12338
+    ax = v12315
+    cx = v12316
+    dx = v12317
+    bx = v12318
+    sp = v12319
+    bp = v12320
+    si = v12467 [from 0x8048563:sub    esi, 0x04]
+    di = v12387 [from 0x8048562:inc    edi]
+    es = v12323
+    cs = v12324
+    ss = v12325
+    ds = v12326
+    fs = v12327
+    gs = v12328
+    cf = -v12544-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?1 = v12330
+    pf = -v12534-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?3 = v12332
+    af = -v12541-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ?5 = v12334
+    zf = v12539 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    sf = v12537 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    tf = v12337
+    if = v12338
+    df = v12339
+    of = v12549 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    iopl0 = v12341
+    iopl1 = v12342
+    nt = v12343
+    ?15 = v12344
     memory = {}
-    ip = v12584 [from 0x8048569:jne    0x08048560<<Insn>>]
+    ip = v12590 [from 0x8048569:jne    0x08048560<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x804856b:call   0x080485b0<_fini>
-    ax = v12709
-    cx = v12710
-    dx = v12711
-    bx = v12712
-    sp = v12751 [from 0x804856b:call   0x080485b0<_fini>]
-    bp = v12714
-    si = v12715
-    di = v12716
-    es = v12717
-    cs = v12718
-    ss = v12719
-    ds = v12720
-    fs = v12721
-    gs = v12722
-    cf = v12723
-    ?1 = v12724
-    pf = v12725
-    ?3 = v12726
-    af = v12727
-    ?5 = v12728
-    zf = v12729
-    sf = v12730
-    tf = v12731
-    if = v12732
-    df = v12733
-    of = v12734
-    iopl0 = v12735
-    iopl1 = v12736
-    nt = v12737
-    ?15 = v12738
+    ax = v12715
+    cx = v12716
+    dx = v12717
+    bx = v12718
+    sp = v12757 [from 0x804856b:call   0x080485b0<_fini>]
+    bp = v12720
+    si = v12721
+    di = v12722
+    es = v12723
+    cs = v12724
+    ss = v12725
+    ds = v12726
+    fs = v12727
+    gs = v12728
+    cf = v12729
+    ?1 = v12730
+    pf = v12731
+    ?3 = v12732
+    af = v12733
+    ?5 = v12734
+    zf = v12735
+    sf = v12736
+    tf = v12737
+    if = v12738
+    df = v12739
+    of = v12740
+    iopl0 = v12741
+    iopl1 = v12742
+    nt = v12743
+    ?15 = v12744
     memory = {
-        size=4; addr=v12713-0x4 [from 0x804856b:call   0x080485b0<_fini>]; value=0x8048570 [from 0x804856b:call   0x080485b0<_fini>]
+        size=4; addr=v12719-0x4 [from 0x804856b:call   0x080485b0<_fini>]; value=0x8048570 [from 0x804856b:call   0x080485b0<_fini>]
     }
     ip = 0x80485b0 [from 0x804856b:call   0x080485b0<_fini>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048570:add    esp, 0x0c
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v12938
-    sp = v13009 [from 0x8048570:add    esp, 0x0c]
-    bp = v12940
-    si = v12941
-    di = v12942
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v12944
+    sp = v13015 [from 0x8048570:add    esp, 0x0c]
+    bp = v12946
+    si = v12947
+    di = v12948
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
     ip = 0x8048573 [from 0x8048570:add    esp, 0x0c]
+
 0x8048573:pop    ebx
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v13051 [from 0x8048573:pop    ebx]
-    sp = v13048 [from 0x8048573:pop    ebx]
-    bp = v12940
-    si = v12941
-    di = v12942
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v13057 [from 0x8048573:pop    ebx]
+    sp = v13054 [from 0x8048573:pop    ebx]
+    bp = v12946
+    si = v12947
+    di = v12948
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
     ip = 0x8048574 [from 0x8048573:pop    ebx]
+
 0x8048574:pop    esi
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v13051 [from 0x8048573:pop    ebx]
-    sp = v13090 [from 0x8048574:pop    esi]
-    bp = v12940
-    si = v13093 [from 0x8048574:pop    esi]
-    di = v12942
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v13057 [from 0x8048573:pop    ebx]
+    sp = v13096 [from 0x8048574:pop    esi]
+    bp = v12946
+    si = v13099 [from 0x8048574:pop    esi]
+    di = v12948
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
     ip = 0x8048575 [from 0x8048574:pop    esi]
+
 0x8048575:pop    edi
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v13051 [from 0x8048573:pop    ebx]
-    sp = v13132 [from 0x8048575:pop    edi]
-    bp = v12940
-    si = v13093 [from 0x8048574:pop    esi]
-    di = v13135 [from 0x8048575:pop    edi]
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v13057 [from 0x8048573:pop    ebx]
+    sp = v13138 [from 0x8048575:pop    edi]
+    bp = v12946
+    si = v13099 [from 0x8048574:pop    esi]
+    di = v13141 [from 0x8048575:pop    edi]
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
     ip = 0x8048576 [from 0x8048575:pop    edi]
+
 0x8048576:pop    ebp
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v13051 [from 0x8048573:pop    ebx]
-    sp = v13174 [from 0x8048576:pop    ebp]
-    bp = v13177 [from 0x8048576:pop    ebp]
-    si = v13093 [from 0x8048574:pop    esi]
-    di = v13135 [from 0x8048575:pop    edi]
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v13057 [from 0x8048573:pop    ebx]
+    sp = v13180 [from 0x8048576:pop    ebp]
+    bp = v13183 [from 0x8048576:pop    ebp]
+    si = v13099 [from 0x8048574:pop    esi]
+    di = v13141 [from 0x8048575:pop    edi]
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
     ip = 0x8048577 [from 0x8048576:pop    ebp]
+
 0x8048577:ret    
-    ax = v12935
-    cx = v12936
-    dx = v12937
-    bx = v13051 [from 0x8048573:pop    ebx]
-    sp = v13221 [from 0x8048577:ret    ]
-    bp = v13177 [from 0x8048576:pop    ebp]
-    si = v13093 [from 0x8048574:pop    esi]
-    di = v13135 [from 0x8048575:pop    edi]
-    es = v12943
-    cs = v12944
-    ss = v12945
-    ds = v12946
-    fs = v12947
-    gs = v12948
-    cf = v13003 [from 0x8048570:add    esp, 0x0c]
-    ?1 = v12950
-    pf = -v12994-0x1 [from 0x8048570:add    esp, 0x0c]
-    ?3 = v12952
-    af = v13001 [from 0x8048570:add    esp, 0x0c]
-    ?5 = v12954
-    zf = v12999 [from 0x8048570:add    esp, 0x0c]
-    sf = v12997 [from 0x8048570:add    esp, 0x0c]
-    tf = v12957
-    if = v12958
-    df = v12959
-    of = v13007 [from 0x8048570:add    esp, 0x0c]
-    iopl0 = v12961
-    iopl1 = v12962
-    nt = v12963
-    ?15 = v12964
+    ax = v12941
+    cx = v12942
+    dx = v12943
+    bx = v13057 [from 0x8048573:pop    ebx]
+    sp = v13227 [from 0x8048577:ret    ]
+    bp = v13183 [from 0x8048576:pop    ebp]
+    si = v13099 [from 0x8048574:pop    esi]
+    di = v13141 [from 0x8048575:pop    edi]
+    es = v12949
+    cs = v12950
+    ss = v12951
+    ds = v12952
+    fs = v12953
+    gs = v12954
+    cf = v13009 [from 0x8048570:add    esp, 0x0c]
+    ?1 = v12956
+    pf = -v13000-0x1 [from 0x8048570:add    esp, 0x0c]
+    ?3 = v12958
+    af = v13007 [from 0x8048570:add    esp, 0x0c]
+    ?5 = v12960
+    zf = v13005 [from 0x8048570:add    esp, 0x0c]
+    sf = v13003 [from 0x8048570:add    esp, 0x0c]
+    tf = v12963
+    if = v12964
+    df = v12965
+    of = v13013 [from 0x8048570:add    esp, 0x0c]
+    iopl0 = v12967
+    iopl1 = v12968
+    nt = v12969
+    ?15 = v12970
     memory = {}
-    ip = v13219 [from 0x8048577:ret    ]
+    ip = v13225 [from 0x8048577:ret    ]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048580:push   ebp
-    ax = v13285
-    cx = v13286
-    dx = v13287
-    bx = v13288
-    sp = v13325 [from 0x8048580:push   ebp]
-    bp = v13290
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = v13299
-    ?1 = v13300
-    pf = v13301
-    ?3 = v13302
-    af = v13303
-    ?5 = v13304
-    zf = v13305
-    sf = v13306
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13310
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    ax = v13291
+    cx = v13292
+    dx = v13293
+    bx = v13294
+    sp = v13331 [from 0x8048580:push   ebp]
+    bp = v13296
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = v13305
+    ?1 = v13306
+    pf = v13307
+    ?3 = v13308
+    af = v13309
+    ?5 = v13310
+    zf = v13311
+    sf = v13312
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13316
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13289-0x4 [from 0x8048580:push   ebp]; value=v13290
+        size=4; addr=v13295-0x4 [from 0x8048580:push   ebp]; value=v13296
     }
     ip = 0x8048581 [from 0x8048580:push   ebp]
+
 0x8048581:mov    ebp, esp
-    ax = v13285
-    cx = v13286
-    dx = v13287
-    bx = v13288
-    sp = v13325 [from 0x8048580:push   ebp]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = v13299
-    ?1 = v13300
-    pf = v13301
-    ?3 = v13302
-    af = v13303
-    ?5 = v13304
-    zf = v13305
-    sf = v13306
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13310
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    ax = v13291
+    cx = v13292
+    dx = v13293
+    bx = v13294
+    sp = v13331 [from 0x8048580:push   ebp]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = v13305
+    ?1 = v13306
+    pf = v13307
+    ?3 = v13308
+    af = v13309
+    ?5 = v13310
+    zf = v13311
+    sf = v13312
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13316
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13289-0x4 [from 0x8048580:push   ebp]; value=v13290
+        size=4; addr=v13295-0x4 [from 0x8048580:push   ebp]; value=v13296
     }
     ip = 0x8048583 [from 0x8048581:mov    ebp, esp]
+
 0x8048583:push   ebx
-    ax = v13285
-    cx = v13286
-    dx = v13287
-    bx = v13288
-    sp = v13404 [from 0x8048583:push   ebx]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = v13299
-    ?1 = v13300
-    pf = v13301
-    ?3 = v13302
-    af = v13303
-    ?5 = v13304
-    zf = v13305
-    sf = v13306
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13310
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    ax = v13291
+    cx = v13292
+    dx = v13293
+    bx = v13294
+    sp = v13410 [from 0x8048583:push   ebx]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = v13305
+    ?1 = v13306
+    pf = v13307
+    ?3 = v13308
+    af = v13309
+    ?5 = v13310
+    zf = v13311
+    sf = v13312
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13316
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
     ip = 0x8048584 [from 0x8048583:push   ebx]
+
 0x8048584:sub    esp, 0x04
-    ax = v13285
-    cx = v13286
-    dx = v13287
-    bx = v13288
-    sp = v13484 [from 0x8048584:sub    esp, 0x04]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = -v13477-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?1 = v13300
-    pf = -v13467-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?3 = v13302
-    af = -v13474-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?5 = v13304
-    zf = v13472 [from 0x8048584:sub    esp, 0x04]
-    sf = v13470 [from 0x8048584:sub    esp, 0x04]
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13482 [from 0x8048584:sub    esp, 0x04]
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    ax = v13291
+    cx = v13292
+    dx = v13293
+    bx = v13294
+    sp = v13490 [from 0x8048584:sub    esp, 0x04]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = -v13483-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?1 = v13306
+    pf = -v13473-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?3 = v13308
+    af = -v13480-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?5 = v13310
+    zf = v13478 [from 0x8048584:sub    esp, 0x04]
+    sf = v13476 [from 0x8048584:sub    esp, 0x04]
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13488 [from 0x8048584:sub    esp, 0x04]
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
     ip = 0x8048587 [from 0x8048584:sub    esp, 0x04]
+
 0x8048587:mov    ebx, 0x080495e8<.ctors>
-    ax = v13285
-    cx = v13286
-    dx = v13287
+    ax = v13291
+    cx = v13292
+    dx = v13293
     bx = 0x80495e8 [from 0x8048587:mov    ebx, 0x080495e8<.ctors>]
-    sp = v13484 [from 0x8048584:sub    esp, 0x04]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = -v13477-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?1 = v13300
-    pf = -v13467-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?3 = v13302
-    af = -v13474-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?5 = v13304
-    zf = v13472 [from 0x8048584:sub    esp, 0x04]
-    sf = v13470 [from 0x8048584:sub    esp, 0x04]
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13482 [from 0x8048584:sub    esp, 0x04]
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    sp = v13490 [from 0x8048584:sub    esp, 0x04]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = -v13483-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?1 = v13306
+    pf = -v13473-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?3 = v13308
+    af = -v13480-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?5 = v13310
+    zf = v13478 [from 0x8048584:sub    esp, 0x04]
+    sf = v13476 [from 0x8048584:sub    esp, 0x04]
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13488 [from 0x8048584:sub    esp, 0x04]
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
     ip = 0x804858c [from 0x8048587:mov    ebx, 0x080495e8<.ctors>]
+
 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
-    ax = v13560 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
-    cx = v13286
-    dx = v13287
+    ax = v13566 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    cx = v13292
+    dx = v13293
     bx = 0x80495e8 [from 0x8048587:mov    ebx, 0x080495e8<.ctors>]
-    sp = v13484 [from 0x8048584:sub    esp, 0x04]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = -v13477-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?1 = v13300
-    pf = -v13467-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?3 = v13302
-    af = -v13474-0x1 [from 0x8048584:sub    esp, 0x04]
-    ?5 = v13304
-    zf = v13472 [from 0x8048584:sub    esp, 0x04]
-    sf = v13470 [from 0x8048584:sub    esp, 0x04]
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13482 [from 0x8048584:sub    esp, 0x04]
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    sp = v13490 [from 0x8048584:sub    esp, 0x04]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = -v13483-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?1 = v13306
+    pf = -v13473-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?3 = v13308
+    af = -v13480-0x1 [from 0x8048584:sub    esp, 0x04]
+    ?5 = v13310
+    zf = v13478 [from 0x8048584:sub    esp, 0x04]
+    sf = v13476 [from 0x8048584:sub    esp, 0x04]
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13488 [from 0x8048584:sub    esp, 0x04]
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
     ip = 0x8048591 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
-0x8048591:cmp    eax, 0xff<-0x01>
-    ax = v13560 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
-    cx = v13286
-    dx = v13287
+
+0x8048591:cmp    eax, 0xff<-1>
+    ax = v13566 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    cx = v13292
+    dx = v13293
     bx = 0x80495e8 [from 0x8048587:mov    ebx, 0x080495e8<.ctors>]
-    sp = v13484 [from 0x8048584:sub    esp, 0x04]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = -v13633-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?1 = v13300
-    pf = -v13623-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?3 = v13302
-    af = -v13630-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?5 = v13304
-    zf = v13628 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    sf = v13626 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13638 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    sp = v13490 [from 0x8048584:sub    esp, 0x04]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = -v13639-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?1 = v13306
+    pf = -v13629-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?3 = v13308
+    af = -v13636-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?5 = v13310
+    zf = v13634 [from 0x8048591:cmp    eax, 0xff<-1>]
+    sf = v13632 [from 0x8048591:cmp    eax, 0xff<-1>]
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13644 [from 0x8048591:cmp    eax, 0xff<-1>]
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
-    ip = 0x8048594 [from 0x8048591:cmp    eax, 0xff<-0x01>]
+    ip = 0x8048594 [from 0x8048591:cmp    eax, 0xff<-1>]
+
 0x8048594:je     0x080485ac<<Insn>>
-    ax = v13560 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
-    cx = v13286
-    dx = v13287
+    ax = v13566 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    cx = v13292
+    dx = v13293
     bx = 0x80495e8 [from 0x8048587:mov    ebx, 0x080495e8<.ctors>]
-    sp = v13484 [from 0x8048584:sub    esp, 0x04]
-    bp = v13362 [from 0x8048581:mov    ebp, esp]
-    si = v13291
-    di = v13292
-    es = v13293
-    cs = v13294
-    ss = v13295
-    ds = v13296
-    fs = v13297
-    gs = v13298
-    cf = -v13633-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?1 = v13300
-    pf = -v13623-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?3 = v13302
-    af = -v13630-0x1 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    ?5 = v13304
-    zf = v13628 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    sf = v13626 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    tf = v13307
-    if = v13308
-    df = v13309
-    of = v13638 [from 0x8048591:cmp    eax, 0xff<-0x01>]
-    iopl0 = v13311
-    iopl1 = v13312
-    nt = v13313
-    ?15 = v13314
+    sp = v13490 [from 0x8048584:sub    esp, 0x04]
+    bp = v13368 [from 0x8048581:mov    ebp, esp]
+    si = v13297
+    di = v13298
+    es = v13299
+    cs = v13300
+    ss = v13301
+    ds = v13302
+    fs = v13303
+    gs = v13304
+    cf = -v13639-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?1 = v13306
+    pf = -v13629-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?3 = v13308
+    af = -v13636-0x1 [from 0x8048591:cmp    eax, 0xff<-1>]
+    ?5 = v13310
+    zf = v13634 [from 0x8048591:cmp    eax, 0xff<-1>]
+    sf = v13632 [from 0x8048591:cmp    eax, 0xff<-1>]
+    tf = v13313
+    if = v13314
+    df = v13315
+    of = v13644 [from 0x8048591:cmp    eax, 0xff<-1>]
+    iopl0 = v13317
+    iopl1 = v13318
+    nt = v13319
+    ?15 = v13320
     memory = {
-        size=4; addr=v13325-0x4 [from 0x8048583:push   ebx]; value=v13288
+        size=4; addr=v13331-0x4 [from 0x8048583:push   ebx]; value=v13294
     }
-    ip = v13678 [from 0x8048594:je     0x080485ac<<Insn>>]
+    ip = v13684 [from 0x8048594:je     0x080485ac<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x8048596:lea    esi, [esi + 0x00]
-    ax = v13803
-    cx = v13804
-    dx = v13805
-    bx = v13806
-    sp = v13807
-    bp = v13808
-    si = v13840 [from 0x8048596:lea    esi, [esi + 0x00]]
-    di = v13810
-    es = v13811
-    cs = v13812
-    ss = v13813
-    ds = v13814
-    fs = v13815
-    gs = v13816
-    cf = v13817
-    ?1 = v13818
-    pf = v13819
-    ?3 = v13820
-    af = v13821
-    ?5 = v13822
-    zf = v13823
-    sf = v13824
-    tf = v13825
-    if = v13826
-    df = v13827
-    of = v13828
-    iopl0 = v13829
-    iopl1 = v13830
-    nt = v13831
-    ?15 = v13832
+    ax = v13809
+    cx = v13810
+    dx = v13811
+    bx = v13812
+    sp = v13813
+    bp = v13814
+    si = v13846 [from 0x8048596:lea    esi, [esi + 0x00]]
+    di = v13816
+    es = v13817
+    cs = v13818
+    ss = v13819
+    ds = v13820
+    fs = v13821
+    gs = v13822
+    cf = v13823
+    ?1 = v13824
+    pf = v13825
+    ?3 = v13826
+    af = v13827
+    ?5 = v13828
+    zf = v13829
+    sf = v13830
+    tf = v13831
+    if = v13832
+    df = v13833
+    of = v13834
+    iopl0 = v13835
+    iopl1 = v13836
+    nt = v13837
+    ?15 = v13838
     memory = {}
     ip = 0x8048599 [from 0x8048596:lea    esi, [esi + 0x00]]
+
 0x8048599:lea    edi, [edi + 0x00000000]
-    ax = v13803
-    cx = v13804
-    dx = v13805
-    bx = v13806
-    sp = v13807
-    bp = v13808
-    si = v13840 [from 0x8048596:lea    esi, [esi + 0x00]]
-    di = v13879 [from 0x8048599:lea    edi, [edi + 0x00000000]]
-    es = v13811
-    cs = v13812
-    ss = v13813
-    ds = v13814
-    fs = v13815
-    gs = v13816
-    cf = v13817
-    ?1 = v13818
-    pf = v13819
-    ?3 = v13820
-    af = v13821
-    ?5 = v13822
-    zf = v13823
-    sf = v13824
-    tf = v13825
-    if = v13826
-    df = v13827
-    of = v13828
-    iopl0 = v13829
-    iopl1 = v13830
-    nt = v13831
-    ?15 = v13832
+    ax = v13809
+    cx = v13810
+    dx = v13811
+    bx = v13812
+    sp = v13813
+    bp = v13814
+    si = v13846 [from 0x8048596:lea    esi, [esi + 0x00]]
+    di = v13885 [from 0x8048599:lea    edi, [edi + 0x00000000]]
+    es = v13817
+    cs = v13818
+    ss = v13819
+    ds = v13820
+    fs = v13821
+    gs = v13822
+    cf = v13823
+    ?1 = v13824
+    pf = v13825
+    ?3 = v13826
+    af = v13827
+    ?5 = v13828
+    zf = v13829
+    sf = v13830
+    tf = v13831
+    if = v13832
+    df = v13833
+    of = v13834
+    iopl0 = v13835
+    iopl1 = v13836
+    nt = v13837
+    ?15 = v13838
     memory = {}
     ip = 0x80485a0 [from 0x8048599:lea    edi, [edi + 0x00000000]]
+
 0x80485a0:sub    ebx, 0x04
-    ax = v13803
-    cx = v13804
-    dx = v13805
-    bx = v13959 [from 0x80485a0:sub    ebx, 0x04]
-    sp = v13807
-    bp = v13808
-    si = v13840 [from 0x8048596:lea    esi, [esi + 0x00]]
-    di = v13879 [from 0x8048599:lea    edi, [edi + 0x00000000]]
-    es = v13811
-    cs = v13812
-    ss = v13813
-    ds = v13814
-    fs = v13815
-    gs = v13816
-    cf = -v13952-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?1 = v13818
-    pf = -v13942-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?3 = v13820
-    af = -v13949-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?5 = v13822
-    zf = v13947 [from 0x80485a0:sub    ebx, 0x04]
-    sf = v13945 [from 0x80485a0:sub    ebx, 0x04]
-    tf = v13825
-    if = v13826
-    df = v13827
-    of = v13957 [from 0x80485a0:sub    ebx, 0x04]
-    iopl0 = v13829
-    iopl1 = v13830
-    nt = v13831
-    ?15 = v13832
+    ax = v13809
+    cx = v13810
+    dx = v13811
+    bx = v13965 [from 0x80485a0:sub    ebx, 0x04]
+    sp = v13813
+    bp = v13814
+    si = v13846 [from 0x8048596:lea    esi, [esi + 0x00]]
+    di = v13885 [from 0x8048599:lea    edi, [edi + 0x00000000]]
+    es = v13817
+    cs = v13818
+    ss = v13819
+    ds = v13820
+    fs = v13821
+    gs = v13822
+    cf = -v13958-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?1 = v13824
+    pf = -v13948-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?3 = v13826
+    af = -v13955-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?5 = v13828
+    zf = v13953 [from 0x80485a0:sub    ebx, 0x04]
+    sf = v13951 [from 0x80485a0:sub    ebx, 0x04]
+    tf = v13831
+    if = v13832
+    df = v13833
+    of = v13963 [from 0x80485a0:sub    ebx, 0x04]
+    iopl0 = v13835
+    iopl1 = v13836
+    nt = v13837
+    ?15 = v13838
     memory = {}
     ip = 0x80485a3 [from 0x80485a0:sub    ebx, 0x04]
+
 0x80485a3:call   eax
-    ax = v13803
-    cx = v13804
-    dx = v13805
-    bx = v13959 [from 0x80485a0:sub    ebx, 0x04]
-    sp = v14003 [from 0x80485a3:call   eax]
-    bp = v13808
-    si = v13840 [from 0x8048596:lea    esi, [esi + 0x00]]
-    di = v13879 [from 0x8048599:lea    edi, [edi + 0x00000000]]
-    es = v13811
-    cs = v13812
-    ss = v13813
-    ds = v13814
-    fs = v13815
-    gs = v13816
-    cf = -v13952-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?1 = v13818
-    pf = -v13942-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?3 = v13820
-    af = -v13949-0x1 [from 0x80485a0:sub    ebx, 0x04]
-    ?5 = v13822
-    zf = v13947 [from 0x80485a0:sub    ebx, 0x04]
-    sf = v13945 [from 0x80485a0:sub    ebx, 0x04]
-    tf = v13825
-    if = v13826
-    df = v13827
-    of = v13957 [from 0x80485a0:sub    ebx, 0x04]
-    iopl0 = v13829
-    iopl1 = v13830
-    nt = v13831
-    ?15 = v13832
+    ax = v13809
+    cx = v13810
+    dx = v13811
+    bx = v13965 [from 0x80485a0:sub    ebx, 0x04]
+    sp = v14009 [from 0x80485a3:call   eax]
+    bp = v13814
+    si = v13846 [from 0x8048596:lea    esi, [esi + 0x00]]
+    di = v13885 [from 0x8048599:lea    edi, [edi + 0x00000000]]
+    es = v13817
+    cs = v13818
+    ss = v13819
+    ds = v13820
+    fs = v13821
+    gs = v13822
+    cf = -v13958-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?1 = v13824
+    pf = -v13948-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?3 = v13826
+    af = -v13955-0x1 [from 0x80485a0:sub    ebx, 0x04]
+    ?5 = v13828
+    zf = v13953 [from 0x80485a0:sub    ebx, 0x04]
+    sf = v13951 [from 0x80485a0:sub    ebx, 0x04]
+    tf = v13831
+    if = v13832
+    df = v13833
+    of = v13963 [from 0x80485a0:sub    ebx, 0x04]
+    iopl0 = v13835
+    iopl1 = v13836
+    nt = v13837
+    ?15 = v13838
     memory = {
-        size=4; addr=v13807-0x4 [from 0x80485a3:call   eax]; value=0x80485a5 [from 0x80485a3:call   eax]
+        size=4; addr=v13813-0x4 [from 0x80485a3:call   eax]; value=0x80485a5 [from 0x80485a3:call   eax]
     }
-    ip = v13803
+    ip = v13809
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80485a5:mov    eax, DWORD PTR ds:[ebx]
-    ax = v14194 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
-    cx = v14158
-    dx = v14159
-    bx = v14160
-    sp = v14161
-    bp = v14162
-    si = v14163
-    di = v14164
-    es = v14165
-    cs = v14166
-    ss = v14167
-    ds = v14168
-    fs = v14169
-    gs = v14170
-    cf = v14171
-    ?1 = v14172
-    pf = v14173
-    ?3 = v14174
-    af = v14175
-    ?5 = v14176
-    zf = v14177
-    sf = v14178
-    tf = v14179
-    if = v14180
-    df = v14181
-    of = v14182
-    iopl0 = v14183
-    iopl1 = v14184
-    nt = v14185
-    ?15 = v14186
+    ax = v14200 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
+    cx = v14164
+    dx = v14165
+    bx = v14166
+    sp = v14167
+    bp = v14168
+    si = v14169
+    di = v14170
+    es = v14171
+    cs = v14172
+    ss = v14173
+    ds = v14174
+    fs = v14175
+    gs = v14176
+    cf = v14177
+    ?1 = v14178
+    pf = v14179
+    ?3 = v14180
+    af = v14181
+    ?5 = v14182
+    zf = v14183
+    sf = v14184
+    tf = v14185
+    if = v14186
+    df = v14187
+    of = v14188
+    iopl0 = v14189
+    iopl1 = v14190
+    nt = v14191
+    ?15 = v14192
     memory = {}
     ip = 0x80485a7 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
-0x80485a7:cmp    eax, 0xff<-0x01>
-    ax = v14194 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
-    cx = v14158
-    dx = v14159
-    bx = v14160
-    sp = v14161
-    bp = v14162
-    si = v14163
-    di = v14164
-    es = v14165
-    cs = v14166
-    ss = v14167
-    ds = v14168
-    fs = v14169
-    gs = v14170
-    cf = -v14267-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?1 = v14172
-    pf = -v14257-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?3 = v14174
-    af = -v14264-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?5 = v14176
-    zf = v14262 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    sf = v14260 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    tf = v14179
-    if = v14180
-    df = v14181
-    of = v14272 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    iopl0 = v14183
-    iopl1 = v14184
-    nt = v14185
-    ?15 = v14186
+
+0x80485a7:cmp    eax, 0xff<-1>
+    ax = v14200 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
+    cx = v14164
+    dx = v14165
+    bx = v14166
+    sp = v14167
+    bp = v14168
+    si = v14169
+    di = v14170
+    es = v14171
+    cs = v14172
+    ss = v14173
+    ds = v14174
+    fs = v14175
+    gs = v14176
+    cf = -v14273-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?1 = v14178
+    pf = -v14263-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?3 = v14180
+    af = -v14270-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?5 = v14182
+    zf = v14268 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    sf = v14266 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    tf = v14185
+    if = v14186
+    df = v14187
+    of = v14278 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    iopl0 = v14189
+    iopl1 = v14190
+    nt = v14191
+    ?15 = v14192
     memory = {}
-    ip = 0x80485aa [from 0x80485a7:cmp    eax, 0xff<-0x01>]
+    ip = 0x80485aa [from 0x80485a7:cmp    eax, 0xff<-1>]
+
 0x80485aa:jne    0x080485a0<<Insn>>
-    ax = v14194 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
-    cx = v14158
-    dx = v14159
-    bx = v14160
-    sp = v14161
-    bp = v14162
-    si = v14163
-    di = v14164
-    es = v14165
-    cs = v14166
-    ss = v14167
-    ds = v14168
-    fs = v14169
-    gs = v14170
-    cf = -v14267-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?1 = v14172
-    pf = -v14257-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?3 = v14174
-    af = -v14264-0x1 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    ?5 = v14176
-    zf = v14262 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    sf = v14260 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    tf = v14179
-    if = v14180
-    df = v14181
-    of = v14272 [from 0x80485a7:cmp    eax, 0xff<-0x01>]
-    iopl0 = v14183
-    iopl1 = v14184
-    nt = v14185
-    ?15 = v14186
+    ax = v14200 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
+    cx = v14164
+    dx = v14165
+    bx = v14166
+    sp = v14167
+    bp = v14168
+    si = v14169
+    di = v14170
+    es = v14171
+    cs = v14172
+    ss = v14173
+    ds = v14174
+    fs = v14175
+    gs = v14176
+    cf = -v14273-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?1 = v14178
+    pf = -v14263-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?3 = v14180
+    af = -v14270-0x1 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    ?5 = v14182
+    zf = v14268 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    sf = v14266 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    tf = v14185
+    if = v14186
+    df = v14187
+    of = v14278 [from 0x80485a7:cmp    eax, 0xff<-1>]
+    iopl0 = v14189
+    iopl1 = v14190
+    nt = v14191
+    ?15 = v14192
     memory = {}
-    ip = v14313 [from 0x80485aa:jne    0x080485a0<<Insn>>]
+    ip = v14319 [from 0x80485aa:jne    0x080485a0<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80485ac:pop    eax
-    ax = v14478 [from 0x80485ac:pop    eax]
-    cx = v14439
-    dx = v14440
-    bx = v14441
-    sp = v14475 [from 0x80485ac:pop    eax]
-    bp = v14443
-    si = v14444
-    di = v14445
-    es = v14446
-    cs = v14447
-    ss = v14448
-    ds = v14449
-    fs = v14450
-    gs = v14451
-    cf = v14452
-    ?1 = v14453
-    pf = v14454
-    ?3 = v14455
-    af = v14456
-    ?5 = v14457
-    zf = v14458
-    sf = v14459
-    tf = v14460
-    if = v14461
-    df = v14462
-    of = v14463
-    iopl0 = v14464
-    iopl1 = v14465
-    nt = v14466
-    ?15 = v14467
+    ax = v14484 [from 0x80485ac:pop    eax]
+    cx = v14445
+    dx = v14446
+    bx = v14447
+    sp = v14481 [from 0x80485ac:pop    eax]
+    bp = v14449
+    si = v14450
+    di = v14451
+    es = v14452
+    cs = v14453
+    ss = v14454
+    ds = v14455
+    fs = v14456
+    gs = v14457
+    cf = v14458
+    ?1 = v14459
+    pf = v14460
+    ?3 = v14461
+    af = v14462
+    ?5 = v14463
+    zf = v14464
+    sf = v14465
+    tf = v14466
+    if = v14467
+    df = v14468
+    of = v14469
+    iopl0 = v14470
+    iopl1 = v14471
+    nt = v14472
+    ?15 = v14473
     memory = {}
     ip = 0x80485ad [from 0x80485ac:pop    eax]
+
 0x80485ad:pop    ebx
-    ax = v14478 [from 0x80485ac:pop    eax]
-    cx = v14439
-    dx = v14440
-    bx = v14520 [from 0x80485ad:pop    ebx]
-    sp = v14517 [from 0x80485ad:pop    ebx]
-    bp = v14443
-    si = v14444
-    di = v14445
-    es = v14446
-    cs = v14447
-    ss = v14448
-    ds = v14449
-    fs = v14450
-    gs = v14451
-    cf = v14452
-    ?1 = v14453
-    pf = v14454
-    ?3 = v14455
-    af = v14456
-    ?5 = v14457
-    zf = v14458
-    sf = v14459
-    tf = v14460
-    if = v14461
-    df = v14462
-    of = v14463
-    iopl0 = v14464
-    iopl1 = v14465
-    nt = v14466
-    ?15 = v14467
+    ax = v14484 [from 0x80485ac:pop    eax]
+    cx = v14445
+    dx = v14446
+    bx = v14526 [from 0x80485ad:pop    ebx]
+    sp = v14523 [from 0x80485ad:pop    ebx]
+    bp = v14449
+    si = v14450
+    di = v14451
+    es = v14452
+    cs = v14453
+    ss = v14454
+    ds = v14455
+    fs = v14456
+    gs = v14457
+    cf = v14458
+    ?1 = v14459
+    pf = v14460
+    ?3 = v14461
+    af = v14462
+    ?5 = v14463
+    zf = v14464
+    sf = v14465
+    tf = v14466
+    if = v14467
+    df = v14468
+    of = v14469
+    iopl0 = v14470
+    iopl1 = v14471
+    nt = v14472
+    ?15 = v14473
     memory = {}
     ip = 0x80485ae [from 0x80485ad:pop    ebx]
+
 0x80485ae:pop    ebp
-    ax = v14478 [from 0x80485ac:pop    eax]
-    cx = v14439
-    dx = v14440
-    bx = v14520 [from 0x80485ad:pop    ebx]
-    sp = v14559 [from 0x80485ae:pop    ebp]
-    bp = v14562 [from 0x80485ae:pop    ebp]
-    si = v14444
-    di = v14445
-    es = v14446
-    cs = v14447
-    ss = v14448
-    ds = v14449
-    fs = v14450
-    gs = v14451
-    cf = v14452
-    ?1 = v14453
-    pf = v14454
-    ?3 = v14455
-    af = v14456
-    ?5 = v14457
-    zf = v14458
-    sf = v14459
-    tf = v14460
-    if = v14461
-    df = v14462
-    of = v14463
-    iopl0 = v14464
-    iopl1 = v14465
-    nt = v14466
-    ?15 = v14467
+    ax = v14484 [from 0x80485ac:pop    eax]
+    cx = v14445
+    dx = v14446
+    bx = v14526 [from 0x80485ad:pop    ebx]
+    sp = v14565 [from 0x80485ae:pop    ebp]
+    bp = v14568 [from 0x80485ae:pop    ebp]
+    si = v14450
+    di = v14451
+    es = v14452
+    cs = v14453
+    ss = v14454
+    ds = v14455
+    fs = v14456
+    gs = v14457
+    cf = v14458
+    ?1 = v14459
+    pf = v14460
+    ?3 = v14461
+    af = v14462
+    ?5 = v14463
+    zf = v14464
+    sf = v14465
+    tf = v14466
+    if = v14467
+    df = v14468
+    of = v14469
+    iopl0 = v14470
+    iopl1 = v14471
+    nt = v14472
+    ?15 = v14473
     memory = {}
     ip = 0x80485af [from 0x80485ae:pop    ebp]
+
 0x80485af:ret    
-    ax = v14478 [from 0x80485ac:pop    eax]
-    cx = v14439
-    dx = v14440
-    bx = v14520 [from 0x80485ad:pop    ebx]
-    sp = v14606 [from 0x80485af:ret    ]
-    bp = v14562 [from 0x80485ae:pop    ebp]
-    si = v14444
-    di = v14445
-    es = v14446
-    cs = v14447
-    ss = v14448
-    ds = v14449
-    fs = v14450
-    gs = v14451
-    cf = v14452
-    ?1 = v14453
-    pf = v14454
-    ?3 = v14455
-    af = v14456
-    ?5 = v14457
-    zf = v14458
-    sf = v14459
-    tf = v14460
-    if = v14461
-    df = v14462
-    of = v14463
-    iopl0 = v14464
-    iopl1 = v14465
-    nt = v14466
-    ?15 = v14467
+    ax = v14484 [from 0x80485ac:pop    eax]
+    cx = v14445
+    dx = v14446
+    bx = v14526 [from 0x80485ad:pop    ebx]
+    sp = v14612 [from 0x80485af:ret    ]
+    bp = v14568 [from 0x80485ae:pop    ebp]
+    si = v14450
+    di = v14451
+    es = v14452
+    cs = v14453
+    ss = v14454
+    ds = v14455
+    fs = v14456
+    gs = v14457
+    cf = v14458
+    ?1 = v14459
+    pf = v14460
+    ?3 = v14461
+    af = v14462
+    ?5 = v14463
+    zf = v14464
+    sf = v14465
+    tf = v14466
+    if = v14467
+    df = v14468
+    of = v14469
+    iopl0 = v14470
+    iopl1 = v14471
+    nt = v14472
+    ?15 = v14473
     memory = {}
-    ip = v14604 [from 0x80485af:ret    ]
+    ip = v14610 [from 0x80485af:ret    ]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80485b0:push   ebp
-    ax = v14670
-    cx = v14671
-    dx = v14672
-    bx = v14673
-    sp = v14710 [from 0x80485b0:push   ebp]
-    bp = v14675
-    si = v14676
-    di = v14677
-    es = v14678
-    cs = v14679
-    ss = v14680
-    ds = v14681
-    fs = v14682
-    gs = v14683
-    cf = v14684
-    ?1 = v14685
-    pf = v14686
-    ?3 = v14687
-    af = v14688
-    ?5 = v14689
-    zf = v14690
-    sf = v14691
-    tf = v14692
-    if = v14693
-    df = v14694
-    of = v14695
-    iopl0 = v14696
-    iopl1 = v14697
-    nt = v14698
-    ?15 = v14699
+    ax = v14676
+    cx = v14677
+    dx = v14678
+    bx = v14679
+    sp = v14716 [from 0x80485b0:push   ebp]
+    bp = v14681
+    si = v14682
+    di = v14683
+    es = v14684
+    cs = v14685
+    ss = v14686
+    ds = v14687
+    fs = v14688
+    gs = v14689
+    cf = v14690
+    ?1 = v14691
+    pf = v14692
+    ?3 = v14693
+    af = v14694
+    ?5 = v14695
+    zf = v14696
+    sf = v14697
+    tf = v14698
+    if = v14699
+    df = v14700
+    of = v14701
+    iopl0 = v14702
+    iopl1 = v14703
+    nt = v14704
+    ?15 = v14705
     memory = {
-        size=4; addr=v14674-0x4 [from 0x80485b0:push   ebp]; value=v14675
+        size=4; addr=v14680-0x4 [from 0x80485b0:push   ebp]; value=v14681
     }
     ip = 0x80485b1 [from 0x80485b0:push   ebp]
+
 0x80485b1:mov    ebp, esp
-    ax = v14670
-    cx = v14671
-    dx = v14672
-    bx = v14673
-    sp = v14710 [from 0x80485b0:push   ebp]
-    bp = v14747 [from 0x80485b1:mov    ebp, esp]
-    si = v14676
-    di = v14677
-    es = v14678
-    cs = v14679
-    ss = v14680
-    ds = v14681
-    fs = v14682
-    gs = v14683
-    cf = v14684
-    ?1 = v14685
-    pf = v14686
-    ?3 = v14687
-    af = v14688
-    ?5 = v14689
-    zf = v14690
-    sf = v14691
-    tf = v14692
-    if = v14693
-    df = v14694
-    of = v14695
-    iopl0 = v14696
-    iopl1 = v14697
-    nt = v14698
-    ?15 = v14699
+    ax = v14676
+    cx = v14677
+    dx = v14678
+    bx = v14679
+    sp = v14716 [from 0x80485b0:push   ebp]
+    bp = v14753 [from 0x80485b1:mov    ebp, esp]
+    si = v14682
+    di = v14683
+    es = v14684
+    cs = v14685
+    ss = v14686
+    ds = v14687
+    fs = v14688
+    gs = v14689
+    cf = v14690
+    ?1 = v14691
+    pf = v14692
+    ?3 = v14693
+    af = v14694
+    ?5 = v14695
+    zf = v14696
+    sf = v14697
+    tf = v14698
+    if = v14699
+    df = v14700
+    of = v14701
+    iopl0 = v14702
+    iopl1 = v14703
+    nt = v14704
+    ?15 = v14705
     memory = {
-        size=4; addr=v14674-0x4 [from 0x80485b0:push   ebp]; value=v14675
+        size=4; addr=v14680-0x4 [from 0x80485b0:push   ebp]; value=v14681
     }
     ip = 0x80485b3 [from 0x80485b1:mov    ebp, esp]
+
 0x80485b3:push   ebx
-    ax = v14670
-    cx = v14671
-    dx = v14672
-    bx = v14673
-    sp = v14789 [from 0x80485b3:push   ebx]
-    bp = v14747 [from 0x80485b1:mov    ebp, esp]
-    si = v14676
-    di = v14677
-    es = v14678
-    cs = v14679
-    ss = v14680
-    ds = v14681
-    fs = v14682
-    gs = v14683
-    cf = v14684
-    ?1 = v14685
-    pf = v14686
-    ?3 = v14687
-    af = v14688
-    ?5 = v14689
-    zf = v14690
-    sf = v14691
-    tf = v14692
-    if = v14693
-    df = v14694
-    of = v14695
-    iopl0 = v14696
-    iopl1 = v14697
-    nt = v14698
-    ?15 = v14699
+    ax = v14676
+    cx = v14677
+    dx = v14678
+    bx = v14679
+    sp = v14795 [from 0x80485b3:push   ebx]
+    bp = v14753 [from 0x80485b1:mov    ebp, esp]
+    si = v14682
+    di = v14683
+    es = v14684
+    cs = v14685
+    ss = v14686
+    ds = v14687
+    fs = v14688
+    gs = v14689
+    cf = v14690
+    ?1 = v14691
+    pf = v14692
+    ?3 = v14693
+    af = v14694
+    ?5 = v14695
+    zf = v14696
+    sf = v14697
+    tf = v14698
+    if = v14699
+    df = v14700
+    of = v14701
+    iopl0 = v14702
+    iopl1 = v14703
+    nt = v14704
+    ?15 = v14705
     memory = {
-        size=4; addr=v14710-0x4 [from 0x80485b3:push   ebx]; value=v14673
+        size=4; addr=v14716-0x4 [from 0x80485b3:push   ebx]; value=v14679
     }
     ip = 0x80485b4 [from 0x80485b3:push   ebx]
+
 0x80485b4:push   eax
-    ax = v14670
-    cx = v14671
-    dx = v14672
-    bx = v14673
-    sp = v14831 [from 0x80485b4:push   eax]
-    bp = v14747 [from 0x80485b1:mov    ebp, esp]
-    si = v14676
-    di = v14677
-    es = v14678
-    cs = v14679
-    ss = v14680
-    ds = v14681
-    fs = v14682
-    gs = v14683
-    cf = v14684
-    ?1 = v14685
-    pf = v14686
-    ?3 = v14687
-    af = v14688
-    ?5 = v14689
-    zf = v14690
-    sf = v14691
-    tf = v14692
-    if = v14693
-    df = v14694
-    of = v14695
-    iopl0 = v14696
-    iopl1 = v14697
-    nt = v14698
-    ?15 = v14699
+    ax = v14676
+    cx = v14677
+    dx = v14678
+    bx = v14679
+    sp = v14837 [from 0x80485b4:push   eax]
+    bp = v14753 [from 0x80485b1:mov    ebp, esp]
+    si = v14682
+    di = v14683
+    es = v14684
+    cs = v14685
+    ss = v14686
+    ds = v14687
+    fs = v14688
+    gs = v14689
+    cf = v14690
+    ?1 = v14691
+    pf = v14692
+    ?3 = v14693
+    af = v14694
+    ?5 = v14695
+    zf = v14696
+    sf = v14697
+    tf = v14698
+    if = v14699
+    df = v14700
+    of = v14701
+    iopl0 = v14702
+    iopl1 = v14703
+    nt = v14704
+    ?15 = v14705
     memory = {
-        size=4; addr=v14789-0x4 [from 0x80485b4:push   eax]; value=v14670
+        size=4; addr=v14795-0x4 [from 0x80485b4:push   eax]; value=v14676
     }
     ip = 0x80485b5 [from 0x80485b4:push   eax]
+
 0x80485b5:call   0x080485ba<<Insn>>
-    ax = v14670
-    cx = v14671
-    dx = v14672
-    bx = v14673
-    sp = v14875 [from 0x80485b5:call   0x080485ba<<Insn>>]
-    bp = v14747 [from 0x80485b1:mov    ebp, esp]
-    si = v14676
-    di = v14677
-    es = v14678
-    cs = v14679
-    ss = v14680
-    ds = v14681
-    fs = v14682
-    gs = v14683
-    cf = v14684
-    ?1 = v14685
-    pf = v14686
-    ?3 = v14687
-    af = v14688
-    ?5 = v14689
-    zf = v14690
-    sf = v14691
-    tf = v14692
-    if = v14693
-    df = v14694
-    of = v14695
-    iopl0 = v14696
-    iopl1 = v14697
-    nt = v14698
-    ?15 = v14699
+    ax = v14676
+    cx = v14677
+    dx = v14678
+    bx = v14679
+    sp = v14881 [from 0x80485b5:call   0x080485ba<<Insn>>]
+    bp = v14753 [from 0x80485b1:mov    ebp, esp]
+    si = v14682
+    di = v14683
+    es = v14684
+    cs = v14685
+    ss = v14686
+    ds = v14687
+    fs = v14688
+    gs = v14689
+    cf = v14690
+    ?1 = v14691
+    pf = v14692
+    ?3 = v14693
+    af = v14694
+    ?5 = v14695
+    zf = v14696
+    sf = v14697
+    tf = v14698
+    if = v14699
+    df = v14700
+    of = v14701
+    iopl0 = v14702
+    iopl1 = v14703
+    nt = v14704
+    ?15 = v14705
     memory = {
-        size=4; addr=v14831-0x4 [from 0x80485b5:call   0x080485ba<<Insn>>]; value=0x80485ba [from 0x80485b5:call   0x080485ba<<Insn>>]
+        size=4; addr=v14837-0x4 [from 0x80485b5:call   0x080485ba<<Insn>>]; value=0x80485ba [from 0x80485b5:call   0x080485ba<<Insn>>]
     }
     ip = 0x80485ba [from 0x80485b5:call   0x080485ba<<Insn>>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80485ba:pop    ebx
-    ax = v14969
-    cx = v14970
-    dx = v14971
-    bx = v15009 [from 0x80485ba:pop    ebx]
-    sp = v15006 [from 0x80485ba:pop    ebx]
-    bp = v14974
-    si = v14975
-    di = v14976
-    es = v14977
-    cs = v14978
-    ss = v14979
-    ds = v14980
-    fs = v14981
-    gs = v14982
-    cf = v14983
-    ?1 = v14984
-    pf = v14985
-    ?3 = v14986
-    af = v14987
-    ?5 = v14988
-    zf = v14989
-    sf = v14990
-    tf = v14991
-    if = v14992
-    df = v14993
-    of = v14994
-    iopl0 = v14995
-    iopl1 = v14996
-    nt = v14997
-    ?15 = v14998
+    ax = v14975
+    cx = v14976
+    dx = v14977
+    bx = v15015 [from 0x80485ba:pop    ebx]
+    sp = v15012 [from 0x80485ba:pop    ebx]
+    bp = v14980
+    si = v14981
+    di = v14982
+    es = v14983
+    cs = v14984
+    ss = v14985
+    ds = v14986
+    fs = v14987
+    gs = v14988
+    cf = v14989
+    ?1 = v14990
+    pf = v14991
+    ?3 = v14992
+    af = v14993
+    ?5 = v14994
+    zf = v14995
+    sf = v14996
+    tf = v14997
+    if = v14998
+    df = v14999
+    of = v15000
+    iopl0 = v15001
+    iopl1 = v15002
+    nt = v15003
+    ?15 = v15004
     memory = {}
     ip = 0x80485bb [from 0x80485ba:pop    ebx]
-0x80485bb:add    ebx, 0x0000110e
-    ax = v14969
-    cx = v14970
-    dx = v14971
-    bx = v15085 [from 0x80485bb:add    ebx, 0x0000110e]
-    sp = v15006 [from 0x80485ba:pop    ebx]
-    bp = v14974
-    si = v14975
-    di = v14976
-    es = v14977
-    cs = v14978
-    ss = v14979
-    ds = v14980
-    fs = v14981
-    gs = v14982
-    cf = v15079 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?1 = v14984
-    pf = -v15070-0x1 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?3 = v14986
-    af = v15077 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?5 = v14988
-    zf = v15075 [from 0x80485bb:add    ebx, 0x0000110e]
-    sf = v15073 [from 0x80485bb:add    ebx, 0x0000110e]
-    tf = v14991
-    if = v14992
-    df = v14993
-    of = v15083 [from 0x80485bb:add    ebx, 0x0000110e]
-    iopl0 = v14995
-    iopl1 = v14996
-    nt = v14997
-    ?15 = v14998
+
+0x80485bb:add    ebx, 0x0000110e<4366>
+    ax = v14975
+    cx = v14976
+    dx = v14977
+    bx = v15091 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    sp = v15012 [from 0x80485ba:pop    ebx]
+    bp = v14980
+    si = v14981
+    di = v14982
+    es = v14983
+    cs = v14984
+    ss = v14985
+    ds = v14986
+    fs = v14987
+    gs = v14988
+    cf = v15085 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?1 = v14990
+    pf = -v15076-0x1 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?3 = v14992
+    af = v15083 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?5 = v14994
+    zf = v15081 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    sf = v15079 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    tf = v14997
+    if = v14998
+    df = v14999
+    of = v15089 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    iopl0 = v15001
+    iopl1 = v15002
+    nt = v15003
+    ?15 = v15004
     memory = {}
-    ip = 0x80485c1 [from 0x80485bb:add    ebx, 0x0000110e]
+    ip = 0x80485c1 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+
 0x80485c1:call   0x08048390<__do_global_dtors_aux>
-    ax = v14969
-    cx = v14970
-    dx = v14971
-    bx = v15085 [from 0x80485bb:add    ebx, 0x0000110e]
-    sp = v15129 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]
-    bp = v14974
-    si = v14975
-    di = v14976
-    es = v14977
-    cs = v14978
-    ss = v14979
-    ds = v14980
-    fs = v14981
-    gs = v14982
-    cf = v15079 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?1 = v14984
-    pf = -v15070-0x1 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?3 = v14986
-    af = v15077 [from 0x80485bb:add    ebx, 0x0000110e]
-    ?5 = v14988
-    zf = v15075 [from 0x80485bb:add    ebx, 0x0000110e]
-    sf = v15073 [from 0x80485bb:add    ebx, 0x0000110e]
-    tf = v14991
-    if = v14992
-    df = v14993
-    of = v15083 [from 0x80485bb:add    ebx, 0x0000110e]
-    iopl0 = v14995
-    iopl1 = v14996
-    nt = v14997
-    ?15 = v14998
+    ax = v14975
+    cx = v14976
+    dx = v14977
+    bx = v15091 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    sp = v15135 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]
+    bp = v14980
+    si = v14981
+    di = v14982
+    es = v14983
+    cs = v14984
+    ss = v14985
+    ds = v14986
+    fs = v14987
+    gs = v14988
+    cf = v15085 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?1 = v14990
+    pf = -v15076-0x1 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?3 = v14992
+    af = v15083 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    ?5 = v14994
+    zf = v15081 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    sf = v15079 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    tf = v14997
+    if = v14998
+    df = v14999
+    of = v15089 [from 0x80485bb:add    ebx, 0x0000110e<4366>]
+    iopl0 = v15001
+    iopl1 = v15002
+    nt = v15003
+    ?15 = v15004
     memory = {
-        size=4; addr=v15006-0x4 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]; value=0x80485c6 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]
+        size=4; addr=v15012-0x4 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]; value=0x80485c6 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]
     }
     ip = 0x8048390 [from 0x80485c1:call   0x08048390<__do_global_dtors_aux>]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
+
 0x80485c6:pop    eax
-    ax = v15353 [from 0x80485c6:pop    eax]
-    cx = v15314
-    dx = v15315
-    bx = v15316
-    sp = v15350 [from 0x80485c6:pop    eax]
-    bp = v15318
-    si = v15319
-    di = v15320
-    es = v15321
-    cs = v15322
-    ss = v15323
-    ds = v15324
-    fs = v15325
-    gs = v15326
-    cf = v15327
-    ?1 = v15328
-    pf = v15329
-    ?3 = v15330
-    af = v15331
-    ?5 = v15332
-    zf = v15333
-    sf = v15334
-    tf = v15335
-    if = v15336
-    df = v15337
-    of = v15338
-    iopl0 = v15339
-    iopl1 = v15340
-    nt = v15341
-    ?15 = v15342
+    ax = v15359 [from 0x80485c6:pop    eax]
+    cx = v15320
+    dx = v15321
+    bx = v15322
+    sp = v15356 [from 0x80485c6:pop    eax]
+    bp = v15324
+    si = v15325
+    di = v15326
+    es = v15327
+    cs = v15328
+    ss = v15329
+    ds = v15330
+    fs = v15331
+    gs = v15332
+    cf = v15333
+    ?1 = v15334
+    pf = v15335
+    ?3 = v15336
+    af = v15337
+    ?5 = v15338
+    zf = v15339
+    sf = v15340
+    tf = v15341
+    if = v15342
+    df = v15343
+    of = v15344
+    iopl0 = v15345
+    iopl1 = v15346
+    nt = v15347
+    ?15 = v15348
     memory = {}
     ip = 0x80485c7 [from 0x80485c6:pop    eax]
+
 0x80485c7:pop    ebx
-    ax = v15353 [from 0x80485c6:pop    eax]
-    cx = v15314
-    dx = v15315
-    bx = v15395 [from 0x80485c7:pop    ebx]
-    sp = v15392 [from 0x80485c7:pop    ebx]
-    bp = v15318
-    si = v15319
-    di = v15320
-    es = v15321
-    cs = v15322
-    ss = v15323
-    ds = v15324
-    fs = v15325
-    gs = v15326
-    cf = v15327
-    ?1 = v15328
-    pf = v15329
-    ?3 = v15330
-    af = v15331
-    ?5 = v15332
-    zf = v15333
-    sf = v15334
-    tf = v15335
-    if = v15336
-    df = v15337
-    of = v15338
-    iopl0 = v15339
-    iopl1 = v15340
-    nt = v15341
-    ?15 = v15342
+    ax = v15359 [from 0x80485c6:pop    eax]
+    cx = v15320
+    dx = v15321
+    bx = v15401 [from 0x80485c7:pop    ebx]
+    sp = v15398 [from 0x80485c7:pop    ebx]
+    bp = v15324
+    si = v15325
+    di = v15326
+    es = v15327
+    cs = v15328
+    ss = v15329
+    ds = v15330
+    fs = v15331
+    gs = v15332
+    cf = v15333
+    ?1 = v15334
+    pf = v15335
+    ?3 = v15336
+    af = v15337
+    ?5 = v15338
+    zf = v15339
+    sf = v15340
+    tf = v15341
+    if = v15342
+    df = v15343
+    of = v15344
+    iopl0 = v15345
+    iopl1 = v15346
+    nt = v15347
+    ?15 = v15348
     memory = {}
     ip = 0x80485c8 [from 0x80485c7:pop    ebx]
+
 0x80485c8:leave  
-    ax = v15353 [from 0x80485c6:pop    eax]
-    cx = v15314
-    dx = v15315
-    bx = v15395 [from 0x80485c7:pop    ebx]
-    sp = v15439 [from 0x80485c8:leave  ]
-    bp = v15438 [from 0x80485c8:leave  ]
-    si = v15319
-    di = v15320
-    es = v15321
-    cs = v15322
-    ss = v15323
-    ds = v15324
-    fs = v15325
-    gs = v15326
-    cf = v15327
-    ?1 = v15328
-    pf = v15329
-    ?3 = v15330
-    af = v15331
-    ?5 = v15332
-    zf = v15333
-    sf = v15334
-    tf = v15335
-    if = v15336
-    df = v15337
-    of = v15338
-    iopl0 = v15339
-    iopl1 = v15340
-    nt = v15341
-    ?15 = v15342
+    ax = v15359 [from 0x80485c6:pop    eax]
+    cx = v15320
+    dx = v15321
+    bx = v15401 [from 0x80485c7:pop    ebx]
+    sp = v15445 [from 0x80485c8:leave  ]
+    bp = v15444 [from 0x80485c8:leave  ]
+    si = v15325
+    di = v15326
+    es = v15327
+    cs = v15328
+    ss = v15329
+    ds = v15330
+    fs = v15331
+    gs = v15332
+    cf = v15333
+    ?1 = v15334
+    pf = v15335
+    ?3 = v15336
+    af = v15337
+    ?5 = v15338
+    zf = v15339
+    sf = v15340
+    tf = v15341
+    if = v15342
+    df = v15343
+    of = v15344
+    iopl0 = v15345
+    iopl1 = v15346
+    nt = v15347
+    ?15 = v15348
     memory = {}
     ip = 0x80485c9 [from 0x80485c8:leave  ]
+
 0x80485c9:ret    
-    ax = v15353 [from 0x80485c6:pop    eax]
-    cx = v15314
-    dx = v15315
-    bx = v15395 [from 0x80485c7:pop    ebx]
-    sp = v15483 [from 0x80485c9:ret    ]
-    bp = v15438 [from 0x80485c8:leave  ]
-    si = v15319
-    di = v15320
-    es = v15321
-    cs = v15322
-    ss = v15323
-    ds = v15324
-    fs = v15325
-    gs = v15326
-    cf = v15327
-    ?1 = v15328
-    pf = v15329
-    ?3 = v15330
-    af = v15331
-    ?5 = v15332
-    zf = v15333
-    sf = v15334
-    tf = v15335
-    if = v15336
-    df = v15337
-    of = v15338
-    iopl0 = v15339
-    iopl1 = v15340
-    nt = v15341
-    ?15 = v15342
+    ax = v15359 [from 0x80485c6:pop    eax]
+    cx = v15320
+    dx = v15321
+    bx = v15401 [from 0x80485c7:pop    ebx]
+    sp = v15489 [from 0x80485c9:ret    ]
+    bp = v15444 [from 0x80485c8:leave  ]
+    si = v15325
+    di = v15326
+    es = v15327
+    cs = v15328
+    ss = v15329
+    ds = v15330
+    fs = v15331
+    gs = v15332
+    cf = v15333
+    ?1 = v15334
+    pf = v15335
+    ?3 = v15336
+    af = v15337
+    ?5 = v15338
+    zf = v15339
+    sf = v15340
+    tf = v15341
+    if = v15342
+    df = v15343
+    of = v15344
+    iopl0 = v15345
+    iopl1 = v15346
+    nt = v15347
+    ?15 = v15348
     memory = {}
-    ip = v15481 [from 0x80485c9:ret    ]
+    ip = v15487 [from 0x80485c9:ret    ]
 analyzed headers: 1

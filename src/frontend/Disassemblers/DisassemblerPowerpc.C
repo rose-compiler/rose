@@ -43,7 +43,7 @@ DisassemblerPowerpc::init()
 {
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
 }
 
@@ -400,8 +400,7 @@ DisassemblerPowerpc::disassemble()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Primary opcode not handled yet: primaryOpcode = %d \n", primaryOpcode);
-               throw ExceptionPowerpc("illegal primary opcode", this, 26);
+               throw ExceptionPowerpc("illegal primary opcode: "+StringUtility::addrToString(primaryOpcode), this, 26);
              }
         }
 
@@ -461,8 +460,7 @@ DisassemblerPowerpc::decode_I_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: I-Form primaryOpcode = %d (illegal instruction)\n", primaryOpcode);
-               throw ExceptionPowerpc("invaild I-Form primary opcode", this);
+               throw ExceptionPowerpc("invaild I-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), this);
              }
         }
 
@@ -525,8 +523,7 @@ DisassemblerPowerpc::decode_B_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: B-Form primaryOpcode = %d not handled!\n", primaryOpcode);
-               throw ExceptionPowerpc("invalid B-Form primary opcode", this);
+               throw ExceptionPowerpc("invalid B-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), this);
              }
         }
 
@@ -752,8 +749,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 1F xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
@@ -797,8 +793,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 3F xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 3F xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 3F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
@@ -837,8 +832,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 00 xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 00 xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 00 xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
@@ -903,8 +897,7 @@ DisassemblerPowerpc::decode_XL_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: XL-Form xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("invalid XL-Form opcode", this);
+               throw ExceptionPowerpc("invalid XL-Form opcode: " + StringUtility::addrToString(xoOpcode), this);
              }
         }
 
@@ -952,8 +945,7 @@ DisassemblerPowerpc::decode_A_formInstruction_00()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
@@ -986,8 +978,7 @@ DisassemblerPowerpc::decode_A_formInstruction_04()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
@@ -1017,8 +1008,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3B()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
@@ -1055,8 +1045,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 

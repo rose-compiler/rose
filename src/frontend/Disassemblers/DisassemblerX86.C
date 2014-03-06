@@ -68,7 +68,7 @@ DisassemblerX86::init(size_t wordsize)
     }
     set_wordsize(wordsize);
     set_alignment(1);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     ROSE_ASSERT(get_registers()!=NULL);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
@@ -163,11 +163,9 @@ DisassemblerX86::getQWord()
 
 SgAsmExpression *
 DisassemblerX86::currentDataSegment() const {
-    if (segOverride == x86_segreg_none) {
-        return makeSegmentRegister(x86_segreg_ds, insnSize == x86_insnsize_64);
-    } else {
-        return makeSegmentRegister(segOverride, insnSize == x86_insnsize_64);
-    }
+    if (segOverride != x86_segreg_none)
+        return makeSegmentRegister(segOverride, insnSize==x86_insnsize_64);
+    return makeSegmentRegister(x86_segreg_ds, insnSize==x86_insnsize_64);
 }
 
 X86InstructionSize
@@ -316,7 +314,8 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
     insn->set_lockPrefix(lock);
     insn->set_repeatPrefix(repeatPrefix);
     insn->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
-    insn->set_segmentOverride(segOverride);
+    if (segOverride != x86_segreg_none)
+        insn->set_segmentOverride(segOverride);
     if (branchPredictionEnabled)
         insn->set_branchPrediction(branchPrediction);
 
@@ -466,7 +465,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
             name = "mm" + StringUtility::numberToString(fullRegisterNumber);
             break;
         case rmXMM:
-            name = "mmx" + StringUtility::numberToString(fullRegisterNumber);
+            name = "xmm" + StringUtility::numberToString(fullRegisterNumber);
             break;
         case rmControl:
             name = "cr" + StringUtility::numberToString(fullRegisterNumber);
@@ -3122,8 +3121,36 @@ DisassemblerX86::decodeOpcode0F()
             decodeOpcode0F38(); /*SSSE3*/
         case 0x39:
             throw ExceptionX86("bad opcode 0x0f39", this);
-        case 0x3A:
-            throw ExceptionX86("not implemented 0x0f3a", this);
+        case 0x3A: {
+            /* more SSE3? should this be in a decodeOpcode0F3A() instead? */
+            uint8_t thirdOpcodeByte = getByte();
+            switch (thirdOpcodeByte) {
+                case 0x0F: { /* palignr */
+                    SgAsmExpression* shiftAmount;
+                    switch (mmPrefix()) {
+                        /* Note that getModRegRM sets the states reg and modrm. Also, standard prefixed used in the manual,
+                         * "mm" refers to "mmx" registers and "xmm" refers to "sse" registers. */
+                        case mmNone:
+                            getModRegRM(rmMM, rmMM, QWORDT);
+                            shiftAmount = getImmByte();
+                            return makeInstruction(x86_palignr, "palignr", reg, modrm, shiftAmount);
+                        case mmF3:
+                            throw ExceptionX86("bad mm prefix F3 for opcode 0x0f3a0f", this);
+                        case mm66:
+                            getModRegRM(rmXMM, rmXMM, DQWORDT);
+                            shiftAmount = getImmByte();
+                            return makeInstruction(x86_palignr, "palignr", reg, modrm, shiftAmount);
+                        case mmF2:
+                            throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3a0f", this);
+                    }
+                }
+                default: {
+                    char opcodestr[16];
+                    sprintf(opcodestr, "0x0f3a%02x", thirdOpcodeByte);
+                    throw ExceptionX86(std::string("bad or unimplemented opcode ")+opcodestr, this);
+                }
+            }
+        }
         case 0x3B:
             throw ExceptionX86("bad opcode 0x0f3b", this);
         case 0x3C:

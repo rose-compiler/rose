@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "threadSupport.h"  // for __attribute__ on Visual Studio
 #include "BinaryControlFlow.h"
 
 #include <boost/graph/depth_first_search.hpp>

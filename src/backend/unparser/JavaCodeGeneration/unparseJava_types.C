@@ -39,7 +39,6 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeBool:       unparseTypeBool( isSgTypeBool(type), info); break;
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
-          case V_SgPointerType:    unparsePointerType( isSgPointerType(type), info); break;
           case V_SgTypedefType:    unparseTypedefType( isSgTypedefType(type), info); break;
           case V_SgClassType:      unparseClassType( isSgClassType(type), info); break;
           case V_SgEnumType:       unparseEnumType( isSgEnumType(type), info); break;
@@ -48,6 +47,7 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
        // DQ (9/5/2011): Added support for Java generics.
           case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type), info); break;
           case V_SgJavaWildcardType:  unparseJavaWildcardType(isSgJavaWildcardType(type), info); break;
+          case V_SgJavaUnionType:  unparseJavaUnionType(isSgJavaUnionType(type), info); break;
 
           default:
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
@@ -80,7 +80,7 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
      //unparseName(decl->get_name(), info);
      //todo templates and qualified names
 
-     if (type -> attributeExists("is_parameter_type")) {
+     if (isSgJavaParameterType(type)) { // -> attributeExists("is_parameter_type")) {
          curprint(type -> get_name().getString());
      }
      else {
@@ -96,65 +96,71 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
    }
 
 
-void
-Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info)
-   {
-     unparseType(type->get_raw_type(),info);
-     curprint("<");
+void Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info) {
+    unparseType(type -> get_raw_type(), info);
 
-     if (type->get_type_list() != NULL)
-        {
-          SgTemplateParameterList* type_list = type->get_type_list();
-          for (size_t i = 0; i < type_list->get_args().size(); i++)
-             {
-               SgType* argumentType = NULL;
-               SgTemplateParameter* templateParameter = type_list->get_args()[i];
-               ROSE_ASSERT(templateParameter != NULL);
-               if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter)
-                  {
-                    if (templateParameter->get_type() != NULL)
-                       {
-                         argumentType = templateParameter->get_type();
-                       }
-                      else
-                       {
-                      // Do we need to support the default type when the type is not explicit.
-                       }
-                  }
-                 else
-                  {
-                 // This was not a type parameter (but it might be a template declaration or something work paying attention to).
-                  }
+    if (type -> get_type_list() != NULL) {
+        curprint("<");
+        SgTemplateParameterList* type_list = type -> get_type_list();
+        for (size_t i = 0; i < type_list -> get_args().size(); i++) {
+            if (i != 0) {
+                curprint(", ");
+            }
+
+            SgType* argumentType = NULL;
+            SgTemplateParameter* templateParameter = type_list -> get_args()[i];
+            ROSE_ASSERT(templateParameter != NULL);
+            if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter) {
+                if (templateParameter -> get_type() != NULL) {
+                    argumentType = templateParameter -> get_type();
+                }
+                else {
+                     // Do we need to support the default type when the type is not explicit.
+                }
+            }
+            else {
+                // This was not a type parameter (but it might be a template declaration or something work paying attention to).
+            }
 
             // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
-               if (argumentType != NULL)
-                  {
-                    unparseType(argumentType, info);
-                  }
-                 else
-                  {
-                 // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
-                  }
-
-                 if (i + 1 < type_list->get_args().size())
-                    {
-                      curprint(", ");
-                    }
-             }
+            if (argumentType != NULL) {
+                unparseType(argumentType, info);
+            }
+            else {
+                // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
+            }
         }
-
-     curprint(">");
-   }
+        curprint(">");
+    }
+}
 
 
 void 
-Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info) {
+Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* wildcard_type, SgUnparse_Info& info) {
      curprint("?");
 
-     if (! type -> get_is_unbound()) {
-         curprint(type -> get_has_extends() ? " extends " : " super ");
-         unparseType(type -> get_bound_type(), info);
+     SgType *extends_type = wildcard_type -> get_extends_type(),
+            *super_type = wildcard_type -> get_super_type();
+     if (extends_type) {
+         curprint(" extends "); 
+         unparseType(extends_type, info);
      }
+     else if (super_type) {
+         curprint(" super "); 
+         unparseType(super_type, info);
+     }
+}
+
+
+void 
+Unparse_Java::unparseJavaUnionType(SgJavaUnionType *union_type, SgUnparse_Info& info) {
+    SgTypePtrList type_list = union_type -> get_type_list();
+    for (int i = 0; i < type_list.size(); i++) {
+        if (i > 0) {
+            curprint(" | ");
+        }
+        unparseType(type_list[i], info);
+    }
 }
 
 
@@ -281,28 +287,8 @@ Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
      ROSE_ASSERT(array_type != NULL);
 
      unparseType(array_type->get_base_type(), info);
-     for (int i = array_type -> get_rank(); i >= 1; i--) {
-         curprint("[]");
-     }
+     curprint("[]");
    }
-
-void
-Unparse_Java::unparsePointerType(SgPointerType *pointer_type, SgUnparse_Info& info) {
-  /*
-    SgType *type = pointer_type;
-    ROSE_ASSERT(type != NULL);
-    string bounds = "";
-    while (isSgPointerType(type)) {
-        bounds += "[]";
-        type = isSgPointerType(type) -> get_base_type();
-    }
-    unparseType(type, info);
-    curprint(bounds);
-  */
-    ROSE_ASSERT(pointer_type != NULL);
-    unparseType(pointer_type -> get_base_type(), info);
-    curprint("[]");
-}
 
 void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
 void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char"); }

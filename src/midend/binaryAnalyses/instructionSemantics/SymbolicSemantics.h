@@ -37,7 +37,6 @@ namespace BinaryAnalysis {              // documented elsewhere
          *  will be answered by very naive comparison of the expression trees. */
         namespace SymbolicSemantics {
 
-            typedef InsnSemanticsExpr::RenameMap RenameMap;
             typedef InsnSemanticsExpr::LeafNode LeafNode;
             typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
             typedef InsnSemanticsExpr::InternalNode InternalNode;
@@ -45,6 +44,15 @@ namespace BinaryAnalysis {              // documented elsewhere
             typedef InsnSemanticsExpr::TreeNode TreeNode;
             typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
             typedef std::set<SgAsmInstruction*> InsnSet;
+
+            /** Formatter for symbolic values. */
+            class Formatter: public BaseSemantics::Formatter {
+            public:
+                Formatter() {
+                    expr_formatter.use_hexadecimal = false;             // preserve the old behavior in API1
+                }
+                InsnSemanticsExpr::Formatter expr_formatter;
+            };
 
             /******************************************************************************************************************
              *                          ValueType
@@ -62,7 +70,67 @@ namespace BinaryAnalysis {              // documented elsewhere
              *  TreeNode.  Most of the methods that are invoked on ValueType just call the same methods for TreeNode.
              *
              *  A ValueType also stores the set of instructions that were used in defining the value.  This provides a
-             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details. */
+             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details.
+             *
+             *  @section Unk_Uinit Unknown versus Uninitialized Values
+             *
+             *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
+             *  "unknown" value versus registers that have not been initialized. By "unknown" we mean a value that has no
+             *  constraints except for its size (e.g., a register that contains "any 32-bit value").  By "uninitialized" we
+             *  mean a register that still contains the value that was placed there before we started symbolically evaluating
+             *  instructions (i.e., a register to which symbolic evaluation hasn't written a new value).
+             *
+             *  An "unknown" value might be produced by a RISC operation that is unable/unwilling to express its result
+             *  symbolically.  For instance, the RISC "add(A,B)" operation could return an unknown/unconstrained result if
+             *  either A or B are unknown/unconstrained (in other words, add(A,B) returns C). An unconstrained value is
+             *  represented by a free variable. ROSE's SymbolicSemantics RISC operations never return unconstrained values, but
+             *  rather always return a new expression (add(A,B) returns the symbolic expression A+B). However, user-defined
+             *  subclasses of ROSE's SymbolicSemantics classes might return unconstrained values, and in fact it is quite
+             *  common for a programmer to first stub out all the RISC operations to return unconstrained values and then
+             *  gradually implement them as they're required.  When a RISC operation returns an unconstrained value, it should
+             *  set the returned value's defining instructions to the CPU instruction that caused the RISC operation to be
+             *  called (and possibly the union of the sets of instructions that defined the RISC operation's operands).
+             *
+             *  An "uninitialized" register (or other storage location) is a register that hasn't ever had a value written to
+             *  it as a side effect of a machine instruction, and thus still contains the value that was initialially stored
+             *  there before analysis started (perhaps by a default constructor).  Such values will generally be unconstrained
+             *  (i.e., "unknown" as defined above) but will have an empty defining instruction set.  The defining instruction
+             *  set is empty because the register contains a value that was not generated as the result of simulating some
+             *  machine instruction.
+             *
+             *  Therefore, it is possible to destinguish between an uninitialized register and an unconstrained register by
+             *  looking at its value.  If the value is a variable with an empty set of defining instructions, then it must be
+             *  an initial value.  If the value is a variable but has a non-empty set of defining instructions, then it must be
+             *  a value that came from some RISC operation invoked on behalf of a machine instruction.
+             *
+             *  One should note that a register that contains a variable is not necessarily unconstrained: another register
+             *  might contain the same variable, in which case the two registers are constrained to have the same value,
+             *  although that value could be anything.  Consider the following example:
+             *
+             *  Step 1: Initialize registers. At this point EAX contains v1[32]{}, EBX contains v2[32]{}, and ECX contains
+             *  v3[32]{}. The notation "vN" is a variable, "[32]" means the variable is 32-bits wide, and "{}" indicates that
+             *  the set of defining instructions is empty. Since the defining sets are empty, the registers can be considered
+             *  to be "uninitialized" (more specifically, they contain initial values that were created by the symbolic machine
+             *  state constructor, or by the user explicitly initializing the registers; they don't contain values that were
+             *  put there as a side effect of executing some machine instruction).
+             *
+             *  Step 2: Execute an x86 "I1: MOV EAX, EBX" instruction that moves the value stored in EBX into the EAX register.
+             *  After this instruction executes, EAX contains v2[32]{I1}, EBX contains v2[32]{}, and ECX contains
+             *  v3[32]{}. Registers EBX and ECX continue to have empty sets of defining instructions and thus contain their
+             *  initial values.  Reigister EAX refers to the same variable (v2) as EBX and therefore must have the same value
+             *  as EBX, although that value can be any 32-bit value.  We can also tell that EAX no longer contains its initial
+             *  value because the set of defining instructions is non-empty ({I1}).
+             *
+             *  Step 3: Execute the imaginary "I2: FOO ECX, EAX" instruction and presume that it performs an operation using
+             *  ECX and EAX and stores the result in ECX.  The operation is implemented by a new user-defined RISC operation
+             *  called "doFoo(A,B)". Furthermore, presume that the operation encoded by doFoo(A,B) cannot be represented by
+             *  ROSE's expression trees either directly or indirectly via other expression tree operations. Therefore, the
+             *  implementation of doFoo(A,B) is such that it always returns an unconstrained value (i.e., a new variable):
+             *  doFoo(A,B) returns C.  After this instruction executes, EAX and EBX continue to contain the results they had
+             *  after step 2, and ECX now contains v4[32]{I2}.  We can tell that ECX contains an unknown value (because its
+             *  value is a variable)  that is 32-bits wide.  We can also tell that ECX no longer contains its initial value
+             *  because its set of defining instructions is non-empty ({I2}).
+             */
             template<size_t nBits>
             class ValueType {
             protected:
@@ -119,9 +187,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
                 /** @} */
 
-                /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See
-                 *  the rename() method for details. */
-                virtual void print(std::ostream &o, RenameMap *rmap=NULL) const {
+                /** Print the value.
+                 * @{ */
+                virtual void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                virtual void print(std::ostream &o, BaseSemantics::Formatter &fmt_) const {
+                    Formatter fmt_dflt;
+                    Formatter *fmt_ptr = dynamic_cast<Formatter*>(&fmt_);
+                    if (!fmt_ptr)
+                        fmt_ptr = &fmt_dflt;
                     o <<"defs={";
                     size_t ndefs=0;
                     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -130,15 +206,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                             o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
                     }
                     o <<"} expr=";
-                    expr->print(o, rmap);
-                }
-                virtual void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
-                    print(o, (RenameMap*)0);
+                    expr->print(o, fmt_ptr->expr_formatter);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
-                    e.print(o, (RenameMap*)0);
+                    e.print(o);
                     return o;
                 }
+                /** @} */
 
                 /** Returns true if the value is a known constant. */
                 virtual bool is_known() const {
@@ -273,7 +347,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  "overlap".  The @p solver is optional but recommended (absence of a solver will result in a naive
                  *  definition). */
                 bool must_alias(const ValueType<32> &addr, SMTSolver *solver) const {
-                    return this->address().get_expression()->equal_to(addr.get_expression(), solver);
+                    return this->address().get_expression()->must_equal(addr.get_expression(), solver);
                 }
 
                 /** Returns true if address can refer to this memory cell. */
@@ -288,26 +362,31 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return SMTSolver::SAT_NO != solver->satisfiable(assertion);
                 }
 
-                /** Print a memory cell. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    o <<prefix <<"address = { ";
-                    address().print(o, ph);
+                /** Print a memory cell.
+                 *  @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    o <<fmt.get_line_prefix() <<"address = { ";
+                    address().print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  value = { ";
-                    value().print(o, ph);
+                    o <<fmt.get_line_prefix() <<"  value = { ";
+                    value().print(o, fmt);
                     o <<" }\n";
 
-                    o <<prefix <<"  flags = {";
+                    o <<fmt.get_line_prefix() <<"  flags = {";
                     if (!written) o <<" rdonly";
                     o <<" }\n";
                 }
 
                 friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
-                    mc.print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    mc.print(o);
                     return o;
                 }
+                /** @} */
             };
 
             /******************************************************************************************************************
@@ -342,6 +421,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 void enable_read_pruning(bool b=true) { read_pruning = b; }
                 void disable_read_pruning() { read_pruning = false; }
                 /** @} */
+
+                /** Clear all memory */
+                void clear() { cell_list.clear(); }
 
                 /** Write a value to memory. Returns the list of cells that were added. The number of cells added is the same
                  *  as the number of bytes in the value being written. */
@@ -460,12 +542,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return cell_list.end();
                 }
 
-                /** Print values of all memory. */
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-                    for (typename CellList::const_iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli)
-                        cli->print(o, prefix, ph);
+                /** Print values of all memory.
+                 * @{ */
+                void print(std::ostream &o) {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
                 }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    for (typename CellList::const_iterator cli=cell_list.begin(); cli!=cell_list.end(); ++cli)
+                        cli->print(o, fmt);
+                }
+                /** @} */
             };
 
             /******************************************************************************************************************
@@ -494,9 +581,14 @@ namespace BinaryAnalysis {              // documented elsewhere
                 Registers registers;
                 Memory memory;
 
-                /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
+                /** Print info about how registers differ.
+                 * @{ */
+                void print_diff_registers(std::ostream &o, const State &state) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, state, fmt);
+                }
+                void print_diff_registers(std::ostream &o, const State&, BaseSemantics::Formatter &fmt) const;
+                /** @} */
 
                 /** Tests registers of two states for equality. */
                 bool equal_registers(const State&) const;
@@ -508,7 +600,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 friend std::ostream& operator <<(std::ostream &o, const State &state) {
-                    state.template print<BaseSemantics::SEMANTIC_NO_PRINT_HELPER>(o);
+                    state.print(o);
                     return o;
                 }
 
@@ -526,12 +618,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                     memory.clear();
                 }
 
-                template<typename PrintHelper>
-                void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    std::string prefix = fmt.get_line_prefix();
+                    BaseSemantics::Indent indent(fmt);
                     o <<prefix <<"registers:\n";
-                    registers.print(o, prefix+"    ", ph);
+                    registers.print(o, fmt);
                     o <<prefix <<"memory:\n";
-                    memory.print(o, prefix+"    ", ph);
+                    memory.print(o, fmt);
                 }
 #endif
             };
@@ -649,20 +746,28 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  memory that has only been read. */
                 bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
-                /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to
-                 *  have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print(std::ostream &o, const std::string prefix="", RenameMap *rmap=NULL) const {
+                /** Print the current state of this policy.  If a print helper is specified then it will be passed along to the
+                 *  InsnSemanticsExpr::print() method.
+                 * @{ */
+                void print(std::ostream &o) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, fmt);
+                }
+                void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
+                    std::string prefix = fmt.get_line_prefix();
+                    BaseSemantics::Indent indent(fmt);
                     o <<prefix <<"registers:\n";
-                    cur_state.registers.print(o, prefix+"    ", rmap);
+                    cur_state.registers.print(o, fmt);
                     o <<prefix <<"memory:\n";
-                    cur_state.memory.print(o, prefix+"    ", rmap);
+                    cur_state.memory.print(o, fmt);
                     o <<prefix <<"init mem:\n";
-                    orig_state.memory.print(o, prefix+"    ", rmap);
+                    orig_state.memory.print(o, fmt);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
-                    p.print(o, "", NULL);
+                    p.print(o);
                     return o;
                 }
+                /** @} */
 
                 /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The
                  *  stack pointer need not have a known value. */
@@ -680,21 +785,26 @@ namespace BinaryAnalysis {              // documented elsewhere
                     return p_discard_popped_memory;
                 }
 
-                /** Print only the differences between two states.  If a rename map is specified then named values will be
-                 *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&, RenameMap *rmap=NULL) const ;
-
-                /** Print the difference between a state and the initial state.  If a rename map is specified then named values
-                 *  will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, const State<ValueType> &state, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, state, rmap);
+                /** Print only the differences between two states.
+                 * @{ */
+                void print_diff(std::ostream &o, const State<ValueType> &s1, const State<ValueType> &s2) const {
+                    BaseSemantics::Formatter fmt;
+                    print(o, s1, s2, fmt);
                 }
+                void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&,
+                                BaseSemantics::Formatter &fmt) const;
+                /** @} */
 
-                /** Print the difference between the current state and the initial state.  If a rename map is specified then
-                 *  named values will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-                void print_diff(std::ostream &o, RenameMap *rmap=NULL) const {
-                    print_diff(o, orig_state, cur_state, rmap);
+
+                /** Print the difference between the current state and the initial state.
+                 * @{ */
+                void print_diff(std::ostream &o) const {
+                    print_diff(o, orig_state, cur_state);
                 }
+                void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
+                    print_diff(o, orig_state, cur_state, fmt);
+                }
+                /** @} */
 
                 /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is
                  *  not available then the return value will be an empty string. */
@@ -1407,7 +1517,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     ValueType<Len> retval;
                     if (a.is_known() && b.is_known()) {
                         retval = ValueType<Len>(a.known_value() ^ b.known_value());
-                    } else if (a.get_expression()->equal_to(b.get_expression(), solver)) {
+                    } else if (a.get_expression()->must_equal(b.get_expression(), solver)) {
                         retval = number<Len>(0);
                     } else {
                         retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,

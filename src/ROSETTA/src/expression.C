@@ -44,6 +44,18 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     NEW_TERMINAL_MACRO (JavaMarkerAnnotation,         "JavaMarkerAnnotation",         "JAVA_MARKER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaSingleMemberAnnotation,   "JavaSingleMemberAnnotation",   "JAVA_SINGLE_MEMBER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaNormalAnnotation,         "JavaNormalAnnotation",         "JAVA_NORMAL_ANNOTATION" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations (hierarchy).
+     NEW_NONTERMINAL_MACRO (JavaAnnotation,
+                            JavaMarkerAnnotation | JavaSingleMemberAnnotation | JavaNormalAnnotation,
+                            "JavaAnnotation","JAVA_ANNOTATION", false);
+
+     NEW_TERMINAL_MACRO (JavaTypeExpression, "JavaTypeExpression", "JAVA_TYPE_EXPRESSION");
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -66,6 +78,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DeleteExp,              "DeleteExp",              "DELETE_OP" );
      NEW_TERMINAL_MACRO (ThisExp,                "ThisExp",                "THIS_NODE" );
      NEW_TERMINAL_MACRO (SuperExp,               "SuperExp",               "SUPER_NODE" );
+     NEW_TERMINAL_MACRO (ClassExp,               "ClassExp",               "CLASS_NODE" );
      NEW_TERMINAL_MACRO (RefExp,                 "RefExp",                 "TYPE_REF" );
      NEW_TERMINAL_MACRO (AggregateInitializer,   "AggregateInitializer",   "AGGREGATE_INIT" );
      NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
@@ -326,7 +339,7 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinOperator | CompoundLiteralExp,
+          TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation | JavaTypeExpression | ClassExp,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -462,6 +475,12 @@ Grammar::setUpExpressions ()
 
   // DQ (8/6/2013): We need to implement this member function explicitly and cannot use the default implementation.
      TemplateParameterVal.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Defife the get_type meber function in the JavaAnnotation (default), but exclude it from the subtree.
+  // JavaAnnotation.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     JavaAnnotation.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+     JavaTypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 
@@ -695,6 +714,7 @@ Grammar::setUpExpressions ()
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ClassExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RefExp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Initializer.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -739,6 +759,14 @@ Grammar::setUpExpressions ()
 
      CompoundAssignOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     JavaTypeExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
   //    This whole mechanism is not used presently.  Someone
@@ -762,6 +790,14 @@ Grammar::setUpExpressions ()
 
   // DQ (7/18/2011): What is the precedence of this operator?
      JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.editSubstitute             ( "PRECEDENCE_VALUE", "16" );
+     JavaMarkerAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+     JavaSingleMemberAnnotation.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+     JavaNormalAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+
+     JavaTypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -1550,6 +1586,32 @@ Grammar::setUpExpressions ()
      JavaInstanceOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionPrototype ( "HEADER_JAVA_ANNOTATION", "../Grammar/Expression.code" );
+     JavaAnnotation.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+     JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+     JavaTypeExpression.setDataPrototype ( "SgType *", "type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaSingleMemberAnnotation.setFunctionPrototype ( "HEADER_JAVA_SINGLE_MEMBER_ANNOTATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setDataPrototype ( "SgExpression*", "value", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaNormalAnnotation.setFunctionPrototype ( "HEADER_JAVA_NORMAL_ANNOTATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setDataPrototype ( "SgJavaMemberValuePairPtrList", "value_pair_list", "",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaNormalAnnotation.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.editSubstitute   ( "LIST_NAME", "value_pair" );
+
+
+
      TypeIdOp.setFunctionPrototype ( "HEADER_TYPE_ID_OPERATOR", "../Grammar/Expression.code" );
      TypeIdOp.setDataPrototype ( "SgExpression*", "operand_expr"   , "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1763,10 +1825,16 @@ Grammar::setUpExpressions ()
      ThisExp.setDataPrototype     ( "int", "pobj_this", "= 0",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     SuperExp.setFunctionPrototype ( "HEADER_THIS_EXPRESSION", "../Grammar/Expression.code" );
+     SuperExp.setFunctionPrototype ( "HEADER_SUPER_EXPRESSION", "../Grammar/Expression.code" );
      SuperExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SuperExp.setDataPrototype     ( "int", "pobj_super", "= 0",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     ClassExp.setFunctionPrototype ( "HEADER_CLASS_EXPRESSION", "../Grammar/Expression.code" );
+     ClassExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ClassExp.setDataPrototype     ( "int", "pobj_class", "= 0",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ScopeOp.setFunctionPrototype ( "HEADER_SCOPE_OPERATOR", "../Grammar/Expression.code" );
@@ -2350,6 +2418,14 @@ Grammar::setUpExpressions ()
      AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_JAVA_ANNOTATION","../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_JAVA_MARKER_ANNOTATION","../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION","../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_JAVA_NORMAL_ANNOTATION","../Grammar/Expression.code" );
+
+     JavaTypeExpression.setFunctionSource             ( "SOURCE_JAVA_TYPE_EXPRESSION","../Grammar/Expression.code" );
+
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
      UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
@@ -2371,6 +2447,7 @@ Grammar::setUpExpressions ()
      DeleteExp.setFunctionSource ( "SOURCE_DELETE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      ThisExp.setFunctionSource ( "SOURCE_THIS_EXPRESSION","../Grammar/Expression.code" );
      SuperExp.setFunctionSource ( "SOURCE_SUPER_EXPRESSION","../Grammar/Expression.code" );
+     ClassExp.setFunctionSource ( "SOURCE_CLASS_EXPRESSION","../Grammar/Expression.code" );
      ScopeOp.setFunctionSource ( "SOURCE_SCOPE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AssignOp.setFunctionSource  ( "SOURCE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
@@ -2586,6 +2663,7 @@ Grammar::setUpExpressions ()
 
      ThisExp.setFunctionSource             ( "SOURCE_GET_TYPE_THIS_EXPRESSION","../Grammar/Expression.code" );
      SuperExp.setFunctionSource            ( "SOURCE_GET_TYPE_SUPER_EXPRESSION","../Grammar/Expression.code" );
+     ClassExp.setFunctionSource            ( "SOURCE_GET_TYPE_CLASS_EXPRESSION","../Grammar/Expression.code" );
 
   // AssignInitializer.setFunctionSource   ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
   //                                              "../Grammar/Expression.code" );

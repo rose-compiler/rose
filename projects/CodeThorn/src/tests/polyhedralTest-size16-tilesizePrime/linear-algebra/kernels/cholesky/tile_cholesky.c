@@ -1,0 +1,68 @@
+#   define N ARRAYSIZE
+# define _PB_N ARRAYSIZE
+/**
+ * cholesky.c: This file is part of the PolyBench/C 3.2 test suite.
+ *
+ *
+ * Contact: Louis-Noel Pouchet <pouchet@cse.ohio-state.edu>
+ * Web address: http://polybench.sourceforge.net
+ */
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+
+int main(int argc,char **argv)
+{
+/* Retrieve problem size. */
+  int n = 16;
+/* Variable declaration/allocation. */
+  double A[16][16];
+  double p[16];
+  int i;
+  int j;
+  int k;
+  double x;
+  
+#pragma scop
+  for (i = 0; i < 16; ++i) {{
+      int c1;
+{
+        int c2;
+        x = A[i][i];
+        for (c2 = 0; c2 <= i + -1; c2++) {
+          x = x - A[i][c2] * A[i][c2];
+        }
+      }
+    }
+    p[i] = 1.0 / sqrt(x);
+{
+      int c3;
+      int c1;
+{
+        int c2;
+        int c5;
+        if (i <= 14) {
+          if (i >= 1) {
+            for (c2 = i + 1; c2 <= 15; c2++) {
+              x = A[i][c2];
+              for (c5 = 0; c5 <= i + -1; c5++) {
+                x = x - A[c2][c5] * A[i][c5];
+              }
+              A[c2][i] = x * p[i];
+            }
+          }
+          if (i <= 0) {
+            for (c2 = i + 1; c2 <= 15; c2++) {
+              x = A[i][c2];
+              A[c2][i] = x * p[i];
+            }
+          }
+        }
+      }
+    }
+  }
+  
+#pragma endscop
+  return 0;
+}

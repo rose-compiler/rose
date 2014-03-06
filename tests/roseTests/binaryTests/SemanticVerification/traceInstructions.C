@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     assert(disassembler!=NULL);
 
     fprintf(stderr, "Setting break points...\n");
-    int status = dbg.setbp(0, 0xffffffff);
+    int status __attribute__((unused)) = dbg.setbp(0, 0xffffffff);
     assert(status>=0);
 
     fprintf(stderr, "Starting executable...\n");

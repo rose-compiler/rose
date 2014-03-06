@@ -130,7 +130,7 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
-	
+
 update_xml:
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/data/01/updateXML.sh $(CC)
 

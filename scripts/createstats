@@ -1,0 +1,66 @@
+#!/bin/bash
+DIRECTORY=$1
+STATS_DATE=2013_12_06
+RESULTS_CSV_FILE=results.csv
+RESULTS_SORTED_CSV_FILE=results.sorted.csv
+
+function printresult {
+# param1: path
+
+language=$1
+benchname=$2
+
+if [ -f "$benchname/rose-passes.txt" ];
+then
+pass=`sort -u $benchname/rose-passes.txt | wc -l`
+else
+pass=0
+fi
+
+if [ -f "$benchname/rose-fails.txt" ];
+then
+fail=`sort -u $benchname/rose-fails.txt | wc -l`
+else
+fail=0
+fi
+
+total=$(($pass+$fail))
+
+shortbenchname=$(basename $benchname)
+if [ $total -gt 0 ];
+then
+  percentage=`echo "scale=4; $pass/$total*100"|bc -q`
+output="$language,$shortbenchname,$pass,$fail,$total,$percentage"
+echo $output >> $RESULTS_CSV_FILE
+else
+echo "$language,$shortbenchname">> $RESULTS_CSV_FILE.notfound
+fi
+} # end of function
+
+
+
+#echo $output | awk --field-separator=, '{ printf "%-10s %5d %5d %5d %6.2f\n", $1,$2,$3,$4,$5}'
+
+
+rm -f $RESULTS_CSV_FILE
+touch $RESULTS_CSV_FILE
+rm -f $RESULTS_CSV_FILE.notfound
+touch $RESULTS_CSV_FILE.notfound
+rm -f $RESULTS_SORTED_CSV_FILE
+
+for dir in rose_evaluation/$STATS_DATE/c/*;
+do
+printresult "C" $dir
+done
+for dir in rose_evaluation/$STATS_DATE/java/*;
+do
+printresult "JAVA" $dir
+done
+
+
+sort --field-separator=, --key=6 -n -r $RESULTS_CSV_FILE -o $RESULTS_SORTED_CSV_FILE
+
+echo "-------------------------------------------------------------------------------"
+awk --field-separator=, '{ printf "%-4s %-10s %5d %5d %5d %6.2f\n", $1,$2,$3,$4,$5,$6}' $RESULTS_SORTED_CSV_FILE
+awk --field-separator=, '{ printf "%-4s %-10s no results available yet\n", $1,$2}' $RESULTS_CSV_FILE.notfound
+echo "-------------------------------------------------------------------------------"

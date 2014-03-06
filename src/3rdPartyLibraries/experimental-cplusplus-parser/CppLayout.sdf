@@ -1,8 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% C++11 Grammar. Extracted from C++11 standard and adapted for SDF. %%
-%% Author: Markus Schordan, 2013.                                    %%
-%% Copyright: Lawrence Livermore National Laboratory                 %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
+%% and extended with rules covering the GNU compiler extensions (superset)                          %%
+%% Version 1.2                                                                                      %%
+%% Author: Markus Schordan, 2013.                                                                   %%
+%% Copyright: Lawrence Livermore National Laboratory                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 module CppLayout
 

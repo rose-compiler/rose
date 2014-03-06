@@ -6,6 +6,11 @@
 #include "jserver.h"
 #include "ofp.h"
 
+namespace Rose {
+namespace Frontend {
+namespace Fortran {
+namespace Ofp {
+
 using std::string;
 
 static jclass    jofp_get_class(const char* name);
@@ -74,5 +79,8 @@ jofp_get_frontEnd_getError_method()
     return getErrorMethod;
 }
 
-
+}// ::Rose::Frontend::Fortran::Ofp
+}// ::Rose::Frontend::Fortran
+}// ::Rose::Frontend
+}// ::Rose
 

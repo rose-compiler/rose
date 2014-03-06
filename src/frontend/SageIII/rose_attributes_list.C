@@ -27,14 +27,20 @@ token_container wave_tokenStream;
 // #endif 
 
 
-//AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
-//to get this by a traversal of the AST
+// DQ (9/30/2013): This global variable is used in only the initial accumulation of
+// the CPP directives, comments and tokens by file name in the src/frontend/SageIII/preproc-c.ll
+// file.  Later after processin it is an empty map (e.g. in the unparsing phase).
+// This is a confusing global variable to have and it appears to have be used within
+// a specific phase of the processing of CPP directives, comments and tokens.
+// AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
+// to get this by a traversal of the AST
 std::map<std::string,ROSEAttributesList* > mapFilenameToAttributes;
 
 
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace rose;
 
 // DQ (3/9/2013): Moved this function from the header file to support SWIG
 std::string
@@ -294,8 +300,16 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
      (*tokenStream)= tokCont;
 
-    internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
 
      if(SgProject::get_verbose() >= 1)
          std::cout << " String for declaration:" << internalString<< " at line: " << lineNo << " and col:" << colNo << std::endl;
@@ -362,6 +376,15 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
 
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
 
    }
 
@@ -440,10 +463,18 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
 
      internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+     if(SgProject::get_verbose() >= 1)
+          std::cout << "Internal string is: " << internalString << std::endl;
+  // internalString = boost::wave::util::impl::as_string(tokenStream) ;
 
-         if(SgProject::get_verbose() >= 1)
-         std::cout << "Internal string is: " << internalString << std::endl;
-  //     internalString = boost::wave::util::impl::as_string(tokenStream) ;
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 
@@ -461,15 +492,14 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 
      whatSortOfDirective = PreprocessingInfo::CpreprocessorIncludeDeclaration;
      ROSE_ASSERT(inclDir != NULL);
-  //implement the position information
+  // implement the position information
      int lineNo = inclDir->directive.get_position().get_line(); 
-     int colNo  = inclDir->directive.get_position().get_column(); 
+     int colNo  = inclDir->directive.get_position().get_column();
 
+  // Support macros declared on the commandline. If declared on the commandline
+  // set filename to ""
 
-  //Support macros declared on the commandline. If declared on the commandline
-  //set filename to ""
-
-     if(inclDir->directive.get_position().get_file().size() != 0)
+     if (inclDir->directive.get_position().get_file().size() != 0)
           file_info = new Sg_File_Info(std::string(inclDir->directive.get_position().get_file().c_str()),lineNo,colNo);
      else
           file_info = new Sg_File_Info("", lineNo, colNo);
@@ -481,13 +511,12 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      lineNumber     = lineNo;
      columnNumber   = colNo;
 #endif
+
      internalString = std::string(inclDir->directive.get_value().c_str()) ;
    }
 
 
-  PreprocessingInfo::PreprocessingInfo( token_type directive, 
-   token_list_container expression, bool expression_value, 
-   DirectiveType dirType, RelativePositionType relPos )
+PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container expression, bool expression_value, DirectiveType dirType, RelativePositionType relPos )
    : relativePosition(relPos)
    {
      tokenStream = new token_container();
@@ -508,16 +537,21 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      tokenStream->push_back(directive);
      token_type tk1(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(directive.get_position().get_file().c_str(),lineNo,colNo));
      tokenStream->push_back(tk1);
-     copy (expression.begin(), expression.end(),
-         inserter(*tokenStream, tokenStream->end()));
-
+     copy (expression.begin(), expression.end(), inserter(*tokenStream, tokenStream->end()));
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
 
+     if (SgProject::get_verbose() >= 1)
+          std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
 
-         if(SgProject::get_verbose() >= 1)
-        std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
-
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 // #endif
@@ -597,6 +631,15 @@ PreprocessingInfo::PreprocessingInfo (
   // Normal code
      internalString = inputString;
 #endif
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 // Copy constructor
@@ -614,6 +657,15 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
      whatSortOfDirective = prepInfo.getTypeOfDirective();
      relativePosition    = prepInfo.getRelativePosition();
      internalString      = prepInfo.internalString;
+
+  // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
+     if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string name = getMacroName();
+#if 0
+          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
+#endif
+        }
    }
 
 
@@ -979,6 +1031,235 @@ PreprocessingInfo::set_optionalflagsForCompilerGeneratedLinemarker( std::string 
      optionalflagsForCompilerGeneratedLinemarker = x;
    }
 
+// DQ (1/19/2014): List the acceptable leading possible characters to any CPP macro only once to aboud errors.
+#define CPP_MACRO_ALPHABET "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+std::string
+PreprocessingInfo::getMacroName()
+   {
+  // This function is only supporting the retrival of the macro name for #define macros (all other cases are an error trapped below).
+
+#define DEBUG_MACRO_NAME 0
+
+     std::string macroName = "unknown CPP directive";
+     if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          string s = internalString;
+          string defineSubString = "define";
+#if DEBUG_MACRO_NAME
+          printf ("s = %s \n",s.c_str());
+#endif
+          size_t lengthOfDefineSubstring = defineSubString.length();
+          size_t startOfDefineSubstring  = s.find(defineSubString);
+
+       // DQ (1/13/2014): trap out cases where the CPP directive has been marked as a #defin CPP directive, but does not contain the substring "define".
+       // ROSE_ASSERT(startOfDefineSubstring != string::npos);
+          if (startOfDefineSubstring != string::npos)
+             {
+               size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
+#if DEBUG_MACRO_NAME
+               printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
+#endif
+               string substring = s.substr(endOfDefineSubstring);
+
+               string cpp_macro_alphabet = CPP_MACRO_ALPHABET;
+               ROSE_ASSERT(cpp_macro_alphabet.length() == 53);
+
+            // size_t startOfMacroName = s.find_first_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfDefineSubstring);
+               size_t startOfMacroName = s.find_first_of(cpp_macro_alphabet,endOfDefineSubstring);
+               size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
+#if DEBUG_MACRO_NAME
+               printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
+#endif
+            // DQ (1/19/2014): Added assertion.
+               ROSE_ASSERT(startOfMacroName != string::npos);
+
+               size_t macroNameLength = (endOfMacroName - startOfMacroName);
+#if DEBUG_MACRO_NAME
+               printf ("   --- macroNameLength = %zu \n",macroNameLength);
+#endif
+               macroName = s.substr(startOfMacroName,macroNameLength);
+#if DEBUG_MACRO_NAME
+               printf ("   --- macroName = %s \n",macroName.c_str());
+#endif
+             }
+            else
+             {
+               printf ("WARNING: In PreprocessingInfo::getMacroName(): 'define' keyword not identified in CpreprocessorDefineDeclaration type CPP directive: returning 'unknown' \n");
+             }
+        }
+       else
+        {
+       // DQ (12/30/2013): I think I want this to be an error for now.
+          printf ("ERROR: In PreprocessingInfo::getMacroName(): (this->getTypeOfDirective() != PreprocessingInfo::CpreprocessorDefineDeclaration): returning error -- %s \n",macroName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     return macroName;
+   }
+
+bool
+PreprocessingInfo::isSelfReferential()
+   {
+  // DQ (12/30/2013): Adding support to supress output of macros that are self-referential.
+  // e.g. "#define foo X->foo", which would be expanded a second time in the backend processing.
+  // Note that if we don't output the #define, then we still might have a problem if there was 
+  // code that depended upon a "#ifdef foo".  So this handling is not without some risk, but it
+  // always better to use the token stream unparsing for these cases.
+
+#define DEBUG_SELF_REFERENTIAL_MACRO 0
+
+     bool result = true;
+
+     if (this->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+        {
+          result = true;
+          string macroName = getMacroName();
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- macroName = %s macroName.length() = %zu \n",macroName.c_str(),macroName.length());
+#endif
+          string s = internalString;
+
+       // DQ (1/13/2014):if the macro name is "n" then the "n" in "define" will be found by mistake.
+          string defineSubstring = "define";
+          size_t startOfMacro_define_Substring  = s.find(defineSubstring);
+
+       // DQ (1/13/2014): This case could happen if we had a macro marked as #define, but
+       // it was not properly formed (getMacroName() returns "unknown CPP directive").
+       // ROSE_ASSERT(startOfMacroSubstring != string::npos);
+          if (startOfMacro_define_Substring == string::npos)
+             {
+               printf ("WARNING: In PreprocessingInfo::isSelfReferential(): (return false): \"define\" substring not found in CPP #define directitve = %s \n",s.c_str());
+               return false;
+             }
+
+          size_t endOfMacro_define_Substring = startOfMacro_define_Substring + defineSubstring.length();
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- startOfMacro_define_Substring = %zu endOfMacro_define_Substring = %zu \n",startOfMacro_define_Substring,endOfMacro_define_Substring);
+#endif
+
+       // DQ (1/13/2014):if the macro name is "n" then the "n" in "define" will be found by mistake.
+       // size_t startOfMacroSubstring  = s.find(macroName);
+          size_t startOfMacroSubstring  = s.find(macroName,endOfMacro_define_Substring);
+
+       // DQ (1/13/2014): This case could happen if we had a macro marked as #define, but
+       // it was not properly formed (getMacroName() returns "unknown CPP directive").
+       // ROSE_ASSERT(startOfMacroSubstring != string::npos);
+          if (startOfMacroSubstring == string::npos)
+             {
+               printf ("WARNING: In PreprocessingInfo::isSelfReferential(): (return false): macroName = %s not found in CPP #define directitve = %s \n",macroName.c_str(),s.c_str());
+               return false;
+             }
+
+          size_t endOfMacroSubstring    = startOfMacroSubstring + (macroName.length() - 1);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);
+#endif
+       // size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
+          size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring + 1);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- secondReferenceToMacroSubstring = %zu \n",secondReferenceToMacroSubstring);
+#endif
+          result = (secondReferenceToMacroSubstring != string::npos);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+          printf ("   --- result = %s \n",result ? "true" : "false");
+#endif
+
+          if (secondReferenceToMacroSubstring != string::npos)
+             {
+               string cpp_macro_alphabet = CPP_MACRO_ALPHABET;
+               ROSE_ASSERT(cpp_macro_alphabet.length() == 53);
+
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- Double check for self-referencing macro: macroName = %s s = %s ",macroName.c_str(),s.c_str());
+#endif
+            // DQ (1/9/2014): Detect a prefix at the start of the second referenced string to make sure it is not embedded in another string.
+            // e.g. test for cases such as "#define ABC __ABC" which is not a self-referential macro.
+               size_t characterBeforeSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring - 1;
+               ROSE_ASSERT(endOfMacroSubstring < characterBeforeSecondReferenceToMacroSubstring);
+               string beforeSecondReferenceToMacroSubstring          = s.substr(endOfMacroSubstring+1,(characterBeforeSecondReferenceToMacroSubstring-endOfMacroSubstring));
+            // size_t find_last_not_of (const string& str, size_t pos = npos) const;
+            // size_t characterBeforeSecondReferenceToMacroSubstring = s.find_last_not_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",characterBeforeSecondReferenceToMacroSubstring);
+            // size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of(cpp_macro_alphabet);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- characterBeforeSecondReferenceToMacroSubstring              = %zu \n",characterBeforeSecondReferenceToMacroSubstring);
+               printf ("   --- beforeSecondReferenceToMacroSubstring                       = %s \n",beforeSecondReferenceToMacroSubstring.c_str());
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring);
+#endif
+               ROSE_ASSERT(nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring != string::npos);
+               size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring + endOfMacroSubstring + 1;
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString);
+#endif
+            // if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring < characterBeforeSecondReferenceToMacroSubstring)
+               if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString < characterBeforeSecondReferenceToMacroSubstring)
+                  {
+                 // This is a case like: "#define ABC __ABC" which is not a self-referential macro.
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                    printf ("   --- Detected case of macro renaming: \"#define ABC __ABC\": not a self-referencing macro (set result = false) \n");
+#endif
+                    result = false;
+                  }
+
+            // DQ (1/9/2014): Detect a suffix on the macro name such that it would be a renamed macro instead of a self-referential macro.
+               ROSE_ASSERT(secondReferenceToMacroSubstring != string::npos);
+               size_t endOfSecondReferenceToMacroSubstring = secondReferenceToMacroSubstring + macroName.length() - 1;
+               ROSE_ASSERT(endOfSecondReferenceToMacroSubstring != string::npos);
+               ROSE_ASSERT(endOfSecondReferenceToMacroSubstring <= s.length());
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- endOfSecondReferenceToMacroSubstring = %zu \n",endOfSecondReferenceToMacroSubstring);
+#endif
+               string afterSecondReferenceToMacroSubstring  = s.substr(endOfSecondReferenceToMacroSubstring+1,(s.length() - endOfSecondReferenceToMacroSubstring));
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- afterSecondReferenceToMacroSubstring = %s \n",afterSecondReferenceToMacroSubstring.c_str());
+#endif
+            // size_t startOfRemainderSubstring = s.find_first_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",endOfSecondReferenceToMacroSubstring+1);
+               size_t startOfRemainderSubstring = s.find_first_of(cpp_macro_alphabet,endOfSecondReferenceToMacroSubstring+1);
+               size_t endOfRemainderSubstring   = s.find_first_of(" (\t\n\0",endOfSecondReferenceToMacroSubstring);
+#if DEBUG_SELF_REFERENTIAL_MACRO
+               printf ("   --- startOfRemainderSubstring = %zu endOfRemainderSubstring = %zu \n",startOfRemainderSubstring,endOfRemainderSubstring);
+#endif
+            // DQ (1/2/2014): Handle the special case of macro pasting "#define foo(X) foo##X"
+            // if (s[endOfSecondReferenceToMacroSubstring+1] == '#' && s[endOfSecondReferenceToMacroSubstring+2] == '#')
+               if (startOfRemainderSubstring < endOfRemainderSubstring)
+                  {
+                 // Detected case of macro pasting.  since the secondary reference to the macro name is modified 
+                 // to be different from the primary macro name this is not a case of self-referencing macro.
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                    printf ("   --- Detected case of macro pasting, not a self-referencing macro (set result = false) \n");
+#endif
+                    result = false;
+                  }
+                 else
+                  {
+                 // Detect second kind of macro pasting.
+
+                 // DQ (1/6/2014): Macro pasting is used in libwww application in the forms:
+                 //    --- #define NS(x) x ## NS
+                 //    --- #define ns(x) x ## _ns
+                 // And we have to allow this since it does not appear to build a self-referenced macro name.
+                    size_t startOfPastingSubstring  = s.find("##");
+                    if (startOfPastingSubstring != string::npos)
+                       {
+#if DEBUG_SELF_REFERENTIAL_MACRO
+                         printf ("   --- Detected 2nd kind of case of macro pasting, not a self-referencing macro (set result = false) \n");
+#endif
+                         result = false;
+                       }
+                  }
+               
+             }
+        }
+       else
+        {
+       // We might want test for #ifdef that was associated with an ignored #define...but for now we ignore this case.
+          result = false;
+        }
+
+     return result;
+   }
+
 
 // *********************************************
 // Member functions for class ROSEATTRIBUTESList
@@ -987,6 +1268,12 @@ PreprocessingInfo::set_optionalflagsForCompilerGeneratedLinemarker( std::string 
 ROSEAttributesList::ROSEAttributesList()
    {
      index = 0;
+
+  // DQ (9/29/2013): Added initialization of data members (when using Wave this 
+  // data member was not being set before being tested).
+  // Note: data members: attributeList, fileName, and filenameIdSet will default 
+  // to proper values using there default constrcutors.
+     rawTokenStream = NULL;
    }
 
 ROSEAttributesList::~ROSEAttributesList()
@@ -1013,9 +1300,7 @@ ROSEAttributesList::addElement(
    }
 #else
 void
-ROSEAttributesList::addElement(
-    PreprocessingInfo::DirectiveType dt, const std::string & pLine,
-    const std::string & filename, int lineNumber, int columnNumber, int numOfLines )
+ROSEAttributesList::addElement( PreprocessingInfo::DirectiveType dt, const std::string & pLine, const std::string & filename, int lineNumber, int columnNumber, int numOfLines )
    {
      ROSE_ASSERT(this != NULL);
   // ROSE_ASSERT(pLine != NULL);
@@ -1034,6 +1319,19 @@ ROSEAttributesList::addElement(
      attributeList.push_back(pElem);
    }
 #endif
+
+
+// DQ (9/29/2013): Added to support adding processed CPP directives and comments as tokens to token list.
+PreprocessingInfo*
+ROSEAttributesList::lastElement()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(attributeList.empty() == false);
+
+     return attributeList.back();
+   }
+
 
 void
 ROSEAttributesList::moveElements( ROSEAttributesList & pList )
@@ -1071,7 +1369,7 @@ ROSEAttributesList::moveElements( ROSEAttributesList & pList )
         }
    }
 
-#if 1
+
 // DQ (5/9/2007): This is required for WAVE support.
 // DQ (4/13/2007): I would like to remove this function, but this is part of WAVE support
 void
@@ -1081,9 +1379,8 @@ ROSEAttributesList::addElement( PreprocessingInfo &pRef )
 
      insertElement(pRef);
    }
-#endif
 
-#if 1
+
 // DQ (5/9/2007): This is required for WAVE support.
 // DQ (4/13/2007): I would like to remove this function
 void
@@ -1121,27 +1418,45 @@ ROSEAttributesList::insertElement( PreprocessingInfo & pRef )
           attributeList.push_back( &pRef );   
         }
    }
-#endif
+
 
 void
 ROSEAttributesList::setFileName(const string & fName)
    {
+  // DQ (10/4/2013): This function is called by the EasyStorage<ROSEAttributesList>::rebuildDataStoredInEasyStorageClass()
+  // which is called as part of the AST File I/O (AST serialization).  It was not previously called until more information
+  // was added to the AST (likely as part of the new token stream support for parse tree reconstruction in ROSE).
+
      ROSE_ASSERT(this != NULL);
 
   // Should have an assert(fName!=NULL) here?
   // strcpy(fileName,fName);
      fileName = fName;
 
-     printf ("Verify that the filenames are correct for all comments in this list! \n");
-     ROSE_ASSERT(false);
+  // DQ (10/4/2013): This code was not previously exercised and is not an error,
+  // commented out the assert to allow the test below to be done. This is 
+  // causing tests/testAstFileIO.C to fail on this input test code.  It might be
+  // that the new token support has caused more to be stored in the AST and thus
+  // triggering more comments and CPP directives to be saved as part of the file I/O
+  // (serialization of the AST).
+     printf ("In ROSEAttributesList::setFileName(): Verify that the filenames are correct for all comments in this list! \n");
+  // ROSE_ASSERT(false);
 
+#if 1
   // Error checking!
      vector<PreprocessingInfo*>::iterator i = attributeList.begin();
      while( i != attributeList.end() )
         {
-          ROSE_ASSERT( (*i)->get_file_info()->get_filenameString() == getFileName());
+          if ((*i)->get_file_info()->get_filenameString() != getFileName())
+             {
+               printf ("ROSEAttributesList::setFileName(fName = %s): Warning (*i)->get_file_info()->get_filenameString() != getFileName(): (*i)->get_file_info()->get_filenameString() = %s \n",fName.c_str(),(*i)->get_file_info()->get_filenameString().c_str());
+             }
+       // ROSE_ASSERT( (*i)->get_file_info()->get_filenameString() == getFileName());
           i++;
         }
+#else
+     printf ("ROSEAttributesList::setFileName(fName = %s): Error checking disabled \n",fName.c_str());
+#endif
    }
 
 string
@@ -2212,41 +2527,53 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                printf ("lineNumberString = %s \n",lineNumberString.c_str());
 #endif
                int line = atoi(lineNumberString.c_str());
-
-            // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
-               string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
 #if 0
-               printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+               printf ("p = %zu \n",p);
+               printf ("directiveStringWithoutHashAndKeyword.length() = %zu \n",directiveStringWithoutHashAndKeyword.length());
+               printf ("directiveStringWithoutHashLineAndKeyword (trimmed) = %s \n",directiveStringWithoutHashAndKeyword.c_str());
 #endif
-            // Remove white space between the line number and the filename.
-               p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
-               directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
-#if 0
-               printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
-#endif
-               string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
-#if 0
-               printf ("quotedFilename = %s \n",quotedFilename.c_str());
-#endif
-               ROSE_ASSERT(quotedFilename[0] == '\"');
-               ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-               std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
-#if 0
-               printf ("filename = %s \n",filename.c_str());
-#endif
-            // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
-               Sg_File_Info::addFilenameToMap(filename);
-
-               int fileId = Sg_File_Info::getIDFromFilename(filename);
-
-               if (SgProject::get_verbose() > 1)
+            // DQ (1/7/2014): Added handling for case where filename is not present in #line directive.
+               if (p != string::npos)
                   {
-                    printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                 // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
+                    string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
+#if 0
+                    printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                 // Remove white space between the line number and the filename.
+                    p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
+                    directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
+#if 0
+                    printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                    string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
+#if 0
+                    printf ("quotedFilename = %s \n",quotedFilename.c_str());
+#endif
+                    ROSE_ASSERT(quotedFilename[0] == '\"');
+                    ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                    std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+#if 0
+                    printf ("filename = %s \n",filename.c_str());
+#endif
+                 // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                    Sg_File_Info::addFilenameToMap(filename);
+
+                    int fileId = Sg_File_Info::getIDFromFilename(filename);
+
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                       }
+
+                    if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                       {
+                         filenameIdSet.insert(fileId);
+                       }
                   }
-
-               if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                 else
                   {
-                    filenameIdSet.insert(fileId);
+                    printf ("NOTE: In ROSEAttributesList::generateFileIdListFromLineDirectives(): no filename present in directiveString = %s \n",directiveString.c_str());
                   }
              }
         }

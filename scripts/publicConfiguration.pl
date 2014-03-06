@@ -35,7 +35,9 @@
 use strict;
 
 # Produce output only for the following symbols:
-my @symbols = (qw/HAVE_PTHREAD_H HAVE_GCRYPT_H HAVE_LIBGCRYPT HAVE_SQLITE3/, @ARGV);
+my @symbols = (qw/HAVE_PTHREAD_H HAVE_GCRYPT_H HAVE_LIBGCRYPT HAVE_DWARF_H HAVE_LIBDWARF HAVE_SQLITE3 HAVE_LIBPQXX
+                  SIZEOF_INT SIZEOF_LONG/,
+	       @ARGV);
 
 my @paragraphs = map {"$_\n"} split /\n[ \t]*\n/, join "", <STDIN>;
 # print "=================\n", $_ for @paragraphs;  # DEBUGGING: print each paragraph

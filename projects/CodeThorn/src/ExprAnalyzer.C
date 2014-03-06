@@ -111,7 +111,30 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "INFO: incdec-op found!"<<endl;
   }
-
+  if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
+	list<SingleEvalResultConstInt> resultList;
+	SgExpression* cond=condExp->get_conditional_exp();
+	list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
+	if(condResultList.size()!=1) {
+	  cerr<<"Error: non-const condition in conditional operator inside expressions not supported yet."<<endl;
+	  exit(1);
+	}
+	SingleEvalResultConstInt singleResult=*condResultList.begin();
+	if(singleResult.result.isTrue()) {
+	  SgExpression* trueBranch=condExp->get_true_exp();
+	  list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+	  return trueBranchResultList;
+	}
+	if(singleResult.result.isFalse()) {
+	  SgExpression* falseBranch=condExp->get_false_exp();
+	  list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+	  return falseBranchResultList;
+	}
+	cerr<<"Error: condition evaluating to top in conditional operator inside expressions not supported yet."<<endl;
+	exit(1);
+	// dummy return value to avoid compiler warning
+	return resultList;
+  }
   if(dynamic_cast<SgBinaryOp*>(node)) {
     //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
 
@@ -332,9 +355,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+		case V_SgPntrArrRefExp: {
+		  // assume top for array elements (array elements are not stored in state)
+		  res.result=AType::Top();
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+		  break;
+		}
         default:
-          cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
-          throw "Error: evalConstInt::unkown binary operatio.";
+			cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+          throw "Error: evalConstInt::unkown binary operation.";
         }
       }
     }
@@ -398,6 +428,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       return listify(res);
     }
     break;
+  }
+  case V_SgDoubleVal: {
+    //SgDoubleVal* doubleValNode=isSgDoubleVal(node);
+	// floating point values are currently not computed
+	res.result=AType::Top();
+    return listify(res);
   }
   case V_SgIntVal: {
     SgIntVal* intValNode=isSgIntVal(node);

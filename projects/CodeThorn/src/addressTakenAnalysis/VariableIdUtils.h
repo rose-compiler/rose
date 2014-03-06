@@ -10,14 +10,12 @@
 #include "VariableIdMapping.h"
 #include <set>
 
-using namespace CodeThorn;
-
 // some utility functions for sets of VariableId
 // 
 class VariableIdSetPrettyPrint
 {
 public:
-  std::string static str(VariableIdSet& vset, CodeThorn::VariableIdMapping& vidm);
+  std::string static str(VariableIdSet& vset, VariableIdMapping& vidm);
   std::string static str(VariableIdSet& vset);
 };
 

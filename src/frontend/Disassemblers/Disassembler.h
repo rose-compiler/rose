@@ -218,7 +218,7 @@ public:
 
     Disassembler()
         : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
-          p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
+          p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
           p_protection(MemoryMap::MM_PROT_EXEC)
         {ctor();}
 
@@ -302,6 +302,8 @@ public:
      *  namespace. It just creates a default Disassembler object, sets its search heuristics to the value specified in the
      *  SgFile node above the interpretation (presumably the value set with ROSE's "-rose:disassembler_search" switch),
      *  and invokes the disassemble() method.
+     *
+     *  See also, Partitioner::disassembleInterpretation() which does Partitioner-driven disassembly.
      *
      *  Thread safety: This class method is not thread safe. */
     static void disassembleInterpretation(SgAsmInterpretation*);
@@ -412,14 +414,14 @@ public:
      *  used when the disassembler is constructed.
      *
      *  Thread safety: It is not safe to change the byte sex while another thread is using this same Disassembler object. */
-    void set_sex(SgAsmExecutableFileFormat::ByteOrder sex) {
+    void set_sex(ByteOrder::Endianness sex) {
         p_sex = sex;
     }
 
     /** Returns the byte order used by the SEARCH_WORDS heuristic.
      *
      *  Thread safety: This method is thread safe. */
-    SgAsmExecutableFileFormat::ByteOrder get_sex() const {
+    ByteOrder::Endianness get_sex() const {
         return p_sex;
     }
 
@@ -696,7 +698,7 @@ protected:
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
     FILE *p_debug;                                      /**< Set to non-null to get debugging info. */
     size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
-    SgAsmExecutableFileFormat::ByteOrder p_sex;         /**< Byte order for SEARCH_WORDS. */
+    ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
     size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */

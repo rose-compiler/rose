@@ -20,6 +20,10 @@ Description:\n\
     switch is applicable only when the input file is a container such as ELF or\n\
     PE.  The default is to not generate an AST dot file.\n\
 \n\
+  --base-va=ADDRESS\n\
+    Use the specified address as the base virtual address rather than the address\n\
+    indicated in the file header.\n\
+\n\
   --cfg-dot\n\
   --no-cfg-dot\n\
     Generate (or don't generate) a GraphViz dot file containing the control flow\n\
@@ -80,6 +84,11 @@ Description:\n\
     Organized the output by address rather than hierarchically.  The output\n\
     will be more like traditional disassemblers.\n\
 \n\
+  --link=PATHS\n\
+    Link dynamic libraries into the executable before disassembling.  The\n\
+    default is not to link.  The PATHS are a colon-separated list of directories\n\
+    to be search for libraries.\n\
+\n\
   --omit-anon=SIZE\n\
   --no-omit-anon\n\
     If the memory being disassembled is anonymously mapped (contains all zero\n\
@@ -127,6 +136,11 @@ Description:\n\
     intended mostly to check the consistency of the disassembler with the\n\
     assembler.  The default is to not reassemble.\n\
 \n\
+  --reserve=ADDRESS,SIZE\n\
+    Reserve the indicated virtual address range before attempting to load the\n\
+    specimen.  The memory is mapped with no access rights. This switch may appear\n\
+    multiple times to reserve discontiguous regions.\n\
+\n\
   --show-bad\n\
   --no-show-bad\n\
     Show (or not) details about why instructions at certain addresses could not\n\
@@ -154,6 +168,9 @@ Description:\n\
     to not show these hashes in the listing. Regardless of this switch, the\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
+\n\
+  --skip-disassemble\n\
+    Skip the entire disassembly process; only parse the binary container (if any).\n\
 \n\
   --syscalls=linux32\n\
   --syscalls=none\n\
@@ -245,7 +262,6 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     bool ignore_final_ip = true;
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
-        PartialSymbolicSemantics::RenameMap rmap;
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }
@@ -715,14 +731,14 @@ dump_CFG_CG(SgNode *ast)
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
     struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
-        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
-            SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
+        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return !func || 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } unassigned_block_filter;
     BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
-    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
+    CFG global_cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
@@ -800,7 +816,14 @@ main(int argc, char *argv[])
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
+    bool do_skip_disassemble = false;
+    bool do_link = false;
     std::string do_generate_ipd;
+    std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
+    rose_addr_t rebase_va = 0;                  /* alternative base virtual address */
+    bool do_rebase = false;
+    ExtentMap reserved;                         /* addresses to be reserved */
+    
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -822,16 +845,38 @@ main(int argc, char *argv[])
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
             exit(1);
+        } else if (!strcmp(argv[i], "--link")) {
+            fprintf(stderr, "%s: --link switch requires library paths (see --help)\n", arg0);
+            exit(1);
+        } else if (!strncmp(argv[i], "--link=", 7)) {
+            if (!strcmp(argv[i]+7, "no")) {
+                do_link = false;
+            } else {
+                do_link = true;
+                std::vector<std::string> dirs;
+                StringUtility::splitStringIntoStrings(argv[i]+7, ':', dirs/*out*/);
+                library_paths.insert(library_paths.end(), dirs.begin(), dirs.end());
+            }
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
             do_ast_dot = true;
         } else if (!strcmp(argv[i], "--no-ast-dot")) {
             do_ast_dot = false;
+        } else if (!strncmp(argv[i], "--base-va=", 10)) {
+            char *rest;
+            rebase_va = strtoull(argv[i]+10, &rest, 0);
+            if (rest && *rest) {
+                fprintf(stderr, "%s: invalid value for --base-va switch: %s\n", arg0, argv[i]+10);
+                exit(1);
+            }
+            do_rebase = true;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--no-cfg-dot")) {
             do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
             do_call_disassembler = true;
+        } else if (!strcmp(argv[i], "--skip-disassemble")) {
+            do_skip_disassemble = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -927,6 +972,32 @@ main(int argc, char *argv[])
                 while (isspace(*rest)) rest++;
                 s = rest;
             }
+        } else if (!strncmp(argv[i], "--reserve=", 10)) {
+            char *rest;
+            errno = 0;
+            rose_addr_t va = strtoull(argv[i]+10, &rest, 0);
+            if (errno || rest==argv[i]+10) {
+                fprintf(stderr, "%s: expected an address for the --reserve switch\n", arg0);
+                exit(1);
+            }
+            char *s = rest;
+            while (isspace(*s)) ++s;
+            if (','!=*s++) {
+                fprintf(stderr, "%s: comma expected between address and size for --reserve switch\n", arg0);
+                exit(1);
+            }
+            errno = 0;
+            rose_addr_t size = strtoull(s, &rest, 0);
+            if (errno || rest==s) {
+                fprintf(stderr, "%s: expected a size after the address for --reserve switch\n", arg0);
+                exit(1);
+            }
+            while (isspace(*rest)) ++rest;
+            if (*rest) {
+                fprintf(stderr, "%s: extra text after --reserve size\n", arg0);
+                exit(1);
+            }
+            reserved.insert(Extent(va, size));
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_loader = true;
@@ -1052,6 +1123,10 @@ main(int argc, char *argv[])
         fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
         exit(1);
     }
+    if (do_rebase && !raw_entries.empty())
+        fprintf(stderr, "%s: warning: --base-va ignored in raw buffer mode\n", arg0);
+    if (!reserved.empty() && !raw_entries.empty())
+        fprintf(stderr, "%s: warning: --reserve ignored in raw buffer mode\n", arg0);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse, link, remap, relocate
@@ -1072,23 +1147,50 @@ main(int argc, char *argv[])
 
         /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
          * mapping here because we may want to see debugging output, etc. */
-        if (interp->get_map()!=NULL)
-            interp->get_map()->clear();
+        MemoryMap *map = interp->get_map();
+        if (map!=NULL) {
+            map->clear();
+        } else {
+            interp->set_map(map = new MemoryMap);
+        }
 
+        /* Adjust the base VA for the primary file header if requested. */
+        if (do_rebase) {
+            const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+            assert(1==hdrs.size());
+            hdrs[0]->set_base_va(rebase_va);
+        }
+
+        /* Reserve parts of the address space. */
+        for (ExtentMap::iterator ri=reserved.begin(); ri!=reserved.end(); ++ri) {
+            map->insert(ri->first, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(ri->first.size()),
+                                                      0, MemoryMap::MM_PROT_NONE, "reserved area"));
+        }
+
+        /* Run the loader */
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-        if (do_debug_loader) loader->set_debug(stderr);
-        //loader->set_perform_dynamic_linking(true);
-        loader->set_perform_remap(true);
-        //loader->set_perform_relocations(true);
-        //loader->add_directory("/lib32");
+        if (do_debug_loader)
+            loader->set_debug(stderr);
         try {
-            loader->load(interp);
+            if (do_link) {
+                for (size_t i=0; i<library_paths.size(); ++i)
+                    loader->add_directory(library_paths[i]);
+                loader->link(interp);
+            }
+            loader->remap(interp);
+            if (do_link || !reserved.empty()) {
+                BinaryLoader::FixupErrors errors;
+                loader->fixup(interp, &errors);
+                if (!errors.empty()) {
+                    std::cerr <<arg0 <<": warning: encountered " <<errors.size()
+                              <<" relocation fixup error" <<(1==errors.size()?"":"s") <<"\n";
+                }
+            }
         } catch (const BinaryLoader::Exception &e) {
             std::cerr <<arg0 <<": BinaryLoader exception: " <<e <<"\n";
             exit(1);
         }
     }
-
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Choose a disassembler
@@ -1142,21 +1244,22 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
 
     /* Note that if we using an active partitioner that calls the disassembler whenever an instruction is needed, then there's
-     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here. */
-    MemoryMap *map = NULL;
+     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here.  We make
+     * a copy of the MemoryMap because we might want to modify some of the permissions for disassembling; the new copy shares
+     * the data (but not meta-data) with the original MemoryMap. */
+    MemoryMap map;
     Disassembler::AddressSet worklist;
 
     if (!raw_entries.empty()) {
          /* We computed the memory map when we processed command-line arguments. */
-        map = &raw_map;
+        map = raw_map;
         for (Disassembler::AddressSet::iterator i=raw_entries.begin(); i!=raw_entries.end(); i++) {
             worklist.insert(*i);
             partitioner->add_function(*i, SgAsmFunction::FUNC_ENTRY_POINT, "entry_function");
         }
     } else {
-        map = interp->get_map();
-        assert(map!=NULL);
-
+        assert(interp->get_map()!=NULL);
+        map = *interp->get_map();
 
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
@@ -1169,16 +1272,40 @@ main(int argc, char *argv[])
 
             /* Seed disassembler work list with addresses of function symbols if desired */
             if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
-                disassembler->search_function_symbols(&worklist, map, *hi);
+                disassembler->search_function_symbols(&worklist, &map, *hi);
         }
     }
 
     /* Should we filter away any anonymous regions? */
     if (do_omit_anon>0)
-        map->prune(large_anonymous_region_p);
+        map.prune(large_anonymous_region_p);
+
+    /* If we did dynamic linking, then mark the ".got.plt" section as read-only.  This makes the disassembler treat it as
+     * constant data so that dynamically-linked function thunks get known successor information.  E.g., a thunk like this:
+     *     abort@plt:
+     *        jmp DWORD PTR ds:[0x080600f8<.got.plt+0x0c>]
+     * will have as its successor, the address stored at .got.plt+12.  If .got.plt had been left as read/write, then the
+     * disassembler must assume that the address at .got.plt+12 changes while the program runs, and therefore the successors of
+     * the JMP instruction are unknown. */
+    if (do_link) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            SgAsmGenericSectionPtrList sections = (*hi)->get_sections_by_name(".got.plt");      // ELF
+            SgAsmGenericSectionPtrList s2 = (*hi)->get_sections_by_name(".got");                // ELF
+            SgAsmGenericSectionPtrList s3 = (*hi)->get_sections_by_name(".import");             // PE
+            sections.insert(sections.end(), s2.begin(), s2.end());
+            sections.insert(sections.end(), s3.begin(), s3.end());
+            for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+                if ((*si)->is_mapped()) {
+                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                }
+            }
+        }
+    }
 
     printf("using this memory map for disassembly:\n");
-    map->dump(stdout, "    ");
+    map.dump(stdout, "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
@@ -1187,22 +1314,24 @@ main(int argc, char *argv[])
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns;
 
-    try {
-        if (do_call_disassembler) {
-            insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-            block = partitioner->partition(interp, insns, map);
-        } else {
-            block = partitioner->partition(interp, disassembler, map);
-            insns = partitioner->get_instructions();
-            bad = partitioner->get_disassembler_errors();
+    if (!do_skip_disassemble) {
+        try {
+            if (do_call_disassembler) {
+                insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+                block = partitioner->partition(interp, insns, &map);
+            } else {
+                block = partitioner->partition(interp, disassembler, &map);
+                insns = partitioner->get_instructions();
+                bad = partitioner->get_disassembler_errors();
+            }
+        } catch (const Partitioner::Exception &e) {
+            std::cerr <<"partitioner exception: " <<e <<"\n";
+            exit(1);
         }
-    } catch (const Partitioner::Exception &e) {
-        std::cerr <<"partitioner exception: " <<e <<"\n";
-        exit(1);
     }
 
     /* Link instructions into AST if possible */
-    if (interp) {
+    if (interp && block) {
         interp->set_global_block(block);
         block->set_parent(interp);
     }
@@ -1221,9 +1350,9 @@ main(int argc, char *argv[])
                 typedef ControlFlow::Graph CFG;
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
-                if (func) {
-                    CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
+                if (func && func->get_entry_block()) {
+                    CFG cfg = cfg_analysis.build_block_cfg_from_ast<CFG>(func);
+                    CFG_Vertex entry = 0; /* see build_block_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
@@ -1301,12 +1430,12 @@ main(int argc, char *argv[])
         printf("\n");
     }
 
-    if (do_show_functions)
+    if (do_show_functions && block)
         std::cout <<ShowFunctions(block);
 
-    if (!do_quiet) {
+    if (!do_quiet && block) {
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(block);
+        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
@@ -1330,8 +1459,8 @@ main(int argc, char *argv[])
      * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
-    if (do_show_extents || do_show_coverage) {
-        ExtentMap extents=map->va_extents();
+    if ((do_show_extents || do_show_coverage) && block) {
+        ExtentMap extents=map.va_extents();
         size_t disassembled_map_size = extents.size();
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
@@ -1387,7 +1516,7 @@ main(int argc, char *argv[])
         //generateAstGraph(project, INT_MAX);
     }
         
-    if (do_cfg_dot) {
+    if (do_cfg_dot && block) {
         printf("generating GraphViz dot files for control flow graphs...\n");
         dump_CFG_CG(block);
     }

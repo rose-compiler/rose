@@ -7,6 +7,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
@@ -100,25 +101,26 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
+      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
       ${CMAKE_SOURCE_DIR}/src/util/support/BitVectorRepr.C
-#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/CommandOptions.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -156,6 +158,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/manglingSupport.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/sage_support.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/cmdline.cpp
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sage_support/keep_going.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_scopes.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_symbols.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 
@@ -170,6 +173,8 @@ set( sage3_SRC
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/omplexer.ll
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/Utf8.C
+
    )
 
 add_definitions(-DPOET_VERSION="1.03.06")
@@ -245,6 +250,9 @@ set(rose_support_src
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/IncludeDirective.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/SqlDatabase.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/LinearCongruentialGenerator.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/Combinatorics.C
      )
 
 
@@ -318,6 +326,7 @@ set (unparser_SRC
 
 set(roseBinaryFormats_fileList_part0
    ### Utilities ###
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ByteOrder.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/DataConversion.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C
@@ -421,6 +430,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCallingConvention.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/DwarfLineMapper.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
  #${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C
@@ -517,13 +527,22 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherPowerpc.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherX86.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/NullSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/TraceSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 )
 
@@ -712,6 +731,9 @@ set( libastTokenStream_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/doCompleteMapping.C  
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/linearizeAST.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/unparseMacro.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/tokenStreamMapping.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/frontierDetection.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/previousAndNextNode.C
    )
 
 
@@ -858,6 +880,13 @@ if(enable-rosehpct)
     )
 endif()
 
+# Liao, 1/27/2014,roseExtensions_SRC defined before is conditionalized by
+# enable rose hpct, which is not desired since there are other subdirs under
+# roseExtensions. 
+set(failsafe_SRC
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
+ )
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -917,6 +946,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
+ ${failsafe_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}
@@ -963,7 +993,7 @@ add_custom_target(
 
 add_definitions(-DPOET_VERSION="1.03.06")
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
 generate_stringify generate_rosePublicConfig poet) 
 
 # tps : independant Components : ROSE, libhpdf
@@ -973,6 +1003,7 @@ set(LINK_FILES
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
+   libX10Traversal
 )
 
 if (have_EDG_source OR NOT WIN32)
@@ -1035,7 +1066,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL ${edg_lib} ${link_with_libraries}
     )
 
 ########### install files ###############

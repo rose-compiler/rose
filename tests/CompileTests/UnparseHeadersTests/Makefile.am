@@ -9,7 +9,7 @@ TestUnparseHeaders_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Test specimens are actually directories, each of which contains a ROSE Test Harness "config" file.
 TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
-EXTRA_DIST += TEST_SPECIMENS
+EXTRA_DIST += $(TEST_SPECIMENS)
 
 ROSE_SWITCHES = --edg:no_warnings --edg:restrict -w -rose:verbose 1 -rose:unparseHeaderFiles
 HDR_ROOT_SWITCHES = -rose:unparseHeaderFilesRootFolder unparsedHeaders

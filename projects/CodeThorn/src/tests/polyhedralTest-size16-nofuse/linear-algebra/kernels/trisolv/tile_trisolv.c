@@ -1,0 +1,69 @@
+#   define N ARRAYSIZE
+# define _PB_N ARRAYSIZE
+/**
+ * trisolv.c: This file is part of the PolyBench/C 3.2 test suite.
+ *
+ *
+ * Contact: Louis-Noel Pouchet <pouchet@cse.ohio-state.edu>
+ * Web address: http://polybench.sourceforge.net
+ */
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+
+int main(int argc,char **argv)
+{
+/* Retrieve problem size. */
+  int n = 16;
+/* Variable declaration/allocation. */
+  double A[16][16];
+  double x[16];
+  double c[16];
+  int i;
+  int j;
+  
+#pragma scop
+{
+    int c2;
+    int c1;
+{
+      int c4;
+      int c3;
+      for (c3 = 0; c3 <= 15; c3++) {
+        x[c3] = c[c3];
+      }
+      x[0] = x[0] / A[0][0];
+      for (c3 = 3; c3 <= 15; c3++) {
+        for (c4 = 3; c4 <= c3 + -3; c4++) {
+          x[c3] = x[c3] - A[c3][c4 + -2 + - 1] * x[c4 + -2 + - 1];
+        }
+        if (c3 <= 4) {
+          x[c3 + -2] = x[c3 + -2] - A[c3 + -2][c3 + -2 + - 1] * x[c3 + -2 + - 1];
+        }
+        if (c3 >= 5) {
+          x[c3 + -2] = x[c3 + -2] - A[c3 + -2][c3 + -2 + - 1] * x[c3 + -2 + - 1];
+          x[c3] = x[c3] - A[c3][c3 + -4 + - 1] * x[c3 + -4 + - 1];
+        }
+        if (c3 == 3) {
+          x[2 + - 1] = x[2 + - 1] / A[2 + - 1][2 + - 1];
+          x[2] = x[2] - A[2][2 + - 2] * x[2 + - 2];
+        }
+        if (c3 >= 4) {
+          x[c3 + -1 + - 1] = x[c3 + -1 + - 1] / A[c3 + -1 + - 1][c3 + -1 + - 1];
+          x[c3 + -1] = x[c3 + -1] - A[c3 + -1][c3 + -1 + - 2] * x[c3 + -1 + - 2];
+          x[c3] = x[c3] - A[c3][c3 + -3 + - 1] * x[c3 + -3 + - 1];
+        }
+        x[c3] = x[c3] - A[c3][c3 + -2 + - 1] * x[c3 + -2 + - 1];
+      }
+      x[14] = x[14] - A[14][14 + - 1] * x[14 + - 1];
+      x[15 + - 1] = x[15 + - 1] / A[15 + - 1][15 + - 1];
+      x[15] = x[15] - A[15][15 + - 2] * x[15 + - 2];
+      x[15] = x[15] - A[15][15 + - 1] * x[15 + - 1];
+      x[15] = x[15] / A[15][15];
+    }
+  }
+  
+#pragma endscop
+  return 0;
+}

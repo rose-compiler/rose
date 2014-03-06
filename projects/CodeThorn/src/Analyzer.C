@@ -137,9 +137,10 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
   t=isStdIOLabel(label) 
-    //    || getLabeler()->isStdErrLabel(label)
+    || (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
+     || isCppLabeledAssertLabel(label)
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -1037,8 +1038,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));
         } else {
+		  if(isSgPntrArrRefExp(lhs)) {
+			// for now we ignore array refs on lhs
+			// TODO: assignments in index computations of ignored array ref
+			// since nothing can change (because of being ignored) state remains the same
+			EState estate=(*i).estate;
+			PState oldPState=*estate.pstate();
+			ConstraintSet oldcset=*estate.constraints();			
+			estateList.push_back(createEState(edge.target,oldPState,oldcset));			
+		  } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
+		  }
         }
       }
       return estateList;
@@ -1062,7 +1073,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new Labeler(root,getVariableIdMapping());
+  Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
@@ -1287,7 +1298,7 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   return true;
 }
 
-
+#if 0
 void Analyzer::deleteNonRelevantEStates() {
   size_t numEStatesBefore=estateSet.size();
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
@@ -1299,6 +1310,7 @@ void Analyzer::deleteNonRelevantEStates() {
   if(numEStatesBefore!=numEStatesAfter)
     cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
+#endif
 
 void Analyzer::stdIOFoldingOfTransitionGraph() {
   cout << "STATUS: stdio-folding: computing states to fold."<<endl;
@@ -1418,6 +1430,78 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
   return 0;
 }
 
+void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
+  ss<<"S"<<estateSet.estateIdString(t.source);
+  ss<<",";
+  ss<<"S"<<estateSet.estateIdString(t.target);
+  const EState* myTarget=t.target;
+  AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+  ss<<",\""; // dquote reqired for condition
+  // generate transition condition
+  if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
+    //assert(myIOVal.isConstInt());
+  }
+  // myIOVal.isTop(): this only means that any value *may* be read/written. This cannot be modeled here.
+  // if it represents "any of A..F" or any of "U..Z" it could be handled.
+  for(int i=1;i<=6;i++) {
+    if(i!=1)
+      ss<<" & ";
+    if(myTarget->io.isStdInIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+    } else {
+      ss<<"! ";
+    }
+    ss<<"i"<<(char)(i+'A'-1);
+  }
+  for(int i=21;i<=26;i++) {
+    ss<<" & ";
+    if(myTarget->io.isStdOutIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+      } else {
+      ss<<"! ";
+    }
+    ss<<"o"<<(char)(i+'A'-1);
+  }
+  ss<<"\""; // dquote reqired for condition
+  ss<<",;"; // no accepting states specified
+  ss<<endl;
+}
+
+string Analyzer::generateSpotSTG() {
+  stringstream ss;
+  // (1) generate accepting states
+#if 0
+  EStatePtrSet states=transitionGraph.estateSet();
+  cout<<"Generating accepting states."<<endl;
+  ss<<"acc=";
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if(!((*i)->io.isStdErrIO()||(*i)->io.isFailedAssertIO())) {
+      ss<<"S"<<estateSet.estateIdString(*i)<<" ";
+    }
+  }
+  ss<<";"<<endl;
+#else
+  cout<<"All states are accepting."<<endl;
+#endif
+  // (2) generate state transition graph
+  // the start state is identified by the first transition. Therefore I generate all transitions of the
+  // start state first, and exclude them from all the others.
+  const EState* startState=transitionGraph.getStartEState();
+  TransitionPtrSet startTransitions=transitionGraph.outEdges(startState);
+  for(TransitionPtrSet::iterator i=startTransitions.begin();i!=startTransitions.end();++i) {
+    generateSpotTransition(ss,**i);
+  }
+  int num=0;
+  for(TransitionGraph::iterator i=transitionGraph.begin();i!=transitionGraph.end();++i) {
+    if((*i).source!=startState)
+      generateSpotTransition(ss,*i);
+    if(num%1000==0 && num>0)
+      cout<<"Generated "<<num<<" of "<<transitionGraph.size()<<" transitions."<<endl;
+    num++;
+  }
+  cout<<"SPOT STG: start state: "<<"S"<<estateSet.estateIdString(startState)<<endl;
+  return ss.str();
+}
 
 int Analyzer::semanticEliminationOfSelfInInTransitions() {
   //cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
@@ -1684,7 +1768,7 @@ void Analyzer::runSolver3() {
         assert(currentEStatePtr);
       
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;

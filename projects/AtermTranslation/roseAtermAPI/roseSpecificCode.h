@@ -1,0 +1,2 @@
+
+ATerm convertNodeToAterm(SgNode* project);

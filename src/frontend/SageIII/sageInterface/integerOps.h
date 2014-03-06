@@ -1,6 +1,7 @@
 #ifndef ROSE_INTEGEROPS_H
 #define ROSE_INTEGEROPS_H
 
+#include <cassert>
 #include <limits>
 #include <boost/static_assert.hpp>
 
@@ -49,28 +50,67 @@ inline T genMask(size_t n) {
     return shl1<T>(n) - 1;
 }
 
+/** Returns true if the sign bit is set, false if clear.
+ * @{ */
 template <size_t NBits, typename T>
 inline bool signBit(T value) {
     return (value & SHL1<T, NBits - 1>::value) != T(0);
 }
 
+template <typename T>
+inline bool signBit2(T value, size_t width=8*sizeof(T)) {
+    assert(width>0 && width<=8*sizeof(T));
+    T sign_mask = shl1<T>(width-1);
+    return 0 != (value & sign_mask);
+}
+/** @} */
+
 /** Sign extend value.  If the bit @p FromBits-1 is set set for @p value, then the result will have bits @p FromBits through @p
-*  ToBits-1 also set (other bits are unchanged).  If @p ToBits is less than or equal to @p FromBits then nothing happens. */
+*  ToBits-1 also set (other bits are unchanged).  If @p ToBits is less than or equal to @p FromBits then nothing happens.
+* @{ */
 template <size_t FromBits, size_t ToBits, typename T>
 inline T signExtend(T value) {
     return value | (signBit<FromBits>(value) ? (GenMask<T, ToBits>::value ^ GenMask<T, FromBits>::value) : T(0));
 }
 
+template <typename T>
+inline T signExtend2(T value, size_t from_width, size_t to_width) {
+    assert(from_width<=8*sizeof(T));
+    assert(to_width<=8*sizeof(T));
+    return value | (signBit2(value, from_width) ? (genMask<T>(to_width) ^ genMask<T>(from_width)) : T(0));
+}
+/** @} */
+
+/** Shifts bits of @p value left by @p count bits.
+ * @{ */
 template <size_t NBits, typename T>
 inline T shiftLeft(T value, size_t count) {
     return (value * shl1<T>(count)) & GenMask<T, NBits>::value;
 }
 
+template <typename T>
+inline T shiftLeft2(T value, size_t count, size_t width=8*sizeof(T)) {
+    assert(width>0 && width<=8*sizeof(T));
+    return (value * shl1<T>(count)) & genMask<T>(width);
+}
+/** @} */
+
+/** Shifts bits of @p value right by @p count bits without sign extension.
+ * @{ */
 template <size_t NBits, typename T>
 inline T shiftRightLogical(T value, size_t count) {
     return (count >= NBits) ? T(0) : (value >> count);
 }
 
+template <typename T>
+inline T shiftRightLogical2(T value, size_t count, size_t width=8*sizeof(T)) {
+    assert(width>0 && width<=8*sizeof(T));
+    return (count >= width) ? T(0) : (value >> count);
+}
+/** @} */
+
+/** Shifts bits of @p value right by @p count bits with sign extension.
+ * @{ */
 template <size_t NBits, typename T>
 inline T shiftRightArithmetic(T value, size_t count) {
     if (count >= NBits) {
@@ -81,17 +121,84 @@ inline T shiftRightArithmetic(T value, size_t count) {
     }
 }
 
+template <typename T>
+inline T shiftRightArithmetic2(T value, size_t count, size_t width=8*sizeof(T)) {
+    if (count >= width) {
+        return signBit2(value, width) ? genMask<T>(width) : T(0);
+    } else {
+        return (shiftRightLogical2(value, count, width) |
+                (signBit2(value, width) ? (genMask<T>(width) ^ genMask<T>(width-count)) : T(0)));
+    }
+}
+/** @} */
+
+/** Rotate the bits of the value left by count bits.
+ * @{ */
 template <size_t NBits, typename T>
 inline T rotateLeft(T value, size_t count) {
     count %= NBits;
     return ((value << count) | (value >> (NBits - count))) & GenMask<T, NBits>::value;
 }
 
+template <typename T>
+inline T rotateLeft2(T value, size_t count, size_t width=8*sizeof(T)) {
+    assert(width>0 && width<=8*sizeof(T));
+    count %= width;
+    return ((value << count) | (value >> (width-count))) & genMask<T>(width);
+}
+/** @} */
+
+/** Rotate bits of the value right by @p count bits.
+ * @{ */
 template <size_t NBits, typename T>
 inline T rotateRight(T value, size_t count) {
     count %= NBits;
     return ((value >> count) | (value << (NBits - count))) & GenMask<T, NBits>::value;
 }
+
+template <typename T>
+inline T rotateRight2(T value, size_t count, size_t width=8*sizeof(T)) {
+    assert(width>0 && width<=8*sizeof(T));
+    return ((value >> count) | (value << (width - count))) & genMask<T>(width);
+}
+/** @} */
+
+/** Returns true if the value is a power of two.  Zero is considered a power of two. */
+template <typename T>
+inline bool isPowerOfTwo(T value)
+{
+    assert(sizeof(T) <= sizeof(uint64_t));
+    if (0 != (value & SHL1<T, 8*sizeof(T)-1>::value))
+        value = ~value + 1;
+    uint64_t uval = value;
+    while (uval) {
+        if (uval & 1)
+            return 1==uval;
+        uval >>= 1u;
+    }
+    return true; // treat zero as a power of two
+}
+
+/** Returns the base-2 logorithm of @p value.  If @p value is not a power of two then the return value is rounded up to the
+ *  next integer. The @p value is treated as an unsigned value. Returns zero if @p value is zero. */
+template <typename T>
+inline T log2max(T value)
+{
+    assert(sizeof(T) <= sizeof(uint64_t));
+    uint64_t uval = value;
+    bool low_bits_set = false;
+    T retval = 0;
+    while (uval) {
+        if (1==uval)
+            return retval + (low_bits_set ? 1 : 0);
+        if (uval & 1)
+            low_bits_set = true;
+        ++retval;
+        uval >>= 1;
+    }
+    return retval;
+}
+
 
 template <typename T>
 inline T log2(T a) {

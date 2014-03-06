@@ -52,6 +52,11 @@ YicesSolver::available_linkage()
 SMTSolver::Satisfiable
 YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
+    clear_evidence();
+    Satisfiable retval = trivially_satisfiable(exprs);
+    if (retval!=SAT_UNKNOWN)
+        return retval;
+
 #ifdef ROSE_HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
 
@@ -636,7 +641,7 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
             assert(bvtype);
             char name[64];
             snprintf(name, sizeof name, "v%"PRIu64, ln->get_name());
-            yices_var_decl vdecl = yices_mk_var_decl(context, name, bvtype);
+            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, bvtype);
             assert(vdecl);
         }
     } else if (ln && ln->is_memory()) {
@@ -648,7 +653,7 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
             assert(ftype);
             char name[64];
             snprintf(name, sizeof name, "m%"PRIu64, ln->get_name());
-            yices_var_decl vdecl = yices_mk_var_decl(context, name, ftype);
+            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, ftype);
             assert(vdecl);
         }
     } else if (in) {

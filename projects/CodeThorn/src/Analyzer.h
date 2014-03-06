@@ -134,7 +134,10 @@ namespace CodeThorn {
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    
+    string generateSpotSTG();
+  private:
+    void generateSpotTransition(stringstream& ss, const Transition& t);
+  public:
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -147,7 +150,11 @@ namespace CodeThorn {
     
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    Labeler* getLabeler() const { return cfanalyzer->getLabeler(); }
+    IOLabeler* getLabeler() const {
+      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+      ROSE_ASSERT(ioLabeler);
+      return ioLabeler;
+    }
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
     EStateSet* getEStateSet() { return &estateSet; }
@@ -184,6 +191,9 @@ namespace CodeThorn {
           labelName=SgNodeHelper::getLabelName((*i).first);
       //assert(labelName.size()>0);
       return labelName;
+    }
+    bool isCppLabeledAssertLabel(Label lab) {
+      return labelNameOfAssertLabel(lab).size()>0;
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;

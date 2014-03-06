@@ -8,6 +8,7 @@
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
 #include "Disassembler.h"
+#include "dwarfSupport.h"
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
@@ -133,6 +134,8 @@ std::string
 BinaryLoader::find_so_file(const std::string &libname) const
 {
     if (debug) fprintf(debug, "BinaryLoader: find library=%s...\n", libname.c_str());
+    if (!libname.empty() && '/'==libname[0])
+        return libname;
     for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
         if (debug) fprintf(debug, "BinaryLoader:   looking in %s...\n", di->c_str());
         std::string libpath = *di + "/" + libname;
@@ -331,7 +334,8 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     rose_addr_t old_base_va = header->get_base_va();
     rose_addr_t new_base_va = rebase(map, header, sections);
     if (new_base_va != old_base_va) {
-        if (debug) fprintf(debug, "  temporarily rebasing header from 0x%08"PRIx64" to 0x%08"PRIx64"\n", old_base_va, new_base_va);
+        if (debug) fprintf(debug, "  temporarily rebasing header from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
+                           old_base_va, new_base_va);
         header->set_base_va(new_base_va);
     }
 
@@ -767,7 +771,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
 
 /* Used to be called relocateAllLibraries */
 void
-BinaryLoader::fixup(SgAsmInterpretation *interp)
+BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors)
 {
     // 1. Get section map (name -> list<section*>)
     // 2. Create Symbol map from relevant sections (.dynsym)
