@@ -2248,7 +2248,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
 
-//--------------------------------Java interface functions ---------------------------
+//--------------------------------Java interface functions ---------------------
       std::string getTempDirectory();
       void destroyTempDirectory(std::string);
       void processFile(SgProject *, std::string);
