@@ -51,8 +51,8 @@ main(int argc, char * argv[])
   bool enable_ast_tests = false;
   std::string report_filename__fail("rose-failed_files.txt");
   std::string report_filename__pass("rose-passed_files.txt");
-  std::string expectations_filename__fail("rose-expected_failures.txt");
-  std::string expectations_filename__pass("rose-expected_passes.txt");
+  std::string expectations_filename__fail("");
+  std::string expectations_filename__pass("");
   std::string path_prefix;
 
   std::string program_name(argv[0]);
