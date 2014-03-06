@@ -63,7 +63,7 @@ SgAsmPEFileHeader::ctor()
     ROSE_ASSERT(p_exec_format!=NULL);
     p_exec_format->set_family(FAMILY_PE);
     p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
     p_exec_format->set_word_size(4);
     p_exec_format->set_version(0);
     p_exec_format->set_is_current_version(true);
@@ -99,7 +99,7 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        rose_addr_t pe_offset = le_to_host(lfanew_disk);
+        rose_addr_t pe_offset = ByteOrder::le_to_host(lfanew_disk);
         
         /* Look for the PE File Header magic number */
         unsigned char pe_magic[4];
@@ -134,13 +134,13 @@ SgAsmPEFileHeader::parse()
         throw FormatError("Bad PE magic number");
 
     /* Decode COFF file header */
-    p_e_cpu_type           = le_to_host(fh.e_cpu_type);
-    p_e_nsections          = le_to_host(fh.e_nsections);
-    p_e_time               = le_to_host(fh.e_time);
-    p_e_coff_symtab        = le_to_host(fh.e_coff_symtab);
-    p_e_coff_nsyms         = le_to_host(fh.e_coff_nsyms);
-    p_e_nt_hdr_size        = le_to_host(fh.e_nt_hdr_size);
-    p_e_flags              = le_to_host(fh.e_flags);
+    p_e_cpu_type           = ByteOrder::le_to_host(fh.e_cpu_type);
+    p_e_nsections          = ByteOrder::le_to_host(fh.e_nsections);
+    p_e_time               = ByteOrder::le_to_host(fh.e_time);
+    p_e_coff_symtab        = ByteOrder::le_to_host(fh.e_coff_symtab);
+    p_e_coff_nsyms         = ByteOrder::le_to_host(fh.e_coff_nsyms);
+    p_e_nt_hdr_size        = ByteOrder::le_to_host(fh.e_nt_hdr_size);
+    p_e_flags              = ByteOrder::le_to_host(fh.e_flags);
 
     /* Read the "Optional Header" (optional in the sense that not all files have one, but required for an executable), the
      * size of which is stored in the e_nt_hdr_size of the main PE file header. According to 
@@ -154,7 +154,7 @@ SgAsmPEFileHeader::parse()
     if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
         fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
                 get_offset() + sizeof(fh));
-    p_e_opt_magic = le_to_host(oh32.e_opt_magic);
+    p_e_opt_magic = ByteOrder::le_to_host(oh32.e_opt_magic);
     
     /* File format changes from ctor() */
     p_exec_format->set_purpose(p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY);
@@ -163,35 +163,35 @@ SgAsmPEFileHeader::parse()
     /* Decode the optional header. */
     rose_addr_t entry_rva;
     if (4==p_exec_format->get_word_size()) {
-        p_e_lmajor             = le_to_host(oh32.e_lmajor);
-        p_e_lminor             = le_to_host(oh32.e_lminor);
-        p_e_code_size          = le_to_host(oh32.e_code_size);
-        p_e_data_size          = le_to_host(oh32.e_data_size);
-        p_e_bss_size           = le_to_host(oh32.e_bss_size);
-        entry_rva              = le_to_host(oh32.e_entrypoint_rva);
-        p_e_code_rva           = le_to_host(oh32.e_code_rva);
-        p_e_data_rva           = le_to_host(oh32.e_data_rva);
-        p_base_va              = le_to_host(oh32.e_image_base);
-        p_e_section_align      = le_to_host(oh32.e_section_align);
-        p_e_file_align         = le_to_host(oh32.e_file_align);
-        p_e_os_major           = le_to_host(oh32.e_os_major);
-        p_e_os_minor           = le_to_host(oh32.e_os_minor);
-        p_e_user_major         = le_to_host(oh32.e_user_major);
-        p_e_user_minor         = le_to_host(oh32.e_user_minor);
-        p_e_subsys_major       = le_to_host(oh32.e_subsys_major);
-        p_e_subsys_minor       = le_to_host(oh32.e_subsys_minor);
-        p_e_reserved9          = le_to_host(oh32.e_reserved9);
-        p_e_image_size         = le_to_host(oh32.e_image_size);
-        p_e_header_size        = le_to_host(oh32.e_header_size);
-        p_e_file_checksum      = le_to_host(oh32.e_file_checksum);
-        p_e_subsystem          = le_to_host(oh32.e_subsystem);
-        p_e_dll_flags          = le_to_host(oh32.e_dll_flags);
-        p_e_stack_reserve_size = le_to_host(oh32.e_stack_reserve_size);
-        p_e_stack_commit_size  = le_to_host(oh32.e_stack_commit_size);
-        p_e_heap_reserve_size  = le_to_host(oh32.e_heap_reserve_size);
-        p_e_heap_commit_size   = le_to_host(oh32.e_heap_commit_size);
-        p_e_loader_flags       = le_to_host(oh32.e_loader_flags);
-        p_e_num_rvasize_pairs  = le_to_host(oh32.e_num_rvasize_pairs);
+        p_e_lmajor             = ByteOrder::le_to_host(oh32.e_lmajor);
+        p_e_lminor             = ByteOrder::le_to_host(oh32.e_lminor);
+        p_e_code_size          = ByteOrder::le_to_host(oh32.e_code_size);
+        p_e_data_size          = ByteOrder::le_to_host(oh32.e_data_size);
+        p_e_bss_size           = ByteOrder::le_to_host(oh32.e_bss_size);
+        entry_rva              = ByteOrder::le_to_host(oh32.e_entrypoint_rva);
+        p_e_code_rva           = ByteOrder::le_to_host(oh32.e_code_rva);
+        p_e_data_rva           = ByteOrder::le_to_host(oh32.e_data_rva);
+        p_base_va              = ByteOrder::le_to_host(oh32.e_image_base);
+        p_e_section_align      = ByteOrder::le_to_host(oh32.e_section_align);
+        p_e_file_align         = ByteOrder::le_to_host(oh32.e_file_align);
+        p_e_os_major           = ByteOrder::le_to_host(oh32.e_os_major);
+        p_e_os_minor           = ByteOrder::le_to_host(oh32.e_os_minor);
+        p_e_user_major         = ByteOrder::le_to_host(oh32.e_user_major);
+        p_e_user_minor         = ByteOrder::le_to_host(oh32.e_user_minor);
+        p_e_subsys_major       = ByteOrder::le_to_host(oh32.e_subsys_major);
+        p_e_subsys_minor       = ByteOrder::le_to_host(oh32.e_subsys_minor);
+        p_e_reserved9          = ByteOrder::le_to_host(oh32.e_reserved9);
+        p_e_image_size         = ByteOrder::le_to_host(oh32.e_image_size);
+        p_e_header_size        = ByteOrder::le_to_host(oh32.e_header_size);
+        p_e_file_checksum      = ByteOrder::le_to_host(oh32.e_file_checksum);
+        p_e_subsystem          = ByteOrder::le_to_host(oh32.e_subsystem);
+        p_e_dll_flags          = ByteOrder::le_to_host(oh32.e_dll_flags);
+        p_e_stack_reserve_size = ByteOrder::le_to_host(oh32.e_stack_reserve_size);
+        p_e_stack_commit_size  = ByteOrder::le_to_host(oh32.e_stack_commit_size);
+        p_e_heap_reserve_size  = ByteOrder::le_to_host(oh32.e_heap_reserve_size);
+        p_e_heap_commit_size   = ByteOrder::le_to_host(oh32.e_heap_commit_size);
+        p_e_loader_flags       = ByteOrder::le_to_host(oh32.e_loader_flags);
+        p_e_num_rvasize_pairs  = ByteOrder::le_to_host(oh32.e_num_rvasize_pairs);
     } else if (8==p_exec_format->get_word_size()) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
@@ -201,35 +201,35 @@ SgAsmPEFileHeader::parse()
         if (sizeof(oh64)!=read_content_local(sizeof fh, &oh64, sizeof oh64))
             fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
                     get_offset() + sizeof(fh));
-        p_e_lmajor             = le_to_host(oh64.e_lmajor);
-        p_e_lminor             = le_to_host(oh64.e_lminor);
-        p_e_code_size          = le_to_host(oh64.e_code_size);
-        p_e_data_size          = le_to_host(oh64.e_data_size);
-        p_e_bss_size           = le_to_host(oh64.e_bss_size);
-        entry_rva              = le_to_host(oh64.e_entrypoint_rva);
-        p_e_code_rva           = le_to_host(oh64.e_code_rva);
-     // p_e_data_rva           = le_to_host(oh.e_data_rva);             /* not in PE32+ */
-        p_base_va              = le_to_host(oh64.e_image_base);
-        p_e_section_align      = le_to_host(oh64.e_section_align);
-        p_e_file_align         = le_to_host(oh64.e_file_align);
-        p_e_os_major           = le_to_host(oh64.e_os_major);
-        p_e_os_minor           = le_to_host(oh64.e_os_minor);
-        p_e_user_major         = le_to_host(oh64.e_user_major);
-        p_e_user_minor         = le_to_host(oh64.e_user_minor);
-        p_e_subsys_major       = le_to_host(oh64.e_subsys_major);
-        p_e_subsys_minor       = le_to_host(oh64.e_subsys_minor);
-        p_e_reserved9          = le_to_host(oh64.e_reserved9);
-        p_e_image_size         = le_to_host(oh64.e_image_size);
-        p_e_header_size        = le_to_host(oh64.e_header_size);
-        p_e_file_checksum      = le_to_host(oh64.e_file_checksum);
-        p_e_subsystem          = le_to_host(oh64.e_subsystem);
-        p_e_dll_flags          = le_to_host(oh64.e_dll_flags);
-        p_e_stack_reserve_size = le_to_host(oh64.e_stack_reserve_size);
-        p_e_stack_commit_size  = le_to_host(oh64.e_stack_commit_size);
-        p_e_heap_reserve_size  = le_to_host(oh64.e_heap_reserve_size);
-        p_e_heap_commit_size   = le_to_host(oh64.e_heap_commit_size);
-        p_e_loader_flags       = le_to_host(oh64.e_loader_flags);
-        p_e_num_rvasize_pairs  = le_to_host(oh64.e_num_rvasize_pairs);
+        p_e_lmajor             = ByteOrder::le_to_host(oh64.e_lmajor);
+        p_e_lminor             = ByteOrder::le_to_host(oh64.e_lminor);
+        p_e_code_size          = ByteOrder::le_to_host(oh64.e_code_size);
+        p_e_data_size          = ByteOrder::le_to_host(oh64.e_data_size);
+        p_e_bss_size           = ByteOrder::le_to_host(oh64.e_bss_size);
+        entry_rva              = ByteOrder::le_to_host(oh64.e_entrypoint_rva);
+        p_e_code_rva           = ByteOrder::le_to_host(oh64.e_code_rva);
+     // p_e_data_rva           = ByteOrder::le_to_host(oh.e_data_rva);             /* not in PE32+ */
+        p_base_va              = ByteOrder::le_to_host(oh64.e_image_base);
+        p_e_section_align      = ByteOrder::le_to_host(oh64.e_section_align);
+        p_e_file_align         = ByteOrder::le_to_host(oh64.e_file_align);
+        p_e_os_major           = ByteOrder::le_to_host(oh64.e_os_major);
+        p_e_os_minor           = ByteOrder::le_to_host(oh64.e_os_minor);
+        p_e_user_major         = ByteOrder::le_to_host(oh64.e_user_major);
+        p_e_user_minor         = ByteOrder::le_to_host(oh64.e_user_minor);
+        p_e_subsys_major       = ByteOrder::le_to_host(oh64.e_subsys_major);
+        p_e_subsys_minor       = ByteOrder::le_to_host(oh64.e_subsys_minor);
+        p_e_reserved9          = ByteOrder::le_to_host(oh64.e_reserved9);
+        p_e_image_size         = ByteOrder::le_to_host(oh64.e_image_size);
+        p_e_header_size        = ByteOrder::le_to_host(oh64.e_header_size);
+        p_e_file_checksum      = ByteOrder::le_to_host(oh64.e_file_checksum);
+        p_e_subsystem          = ByteOrder::le_to_host(oh64.e_subsystem);
+        p_e_dll_flags          = ByteOrder::le_to_host(oh64.e_dll_flags);
+        p_e_stack_reserve_size = ByteOrder::le_to_host(oh64.e_stack_reserve_size);
+        p_e_stack_commit_size  = ByteOrder::le_to_host(oh64.e_stack_commit_size);
+        p_e_heap_reserve_size  = ByteOrder::le_to_host(oh64.e_heap_reserve_size);
+        p_e_heap_commit_size   = ByteOrder::le_to_host(oh64.e_heap_commit_size);
+        p_e_loader_flags       = ByteOrder::le_to_host(oh64.e_loader_flags);
+        p_e_num_rvasize_pairs  = ByteOrder::le_to_host(oh64.e_num_rvasize_pairs);
     } else {
         throw FormatError("unrecognized Windows PE optional header magic number");
     }
@@ -367,85 +367,85 @@ SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    host_to_le(p_e_cpu_type,           &(disk->e_cpu_type));
-    host_to_le(p_e_nsections,          &(disk->e_nsections));
-    host_to_le(p_e_time,               &(disk->e_time));
-    host_to_le(p_e_coff_symtab,        &(disk->e_coff_symtab));
-    host_to_le(p_e_coff_nsyms,         &(disk->e_coff_nsyms));
-    host_to_le(p_e_nt_hdr_size,        &(disk->e_nt_hdr_size));
-    host_to_le(p_e_flags,              &(disk->e_flags));
+    ByteOrder::host_to_le(p_e_cpu_type,           &(disk->e_cpu_type));
+    ByteOrder::host_to_le(p_e_nsections,          &(disk->e_nsections));
+    ByteOrder::host_to_le(p_e_time,               &(disk->e_time));
+    ByteOrder::host_to_le(p_e_coff_symtab,        &(disk->e_coff_symtab));
+    ByteOrder::host_to_le(p_e_coff_nsyms,         &(disk->e_coff_nsyms));
+    ByteOrder::host_to_le(p_e_nt_hdr_size,        &(disk->e_nt_hdr_size));
+    ByteOrder::host_to_le(p_e_flags,              &(disk->e_flags));
 
     return disk;
 }
 void *
 SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk) const
 {
-    host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
-    host_to_le(p_e_lmajor,             &(disk->e_lmajor));
-    host_to_le(p_e_lminor,             &(disk->e_lminor));
-    host_to_le(p_e_code_size,          &(disk->e_code_size));
-    host_to_le(p_e_data_size,          &(disk->e_data_size));
-    host_to_le(p_e_bss_size,           &(disk->e_bss_size));
-    host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
-    host_to_le(p_e_code_rva,           &(disk->e_code_rva));
-    host_to_le(p_e_data_rva,           &(disk->e_data_rva));
-    host_to_le(get_base_va(),          &(disk->e_image_base));
-    host_to_le(p_e_section_align,      &(disk->e_section_align));
-    host_to_le(p_e_file_align,         &(disk->e_file_align));
-    host_to_le(p_e_os_major,           &(disk->e_os_major));
-    host_to_le(p_e_os_minor,           &(disk->e_os_minor));
-    host_to_le(p_e_user_major,         &(disk->e_user_major));
-    host_to_le(p_e_user_minor,         &(disk->e_user_minor));
-    host_to_le(p_e_subsys_major,       &(disk->e_subsys_major));
-    host_to_le(p_e_subsys_minor,       &(disk->e_subsys_minor));
-    host_to_le(p_e_reserved9,          &(disk->e_reserved9));
-    host_to_le(p_e_image_size,         &(disk->e_image_size));
-    host_to_le(p_e_header_size,        &(disk->e_header_size));
-    host_to_le(p_e_file_checksum,      &(disk->e_file_checksum));
-    host_to_le(p_e_subsystem,          &(disk->e_subsystem));
-    host_to_le(p_e_dll_flags,          &(disk->e_dll_flags));
-    host_to_le(p_e_stack_reserve_size, &(disk->e_stack_reserve_size));
-    host_to_le(p_e_stack_commit_size,  &(disk->e_stack_commit_size));
-    host_to_le(p_e_heap_reserve_size,  &(disk->e_heap_reserve_size));
-    host_to_le(p_e_heap_commit_size,   &(disk->e_heap_commit_size));
-    host_to_le(p_e_loader_flags,       &(disk->e_loader_flags));
-    host_to_le(p_e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
+    ByteOrder::host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
+    ByteOrder::host_to_le(p_e_lmajor,             &(disk->e_lmajor));
+    ByteOrder::host_to_le(p_e_lminor,             &(disk->e_lminor));
+    ByteOrder::host_to_le(p_e_code_size,          &(disk->e_code_size));
+    ByteOrder::host_to_le(p_e_data_size,          &(disk->e_data_size));
+    ByteOrder::host_to_le(p_e_bss_size,           &(disk->e_bss_size));
+    ByteOrder::host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
+    ByteOrder::host_to_le(p_e_code_rva,           &(disk->e_code_rva));
+    ByteOrder::host_to_le(p_e_data_rva,           &(disk->e_data_rva));
+    ByteOrder::host_to_le(get_base_va(),          &(disk->e_image_base));
+    ByteOrder::host_to_le(p_e_section_align,      &(disk->e_section_align));
+    ByteOrder::host_to_le(p_e_file_align,         &(disk->e_file_align));
+    ByteOrder::host_to_le(p_e_os_major,           &(disk->e_os_major));
+    ByteOrder::host_to_le(p_e_os_minor,           &(disk->e_os_minor));
+    ByteOrder::host_to_le(p_e_user_major,         &(disk->e_user_major));
+    ByteOrder::host_to_le(p_e_user_minor,         &(disk->e_user_minor));
+    ByteOrder::host_to_le(p_e_subsys_major,       &(disk->e_subsys_major));
+    ByteOrder::host_to_le(p_e_subsys_minor,       &(disk->e_subsys_minor));
+    ByteOrder::host_to_le(p_e_reserved9,          &(disk->e_reserved9));
+    ByteOrder::host_to_le(p_e_image_size,         &(disk->e_image_size));
+    ByteOrder::host_to_le(p_e_header_size,        &(disk->e_header_size));
+    ByteOrder::host_to_le(p_e_file_checksum,      &(disk->e_file_checksum));
+    ByteOrder::host_to_le(p_e_subsystem,          &(disk->e_subsystem));
+    ByteOrder::host_to_le(p_e_dll_flags,          &(disk->e_dll_flags));
+    ByteOrder::host_to_le(p_e_stack_reserve_size, &(disk->e_stack_reserve_size));
+    ByteOrder::host_to_le(p_e_stack_commit_size,  &(disk->e_stack_commit_size));
+    ByteOrder::host_to_le(p_e_heap_reserve_size,  &(disk->e_heap_reserve_size));
+    ByteOrder::host_to_le(p_e_heap_commit_size,   &(disk->e_heap_commit_size));
+    ByteOrder::host_to_le(p_e_loader_flags,       &(disk->e_loader_flags));
+    ByteOrder::host_to_le(p_e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
 
     return disk;
 }
 void *
 SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
 {
-    host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
-    host_to_le(p_e_lmajor,             &(disk->e_lmajor));
-    host_to_le(p_e_lminor,             &(disk->e_lminor));
-    host_to_le(p_e_code_size,          &(disk->e_code_size));
-    host_to_le(p_e_data_size,          &(disk->e_data_size));
-    host_to_le(p_e_bss_size,           &(disk->e_bss_size));
-    host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
-    host_to_le(p_e_code_rva,           &(disk->e_code_rva));
- // host_to_le(p_e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
-    host_to_le(get_base_va(),          &(disk->e_image_base));
-    host_to_le(p_e_section_align,      &(disk->e_section_align));
-    host_to_le(p_e_file_align,         &(disk->e_file_align));
-    host_to_le(p_e_os_major,           &(disk->e_os_major));
-    host_to_le(p_e_os_minor,           &(disk->e_os_minor));
-    host_to_le(p_e_user_major,         &(disk->e_user_major));
-    host_to_le(p_e_user_minor,         &(disk->e_user_minor));
-    host_to_le(p_e_subsys_major,       &(disk->e_subsys_major));
-    host_to_le(p_e_subsys_minor,       &(disk->e_subsys_minor));
-    host_to_le(p_e_reserved9,          &(disk->e_reserved9));
-    host_to_le(p_e_image_size,         &(disk->e_image_size));
-    host_to_le(p_e_header_size,        &(disk->e_header_size));
-    host_to_le(p_e_file_checksum,      &(disk->e_file_checksum));
-    host_to_le(p_e_subsystem,          &(disk->e_subsystem));
-    host_to_le(p_e_dll_flags,          &(disk->e_dll_flags));
-    host_to_le(p_e_stack_reserve_size, &(disk->e_stack_reserve_size));
-    host_to_le(p_e_stack_commit_size,  &(disk->e_stack_commit_size));
-    host_to_le(p_e_heap_reserve_size,  &(disk->e_heap_reserve_size));
-    host_to_le(p_e_heap_commit_size,   &(disk->e_heap_commit_size));
-    host_to_le(p_e_loader_flags,       &(disk->e_loader_flags));
-    host_to_le(p_e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
+    ByteOrder::host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
+    ByteOrder::host_to_le(p_e_lmajor,             &(disk->e_lmajor));
+    ByteOrder::host_to_le(p_e_lminor,             &(disk->e_lminor));
+    ByteOrder::host_to_le(p_e_code_size,          &(disk->e_code_size));
+    ByteOrder::host_to_le(p_e_data_size,          &(disk->e_data_size));
+    ByteOrder::host_to_le(p_e_bss_size,           &(disk->e_bss_size));
+    ByteOrder::host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
+    ByteOrder::host_to_le(p_e_code_rva,           &(disk->e_code_rva));
+ // ByteOrder::host_to_le(p_e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
+    ByteOrder::host_to_le(get_base_va(),          &(disk->e_image_base));
+    ByteOrder::host_to_le(p_e_section_align,      &(disk->e_section_align));
+    ByteOrder::host_to_le(p_e_file_align,         &(disk->e_file_align));
+    ByteOrder::host_to_le(p_e_os_major,           &(disk->e_os_major));
+    ByteOrder::host_to_le(p_e_os_minor,           &(disk->e_os_minor));
+    ByteOrder::host_to_le(p_e_user_major,         &(disk->e_user_major));
+    ByteOrder::host_to_le(p_e_user_minor,         &(disk->e_user_minor));
+    ByteOrder::host_to_le(p_e_subsys_major,       &(disk->e_subsys_major));
+    ByteOrder::host_to_le(p_e_subsys_minor,       &(disk->e_subsys_minor));
+    ByteOrder::host_to_le(p_e_reserved9,          &(disk->e_reserved9));
+    ByteOrder::host_to_le(p_e_image_size,         &(disk->e_image_size));
+    ByteOrder::host_to_le(p_e_header_size,        &(disk->e_header_size));
+    ByteOrder::host_to_le(p_e_file_checksum,      &(disk->e_file_checksum));
+    ByteOrder::host_to_le(p_e_subsystem,          &(disk->e_subsystem));
+    ByteOrder::host_to_le(p_e_dll_flags,          &(disk->e_dll_flags));
+    ByteOrder::host_to_le(p_e_stack_reserve_size, &(disk->e_stack_reserve_size));
+    ByteOrder::host_to_le(p_e_stack_commit_size,  &(disk->e_stack_commit_size));
+    ByteOrder::host_to_le(p_e_heap_reserve_size,  &(disk->e_heap_reserve_size));
+    ByteOrder::host_to_le(p_e_heap_commit_size,   &(disk->e_heap_commit_size));
+    ByteOrder::host_to_le(p_e_loader_flags,       &(disk->e_loader_flags));
+    ByteOrder::host_to_le(p_e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
 
     return disk;
 }

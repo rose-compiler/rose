@@ -56,7 +56,5 @@ execute_process(
 
 ########### install files ###############
 
-install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h DESTINATION ${INCLUDE_INSTALL_DIR})
-#set( graphs DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C )
-
-#add_library(rose_util_lib STATIC ${rose_util_src}    )
+install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h Stopwatch.h ParallelSort.h 
+        DESTINATION ${INCLUDE_INSTALL_DIR})

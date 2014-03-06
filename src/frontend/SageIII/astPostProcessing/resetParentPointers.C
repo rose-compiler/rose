@@ -680,6 +680,14 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // ROSE_ASSERT(false);
                     break;
                   }
+
+            // DQ (2/10/2014): Added this case to avoid compiler warning (I think there is nothing to do here).
+               case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+                 // printf ("Error: resetParentPointersInTemplateArgumentList() SgTemplateArgument::start_of_pack_expansion_argument case not implemented \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
              }
 
        // Increment to next template argument
@@ -1024,8 +1032,18 @@ ResetParentPointers::evaluateInheritedAttribute (
                     ROSE_ASSERT(variableRefExpression != NULL);
 
                     SgVariableSymbol *variableSymbol = variableRefExpression->get_symbol();
+
+                    if (variableSymbol == NULL)
+                       {
+                         printf ("WARNING: variableSymbol == NULL: variableRefExpression = %p \n",variableRefExpression);
+                       }
                     ROSE_ASSERT(variableSymbol != NULL);
 
+                 // DQ (1/1/2014): I think we may have to allow this for cases such as that in test2014_01.c
+                 // But I would prefer to have a sysmbol always built so that ROSE had a consistant representation.
+                 // Initially we want to allow this so that we can get the graph of the AST so that I can understand the problem better.
+                    if (variableSymbol != NULL)
+                       {
                  // This is bit confusing since what is returned is the SgInitializedName and NOT a declaration!
                     SgInitializedName *initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
@@ -1044,6 +1062,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                          initializedName->set_parent(variableRefExpression);
                        }
                     ROSE_ASSERT(initializedName->get_parent() != NULL);
+                       }
+
                     break;
                   }
 
@@ -1358,8 +1378,19 @@ ResetParentPointers::evaluateInheritedAttribute (
                        }
                       else
                        {
+                      // DQ (2/9/2014): This was an error, but it only shows up in the use of the GNU 4.6 header files 
+                      // (and it is not clear that it should be an error).  So output a message as we debug this issue.
+                         if (declaration->get_parent() != directive)
+                            {
+                              printf ("Error: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+                              printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
+                              printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+                              declaration->get_file_info()->display("location of problem code: declaration: debug");
+                              directive->get_file_info()->display("location of problem code: directive: debug");
+                            }
+
                       // DQ (3/15/2006): Why is it an error to have this be a valid pointer?  The parent should be the directive, I think.
-                         ROSE_ASSERT(declaration->get_parent() == directive);
+                      // ROSE_ASSERT(declaration->get_parent() == directive);
 #if 0
                          printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
                          printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());

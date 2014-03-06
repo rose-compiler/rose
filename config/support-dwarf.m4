@@ -35,6 +35,11 @@ else
 
    echo "DWARF_INCLUDE = $DWARF_INCLUDE"
    echo "DWARF_LINK    = $DWARF_LINK"
+
+   dnl These are the cpp  symbols that autoconf usually defines for headers and libraries. We don't actually check
+   dnl for their existence above, but rather assume that if the user said "--with-dwarf" that they exist.
+   AC_DEFINE(HAVE_DWARF_H, 1, [Define to 1 if you have the <dwarf.h> header file.])
+   AC_DEFINE(HAVE_LIBDWARF, 1, [Define to 1 if you have the `dwarf' library (-ldwarf).])
 fi
 
 AC_SUBST(dwarf_path)

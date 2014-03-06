@@ -4,6 +4,7 @@
  */
 #include "sage3basic.h"
 #include "unparser.h"
+#include "Utf8.h"
 #include <limits>
 
 using namespace std;
@@ -76,6 +77,7 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
         case THIS_NODE:               { unparseThisNode(expr, info); break; }
         case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
+        case CLASS_NODE:              { unparseClassNode(expr, info); break; }
 
         case TYPE_REF:                { unparseTypeRef(expr, info); break; }
         case EXPR_INIT:               { unparseExprInit(expr, info); break; }
@@ -86,6 +88,13 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
         case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
         case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
+
+        case V_SgJavaMarkerAnnotation:       { unparseJavaMarkerAnnotation(expr, info); break; }
+        case V_SgJavaSingleMemberAnnotation: { unparseJavaSingleMemberAnnotation(expr, info); break; }
+        case V_SgJavaNormalAnnotation:       { unparseJavaNormalAnnotation(expr, info); break; }
+
+        case V_SgJavaTypeExpression:         { unparseJavaTypeExpression(expr, info); break; }
+
 
         default: {
 
@@ -160,15 +169,6 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         for (int i = 0; i < open_parentheses.size(); i++) {
             curprint (")");
         }
-    }
-
-    //
-    // An Expression may contain a name suffix stored in the "suffix" attribute.
-    //
-    if (expr -> attributeExists("suffix")) {
-        curprint(".");
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
-        curprint(attribute -> expression);
     }
 }
 
@@ -356,16 +356,18 @@ Unparse_Java::unparseBoolVal(SgExpression* expr, SgUnparse_Info& info) {
 void
 Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
-     SgStringVal* str_val = isSgStringVal(expr);
+     SgStringVal *str_val = isSgStringVal(expr);
      ROSE_ASSERT(str_val != NULL);
 
   // Handle special case of macro specification (this is a temporary hack to permit us to
   // specify macros within transformations)
 
-     int wrap = unp->u_sage->cur_get_linewrap();
-     unp->u_sage->cur_get_linewrap();
+     int wrap = unp -> u_sage -> cur_get_linewrap();
+     unp -> u_sage->cur_get_linewrap();
 
 #ifndef CXX_IS_ROSE_CODE_GENERATION
+     // TODO: Remove this
+     /*
   // DQ (3/25/2006): Finally we can use the C++ string class
      string targetString = "ROSE-MACRO-CALL:";
      int targetStringLength = targetString.size();
@@ -394,9 +396,14 @@ Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
                curprint ( "L");
           curprint ( "\"" + stringValue + "\"");
         }
+     */
+
+     string tempString = str_val -> get_value();
+     string stringValue = Utf8::getPrintableJavaUnicodeString(tempString.c_str());
+     curprint ( "\"" + stringValue + "\"");
 #endif
 
-     unp->u_sage->cur_set_linewrap(wrap);
+     unp -> u_sage->cur_set_linewrap(wrap);
    }
 
 
@@ -704,6 +711,29 @@ void Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
     ROSE_ASSERT(func_call != NULL);
 
+// TODO: Remove this !!!
+/*
+    if (func_call -> attributeExists("invocation_parameter_types")) {
+        curprint("<");
+        AstSgNodeListAttribute *parameter_types_attribute = (AstSgNodeListAttribute *) func_call -> getAttribute("invocation_parameter_types");
+        for (int i = 0; i < parameter_types_attribute -> size(); i++) {
+            SgType *type = isSgType(parameter_types_attribute -> getNode(i));
+            ROSE_ASSERT(type);
+            unparseType(type, info);
+            if (i + 1 < parameter_types_attribute -> size()) {
+                curprint(", ");
+            }
+        }
+        curprint("> ");
+    }
+*/
+
+    if (func_call -> attributeExists("function_parameter_types")) {
+        AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("function_parameter_types");
+        curprint(attribute -> expression);
+        curprint(" ");
+    }
+
     if (func_call -> attributeExists("<init>")) {
         AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
         curprint(constructor_attribute -> expression);
@@ -799,8 +829,11 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     ROSE_ASSERT(cast != NULL);
 
     curprint("(");
-    unparseType(cast->get_type(), info);
+    AstRegExAttribute *attribute = (AstRegExAttribute *) cast -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
     curprint(") ");
+
     curprint("(");
     unparseExpression(cast->get_operand(), info);
     curprint(") ");
@@ -894,19 +927,23 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
      */
-     if (isSgPointerType(new_op->get_specified_type())) {
-         SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
-         while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
-             pointer_type = isSgPointerType(pointer_type -> get_base_type());
+     if (isSgArrayType(new_op -> get_specified_type())) {
+         SgArrayType *array_type = isSgArrayType(new_op -> get_specified_type());
+         while(isSgArrayType(array_type -> get_base_type())) { // find the base type...
+             array_type = isSgArrayType(array_type -> get_base_type());
          }
 
-         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
-             SgClassType *class_type = isSgClassType(pointer_type -> get_base_type());
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op -> get_specified_type())) {
+             SgClassType *class_type = isSgClassType(array_type -> get_base_type());
              ROSE_ASSERT(class_type);
              curprint(class_type -> get_name().getString());
          }
          else {
-             unparseType(pointer_type -> get_base_type(), info);
+// TODO: Remove this!
+//             unparseType(pointer_type -> get_base_type(), info);
+             ROSE_ASSERT(new_op -> attributeExists("type"));
+             AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
+             curprint(attribute -> expression);
          }
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
@@ -938,7 +975,12 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
              curprint(class_type -> get_name().getString());
          }
          else {
-             unparseType(new_op->get_specified_type(), info);
+// TODO: Remove this!
+//             unparseType(new_op->get_specified_type(), info);
+
+             ROSE_ASSERT(new_op -> attributeExists("type"));
+             AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
+             curprint(attribute -> expression);
          }
 
          curprint ("(");
@@ -954,7 +996,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          curprint (")");
 
          //
-         // If this is an allocation expression for an anonymous class, output the body of the class.
+         // Check if this is an allocation expression for an anonymous class. In such a case, output the body of the class.
          //
          if (new_op -> attributeExists("body")) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
@@ -1047,7 +1089,7 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
 
      if (unp->opt.get_this_opt()) // Checks options to determine whether to print "this"  
         {
-          curprint (this_node -> attributeExists("class") ? "class" : "this"); 
+          curprint ("this"); 
         }
    }
 
@@ -1057,6 +1099,14 @@ Unparse_Java::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
 
     ROSE_ASSERT(super_node != NULL);
     curprint ("super"); 
+}
+
+void
+Unparse_Java::unparseClassNode(SgExpression* expr, SgUnparse_Info& info) {
+    SgClassExp* class_node = isSgClassExp(expr);
+
+    ROSE_ASSERT(class_node != NULL);
+    curprint ("class"); 
 }
 
 void
@@ -1220,13 +1270,9 @@ Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
     unparseExpression(inst_op->get_operand_expr(), info);
     curprint(" instanceof ");
 
-    //TODO p_operand_type should be defined. Until it always is, complain.
-    if (inst_op->get_operand_type() != NULL) {
-        unparseType(inst_op->get_operand_type(), info);
-    } else {
-        cout << "unparser: error. SgJavaInstanceOfOp::p_operand_type is NULL" << endl;
-        curprint("NULL_TYPE_IN_AST");
-    }
+    ROSE_ASSERT(inst_op -> attributeExists("type"));
+    AstRegExAttribute *attribute = (AstRegExAttribute *) inst_op -> getAttribute("type");
+    curprint(attribute -> expression);
 }
 
 void
@@ -1426,3 +1472,68 @@ void Unparse_Java::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
     unparseExpression(rhs, info);
 }
 
+
+void 
+Unparse_Java::unparseJavaMarkerAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaMarkerAnnotation *marker_annotation = isSgJavaMarkerAnnotation(expr);
+    // SgClassType *type = isSgClassType(marker_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) marker_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+}
+
+void
+Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaSingleMemberAnnotation *single_member_annotation = isSgJavaSingleMemberAnnotation(expr);
+    // SgClassType *type = isSgClassType(single_member_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) single_member_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+
+    curprint("(");
+    unparseExpression(single_member_annotation -> get_value(), info);
+    curprint(")");
+}
+
+void
+Unparse_Java::unparseJavaNormalAnnotation(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaNormalAnnotation *normal_annotation = isSgJavaNormalAnnotation(expr);
+    // SgClassType *type = isSgClassType(normal_annotation -> get_type());
+    // ROSE_ASSERT(type);
+    // curprint("@");
+    // curprint(type -> get_name().getString());
+    curprint("@");
+    AstRegExAttribute *attribute = (AstRegExAttribute *) normal_annotation -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+
+    SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
+    curprint("(");
+    for (int k = 0; k < pair_list.size(); k++) {
+        SgJavaMemberValuePair *pair = pair_list[k];
+        if (k > 0) {
+            curprint(", ");
+        }
+        curprint(pair -> get_name().getString());
+        curprint(" = ");
+        unparseExpression(pair -> get_value(), info);
+    }
+    curprint(")");
+}
+
+
+void
+Unparse_Java::unparseJavaTypeExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
+    AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
+    ROSE_ASSERT(attribute);
+    curprint(attribute -> expression);
+}

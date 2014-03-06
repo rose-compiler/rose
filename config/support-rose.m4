@@ -184,18 +184,17 @@ AC_SUBST(GCC_MINOR_VERSION)
 # *******************************************************
 # ROSE/projects directory compilation & testing
 # *******************************************************
-AC_MSG_CHECKING([if we should build & test the ROSE/projects directory])
-AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Disable compilation and testing of the ROSE/projects directory]),[],[enableval=yes])
-support_projects_directory=yes
-if test "x$enableval" = "xyes"; then
-   support_projects_directory=yes
-   AC_MSG_RESULT(enabled)
+ROSE_ARG_ENABLE(
+  [projects-directory],
+  [if we should enable the ROSE/projects directory],
+  [Toggle compilation and testing of the the ROSE/projects directory (disabled by default)],
+  [no])
+
+if test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
-else
-   support_projects_directory=no
-   AC_MSG_RESULT(disabled)
 fi
-AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
+
 # ****************************************************
 # ROSE/tests directory compilation & testing 
 # ****************************************************
@@ -290,8 +289,8 @@ AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental frotran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental frotran frontend])
+  AC_MSG_WARN([Using this mode enable experimental fortran front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
 # DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
@@ -1595,6 +1594,10 @@ AC_CHECK_TYPE(user_desc,
               [],
 	      [#include <asm/ldt.h>])
 
+# Check whether PostgreSQL is supported
+AC_CHECK_HEADERS([pqxx/version.hxx])
+AC_CHECK_LIB(pqxx, PQconnectdb)
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -1798,16 +1801,20 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
+projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryCloneDetection/semantic/Makefile
+projects/BinaryCloneDetection/syntactic/Makefile
+projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
@@ -1932,9 +1939,6 @@ projects/dataStructureGraphing/Makefile
 projects/extractMPISkeleton/Makefile
 projects/extractMPISkeleton/src/Makefile
 projects/extractMPISkeleton/tests/Makefile
-projects/haskellport/Makefile
-projects/haskellport/Setup.hs
-projects/haskellport/rose.cabal.in
 projects/highLevelGrammars/Makefile
 projects/interpreter/Makefile
 projects/javaport/Makefile
@@ -2038,12 +2042,12 @@ tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/Fortran_tests/experimental_frontend_tests/Makefile
-tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/FailSafe_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
 tests/CompileTests/OpenMP_tests/cvalidation/Makefile
@@ -2065,6 +2069,7 @@ tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
+tests/CompileTests/systemc_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2165,6 +2170,12 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/haskellport/Makefile
+#projects/haskellport/Setup.hs
+#projects/haskellport/rose.cabal.in
+#tests/CompileTests/CAF2_tests/Makefile
 
 dnl
 dnl Compass2

@@ -4,6 +4,13 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+#include "rosePublicConfig.h"
+#ifdef ROSE_HAVE_GCRYPT_H
+#include <gcrypt.h>
+#endif
+
+using namespace rose;
+
 /** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
  *  version of reason_str(). */
 std::string
@@ -11,9 +18,9 @@ SgAsmFunction::reason_key(const std::string &prefix)
 {
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
-            prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
-            prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks" +
+            prefix + "O = exported              S = function symbol      P = instruction pattern\n" +
+            prefix + "G = CFG graph analysis    U = user-def detection   N = NOP/zero padding\n" +
+            prefix + "D = discontiguous blocks  V = intra-function block L = leftover blocks\n" +
             prefix + "Mxxx are miscellaneous reasons (at most one misc reason per function):\n" +
             prefix + "      M001 = code between function padding bytes\n" +
             prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
@@ -63,6 +70,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, (r & FUNC_THUNK),     do_pad, "T", "thunk");
     }
     add_to_reason_string(result, (r & FUNC_IMPORT),        do_pad, "I", "import");
+    add_to_reason_string(result, (r & FUNC_EXPORT),        do_pad, "E", "export");
     add_to_reason_string(result, (r & FUNC_SYMBOL),        do_pad, "S", "symbol");
     add_to_reason_string(result, (r & FUNC_PATTERN),       do_pad, "P", "pattern");
     add_to_reason_string(result, (r & FUNC_GRAPH),         do_pad, "G", "graph");
@@ -104,7 +112,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
  *  the extent map is not modified and the low and high addresses are both set to zero.
  *
- *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
+ *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the function.  This
  *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
  *
  *  @code
@@ -186,8 +194,52 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
     return t1.nnodes;
 }
 
-/** Function entry basic block.  Returns the basic block that represents the function entry point. Every function must have
- *  one. */
+bool
+SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
+{
+#ifdef ROSE_HAVE_GCRYPT_H
+    struct T1: public AstSimpleProcessing {
+        NodeSelector *selector;
+        gcry_md_hd_t md; // message digest
+        T1(NodeSelector *selector): selector(selector) {
+            gcry_error_t error = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+            assert(GPG_ERR_NO_ERROR==error);
+        }
+        ~T1() {
+            gcry_md_close(md);
+        }
+        void visit(SgNode *node) {
+            if (selector && !(*selector)(node))
+                return;
+            SgAsmInstruction *insn = isSgAsmInstruction(node);
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            if (insn) {
+                SgUnsignedCharList buf = insn->get_raw_bytes();
+                gcry_md_write(md, &buf[0], buf.size());
+            } else if (data) {
+                SgUnsignedCharList buf = data->get_raw_bytes();
+                gcry_md_write(md, &buf[0], buf.size());
+            }
+        }
+        void read(uint8_t digest[20]) {
+            assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
+            gcry_md_final(md);
+            unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
+            assert(d!=NULL);
+            memcpy(digest, d, 20);
+        }
+    } t1(selector);
+    t1.traverse(this, preorder);
+    t1.read(digest);
+    return true;
+#else
+    memset(digest, 0, 20);
+    return false;
+#endif
+}
+
+/** Function entry basic block.  Returns the basic block that represents the function entry point. Returns null for a function
+ *  that contains no instructions (e.g., has only static data blocks). */
 SgAsmBlock *
 SgAsmFunction::get_entry_block() const {
     for (SgAsmStatementPtrList::const_iterator si=p_statementList.begin(); si!=p_statementList.end(); ++si) {
@@ -195,6 +247,5 @@ SgAsmFunction::get_entry_block() const {
         if (bb && bb->get_address()==p_entry_va)
             return bb;
     }
-    assert(!"no entry basic block");
-    abort();
+    return NULL;
 }

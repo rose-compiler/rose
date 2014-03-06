@@ -1737,8 +1737,13 @@ if (!sgClassType) { \
                 if (SageInterface::isStatic(sgVariableDeclaration))
                     continue;
                 
-                if (isScalarType(sgVariableDeclaration->get_definition()->get_type())){
-                    if (sgVariableDeclaration->get_definition()->get_bitfield() == NULL || sgVariableDeclaration->get_definition()->get_bitfield()->get_value() != 0) {
+                if (isScalarType(sgVariableDeclaration->get_definition()->get_type()))
+                {
+                 // DQ (1/20/2014): The bitfield is not stored as a SgValueExp.  As a result we can't get the value as directly.
+                 // I think that this correction to the code below is what is required.
+                 // if (sgVariableDeclaration->get_definition()->get_bitfield() == NULL || sgVariableDeclaration->get_definition()->get_bitfield()->get_value() != 0)
+                   if (sgVariableDeclaration->get_definition()->get_bitfield() != NULL)
+                    {
                         return false;
                     }
                 } else {
@@ -2096,7 +2101,7 @@ if (!sgClassType) { \
     SgType *  UnderlyingType(SgType *type){
         ROSE_ASSERT(IsEnum(type));
         ROSE_ASSERT( 0  && "Cxx11 feature NYI");
-        
+        return NULL;
     }
 
 #endif //CPP_TYPE_TRAITS

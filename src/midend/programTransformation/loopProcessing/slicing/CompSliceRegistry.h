@@ -67,7 +67,7 @@ class CompSliceRegistry
       if (node == 0) {
         node = new SliceNode(this, SelfInfo(anal, slice));
         nodeMap.InsertMapping(const_cast<CompSlice*>(slice),node);
-        AddNode(node);
+        this->AddNode(node);
         const_cast<CompSlice*>(slice)->AttachObserver(*this); 
       }
       return node;
@@ -79,7 +79,7 @@ class CompSliceRegistry
      SliceEdge *edge = 0;
      if (cross.ReachEnd()) {
        edge = new SliceEdge(this, RelInfo(anal, slice1,slice2));
-       AddEdge(node1,node2,edge);
+       this->AddEdge(node1,node2,edge);
      }
      else
        edge = cross.Current();
@@ -87,8 +87,8 @@ class CompSliceRegistry
     }
    void MoveEdgeEndPoint( SliceEdge *e, GraphAccess::EdgeDirection dir, SliceNode *n)
     { 
-      SliceNode *n1 = GetEdgeEndPoint(e,  GraphAccess::EdgeOut), 
-                *n2 = GetEdgeEndPoint(e, GraphAccess::EdgeIn);
+      SliceNode *n1 = this->GetEdgeEndPoint(e,  GraphAccess::EdgeOut), 
+                *n2 = this->GetEdgeEndPoint(e, GraphAccess::EdgeIn);
       SliceEdge *edge = (dir == GraphAccess::EdgeOut)? 
              GraphCrossEdgeIterator<CompSliceRegistry>(this,n, n2).Current() : 
              GraphCrossEdgeIterator<CompSliceRegistry>(this,n1,n).Current();

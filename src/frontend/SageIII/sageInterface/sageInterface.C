@@ -1107,6 +1107,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageDeclaration:
+             {
+               name = "_java_package_declaration_";
+               const SgJavaPackageDeclaration* package_declaration = isSgJavaPackageDeclaration(declaration);
+               ROSE_ASSERT(package_declaration != NULL);
+               ROSE_ASSERT(package_declaration->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageDeclaration*>(package_declaration));
+               break;
+             }
+
            case V_SgJavaPackageStatement:
              {
                name = "_java_package_stmt_";
@@ -8040,6 +8050,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
 // Liao, 6/15/2009
 //! A helper function to calculate n!
+//! See also, Combinatorics::factorial(), which also checks for overflow.
 static size_t myfactorial (size_t n)
 {
   size_t result=1;
@@ -8052,7 +8063,8 @@ static size_t myfactorial (size_t n)
 
 #ifndef USE_ROSE
 
-//! A helper function to return a permutation order for n elements based on a lexicographical order number
+//! A helper function to return a permutation order for n elements based on a lexicographical order number.
+//! See also, Combinatorics::permute(), which is faster but does not use strict lexicographic ordering.
 std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
 {
   size_t k = lexicoOrder;
@@ -10488,7 +10500,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     if (namespaceDefinition != NULL)
                        {
                          associatedScope = namespaceDefinition->get_global_definition();
-
+#error "DEAD CODE!"
                          printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
                               initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
                        }
@@ -10514,6 +10526,31 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     initName->set_prev_decl_item(prev_decl);
 
                ROSE_ASSERT(initName->get_prev_decl_item() != initName);
+#if 0
+            // DQ (1/25/2014): We need to make sure that the variable is not initialzed twice.
+            // The selection of where to do the initialization is however important.
+            // ROSE_ASSERT(initName->get_prev_decl_item() != NULL);
+               if (initName->get_prev_decl_item() != NULL)
+                  {
+                 // Check if get_prev_decl_item() is marked extern, and if so don't let it be marked with an initializer.
+                 // We might also want to check is this is in a class, marked const, etc.
+                    if (initName->get_prev_decl_item()->get_initializer() != NULL && initName->get_initializer() != NULL)
+                       {
+#if 1
+                         printf ("In SageInterface::fixVariableDeclaration(): (initName->get_prev_decl_item()->get_init() != NULL): variable initialized twice! \n");
+#endif
+                         ROSE_ASSERT(initName->get_prev_decl_item()->get_initializer() != initName->get_initializer());
+
+                      // DQ (1/25/2014): If the first variable was initialized, then reset the second one to NULL.
+                         initName->set_initializer(NULL);
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#endif
+               
              } //end if
         } //end for
 
@@ -11230,23 +11267,41 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              {
                for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                   {
+                    SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
 #if 0
-                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
+                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Testing j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
 #endif
                  // DQ (3/9/2012): Avoid setting the function to be it's own firstNondefiningDeclaration.
                  // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
-                    if (*j != func)
+                 // if (*j != func)
+                    if (func_decl != func)
                        {
-                         isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+                         if (func_decl->get_firstNondefiningDeclaration() == NULL)
+                            {
+#if 0
+                              printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 1) Calling j = %p set_firstNondefiningDeclaration(%p) \n",*j,func);
+#endif
+                              func_decl->set_firstNondefiningDeclaration(func);
+                            }
                        }
                   }
              }
             else // is a following nondefining declaration, grab any other's first nondefining link then
              {
 #if 0
-               printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+               printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-               func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+               if (func->get_firstNondefiningDeclaration() == NULL)
+                  {
+#if 0
+                    printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Calling func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+#endif
+                    func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+                  }
              }
         }
    }
@@ -11388,18 +11443,30 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
 
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
-PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target,
-                const std::string & text,
-               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/)
-{
-    ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
-    PreprocessingInfo* result = NULL;
-    PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
-    result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
-    ROSE_ASSERT(result);
-    target->addToAttachedPreprocessingInfo(result);
-    return result;
-}
+PreprocessingInfo* 
+SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & text, PreprocessingInfo::RelativePositionType position /*=PreprocessingInfo::before*/)
+   {
+  // DQ (1/13/2014): This function needs a better mechanism than attaching text to the AST unparser as a CPP directive.
+
+     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
+     PreprocessingInfo* result = NULL;
+
+  // DQ (1/13/2014): It is a mistake to attach arbitrary test to the AST as a #define 
+  // (since we evaluate all #define CPP declarations to be a self-referential macro).
+  // For now I will make it a #if CPP declaration, since these are not evaluated internally.
+  // PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
+     PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorIfDeclaration;
+
+  // DQ (1/13/2014): Output a warning so that this can be fixed whereever it is used.
+     printf ("Warning: attachArbitraryText(): attaching arbitrary text to the AST as a #if declaration: text = %s \n",text.c_str());
+
+     result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
+     ROSE_ASSERT(result);
+
+     target->addToAttachedPreprocessingInfo(result);
+
+     return result;
+   }
 
 
 //!Check if a target node has MacroCall attached, if yes, replace them with expanded strings
@@ -17023,15 +17090,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      */
     SgForStatement *& target_loop = loop;
 
-    SgInitializedName* ivar[collapsing_factor];
-    SgExpression* lb[collapsing_factor];
-    SgExpression* ub[collapsing_factor];
-    SgExpression* step[collapsing_factor];
-    SgStatement* orig_body[collapsing_factor]; 
+    SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
+    SgExpression** lb = new SgExpression*[collapsing_factor];
+    SgExpression** ub = new SgExpression*[collapsing_factor];
+    SgExpression** step = new SgExpression*[collapsing_factor];
+    SgStatement** orig_body = new SgStatement*[collapsing_factor]; 
     
-    SgExpression* total_iters[collapsing_factor]; //Winnie, the real iteration counter in each loop level
-    SgExpression* interval[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
-    bool isPlus[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
+    SgExpression** total_iters = new SgExpression*[collapsing_factor]; //Winnie, the real iteration counter in each loop level
+    SgExpression** interval = new SgExpression*[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
+    bool *isPlus = new bool[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
 
 
     //Winnie, get loops info first
@@ -17212,6 +17279,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
+
+    delete [] ivar;
+    delete [] lb;
+    delete [] ub;
+    delete [] step;
+    delete [] orig_body;
+    delete [] total_iters;
+    delete [] interval;
+    delete [] isPlus;
 
     #endif
 

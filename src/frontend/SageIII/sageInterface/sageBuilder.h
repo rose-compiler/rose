@@ -363,6 +363,10 @@ SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
 
+//! Build class pointer
+SgClassExp* buildClassExp(SgClassSymbol* sym);
+SgClassExp* buildClassExp_nfi(SgClassSymbol* sym);
+
 //! Build lambda expression
 SgLambdaRefExp* buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope);
 
@@ -865,11 +869,11 @@ buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* fu
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
-SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
+ROSE_DLL_API SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
-SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
+ROSE_DLL_API SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
 
 
 // DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
@@ -1271,6 +1275,5 @@ ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 //@}
 
 } // end of namespace
+
 #endif //ROSE_SAGE_BUILDER_INTERFACE
-
-

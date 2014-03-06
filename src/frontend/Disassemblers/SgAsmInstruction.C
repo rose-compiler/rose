@@ -48,9 +48,11 @@ SgAsmInstruction::terminates_basic_block()
 /** Returns true if the specified basic block looks like a function call.  This instruction object is only used to select the
  *  appropriate virtual is_function_call(); the basic block to be analyzed is the first argument to the function.  If the basic
  *  block looks like a function call then is_function_call() returns true.  If (and only if) the target address is known (i.e.,
- *  the address of the called function) then @p target is set to this address (otherwise @p target is unmodified). */
+ *  the address of the called function) then @p target is set to this address (otherwise @p target is unmodified). If
+ *  the return address is known or can be guessed, then return_va is initialized to the return address, which is normally the
+ *  fall-through address of the last instruction; otherwise the return_va is unmodified. */
 bool
-SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target)
+SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
 {
     return false;
 }
@@ -63,6 +65,35 @@ SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&)
     return false;
 }
 
+/** Returns true if this instruction is the first instruction in a basic block. */
+bool
+SgAsmInstruction::is_first_in_block()
+{
+    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    if (bb) {
+        const SgAsmStatementPtrList &stmts = bb->get_statementList();
+        for (size_t i=0; i<stmts.size(); ++i) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(stmts[i]))
+                return insn==this;
+        }
+    }
+    return false;
+}
+
+/** Returns true if this instruction is the last instruction in a basic block. */
+bool
+SgAsmInstruction::is_last_in_block()
+{
+    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    if (bb) {
+        const SgAsmStatementPtrList &stmts = bb->get_statementList();
+        for (size_t i=stmts.size(); i>0; --i) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(stmts[i-1]))
+                return insn==this;
+        }
+    }
+    return false;
+}
 
 /** Obtains the virtual address for a branching instruction.  Returns true if this instruction is a branching instruction and
   *  the target address is known; otherwise, returns false and @p target is not modified. */

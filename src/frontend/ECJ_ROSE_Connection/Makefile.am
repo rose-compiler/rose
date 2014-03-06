@@ -25,16 +25,14 @@ JavaParserActionROSE.C: JavaTraversal.h
 JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
-libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
-
-if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
- # Handle case of Java language support specified and Fortran language support NOT specified.
-   libroseJava_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
-endif
+libroseJava_la_SOURCES = \
+	ecj.C \
+	jserver.C \
+	openJavaParser_main.C
 
 libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
 
-include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
+include_HEADERS = ecj.h jserver.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
 
 extract_rose_required_ecj_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
