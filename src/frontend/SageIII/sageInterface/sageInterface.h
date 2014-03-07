@@ -1396,8 +1396,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #endif
    }
 
-//! Get the closest scope from astNode. Return astNode if it is already a scope.
-ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+  //! Find enclosing source file node 
+  ROSE_DLL_API SgSourceFile* getEnclosingSourceFile(SgNode* n, const bool includingSelf=false);
+
+  //! Get the closest scope from astNode. Return astNode if it is already a scope.
+  ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+
+  //! Get the enclosing scope from a node n 
+  ROSE_DLL_API SgScopeStatement* getEnclosingScope(SgNode* n, const bool includingSelf=false);
 
   //! Traverse back through a node's parents to find the enclosing global scope
   ROSE_DLL_API SgGlobal* getGlobalScope( const SgNode* astNode);
