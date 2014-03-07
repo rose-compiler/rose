@@ -13,6 +13,8 @@ LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
 clean-local:
 	rm -fr rose-* ecj-classes-* javac-*
+	rm -f core.*
+	rm -f hs_err_pid*
 
 check-local:
 	@$(MAKE) $(UNIT_TESTS)
@@ -23,7 +25,9 @@ check-local:
 UNIT_TESTS = \
 	test_addJavaAssignmentStmt \
 	test_addJavaExpression \
-	test_addJavaVariableDeclaration
+	test_addJavaVariableDeclaration \
+	test_addJavaSource \
+	test_addJavaTransformation
 # TOO1 (3/7/2014): Requires Java 7u51+; JVM crashes on "jni_GetStringUTFChars"
 #test_addJavaSource
 #test_addJavaTransformation
