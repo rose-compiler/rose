@@ -931,6 +931,12 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
     assert(snippetGlobalScope!=NULL);
     const SgDeclarationStatementPtrList &snippetStmts = snippetGlobalScope->get_declarations();
 
+ // DQ (3/6/2014): Check if the declaration referenced in the snippet are expected to be in the target AST.
+ // This allows the snippet mechanism to be more general that required for use that would allow the AST fixup 
+ // to be done (such as generating unparsable code, but not code that might pass an analysis phase).
+    ROSE_ASSERT(getFile() != NULL);
+    printf ("getFile()->getCopyRelatedThings() = %s \n",getFile()->getCopyRelatedThings() == true ? "true" : "false");
+
     // Do the insertion for non-preprocessor stuff
     SgStatement *firstInserted = NULL;
     BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
@@ -1014,6 +1020,17 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 if (classSymbolInTargetAST == NULL)
                    {
                      printf ("Error: Can't find SgClassSymbol for class_decl = %p = %s \n",class_decl,class_decl->get_name().str());
+
+                     if (getFile()->getCopyRelatedThings() == true)
+                        {
+                       // If we are requiring that language constructs be copied into the target AST, then we 
+                       // assume that they don't already exist and so it is expected that we can't resolve symbols.
+                       // Output a message and keep going.
+                          printf ("Note: getFile()->getCopyRelatedThings() == true: \n");
+                          printf ("   --- If we are requiring that language constructs be copied into the target AST, then we \n");
+                          printf ("   --- assume that they don't already exist and so it is expected that we can't resolve symbols. \n");
+                          continue;
+                        }
                    }
                 ROSE_ASSERT(classSymbolInTargetAST != NULL);
                 SgDeclarationStatement* decl = classSymbolInTargetAST->get_declaration();
