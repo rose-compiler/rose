@@ -6217,10 +6217,24 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 
 #endif
 
+//! Get the enclosing scope from a node n 
+SgScopeStatement* SageInterface::getEnclosingScope(SgNode* n, const bool includingSelf/* =false*/)
+{
+  SgScopeStatement* result = getScope (n);
+  if (result == n)
+  {
+    if (!includingSelf)
+      result = getScope(n->get_parent());
+  }
+  return result;
+}
+
 // from transformationSupport.C
 SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
+
+   // Case 1: directly call get_scope() for some types of nodes  
     if (const SgSymbol* symbol = isSgSymbol(astNode))
         return symbol->get_scope();
     else if (const SgInitializedName* initName = isSgInitializedName(astNode))
@@ -6230,30 +6244,30 @@ SageInterface::getScope( const SgNode* astNode )
     else if (const SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
         return qualifiedName->get_scope();
 
-  // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
-  const SgNode* parentNode = astNode;
-  while (!isSgScopeStatement(parentNode))
-  {
-      //George Vulov (11/29/2010)
-      //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
-      //produces SgGlobal.
-      if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
-      {
-          const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
-          ROSE_ASSERT(funcDeclaration != NULL);
-          funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
-          if (funcDeclaration != NULL)
-          {
-              return funcDeclaration->get_definition();
-          }
-      }
-
-      parentNode = parentNode->get_parent();
-      if (parentNode == NULL)
-      {
-          break;
-      }
-  }
+    // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
+    const SgNode* parentNode = astNode;
+    while (!isSgScopeStatement(parentNode))
+    {
+        //George Vulov (11/29/2010)
+        //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
+        //produces SgGlobal.
+        if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
+        {
+            const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
+            ROSE_ASSERT(funcDeclaration != NULL);
+            funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
+            if (funcDeclaration != NULL)
+            {
+                return funcDeclaration->get_definition();
+            }
+        }
+  
+        parentNode = parentNode->get_parent();
+        if (parentNode == NULL)
+        {
+            break;
+        }
+    }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
@@ -6546,6 +6560,16 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
   return vis.symbols;
 }
 #endif
+
+SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf)
+{
+    SgSourceFile* temp = getEnclosingNode<SgSourceFile>(n,includingSelf);
+  if (temp)
+    return temp;
+  else
+    return NULL;
+}
+
 
 SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
 {
