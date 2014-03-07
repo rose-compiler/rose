@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
 #include <cstdlib>
@@ -435,120 +436,123 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         file->expandSnippets(toInsert);
 
 #if 1
- // DQ (2/26/2014): Adding support to fixup the AST fragment (toInsert) that is being inserted into the target AST.
+    if (!file->getCopyRelatedThings()) {
+     // DQ (2/26/2014): Adding support to fixup the AST fragment (toInsert) that is being inserted into the target AST.
 
- // Build a translation map so that we can save the mapping of scopes between the target AST and the snippet AST.
- // In the case of insertMechanism == INSERT_STMTS we also add the mapping of the scope used for the copy of the body
- // to the parent of the insertionPoint so that symbols can be reset into the scope of the insertionPoint.
- // This map connects snippet scopes (key) to target AST scopes (value).
-    std::map<SgNode*,SgNode*> translationMap;
+     // Build a translation map so that we can save the mapping of scopes between the target AST and the snippet AST.
+     // In the case of insertMechanism == INSERT_STMTS we also add the mapping of the scope used for the copy of the body
+     // to the parent of the insertionPoint so that symbols can be reset into the scope of the insertionPoint.
+     // This map connects snippet scopes (key) to target AST scopes (value).
+        std::map<SgNode*,SgNode*> translationMap;
 
- // If we are inserting into the end of a scope then we point to the scope since there is no last statement 
- // to insert a statement before.  In this case then insertionPointIsScope == true, else it is false. 
-    bool insertionPointIsScope = false;
+     // If we are inserting into the end of a scope then we point to the scope since there is no last statement 
+     // to insert a statement before.  In this case then insertionPointIsScope == true, else it is false. 
+        bool insertionPointIsScope = false;
 
-    if (insertMechanism == INSERT_BODY)
-       {
+        if (insertMechanism == INSERT_BODY)
+           {
 #if 0 // DEBUGGING [DQ 2014-03-07]
-         printf ("In Snippet::insert(): insertMechanism == INSERT_BODY: "
-                 "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == false) \n");
+             printf ("In Snippet::insert(): insertMechanism == INSERT_BODY: "
+                     "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == false) \n");
 #endif
-      // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the
-      // insertionPoint.
-         if (translationMap.find(ast->get_body()) == translationMap.end());
-              translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
+          // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the
+          // insertionPoint.
+             if (translationMap.find(ast->get_body()) == translationMap.end());
+                  translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
 
-         SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,toInsert,
-                                                                   ast->get_body(),translationMap);
-       }
-      else
-       {
-         if (insertMechanism == INSERT_STMTS)
-            {
-              const SgStatementPtrList &stmts_copy_of_snippet_ast     = toInsert->getStatementList();
-              const SgStatementPtrList &stmts_in_original_snippet_ast = ast->get_body()->getStatementList();
-              ROSE_ASSERT(stmts_copy_of_snippet_ast.size() == stmts_in_original_snippet_ast.size());
+             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,toInsert,
+                                                                       ast->get_body(),translationMap);
+           }
+          else
+           {
+             if (insertMechanism == INSERT_STMTS)
+                {
+                  const SgStatementPtrList &stmts_copy_of_snippet_ast     = toInsert->getStatementList();
+                  const SgStatementPtrList &stmts_in_original_snippet_ast = ast->get_body()->getStatementList();
+                  ROSE_ASSERT(stmts_copy_of_snippet_ast.size() == stmts_in_original_snippet_ast.size());
 
-              for (size_t i = 0; i < stmts_copy_of_snippet_ast.size(); ++i) 
-                 {
-                // We have to reset this since it can be changed by one of the cases below.
-                   insertionPointIsScope = false;
+                  for (size_t i = 0; i < stmts_copy_of_snippet_ast.size(); ++i) 
+                     {
+                    // We have to reset this since it can be changed by one of the cases below.
+                       insertionPointIsScope = false;
 
-                   if (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL) 
-                      {
-                        switch (locDeclsPosition) 
-                           {
-                             case LOCDECLS_AT_BEGINNING:
-                               // SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                       if (isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL) 
+                          {
+                            switch (locDeclsPosition) 
+                               {
+                                 case LOCDECLS_AT_BEGINNING:
+                                   // SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
 #if 0 // DEBUGGING [DQ 2014-03-07]
-                                  printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
-                                          "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): "
-                                          "case LOCDECLS_AT_BEGINNING \n");
+                                      printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
+                                              "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): "
+                                              "case LOCDECLS_AT_BEGINNING \n");
 #endif
-                               // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
-                               // associated scope of the insertionPoint.
-                                  if (translationMap.find(ast->get_body()) == translationMap.end());
-                                       translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),
-                                                                                          insertionPoint->get_scope() ) );
+                                   // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
+                                   // associated scope of the insertionPoint.
+                                      if (translationMap.find(ast->get_body()) == translationMap.end());
+                                           translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),
+                                                                                              insertionPoint->get_scope() ) );
 
-                                  SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
-                                                                                            insertionPointIsScope,
-                                                                                            stmts_copy_of_snippet_ast[i],
-                                                                                            stmts_in_original_snippet_ast[i],
-                                                                                            translationMap);
-                                  break;
+                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
+                                                                                                insertionPointIsScope,
+                                                                                                stmts_copy_of_snippet_ast[i],
+                                                                                                stmts_in_original_snippet_ast[i],
+                                                                                                translationMap);
+                                      break;
 
-                             case LOCDECLS_AT_END:
-                               // SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+                                 case LOCDECLS_AT_END:
+                                   // SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
 #if 0 // DEBUGGING [DQ 2014-03-07]
-                                  printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
-                                          "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): "
-                                          "case LOCDECLS_AT_END \n");
+                                      printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
+                                              "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) != NULL): "
+                                              "case LOCDECLS_AT_END \n");
 #endif
-                               // We are providing the scope instead of the declaration reference.
-                                  insertionPointIsScope = true;
+                                   // We are providing the scope instead of the declaration reference.
+                                      insertionPointIsScope = true;
 
-                               // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
-                               // associated scope of the insertionPoint.
-                                  if (translationMap.find(ast->get_body()) == translationMap.end());
-                                       translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint ) );
+                                   // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
+                                   // associated scope of the insertionPoint.
+                                      if (translationMap.find(ast->get_body()) == translationMap.end());
+                                           translationMap.insert( std::pair<SgNode*,SgNode*>(ast->get_body(), insertionPoint));
 
-                                  SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFunctionScope,
-                                                                                            insertionPointIsScope,
-                                                                                            stmts_copy_of_snippet_ast[i],
-                                                                                            stmts_in_original_snippet_ast[i],
-                                                                                            translationMap);
-                                  break;
-                           }
-                      } 
-                     else 
-                      {
-                     // SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFunctionScope,
+                                                                                                insertionPointIsScope,
+                                                                                                stmts_copy_of_snippet_ast[i],
+                                                                                                stmts_in_original_snippet_ast[i],
+                                                                                                translationMap);
+                                      break;
+                               }
+                          } 
+                         else 
+                          {
+                         // SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
 #if 0 // DEBUGGING [DQ 2014-03-07]
-                        printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
-                                "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == NULL) \n");
+                            printf ("In Snippet::insert(): insertMechanism == INSERT_STMTS: "
+                                    "(isSgDeclarationStatement(stmts_copy_of_snippet_ast[i]) == NULL) \n");
 #endif
-                     // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope
-                     // of the insertionPoint.
-                        if (translationMap.find(ast->get_body()) == translationMap.end());
-                             translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
+                         // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated
+                         // scope of the insertionPoint.
+                            if (translationMap.find(ast->get_body()) == translationMap.end());
+                                 translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),
+                                                                                    insertionPoint->get_scope() ) );
 
-                        SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,
-                                                                                  stmts_copy_of_snippet_ast[i],
-                                                                                  stmts_in_original_snippet_ast[i],
-                                                                                  translationMap);
-                      }
-                 }
-            }
-           else
-            {
-              printf ("Error: insertMechanism should be either INSERT_BODY or INSERT_STMTS \n");
-              ROSE_ASSERT(false);
-            }
-       }
+                            SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,
+                                                                                      stmts_copy_of_snippet_ast[i],
+                                                                                      stmts_in_original_snippet_ast[i],
+                                                                                      translationMap);
+                          }
+                     }
+                }
+               else
+                {
+                  printf ("Error: insertMechanism should be either INSERT_BODY or INSERT_STMTS \n");
+                  ROSE_ASSERT(false);
+                }
+           }
 #else // DEBUGGING [DQ 2014-03-07]
-     printf ("Skipping code to call the SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst() function \n");
+         printf ("Skipping code to call the SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst() function \n");
 #endif
+    }
 }
 
 // class method
@@ -995,6 +999,8 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 causeUnparsing(newStmt, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
 
+                ROSE_ASSERT(file->getCopyRelatedThings());
+#if 0 /* [Robb P. Matzke 2014-03-07]: Ast fixups not needed here since SnippetFile::getCopyRelatedThings returns true */
              // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
              // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
              // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
@@ -1027,6 +1033,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
              // fixup the symbol table (add symbols for each SgInitializedName).
                 SageInterface::supportForInitializedNameLists(scope,initializedNameList);
+#endif
 
                 if (!firstInserted)
                     firstInserted = newStmt;
@@ -1035,13 +1042,15 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         }
         
         if (SgClassDeclaration *class_decl = isSgClassDeclaration(snippetStmt)) {
-            if (file->getCopyRelatedThings()&& class_decl->get_definition()!=NULL) {
+            if (file->getCopyRelatedThings() && class_decl->get_definition()!=NULL) {
                 SgTreeCopy deep;
                 SgStatement *newStmt = isSgClassDeclaration(class_decl);
                 removeIncludeDirectives(newStmt);
                 causeUnparsing(newStmt, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
 
+                ROSE_ASSERT(file->getCopyRelatedThings());
+#if 0 /* [Robb P. Matzke 2014-03-07]: Ast fixups not needed here since SnippetFile::getCopyRelatedThings returns true */
              // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
              // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
              // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
@@ -1050,8 +1059,10 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 ROSE_ASSERT(scope != NULL);
                 ROSE_ASSERT(scope->get_parent() != NULL);
 
+#if 0 // DEBUGGING [DQ 2014-03-07]
                 printf ("Snippet::insertRelatedThingsForC(): scope for insertion point = %p = %s \n",
                         scope,scope->class_name().c_str());
+#endif
 
                 SgClassDeclaration* cdecl_copy = isSgClassDeclaration(newStmt);
                 cdecl_copy->set_scope(scope);
@@ -1059,26 +1070,14 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
              // Lookup the symbol in the parent scopes of the insertion point in the traget program (must exist).
                 SgClassSymbol* classSymbolInTargetAST = SageInterface::lookupClassSymbolInParentScopes(class_decl->get_name(),
                                                                                                        scope);
-                if (classSymbolInTargetAST == NULL)
-                   {
-                     printf ("Error: Can't find SgClassSymbol for class_decl = %p = %s \n",
-                             class_decl,class_decl->get_name().str());
-
-                     if (getFile()->getCopyRelatedThings() == true)
-                        {
-#if 0 // DEBUGGING [DQ 2014-03-07]
-                       // If we are requiring that language constructs be copied into the target AST, then we 
-                       // assume that they don't already exist and so it is expected that we can't resolve symbols.
-                       // Output a message and keep going.
-                          printf ("Note: getFile()->getCopyRelatedThings() == true: \n");
-                          printf ("   --- If we are requiring that language constructs be copied into the target AST, "
-                                  "then we \n");
-                          printf ("   --- assume that they don't already exist and so it is expected that we can't resolve "
-                                  "symbols. \n");
-#endif
-                          continue;
-                        }
-                   }
+                if (classSymbolInTargetAST == NULL) {
+                    // If we are requiring that language constructs be copied into the target AST, then we 
+                    // assume that they don't already exist and so it is expected that we can't resolve symbols.
+                    // Output a message and keep going.
+                    throw std::runtime_error("Snippet::insertRelatedThings: cannot find SgClassSymbol for class_decl (" +
+                                             class_decl->class_name() + "*)" + boost::lexical_cast<std::string>(class_decl) +
+                                             " \"" + class_decl->get_name().str() + "\"");
+                }
 
                 ROSE_ASSERT(classSymbolInTargetAST != NULL);
 
@@ -1097,6 +1096,8 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 printf ("SgClassDeclaration: Exiting as a test! \n");
                 ROSE_ASSERT(false);
 #endif
+#endif
+
                 if (!firstInserted)
                     firstInserted = newStmt;
                 continue;
@@ -1106,7 +1107,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(snippetStmt)) {
             SgFunctionDefinition *fdef = fdecl->get_definition();
             
-            if (file->getCopyAllSnippetDefinitions()&& fdef!=NULL &&
+            if (file->getCopyAllSnippetDefinitions() && fdef!=NULL &&
                 fdef->get_startOfConstruct()->get_file_id()==ast->get_startOfConstruct()->get_file_id()) {
                 SgTreeCopy deep;
                 SgFunctionDeclaration *fdecl_copy = isSgFunctionDeclaration(fdecl->copy(deep));
@@ -1131,6 +1132,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                    {
                      printf ("In Snippet::insertGlobalStuff(): Can't location function: name = %s in parent scopes of "
                              "insertion point \n",fdecl->get_name().str());
+                     continue;
                    }
                 ROSE_ASSERT(functionSymbolInTargetAST != NULL);
                 SgDeclarationStatement* decl = functionSymbolInTargetAST->get_declaration();
@@ -1166,6 +1168,8 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
 
+                ROSE_ASSERT(file->getCopyRelatedThings());
+#if 0 /* [Robb P. Matzke 2014-03-07]: Ast fixups not needed here since SnippetFile::getCopyRelatedThings returns true */
              // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
              // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
              // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
@@ -1194,6 +1198,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 #if 0 // DEBUGGING [DQ 2014-03-07]
                 printf ("(fdecl->get_definition()==NULL): Exiting as a test! \n");
                 ROSE_ASSERT(false);
+#endif
 #endif
                 if (!firstInserted)
                     firstInserted = fdecl_copy;
