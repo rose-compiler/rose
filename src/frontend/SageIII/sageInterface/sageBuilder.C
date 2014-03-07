@@ -13297,3 +13297,110 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
    }
 
+/**
+ * The import_info represents the qualified name of a package, type or static field.
+ */
+SgJavaPackageStatement *SageBuilder::buildJavaPackageStatement(string package_name) {
+    SgJavaPackageStatement *package_statement = new SgJavaPackageStatement(package_name);
+    package_statement -> set_firstNondefiningDeclaration(package_statement);
+    package_statement -> set_definingDeclaration(package_statement);
+    SageInterface::setSourcePosition(package_statement);
+    return package_statement;
+}
+
+/**
+ * The import_info represents the qualified name of a package, type or static field.
+ */
+SgJavaImportStatement *SageBuilder::buildJavaImportStatement(string import_info, bool contains_wildcard) {
+    SgJavaImportStatement *import_statement = new SgJavaImportStatement(import_info, contains_wildcard);
+    import_statement -> set_firstNondefiningDeclaration(import_statement);
+    import_statement -> set_definingDeclaration(import_statement);
+    SageInterface::setSourcePosition(import_statement);
+    return import_statement;
+}
+
+/**
+ *  Build a class with the given name in the given scope and return its SgClassDefinition.
+ */
+SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatement *scope, string name) {
+    ROSE_ASSERT(scope);
+    SgClassDeclaration *class_declaration;
+     SgName class_name = name;
+    SgClassSymbol *class_symbol = scope -> lookup_class_symbol(class_name);
+    if (class_symbol) { // class already exists in the scope
+        class_declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
+    }
+    else {
+        SgClassDeclaration* nonDefiningDecl              = NULL;
+        bool buildTemplateInstantiation                  = false;
+        SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+        class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_java_parameter, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+        ROSE_ASSERT(class_declaration);
+        class_declaration -> set_parent(scope);
+        class_declaration -> set_scope(scope);
+        SageInterface::setSourcePosition(class_declaration);
+        SgClassDefinition *class_definition = class_declaration -> get_definition();
+        ROSE_ASSERT(class_definition);
+        SageInterface::setSourcePosition(class_definition);
+
+        class_definition -> setAttribute("extensions", new AstSgNodeListAttribute());
+        class_definition -> setAttribute("extension_type_names", new AstRegExAttribute());
+
+        SgScopeStatement *type_space = new SgScopeStatement();
+        type_space -> set_parent(class_definition);
+        SageInterface::setSourcePosition(type_space);
+        class_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
+    }
+
+    return class_declaration;
+}
+
+
+/**
+ * Create a source file in the directory_name for the given type_name and add it to the given project.
+ * This function is useful in order to create a new type to be added to a pre-existing Rose AST.
+ */
+SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string directory_name, SgClassDefinition *package_definition, string type_name) {
+    string filename = directory_name + "/" + type_name + ".java";
+    ROSE_ASSERT((*project)[filename] == NULL); // does not already exist!
+
+    string command = string("touch ") + filename; // create the file
+    int status = system(command.c_str());
+    ROSE_ASSERT(status == 0);
+    project -> get_sourceFileNameList().push_back(filename);
+    Rose_STL_Container<std::string> arg_list = project -> get_originalCommandLineArgumentList();
+    arg_list.push_back(filename);
+    Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arg_list, // binaryMode
+                                                                                         false);
+    CommandlineProcessing::removeAllFileNamesExcept(arg_list, fileList, filename);
+    int error_code = 0;
+    SgFile *file = determineFileType(arg_list, error_code, project);
+    SgSourceFile *sourcefile = isSgSourceFile(file);
+    ROSE_ASSERT(sourcefile);
+    sourcefile -> set_parent(project);
+    project -> get_fileList_ptr() -> get_listOfFiles().push_back(sourcefile);
+    ROSE_ASSERT(sourcefile == isSgSourceFile((*project)[filename]));
+
+    //
+    // Create a package statement and add it to the source file
+    //
+    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_definition -> get_declaration() -> get_qualified_name().getString());
+    package_statement -> set_parent(package_definition);
+    sourcefile -> set_package(package_statement);
+
+    //
+    // Initialize an import-list for the sourcefile
+    //
+    SgJavaImportStatementList *import_statement_list = new SgJavaImportStatementList();
+    import_statement_list -> set_parent(sourcefile);
+    sourcefile -> set_import_list(import_statement_list);
+
+    //
+    // Initialize a class-declaration-list for the sourcefile
+    //
+    SgJavaClassDeclarationList *class_declaration_list = new SgJavaClassDeclarationList();
+    class_declaration_list -> set_parent(package_definition);
+    sourcefile -> set_class_list(class_declaration_list);
+
+    return sourcefile;
+}
