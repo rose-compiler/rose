@@ -117,6 +117,17 @@ HEADER_START
           void set_originalExpressionTree(SgExpression* X);
 #endif
 
+      /*! \brief Some expressions store internal SgType pointers explicitly while others compute them from other expressions.  This function is true if it has a data member that is a type (pointer, array, etc.).
+
+          Result is true if it stores a type explicitly as a data member, else false.
+
+          \internal True only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
+                    SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+                    SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
+                    SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
+       */
+          bool hasExplicitType();
+
 HEADER_END
 
 
@@ -2085,6 +2096,33 @@ SgExpression::set_originalExpressionTree(SgExpression* X)
      ROSE_ASSERT(false);
    }
 #endif
+
+bool SgExpression::hasExplicitType()
+   {
+  // DQ (3/7/2014):  This could be implemented as a virtual function but would require 11 functions to be 
+  // implemented. I have thus instead implemented it as a single function on the SgType instead. We
+  // can review this if it is important.
+
+  // This function returns true only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
+  // SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+  // SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
+  // SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
+
+     bool returnValue = false;
+
+     if ( isSgTemplateParameterVal(this) != NULL   || isSgComplexVal(this)    != NULL           || isSgSizeOfOp(this) != NULL             || 
+          isSgAlignOfOp(this) != NULL              || isSgJavaInstanceOfOp(this) != NULL        || isSgTypeIdOp(this)  != NULL            ||
+          isSgVarArgStartOp(this) != NULL          || isSgVarArgStartOneOperandOp(this) != NULL || isSgVarArgOp(this)  != NULL            ||
+          isSgVarArgEndOp(this) != NULL            || isSgVarArgCopyOp(this) != NULL            || isSgNewExp(this)  != NULL              ||
+          isSgRefExp(this) != NULL                 || isSgAggregateInitializer(this) != NULL    || isSgCompoundInitializer(this)  != NULL ||
+          isSgConstructorInitializer(this) != NULL || isSgAssignInitializer(this) != NULL       || isSgPseudoDestructorRefExp(this)  != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 SOURCE_BASECLASS_EXPRESSION_END
 

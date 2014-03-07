@@ -12616,7 +12616,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
   // qualified (which are C++ specific). These are a performance option to simplify tacking back 
   // through scopes with code similarly complex as to what is supported in the name qualification 
   // support.
-#if 1
+#if 0
      printf ("In fixupCopyOfNodeFromSeperateFileInNewTargetAst: node_copy = %p = %s \n",node_copy,node_copy->class_name().c_str());
 #endif
 
@@ -12734,10 +12734,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
         {
        // Check the scope if it is stored explicitly.
 
-          printf ("WARNING: Need to check if the type is explicitly stored in this expression! \n");
+       // printf ("WARNING: Need to check if the type is explicitly stored in this expression! \n");
 
-       // if (expression->hasExplicitType() == true)
-          if (false)
+          if (expression->hasExplicitType() == true)
              {
             // Handle the type for all expressions.
                SgType* type = expression->get_type();
