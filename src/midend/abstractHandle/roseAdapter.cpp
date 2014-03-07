@@ -377,7 +377,8 @@ namespace AbstractHandle{
     }
    
    ROSE_ASSERT (p_handle != NULL);
-    return p_handle; 
+
+   return buildSingleAbstractHandle (snode, p_handle);
   }
 
 } // end of namespace
