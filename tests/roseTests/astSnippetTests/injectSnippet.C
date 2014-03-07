@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
 
-#if 1
+#if 0 // DEBUGGING [DQ 2014-03-07]
     ROSE_ASSERT(project->get_fileList_ptr() != NULL);
     SgFilePtrList & vectorFile = project->get_fileList_ptr()->get_listOfFiles();
     printf ("project files (size = %zu): \n",vectorFile.size());
@@ -212,15 +212,18 @@ main(int argc, char *argv[])
     ROSE_ASSERT(vectorFile.size() == 2);
 #endif
 
-#if 0
+#if 0 // DEBUGGING [DQ 2014-03-07]
     printf ("Test the use of the SageInterface::deleteAST() function (appears to fail for snippet file that include stdio.h) \n");
     SageInterface::deleteAST(tmp_snippetSourceFile);
     printf ("Exiting after test of deleteAST on new file \n");
     ROSE_ASSERT(false);
 #endif
 
+#if 0 // DEBUGGING [DQ 2014-03-07]
     printf ("After reading snippet file: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+            project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
+            tmp_snippetSourceFile->getFileName().c_str());
+#endif
 
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
     size_t nargs = snippet->numberOfArguments();
@@ -231,17 +234,20 @@ main(int argc, char *argv[])
     snippet->setLocalDeclarationPosition(locdecls_position);
     snippet->setInsertRecursively(insert_recursively);
 
-#if 1
+#if 0 // DEBUGGING [DQ 2014-03-07]
     printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+            project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
+            tmp_snippetSourceFile->getFileName().c_str());
 #endif
 
- // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is not a problem, but is interesting).
+ // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is not a
+ // problem, but is interesting).
     snippet->insert(ipoint, args);
 
-#if 1
+#if 0 // DEBUGGING [2014-03-07]
     printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),tmp_snippetSourceFile->getFileName().c_str());
+            project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
+            tmp_snippetSourceFile->getFileName().c_str());
 #endif
 
 #if 1
@@ -250,8 +256,11 @@ main(int argc, char *argv[])
     ROSE_ASSERT(snippet->getFile() != NULL);
     SgFile* snippetSourceFile = snippet->getFile()->getAst();
     ROSE_ASSERT(snippetSourceFile != NULL);
+#if 0 // DEBUGGING [DQ 2014-03-07]
     printf ("Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-         project->get_fileList().size(),snippetSourceFile,snippetSourceFile->class_name().c_str(),snippetSourceFile->getFileName().c_str());
+            project->get_fileList().size(),snippetSourceFile,snippetSourceFile->class_name().c_str(),
+            snippetSourceFile->getFileName().c_str());
+#endif
 
 #if 0
  // DQ (4/4/2014): This fails for some header files (e.g. stdio.h).
@@ -268,7 +277,9 @@ main(int argc, char *argv[])
       // Find the snippet file.
          if (*i == snippetSourceFile)
             {
+#if 0 // DEBUGGING [DQ 2014-03-07]
               printf ("Removing snippetSourceFile = %p from project \n",snippetSourceFile);
+#endif
               eraseTheseFiles.push_back(i);
            // *i = NULL;
             }
@@ -282,13 +293,16 @@ main(int argc, char *argv[])
          project->get_fileList().erase(eraseTheseFiles[j]);
        }
 
-    printf ("DONE: Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p \n",project->get_fileList().size(),snippetSourceFile);
+#if 0 // DEBUGGING [DQ 2014-03-07]
+    printf ("DONE: Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p \n",
+            project->get_fileList().size(),snippetSourceFile);
 
     for (size_t i = 0; i < project->get_fileList().size(); i++)
        {
          SgFile* file = project->get_fileList()[i];
          printf ("Remaining file = %p = %s = %s \n",file,file->class_name().c_str(),file->getFileName().c_str());
        }
+#endif
 #endif
 
     // Unparse the modified source code
