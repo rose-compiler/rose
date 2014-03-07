@@ -12616,7 +12616,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
   // qualified (which are C++ specific). These are a performance option to simplify tacking back 
   // through scopes with code similarly complex as to what is supported in the name qualification 
   // support.
-#if 0
+#if 1
      printf ("In fixupCopyOfNodeFromSeperateFileInNewTargetAst: node_copy = %p = %s \n",node_copy,node_copy->class_name().c_str());
 #endif
 
@@ -13012,14 +13012,14 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(variableSymbol_copy != NULL);
                if (TransformationSupport::getFile(variableSymbol_copy) != targetFile)
                   {
-#if 0
+#if 1
                     printf ("Warning: case V_SgVarRefExp: variableSymbol not in target file: name = %s \n",variableSymbol_copy->get_name().str());
 #endif
-#if 0
+#if 1
                     printf ("insertionPoint = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str());
 #endif
                     SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
-#if 0
+#if 1
                     printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
                  // Find the nearest variable with the same name in an outer scope (starting at insertionPointScope).
@@ -13034,7 +13034,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // This is a violation of the policy that the a variable with the same name will be found in the target AST.
                       // Note that if the variable could not be found then it should have been added as part of the snippet, or a 
                       // previously added snippet.
-#if 0
+#if 1
                          printf ("Error: The associated variable = %s should have been found in a parent scope of the target AST \n",variableSymbol_copy->get_name().str());
 #endif
                       // We need to look into the scope of the block used to define the statments as seperate snippets (same issue as for functions).
@@ -13042,14 +13042,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // If could be that the symbol is in the local scope of the snippet AST.
                          SgStatement* enclosingStatement_original = TransformationSupport::getStatement(varRefExp_original);
                          ROSE_ASSERT(enclosingStatement_original != NULL);
-#if 0
+#if 1
                          printf ("case V_SgVarRefExp: enclosingStatement_original = %p = %s \n",enclosingStatement_original,enclosingStatement_original->class_name().c_str());
 #endif
                          SgScopeStatement* otherPossibleScope_original = isSgScopeStatement(enclosingStatement_original->get_parent());
                          ROSE_ASSERT(otherPossibleScope_original != NULL);
-                         SgFile* file = TransformationSupport::getFile(enclosingStatement_original);
+                      // SgFile* file = TransformationSupport::getFile(enclosingStatement_original);
+                         SgFile* file = getEnclosingFileNode(enclosingStatement_original);
                          ROSE_ASSERT(file != NULL);
-#if 0
+#if 1
                          printf ("enclosingStatement_original: associated file name = %s \n",file->get_sourceFileNameWithPath().c_str());
                       // printf ("   --- targetFile            = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
 
@@ -13057,13 +13058,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          printf ("case V_SgClassDeclaration: variableSymbol_copy->get_name() = %s \n",variableSymbol_copy->get_name().str());
 #endif
                          variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol_copy->get_name(),otherPossibleScope_original);
-#if 0
                          if (variableSymbolInTargetAST == NULL)
                             {
+#if 0
                               targetScope->get_symbol_table()->print("targetScope: symbol table");
                               otherPossibleScope_original->get_symbol_table()->print("otherPossibleScope_original: symbol table");
-                            }
 #endif
+                            }
                          ROSE_ASSERT(variableSymbolInTargetAST != NULL);
                          SgInitializedName* initializedName = variableSymbolInTargetAST->get_declaration();
                          ROSE_ASSERT(initializedName != NULL);
