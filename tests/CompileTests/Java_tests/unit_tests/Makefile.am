@@ -1,0 +1,80 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# Global setting for ROSE verbosity
+ROSE_VERBOSE=-rose:verbose 0
+
+# Initial definition
+bin_PROGRAMS =
+
+# Use variables set in ROSE/config/Makefile.for.ROSE.includes.and.libs
+INCLUDES = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
+LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+
+clean-local:
+	rm -f rose_*
+
+check-local:
+	@$(MAKE) $(UNIT_TESTS)
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Java_tests/unit_tests: make check rule complete (terminated normally) ******"
+	@echo "***********************************************************************************************************"
+
+UNIT_TESTS = \
+	test_addJavaTransformation \
+	test_addJavaSource \
+	test_addJavaAssignmentStmt \
+	test_addJavaExpression \
+	test_addJavaVariableDeclaration
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                                  Unit Tests
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+#---------------------------------------
+# test:   addJavaTransformation
+# author: Philippe Charles
+#---------------------------------------
+bin_PROGRAMS += addJavaTransformation
+addJavaTransformation_SOURCES = addJavaTransformation.cpp
+
+test_addJavaTransformation: addJavaTransformation
+	./addJavaTransformation -rose:verbose 0 "$(srcdir)/InputCode_java.java"
+
+#---------------------------------------
+# test:   addJavaSource
+# author: Philippe Charles
+#---------------------------------------
+bin_PROGRAMS += addJavaSource
+addJavaSource_SOURCES = addJavaSource.cpp
+test_addJavaSource: addJavaSource
+	./addJavaSource $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
+
+#---------------------------------------
+# test:   addJavaAssignmentStmt
+# author: Philippe Charles
+#---------------------------------------
+bin_PROGRAMS += addJavaAssignmentStmt
+addJavaAssignmentStmt_SOURCES = addJavaAssignmentStmt.cpp
+test_addJavaAssignmentStmt: addJavaAssignmentStmt
+	./addJavaAssignmentStmt $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+
+#---------------------------------------
+# test:   addJavaExpression
+# author: Philippe Charles
+#---------------------------------------
+bin_PROGRAMS += addJavaExpression
+addJavaExpression_SOURCES = addJavaExpression.cpp
+test_addJavaExpression: addJavaExpression
+	./addJavaExpression $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+
+#---------------------------------------
+# test:   addJavaVariableDeclaration
+# author: Philippe Charles
+#---------------------------------------
+bin_PROGRAMS += addJavaVariableDeclaration
+addJavaVariableDeclaration_SOURCES = addJavaVariableDeclaration.cpp
+test_addJavaVariableDeclaration: addJavaVariableDeclaration
+	./addJavaVariableDeclaration $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+

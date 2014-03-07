@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = \
+	unit_tests
+
 ##################################################################################
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
