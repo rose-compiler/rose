@@ -13060,10 +13060,47 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol_copy->get_name(),otherPossibleScope_original);
                          if (variableSymbolInTargetAST == NULL)
                             {
-#if 0
+#if 1
                               targetScope->get_symbol_table()->print("targetScope: symbol table");
                               otherPossibleScope_original->get_symbol_table()->print("otherPossibleScope_original: symbol table");
 #endif
+
+                           // Check for the case of a record reference (member of data structure).
+                              SgExpression* parentExpression = isSgExpression(varRefExp_copy->get_parent());
+                              SgBinaryOp*   parentBinaryOp   = isSgBinaryOp(parentExpression);
+                              SgDotExp*     parentDotExp     = isSgDotExp(parentExpression);
+                              SgArrowExp*   parentArrowExp   = isSgArrowExp(parentExpression);
+                              if (parentDotExp != NULL || parentArrowExp != NULL)
+                                 {
+                                // This is a data member reference, so it's scope is the associated data structure.
+                                   SgExpression* lhs = parentBinaryOp->get_lhs_operand();
+                                   ROSE_ASSERT(lhs != NULL);
+                                   ROSE_ASSERT(parentBinaryOp->get_rhs_operand() == varRefExp_copy);
+
+                                   SgType* type = lhs->get_type();
+                                   ROSE_ASSERT(type != NULL);
+
+                                   printf ("type = %p = %s \n",type,type->class_name().c_str());
+
+                                   SgNamedType* namedType = isSgNamedType(type);
+                                   ROSE_ASSERT(namedType != NULL);
+                                   SgDeclarationStatement* declaration = namedType->get_declaration();
+                                   ROSE_ASSERT(declaration != NULL);
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                   ROSE_ASSERT(classDeclaration != NULL);
+                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declaration->get_definingDeclaration());
+                                   ROSE_ASSERT(definingClassDeclaration != NULL);
+                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                   ROSE_ASSERT(classDefinition != NULL);
+
+                                   printf ("case V_SgClassDeclaration: classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
+
+                                // I think we want the copy.
+                                   otherPossibleScope_original = classDefinition;
+
+                                   variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol_copy->get_name(),otherPossibleScope_original);
+                                 }
+                              
                             }
                          ROSE_ASSERT(variableSymbolInTargetAST != NULL);
                          SgInitializedName* initializedName = variableSymbolInTargetAST->get_declaration();
