@@ -158,7 +158,7 @@ test3a.passed: injectSnippet snippets3.c specimen1.c $(C_INJECTION_TEST)
 		TITLE="include files [$@]"	\
 		SNIPPET=snippets3.c,::print	\
 		SPECIMEN=specimen1.c		\
-		IPOINT=::ipoint1		\
+		IPOINT=::ipoint2		\
 		INSERT_MECHANISM=stmts		\
 		LOCDECLS_POSITION=end		\
 		RECURSIVE_INSERTION=yes		\
@@ -170,7 +170,7 @@ test3b.passed: injectSnippet snippets3.c specimen1.c $(C_INJECTION_TEST)
 		TITLE="include files [$@]"	\
 		SNIPPET=snippets3.c,::print	\
 		SPECIMEN=specimen1.c		\
-		IPOINT=::ipoint1		\
+		IPOINT=::ipoint2		\
 		INSERT_MECHANISM=stmts		\
 		LOCDECLS_POSITION=end		\
 		RECURSIVE_INSERTION=yes		\
@@ -483,26 +483,24 @@ testJava2b.passed: injectSnippet Snippets2.java Specimen1.java $(JAVA_INJECTION_
 		COPY_RELATED_THINGS=yes			\
 		$(JAVA_INJECTION_TEST) $@
 
-testJava2c.passed: injectSnippet Snippets2.java Specimen1.java $(JAVA_INJECTION_TEST)
+testJava2c.passed: injectSnippet Snippets2.java Specimen1b.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)									\
 		TITLE="global entities [$@]"						\
-		DISABLED="Java tests not set up to handle COPY_RELATED_THINGS=no"	\
 		SNIPPET=Snippets2.java,Snippets2.count					\
-		SPECIMEN=Specimen1.java							\
-		IPOINT=Specimen1.ipoint1						\
+		SPECIMEN=Specimen1b.java						\
+		IPOINT=Specimen1b.ipoint1						\
 		INSERT_MECHANISM=stmts							\
 		RECURSIVE_INSERTION=yes							\
 		COPY_DEFINITIONS=no							\
 		COPY_RELATED_THINGS=no							\
 		$(JAVA_INJECTION_TEST) $@
 
-testJava2d.passed: injectSnippet Snippets2.java Specimen1.java $(JAVA_INJECTION_TEST)
+testJava2d.passed: injectSnippet Snippets2.java Specimen1b.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)									\
 		TITLE="global entities [$@]"						\
-		DISABLED="Java tests not set up to handle COPY_RELATED_THINGS=no"	\
 		SNIPPET=Snippets2.java,Snippets2.count					\
-		SPECIMEN=Specimen1.java							\
-		IPOINT=Specimen1.ipoint1						\
+		SPECIMEN=Specimen1b.java						\
+		IPOINT=Specimen1b.ipoint1						\
 		INSERT_MECHANISM=body							\
 		RECURSIVE_INSERTION=yes							\
 		COPY_DEFINITIONS=no							\
@@ -511,7 +509,7 @@ testJava2d.passed: injectSnippet Snippets2.java Specimen1.java $(JAVA_INJECTION_
 
 #----------------------------------------------------------------------------------------------------
 # testJava3*.passed are for injection Snippets3.java into Specimen1.java in various ways.
-TEST_TARGETS += testJava3a.passed testJava3b.passed
+TEST_TARGETS += testJava3a.passed
 testJava3a.passed: injectSnippet Snippets3.java Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)					\
 		TITLE="imports [$@]"			\
@@ -522,18 +520,6 @@ testJava3a.passed: injectSnippet Snippets3.java Specimen1.java $(JAVA_INJECTION_
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
 		COPY_RELATED_THINGS=yes			\
-		$(JAVA_INJECTION_TEST) $@
-testJava3b.passed: injectSnippet snippets3.c specimen1.c $(JAVA_INJECTION_TEST)
-	@$(RTH_RUN)									\
-		TITLE="imports [$@]"							\
-		DISABLED="Java tests no set up to handle COPY_RELATED_THINGS=no"	\
-		SNIPPET=snippets3.c,::print						\
-		SPECIMEN=specimen1.c							\
-		IPOINT=::ipoint1							\
-		INSERT_MECHANISM=stmts							\
-		RECURSIVE_INSERTION=yes							\
-		COPY_DEFINITIONS=no							\
-		COPY_RELATED_THINGS=no							\
 		$(JAVA_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -580,7 +566,7 @@ testJava4c.passed: injectSnippet Snippets5.java Specimen1.java $(JAVA_INJECTION_
 
 #----------------------------------------------------------------------------------------------------
 # testJava5*.passed are for injection Snippets6.java into Specimen1.java in various ways.
-TEST_TARGETS += testJava5a.passed testJava5c.passed testJava5d.passed testJava5f.passed
+TEST_TARGETS += testJava5a.passed testJava5c.passed
 testJava5a.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)						\
 		TITLE="recursive invocation [$@]"		\
@@ -590,7 +576,7 @@ testJava5a.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_
 		INSERT_MECHANISM=stmts				\
 		RECURSIVE_INSERTION=yes				\
 		COPY_DEFINITIONS=no				\
-		COPY_RELATED_THINGS=yes				\
+		COPY_RELATED_THINGS=no				\
 		$(JAVA_INJECTION_TEST) $@
 
 testJava5c.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_TEST)
@@ -602,34 +588,9 @@ testJava5c.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_
 		INSERT_MECHANISM=stmts				\
 		RECURSIVE_INSERTION=no				\
 		COPY_DEFINITIONS=yes				\
-		COPY_RELATED_THINGS=yes				\
+		COPY_RELATED_THINGS=no				\
 		$(JAVA_INJECTION_TEST) $@
 
-testJava5d.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_TEST)
-	@$(RTH_RUN)									\
-		TITLE="recursive invocation [$@]"					\
-		DISABLED="Java tests no set up to handle COPY_RELATED_THINGS=no"	\
-		SNIPPET=Snippets6.java,Snippets6.addWithError				\
-		SPECIMEN=Specimen1.java							\
-		IPOINT=Specimen1.ipoint1						\
-		INSERT_MECHANISM=stmts							\
-		RECURSIVE_INSERTION=yes							\
-		COPY_DEFINITIONS=no							\
-		COPY_RELATED_THINGS=no							\
-		$(JAVA_INJECTION_TEST) $@
-
-testJava5f.passed: injectSnippet Snippets6.java Specimen1.java $(JAVA_INJECTION_TEST)
-	@$(RTH_RUN)									\
-		TITLE="recursive invocation [$@]"					\
-		DISABLED="Java tests no set up to handle COPY_RELATED_THINGS=no"	\
-		SNIPPET=Snippets6.java,Snippets6.addWithError				\
-		SPECIMEN=Specimen1.java							\
-		IPOINT=Specimen1.ipoint1						\
-		INSERT_MECHANISM=stmts							\
-		RECURSIVE_INSERTION=no							\
-		COPY_DEFINITIONS=yes							\
-		COPY_RELATED_THINGS=no							\
-		$(JAVA_INJECTION_TEST) $@
 
 # DQ (3/2/2014): Extra tests I have to build:
 # ./injectSnippet --test:snippet=snippet2014_01.foo --test:ipoint-function=foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(src_dir)/specimen2014_01.c
