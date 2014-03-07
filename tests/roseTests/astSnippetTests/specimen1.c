@@ -42,7 +42,7 @@ ipoint2()
     return s3;
 }
 
-void
+double
 ipoint3()
 {
     double f1 = 3.14;

@@ -303,7 +303,5 @@ main(int argc, char *argv[])
      printf ("DONE: Generate the Whole AST graph! \n");
 #endif
 
-    backend(project);
-
-    return 0;
+    return backend(project);
 }
