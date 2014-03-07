@@ -2254,6 +2254,16 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
+//--------------------------------Java interface functions ---------------------
+      std::string getTempDirectory();
+      void destroyTempDirectory(std::string);
+      void processFile(SgProject *, std::string);
+      std::string preprocessPackage(SgProject *, std::string);
+      std::string preprocessImport(SgProject *, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string);
+      SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
+      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string);
+
 }// end of namespace
 
 #endif
