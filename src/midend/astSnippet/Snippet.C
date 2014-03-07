@@ -1024,6 +1024,8 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 ROSE_ASSERT(scope != NULL);
                 ROSE_ASSERT(scope->get_parent() != NULL);
 
+                printf ("Snippet::insertRelatedThingsForC(): scope for insertion point = %p = %s \n",scope,scope->class_name().c_str());
+
                 SgClassDeclaration* cdecl_copy = isSgClassDeclaration(newStmt);
                 cdecl_copy->set_scope(scope);
 
@@ -1044,7 +1046,9 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                           continue;
                         }
                    }
+
                 ROSE_ASSERT(classSymbolInTargetAST != NULL);
+
                 SgDeclarationStatement* decl = classSymbolInTargetAST->get_declaration();
                 ROSE_ASSERT(decl != NULL);
 
