@@ -722,6 +722,7 @@ SgUntypedModuleDeclaration
 SgUntypedStatementList
 SgUntypedDeclarationList
 SgUntypedFunctionDeclarationList
+SgUntypedInitializedNameList
 SgUpcBarrierStatement
 SgUpcBlocksizeofExpression
 SgUpcElemsizeofExpression
