@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Global setting for ROSE verbosity
 ROSE_VERBOSE=-rose:verbose 0
+CLASSPATH=-classpath ./rose-output
 
 # Initial definition
 bin_PROGRAMS =
@@ -11,7 +12,7 @@ INCLUDES = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
 LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
 clean-local:
-	rm -f rose_*
+	rm -fr rose-* ecj-classes-* javac-*
 
 check-local:
 	@$(MAKE) $(UNIT_TESTS)
@@ -40,7 +41,7 @@ bin_PROGRAMS += addJavaTransformation
 addJavaTransformation_SOURCES = addJavaTransformation.cpp
 
 test_addJavaTransformation: addJavaTransformation
-	./addJavaTransformation -rose:verbose 0 "$(srcdir)/InputCode_java.java"
+	./addJavaTransformation $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
 
 #---------------------------------------
 # test:   addJavaSource
@@ -49,7 +50,7 @@ test_addJavaTransformation: addJavaTransformation
 bin_PROGRAMS += addJavaSource
 addJavaSource_SOURCES = addJavaSource.cpp
 test_addJavaSource: addJavaSource
-	./addJavaSource $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
+	./addJavaSource $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
 
 #---------------------------------------
 # test:   addJavaAssignmentStmt
@@ -58,7 +59,7 @@ test_addJavaSource: addJavaSource
 bin_PROGRAMS += addJavaAssignmentStmt
 addJavaAssignmentStmt_SOURCES = addJavaAssignmentStmt.cpp
 test_addJavaAssignmentStmt: addJavaAssignmentStmt
-	./addJavaAssignmentStmt $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./addJavaAssignmentStmt $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
 
 #---------------------------------------
 # test:   addJavaExpression
@@ -67,7 +68,7 @@ test_addJavaAssignmentStmt: addJavaAssignmentStmt
 bin_PROGRAMS += addJavaExpression
 addJavaExpression_SOURCES = addJavaExpression.cpp
 test_addJavaExpression: addJavaExpression
-	./addJavaExpression $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./addJavaExpression $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
 
 #---------------------------------------
 # test:   addJavaVariableDeclaration
@@ -76,5 +77,5 @@ test_addJavaExpression: addJavaExpression
 bin_PROGRAMS += addJavaVariableDeclaration
 addJavaVariableDeclaration_SOURCES = addJavaVariableDeclaration.cpp
 test_addJavaVariableDeclaration: addJavaVariableDeclaration
-	./addJavaVariableDeclaration $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./addJavaVariableDeclaration $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
 
