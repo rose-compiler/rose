@@ -12625,7 +12625,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
      return;
 #endif
 
-     SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+  // SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+     SgFile* targetFile = getEnclosingFileNode(insertionPoint);
 
 #if 0
      printf ("   --- targetFile            = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
@@ -12649,10 +12650,12 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(scope_copy     != NULL);
                ROSE_ASSERT(scope_original != NULL);
 
-               if (TransformationSupport::getFile(scope_original) != targetFile)
+            // if (TransformationSupport::getFile(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_original) != targetFile)
                   {
                     printf ("Warning: SgStatement: scope = %p = %s \n",scope_original,scope_original->class_name().c_str());
-                    SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                 // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
                     ROSE_ASSERT(snippetFile != NULL);
                     ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
 
@@ -12706,7 +12709,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
         {
        // Check the firstnondefiningDeclaration and definingDeclaration
           SgDeclarationStatement* firstNondefiningDeclaration_original = declarationStatement_original->get_firstNondefiningDeclaration();
-          if (TransformationSupport::getFile(firstNondefiningDeclaration_original) != targetFile)
+       // if (TransformationSupport::getFile(firstNondefiningDeclaration_original) != targetFile)
+          if (getEnclosingFileNode(firstNondefiningDeclaration_original) != targetFile)
              {
                printf ("Warning: SgDeclarationStatement: firstNondefiningDeclaration_original is not in target file \n");
             // ROSE_ASSERT(false);
@@ -12714,7 +12718,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
           SgDeclarationStatement* definingDeclaration_original = declarationStatement_original->get_definingDeclaration();
           if (definingDeclaration_original != NULL)
              {
-               if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
+            // if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
+               if (getEnclosingFileNode(definingDeclaration_original) != targetFile)
                   {
                     printf ("Warning: SgDeclarationStatement: definingDeclaration is not in target file \n");
                  // ROSE_ASSERT(false);
@@ -12749,15 +12754,27 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     SgDeclarationStatement* declaration = namedType->get_declaration();
                     ROSE_ASSERT(declaration != NULL);
 
-                    if (TransformationSupport::getFile(declaration) != targetFile)
+                 // if (TransformationSupport::getFile(declaration) != targetFile)
+                    if (getEnclosingFileNode(declaration) != targetFile)
                        {
                          printf ("Warning: SgExpression: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-                         SgFile* snippetFile = TransformationSupport::getFile(declaration);
-                         ROSE_ASSERT(snippetFile != NULL);
-                         ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                         if (classDeclaration != NULL)
+                            {
+                           // Check the name of the class.
+                              printf ("Warning: SgExpression: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->get_name().str());
+                            }
+                      // DQ (3/7/2014): Note that the getEnclosingFileNode(declaration) can be NULL for Java if 
+                      // the is a class that is not associated with a file (e.g. BigInteger which is java.lang).
+                         SgFile* snippetFile = getEnclosingFileNode(declaration);
+                      // ROSE_ASSERT(snippetFile != NULL);
+                         if (snippetFile != NULL)
+                            {
+                              ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
 
-                         printf ("Warning: SgExpression: type declaration not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
-                      // ROSE_ASSERT(false);
+                              printf ("Warning: SgExpression: type declaration not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
+                           // ROSE_ASSERT(false);
+                            }
                        }
                   }
              }
@@ -12777,7 +12794,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(scope_copy != NULL);
                ROSE_ASSERT(scope_original != NULL);
 
-               if (TransformationSupport::getFile(scope_original) != targetFile)
+            // if (TransformationSupport::getFile(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_original) != targetFile)
                   {
 #if 0
                     printf ("Warning: case V_SgInitializedName: scope_copy     = %p = %s \n",scope_copy,scope_copy->class_name().c_str());
@@ -12786,7 +12804,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     printf ("Warning: case V_SgInitializedName: initializedName_copy->get_parent()     = %p \n",initializedName_copy->get_parent());
                     printf ("Warning: case V_SgInitializedName: initializedName_original->get_parent() = %p \n",initializedName_original->get_parent());
 #endif
-                    SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                 // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
 
                     ROSE_ASSERT(snippetFile != NULL);
                     ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
@@ -12807,7 +12826,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          printf ("Found case of named type which might refer to a type from a declaration in another file \n");
                          SgDeclarationStatement* decl = namedType_copy->get_declaration();
                          ROSE_ASSERT(decl != NULL);
-                         if (TransformationSupport::getFile(decl) != targetFile)
+                      // if (TransformationSupport::getFile(decl) != targetFile)
+                         if (getEnclosingFileNode(decl) != targetFile)
                             {
                               printf ("Warning: case V_SgInitializedName: named type's associated declaration is not in target file \n");
                            // ROSE_ASSERT(false);
@@ -12912,7 +12932,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                SgClassSymbol* classSymbol_copy = isSgClassSymbol(classDeclaration_copy->search_for_symbol_from_symbol_table());
                ROSE_ASSERT(classSymbol_copy != NULL);
-               if (TransformationSupport::getFile(classSymbol_copy) != targetFile)
+            // if (TransformationSupport::getFile(classSymbol_copy) != targetFile)
+               if (getEnclosingFileNode(classSymbol_copy) != targetFile)
                   {
                     printf ("Warning: case V_SgClassDeclaration: classSymbol_copy not in target file \n");
 
@@ -13009,7 +13030,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgVarRefExp* varRefExp_original = isSgVarRefExp(node_original);
                SgVariableSymbol* variableSymbol_copy = isSgVariableSymbol(varRefExp_copy->get_symbol());
                ROSE_ASSERT(variableSymbol_copy != NULL);
-               if (TransformationSupport::getFile(variableSymbol_copy) != targetFile)
+            // if (TransformationSupport::getFile(variableSymbol_copy) != targetFile)
+               if (getEnclosingFileNode(variableSymbol_copy) != targetFile)
                   {
 #if 1
                     printf ("Warning: case V_SgVarRefExp: variableSymbol not in target file: name = %s \n",variableSymbol_copy->get_name().str());
@@ -13129,7 +13151,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node_copy);
                SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionRefExp->get_symbol());
                ROSE_ASSERT(functionSymbol != NULL);
-               if (TransformationSupport::getFile(functionSymbol) != targetFile)
+            // if (TransformationSupport::getFile(functionSymbol) != targetFile)
+               if (getEnclosingFileNode(functionSymbol) != targetFile)
                   {
 #if 0
                     printf ("Warning: case V_SgFunctionRefExp: functionSymbol not in target file (find function = %s) \n",functionSymbol->get_name().str());
@@ -13172,7 +13195,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node_copy);
                SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
                ROSE_ASSERT(memberFunctionSymbol != NULL);
-               if (TransformationSupport::getFile(memberFunctionSymbol) != targetFile)
+            // if (TransformationSupport::getFile(memberFunctionSymbol) != targetFile)
+               if (getEnclosingFileNode(memberFunctionSymbol) != targetFile)
                   {
                  // Not implemented (initial work is focused on C, then Java, then C++.
                     printf ("Warning: case V_SgMemberFunctionRefExp: memberFunctionSymbol not in target file (find member function = %s) \n",memberFunctionSymbol->get_name().str());
@@ -13222,7 +13246,8 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
   // target AST.
      ROSE_ASSERT(snippetFile_of_copy == targetFile);
 
-     SgFile* snippetFile_of_original = TransformationSupport::getFile(original_before_copy);
+  // SgFile* snippetFile_of_original = TransformationSupport::getFile(original_before_copy);
+     SgFile* snippetFile_of_original = getEnclosingFileNode(original_before_copy);
 
      ROSE_ASSERT(snippetFile_of_original != targetFile);
 
