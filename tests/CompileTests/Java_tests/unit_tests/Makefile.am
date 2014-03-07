@@ -21,11 +21,12 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 UNIT_TESTS = \
-	test_addJavaTransformation \
-	test_addJavaSource \
 	test_addJavaAssignmentStmt \
 	test_addJavaExpression \
 	test_addJavaVariableDeclaration
+# TOO1 (3/7/2014): Requires Java 7u51+; JVM crashes on "jni_GetStringUTFChars"
+#test_addJavaSource
+#test_addJavaTransformation
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
