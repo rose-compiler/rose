@@ -28,6 +28,23 @@
 namespace po = boost::program_options;
 using namespace CodeThorn;
 
+// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
+list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string prefix) {
+  list<SgPragmaDeclaration*> pragmaList;
+  RoseAst ast(root);
+  cout<<"STATUS: searching for fragment markers."<<endl;
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
+      string foundPrefix=SageInterface::extractPragmaKeyword(pragmaDecl);
+      cout<<"DEBUG: PREFIX:"<<foundPrefix<<endl;
+      if(prefix==foundPrefix || "end"+prefix==foundPrefix) {
+        pragmaList.push_back(pragmaDecl);
+      }
+    }
+  }
+  return pragmaList;
+}
+
 void CodeThornLanguageRestrictor::initialize() {
   LanguageRestrictorCppSubset1::initialize();
   // RERS 2013 (required for some system headers)
@@ -436,35 +453,35 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
 
   {
     // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
-	if(isSgCompoundAssignOp(root)) {
-	  dump1_stats.numElimAssignOperator++;
-	  SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
-	  SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
-	  SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
-	  SgExpression* newExp;
-	  switch(root->variantT()) {
-	  case V_SgPlusAssignOp:
-	   newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
-	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-	   break;
-	  case V_SgDivAssignOp:
-	   newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
-	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+    if(isSgCompoundAssignOp(root)) {
+      dump1_stats.numElimAssignOperator++;
+      SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+      SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+      SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
+      SgExpression* newExp;
+      switch(root->variantT()) {
+      case V_SgPlusAssignOp:
+        newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
+        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+        break;
+      case V_SgDivAssignOp:
+        newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
+        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+        break;
+      case V_SgMinusAssignOp:
+        newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
+        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+        break;
+      case V_SgMultAssignOp:
+        newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
+        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
 		break;
-	  case V_SgMinusAssignOp:
-	   newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
-	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-		break;
-	  case V_SgMultAssignOp:
-	   newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
-	   root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-		break;
-	  default: /* ignore all other cases - all other expr remain unmodified */
-		;
-	  }
-	}
+      default: /* ignore all other cases - all other expr remain unmodified */
+        ;
+      }
+    }
   }
-
+  
   do{
     someTransformationApplied=false;
 
@@ -619,7 +636,11 @@ struct EStateExprInfo {
 //typedef pair<const EState*, SgExpression*> EStateExprPair;
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
 
-void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates) {
+bool isAtMarker(Label lab, const EState* estate) {
+  Label elab=estate->label();
+  return elab==lab;
+}
+void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
   Labeler* labeler=ana->getLabeler();
   VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
   TransitionGraph* tg=ana->getTransitionGraph();
@@ -627,6 +648,22 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
   EStatePtrSet succSet=tg->succ(estate);
   int numProcessedArrayUpdates=0;
   vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
+
+  // initialize markers
+  // if NO_LABEL is specified then assume start-label at first node and that the end-label is never found (on the path).
+  bool foundStartMarker=false;
+  bool foundEndMarker=false;
+  if(startMarkerLabel==Labeler::NO_LABEL) {
+    foundStartMarker=true;
+  } else {
+    foundStartMarker=isAtMarker(startMarkerLabel,estate);
+  }
+  if(endMarkerLabel==Labeler::NO_LABEL) {
+    foundEndMarker=isAtMarker(endMarkerLabel,estate);
+  } else {
+    foundEndMarker=false;
+  }
+  
   while(succSet.size()>=1) {
     if(succSet.size()>1) {
 	  cerr<<estate->toString()<<endl;
@@ -635,20 +672,25 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
     } else {
       EStatePtrSet::iterator i=succSet.begin();
       estate=*i;
-    }
-    // investigate state
-    Label lab=estate->label();
-    SgNode* node=labeler->getNode(lab);
-    // eliminate superfluous root nodes
-    if(isSgExprStatement(node))
-      node=SgNodeHelper::getExprStmtChild(node);
-    if(isSgExpressionRoot(node))
-      node=SgNodeHelper::getExprRootChild(node);
-    if(SgExpression* exp=isSgExpression(node)) {
-      if(SgNodeHelper::isArrayElementAssignment(node)) {
-		stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+    }  
+    foundStartMarker=foundStartMarker||isAtMarker(startMarkerLabel,estate);
+    foundEndMarker=foundEndMarker||isAtMarker(endMarkerLabel,estate);
+    if(foundStartMarker && !foundEndMarker) {
+      // investigate state
+      Label lab=estate->label();
+      SgNode* node=labeler->getNode(lab);
+      // eliminate superfluous root nodes
+      if(isSgExprStatement(node))
+        node=SgNodeHelper::getExprStmtChild(node);
+      if(isSgExpressionRoot(node))
+        node=SgNodeHelper::getExprRootChild(node);
+      if(SgExpression* exp=isSgExpression(node)) {
+        if(SgNodeHelper::isArrayElementAssignment(node)) {
+          stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+        }
       }
     }
+
     // next successor set
     succSet=tg->succ(estate);
   }
@@ -660,25 +702,25 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
 
   // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
   for(int i=0;i<N;++i) {
-	const EState* p_estate=stgArrayUpdateSequence[i].first;
-	const PState* p_pstate=p_estate->pstate();
-	SgExpression* p_exp=stgArrayUpdateSequence[i].second;
-	SgNode* p_expCopy=SageInterface::copyExpression(p_exp);
-	// print for temporary info purpose
-	substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
-	rewriteAst(p_expCopy, variableIdMapping);
-	SgExpression* p_expCopy2=isSgExpression(p_expCopy);
-	if(!p_expCopy2) {
-	  cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
-	  exit(1);
-	}
-	numProcessedArrayUpdates++;
-	if(numProcessedArrayUpdates%100==0) {
-	  cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
-	}
-	arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
+    const EState* p_estate=stgArrayUpdateSequence[i].first;
+    const PState* p_pstate=p_estate->pstate();
+    SgExpression* p_exp=stgArrayUpdateSequence[i].second;
+    SgNode* p_expCopy=SageInterface::copyExpression(p_exp);
+    // print for temporary info purpose
+    substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+    rewriteAst(p_expCopy, variableIdMapping);
+    SgExpression* p_expCopy2=isSgExpression(p_expCopy);
+    if(!p_expCopy2) {
+      cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
+      exit(1);
+    }
+    numProcessedArrayUpdates++;
+    if(numProcessedArrayUpdates%100==0) {
+      cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+    }
+    arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
   }	
-
+  
 }
 
 struct ArrayElementAccessData {
@@ -797,7 +839,6 @@ void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapp
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
 void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
-  //  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
   ++i; // we start at element 2 because no substitutions can be performed in the first one AND this simplifies passing the previous element (i-1) when starting the backward search
   for(;i!=arrayUpdates.end();++i) {
@@ -818,24 +859,22 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
           SgExpression* defRhs=isSgExpression(SgNodeHelper::getRhs(defAssign));
           ROSE_ASSERT(defRhs);
           //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
-		  switch(sarMode) {
-		  case SAR_SUBSTITUTE: {
-			SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
-			break;
-		  }
-		  case SAR_SSA: {
-			AstAttribute* attr=SgNodeHelper::getLhs(defAssign)->getAttribute("Number");
-			if(attr) {
-			  //cout<<"DEBUG: found attr:"<<attr->toString();
-			  useRef->setAttribute("Number",attr);
-			}
-			break;
-		  }
-		  }
+          switch(sarMode) {
+          case SAR_SUBSTITUTE: {
+            SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            break;
+          }
+          case SAR_SSA: {
+            AstAttribute* attr=SgNodeHelper::getLhs(defAssign)->getAttribute("Number");
+            if(attr) {
+              useRef->setAttribute("Number",attr);
+            }
+            break;
+          }
+          } // end switch
         }
       }
     }
-    //cout<<endl;
   }
 }
 
@@ -964,6 +1003,7 @@ int main( int argc, char * argv[] ) {
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+    ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -980,8 +1020,8 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("version")) {
-    cout << "CodeThorn version 1.2\n";
-    cout << "Written by Markus Schordan and Adrian Prantl 2012-2013\n";
+    cout << "CodeThorn version 1.4\n";
+    cout << "Written by Markus Schordan and Adrian Prantl 2012-2014\n";
     return 0;
   }
 
@@ -1052,6 +1092,11 @@ int main( int argc, char * argv[] ) {
   Analyzer analyzer;
   global_analyzer=&analyzer;
   
+  string option_pragma_name;
+  if (args.count("limit-to-fragment")) {
+    option_pragma_name = args["limit-to-fragment"].as<string>();
+  }
+
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
     ltl_file = args["verify"].as<string>();
@@ -1134,13 +1179,19 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--csv-ltl"
         || string(argv[i])=="--spot-stg"
         || string(argv[i])=="--dump-sorted"
-        || string(argv[i])=="--dump-non-sorted3"
+        || string(argv[i])=="--dump-non-sorted"
+        || string(argv[i])=="--limit-to-fragment"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
       assert(i+1<argc);
         argv[i+1] = strdup("");
     }
+  }
+
+  // reset dump1 in case sorted or non-sorted is used
+  if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
+    boolOptions.registerOption("dump1",true);
   }
 
   // handle RERS mode: reconfigure options
@@ -1195,6 +1246,32 @@ int main( int argc, char * argv[] ) {
 #if 0
   analyzer.getVariableIdMapping()->toStream(cout);
 #endif
+
+  SgNode* fragmentStartNode=0;
+  SgNode* fragmentEndNode=0;
+
+  if(option_pragma_name!="") {
+    list<SgPragmaDeclaration*> pragmaDeclList=findPragmaDeclarations(root, option_pragma_name);
+    if(pragmaDeclList.size()==0) {
+      cerr<<"Error: pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
+      exit(1);
+    }
+    if(pragmaDeclList.size()==1) {
+      cerr<<"Error: pragma "<<option_pragma_name<<" only found once. The fragment is required to be marked with two pragmas."<<endl;
+      exit(1);
+    }
+    if(pragmaDeclList.size()>2) {
+      cerr<<"Error: pragma "<<option_pragma_name<<" : too many markers found ("<<pragmaDeclList.size()<<")"<<endl;
+      exit(1);
+    }
+    cout<<"STATUS: Fragment marked by "<<option_pragma_name<<": correctly identified."<<endl;
+
+    ROSE_ASSERT(pragmaDeclList.size()==2);
+    list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
+    fragmentStartNode=*i;
+    ++i;
+    fragmentEndNode=*i;
+  }
 
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
@@ -1332,35 +1409,48 @@ int main( int argc, char * argv[] ) {
   double arrayUpdateSsaNumberingRunTime=0;
   
   if(boolOptions["dump1"]) {
-	ArrayUpdatesSequence arrayUpdates;
-	cout<<"STATUS: performing array analysis on STG."<<endl;
-	cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-	timer.start();
-	extractArrayUpdateOperations(&analyzer,arrayUpdates);
-	arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
-	dump1_stats.numArrayUpdates=arrayUpdates.size();
-	cout<<"STATUS: establishing array-element SSA numbering."<<endl;
-	timer.start();
-	attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
-	substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
-	arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+    ArrayUpdatesSequence arrayUpdates;
+    cout<<"STATUS: performing array analysis on STG."<<endl;
+    cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+    timer.start();
 
-	cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
-	timer.start();
-	if (args.count("dump-non-sorted")) {
-	  string filename=args["dump-non-sorted"].as<string>();
-	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
-	}
-	if (args.count("dump-sorted")) {
-	  string filename=args["dump-sorted"].as<string>();
-	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
-	}
-	string filename="arrayupdates.txt";
-	writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
-	
+    Label fragmentStartLabel=Labeler::NO_LABEL;
+    if(fragmentStartNode!=0) {
+      fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
+      cout<<"INFO: Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
+    }
+    
+    Label fragmentEndLabel=Labeler::NO_LABEL;
+    if(fragmentEndNode!=0) {
+      fragmentEndLabel=analyzer.getLabeler()->getLabel(fragmentEndNode);
+      cout<<"INFO: Fragment: end-node  : "<<fragmentEndNode<<  "  end-label  : "<<fragmentEndLabel<<endl;
+    }
+
+    extractArrayUpdateOperations(&analyzer,arrayUpdates,fragmentStartLabel,fragmentEndLabel);
+    arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+    dump1_stats.numArrayUpdates=arrayUpdates.size();
+    cout<<"STATUS: establishing array-element SSA numbering."<<endl;
+    timer.start();
+    attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
+    substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
+    arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+    
+    cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
+    timer.start();
+    if (args.count("dump-non-sorted")) {
+      string filename=args["dump-non-sorted"].as<string>();
+      writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
+    }
+    if (args.count("dump-sorted")) {
+      string filename=args["dump-sorted"].as<string>();
+      writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+    }
+    string filename="arrayupdates.txt";
+    writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+    
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime;
   }
-
+  
   if(args.count("csv-stats")) {
     string filename=args["csv-stats"].as<string>().c_str();
     stringstream text;
@@ -1400,14 +1490,14 @@ int main( int argc, char * argv[] ) {
     text<<"threads,"<<numberOfThreadsToUse<<endl;
     //    text<<"abstract-and-const-states,"
     //    <<"";
-	text<<"rewrite-stats, "
-		<<dump1_stats.numArrayUpdates<<", "
-		<<dump1_stats.numElimMinusOperator<<", "
-		<<dump1_stats.numElimAssignOperator<<", "
-		<<dump1_stats.numAddOpReordering<<", "
-		<<dump1_stats.numConstantFolding<<", "
-		<<dump1_stats.numVariableElim
-		<<endl;
+    text<<"rewrite-stats, "
+        <<dump1_stats.numArrayUpdates<<", "
+        <<dump1_stats.numElimMinusOperator<<", "
+        <<dump1_stats.numElimAssignOperator<<", "
+        <<dump1_stats.numAddOpReordering<<", "
+        <<dump1_stats.numConstantFolding<<", "
+        <<dump1_stats.numVariableElim
+        <<endl;
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }
