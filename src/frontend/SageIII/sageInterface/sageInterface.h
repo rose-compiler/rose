@@ -2255,7 +2255,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
-      std::string getTempDirectory();
+      std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
       void processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
