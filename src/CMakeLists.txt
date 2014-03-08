@@ -432,6 +432,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
