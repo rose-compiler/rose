@@ -711,7 +711,15 @@ ResetParentPointers::evaluateInheritedAttribute (
 
 #if 0
      printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->sage_class_name());
-
+#endif
+#if 0
+  // ROSE_ASSERT(node->get_file_info() != NULL);
+     if (node->get_file_info() != NULL)
+        {
+          node->get_file_info()->display("ResetParentPointers::evaluateInheritedAttribute: debug");
+        }
+#endif
+#if 0
      if (isSgTryStmt(node) != NULL)
         {
           printf ("\n\n################ FOUND TRY STATEMENT ##################### \n\n\n");
