@@ -17522,7 +17522,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
 /**
  * Create a temporary directory if it does not yet exist and return its name.
  */
-string SageInterface::getTempDirectory(SgProject *project) {
+std::string SageInterface::getTempDirectory(SgProject *project) {
     jstring temp_directory = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, ::getTempDirectoryMethod);
 
     string directory_name = ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
