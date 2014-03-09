@@ -14,7 +14,9 @@ include_directories(
 #-------------------------------------------------------------------------------
   ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH2}
-  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection)
+  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
+# DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
+  ${CMAKE_SOURCE_DIR}/src/midend/astMatching)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
