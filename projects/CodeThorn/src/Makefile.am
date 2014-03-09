@@ -577,7 +577,12 @@ CODETHORN_TESTS= \
     tests/rers/properties6.txt \
     tests/rers/properties7.txt \
     tests/rers/properties8.txt \
-    tests/rers/properties9.txt
+    tests/rers/properties9.txt \
+    tests/rers/Problem28_mod.c \
+    tests/rers/Problem28_opt.C \
+    tests/rers/Problem901-solutions.csv \
+    tests/rers/Problem901-solutions.ltl.csv \
+    tests/rers/Problem901.c
 
 # MS: does not exist
 #    tests/test.ltl \
