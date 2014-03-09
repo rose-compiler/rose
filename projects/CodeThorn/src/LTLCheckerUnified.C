@@ -506,9 +506,9 @@ public:
       //cerr<<"** added new node "<<v<<": "<<new_state<<endl;
     } else {
       v = (*i).second;
-
+      //#define MERGE_TOP_STATES
 #ifdef MERGE_TOP_STATES
-      if (new_state.val.isTrue() || new_state.val.isFalse()) {
+      if (new_state.top().isTrue() || new_state.top().isFalse()) {
     // If there is both A and !A, create a single A=Top instead
     LTLState neg_state = new_state;
     neg_state.val = !new_state.val;
@@ -1047,7 +1047,11 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       // Use the neutral element instead of Bot.
+#ifdef INIT_TO_NEUTRAL_ELEMENT      
       BoolLattice new_val  = /*old_val ||*/ e1 || (succ_val.isBot()?false:succ_val);
+#else
+      BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
+#endif
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1065,7 +1069,11 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
       BoolLattice new_val = /*old_val &&*/ e1 && (succ_val.isBot()?true:succ_val);
+#else
+      BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
+#endif
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1117,7 +1125,11 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
       BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && (succ_val.isBot()?true:succ_val)));
+#else
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
+#endif
       if (verbose) cerr<<"  Until(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1141,6 +1153,7 @@ public:
      * Implementation status: DONE
      */
     void visit(const WeakUntil* expr) {
+      // Lowered in the parser.
       assert(false);
     }
 
@@ -1156,7 +1169,11 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
       BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || (succ_val.isBot()?false:succ_val)));
+#else
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
+#endif
       if (verbose) cerr<<"  Release(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1362,7 +1379,11 @@ UChecker::verify(const Formula& f)
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
       //cerr<<"Value at START = "<<s.top()<<endl;
+#ifdef INIT_TO_NEUTRAL_ELEMENT
       b = b && lower(s.top());
+#else
+      b = b && s.top();
+#endif
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;
