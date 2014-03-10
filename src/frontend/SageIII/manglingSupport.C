@@ -394,7 +394,19 @@ mangleQualifiers( const SgScopeStatement* scope )
   // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
      ROSE_ASSERT(scope->class_name() != "SgNode");
 
+  // DQ (2/17/2014): Adding debugging code (issue with new options to gnunet).
   // DQ (1/12/13): Added assertion.
+     if (scope->get_scope() == NULL)
+        {
+#if 0
+          printf ("Warning: In mangleQualifiers(): (scope->get_scope() == NULL): scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#endif
+#if 0
+          scope->get_file_info()->display("Warning: scope->get_scope() == NULL: debug \n");
+#endif
+       // DQ (2/17/2014): In this case there is no mangled name.
+          return SgName("");
+        }
      ROSE_ASSERT(scope->get_scope() != NULL);
 
      string s = mangleQualifiersToString(scope);

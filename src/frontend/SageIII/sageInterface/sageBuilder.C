@@ -892,13 +892,15 @@ SageBuilder::testTemplateArgumentParents( SgDeclarationStatement* decl )
 
             // DQ (9/16/2012): Adding new test.
                ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
+#if 0
+            // DQ (2/16/2014): This happens because the templates arguments are shared across multiple template instantiations and there parent pointers can only match a single template instantiation.
                if (parent != decl->get_firstNondefiningDeclaration())
                   {
                     printf ("Error: In testTemplateArgumentParents(): decl = %p = %s has template argument = %p with parent = %p = %s \n",decl,decl->class_name().c_str(),*i,parent,parent->class_name().c_str());
                     printf ("  --- decl                                    = %p = %s \n",decl,decl->class_name().c_str());
                     printf ("  --- decl->get_firstNondefiningDeclaration() = %p = %s \n",decl->get_firstNondefiningDeclaration(),decl->get_firstNondefiningDeclaration()->class_name().c_str());
                   }
-
+#endif
             // DQ (1/30/2013): Commented this test out so that we could reuse SgTemplateArguments and
             // assure that the mapping from EDG a_template_arg_ptr's to SgTemplateArgument's was 1-to-1.
             // It is not clear if we can relax this constraint in the future.
@@ -9057,11 +9059,14 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
    {
      ROSE_ASSERT(base_type != NULL);
 
+  // DQ (1/30/2014): We need to include typedefs here as well (see test2014_77.c).
   // DQ (9/28/2012): Added that the base type could be an array (see test2012_03.c (C test code)).
   // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
-     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
+  // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type))
+  // if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type))
+     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type) && !isSgArrayType(base_type) && !isSgTypedefType(base_type) && !isSgModifierType(base_type))
         {
-          printf("ERROR: Base type of restrict type must be a pointer or reference type base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+          printf("ERROR: Base type of restrict type must be on a pointer or reference or array or typedef type: base_type = %p = %s \n",base_type,base_type->class_name().c_str());
           printf ("  --- generate_type_list() = %s \n",generate_type_list(base_type).c_str());
           ROSE_ASSERT(false);
         }
@@ -10572,7 +10577,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        else // build a nondefnining declaration if it does not exist
         {
 #if 0
-          printf ("In In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
+          printf ("In SageBuilder::buildClassDeclaration_nfi(): building a nondefnining declaration if it does not exist \n");
 #endif
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
        // DQ (1/1/2012): Fixed to force matching types or IR nodes for defining and non-defining declarations.
@@ -10583,7 +10588,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // nondefdecl = new SgTemplateInstantiationDecl (name,kind,NULL,NULL,NULL,emptyList);
                nondefdecl = new SgTemplateInstantiationDecl (nameWithTemplateArguments,kind,NULL,NULL,NULL,emptyList);
                ROSE_ASSERT(nondefdecl != NULL);
-
+#if 0
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): Build SgTemplateInstantiationDecl: nondefdecl = %p \n",nondefdecl);
+#endif
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
@@ -10697,7 +10704,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
           if (nondefdecl->get_type() == NULL)
              {
-               nondefdecl->set_type(SgClassType::createType(nondefdecl));
+               SgClassType *class_type = (kind == SgClassDeclaration::e_java_parameter 
+                                                ? (SgClassType *) SgJavaParameterType::createType(nondefdecl)
+                                                : (SgClassType *) SgClassType::createType(nondefdecl));
+               nondefdecl->set_type(class_type);
              }
 
        // DQ (3/22/2012): Added assertions.
@@ -12519,3 +12529,106 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 }
 #endif
 
+
+/**
+ * The import_info represents the qualified name of a package, type or static field.
+ */
+SgJavaPackageStatement *SageBuilder::buildJavaPackageStatement(string package_name) {
+    SgJavaPackageStatement *package_statement = new SgJavaPackageStatement(package_name);
+    package_statement -> set_firstNondefiningDeclaration(package_statement);
+    package_statement -> set_definingDeclaration(package_statement);
+    SageInterface::setSourcePosition(package_statement);
+    return package_statement;
+}
+
+/**
+ * The import_info represents the qualified name of a package, type or static field.
+ */
+SgJavaImportStatement *SageBuilder::buildJavaImportStatement(string import_info, bool contains_wildcard) {
+    SgJavaImportStatement *import_statement = new SgJavaImportStatement(import_info, contains_wildcard);
+    import_statement -> set_firstNondefiningDeclaration(import_statement);
+    import_statement -> set_definingDeclaration(import_statement);
+    SageInterface::setSourcePosition(import_statement);
+    return import_statement;
+}
+
+/**
+ *  Build a class with the given name in the given scope and return its SgClassDefinition.
+ */
+SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatement *scope, string name) {
+    ROSE_ASSERT(scope);
+    SgName class_name = name;
+    ROSE_ASSERT(scope -> lookup_class_symbol(class_name) == NULL);
+
+    SgClassDeclaration* nonDefiningDecl              = NULL;
+    bool buildTemplateInstantiation                  = false;
+    SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+    SgClassDeclaration *class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_java_parameter, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    ROSE_ASSERT(class_declaration);
+    class_declaration -> set_parent(scope);
+    class_declaration -> set_scope(scope);
+    SageInterface::setSourcePosition(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition);
+    SageInterface::setSourcePosition(class_definition);
+
+    class_definition -> setAttribute("extensions", new AstSgNodeListAttribute());
+    class_definition -> setAttribute("extension_type_names", new AstRegExAttribute());
+
+    SgScopeStatement *type_space = new SgScopeStatement();
+    type_space -> set_parent(class_definition);
+    SageInterface::setSourcePosition(type_space);
+    class_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
+
+    return class_declaration;
+}
+
+
+/**
+ * Create a source file in the directory_name for the given type_name and add it to the given project.
+ * This function is useful in order to create a new type to be added to a pre-existing Rose AST.
+ */
+SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string directory_name, SgClassDefinition *package_definition, string type_name) {
+    string filename = directory_name + "/" + type_name + ".java";
+    ROSE_ASSERT((*project)[filename] == NULL); // does not already exist!
+
+    string command = string("touch ") + filename; // create the file
+    int status = system(command.c_str());
+    ROSE_ASSERT(status == 0);
+    project -> get_sourceFileNameList().push_back(filename);
+    Rose_STL_Container<std::string> arg_list = project -> get_originalCommandLineArgumentList();
+    arg_list.push_back(filename);
+    Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arg_list, // binaryMode
+                                                                                         false);
+    CommandlineProcessing::removeAllFileNamesExcept(arg_list, fileList, filename);
+    int error_code = 0;
+    SgFile *file = determineFileType(arg_list, error_code, project);
+    SgSourceFile *sourcefile = isSgSourceFile(file);
+    ROSE_ASSERT(sourcefile);
+    sourcefile -> set_parent(project);
+    project -> get_fileList_ptr() -> get_listOfFiles().push_back(sourcefile);
+    ROSE_ASSERT(sourcefile == isSgSourceFile((*project)[filename]));
+
+    //
+    // Create a package statement and add it to the source file
+    //
+    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_definition -> get_declaration() -> get_qualified_name().getString());
+    package_statement -> set_parent(package_definition);
+    sourcefile -> set_package(package_statement);
+
+    //
+    // Initialize an import-list for the sourcefile
+    //
+    SgJavaImportStatementList *import_statement_list = new SgJavaImportStatementList();
+    import_statement_list -> set_parent(sourcefile);
+    sourcefile -> set_import_list(import_statement_list);
+
+    //
+    // Initialize a class-declaration-list for the sourcefile
+    //
+    SgJavaClassDeclarationList *class_declaration_list = new SgJavaClassDeclarationList();
+    class_declaration_list -> set_parent(package_definition);
+    sourcefile -> set_class_list(class_declaration_list);
+
+    return sourcefile;
+}

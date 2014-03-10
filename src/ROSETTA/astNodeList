@@ -758,3 +758,5 @@ SgJavaNormalAnnotation
 SgJavaTypeExpression
 SgJavaQualifiedType
 SgClassExp
+SgJavaUnionType
+SgJavaParameterType

@@ -363,7 +363,7 @@ SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
 
-//! Build super pointer
+//! Build class pointer
 SgClassExp* buildClassExp(SgClassSymbol* sym);
 SgClassExp* buildClassExp_nfi(SgClassSymbol* sym);
 
@@ -1271,6 +1271,11 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 //! Build an abstract handle from a SgNode
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
+
+ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
+ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);
+ROSE_DLL_API SgClassDeclaration *buildJavaDefiningClassDeclaration(SgScopeStatement *, std::string);
+ROSE_DLL_API SgSourceFile *buildJavaSourceFile(SgProject *, std::string, SgClassDefinition *, std::string);
 
 //@}
 
