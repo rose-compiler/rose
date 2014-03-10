@@ -812,44 +812,6 @@ Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
     return visitor.foundComment;
 }
 
-// Find the file that contains this node.  For most languages we simply traverse up the parent pointers until we find the
-// file. But in a Java AST the SgFile node participates only in the downward AST edges, not the back edges.  So we have to turn
-// the whole algorithm upside down: start at the project and traverse down until we find a path to the node we're looking for,
-// then find the SgFile our our path rather than in the parent pointers.  This is certainly not efficient!
-SgFile *
-Snippet::getEnclosingFileNode(SgNode *node)
-{
-    if (!SageInterface::is_Java_language())
-        return SageInterface::getEnclosingFileNode(node);
-        
-    struct Visitor: AstPrePostOrderTraversal {
-        SgNode *deepNode;                               // the node whose SgFile we're trying to find
-        SgFile *inFile;                                 // non-null if the traversal is inside a file
-        Visitor(SgNode *node): deepNode(node), inFile(NULL) {}
-
-        void preOrderVisit(SgNode *node) {
-            if (SgFile *file = isSgFile(node)) {
-                ROSE_ASSERT(NULL==inFile || !"SgFile nodes cannot be nested");
-                inFile = file;
-            }
-            if (node==deepNode)
-                throw inFile;                           // avoid long traversals
-        }
-
-        void postOrderVisit(SgNode *node) {
-            if (isSgFile(node))
-                inFile = NULL;
-        }
-    } visitor(node);
-
-    try {
-        visitor.traverse(SageInterface::getProject());
-    } catch (SgFile *file) {
-        return file;
-    }
-    return NULL;
-}
-
 void
 Snippet::insertRelatedThings(SgStatement *insertionPoint)
 {
@@ -920,9 +882,9 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
 
     // Copy import statements from the snippet's file into the target file.
     if (file->getCopyRelatedThings()) {
-        SgSourceFile *targetFile = isSgSourceFile(getEnclosingFileNode(insertionPoint));
+        SgSourceFile *targetFile = isSgSourceFile(SageInterface::getEnclosingFileNode(insertionPoint));
         ROSE_ASSERT(targetFile || !"snippet insertion point must belong to a file");
-        SgSourceFile *snippetFile = isSgSourceFile(getEnclosingFileNode(ast));
+        SgSourceFile *snippetFile = isSgSourceFile(SageInterface::getEnclosingFileNode(ast));
         ROSE_ASSERT(snippetFile || !"snippet must belong to a file");
         SgJavaImportStatementList *targetImports = targetFile->get_import_list();
         SgJavaImportStatementList *snippetImports = snippetFile->get_import_list();

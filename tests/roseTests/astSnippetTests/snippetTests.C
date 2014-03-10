@@ -22,7 +22,7 @@ findSnippetInAst(SgProject *project, const std::string &snippetFileName, const s
 {
     SgFunctionDefinition *snippetDefn = findFunctionDefinition(project, snippetName);
     ROSE_ASSERT(snippetDefn || !"cannot find snippet in existing AST");
-    SgSourceFile *snippetFileAst = isSgSourceFile(Snippet::getEnclosingFileNode(snippetDefn));
+    SgSourceFile *snippetFileAst = isSgSourceFile(SageInterface::getEnclosingFileNode(snippetDefn));
     ROSE_ASSERT(snippetFileAst || !"snippet has no source file");
 
     SnippetFilePtr snippetFile = SnippetFile::instance(snippetFileName, snippetFileAst);
