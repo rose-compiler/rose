@@ -1439,7 +1439,11 @@ void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
   ss<<",\""; // dquote reqired for condition
   // generate transition condition
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
-    //assert(myIOVal.isConstInt());
+	if(!myIOVal.isConstInt()) {
+	  //assert(myIOVal.isConstInt());
+	  cerr<<"Error: IOVal is NOT const.\n"<<"EState: "<<myTarget->toString()<<endl;
+	  exit(1);
+	}
   }
   // myIOVal.isTop(): this only means that any value *may* be read/written. This cannot be modeled here.
   // if it represents "any of A..F" or any of "U..Z" it could be handled.
