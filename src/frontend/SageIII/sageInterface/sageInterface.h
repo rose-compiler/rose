@@ -2255,14 +2255,15 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
-      std::string getTempDirectory();
+      std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string);
+      void processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string, std::string);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
-      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string);
+      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
 
 }// end of namespace
 

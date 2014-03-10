@@ -62,8 +62,14 @@
    #include "transformationSupport.h"
 #endif
 
+// We need this so that USE_CMAKE will be seen (set via configure).
+#include "rose_config.h"
+
+#ifndef USE_CMAKE
+// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
+#endif
 
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
@@ -17463,6 +17469,9 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
    {
   // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
 
+#ifndef USE_CMAKE
+  // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+
   // This is AST container for the ROSE AST that will provide an iterator.
   // We want two iterators (one for the copy of the snippet and one for the 
   // original snippet so that we can query the original snippet's AST 
@@ -17508,6 +17517,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
 
   // We have reached the end of both ASTs.
      ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
+#endif
 
      return true;
    }
@@ -17522,14 +17532,21 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
 /**
  * Create a temporary directory if it does not yet exist and return its name.
  */
-string SageInterface::getTempDirectory() {
+std::string SageInterface::getTempDirectory(SgProject *project) {
     jstring temp_directory = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, ::getTempDirectoryMethod);
-    return ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+
+    string directory_name = ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+
+    list<string> sourcepath = project -> get_Java_sourcepath();
+    sourcepath.push_back(directory_name); // push it in the back because it should have lower priority
+    project -> set_Java_sourcepath(sourcepath);
+
+    return directory_name;
 }
 
 
 /**
- * Use the system command to remove the temporary directory and all its containing files.
+ * Use the system command to remove a temporary directory and all its containing files.
  */
 void SageInterface::destroyTempDirectory(string directory_name) {
     string command = string("rm -fr ") + directory_name;
@@ -17539,9 +17556,9 @@ void SageInterface::destroyTempDirectory(string directory_name) {
 
 
 /**
- * Invoke JavaRose to translate given file and put the resulting AST in the global space of the project.
+ * Invoke JavaRose to translate a given file and put the resulting AST in the global space of the project.
  */
-void SageInterface::processFile(SgProject *project, string filename) {
+void SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
     //
     // Set up the new source file for processing "a la Rose".
     //
@@ -17557,43 +17574,44 @@ void SageInterface::processFile(SgProject *project, string filename) {
     sourcefile -> set_parent(project);
 
     //
-    // Note that we do NOT really want to add these artificial "import" files to the list of files to be unparsed in the project.
-    // So after we are done building the AST, we remove the file from the project's list of files.
+    // Insert the file into the list of files in the project.
     //
     project -> get_fileList_ptr() -> get_listOfFiles().push_back(sourcefile);
     ROSE_ASSERT(sourcefile == isSgSourceFile((*project)[filename]));
 
     sourcefile -> build_Java_AST(arg_list, project -> get_originalCommandLineArgumentList());
 
-    project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove the temporary sourcefile we just pushed.
-    ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
+    if (! unparse) { // if we are not supposed to unparse this file, 
+        project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
+        ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
+    }
 }
 
 
 /**
- * Using the import_string parameter, load the relevant Java class, build its AST and
- * add it to the project.
+ * Using the package_name, create a file with a package statement, translate it in order to load the package
+ * into the project.
  */
 string SageInterface::preprocessPackage(SgProject *project, string package_name) {
     string command = "package " + package_name + ";";
 
     //
-    // Call the Java side to create an input file with the relevant package statement, translate the file and return the file name.
+    // Call the Java side to create an input file with the relevant package statement; translate the file and return the file name.
     //
     jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
                                                                            ::createTempFileMethod,
                                                                            ::currentEnvironment -> NewStringUTF(command.c_str()));
 
     string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
-    processFile(project, filename);
+    processFile(project, filename); // translate the file 
 
     return package_name;
 }
 
 
 /**
- * Using the import_string parameter, load the relevant Java class, build its AST and
- * add it to the project.
+ * Using the import_string parameter, create a file with the relevant import statement; translate the file and
+ * add its AST to the project.
  */
 string SageInterface::preprocessImport(SgProject *project, string import_string) {
     string command = "import " + import_string + ";";
@@ -17613,19 +17631,20 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
 
 
 /**
- * Using the file_content_string, create a file with the content in question, build its AST and
+ * Using the file_content string, create a file with the content in question; build its AST and
  * add it to the project.
  */
-void SageInterface::preprocessCompilationUnit(SgProject *project, string file_content_string) {
+void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content) {
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
     jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
-                                                                           ::createTempFileMethod,
-                                                                           ::currentEnvironment -> NewStringUTF(file_content_string.c_str()));
+                                                                           ::createTempNamedFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(file_name.c_str()),
+                                                                           ::currentEnvironment -> NewStringUTF(file_content.c_str()));
 
     string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
-    processFile(project, filename); // translate the file 
+    processFile(project, filename, true /* unparse */); // translate the file and unparse it
 }
 
 
@@ -17665,11 +17684,21 @@ SgClassDefinition *SageInterface::findJavaPackage(SgScopeStatement *scope, strin
 /**
  * Process a qualified package name, if needed, and return its package definition.
  */
-SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, string package_name) {
+SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, string package_name, bool create_directory /* = false */) {
     SgGlobal *global_scope = project -> get_globalScopeAcrossFiles();
     SgClassDefinition *package_definition = findJavaPackage(global_scope, package_name);
     if (package_definition == NULL) { // try again after loading the package
         preprocessPackage(project, package_name);
+
+        //
+        // If requested, Create the directory associated with this package_name.
+        //
+        if (create_directory) {
+            ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                     ::createTempNamedDirectoryMethod,
+                                                     ::currentEnvironment -> NewStringUTF(package_name.c_str()));
+        }
+
         package_definition = findJavaPackage(global_scope, package_name);
     }
 
@@ -17680,3 +17709,15 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 //------------------------------------------------------------------------------
 
 
+/**
+ * If the class_name already exists in the scope, return it. Otherwise, build the class and return it.
+ */
+SgClassDeclaration *SageInterface::findOrInsertJavaClass(SgScopeStatement *scope, string class_name) {
+    SgClassSymbol *class_symbol = scope -> lookup_class_symbol(class_name);
+    SgClassDeclaration *class_declaration = (class_symbol  // class already exists in the scope
+                                                  ? isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration())
+                                                  : buildJavaDefiningClassDeclaration(scope, class_name));
+    ROSE_ASSERT(class_declaration);
+
+    return class_declaration;
+}
