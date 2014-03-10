@@ -6683,7 +6683,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
                printf ("Class name = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
 #endif
             // Find the associated Java class file.
-#if 1
+#if 0
             // DQ (3/4/2014): This is the code we want to use until we get Philippe's branch in place with the attribute.
                SgProject* project = TransformationSupport::getProject(parent);
                ROSE_ASSERT(project != NULL);
@@ -6725,7 +6725,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
             // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
                AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
 
-#error "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
+               // "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
 
                if (attribute) 
                   {
