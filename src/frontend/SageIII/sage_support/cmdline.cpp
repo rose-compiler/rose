@@ -11,6 +11,7 @@
 #include "keep_going.h"
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
@@ -1256,12 +1257,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
               p_includeDirectorySpecifierList.push_back("-I" + include_path);
 
-              bool is_directory = boost::filesystem::is_directory(include_path);
+              std::string include_path_no_quotes =
+                  boost::replace_all_copy(include_path, "\"", "");
+              bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
               if (false == is_directory)
               {
                   std::cout  << "[WARN] "
                           << "Invalid argument to -I; path does not exist: "
-                          << "'" << include_path << "'"
+                          << "'" << include_path_no_quotes << "'"
                           << std::endl;
               }
           }
@@ -1367,7 +1370,6 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
       // be entered.
       if (looking_for_include_path_arg)
       {
-          r_argv.push_back("-I" + arg);
           looking_for_include_path_arg = false; // reset for next iteration
 
           // Sanity check
@@ -1379,6 +1381,12 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
                         << "'" << arg << "'"
                         << std::endl;
           }
+          #ifdef _MSC_VER
+          // ensure that the path is quoted on Windows.
+          r_argv.push_back("-I\"" + arg + "\"");
+          #else
+          r_argv.push_back("-I" + arg + "");
+          #endif
       }
       else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
       {
@@ -1394,7 +1402,15 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           }
           else
           {
-              // no normalization required for -I<path>
+              // no normalization required for -I<path>, but ensure
+              // that the path is quoted on Windows.
+              #ifdef _MSC_VER
+              if (arg[2] != '"')
+              {
+                  arg.insert(2, "\"");
+                  arg.append("\"");
+              }
+              #endif
               r_argv.push_back(arg);
           }
       }

@@ -815,9 +815,14 @@ cout.flush();
             // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
             // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
 
+       // Zack Galbreath 1/9/2014: Windows absolute paths do not begin with "/".
+       // The following printf could cause problems for our testing systems because
+       // it contains the word "error".
+       #ifndef _MSC_VER
           if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
                printf ("sourceFilename encountered an error in filename\n");
-
+       #endif
+       
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
@@ -4852,7 +4857,16 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
-
+     
+     // Support for compiling .C files as C++ on Visual Studio
+     #ifdef _MSC_VER
+        if (get_Cxx_only() == true)
+           {
+           vector<string>::iterator pos = compilerCmdLine.begin() + 1;
+           compilerCmdLine.insert(pos, "/TP");
+           }
+     #endif
+     
      int returnValueForCompiler = 0;
 
   // error checking

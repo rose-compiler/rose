@@ -13,8 +13,16 @@ endif()
 
 install(
   FILES OpenFortranParser-0.8.3.jar
+        OpenFortranParser-20111001.jar
         ${jar_file}
-  DESTINATION ${INCLUDE_INSTALL_DIR} )
+  DESTINATION lib)
+
+# this file also needs to be in the binary directory for
+# related tests to pass
+configure_file(
+  ${jar_file}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  COPYONLY)
 
 set(files_to_extract
   "fortran/ofp/parser/c/FortranParserAction.h"

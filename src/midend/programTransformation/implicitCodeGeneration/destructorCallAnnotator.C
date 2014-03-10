@@ -6,6 +6,7 @@
 #include <shortCircuitingTransformation.h>
 
 #include <defaultFunctionGenerator.h>
+#include <destructorCallAnnotator.h>
 
 using namespace std;
 

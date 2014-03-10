@@ -10,7 +10,7 @@ add_executable(dot2gml ${dot2gml_SRCS})
 
 target_link_libraries(dot2gml ${KDE4_KDECORE_LIBS})
 
-install(TARGETS dot2gml ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS dot2gml DESTINATION bin)
 endif()
 
 
