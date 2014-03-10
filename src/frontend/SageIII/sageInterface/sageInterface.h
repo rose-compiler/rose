@@ -2247,6 +2247,17 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsTrivial(const SgType * const inputType);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
+
+      std::string getTempDirectory(SgProject *);
+      void destroyTempDirectory(std::string);
+      void processFile(SgProject *, std::string, bool unparse = false);
+      std::string preprocessPackage(SgProject *, std::string);
+      std::string preprocessImport(SgProject *, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string, std::string);
+      SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
+      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
+
 }// end of namespace
 
 #endif
