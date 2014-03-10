@@ -1,3 +1,6 @@
+// DQ (2/10/2014): See if this helps compile ROSE using boost version 1.50.
+// #define BOOST_FILESYSTEM_VERSION 2
+
 #include <rose.h>
 #include <rose_config.h>
 
@@ -187,11 +190,7 @@ void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose) {
             inputFile -> stripEdgCommandLineOptions(argv);
             inputFile -> stripFortranCommandLineOptions(argv);
         } else {
-            if (inputFile -> get_Java_only() == true) {
-                inputFile -> stripJavaCommandLineOptions(argv);
-            } else {
-                // This is the case of binary analysis...(nothing to do there)
-            }
+            // This is the case of binary analysis...(nothing to do there)
         }
     }
 

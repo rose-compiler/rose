@@ -123,6 +123,15 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
          ;;
   esac
 
+# DQ (2/21/2014): Added major and minor release numbers for OS.
+  OS_major_release_number=`lsb_release -rs | cut -d\. -f1`
+  OS_minor_release_number=`lsb_release -rs | cut -d\. -f2`
+
+  AC_MSG_CHECKING([$OS_vendor major release number])
+  AC_MSG_RESULT([$OS_major_release_number])
+  AC_MSG_CHECKING([$OS_vendor minor release number])
+  AC_MSG_RESULT([$OS_minor_release_number])
+
   AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
   AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
   AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
@@ -135,7 +144,19 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 
   AM_CONDITIONAL([OS_VENDOR_REDHAT_32BIT],[ test "x$REDHAT" = xyes -a "x$build_cpu" = xi686 ] )
 
+# DQ (2/21/2014): Added major and minor release numbers for REDHAT OS.
+  AM_CONDITIONAL([OS_VENDOR_REDHAT_REL5],[ test "x$REDHAT" = xyes -a "x$OS_major_release_number" = x5] )
+  AM_CONDITIONAL([OS_VENDOR_REDHAT_REL6],[ test "x$REDHAT" = xyes -a "x$OS_major_release_number" = x6] )
+
   AC_SUBST(OS_vendor)
   AC_SUBST(OS_release)
+
+# DQ (2/21/2014): Added major release number for OS.
+  AC_DEFINE_UNQUOTED([ROSE_OS_MAJOR_RELEASE_NUMBER], $OS_major_release_number , [RedHat Operating System (OS) major release number being used to build ROSE])
+  AC_DEFINE_UNQUOTED([ROSE_OS_MINOR_RELEASE_NUMBER], $OS_minor_release_number , [RedHat Operating System (OS) minor release number being used to build ROSE])
+
+# DQ (2/21/2014): Added major and minor release numbers for REDHAT OS.
+  AC_SUBST(OS_major_release_number)
+  AC_SUBST(OS_minor_release_number)
 ])
 

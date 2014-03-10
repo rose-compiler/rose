@@ -25,6 +25,17 @@ using namespace std;
 
 #define ERROR_CODE 4
 
+namespace Rose {
+namespace Frontend {
+namespace Java {
+namespace Ecj {
+  // TOO1 (2/13/2014): Initialized in src/frontend/SageIII/sage_support/sage_support.cpp.
+  // support to point to the current SgSourceFile.
+  SgSourceFile* Ecj_globalFilePointer = 0;
+}// ::Rose::Frontend::Java::Ecj
+}// ::Rose::Frontend::Java
+}// ::Rose::Frontend
+}// ::Rose
 int runECJ (int argc, char **argv);
 
 /* Include the paths to the source tree and build tree for ROSE */
@@ -42,17 +53,6 @@ int runECJ (int argc, char **argv);
 // DQ (10/12/2010): commented out to debug using the environments LD_LIBRARY_PATH value.
 // #define OVERWRITE_LD_LIBRARY_PATH 1
 #define OVERWRITE_LD_LIBRARY_PATH 1
-
-// DQ (8/15/2011): Moved to openJavaParser_main.C to
-// separate the work on Java from the rest of ROSE and support the ROSE
-// configuration language only options.
-// DQ (10/21/2010): If Fortran is being supported then there will
-// be a definition of this pointer there.  Note that we currently
-// use only one pointer so that we can simplify how the JVM support 
-// is used for either Fortran or Java language support.
-#ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-SgSourceFile *OpenFortranParser_globalFilePointer = NULL;
-#endif
 
 // DQ (8/15/2011): These functions were moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
@@ -148,7 +148,7 @@ int runECJ (int argc, char **argv) {
     int retval= 0;
     /* start/find the Java VM with ofp method loaded,run ofp on the args */
     retval = jvm_ecj_processing(argc, argv);
-  
+
     return retval;
 }
 

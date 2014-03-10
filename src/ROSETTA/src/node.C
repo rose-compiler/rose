@@ -723,6 +723,13 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool","isFinal","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+  // For example: "int array[];" This can be important to preserve when the primary declaration uses an
+  // array bound that is declared between the secondary and primary declarations.  See test2014_81.c and
+  // test2014_06.C.
+     InitializedName.setDataPrototype("bool", "hasArrayTypeWithEmptyBracketSyntax", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");
