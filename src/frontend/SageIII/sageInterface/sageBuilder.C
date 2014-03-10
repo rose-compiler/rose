@@ -12597,6 +12597,261 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 }
 #endif
 
+SgSymbol*
+SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
+   {
+  // Starting at the snippet_declaration, record the associated scope list to the global scope.
+  // The do a reverse traversal on the list starting with the global scope of the target AST.
+  // Lookup each declaration as we proceed deeper into the target AST to find the associated 
+  // symbol in the target AST (associated with the input declaration from the snippet AST).
+
+     SgSymbol* returnSymbol = NULL;
+
+     typedef Rose_STL_Container<SgScopeStatement*>  SgScopeStatementPtrList;
+     SgScopeStatementPtrList snippet_scope_list;
+     
+  // Starting at the snippet_declaration, record the associated scope list to the global scope.
+     SgScopeStatement* snippet_scope = snippet_declaration->get_scope();
+#if 0
+     printf ("First scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
+#endif
+     snippet_scope_list.push_back(snippet_scope);
+     while (snippet_scope != NULL && isSgGlobal(snippet_scope) == NULL)
+        {
+       // The scopes between the snippet declaration and the global scope should be named scopes, 
+       // else we will not be able to identify the associated scope in the target AST.
+          ROSE_ASSERT(snippet_scope->isNamedScope() == true);
+
+          snippet_scope = snippet_scope->get_scope();
+#if 0
+          printf ("snippet_scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
+#endif
+          snippet_scope_list.push_back(snippet_scope);
+        }
+
+#if 0
+     printf ("snippet_scope_list.size() = %zu \n",snippet_scope_list.size());
+#endif
+
+     SgGlobal* global_scope_in_target_ast = TransformationSupport::getGlobalScope(targetScope);
+     SgScopeStatementPtrList::reverse_iterator i = snippet_scope_list.rbegin();
+     
+     SgScopeStatement* target_AST_scope  = global_scope_in_target_ast;
+     SgScopeStatement* snippet_AST_scope = *i;
+
+     ROSE_ASSERT(isSgGlobal(snippet_AST_scope) != NULL);
+  // Iterate past the global scope
+     i++;
+
+  // Traverse the snippet scopes in the reverse order from global scope to the associated scope in the target AST.
+     while (i != snippet_scope_list.rend())
+        {
+#if 0
+          printf ("snippet_AST_scope list *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+       // printf ("target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope ->class_name().c_str());
+       // printf ("snippet_AST_scope = %p = %s \n",snippet_AST_scope,snippet_AST_scope ->class_name().c_str());
+
+          SgClassDefinition* classDefinition = isSgClassDefinition(*i);
+          if (classDefinition != NULL)
+             {
+               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+               SgName className = classDeclaration->get_name();
+#if 0
+               printf ("Found snippet class name = %s \n",className.str());
+#endif
+               SgClassSymbol* classSymbol = target_AST_scope->lookup_class_symbol(className);
+               ROSE_ASSERT(classSymbol != NULL);
+               ROSE_ASSERT(classSymbol->get_declaration() != NULL);
+#if 0
+               printf ("Associated symbol in taget AST: declaration = %p name = %s \n",classSymbol->get_declaration(),classSymbol->get_declaration()->get_name().str());
+#endif
+            // Set the return value as we go so that it will be properly set at the end of the reverse iteration over the scopes.
+               returnSymbol = classSymbol;
+
+            // Reset the target AST scope (as we traverse down the AST to the associated declaration in the target AST).
+               target_AST_scope = classDefinition;
+             }
+
+       // Increment the reverse iterator.
+          i++;
+        }
+
+  // return the last found symbol.
+     return returnSymbol;
+   }
+
+SgType* 
+SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope)
+   {
+     SgType* returnType = NULL;
+
+     ROSE_ASSERT(snippet_type != NULL);
+     ROSE_ASSERT(targetScope != NULL);
+
+     SgNamedType* namedType = isSgNamedType(snippet_type);
+     if (namedType != NULL)
+        {
+       // Find the associated declaration and it's corresponding declaration in the target AST.
+          SgDeclarationStatement* snippet_declaration = namedType->get_declaration();
+          ROSE_ASSERT(snippet_declaration != NULL);
+#if 0
+          printf ("Need to find the declaration in the target AST that is associated with the snippet_declaration in the snippet AST \n");
+          printf ("   --- snippet_declaration = %p = %s = %s \n",snippet_declaration,snippet_declaration->class_name().c_str(),SageInterface::get_name(snippet_declaration).c_str());
+#endif
+       // There are only a few cases here!
+          switch (namedType->variantT())
+             {
+               case V_SgClassType:
+                  {
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(snippet_declaration);
+                    if (classDeclaration != NULL)
+                       {
+                         SgClassSymbol* classSymbolInTargetAST = lookupClassSymbolInParentScopes(classDeclaration->get_name(),targetScope);
+                         if (classSymbolInTargetAST == NULL)
+                            {
+                           // For Java or C++ this could be a name qualified type and so we need a better mechanism 
+                           // to identify it thorugh it's parent scopes. Build a list of parent scope back to the 
+                           // global scope and then traverse the list backwards to identify each scope in the target 
+                           // AST's global scope until we each the associated declaration in the target AST.
+#if 0
+                              printf ("This is likely a name qualified scope (which can't be seen in a simple traversal of the parent scope (case of C++ or Java) \n");
+#endif
+                              SgSymbol* symbol = findAssociatedSymbolInTargetAST(classDeclaration,targetScope);
+                              ROSE_ASSERT(symbol != NULL);
+
+                              classSymbolInTargetAST = isSgClassSymbol(symbol);
+                            }
+                         ROSE_ASSERT(classSymbolInTargetAST != NULL);
+
+                         returnType = classSymbolInTargetAST->get_type();
+                       }
+                    break;
+                  }
+
+               case V_SgTypedefType:
+                  {
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(snippet_declaration);
+                    if (typedefDeclaration != NULL)
+                       {
+                         SgTypedefSymbol* typedefSymbolInTargetAST = lookupTypedefSymbolInParentScopes(typedefDeclaration->get_name(),targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                         ROSE_ASSERT(typedefSymbolInTargetAST != NULL);
+
+                         returnType = typedefSymbolInTargetAST->get_type();
+                       }
+                    break;
+                  }
+
+               case V_SgEnumType:
+                  {
+                    SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(snippet_declaration);
+                    if (enumDeclaration != NULL)
+                       {
+                         ROSE_ASSERT(enumDeclaration->get_name().is_null() == false);
+                         SgEnumSymbol* enumSymbolInTargetAST = lookupEnumSymbolInParentScopes(enumDeclaration->get_name(),targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                         ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+
+                         returnType = enumSymbolInTargetAST->get_type();
+                       }
+
+                    break;
+                  }
+
+               case V_SgJavaParameterizedType:
+                  {
+                    printf ("In getTargetFileType(): case V_SgJavaParameterizedType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+#if 1
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(snippet_declaration);
+                    if (classDeclaration != NULL)
+                       {
+                         SgTemplateParameterPtrList* templateParameterList              = NULL;
+                         SgTemplateArgumentPtrList*  templateSpecializationArgumentList = NULL;
+                         SgTemplateClassSymbol* templateClassSymbolInTargetAST = lookupTemplateClassSymbolInParentScopes(classDeclaration->get_name(),templateParameterList,templateSpecializationArgumentList,targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                         ROSE_ASSERT(templateClassSymbolInTargetAST != NULL);
+
+                         returnType = templateClassSymbolInTargetAST->get_type();
+                       }
+#else
+                    SgJavaParameterizedType* javaParameterizedType = isSgJavaParameterizedType(namedType);
+                    if (javaParameterizedType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaParameterizedType;
+
+                         SgType* internal_type = javaParameterizedType->get_raw_type();
+                         ROSE_ASSERT(internal_type != NULL);
+                       }
+#endif
+                    printf ("SgJavaParameterizedType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case V_SgJavaQualifiedType:
+                  {
+                    printf ("In getTargetFileType(): case V_SgJavaQualifiedType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+
+                    SgJavaQualifiedType* javaQualifiedType = isSgJavaQualifiedType(namedType);
+                    if (javaQualifiedType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaQualifiedType;
+
+                         SgType* internal_type_1 = javaQualifiedType->get_parent_type();
+                         ROSE_ASSERT(internal_type_1 != NULL);
+                         SgType* internal_type_2 = javaQualifiedType->get_type();
+                         ROSE_ASSERT(internal_type_2 != NULL);
+                       }
+
+                    printf ("SgJavaQualifiedType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case V_SgJavaWildcardType:
+                  {
+                    printf ("In getTargetFileType(): case V_SgJavaWildcardType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+
+                    SgJavaWildcardType* javaWildcardType = isSgJavaWildcardType(namedType);
+                    if (javaWildcardType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaWildcardType;
+
+                         SgType* internal_type_1 = javaWildcardType->get_extends_type();
+                         ROSE_ASSERT(internal_type_1 != NULL);
+                         SgType* internal_type_2 = javaWildcardType->get_super_type();
+                         ROSE_ASSERT(internal_type_2 != NULL);
+                       }
+
+                    printf ("SgJavaWildcardType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Error: In getTargetFileType(): default reached in switch \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+          ROSE_ASSERT(returnType != NULL);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     return returnType;
+   }
+
 
 void 
 SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap)
@@ -12625,7 +12880,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
      return;
 #endif
 
-     SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+  // SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
+     SgFile* targetFile = getEnclosingFileNode(insertionPoint);
 
 #if 0
      printf ("   --- targetFile            = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
@@ -12634,6 +12890,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
 #if 1
   // DQ (3/4/2014): As I recall there is a reason why we can't setup the scope here.
+
+  // We also need to handle the symbol (move it from the body (SgBaicBlock) that was
+  // a copy to the scope in the target AST where the SgInitializedName was inserted).
+     SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
+#if 0
+     printf ("insertionPointScope = %p = %s \n",insertionPointScope,insertionPointScope->class_name().c_str());
+#endif
+     SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+     ROSE_ASSERT(targetScope != NULL);
 
   // Handle what is the same about all statements before getting to the switch.
      SgStatement* statement_copy     = isSgStatement(node_copy);
@@ -12649,10 +12914,12 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(scope_copy     != NULL);
                ROSE_ASSERT(scope_original != NULL);
 
-               if (TransformationSupport::getFile(scope_original) != targetFile)
+            // if (TransformationSupport::getFile(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_original) != targetFile)
                   {
                     printf ("Warning: SgStatement: scope = %p = %s \n",scope_original,scope_original->class_name().c_str());
-                    SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                 // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
                     ROSE_ASSERT(snippetFile != NULL);
                     ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
 
@@ -12663,8 +12930,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
                printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 
-               SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
-               ROSE_ASSERT(targetScope != NULL);
+            // SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+            // ROSE_ASSERT(targetScope != NULL);
 
             // SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
             // SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
@@ -12700,13 +12967,14 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
 
   // Handle what is the same about all declaration before getting to the switch.
-     SgDeclarationStatement* declarationStatement_copy = isSgDeclarationStatement(node_copy);
+     SgDeclarationStatement* declarationStatement_copy     = isSgDeclarationStatement(node_copy);
      SgDeclarationStatement* declarationStatement_original = isSgDeclarationStatement(node_original);
      if (declarationStatement_copy != NULL)
         {
        // Check the firstnondefiningDeclaration and definingDeclaration
           SgDeclarationStatement* firstNondefiningDeclaration_original = declarationStatement_original->get_firstNondefiningDeclaration();
-          if (TransformationSupport::getFile(firstNondefiningDeclaration_original) != targetFile)
+       // if (TransformationSupport::getFile(firstNondefiningDeclaration_original) != targetFile)
+          if (getEnclosingFileNode(firstNondefiningDeclaration_original) != targetFile)
              {
                printf ("Warning: SgDeclarationStatement: firstNondefiningDeclaration_original is not in target file \n");
             // ROSE_ASSERT(false);
@@ -12714,7 +12982,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
           SgDeclarationStatement* definingDeclaration_original = declarationStatement_original->get_definingDeclaration();
           if (definingDeclaration_original != NULL)
              {
-               if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
+            // if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
+               if (getEnclosingFileNode(definingDeclaration_original) != targetFile)
                   {
                     printf ("Warning: SgDeclarationStatement: definingDeclaration is not in target file \n");
                  // ROSE_ASSERT(false);
@@ -12741,7 +13010,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // Handle the type for all expressions.
                SgType* type = expression->get_type();
                ROSE_ASSERT(type != NULL);
-
+#if 1
+            // SgType* new_type = getTargetFileType(type);
+               SgType* new_type = getTargetFileType(type->stripType(),targetScope);
+               if (new_type != NULL)
+                  {
+                 // Reset the base type to be the one associated with the target file.
+                    expression->set_explicitly_stored_type(new_type);
+                  }
+#else
             // I am not clear if I have to strip this type. I think so, since it it could be a pointer to a type in the snippet file.
                SgNamedType* namedType = isSgNamedType(type->stripType());
                if (namedType != NULL)
@@ -12749,17 +13026,32 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     SgDeclarationStatement* declaration = namedType->get_declaration();
                     ROSE_ASSERT(declaration != NULL);
 
-                    if (TransformationSupport::getFile(declaration) != targetFile)
+                 // if (TransformationSupport::getFile(declaration) != targetFile)
+                    if (getEnclosingFileNode(declaration) != targetFile)
                        {
                          printf ("Warning: SgExpression: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-                         SgFile* snippetFile = TransformationSupport::getFile(declaration);
-                         ROSE_ASSERT(snippetFile != NULL);
-                         ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
+#if 0
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                         if (classDeclaration != NULL)
+                            {
+                           // Check the name of the class.
+                              printf ("Warning: SgExpression: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->get_name().str());
+                            }
+#endif
+                      // DQ (3/7/2014): Note that the getEnclosingFileNode(declaration) can be NULL for Java if 
+                      // the is a class that is not associated with a file (e.g. BigInteger which is java.lang).
+                         SgFile* snippetFile = getEnclosingFileNode(declaration);
+                      // ROSE_ASSERT(snippetFile != NULL);
+                         if (snippetFile != NULL)
+                            {
+                              ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
 
-                         printf ("Warning: SgExpression: type declaration not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
-                      // ROSE_ASSERT(false);
+                              printf ("Warning: SgExpression: type declaration not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
+                           // ROSE_ASSERT(false);
+                            }
                        }
                   }
+#endif
              }
         }
 
@@ -12777,7 +13069,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(scope_copy != NULL);
                ROSE_ASSERT(scope_original != NULL);
 
-               if (TransformationSupport::getFile(scope_original) != targetFile)
+            // if (TransformationSupport::getFile(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_original) != targetFile)
                   {
 #if 0
                     printf ("Warning: case V_SgInitializedName: scope_copy     = %p = %s \n",scope_copy,scope_copy->class_name().c_str());
@@ -12786,7 +13079,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     printf ("Warning: case V_SgInitializedName: initializedName_copy->get_parent()     = %p \n",initializedName_copy->get_parent());
                     printf ("Warning: case V_SgInitializedName: initializedName_original->get_parent() = %p \n",initializedName_original->get_parent());
 #endif
-                    SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                 // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
 
                     ROSE_ASSERT(snippetFile != NULL);
                     ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
@@ -12797,7 +13091,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
             // See if the type might be asociated with the snippet file.
                SgType* type_copy     = initializedName_copy->get_type();
-               SgType* type_original = initializedName_original->get_type();
+            // SgType* type_original = initializedName_original->get_type();
+#if 1
+               SgType* new_type = getTargetFileType(type_copy->stripType(),targetScope);
+               if (new_type != NULL)
+                  {
+                 // Reset the base type to be the one associated with the target file.
+                    initializedName_copy->set_type(new_type);
+                  }
+#else
                SgNamedType* namedType_copy     = isSgNamedType(type_copy);
                SgNamedType* namedType_original = isSgNamedType(type_original);
                if (namedType_copy != NULL)
@@ -12807,23 +13109,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          printf ("Found case of named type which might refer to a type from a declaration in another file \n");
                          SgDeclarationStatement* decl = namedType_copy->get_declaration();
                          ROSE_ASSERT(decl != NULL);
-                         if (TransformationSupport::getFile(decl) != targetFile)
+                      // if (TransformationSupport::getFile(decl) != targetFile)
+                         if (getEnclosingFileNode(decl) != targetFile)
                             {
                               printf ("Warning: case V_SgInitializedName: named type's associated declaration is not in target file \n");
                            // ROSE_ASSERT(false);
                             }
                        }
                   }
-
-            // We also ned to handle the symbol (move it from the body (SgBaicBlock) that was
-            // a copy to the scope in the target AST where the SgInitializedName was inserted).
-               SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
-#if 0
-               printf ("insertionPointScope = %p = %s \n",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
-               SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
-               ROSE_ASSERT(targetScope != NULL);
-
                SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
 
             // DQ (3/2/2014): If this is a function parameter then there will be no associated symbol.
@@ -12912,19 +13206,20 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                SgClassSymbol* classSymbol_copy = isSgClassSymbol(classDeclaration_copy->search_for_symbol_from_symbol_table());
                ROSE_ASSERT(classSymbol_copy != NULL);
-               if (TransformationSupport::getFile(classSymbol_copy) != targetFile)
+            // if (TransformationSupport::getFile(classSymbol_copy) != targetFile)
+               if (getEnclosingFileNode(classSymbol_copy) != targetFile)
                   {
                     printf ("Warning: case V_SgClassDeclaration: classSymbol_copy not in target file \n");
 
                  // Find the symbol in the target scope.
-                    SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
+                 // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
 #if 0
-                    printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
+                 // printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
                  // Find the nearest variable with the same name in an outer scope (starting at insertionPointScope).
 
-                    SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
-                    ROSE_ASSERT(targetScope != NULL);
+                 // SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+                 // ROSE_ASSERT(targetScope != NULL);
 #if 0
                  // If we randomize the names then we need to handle this case...
                     printf ("case V_SgClassDeclaration: targetScope = %p classSymbol_copy->get_name() = %s \n",targetScope,classSymbol_copy->get_name().str());
@@ -12991,6 +13286,14 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                printf ("Need to handled named types from typedef declarations \n");
 
+               SgType* base_type = typedefDeclaration->get_base_type();
+               ROSE_ASSERT(base_type != NULL);
+               SgType* new_base_type = getTargetFileType(base_type,targetScope);
+               if (new_base_type != NULL)
+                  {
+                 // Reset the base type to be the one associated with the target file.
+                    typedefDeclaration->set_base_type(new_base_type);
+                  }
                break;
              }
 
@@ -13009,22 +13312,23 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgVarRefExp* varRefExp_original = isSgVarRefExp(node_original);
                SgVariableSymbol* variableSymbol_copy = isSgVariableSymbol(varRefExp_copy->get_symbol());
                ROSE_ASSERT(variableSymbol_copy != NULL);
-               if (TransformationSupport::getFile(variableSymbol_copy) != targetFile)
+            // if (TransformationSupport::getFile(variableSymbol_copy) != targetFile)
+               if (getEnclosingFileNode(variableSymbol_copy) != targetFile)
                   {
-#if 1
+#if 0
                     printf ("Warning: case V_SgVarRefExp: variableSymbol not in target file: name = %s \n",variableSymbol_copy->get_name().str());
 #endif
-#if 1
+#if 0
                     printf ("insertionPoint = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str());
 #endif
-                    SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
-#if 1
-                    printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
+                 // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
+#if 0
+                 // printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
                  // Find the nearest variable with the same name in an outer scope (starting at insertionPointScope).
 
-                    SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
-                    ROSE_ASSERT(targetScope != NULL);
+                 // SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+                 // ROSE_ASSERT(targetScope != NULL);
 
                     SgVariableSymbol* variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol_copy->get_name(),targetScope);
 
@@ -13033,7 +13337,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // This is a violation of the policy that the a variable with the same name will be found in the target AST.
                       // Note that if the variable could not be found then it should have been added as part of the snippet, or a 
                       // previously added snippet.
-#if 1
+#if 0
                          printf ("Error: The associated variable = %s should have been found in a parent scope of the target AST \n",variableSymbol_copy->get_name().str());
 #endif
                       // We need to look into the scope of the block used to define the statments as seperate snippets (same issue as for functions).
@@ -13041,7 +13345,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // If could be that the symbol is in the local scope of the snippet AST.
                          SgStatement* enclosingStatement_original = TransformationSupport::getStatement(varRefExp_original);
                          ROSE_ASSERT(enclosingStatement_original != NULL);
-#if 1
+#if 0
                          printf ("case V_SgVarRefExp: enclosingStatement_original = %p = %s \n",enclosingStatement_original,enclosingStatement_original->class_name().c_str());
 #endif
                          SgScopeStatement* otherPossibleScope_original = isSgScopeStatement(enclosingStatement_original->get_parent());
@@ -13049,7 +13353,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // SgFile* file = TransformationSupport::getFile(enclosingStatement_original);
                          SgFile* file = getEnclosingFileNode(enclosingStatement_original);
                          ROSE_ASSERT(file != NULL);
-#if 1
+#if 0
                          printf ("enclosingStatement_original: associated file name = %s \n",file->get_sourceFileNameWithPath().c_str());
                       // printf ("   --- targetFile            = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
 
@@ -13059,7 +13363,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol_copy->get_name(),otherPossibleScope_original);
                          if (variableSymbolInTargetAST == NULL)
                             {
-#if 1
+#if 0
                               targetScope->get_symbol_table()->print("targetScope: symbol table");
                               otherPossibleScope_original->get_symbol_table()->print("otherPossibleScope_original: symbol table");
 #endif
@@ -13078,9 +13382,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                                    SgType* type = lhs->get_type();
                                    ROSE_ASSERT(type != NULL);
-
+#if 0
                                    printf ("type = %p = %s \n",type,type->class_name().c_str());
-
+#endif
                                    SgNamedType* namedType = isSgNamedType(type);
                                    ROSE_ASSERT(namedType != NULL);
                                    SgDeclarationStatement* declaration = namedType->get_declaration();
@@ -13091,9 +13395,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                    ROSE_ASSERT(definingClassDeclaration != NULL);
                                    SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
                                    ROSE_ASSERT(classDefinition != NULL);
-
+#if 0
                                    printf ("case V_SgClassDeclaration: classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
-
+#endif
                                 // I think we want the copy.
                                    otherPossibleScope_original = classDefinition;
 
@@ -13129,19 +13433,20 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node_copy);
                SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionRefExp->get_symbol());
                ROSE_ASSERT(functionSymbol != NULL);
-               if (TransformationSupport::getFile(functionSymbol) != targetFile)
+            // if (TransformationSupport::getFile(functionSymbol) != targetFile)
+               if (getEnclosingFileNode(functionSymbol) != targetFile)
                   {
 #if 0
                     printf ("Warning: case V_SgFunctionRefExp: functionSymbol not in target file (find function = %s) \n",functionSymbol->get_name().str());
 #endif
-                    SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
+                 // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
 #if 0
-                    printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
+                 // printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
                  // Find the nearest variable with the same name in an outer scope (starting at insertionPointScope).
 
-                    SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
-                    ROSE_ASSERT(targetScope != NULL);
+                 // SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+                 // ROSE_ASSERT(targetScope != NULL);
 
                  // I think we need the function's mangled name to support this lookup.
                     SgFunctionSymbol* functionSymbolInTargetAST = lookupFunctionSymbolInParentScopes(functionSymbol->get_name(),targetScope);
@@ -13172,10 +13477,26 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node_copy);
                SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
                ROSE_ASSERT(memberFunctionSymbol != NULL);
-               if (TransformationSupport::getFile(memberFunctionSymbol) != targetFile)
+            // if (TransformationSupport::getFile(memberFunctionSymbol) != targetFile)
+               if (getEnclosingFileNode(memberFunctionSymbol) != targetFile)
                   {
                  // Not implemented (initial work is focused on C, then Java, then C++.
                     printf ("Warning: case V_SgMemberFunctionRefExp: memberFunctionSymbol not in target file (find member function = %s) \n",memberFunctionSymbol->get_name().str());
+#if 0
+                    SgMemberFunctionSymbol* memberFunctionSymbolInTargetAST = lookupFunctionSymbolInParentScopes(memberFunctionSymbol->get_name(),targetScope);
+
+                    if (memberFunctionSymbolInTargetAST == NULL)
+                       {
+                      // This is a violation of the policy that the a variable with the same name will be found in the target AST.
+                      // Note that if the variable could not be found then it should have been added as part of the snippet, or a 
+                      // previously added snippet.
+                         printf ("Error: The associated function = %s should have been found in a parent scope of the target AST \n",functionSymbol->get_name().str());
+                       }
+                    ROSE_ASSERT(memberFunctionSymbolInTargetAST != NULL);
+
+                 // Reset the symbol associated with this function reference.
+                    memberFunctionRefExp->set_symbol(memberFunctionSymbolInTargetAST);
+#endif
                   }
 
                break;
@@ -13222,7 +13543,8 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
   // target AST.
      ROSE_ASSERT(snippetFile_of_copy == targetFile);
 
-     SgFile* snippetFile_of_original = TransformationSupport::getFile(original_before_copy);
+  // SgFile* snippetFile_of_original = TransformationSupport::getFile(original_before_copy);
+     SgFile* snippetFile_of_original = getEnclosingFileNode(original_before_copy);
 
      ROSE_ASSERT(snippetFile_of_original != targetFile);
 
