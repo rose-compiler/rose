@@ -89,8 +89,11 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 // DQ (4/3/2012): Addes so that I can enforce some rules as the AST is constructed.
 #include "AstConsistencyTests.h"
 
+#ifndef USE_CMAKE
+// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 // DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeperateFileInNewTargetAst()
 #include "RoseAst.h"
+#endif
 
 // DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
 #define foreach BOOST_FOREACH
@@ -13570,6 +13573,9 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
         }
      ROSE_ASSERT(isStructurallyEquivalent == true);
 
+#ifndef USE_CMAKE
+  // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+
   // This is AST container for the ROSE AST that will provide an iterator.
   // We want two iterators (one for the copy of the snippet and one for the 
   // original snippet so that we can query the original snippet's AST 
@@ -13616,6 +13622,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
 
   // We have reached the end of both ASTs.
      ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
+#endif
    }
 
 /**
@@ -13645,33 +13652,28 @@ SgJavaImportStatement *SageBuilder::buildJavaImportStatement(string import_info,
  */
 SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatement *scope, string name) {
     ROSE_ASSERT(scope);
-    SgClassDeclaration *class_declaration;
-     SgName class_name = name;
-    SgClassSymbol *class_symbol = scope -> lookup_class_symbol(class_name);
-    if (class_symbol) { // class already exists in the scope
-        class_declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
-    }
-    else {
-        SgClassDeclaration* nonDefiningDecl              = NULL;
-        bool buildTemplateInstantiation                  = false;
-        SgTemplateArgumentPtrList* templateArgumentsList = NULL;
-        class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_java_parameter, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
-        ROSE_ASSERT(class_declaration);
-        class_declaration -> set_parent(scope);
-        class_declaration -> set_scope(scope);
-        SageInterface::setSourcePosition(class_declaration);
-        SgClassDefinition *class_definition = class_declaration -> get_definition();
-        ROSE_ASSERT(class_definition);
-        SageInterface::setSourcePosition(class_definition);
+    SgName class_name = name;
+    ROSE_ASSERT(scope -> lookup_class_symbol(class_name) == NULL);
 
-        class_definition -> setAttribute("extensions", new AstSgNodeListAttribute());
-        class_definition -> setAttribute("extension_type_names", new AstRegExAttribute());
+    SgClassDeclaration* nonDefiningDecl              = NULL;
+    bool buildTemplateInstantiation                  = false;
+    SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+    SgClassDeclaration *class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_java_parameter, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    ROSE_ASSERT(class_declaration);
+    class_declaration -> set_parent(scope);
+    class_declaration -> set_scope(scope);
+    SageInterface::setSourcePosition(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition);
+    SageInterface::setSourcePosition(class_definition);
 
-        SgScopeStatement *type_space = new SgScopeStatement();
-        type_space -> set_parent(class_definition);
-        SageInterface::setSourcePosition(type_space);
-        class_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
-    }
+    class_definition -> setAttribute("extensions", new AstSgNodeListAttribute());
+    class_definition -> setAttribute("extension_type_names", new AstRegExAttribute());
+
+    SgScopeStatement *type_space = new SgScopeStatement();
+    type_space -> set_parent(class_definition);
+    SageInterface::setSourcePosition(type_space);
+    class_declaration -> setAttribute("type_space", new AstSgNodeAttribute(type_space));
 
     return class_declaration;
 }
