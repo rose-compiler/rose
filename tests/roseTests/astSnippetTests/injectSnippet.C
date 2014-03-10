@@ -159,6 +159,8 @@ main(int argc, char *argv[])
 
 #if 0
     // DQ (2/28/2014): This code is causing memory problems.
+    // Valgrind shows no problems here on my machine, although there are 10 prior "Conditional jump or move depends on
+    // uninialize value" errors reported before this point, all of which are in SgTreeTraversal. [Robb P. Matzke 2014-03-07]
     // Load replacement variable names (optional). If this isn't present then variables will have random names.
     SnippetFile::loadVariableNames("/usr/share/dict/words");
 #endif

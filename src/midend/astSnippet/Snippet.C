@@ -184,7 +184,7 @@ SnippetFile::loadVariableNames(const std::string &fileName)
 
      // DQ (2/28/2014): This causes my test code to fail (specimen2014_01.c in 
      // ResetParentPointers::evaluateInheritedAttribute() with a memory problem).
-     // free(line);
+        free(line);
 
         fclose(dict);
     }
