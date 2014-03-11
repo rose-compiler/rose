@@ -1556,6 +1556,8 @@ Grammar::setUpExpressions ()
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AlignOfOp.setDataPrototype ( "SgType*", "operand_type", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // DQ (3/7/2013): We should not store the type of operators but instead obtain it from the operand directly.
+  // I think that we are not using this data member.
      AlignOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
@@ -1592,7 +1594,7 @@ Grammar::setUpExpressions ()
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
      JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
-     JavaTypeExpression.setDataPrototype ( "SgType *", "type", "= NULL",
+     JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (1/13/2014): Added Java support for Java annotations.
