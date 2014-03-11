@@ -552,9 +552,9 @@ Grammar::setUpTypes ()
 
      JavaQualifiedType.setFunctionPrototype ("HEADER_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code" );
      JavaQualifiedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
-     JavaQualifiedType.setDataPrototype     ("SgType *","parent_type","= NULL",
+     JavaQualifiedType.setDataPrototype     ("SgType*","parent_type","= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaQualifiedType.setDataPrototype     ("SgType *","type","= NULL",
+     JavaQualifiedType.setDataPrototype     ("SgType*","type","= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaWildcardType.setFunctionPrototype ("HEADER_JAVA_WILDCARD_TYPE", "../Grammar/Type.code" );
