@@ -200,9 +200,9 @@ main(int argc, char *argv[])
     snippetFile->setCopyAllSnippetDefinitions(copy_definitions);
     snippetFile->setCopyRelatedThings(copy_related_things);
 
+#if 0 // DEBUGGING [DQ 2014-03-07]
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
 
-#if 0 // DEBUGGING [DQ 2014-03-07]
     ROSE_ASSERT(project->get_fileList_ptr() != NULL);
     SgFilePtrList & vectorFile = project->get_fileList_ptr()->get_listOfFiles();
     printf ("project files (size = %zu): \n",vectorFile.size());

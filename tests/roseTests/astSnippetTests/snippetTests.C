@@ -1,4 +1,5 @@
 #include "snippetTests.h"
+#include <boost/foreach.hpp>
 
 using namespace rose;
 
@@ -7,14 +8,26 @@ namespace SnippetTests {
 std::string
 findSnippetFile(const std::string &fileName)
 {
-    assert(!fileName.empty());
-    if (-1 != access(fileName.c_str(), R_OK))
+    if (fileName.empty())
+        throw std::runtime_error("empty file name");
+
+    if ('/'==fileName[0]) {
+        if (-1 != access(fileName.c_str(), R_OK))
+            throw std::runtime_error("snippet file does not exist or is not readable: " + fileName);
         return fileName;
-    std::string fullName = ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/" + fileName;
-    if (-1 != access(fullName.c_str(), R_OK))
-        return fullName;
-    std::cerr <<"snippet file does not exist or is not readable: " <<fullName <<"\n";
-    return "";
+    }
+
+    std::vector<std::string> directories;
+    directories.push_back(".");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensC");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensJava");
+    BOOST_FOREACH (const std::string &directory, directories) {
+        std::string fullName = directory + "/" + fileName;
+        if (0 == access(fullName.c_str(), R_OK))
+            return fullName;
+    }
+
+    throw std::runtime_error("snippet file does not exist or is not readable: " + fileName);
 }
 
 SnippetPtr
