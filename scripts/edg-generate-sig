@@ -145,6 +145,13 @@ if [ "$ROSE_SRC" = "" ]; then
 fi
 
 #------------------------------------------------------------------------------------------------------------------------
+# Returns success if $ROSE_SRC is a git repository, otherwise fails.
+is_git_repo () {
+    (cd "$ROSE_SRC" && git rev-parse --show-toplevel >/dev/null 2>&1)
+    return $?
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Echo the SHA1 hash that represents the EDG binary library version number for the specified commit.  The EDG SHA1 hash
 # is calculated by hashing the ls-tree lines for the things upon which EDG depends. Namely,
 #   util                         - a tree object, whose SHA1 depends recursively on everything under it.
@@ -265,15 +272,16 @@ else
 	[ -r "$ROSE_SRC/bincompat-sig" ] && sig="$(head -n1 $ROSE_SRC/bincompat-sig)"
     fi
 
-    # Try to find the best version
-    if [ "$sig" = "" ]; then
-	[ -n "$progress" ] && echo -n "checking" >&2
+    # Try to find the best version (which requires us to be in a git repository)
+    if [ "$sig" = "" ] && is_git_repo; then
+        [ -n "$progress" ] && echo -n "checking" >&2
 	sig=$(find_best_edg_version $commit generate_edg_hash)
     fi
-    if [ "$sig" = "" ]; then
+    if [ "$sig" = "" ] && is_git_repo; then
 	[ -n "$progress" ] && echo -n "checking (old)" >&2
 	sig=$(find_best_edg_version $commit generate_edg_hash_old)  #DEPRECATED
     fi
+    
 
     # Diagnostics
     if [ "$sig" = "" ]; then
@@ -282,15 +290,21 @@ else
 	    echo "$myname: include the following information in your bug report:"
 	    echo "    Time          = $(date)"
 	    echo "    ROSE src dir  = $ROSE_SRC"
-	    echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
+	    if is_git_repo; then
+		echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
+	    else
+		echo "    Commit        = <this is not a Git repository>"
+	    fi
 	    if [ -r "$manifest" ]; then
 		echo "    Manifest file = $(cd $ROSE_SRC && git hash-object $manifest) $localdir"
 		echo "    Num versions  = $(grep '^[0-9a-f]' $manifest |wc -l)"
 	    else
 		echo "    Manifest file = not found"
 	    fi
-	    echo "    Here          = $(generate_edg_hash $commit)"
-	    echo "    Here (old)    = $(generate_edg_hash_old $commit)" #DEPRECATED
+	    if is_git_repo; then
+		echo "    Here          = $(generate_edg_hash $commit)"
+		echo "    Here (old)    = $(generate_edg_hash_old $commit)" #DEPRECATED
+	    fi
 	) >&2
 	exit 1
     fi

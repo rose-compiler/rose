@@ -1815,7 +1815,6 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
-projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
@@ -2174,6 +2173,7 @@ binaries/samples/Makefile
 ])
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/BinaryDataStructureRecognition/Makefile
 #projects/haskellport/Makefile
 #projects/haskellport/Setup.hs
 #projects/haskellport/rose.cabal.in
