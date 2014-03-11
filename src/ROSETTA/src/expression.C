@@ -476,10 +476,12 @@ Grammar::setUpExpressions ()
   // DQ (8/6/2013): We need to implement this member function explicitly and cannot use the default implementation.
      TemplateParameterVal.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
-  // DQ (1/13/2014): Defife the get_type meber function in the JavaAnnotation (default), but exclude it from the subtree.
+  // DQ (1/13/2014): Define the get_type meber function in the JavaAnnotation (default), but exclude it from the subtree.
   // JavaAnnotation.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      JavaAnnotation.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
+  // DQ (3/7/2014): We want to use the automatically generated access function instead (so I think I need to include this).
+     JavaTypeExpression.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      JavaTypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
   // This is the easiest solution, then where any post_construction_initialization() function
@@ -1590,12 +1592,14 @@ Grammar::setUpExpressions ()
 
   // DQ (1/13/2014): Added Java support for Java annotations.
      JavaAnnotation.setFunctionPrototype ( "HEADER_JAVA_ANNOTATION", "../Grammar/Expression.code" );
+  // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
      JavaAnnotation.setDataPrototype ( "SgType*", "expression_type", "= NULL",
-            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
      JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
      JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
-            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (1/13/2014): Added Java support for Java annotations.
      JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );

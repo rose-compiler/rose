@@ -7139,6 +7139,10 @@ SOURCE_JAVA_NORMAL_ANNOTATION_END
 
 SOURCE_JAVA_TYPE_EXPRESSION_START
 
+#if 0
+// DQ (3/7/2014): Use automatically generated access functions instead (so that we get both get_ and set_ functions).
+// We need the set functions to support the AST fixup for the snippet mechanism.
+
 //
 // Return the type associated with this Type expression.
 //
@@ -7152,6 +7156,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_JAVA_TYPE_EXPRESSION_END
 
