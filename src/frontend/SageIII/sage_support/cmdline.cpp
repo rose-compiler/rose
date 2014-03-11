@@ -4888,7 +4888,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-
+/* TV (02/26/2014): We do not need to specify EDG_BASE anymore as dependency to predefined_macros.txt is switch off
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
     //--------------------------------------------------------------------------
     // TOO (11/12/2012) - Refactor to use generic EDG version.
@@ -4915,7 +4915,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
         commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
     }
-
+*/
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
