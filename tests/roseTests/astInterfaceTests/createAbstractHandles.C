@@ -9,11 +9,9 @@ by Liao, 3/6/2014
 #include <iostream>
 
 using namespace std;
-using namespace AbstractHandle;
-
 
 // a global handle for the current file
-static abstract_handle* file_handle = NULL;
+//static abstract_handle* file_handle = NULL;
 
 class visitorTraversal : public AstSimpleProcessing
 {
@@ -23,12 +21,12 @@ class visitorTraversal : public AstSimpleProcessing
 
 void visitorTraversal::visit(SgNode* n)
 {
-  SgForStatement* forloop = isSgForStatement(n);
+  SgLocatedNode* lnode= isSgLocatedNode(n);
 
-  if (forloop)
+  if (lnode)
   {
-    cout<<"Creating handles for a loop construct..."<<endl;
 #if 0    
+    cout<<"Creating handles for a loop construct..."<<endl;
     //Create an abstract node
     abstract_node* anode= buildroseNode(forloop);
 
@@ -40,7 +38,7 @@ void visitorTraversal::visit(SgNode* n)
     // Create handles based on numbering specifiers within the file
     abstract_handle * bhandle = new abstract_handle(anode,e_numbering,file_handle);
 #endif
-    abstract_handle * bhandle = buildAbstractHandle(forloop);
+    AbstractHandle::abstract_handle * bhandle = SageInterface::buildAbstractHandle(lnode);
     cout<<bhandle->toString()<<endl<<endl;
   }
 }

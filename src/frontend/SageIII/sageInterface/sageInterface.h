@@ -540,6 +540,9 @@ class StatementGenerator {
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
 
+//! Build an abstract handle from an AST node, reuse previously built handle when possible
+ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
+
 //! Obtain a matching SgNode from an abstract handle string
 ROSE_DLL_API SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
 
@@ -561,7 +564,7 @@ bool isPrefixOperatorName( const SgName & functionName );
 //! Is an overloaded operator a postfix operator. (e.g. ).
 bool isPostfixOperator( SgExpression* exp );
 
-//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+//! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
 bool isIndexOperator( SgExpression* exp );
 
 //@}
