@@ -6217,6 +6217,11 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 
 #endif
 
+AbstractHandle::abstract_handle* SageInterface::buildAbstractHandle(SgNode* n)
+{
+  return AbstractHandle::buildAbstractHandle(n);
+  
+}
 //! Get the enclosing scope from a node n 
 SgScopeStatement* SageInterface::getEnclosingScope(SgNode* n, const bool includingSelf/* =false*/)
 {
