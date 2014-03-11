@@ -16,6 +16,8 @@ jmethodID mainMethod = NULL;
 jmethodID hasConflictsMethod = NULL;
 jmethodID getTempDirectoryMethod = NULL;
 jmethodID createTempFileMethod = NULL;
+jmethodID createTempNamedFileMethod = NULL;
+jmethodID createTempNamedDirectoryMethod = NULL;
 static jmethodID jofp_get_method(int, const char*, const char*);
 
 // DQ (4/17/2011): This is not used.
@@ -87,6 +89,8 @@ static int jofp_invoke(int argc, char **argv) {
     ::hasConflictsMethod = jofp_get_method(STATIC_METHOD, "hasConflicts", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z");
     ::getTempDirectoryMethod = jofp_get_method(STATIC_METHOD, "getTempDirectory", "()Ljava/lang/String;");
     ::createTempFileMethod = jofp_get_method(STATIC_METHOD, "createTempFile", "(Ljava/lang/String;)Ljava/lang/String;");
+    ::createTempNamedFileMethod = jofp_get_method(STATIC_METHOD, "createTempNamedFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    ::createTempNamedDirectoryMethod = jofp_get_method(STATIC_METHOD, "createTempNamedDirectory", "(Ljava/lang/String;)V");
 
     (*::currentEnvironment).CallStaticVoidMethod(::currentJavaTraversalClass, mainMethod, args);
     if (::currentEnvironment -> ExceptionOccurred()) {
