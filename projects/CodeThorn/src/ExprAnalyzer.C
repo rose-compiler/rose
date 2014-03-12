@@ -121,7 +121,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               tmpres2.result=false;
               resultList.push_back(tmpres1);
               resultList.push_back(tmpres2);
-              return resultList;
+              //return resultList; MS: removed 3/11/2014
               break;
             }
           }
