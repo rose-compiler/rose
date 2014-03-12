@@ -63,6 +63,7 @@ SnippetFile::parse(const std::string &fileName)
     SgSourceFile *snippetAst = isSgSourceFile(file);
     assert(snippetAst!=NULL);
     attachPreprocessingInfo(snippetAst);
+    resetConstantFoldedValues(file);
     snippetAst->set_skip_unparse(true);
     return snippetAst;
 }
