@@ -19,6 +19,7 @@ findSnippetFile(const std::string &fileName)
 
     std::vector<std::string> directories;
     directories.push_back(".");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests");
     directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensC");
     directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensJava");
     BOOST_FOREACH (const std::string &directory, directories) {
@@ -132,6 +133,14 @@ findVariableDeclaration(SgNode *ast, const std::string &var_name)
         return iname;
     }
     return NULL;
+}
+
+SgInitializedName *
+findArgumentDeclaration(SgNode *ast, const std::string &varName)
+{
+    SgFunctionDeclaration *fdecl = SageInterface::getEnclosingNode<SgFunctionDeclaration>(ast);
+    ROSE_ASSERT(fdecl || !"cannot find enclosing function declaration");
+    return findVariableDeclaration(fdecl->get_parameterList(), varName);
 }
 
 std::vector<SgInitializedName*>

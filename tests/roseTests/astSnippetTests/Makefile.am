@@ -608,6 +608,21 @@ testJava5c.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimen
 		COPY_RELATED_THINGS=no				\
 		$(JAVA_INJECTION_TEST) $@
 
+###############################################################################################################################
+# quicksort tests
+###############################################################################################################################
+
+noinst_PROGRAMS += quickSortInjector
+quickSortInjector_SOURCES = quickSortInjector.C snippetTests.C
+quickSortInjector_LDADD = $(ROSE_LIBS)
+
+TEST_TARGETS += quickSort.passed
+quickSort.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnippets.c
+	@$(RTH_RUN)										\
+		TITLE="quickSort C [$@]"							\
+		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortC/quicksort.c"	\
+		SUBDDIR=yes									\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
 # DQ (3/2/2014): Extra tests I have to build:

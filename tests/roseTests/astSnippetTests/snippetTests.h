@@ -29,6 +29,9 @@ SgStatement *findInsertHere(SgFunctionDefinition*);
 /** Find a variable declaration. */
 SgInitializedName *findVariableDeclaration(SgNode *ast, const std::string &varName);
 
+/** Find a formal argument for the function enclosing @p ast. */
+SgInitializedName *findArgumentDeclaration(SgNode *ast, const std::string &varName);
+
 /** Find all variable declarations in a function definition, including formal arguments. */
 std::vector<SgInitializedName*> findFunctionVariables(SgFunctionDefinition*);
 
