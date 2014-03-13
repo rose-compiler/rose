@@ -13,63 +13,63 @@ all: extract_rose_required_ecj_source_files
 # extract_rose_required_ecj_source_files: buildJavaSupport
 # extract_rose_required_ecj_source_files: ${srcdir}/JavaTraversal.java
 extract_rose_required_ecj_source_files: JavaTraversal.class
-#	@echo "In extract_rose_required_ecj_source_files: After building JavaTraversal.java, copy ecj-3.8.jar from srcdir to builddir"
-#	cp ${srcdir}/ecjROSE.jar ecj-3.8.jar
+#	@echo "In extract_rose_required_ecj_source_files: After building JavaTraversal.java, copy ecj-3.8.2.jar from srcdir to builddir"
+#	cp ${srcdir}/ecjROSE.jar ecj-3.8.2.jar
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
 JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java 
-	$(JAVAC) -d . -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java ${srcdir}/JavaSourcePositionInformation.java  ${srcdir}/JavaSourcePositionInformationFactory.java 
+	$(JAVAC) -d . -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java ${srcdir}/JavaSourcePositionInformation.java  ${srcdir}/JavaSourcePositionInformationFactory.java 
 #	DQ (11/23/2010): javah only requires the class file which are in the build directory.
-	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.jar:. JavaTraversal
-	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.jar:. JavaParser
-#	DQ (10/13/2010): I want to avoid copying ecj-3.8.jar into the build tree, but it is required for now.
+	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaTraversal
+	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
+#	DQ (10/13/2010): I want to avoid copying ecj-3.8.2.jar into the build tree, but it is required for now.
 #	Only ROSE translators need it, not the javac and javah commands (above).
-	@echo "After building JavaTraversal.java, copy ecj-3.8.jar from srcdir to builddir (only required for ROSE to find ecj-3.8.jar (fix later))"
-	(test -f ecj-3.8.jar) || cp ${srcdir}/ecj-3.8.jar ecj-3.8.jar
+	@echo "After building JavaTraversal.java, copy ecj-3.8.2.jar from srcdir to builddir (only required for ROSE to find ecj-3.8.2.jar (fix later))"
+	(test -f ecj-3.8.2.jar) || cp ${srcdir}/ecj-3.8.2.jar ecj-3.8.2.jar
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
 JavaParser.class: ${srcdir}/JavaParser.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaParser.java
-	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.jar:. JavaParser
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
 
 JavaParser.h: ${srcdir}/JavaParser.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaParser.java
-	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.jar:. JavaParser
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
 
 # This is needed when distcheck compiles the code, I don't know why.
 JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaParserSupport.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaParserSupport.java
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
 ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
 JavaTraversal.h: ${srcdir}/JavaTraversal.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar ${srcdir}/JavaTraversal.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar ${srcdir}/JavaTraversal.java
 	$(JAVAH) -jni JavaTraversal
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaToken.class: ${srcdir}/JavaToken.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaToken.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaToken.java
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformation.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformation.java
 
 # charles4: (2/23/2012): 
 JavaSourcePositionInformationFactory.class: ${srcdir}/JavaSourcePositionInformationFactory.java
-	$(JAVAC) -cp ${srcdir}/ecj-3.8.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformationFactory.java
+	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformationFactory.java
 
-EXTRA_DIST = CMakeLists.txt ecj-3.8.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
+EXTRA_DIST = CMakeLists.txt ecj-3.8.2.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java UnitInfo.java
 
 install-data-local:
-	$(INSTALL_DATA) $(srcdir)/ecj-3.8.jar $(libdir)/ecj-3.8.jar
+	$(INSTALL_DATA) $(srcdir)/ecj-3.8.2.jar $(libdir)/ecj-3.8.2.jar
 	$(INSTALL_DATA) *.class $(libdir)
 
 clean-local:
-	rm -f *.dot ecj-3.8.jar *.class *.java *.h
+	rm -f *.dot ecj-3.8.2.jar *.class *.java *.h
 
 # JavaParser* JavaTraversal* JavaParserSupport* ecjASTVisitor* ExtendedASTVisitor*

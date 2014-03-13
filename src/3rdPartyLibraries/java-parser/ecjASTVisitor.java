@@ -53,8 +53,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             return " MessageSend: " + javaParserSupport.getMethodName(((MessageSend) node).binding) + "( ... )";
         else if (node instanceof MethodDeclaration) // && (! (node instanceof AnnotationMethodDeclaration)))
             return " MethodDeclaration: " + javaParserSupport.getMethodName(((MethodDeclaration) node).binding) + "(***)";
-        else if (node instanceof SingleNameReference)
-            return " SingleNameReference: " + new String(((SingleNameReference) node).token);
+        else if (node instanceof NameReference)
+            return node.getClass().getName() + ": " +  ((NameReference) node).print(0, new StringBuffer()).toString();
+        else if (node instanceof TypeReference)
+            return node.getClass().getName() + ": " + ((TypeReference) node).print(0, new StringBuffer()).toString();
         return node.getClass().getName();
     }
     
@@ -249,6 +251,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         //
         // Complete the processing of the type parameters, if any.
         //
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             JavaParser.cactionPushTypeParameterScope(package_name,
                                                      typename,
@@ -260,7 +263,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
             JavaParser.cactionPopTypeParameterScope(location);
         }
-
+        */
         JavaParser.cactionTypeDeclaration(package_name,
                                           typename,
                                           (node.annotations == null ? 0 : node.annotations.length),
@@ -1202,12 +1205,14 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                 node.annotations[i].traverse(this, node.scope);
         }
 
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             int typeParametersLength = node.typeParameters.length;
             for (int i = 0; i < typeParametersLength; i++) {
                 node.typeParameters[i].traverse(this, node.scope);
             }
         }
+        */
 
         if (node.arguments != null) {
             int argumentLength = node.arguments.length;
@@ -1320,7 +1325,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(DoubleLiteral, BlockScope)");
 
-        JavaParser.cactionDoubleLiteral(node.constant.doubleValue(), new String(node.source()), this.unitInfo.createJavaToken(node));
+        double value = node.constant.doubleValue();
+        String source = (value < 0 ? "-" : "") + new String(node.source());
+        JavaParser.cactionDoubleLiteral(value, source, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(DoubleLiteral, BlockScope)");
@@ -1514,7 +1521,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FieldReference, BlockScope)");
 
-        javaParserSupport.preprocessClass((node.genericCast != null ? node.genericCast : node.actualReceiverType), this.unitInfo);       	
+        javaParserSupport.preprocessClass((node.genericCast != null ? node.genericCast : node.actualReceiverType), this.unitInfo);
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1531,7 +1538,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         String field_name = new String(node.token);
         
 //System.out.println("Field reference 1; " + (node.genericCast != null ? ("generic cast: " + node.genericCast.debugName() + "; "): "") + "receiver type: " + 
-//		           node.actualReceiverType.debugName() + "; binding type: " + node.binding.type.debugName());
+//                   node.actualReceiverType.debugName() + "; binding type: " + node.binding.type.debugName());
 
         JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, field_name, this.unitInfo.createJavaToken(node));
 
@@ -1573,7 +1580,9 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(FloatLiteral, BlockScope)");
 
-        JavaParser.cactionFloatLiteral(node.constant.floatValue(), new String(node.source()), this.unitInfo.createJavaToken(node));
+        float value = node.constant.floatValue();
+        String source = (value < 0 ? "-" : "") + new String(node.source());
+        JavaParser.cactionFloatLiteral(value, source, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(FloatLiteral, BlockScope)");
@@ -1749,10 +1758,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(IntLiteral, BlockScope) value = " + node.toString());
 
-        //
-        // Do not use node.source() for the string representation of this integer because it yields an incorrect result for -2147483648
-        //
-        JavaParser.cactionIntLiteral(node.constant.intValue(), new String(node.source()), this.unitInfo.createJavaToken(node));
+        int value = node.constant.intValue();
+        char source_array[] = node.source();
+        String source = (value < 0 &&
+                         (! (source_array.length > 1 && // at least 2 elements
+                             source_array[0] == '0'  && // starts with 0 
+                             (source_array[1] == 'x' || source_array[1] == 'X' || source_array[1] == 'b' || source_array[1] == 'B'))) // not a binary or Heaxadecimal
+                         ? "-"
+                         : "") + new String(source_array);
+        JavaParser.cactionIntLiteral(value, source, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(IntLiteral, BlockScope)");
@@ -1813,7 +1827,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         node.type.traverse(this, scope);
 
         JavaParser.cactionLocalDeclaration(node.annotations == null ? 0 : node.annotations.length,
-        		                           new String(node.name),
+                                           new String(node.name),
                                            node.binding != null && node.binding.isFinal(),
                                            this.unitInfo.createJavaToken(node));
 
@@ -1844,7 +1858,15 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(LongLiteral, BlockScope)");
 
-        JavaParser.cactionLongLiteral(node.constant.longValue(), new String(node.source()), this.unitInfo.createJavaToken(node));
+        long value = node.constant.longValue();
+        char source_array[] = node.source();
+        String source = (value < 0 &&
+                         (! (source_array.length > 1 && // at least 2 elements
+                             source_array[0] == '0'  && // starts with 0 
+                             (source_array[1] == 'x' || source_array[1] == 'X' || source_array[1] == 'b' || source_array[1] == 'B'))) // not a binary or Heaxadecimal
+                        ? "-"
+                        : "") + new String(source_array);
+        JavaParser.cactionLongLiteral(value, source, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(LongLiteral, BlockScope)");
@@ -2092,11 +2114,14 @@ javaParserSupport.getMethodKey(node.binding) +
                 node.annotations[i].traverse(this, node.scope);
         }
 
+        /* No need for this!!!  The type parameters are fully processed during the initial traversal.
         if (node.typeParameters != null) {
             for (int i = 0; i < node.typeParameters.length; i++) {
                 node.typeParameters[i].traverse(this, node.scope);
             }
         }
+        */
+
         /*
         if (node.returnType != null) {
             node.returnType.traverse(this, node.scope);
@@ -2918,9 +2943,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(StringLiteral, BlockScope)");
 
-        String literal = new String(node.source());
-
-        JavaParser.cactionStringLiteral(literal, this.unitInfo.createJavaToken(node));
+        String source = new String(node.source());
+        JavaParser.cactionStringLiteral(source, this.unitInfo.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(StringLiteral, BlockScope)");
@@ -3233,7 +3257,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(TypeParameter, BlockScope)");
 
-        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(TypeParameter, BlockScope)");
@@ -3245,7 +3270,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering exit(TypeParameter, BlockScope)");
 
-        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(TypeParameter, BlockScope)");
@@ -3256,7 +3282,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(TypeParameter, ClassScope)");
 
-        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameter(node.binding.debugName(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter(TypeParameter, ClassScope)");
@@ -3268,7 +3295,8 @@ System.out.flush();
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside exit(TypeParameter, ClassScope)");
 
-        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+//        JavaParser.cactionTypeParameterEnd(node.binding.debugName(), (node.binding.firstBound != null), node.binding.boundsCount(), this.unitInfo.createJavaToken(node));
+        assert(false);
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit(TypeParameter, ClassScope)");
@@ -3326,6 +3354,7 @@ System.out.flush();
     public boolean enter(Wildcard node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(Wildcard, BlockScope)");
+//System.out.println("Wildcard " + node.print(0, new StringBuffer()).toString());
 
         JavaParser.cactionWildcard(this.unitInfo.createJavaToken(node));
 
@@ -3349,6 +3378,7 @@ System.out.flush();
     public boolean enter(Wildcard node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Entering enter(Wildcard, ClassScope)");
+//System.out.println("Wildcard " + node.print(0, new StringBuffer()).toString());
 
         JavaParser.cactionWildcard(this.unitInfo.createJavaToken(node));
 

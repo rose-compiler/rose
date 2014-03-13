@@ -170,15 +170,6 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
             curprint (")");
         }
     }
-
-    //
-    // An Expression may contain a name suffix stored in the "suffix" attribute.
-    //
-    if (expr -> attributeExists("suffix")) {
-        curprint(".");
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
-        curprint(attribute -> expression);
-    }
 }
 
 PrecedenceSpecifier
@@ -839,8 +830,12 @@ Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
 
     curprint("(");
     AstRegExAttribute *attribute = (AstRegExAttribute *) cast -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(cast -> get_type(), info);
+    }
     curprint(") ");
 
     curprint("(");
@@ -884,6 +879,8 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      //
      // If this is an allocation expression for an anonymous class, output the body of the class.
      //
+// TODO: Remove this!
+/*
      if (new_op -> attributeExists("new_prefix")) {
          AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("new_prefix");
          SgExpression *prefix = isSgExpression(attribute -> getNode());
@@ -891,7 +888,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          unparseExpression(prefix, info);
          curprint(".");
      }
-
+*/
      curprint("new ");
 
   // curprint ( "\n /* Output any placement arguments */ \n";
@@ -936,24 +933,36 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
      */
-     if (isSgPointerType(new_op->get_specified_type())) {
-         SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
-         while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
-             pointer_type = isSgPointerType(pointer_type -> get_base_type());
+     if (isSgArrayType(new_op -> get_specified_type())) {
+// TODO: Remove this!
+/*
+         SgArrayType *array_type = isSgArrayType(new_op -> get_specified_type());
+         while(isSgArrayType(array_type -> get_base_type())) { // find the base type...
+             array_type = isSgArrayType(array_type -> get_base_type());
          }
 
-         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
-             SgClassType *class_type = isSgClassType(pointer_type -> get_base_type());
+         if (isSgDotExp(new_op -> get_parent()) && isSgClassType(new_op -> get_specified_type())) {
+             SgClassType *class_type = isSgClassType(array_type -> get_base_type());
              ROSE_ASSERT(class_type);
              curprint(class_type -> get_name().getString());
          }
          else {
+*/
 // TODO: Remove this!
 //             unparseType(pointer_type -> get_base_type(), info);
-             ROSE_ASSERT(new_op -> attributeExists("type"));
+
              AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             curprint(attribute -> expression);
-         }
+             if (attribute) {
+                 curprint(attribute -> expression);
+             }
+             else {
+                 SgType *type = new_op -> get_specified_type();
+                 do {
+                     SgType *type = isSgArrayType(type) -> get_base_type();
+                 } while (isSgArrayType(type));
+                 unparseType(type, info);
+             }
+//         }
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
          SgConstructorInitializer *init = new_op -> get_constructor_args();
@@ -978,19 +987,27 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          }
      }
      else {
-         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
+// TODO: Remove this!
+/*
+         if (isSgDotExp(new_op -> get_parent()) && isSgClassType(new_op->get_specified_type())) {
              SgClassType *class_type = isSgClassType(new_op->get_specified_type());
              ROSE_ASSERT(class_type);
              curprint(class_type -> get_name().getString());
          }
          else {
+*/
 // TODO: Remove this!
 //             unparseType(new_op->get_specified_type(), info);
 
-             ROSE_ASSERT(new_op -> attributeExists("type"));
+
              AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             curprint(attribute -> expression);
-         }
+             if (attribute) {
+                 curprint(attribute -> expression);
+             }
+             else {
+                 unparseType(new_op -> get_specified_type(), info);
+             }
+//         }
 
          curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
@@ -1005,7 +1022,7 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          curprint (")");
 
          //
-         // If this is an allocation expression for an anonymous class, output the body of the class.
+         // Check if this is an allocation expression for an anonymous class. In such a case, output the body of the class.
          //
          if (new_op -> attributeExists("body")) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
@@ -1279,9 +1296,13 @@ Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
     unparseExpression(inst_op->get_operand_expr(), info);
     curprint(" instanceof ");
 
-    ROSE_ASSERT(inst_op -> attributeExists("type"));
     AstRegExAttribute *attribute = (AstRegExAttribute *) inst_op -> getAttribute("type");
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(inst_op -> get_operand_type(), info);
+    }
 }
 
 void
@@ -1491,9 +1512,14 @@ Unparse_Java::unparseJavaMarkerAnnotation(SgExpression *expr, SgUnparse_Info& in
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) marker_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(marker_annotation -> get_type(), info);
+    }
 }
+
 
 void
 Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_Info& info) {
@@ -1504,8 +1530,12 @@ Unparse_Java::unparseJavaSingleMemberAnnotation(SgExpression *expr, SgUnparse_In
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) single_member_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(single_member_annotation -> get_type(), info);
+    }
 
     curprint("(");
     unparseExpression(single_member_annotation -> get_value(), info);
@@ -1521,8 +1551,12 @@ Unparse_Java::unparseJavaNormalAnnotation(SgExpression *expr, SgUnparse_Info& in
     // curprint(type -> get_name().getString());
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) normal_annotation -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(normal_annotation -> get_type(), info);
+    }
 
     SgJavaMemberValuePairPtrList &pair_list = normal_annotation -> get_value_pair_list();
     curprint("(");
@@ -1543,6 +1577,10 @@ void
 Unparse_Java::unparseJavaTypeExpression(SgExpression *expr, SgUnparse_Info& info) {
     SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
     AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
-    ROSE_ASSERT(attribute);
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else {
+        unparseType(type_expression -> get_type(), info);
+    }
 }

@@ -96,7 +96,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #if 0
           printf ("In unparseOneElemConInit(): con_init->get_declaration() = %p \n",con_init->get_declaration());
 #endif
-          if(con_init->get_declaration())
+          if (con_init->get_declaration())
              {
             // DQ (11/12/2004)  Use the qualified name always (since get_need_qualifier() does
             //                  not appear to get set correctly (perhaps within EDG as before)
@@ -112,8 +112,29 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
-               name = nameQualifier + con_init->get_declaration()->get_name();
 
+            // DQ (2/8/2014): Adding the trimming of the constructor name where it is required for the
+            // GNU g++ version 4.5 and greater compilers (used in the backend compilation within ROSE).
+               bool skipOutputOfFunctionName = false;
+               nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
+
+            // name = nameQualifier + con_init->get_declaration()->get_name();
+               if (skipOutputOfFunctionName == false)
+                  {
+                 // Case for g++ version less than version 4.5
+                    name = nameQualifier + con_init->get_declaration()->get_name();
+                  }
+                 else
+                  {
+                 // Case for g++ versions equal to or greater than version 4.5
+                    name = nameQualifier;
+                  }
+#if 0
+               printf ("In unparseOneElemConInit(): name = %s \n",name.str());
+#endif
+#if 0
+               curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() != NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
+#endif
             // DQ (8/19/2013): I am not sure that this will include name qualification on possible template arguments.
             // We need an example of this.
                if ( unp->u_sage->printConstructorName(con_init))
@@ -147,11 +168,18 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
 
+#if 0
+                    printf ("In unparseOneElemConInit(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+
                  // DQ (8/19/2013): We need to unparse the type using any possible qualification on the type name (e.g. name qualification on template arguments).
                     if ( unp->u_sage->printConstructorName(con_init))
                        {
 #if 0
                          printf ("In unparseOneElemConInit(): Unparse the nameQualifier = %s \n",nameQualifier.str());
+#endif
+#if 0
+                         curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() == NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
 #endif
                          curprint(nameQualifier.str());
 #if 0
@@ -191,7 +219,9 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
         }
 
-  // curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#if 0
+     curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
 
   // taken from unparseExprList
   // check whether the constructor name was printed. If so, we need to surround
@@ -229,6 +259,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
 #if 0
      printf ("Leaving of Unparse_MOD_SAGE::unparseOneElemConInit \n\n\n");
+     curprint( "\n /* Leaving of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
    }
 
@@ -321,7 +352,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
      if (storage.isAsm())
         {
-          curprint("asm ");
+       // DQ (2/6/2014): Fix to support GNU gcc.
+       // curprint("asm ");
+          curprint("__asm__ ");
         }
 
   // TV (05/06/2010): CUDA storage modifiers
@@ -2559,6 +2592,15 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          break;
                        }
 
+                 // DQ (2/16/2014): The SystemC example (in systemc_tests) demonstrates where this case must be handled.
+                 // I think it should be the scope of the SgTypedefDeclaration.
+                    case V_SgTypedefDeclaration:
+                       {
+                         SgTypedefDeclaration* declaration = isSgTypedefDeclaration(parentOfFunctionDeclaration);
+                         currentScope = declaration->get_scope();
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
@@ -2778,7 +2820,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printf ("storage.isAsm() = %s \n",storage.isAsm() ? "true" : "false");
           if (storage.isAsm() == true)
              {
-               curprint("asm ");
+            // DQ (2/6/2014): Modified to support gcc.
+            // curprint("asm ");
+               curprint("__asm__ ");
              }
 
 #if 0
@@ -2895,12 +2939,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
+                 // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
+                 // because it doesn't try to resolve any conflicts with symbols, but if the following assertion is
+                 // commented out it at least works.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
 
                  // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
                        {
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
+                         printf ("firstNondefiningFunction = %s \n",firstNondefiningFunction->get_name().str());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
                          printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
@@ -2909,7 +2959,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
+                 // copied-and-inserted declaration is unparsed correctly if this assert is commented out.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
                   }
 #if 0
                printf ("Unparser: firstNondefiningFunction = %p \n",firstNondefiningFunction);
@@ -3001,10 +3054,12 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (1/25/2009): Function can be defined using asm function names. The name is held as a string.
           if (funcdecl_stmt->get_asm_name().empty() == false)
              {
+            // DQ (2/6/2014): Fix to support GNU gcc.
             // an asm ("<function name>") is in use
-               curprint ( string(" asm (\""));
-               curprint ( funcdecl_stmt->get_asm_name() );
-               curprint ( string("\")"));
+            // curprint ( string(" asm (\""));
+               curprint(" __asm__ (\"");
+               curprint( funcdecl_stmt->get_asm_name() );
+               curprint( string("\")"));
              }
 
           if (funcdecl_stmt->isForward() && !ninfo.SkipSemiColon())
@@ -4286,6 +4341,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo_for_type.set_SkipClassSpecifier();
                   }
 
+            // DQ (2/2/2014): Adding support to supress the output of the array bound in secondary array typed variable declarations.
+               if (decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true)
+                  {
+                    ninfo_for_type.set_supressArrayBound();
+#if 0
+                    printf ("In unparseVarDeclStmt(): decl_item->get_hasArrayTypeWithEmptyBracketSyntax() == true: calling ninfo_for_type.set_supressArrayBound() \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
             // printf ("After isNameOnly() test: ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
 
             // DQ (8/23/2006): This was used to specify global qualification separately from the more general name 
@@ -4427,8 +4495,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (12/31/2013): review this in light of change to support type attributres directly.
                printf ("Inside of unparseVarDeclStmt: calling printAttributes(decl_item,info): Find out what what sorts of gnu attributes this causes to be put out! \n");
 #endif
+            // DQ (2/6/2014): Move this to be after the name is output.
             // DQ (8/31/2013): Added support for missing attributes.
-               unp->u_sage->printAttributes(decl_item,info);
+            // unp->u_sage->printAttributes(decl_item,info);
 
             // DQ (12/30/2013): Adding support to seperate how packing is handled when attached to the type of a variable vs. the variable directly.
                if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
@@ -4581,6 +4650,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (7/31/2006): I think that we can simplify to just this code.
             // unp->u_type->unparseType(tmp_type, ninfo2);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
+
+            // DQ (2/6/2014): Move this to be after the name is output.
+            // DQ (8/31/2013): Added support for missing attributes.
+               unp->u_sage->printAttributes(decl_item,info);
 
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
@@ -5875,9 +5948,20 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
      ROSE_ASSERT(case_stmt != NULL);
 
-     curprint ( string("case "));
+     curprint("case ");
+
      unparseExpression(case_stmt->get_key(), info);
-     curprint ( string(":"));
+
+  // DQ (1/31/2014): Adding support for gnu case range extension.
+     if (case_stmt->get_key_range_end() != NULL)
+        {
+       // Note that the spaces on each side of the "..." are required to avoid interpretation 
+       // of the case range as a floating point number by the gnu parser.
+          curprint(" ... ");
+          unparseExpression(case_stmt->get_key_range_end(), info);
+        }
+
+     curprint(":");
 
   // if(case_stmt->get_body())
      if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -6024,7 +6108,94 @@ isOutputAsmOperand(SgAsmOp* asmOp)
 
      return (asmOp->get_recordRawAsmOperandDescriptions() == true) ? (asmOp->get_isOutputOperand() == true) : (asmOp->get_modifiers() & SgAsmOp::e_output);
    }
-                
+
+
+static std::string 
+asm_escapeString(const std::string & s) 
+   {
+  // DQ (2/4/2014): We need a special version of this function for unparsing the asm strings.
+  // The version of escapeString in util will expand '\' to be '\\' and this should not
+  // be done to the "\n" and "\t" substrings.
+
+     std::string result;
+     for (size_t i = 0; i < s.length(); ++i) 
+        {
+          switch (s[i]) 
+             {
+#if 0
+            // DQ (2/4/2014): I think this is a problem for asm strings (it translates "\n" 
+            // substrings into "\\\n" substrings which are a problem for the assembler.
+               case '\\': 
+#if 1
+                    printf ("In asm_escapeString(): processing \\\\ character \n");
+#endif
+                    result += "\\\\";
+                    break;
+#endif
+               case '"':
+#if 0
+                    printf ("In asm_escapeString(): processing \\\" character \n");
+#endif
+                    result += "\\\"";
+                    break;
+               case '\a':
+#if 0
+                    printf ("In asm_escapeString(): processing \\a character \n");
+#endif
+                    result += "\\a";
+                    break;
+               case '\f':
+#if 0
+                    printf ("In asm_escapeString(): processing \\f character \n");
+#endif
+                    result += "\\f";
+                    break;
+               case '\n':
+#if 0
+                    printf ("In asm_escapeString(): processing \\n character \n");
+#endif
+                    result += "\\n";
+                    break;
+               case '\r':
+#if 0
+                    printf ("In asm_escapeString(): processing \\r character \n");
+#endif
+                    result += "\\r";
+                    break;
+               case '\t':
+#if 0
+                    printf ("In asm_escapeString(): processing \\t character \n");
+#endif
+                    result += "\\t";
+                    break;
+               case '\v':
+#if 0
+                    printf ("In asm_escapeString(): processing \\v character \n");
+#endif
+                    result += "\\v";
+                    break;
+               default:
+#if 0
+                    printf ("In asm_escapeString(): processing default case character \n");
+#endif
+                    if (isprint(s[i])) 
+                       {
+                         result.push_back(s[i]);
+                       }
+                      else 
+                       {
+                         std::ostringstream stream;
+                         stream << '\\';
+                         stream << std::setw(3) << std::setfill('0') <<std::oct << (unsigned)(unsigned char)(s[i]);
+                         result += stream.str();
+                       }
+                    break;
+             }
+        }
+
+     return result;
+   }
+
 
 
 void
@@ -6039,6 +6210,10 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(asm_stmt != NULL);
 
 #define ASM_DEBUGGING 0
+
+#if ASM_DEBUGGING
+     printf ("In unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
 
      SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
      ROSE_ASSERT(sourceFile != NULL);
@@ -6077,26 +6252,67 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           return;
         }
 
+#if 0
+  // DQ (2/4/2014): Note that test2012_175.c demonstrates where EDG causes the IR node in ROSE to be marked 
+  // as volatile and it causes an error in the generated code.
+
+  // DQ (7/23/2006): Added support for volatile as modifier.
+     if (asm_stmt->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile())
+        {
+#if ASM_DEBUGGING
+          curprint("/* output volatile keyword from unparseAsmStmt */ \n ");
+#endif
+          curprint("volatile ");
+        }
+#endif
+
   // Output the "asm" keyword.
   // DQ (8/31/2013): We have to output either "__asm__" or "asm" (for MSVisual C++ I think we might need "__asm").
+#if 0
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
      if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
         {
-          curprint("__asm__ ");
+       // curprint("__asm__ ");
+          curprint("asm ");
         }
        else
         {
           curprint("asm ");
         }
+#else
 
-  // DQ (7/23/2006): Added support for volatile as modifier.
-     if (asm_stmt->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile())
-        {
-#if 0
-          curprint("/* output volatile keyword from unparseAsmStmt */ \n ");
+// DQ (2/25/2014): Note that the 4.2.4 compiler will define both BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+// So we need to use another macro BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM that will work uniformally on both 4.4.7 and 4.2.4 versions of 
+// the GNU compiler.  This is truely strange behavior.
+// DQ (2/25/2014): This is the new support for use of "asm" or "__asm__" (which should maybe be refactored).
+// #if (defined(BACKEND_C_COMPILER_SUPPORTS_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+//    #error "Error: BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
+// #endif
+#ifndef _MSC_VER
+#if (defined(BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+// DQ (2/26/2014): Allow the CMake tests to pass for now.
+   #warning "Warning: BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
 #endif
-          curprint("volatile ");
-        }
+
+// #ifdef BACKEND_C_COMPILER_SUPPORTS_ASM
+#ifdef BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM
+     curprint("asm ");
+#else
+#ifdef BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+     curprint("__asm__ ");
+#else
+   #warning "Warning: either BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM or BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM should be defined (but not both)!"
+
+  // DQ (2/26/2014): Allow the default behavior on CMake build systems to use the GNU compiler specific version or "__asm__".
+     curprint("__asm__ ");
+#endif
+#endif
+#else
+  // DQ (2/26/2014): I assume that MSVC would use the C standard representation.
+     curprint("asm ");
+#endif
+
+#endif
 
      curprint("(");
 
@@ -6111,17 +6327,30 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      string testString = "pxor %%mm7, %%mm7";
      printf ("In unparseAsmStmt(): testString                = %s \n",testString.c_str());
      printf ("In unparseAsmStmt(): escapeString(testString)  = %s \n",escapeString(testString).c_str());
-
-     for (size_t i=0; i < asmTemplate.length(); i++)
-        {
-          printf ("ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
-        }
-
-     printf ("In unparseAsmStmt(): asmTemplate               = %s \n",asmTemplate.c_str());
-     printf ("In unparseAsmStmt(): escapeString(asmTemplate) = %s \n",escapeString(asmTemplate).c_str());
 #endif
 
-     curprint("\"" + escapeString(asmTemplate) + "\"");
+#if ASM_DEBUGGING
+     printf ("In unparseAsmStmt(): asmTemplate.length()      = %zu \n",(size_t)asmTemplate.length());
+#endif
+#if 0
+     for (size_t i=0; i < asmTemplate.length(); i++)
+        {
+          printf ("   --- ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
+        }
+#endif
+
+#if ASM_DEBUGGING
+     printf ("In unparseAsmStmt(): asmTemplate               = %s \n",asmTemplate.c_str());
+     printf ("In unparseAsmStmt(): escapeString(asmTemplate) = %s \n",asm_escapeString(asmTemplate).c_str());
+#endif
+
+  // DQ (2/4/2014): We don't want to escape this string (see test2014_83.c, test2014_84.c, and test2014_85.c).
+     curprint("\"" + asm_escapeString(asmTemplate) + "\"");
+  // curprint("\"" + asmTemplate + "\"");
+
+#if ASM_DEBUGGING
+     printf ("In unparseAsmStmt(): asm_stmt->get_useGnuExtendedFormat() = %s \n",asm_stmt->get_useGnuExtendedFormat() ? "true" : "false");
+#endif
 
      if (asm_stmt->get_useGnuExtendedFormat())
         {
@@ -6158,13 +6387,18 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
 
 #if ASM_DEBUGGING
-          printf ("numOutputOperands = %zu numInputOperands = %zu numClobbers = %zu \n",numOutputOperands,numInputOperands,numClobbers);
+          printf ("In unparseAsmStmt(): numClobbers = %zu \n",numClobbers);
 #endif
 
-          bool first;
+#if ASM_DEBUGGING
+          printf ("In unparseAsmStmt(): numOutputOperands = %zu numInputOperands = %zu numClobbers = %zu \n",numOutputOperands,numInputOperands,numClobbers);
+#endif
+
+       // DQ (2/4/2014): Adding initializer (to make me feel better about this code).
+          bool first = false;
           if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0)
              {
-#if 0
+#if ASM_DEBUGGING
                printf ("In unparseAsmStmt(): (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
 #endif
             // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c).
@@ -6197,7 +6431,7 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (numInputOperands == 0 && numClobbers == 0)
              {
-#if 0
+#if ASM_DEBUGGING
                printf ("In unparseAsmStmt(): (numInputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
 #endif
             // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
@@ -6226,7 +6460,7 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (numClobbers == 0)
              {
-#if 0
+#if ASM_DEBUGGING
                printf ("In unparseAsmStmt(): (numClobbers == 0): goto donePrintingConstraints \n");
 #endif
             // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
@@ -6250,6 +6484,9 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 donePrintingConstraints: {}
 
+#if ASM_DEBUGGING
+          printf ("In unparseAsmStmt(): base of conditional block: asm_stmt->get_useGnuExtendedFormat() = %s \n",asm_stmt->get_useGnuExtendedFormat() ? "true" : "false");
+#endif
         }
 
      curprint ( string(")"));
@@ -6258,6 +6495,10 @@ donePrintingConstraints: {}
         {
           curprint ( string(";"));
         }
+
+#if ASM_DEBUGGING
+     printf ("Leaving unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
    }
 
 

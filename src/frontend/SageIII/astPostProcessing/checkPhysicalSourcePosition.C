@@ -2,6 +2,8 @@
 #include "checkPhysicalSourcePosition.h"
 #include "stringify.h"
 
+using namespace rose;
+
 // documented in header file
 size_t
 checkPhysicalSourcePosition(SgNode *ast)

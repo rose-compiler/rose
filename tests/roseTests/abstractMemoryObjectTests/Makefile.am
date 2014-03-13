@@ -32,7 +32,7 @@ TEST_TARGETS += $(memObjectGenerator_test_targets)
 $(memObjectGenerator_test_targets): memObjectGenerator_%.passed: % memObjectGenerator
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/memObjectGenerator -g --edg:no_warnings -c $<" \
+		CMD="$$(pwd)/memObjectGenerator -g --edg:no_warnings -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ TEST_TARGETS += ObjSetTest.passed
 ObjSetTest.passed: array2.c ObjSetTest
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/ObjSetTest -c $<" \
+		CMD="$$(pwd)/ObjSetTest -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------

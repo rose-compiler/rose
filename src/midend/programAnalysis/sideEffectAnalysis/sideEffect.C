@@ -12,6 +12,7 @@
 #include "sqlite3x.h"
 
 using namespace std;
+using namespace rose;
 using namespace sqlite3x;
 using namespace StringUtility;
 

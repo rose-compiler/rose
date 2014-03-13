@@ -7,7 +7,16 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
-  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser)
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
+  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser
+#-------------------------------------------------------------------------------
+# TOO1 (3/6/2014): Add Java includes for sageInterface.C: jni.h, jni_md.h, ecj.h
+#-------------------------------------------------------------------------------
+  ${JAVA_INCLUDE_PATH}
+  ${JAVA_INCLUDE_PATH2}
+  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
+# DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
+  ${CMAKE_SOURCE_DIR}/src/midend/astMatching)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -100,25 +109,26 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
-      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
+      ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
+      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
       ${CMAKE_SOURCE_DIR}/src/util/support/BitVectorRepr.C
-#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/CommandOptions.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -424,6 +434,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
@@ -878,6 +889,13 @@ if(enable-rosehpct)
     )
 endif()
 
+# Liao, 1/27/2014,roseExtensions_SRC defined before is conditionalized by
+# enable rose hpct, which is not desired since there are other subdirs under
+# roseExtensions. 
+set(failsafe_SRC
+  ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
+ )
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -937,6 +955,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
+ ${failsafe_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}

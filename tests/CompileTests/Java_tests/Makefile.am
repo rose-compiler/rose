@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = \
+	unit_tests
+
 ##################################################################################
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
@@ -160,7 +163,9 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_foreach5.java \
      cave3_foreach6.java \
      cave3_foreach7.java \
-     cave3_labelBreak4.java
+     cave3_labelBreak4.java \
+     \
+     InterfaceWithGenericMethod.java
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
@@ -380,7 +385,7 @@ tp.java \
 update_outer.java \
 utf8concat.java \
 utilTest.java \
-verify.java
+verify.java 
 
 GCJ_TESTCODE_CURRENTLY_FAILING = \
    PR35020.java \
@@ -422,8 +427,6 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR
 
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7:.java=.o}
 
-
-
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 testTranslator=../../testTranslator
@@ -463,6 +466,7 @@ $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTr
 $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	@echo "Test using Java 1.7 version support."
 	$(testTranslator) -rose:java:source 1.7 -rose:java:target 1.7 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
@@ -512,8 +516,48 @@ testWithoutJavaSpecification: $(testTranslator)
 testJava_option: $(testTranslator)
 	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
+#-------------------------------------------------------------------------------
+# TOO1 (2/6/2014): Won't fail in some cases, e.g. GCC's "unrecognized option" message
+#                  will only fail in version 4.6+.
+#                  (See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=15303)
+#-------------------------------------------------------------------------------
+testJavaCommandlineOptions: $(testTranslator)
+#-----------------------------
+# Java only
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java
+#-----------------------------
+# Classpath
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:cp "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -cp "/path/1:/path/2"
+#-----------------------------
+# Sourcepath
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:sourcepath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -sourcepath "/path/1:/path/2"
+#-----------------------------
+# Destdir
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/destdir"
+# Source Destdir
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/source_destdir"
+#-----------------------------
+# JVM Options
+#-----------------------------
+# Increase ECJ's JVM stack size
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:jvm_options "-Xss5m"
+#-----------------------------
+# Remote JVM Debugging
+# TOO1 (2/6/2014): Can't perform this test since it is interactive
+#-----------------------------
+#	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:enable_remote_debugging
+
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option testJavaCommandlineOptions graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 

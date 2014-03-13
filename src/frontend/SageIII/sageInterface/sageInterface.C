@@ -53,9 +53,22 @@
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#   include "ecj.h"
+#   include "jni.h"
+#endif
 
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
+#endif
+
+// We need this so that USE_CMAKE will be seen (set via configure).
+#include "rose_config.h"
+
+#ifndef USE_CMAKE
+// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+// DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
+#include "RoseAst.h"
 #endif
 
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
@@ -2610,6 +2623,17 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
         }
    }
 
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+void
+SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
+   {
+     SgSymbolTable* symbolTable = scope->get_symbol_table();
+     ROSE_ASSERT(symbolTable != NULL);
+
+     supportForVariableLists(scope,symbolTable,variableList);
+   }
+
+
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
    {
@@ -2657,8 +2681,6 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           supportForBaseTypeDefiningDeclaration ( symbolTable, variableDeclaration->get_baseTypeDefiningDeclaration() );
         }
    }
-
-
 
 void
 supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable )
@@ -5993,8 +6015,8 @@ bool SageInterface::isMain(const SgNode* n)
  else
  {
    if (isSgFunctionDeclaration(n) &&
-     isSgGlobal(isSgStatement(n)->get_scope())&&
-     isSgFunctionDeclaration(n)->get_name() == "main")
+       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
+       isSgFunctionDeclaration(n)->get_name() == "main")
    result = true;
  }
 
@@ -6615,24 +6637,141 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
 
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
-{
-    ROSE_ASSERT (astNode != NULL);
+   {
+  // DQ (3/4/2014): This new version of this function supports both C/C++ and also Java.
+  // If the SgJavaPackageDeclaration is noticed then the previous parent is a 
+  // SgClassDefinition and the previous previous parent is a SgClassDeclaration whose
+  // name can be used to match the filename in the SgProject's list of files.
+  // A better implementation usign an attribute (not in place until tomorrow) and
+  // from the attribute the pointer to the associated file is directly available.
+  // The later implementation is as fast as possible.
+
+     ROSE_ASSERT (astNode != NULL);
 
   // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
      ROSE_ASSERT (isSgProject(astNode) == NULL);
 
+     SgNode* previous_parent = NULL;
+     SgNode* previous_previous_parent = NULL;
+
      SgNode* parent = astNode;
-     while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+  // while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+     while ( (parent != NULL) && (isSgFile(parent) == NULL) && isSgJavaPackageDeclaration(parent) == NULL)
         {
-       // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#if 0
+          printf ("In getEnclosingFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+          previous_previous_parent = previous_parent;
+          previous_parent = parent;
+
           parent = parent->get_parent();
         }
- if (!parent)
-   return NULL;
- else return isSgFile(parent);
 
-}
+     if (previous_previous_parent != NULL && previous_parent != NULL && isSgJavaPackageDeclaration(parent) != NULL)
+        {
+       // This is for a Java program and is contained within a SgJavaPackageDeclaration
+#if 0
+          printf ("parent                   = %p = %s \n",parent,parent->class_name().c_str());
+          printf ("previous_parent          = %p = %s \n",previous_parent,previous_parent->class_name().c_str());
+          printf ("previous_previous_parent = %p = %s \n",previous_previous_parent,previous_previous_parent->class_name().c_str());
+#endif
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(previous_previous_parent);
+          if (classDeclaration != NULL)
+             {
+#if 0
+               printf ("Class name = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+            // Find the associated Java class file.
+#if 0
+            // DQ (3/4/2014): This is the code we want to use until we get Philippe's branch in place with the attribute.
+               SgProject* project = TransformationSupport::getProject(parent);
+               ROSE_ASSERT(project != NULL);
+               SgFileList* fileList = project->get_fileList_ptr();
+               ROSE_ASSERT(fileList != NULL);
+               SgFilePtrList & vectorFile = fileList->get_listOfFiles();
+#if 0
+               printf ("Output list of files: \n");
+#endif
+               SgFilePtrList::iterator i = vectorFile.begin();
+               while (i != vectorFile.end())
+                  {
+                    SgFile* file = *i;
+                    ROSE_ASSERT(file != NULL);
+#if 0
+                    printf ("   --- filename = %s \n",file->getFileName().c_str());
+#endif
+                    string filename            = file->getFileName();
+                    string filenameWithoutPath = file->get_sourceFileNameWithoutPath();
+                    string classname           = classDeclaration->get_name();
+                    string matchingfilename    = classname + ".java";
+#if 0
+                    printf ("   ---   --- filename            = %s \n",filename.c_str());
+                    printf ("   ---   --- filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+                    printf ("   ---   --- classname           = %s \n",classname.c_str());
+                    printf ("   ---   --- matchingfilename    = %s \n",matchingfilename.c_str());
+#endif
+                    if (filenameWithoutPath == matchingfilename)
+                       {
+#if 0
+                         printf ("   return file = %p \n",file);
+#endif
+                         return file;
+                       }
+
+                    i++;
+                  }
+#else
+            // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
+               AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
+
+               // "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
+
+               if (attribute) 
+                  {
+                 // true for all user-specified classes and false for all classes fom libraries
+                    SgSourceFile *sourcefile = isSgSourceFile(attribute->getNode());
+                    ROSE_ASSERT(sourcefile != NULL);
+                    return sourcefile;
+                  }
+#endif
+             }
+        }
+       else
+        {
+       // previous_parent was uninitialized to a non-null value or astNode is a SgJavaPackageDeclaration or SgFile.
+          if (previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+             {
+            // The input was a SgJavaPackageDeclaration (so there is no associated SgFile).
+               ROSE_ASSERT(isSgJavaPackageDeclaration(astNode) != NULL);
+               return NULL;
+             }
+            else
+             {
+               if (previous_previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+                  {
+                 // The input was a SgClassDefinition (so there is no associated SgFile).
+                    ROSE_ASSERT(isSgClassDefinition(astNode) != NULL);
+                    return NULL;
+                  }
+                 else
+                  {
+                 // This could be a C/C++ file (handled below).
+                  }
+             }
+        }
+
+  // This is where we handle the C/C++ files.
+  // if (!parent)
+     if (parent == NULL)
+        {
+          return NULL;
+        }
+       else
+        {
+          return isSgFile(parent);
+        }
+   }
 
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
@@ -7352,7 +7491,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
         if (func1->get_name() == func2->get_name())
           result = true;
       }
-      else if (is_Cxx_language())
+      else if (is_Cxx_language() || is_Java_language())
       {
          if (func1->get_qualified_name().getString() +
             func1->get_mangled_name().getString() ==
@@ -8050,6 +8189,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
 // Liao, 6/15/2009
 //! A helper function to calculate n!
+//! See also, Combinatorics::factorial(), which also checks for overflow.
 static size_t myfactorial (size_t n)
 {
   size_t result=1;
@@ -8062,7 +8202,8 @@ static size_t myfactorial (size_t n)
 
 #ifndef USE_ROSE
 
-//! A helper function to return a permutation order for n elements based on a lexicographical order number
+//! A helper function to return a permutation order for n elements based on a lexicographical order number.
+//! See also, Combinatorics::permute(), which is faster but does not use strict lexicographic ordering.
 std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
 {
   size_t k = lexicoOrder;
@@ -15196,11 +15337,33 @@ SageInterface::deleteAST ( SgNode* n )
                                 /*////////////////////////////////////////////////
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
-
 #if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
-
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgScopeStatement(node) !=NULL)
+                                   {
+                                     SgScopeStatement* scope = isSgScopeStatement(node);
+#if 1
+                                     printf ("Deleting the scopes type table: scope->get_type_table() = %p \n",scope->get_type_table());
+#endif
+                                     delete scope->get_type_table();
+                                   }
+#endif
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgTypeTable(node) !=NULL)
+                                   {
+                                     SgTypeTable* typeTable = isSgTypeTable(node);
+#if 1
+                                     printf ("Deleting the type table (SgSymbolTable): typeTable->get_type_table() = %p \n",typeTable->get_type_table());
+#endif
+                                     delete typeTable->get_type_table();
+                                   }
+#endif
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
@@ -15669,10 +15832,13 @@ SageInterface::deleteAST ( SgNode* n )
 
 #endif
 #if 0
-                        printf ("Deleting node = %p = %s \n",node,node->class_name().c_str());
+                        printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
                         delete node;
+#if 0
+                        printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
+#endif
                         }
                 };
 
@@ -15681,6 +15847,10 @@ SageInterface::deleteAST ( SgNode* n )
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
+
+#if 0
+     printf ("Leaving SageInterface::deleteAST(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
    }
 
 
@@ -17292,4 +17462,262 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     return new_var_list;
 }
 
+
+
+bool
+SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
+   {
+  // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+
+#ifndef USE_CMAKE
+  // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+
+  // This is AST container for the ROSE AST that will provide an iterator.
+  // We want two iterators (one for the copy of the snippet and one for the 
+  // original snippet so that we can query the original snippet's AST 
+  // as we process each IR node of the AST for the copy of the snippet.
+  // Only the copy of the snippet is inserted into the target AST.
+     RoseAst ast_of_copy(tree1);
+     RoseAst ast_of_original(tree2);
+
+  // printf ("ast_of_copy.size() = %zu \n",ast_of_copy.size());
+
+  // Build the iterators so that we can increment thorugh both ASTs one IR node at a time.
+     RoseAst::iterator i_copy     = ast_of_copy.begin();
+     RoseAst::iterator i_original = ast_of_original.begin();
+
+  // Iterate of the copy of the snippet's AST.
+     while (i_copy != ast_of_copy.end())
+        {
+#if 0
+          printf ("*i_copy = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
+          printf ("*i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
 #endif
+       // DQ (2/28/2014): This is a problem for some of the test codes (TEST   store/load heap string [test7a] and [test7a])
+       // ROSE_ASSERT((*i_copy)->variantT() == (*i_original)->variantT());
+          if ((*i_copy)->variantT() != (*i_original)->variantT())
+             {
+#if 0
+               printf ("ERROR: return from SageInterface::isStructurallyEquivalentAST(): (*i_copy)->variantT() != (*i_original)->variantT() \n");
+#endif
+#if 0
+               printf ("Making this an error! \n");
+               ROSE_ASSERT(false);
+#endif
+               return false;
+             }
+
+          i_copy++;
+
+       // Verify that we have not reached the end of the ast for the original (both the 
+       // copy and the original are the same structurally, and thus the same size).
+          ROSE_ASSERT(i_original != ast_of_original.end());
+          i_original++;
+        }
+
+  // We have reached the end of both ASTs.
+     ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
+#endif
+
+     return true;
+   }
+
+
+#endif
+
+//------------------------------------------------------------------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+
+/**
+ * Create a temporary directory if it does not yet exist and return its name.
+ */
+std::string SageInterface::getTempDirectory(SgProject *project) {
+    jstring temp_directory = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, ::getTempDirectoryMethod);
+
+    string directory_name = ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+
+    list<string> sourcepath = project -> get_Java_sourcepath();
+    sourcepath.push_back(directory_name); // push it in the back because it should have lower priority
+    project -> set_Java_sourcepath(sourcepath);
+
+    return directory_name;
+}
+
+
+/**
+ * Use the system command to remove a temporary directory and all its containing files.
+ */
+void SageInterface::destroyTempDirectory(string directory_name) {
+    string command = string("rm -fr ") + directory_name;
+    int status = system(command.c_str());
+    ROSE_ASSERT(status == 0);
+}
+
+
+/**
+ * Invoke JavaRose to translate a given file and put the resulting AST in the global space of the project.
+ */
+void SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
+    //
+    // Set up the new source file for processing "a la Rose".
+    //
+    project -> get_sourceFileNameList().push_back(filename);
+    Rose_STL_Container<std::string> arg_list = project -> get_originalCommandLineArgumentList();
+    arg_list.push_back(filename);
+    Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arg_list, false);
+    CommandlineProcessing::removeAllFileNamesExcept(arg_list, fileList, filename);
+    int error_code = 0; // need this because determineFileType takes a reference "error_code" argument.
+    SgFile *file = determineFileType(arg_list, error_code, project);
+    SgSourceFile *sourcefile = isSgSourceFile(file);
+    ROSE_ASSERT(sourcefile);
+    sourcefile -> set_parent(project);
+
+    //
+    // Insert the file into the list of files in the project.
+    //
+    project -> get_fileList_ptr() -> get_listOfFiles().push_back(sourcefile);
+    ROSE_ASSERT(sourcefile == isSgSourceFile((*project)[filename]));
+
+    sourcefile -> build_Java_AST(arg_list, project -> get_originalCommandLineArgumentList());
+
+    if (! unparse) { // if we are not supposed to unparse this file, 
+        project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
+        ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
+    }
+}
+
+
+/**
+ * Using the package_name, create a file with a package statement, translate it in order to load the package
+ * into the project.
+ */
+string SageInterface::preprocessPackage(SgProject *project, string package_name) {
+    string command = "package " + package_name + ";";
+
+    //
+    // Call the Java side to create an input file with the relevant package statement; translate the file and return the file name.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename); // translate the file 
+
+    return package_name;
+}
+
+
+/**
+ * Using the import_string parameter, create a file with the relevant import statement; translate the file and
+ * add its AST to the project.
+ */
+string SageInterface::preprocessImport(SgProject *project, string import_string) {
+    string command = "import " + import_string + ";";
+
+    //
+    // Call the Java side to create an input file with the relevant import statement.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename); // translate the file 
+
+    return import_string;
+}
+
+
+/**
+ * Using the file_content string, create a file with the content in question; build its AST and
+ * add it to the project.
+ */
+void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content) {
+    //
+    // Call the Java side to create an input file with the relevant import statement.
+    //
+    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                                           ::createTempNamedFileMethod,
+                                                                           ::currentEnvironment -> NewStringUTF(file_name.c_str()),
+                                                                           ::currentEnvironment -> NewStringUTF(file_content.c_str()));
+
+    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    processFile(project, filename, true /* unparse */); // translate the file and unparse it
+}
+
+
+/**
+ * Look for a qualified package name in the given scope and return its package definition.
+ */
+SgClassDefinition *SageInterface::findJavaPackage(SgScopeStatement *scope, string package_name) {
+    ROSE_ASSERT(scope);
+    SgClassDefinition *package_definition = NULL;
+    for (int index = 0, length = package_name.size(); index < length; index++) {
+        int n;
+        for (n = index; n < length; n++) {
+            if (package_name[n] == '.') {
+                break;
+            }
+        }
+        string name = package_name.substr(index, n - index);
+
+        SgClassSymbol *package_symbol = scope -> lookup_class_symbol(name);
+        if (package_symbol == NULL) { // package not found?
+            return NULL;
+        }
+
+        SgJavaPackageDeclaration *package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(package_declaration);
+        package_definition = package_declaration -> get_definition();
+        ROSE_ASSERT(package_definition);
+        scope = package_definition;
+
+        index = n;
+    }
+
+    return package_definition;
+}
+
+
+/**
+ * Process a qualified package name, if needed, and return its package definition.
+ */
+SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, string package_name, bool create_directory /* = false */) {
+    SgGlobal *global_scope = project -> get_globalScopeAcrossFiles();
+    SgClassDefinition *package_definition = findJavaPackage(global_scope, package_name);
+    if (package_definition == NULL) { // try again after loading the package
+        preprocessPackage(project, package_name);
+
+        //
+        // If requested, Create the directory associated with this package_name.
+        //
+        if (create_directory) {
+            ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
+                                                     ::createTempNamedDirectoryMethod,
+                                                     ::currentEnvironment -> NewStringUTF(package_name.c_str()));
+        }
+
+        package_definition = findJavaPackage(global_scope, package_name);
+    }
+
+    return package_definition;
+}
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+
+
+/**
+ * If the class_name already exists in the scope, return it. Otherwise, build the class and return it.
+ */
+SgClassDeclaration *SageInterface::findOrInsertJavaClass(SgScopeStatement *scope, string class_name) {
+    SgClassSymbol *class_symbol = scope -> lookup_class_symbol(class_name);
+    SgClassDeclaration *class_declaration = (class_symbol  // class already exists in the scope
+                                                  ? isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration())
+                                                  : buildJavaDefiningClassDeclaration(scope, class_name));
+    ROSE_ASSERT(class_declaration);
+
+    return class_declaration;
+}
