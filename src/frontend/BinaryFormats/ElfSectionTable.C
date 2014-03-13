@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 

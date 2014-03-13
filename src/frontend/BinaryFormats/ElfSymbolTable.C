@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+using namespace rose;
+
 /** Adds the newly constructed symbol to the specified ELF Symbol Table. */
 void
 SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
