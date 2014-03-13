@@ -127,6 +127,8 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   return preds;
 }
 
+#if 0
+// not used anywere, generates warnings
 static AType::BoolLattice flip(AType::BoolLattice b) {
   if (b.isTop()) return Bot();
   if (b.isBot()) return Top();
@@ -142,6 +144,7 @@ static AType::BoolLattice lower(AType::BoolLattice b) {
   if (b.isTop()) return Bot();
   return b;
 }
+#endif
 
 /**
  * DOT visualization of the LTL Checker result

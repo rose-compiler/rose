@@ -219,10 +219,14 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     bool isIncompleteSTGReady();
-	ReachabilityResults reachabilityResults;
-	int reachabilityAssertCode(const EState* currentEStatePtr);
-	enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
-	void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    ReachabilityResults reachabilityResults;
+    int reachabilityAssertCode(const EState* currentEStatePtr);
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
+    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    void setSkipSelectedFunctionCalls(bool defer) {
+      _skipSelectedFunctionCalls=true; 
+      exprAnalyzer.setSkipSelectedFunctionCalls(true);
+    }
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -243,7 +247,8 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
     bool _treatStdErrLikeFailedAssert;
-	ExplorationMode _explorationMode;
+    ExplorationMode _explorationMode;
+    bool _skipSelectedFunctionCalls;
   };
   
 } // end of namespace CodeThorn

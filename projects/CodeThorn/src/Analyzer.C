@@ -19,7 +19,7 @@ using namespace CodeThorn;
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
              _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),
-             _maxTransitions(0),_treatStdErrLikeFailedAssert(false) {
+                     _maxTransitions(0),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -304,22 +304,22 @@ void Analyzer::runSolver1() {
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-				if(name.size()>0) {
-				  if(name=="globalError")
-					name="error_60";
-				  name=name.substr(6,name.size()-6);
-				  std::ofstream fout;
-				  // csv_assert_live_file is the member-variable of analyzer
+                if(name.size()>0) {
+                  if(name=="globalError")
+                    name="error_60";
+                  name=name.substr(6,name.size()-6);
+                  std::ofstream fout;
+                  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-				  {
-					fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-					assert (!fout.fail( ));
-					fout << name << ",yes,9"<<endl;
-					//cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-					
-					fout.close(); 
-				  }
-				} // if (assert-label was found)
+                  {
+                    fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                    assert (!fout.fail( ));
+                    fout << name << ",yes,9"<<endl;
+                    //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                    
+                    fout.close(); 
+                  }
+                } // if (assert-label was found)
               } // if
             }
           } // end of loop on transfer function return-estates
@@ -966,6 +966,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       return newEStateList;
     }
     if(isSgConditionalExp(nextNodeToAnalyze2)) {
+      // this is meanwhile modeled in the ExprAnalyzer - TODO: utilize as expr-stmt.
       cerr<<"Error: found conditional expression outside assert. We do not support this form yet."<<endl;
       exit(1);
 #if 0
@@ -1038,18 +1039,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));
         } else {
-		  if(isSgPntrArrRefExp(lhs)) {
-			// for now we ignore array refs on lhs
-			// TODO: assignments in index computations of ignored array ref
-			// since nothing can change (because of being ignored) state remains the same
-			EState estate=(*i).estate;
-			PState oldPState=*estate.pstate();
-			ConstraintSet oldcset=*estate.constraints();			
-			estateList.push_back(createEState(edge.target,oldPState,oldcset));			
-		  } else {
+          if(isSgPntrArrRefExp(lhs)) {
+            // for now we ignore array refs on lhs
+            // TODO: assignments in index computations of ignored array ref
+            // since nothing can change (because of being ignored) state remains the same
+            EState estate=(*i).estate;
+            PState oldPState=*estate.pstate();
+            ConstraintSet oldcset=*estate.constraints();			
+            estateList.push_back(createEState(edge.target,oldPState,oldcset));			
+          } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
-		  }
+          }
         }
       }
       return estateList;
@@ -1803,21 +1804,21 @@ void Analyzer::runSolver3() {
                   cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
                 }
               }
-
-			  // record reachability
-			  int assertCode=reachabilityAssertCode(currentEStatePtr);
-			  if(assertCode>=0) {
-                #pragma omp critical
-				{
-				  reachabilityResults.reachable(assertCode);
-				}
-			  } else {
-				// TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-				if(!boolOptions["rersmode"]) {
-				  // assert without label
-				}
-			  }
-
+              
+              // record reachability
+              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              if(assertCode>=0) {
+#pragma omp critical
+                {
+                  reachabilityResults.reachable(assertCode);
+                }
+              } else {
+                // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+                if(!boolOptions["rersmode"]) {
+                  // assert without label
+                }
+              }
+              
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
                 if(name=="globalError")
@@ -1931,42 +1932,42 @@ void Analyzer::runSolver4() {
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
               recordTransition(currentEStatePtr,e,newEStatePtr);        
-
-			  // record reachability
-			  int assertCode=reachabilityAssertCode(currentEStatePtr);
-			  if(assertCode>=0) {
-                #pragma omp critical
-				{
-				  reachabilityResults.reachable(assertCode);
-				}
-			  } else {
-				// assert without label
-			  }
-
+              
+              // record reachability
+              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              if(assertCode>=0) {
+#pragma omp critical
+                {
+                  reachabilityResults.reachable(assertCode);
+                }
+              } else {
+                // assert without label
+              }
+              
               if(boolOptions["report-failed-assert"]) {
-                #pragma omp critical
+#pragma omp critical
                 {
                   cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
                 }
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-				if(name.size()>0) {
-				  if(name=="globalError")
-					name="error_60";
-				  name=name.substr(6,name.size()-6);
-				  std::ofstream fout;
-				  // csv_assert_live_file is the member-variable of analyzer
+                if(name.size()>0) {
+                  if(name=="globalError")
+                    name="error_60";
+                  name=name.substr(6,name.size()-6);
+                  std::ofstream fout;
+                  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-				  {
-					fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-					assert (!fout.fail( ));
-					fout << name << ",yes,9"<<endl;
-					//cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-					
-					fout.close(); 
-				  }
-				}// if label of assert was found (name.size()>0)
+                  {
+                    fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                    assert (!fout.fail( ));
+                    fout << name << ",yes,9"<<endl;
+                    //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                    
+                    fout.close(); 
+                  }
+                }// if label of assert was found (name.size()>0)
               } // if
             }
           } // end of loop on transfer function return-estates
