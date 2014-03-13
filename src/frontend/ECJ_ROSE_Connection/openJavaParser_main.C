@@ -25,17 +25,6 @@ using namespace std;
 
 #define ERROR_CODE 4
 
-namespace Rose {
-namespace Frontend {
-namespace Java {
-namespace Ecj {
-  // TOO1 (2/13/2014): Initialized in src/frontend/SageIII/sage_support/sage_support.cpp.
-  // support to point to the current SgSourceFile.
-  SgSourceFile* Ecj_globalFilePointer = 0;
-}// ::Rose::Frontend::Java::Ecj
-}// ::Rose::Frontend::Java
-}// ::Rose::Frontend
-}// ::Rose
 int runECJ (int argc, char **argv);
 
 /* Include the paths to the source tree and build tree for ROSE */
@@ -54,6 +43,8 @@ int runECJ (int argc, char **argv);
 // #define OVERWRITE_LD_LIBRARY_PATH 1
 #define OVERWRITE_LD_LIBRARY_PATH 1
 
+// TODO: Remove this !!!
+/*
 // DQ (8/15/2011): These functions were moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
 // configuration language only options.
@@ -71,7 +62,7 @@ SgScopeStatement *getTopOfJavaScopeStack() {
 
     return topOfStack;
 }
-
+*/
 
 
 /* DQ (8/16/2007): This is what we want ROSE to call so that we can run the Java based OpenJavaParser from C++. */
