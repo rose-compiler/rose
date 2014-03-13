@@ -1276,6 +1276,10 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
+  if(boolOptions["dump1"]) {
+    // extraction of expressions: skip function calls to selected functions (also inside expressions) for defered handling.
+    analyzer.setSkipSelectedFunctionCalls(true);
+  }
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();

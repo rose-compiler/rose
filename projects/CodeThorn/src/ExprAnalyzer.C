@@ -9,6 +9,17 @@
 
 using namespace CodeThorn;
 
+ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false){
+}
+
+void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
+  _skipSelectedFunctionCalls=skip;
+}
+
+bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
+}
+
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
@@ -415,6 +426,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
     break;
   }
+  case V_SgFunctionCallExp: {
+    if(getSkipSelectedFunctionCalls()) {
+      // return default value
+      return listify(res);
+    } else {
+      throw "Error: evalConstInt::function call inside expression.";
+    }
+
+  }
+
   default:
     cerr << "@NODE:"<<node->sage_class_name()<<endl;
     throw "Error: evalConstInt::unknown operation failed.";
