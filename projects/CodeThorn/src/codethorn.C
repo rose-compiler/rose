@@ -435,6 +435,15 @@ struct RewriteStatistics {
   int numArrayUpdates; // number of array updates (i.e. assignments)
 } dump1_stats;
 
+// not used yet
+void threadsafeReplaceExpression(SgExpression* exp1, SgExpression* exp2, bool mode) {
+#pragma omp critical
+  {
+	SageInterface::replaceExpression(exp1,exp2,mode);
+  }
+}
+
+
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.

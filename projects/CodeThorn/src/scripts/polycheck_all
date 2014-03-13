@@ -138,6 +138,11 @@ fi
 	    --longcheck2)
                runallgeneralbenchmarks_param "linear-algebra/kernels/doitgen"
             ;;
+        --funcheck)
+               # cond-operator: cholesky, correlation
+               # function call only: gramschmidt
+               runallgeneralbenchmarks_param "linear-algebra/kernels/cholesky datamining/correlation linear-algebra/solvers/gramschmidt"
+            ;;
         --*) echo "bad option $1"
             ;;
         *) echo "argument $1"
