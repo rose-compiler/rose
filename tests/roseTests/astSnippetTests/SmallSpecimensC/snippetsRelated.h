@@ -13,6 +13,7 @@ int snippet_usage_counter = 0;
 
 /* From snippets3.c */
 #include <stdio.h>
+int copy_me_too();
 
 /* From snippets4.c */
 #include <stdlib.h>
@@ -27,14 +28,15 @@ struct Struct1 {
 };
 
 /* From snippets5.c */
-void randomOffByOne(int addend1);
-void addWithError(int addend1, int addend2, int result);
-void copy_string10(char *dst, const char *src);
-void allocate_string(const char *s);
 
 /* From snippets6.c */
 #include <stdlib.h>
 #include <string.h>
+
+void randomOffByOne(int addend1);
+void addWithError(int addend1, int addend2, int result);
+void copy_string10(char *dst, const char *src);
+void allocate_string(const char *s);
 
 
 #endif

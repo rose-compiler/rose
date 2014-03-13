@@ -164,7 +164,7 @@ test3a.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specime
 		INSERT_MECHANISM=stmts			\
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		COPY_DEFINITIONS=yes			\
 		COPY_RELATED_THINGS=yes			\
 		$(C_INJECTION_TEST) $@
 test3b.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -176,7 +176,7 @@ test3b.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specime
 		INSERT_MECHANISM=stmts			\
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		COPY_DEFINITIONS=yes			\
 		COPY_RELATED_THINGS=no			\
 		$(C_INJECTION_TEST) $@
 
