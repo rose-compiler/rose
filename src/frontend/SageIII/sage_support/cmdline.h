@@ -222,6 +222,72 @@ namespace Cmdline {
     void
     ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv);
 
+    /** Specify destination directory for generated source files.
+     *
+     * > -s dir
+     * >    Specify  the  directory where to place generated source files. The directory must already exist; javac will not create it. If a class is part of a package, the compiler puts the source file in a
+     * >    subdirectory reflecting the package name, creating directories as needed. For example, if you specify -s /home/mysrc and the class is called com.mypackage.MyClass, then the source file  will  be
+     * >    placed in /home/mysrc/com/mypackage/MyClass.java.
+     */
+    void
+    ProcessS (SgProject* project, std::vector<std::string>& argv);
+
+    /** Specify the input Java source version.
+     *
+     * See `man javac(1)`:
+     *
+     * > -source <release>
+     * >    Specifies the version of source code accepted.
+     *
+     * Example versions: 1.3, 1.4, 1.5, 5, 1.6, 6, 1.7, 7
+     */
+    void
+    ProcessSource (SgProject* project, std::vector<std::string>& argv);
+
+    /** Specify the output Java source version.
+     *
+     * See `man javac(1)`:
+     *
+     * > -source <release>
+     * >    Generate  class files that target a specified version of the
+     * >    VM. Class files will run on the specified target and on later
+     * >    versions, but not on earlier versions of the VM. Valid targets
+     * >    are 1.1, 1.2, 1.3, 1.4, 1.5 (also 5), 1.6 (also 6), and 1.7
+     * >    (also 7).
+     *
+     * Default depends on -source.
+     *
+     * Example versions: 1.3, 1.4, 1.5, 5, 1.6, 6, 1.7, 7
+     */
+    void
+    ProcessTarget (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessEncoding (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessG (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessNoWarn (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessVerbose (SgProject* project, std::vector<std::string>& argv);
+
+    // @filename used by Java
+    std::vector<std::string>
+    GetListFromFile (const std::string& filename);
+
+    // Returns a list of file names extracted from @arglist.
+    // @arglist includes the leading '@'.
+    Rose_STL_Container<std::string>
+    ExpandArglist (const std::string& arglist);
+
+    // Return a copy of argv with Java's @arglist expanded in-place
+    // with the actual filenames in the specified file.
+    Rose_STL_Container<std::string>
+    ExpandArglist (const Rose_STL_Container<std::string>& argv);
+
     /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
     namespace Ecj {

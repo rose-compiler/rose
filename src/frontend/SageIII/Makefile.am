@@ -56,7 +56,7 @@ endif
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
-	if test -f ompparser.hh; then $(LN_S) ompparser.hh ompparser.h; fi;
+	if test -f ompparser.hh; then $(LN_S) -f ompparser.hh ompparser.h; fi;
 
 # Force sage.docs to be make by default 
 # (if sage.docs.in is modified)
@@ -93,7 +93,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
              omplexer.cc ompparser.cc ompparser.h sage3basic.hhh fileoffsetbits.h rosedll.h \
-	     ompAstConstruction.h PolicyControl.txt
+	     ompAstConstruction.h PolicyControl.txt Utf8.h
 CLEANFILES = haveRosettaGeneratedSource
 
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc

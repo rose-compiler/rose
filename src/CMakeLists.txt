@@ -8,7 +8,15 @@ include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
-  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser)
+  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser
+#-------------------------------------------------------------------------------
+# TOO1 (3/6/2014): Add Java includes for sageInterface.C: jni.h, jni_md.h, ecj.h
+#-------------------------------------------------------------------------------
+  ${JAVA_INCLUDE_PATH}
+  ${JAVA_INCLUDE_PATH2}
+  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
+# DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
+  ${CMAKE_SOURCE_DIR}/src/midend/astMatching)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -426,6 +434,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C

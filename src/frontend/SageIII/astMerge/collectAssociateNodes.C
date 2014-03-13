@@ -492,10 +492,15 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
             // Add associated nodes so that they will be excluded as well
                SgFunctionType* functionType = functionDeclaration->get_type();
                ROSE_ASSERT(functionType != NULL);
-#if 0
+#if 1
                printf ("addAssociatedNodes(): functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
+               printf ("addAssociatedNodes(): functionDeclaration = %p firstNondefiningDeclaration = %p definingDeclaration = %p \n",functionDeclaration,functionDeclaration->get_firstNondefiningDeclaration(),functionDeclaration->get_definingDeclaration());
+#endif
+#if 0
                printf ("addAssociatedNodes(): functionDeclaration mangled name = %s matchingNodeInMergedAST = %p \n",functionDeclaration->get_mangled_name().str(),matchingNodeInMergedAST);
-            // functionDeclaration->get_startOfConstruct()->display("addAssociatedNodes(): functionDeclaration");
+#endif
+#if 1
+               functionDeclaration->get_startOfConstruct()->display("addAssociatedNodes(): functionDeclaration");
 #endif
                addAssociatedNodes(functionType,nodeList,markMemberNodesDefinedToBeDeleted);
 
@@ -796,9 +801,23 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     return;
                   }
                ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+            // DQ (3/2/2014): This might be a SgInitializedName that is a parameter to a non-defining 
+            // function declaration that was not deleted when we deleted the AST.  If so then this 
+            // will be NULL. See tests/roseTests/astSnippetTests/specimen2014_03.c.
                if (initializedName->get_scope()->get_symbol_table() == NULL)
                   {
                     printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                    printf ("initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+
+                 // DQ (3/2/2014): Check for a previously delete IR node as part of testing the snippet injection mechanism.
+                    if (initializedName->get_scope()->variantT() == V_SgNode)
+                       {
+                      // This is a previously deleted IR node and we need not track down associated node for it.
+                         printf ("Warning: This is a previously deleted IR node and we need not track down associated node for it (snippet injection support). \n");
+                         return;
+                       }
+
                     initializedName->get_file_info()->display("error: debug");
                   }
                ROSE_ASSERT(initializedName->get_scope()->get_symbol_table() != NULL);

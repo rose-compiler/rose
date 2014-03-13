@@ -3878,7 +3878,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
        // GB (09/25/2007): Added implementations for the new methods get_numberOfTraversalSuccessors, get_traversalSuccessorByIndex, and get_childIndex.
           outputFile << "size_t\n" << node.getName() << "::get_numberOfTraversalSuccessors() {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
-                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
+                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  this = \" << this << \" = \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
                      << "ROSE_ASSERT(false);\n"
                      << "return 42;\n }\n\n";
