@@ -212,6 +212,14 @@ HEADER_START
        // Report if a construct has a concept of end_numeric_label
           virtual bool has_end_numeric_label() const;
 
+      /*! \brief Some statement store internal SgType pointers explicitly.  This function is true if it has a data member that is a type (only applies to SgTypedefDeclaration).
+
+          Result is true if it stores a type explicitly as a data member, else false.
+
+          \internal True only if this is a SgTypedefDeclaration.
+       */
+          bool hasExplicitType();
+
 HEADER_END
 
 
@@ -4143,6 +4151,26 @@ SgStatement::has_end_numeric_label() const
 
      return returnValue;
    }
+
+bool
+SgStatement::hasExplicitType()
+   {
+  // DQ (3/7/2014):  This could be implemented as a virtual function but would require multiple functions to be 
+  // implemented. I have thus instead implemented it as a single function on the SgStatement instead. We
+  // can review this if it is important.
+
+  // This function returns true only if this is a SgTypedefDeclaration.
+
+     bool returnValue = false;
+
+     if ( isSgTypedefDeclaration(this) != NULL )
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 SOURCE_MAIN_STATEMENT_END
 
@@ -10469,6 +10497,19 @@ SgFunctionDeclaration::get_symbol_from_symbol_table() const
    {
      SgScopeStatement* scope = get_scope();
      ROSE_ASSERT(scope != NULL);
+
+  // DQ (3/1/2014): This could be a scope from a deleted AST and if we would like to 
+  // think that the SgFunctionDeclaration would have been deleted, but it could have
+  // been the first non-defining declaration constructed to support the symbol), and 
+  // thus not strictly in the AST. In this case so we would like return NULL.
+  // The test for if this is a deletec IR node is if the variant is V_SgNode.
+     if (scope->variantT() == V_SgNode)
+        {
+          printf ("SgFunctionDeclaration::get_symbol_from_symbol_table(): This is a deleted IR node (returning NULL) \n");
+          return NULL;
+        }
+     ROSE_ASSERT(scope->variantT() != V_SgNode);
+
   // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
 #if 0
      printf ("In SgFunctionDeclaration::get_symbol_from_symbol_table(): this = %p = %s = %s scope = %p = %s scope->get_symbol_table() = %p \n",

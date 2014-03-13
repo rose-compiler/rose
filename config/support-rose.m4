@@ -1683,6 +1683,8 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -1815,7 +1817,6 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
-projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
@@ -2033,6 +2034,7 @@ tests/CompileTests/C_tests/Makefile
 tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
+tests/CompileTests/Java_tests/unit_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/Cxx11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
@@ -2085,6 +2087,7 @@ tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
@@ -2172,6 +2175,7 @@ binaries/samples/Makefile
 ])
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/BinaryDataStructureRecognition/Makefile
 #projects/haskellport/Makefile
 #projects/haskellport/Setup.hs
 #projects/haskellport/rose.cabal.in
