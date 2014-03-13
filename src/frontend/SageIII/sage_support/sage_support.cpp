@@ -4991,6 +4991,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        << endl;
                   cout.flush();
               }
+
+              if (this->get_project()->get_keep_going() == false) {
+                  this -> set_javacErrorCode(0);           // keep going !!!
+                  this -> set_frontendErrorCode(0);        // keep going !!!
+                  this -> set_unparserErrorCode(0);        // keep going !!!
+                  this -> set_backendCompilerErrorCode(0); // keep going !!!
+              }
+
           }
          }
        else
