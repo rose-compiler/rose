@@ -402,7 +402,7 @@ e.printStackTrace();
             else if (binding instanceof ReferenceBinding) {
                 ReferenceBinding type_binding = (ReferenceBinding) binding;
                 if (temporaryImportProcessing) {
-                	preprocessClass(type_binding, unit_info);
+                    preprocessClass(type_binding, unit_info);
                 }
                 else {
                     setupClass(type_binding, unit_info);
@@ -857,7 +857,11 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
     public void insertClasses(ReferenceBinding binding, UnitInfo unit_info) {
         String class_name = new String(binding.sourceName);
         JavaToken location = unit_info.getDefaultLocation();
-        JavaParser.cactionInsertClassStart(class_name, location);
+        JavaParser.cactionInsertClassStart(class_name, 
+                                           binding.isInterface(),
+                                           binding.isEnum(),
+                                           binding.isAnonymousType(),
+                                           location);
 
 
         ReferenceBinding inner_class_list[] = (binding instanceof BinaryTypeBinding
@@ -893,7 +897,11 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                                            ? (special_type.isAnonymous() ? special_type.typename : special_type.simplename)
                                            : new String(node.name));
 
-        JavaParser.cactionInsertClassStart(class_name, location);
+        JavaParser.cactionInsertClassStart(class_name,
+                                           node.binding.isInterface(),
+                                           node.binding.isEnum(),
+                                           node.binding.isAnonymousType(),
+                                           location);
         TypeDeclaration member_types[] = node.memberTypes;
         if (member_types != null) {
             for (int i = 0; i < member_types.length; i++) {
@@ -1159,7 +1167,11 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
         
         JavaToken location = unit_info.getDefaultLocation();
         String class_name = new String(binding.sourceName());
-        JavaParser.cactionInsertClassStart(class_name, location);
+        JavaParser.cactionInsertClassStart(class_name,
+                                           binding.isInterface(),
+                                           binding.isEnum(),
+                                           binding.isAnonymousType(),
+                                           location);
         ReferenceBinding member_types[] = (binding instanceof BinaryTypeBinding ? ((BinaryTypeBinding) binding).memberTypes()
                                                                                 : ((SourceTypeBinding) binding).memberTypes()); 
         if (member_types != null) {
@@ -2296,7 +2308,7 @@ e.printStackTrace();
     
     public void translate(ArrayList<CompilationUnitDeclaration> units, String language_level) {
         if (units.size() == 0) { // nothing to do?
-        	return;
+            return;
         }
         
         // Debugging support...

@@ -196,7 +196,7 @@ class JavaParser implements Callable<Boolean> {
     public static native void cactionWildcardEnd(boolean is_unbound, boolean has_extends_bound, boolean has_super_bound, JavaToken jToken);
     public static native void cactionSetupSourceFilename(String full_file_name);
     public static native void cactionClearSourceFilename();
-    public static native void cactionInsertClassStart(String className, JavaToken jToken);
+    public static native void cactionInsertClassStart(String className, boolean is_interface, boolean is_enum, boolean is_anonymous, JavaToken jToken);
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);
     public static native void cactionBuildClassSupportStart(String className, String externalName, boolean user_defined_class, boolean is_interface, boolean is_enum, boolean is_anonymous, JavaToken jToken);
     public static native void cactionUpdateClassSupportStart(String class_name, JavaToken jToken);
