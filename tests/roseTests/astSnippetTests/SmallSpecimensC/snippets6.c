@@ -13,9 +13,9 @@ void randomOffByOne(int arg1)
 void shouldNotBeInserted() {}
 typedef int SomeOtherInteger;
 SomeOtherInteger someOtherInteger;
-//struct SomeOtherStruct {
-//    int dummy;
-//};
+struct SomeOtherStruct {
+    int dummy;
+};
 
 // Verify that some miscellaneous things are copied into the target.
 typedef int SomeInteger;

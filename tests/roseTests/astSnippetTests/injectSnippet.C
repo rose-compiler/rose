@@ -187,11 +187,17 @@ main(int argc, char *argv[])
     SnippetFilePtr snippetFile = snippet->getFile();
     snippetFile->setCopyAllSnippetDefinitions(copy_definitions);
 
-    // Test that we can prevent some things from being copied.
+    // Test that we can prevent some things from being copied in C
     snippetFile->doNotInsert("::shouldNotBeInserted");  // a function
     snippetFile->doNotInsert("::SomeOtherInteger");     // a typedef
     snippetFile->doNotInsert("::someOtherInteger");     // a global variable
     snippetFile->doNotInsert("::SomeOtherStruct");      // a struct
+
+    // Test that we can prevent some things from being copied in Java
+    snippetFile->doNotInsert("Snippets6.shouldNotBeInserted");
+    snippetFile->doNotInsert("Snippets6.someOtherInteger");
+    snippetFile->doNotInsert("Snippets6.SomeOtherStruct");
+    
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();
