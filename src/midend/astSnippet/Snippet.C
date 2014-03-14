@@ -933,13 +933,14 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         SgStatement* toInsert             = declCopy;
         SgStatement* original_before_copy = decl;
         std::map<SgNode*,SgNode*> translationMap;
-#if 0 /*DEBUGGING [DQ 2014-03-14]*/
-        printf ("Fixup SgVariableDeclaration: calling SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(): "
-                "vdecl = %p \n",vdecl);
-        // ROSE_ASSERT(false);
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+        std::cerr <<"calling SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst...\n";
 #endif
         SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope, toInsert,
                                                                   original_before_copy, translationMap);
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+        std::cerr <<"call to SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst has returned.\n";
+#endif
     }
 
     // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
