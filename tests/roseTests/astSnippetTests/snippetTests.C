@@ -67,6 +67,26 @@ findFunctionDefinition(SgNode *ast, std::string function_name)
     return NULL;
 }
 
+std::vector<SgFunctionDefinition*>
+findFunctionDefinitions(SgNode *ast, std::string function_name)
+{
+    assert(ast!=NULL);
+    struct FindFunctionDef: AstSimpleProcessing {
+        const std::string &name;
+        std::vector<SgFunctionDefinition*> found;
+        FindFunctionDef(const std::string &name): name(name) {}
+
+        void visit(SgNode *node) {
+            if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node)) {
+                if (fdef->get_declaration()->get_qualified_name() == name)
+                    found.push_back(fdef);
+            }
+        }
+    } t1(function_name);
+    t1.traverse(ast, preorder);
+    return t1.found;
+}
+
 SgStatement *
 findLastAppendableStatement(SgFunctionDefinition *fdef)
 {

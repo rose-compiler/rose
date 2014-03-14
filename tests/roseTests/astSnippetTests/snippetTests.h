@@ -16,6 +16,7 @@ rose::SnippetPtr findSnippetInAst(SgProject*, const std::string &snippetFileName
 
 /** Find a function definition having the specified name. */
 SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string fullyQualifiedFunctionName);
+std::vector<SgFunctionDefinition*> findFunctionDefinitions(SgNode *ast, std::string function_name);
 
 /** Find the last statement in a function definition after which we can reasonably insert another statement. */
 SgStatement *findLastAppendableStatement(SgFunctionDefinition*);
