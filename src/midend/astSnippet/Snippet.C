@@ -238,6 +238,76 @@ SnippetFile::randomVariableName()
     return name;
 }
 
+void
+SnippetFile::doNotInsert(const std::string &name, SgType *type/*=NULL*/)
+{
+    assert(!name.empty());
+    blackListedDeclarations[name].push_back(type);
+}
+
+bool
+SnippetFile::isBlackListed(SgDeclarationStatement *decl)
+{
+    assert(this!=NULL);
+    assert(decl!=NULL);
+    bool retval = false;
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+    std::cerr <<"isBlackListed((" <<decl->class_name() <<"*)" <<decl <<")\n";
+#endif
+
+    // Obtain the name and type for the declaration
+    std::string name;
+    SgType *type = NULL;
+    if (SgClassDeclaration *classDecl = isSgClassDeclaration(decl)) {
+        name = classDecl->get_qualified_name().getString();
+        type = classDecl->get_type();
+    } else if (SgEnumDeclaration *enumDecl = isSgEnumDeclaration(decl)) {
+        name = enumDecl->get_qualified_name().getString();
+        type = enumDecl->get_type();
+    } else if (SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(decl)) {
+        name = funcDecl->get_qualified_name().getString();
+        type = funcDecl->get_type();
+    } else if (SgTypedefDeclaration *typedefDecl = isSgTypedefDeclaration(decl)) {
+        name = typedefDecl->get_qualified_name().getString();
+        type = typedefDecl->get_type();
+    } else if (SgVariableDeclaration *varDecl = isSgVariableDeclaration(decl)) {
+        // We currently only support variable declarations having exactly one SgInitializedName, otherwise we would potentially
+        // need to transform the SgVariableDeclaration while it was copied to the target AST in order to remove only those
+        // SgInitializedName nodes that are black listed.
+        const SgInitializedNamePtrList &inames = varDecl->get_variables();
+        if (1!=inames.size()) {
+            std::cerr <<"warning: SnippetFile::isBlackListed does not support declaration statements with more than"
+                      <<" one variable.\n";
+        } else {
+            SgInitializedName *iname = inames.front();
+            name = iname->get_qualified_name();
+            type = iname->get_type();
+        }
+    }
+
+    // Is the (name,type) pair black listed?  If a black listed type is null then only the name needs to match.
+    SgTypePtrList blackListedTypes = blackListedDeclarations.get_value_or(name, SgTypePtrList());
+    if (!blackListedTypes.empty()) {
+        BOOST_FOREACH (SgType *blackListedType, blackListedTypes) {
+            if (!blackListedType || type==blackListedType) {
+                retval = true;
+                break;
+            }
+        }
+    }
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+    if (!name.empty())
+        std::cerr <<"    Name = \"" <<name <<"\"\n";
+    if (type!=NULL)
+        std::cerr <<"    Type = (" <<type->class_name() <<"*)" <<type <<"\n";
+    std::cerr <<"    Black listed? " <<(retval ? "yes":"no") <<"\n";
+#endif
+
+    return retval;
+}
+
 /*******************************************************************************************************************************
  *                                      Snippet
  *******************************************************************************************************************************/
@@ -713,36 +783,6 @@ Snippet::removeIncludeDirectives(SgNode *node)
     }
 }
 
-bool
-Snippet::hasCommentMatching(SgNode *ast, const std::string &toMatch)
-{
-    struct Visitor: AstSimpleProcessing {
-        std::string toMatch;
-        bool foundComment;
-        Visitor(const std::string &toMatch): toMatch(toMatch), foundComment(false) {}
-        void visit(SgNode *node) {
-            if (!foundComment) {
-                if (SgLocatedNode *lnode = isSgLocatedNode(node)) {
-                    if (AttachedPreprocessingInfoType *cpplist = lnode->getAttachedPreprocessingInfo()) {
-                        BOOST_FOREACH (PreprocessingInfo *cpp, *cpplist) {
-                            switch (cpp->getTypeOfDirective()) {
-                                case PreprocessingInfo::C_StyleComment:
-                                case PreprocessingInfo::CplusplusStyleComment:
-                                case PreprocessingInfo::F90StyleComment:
-                                    foundComment = boost::contains(cpp->getString(), toMatch);
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } visitor(toMatch);
-    visitor.traverse(ast, preorder);
-    return visitor.foundComment;
-}
-
 void
 Snippet::insertRelatedThings(SgStatement *insertionPoint)
 {
@@ -788,7 +828,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
             continue;
 
         // If a declaration is blacklisted in the snippet file then don't insert it.
-        if (hasCommentMatching(decl, "DO_NOT_INSERT"))
+        if (file->isBlackListed(decl))
             continue;
 
         // Insert whole function definitions (snippets) only if the user asked for this feature.
@@ -857,13 +897,13 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
     // Insert declarations
     SgStatement *firstInserted = NULL; // earliest node (in traversal) we inserted into the target AST
-    BOOST_FOREACH (SgStatement *decl, snippetGlobalScope->get_declarations()) {
+    BOOST_FOREACH (SgDeclarationStatement *decl, snippetGlobalScope->get_declarations()) {
         // Insert only those things that come from the snippet file, not from header files
         if (!decl->get_file_info()->isSameFile(ast->get_file_info()))
             continue;
 
         // If a declaration is blacklisted in the snippet file then don't insert it.
-        if (hasCommentMatching(decl, "DO_NOT_INSERT"))
+        if (file->isBlackListed(decl))
             continue;
 
         // Insert whole function definitions (snippets) only if the user asked for this feature.
