@@ -117,6 +117,21 @@ HEADER_START
           void set_originalExpressionTree(SgExpression* X);
 #endif
 
+      /*! \brief Some expressions store internal SgType pointers explicitly while others compute them from other expressions.  This function is true if it has a data member that is a type (pointer, array, etc.).
+
+          Result is true if it stores a type explicitly as a data member, else false.
+
+          \internal True only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
+                    SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+                    SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
+                    SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
+       */
+          bool hasExplicitType();
+
+      /*! \brief Some expressions store internal SgType pointers explicitly, this allows these IR nodes to be reset with new types (used in the snippet support).
+       */
+          void set_explicitly_stored_type( SgType* type );
+
 HEADER_END
 
 
@@ -2085,6 +2100,242 @@ SgExpression::set_originalExpressionTree(SgExpression* X)
      ROSE_ASSERT(false);
    }
 #endif
+
+bool
+SgExpression::hasExplicitType()
+   {
+  // DQ (3/7/2014):  This could be implemented as a virtual function but would require 11 functions to be 
+  // implemented. I have thus instead implemented it as a single function on the SgType instead. We
+  // can review this if it is important.
+
+  // This function returns true only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
+  // SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+  // SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
+  // SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
+
+     bool returnValue = false;
+
+  // Need to add: SgUpcLocalsizeofExpression, SgUpcBlocksizeofExpression, SgUpcElemsizeofExpression.
+
+  // There are no access functions for SgJavaAnnotation, SgJavaTypeExpression, SgJavaTypeExpression, 
+
+     if ( isSgTemplateParameterVal(this) != NULL     || isSgComplexVal(this)    != NULL            || isSgSizeOfOp(this) != NULL                 || 
+          isSgAlignOfOp(this) != NULL                || isSgJavaInstanceOfOp(this) != NULL         || isSgTypeIdOp(this)  != NULL                ||
+          isSgVarArgStartOp(this) != NULL            || isSgVarArgStartOneOperandOp(this) != NULL  || isSgVarArgOp(this)  != NULL                ||
+          isSgVarArgEndOp(this) != NULL              || isSgVarArgCopyOp(this) != NULL             || isSgNewExp(this)  != NULL                  ||
+          isSgRefExp(this) != NULL                   || isSgAggregateInitializer(this) != NULL     || isSgCompoundInitializer(this)  != NULL     ||
+          isSgUpcLocalsizeofExpression(this) != NULL || isSgUpcBlocksizeofExpression(this) != NULL || isSgUpcElemsizeofExpression(this)  != NULL ||
+          isSgJavaAnnotation(this) != NULL           || isSgJavaTypeExpression(this) != NULL       || isSgJavaTypeExpression(this)  != NULL      ||
+       // isSgConstructorInitializer(this) != NULL   || isSgAssignInitializer(this) != NULL        || isSgPseudoDestructorRefExp(this)  != NULL  ||
+          isSgConstructorInitializer(this) != NULL   || isSgPseudoDestructorRefExp(this)  != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+void
+SgExpression::set_explicitly_stored_type( SgType* type )
+   {
+  // DQ (3/7/2014): Some expressions store internal SgType pointers explicitly, this allows these IR nodes to be reset with new types (used in the snippet support).
+
+     switch (this->variantT())
+        {
+           case V_SgNewExp:
+             {
+               SgNewExp* exp = isSgNewExp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_specified_type(type);
+               break;
+             }
+
+          case V_SgConstructorInitializer:
+             {
+               SgConstructorInitializer* exp = isSgConstructorInitializer(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgTemplateParameterVal:
+             {
+               SgTemplateParameterVal* exp = isSgTemplateParameterVal(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_valueType(type);
+               break;
+             }
+
+          case V_SgComplexVal:
+             {
+               SgComplexVal* exp = isSgComplexVal(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_precisionType(type);
+               break;
+             }
+
+          case V_SgSizeOfOp:
+             {
+               SgSizeOfOp* exp = isSgSizeOfOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+          case V_SgAlignOfOp:
+             {
+               SgAlignOfOp* exp = isSgAlignOfOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+          case V_SgJavaInstanceOfOp:
+             {
+               SgJavaInstanceOfOp* exp = isSgJavaInstanceOfOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+          case V_SgTypeIdOp:
+             {
+               SgTypeIdOp* exp = isSgTypeIdOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+          case V_SgVarArgStartOp:
+             {
+               SgVarArgStartOp* exp = isSgVarArgStartOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgVarArgStartOneOperandOp:
+             {
+               SgVarArgStartOneOperandOp* exp = isSgVarArgStartOneOperandOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgVarArgOp:
+             {
+               SgVarArgOp* exp = isSgVarArgOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgVarArgEndOp:
+             {
+               SgVarArgEndOp* exp = isSgVarArgEndOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgVarArgCopyOp:
+             {
+               SgVarArgCopyOp* exp = isSgVarArgCopyOp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgRefExp:
+             {
+               SgRefExp* exp = isSgRefExp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_type_name(type);
+               break;
+             }
+
+          case V_SgAggregateInitializer:
+             {
+               SgAggregateInitializer* exp = isSgAggregateInitializer(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgCompoundInitializer:
+             {
+               SgCompoundInitializer* exp = isSgCompoundInitializer(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expression_type(type);
+               break;
+             }
+
+          case V_SgPseudoDestructorRefExp:
+             {
+               SgPseudoDestructorRefExp* exp = isSgPseudoDestructorRefExp(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_object_type(type);
+               break;
+             }
+
+           case V_SgUpcLocalsizeofExpression:
+             {
+               SgUpcLocalsizeofExpression* exp = isSgUpcLocalsizeofExpression(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+           case V_SgUpcBlocksizeofExpression:
+             {
+               SgUpcBlocksizeofExpression* exp = isSgUpcBlocksizeofExpression(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+           case V_SgUpcElemsizeofExpression:
+             {
+               SgUpcElemsizeofExpression* exp = isSgUpcElemsizeofExpression(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_operand_type(type);
+               break;
+             }
+
+#if 0
+        // DQ (3/7/20145): This IR node is generated without access functions for the type.
+           case V_SgJavaAnnotation:
+             {
+               SgJavaAnnotation* exp = isSgJavaAnnotation(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_expresion_type(type);
+               break;
+             }
+
+        // DQ (3/7/20145): This IR node is generated without access functions for the type.
+           case V_SgJavaTypeExpression:
+             {
+               SgJavaTypeExpression* exp = isSgJavaTypeExpression(this);
+               ROSE_ASSERT(exp != NULL);
+               exp->set_type(type);
+               break;
+             }
+#endif
+#if 0
+             {
+               printf ("Error: case not handled: expression = %p = %s \n",this,this->class_name().c_str());
+               ROSE_ASSERT(false);
+               break;
+             }
+#endif
+          default: 
+             {
+               printf ("Error: SgExpression::set_explicit_type(): default reached: expression = %p = %s \n",this,this->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+   }
+
 
 SOURCE_BASECLASS_EXPRESSION_END
 
@@ -4384,6 +4635,13 @@ SgPointerDerefExp::get_type() const
                break;
              }
 #endif
+       // DQ (2/16/2014): Added this for the case of the new EDG interface (sometimes this case is required).
+          case V_SgTypeUnknown:
+             {
+               returnType = someType;
+               break;
+             }
+
           default:
              {
 // #ifndef ROSE_USE_EDG_VERSION_4
@@ -6881,6 +7139,10 @@ SOURCE_JAVA_NORMAL_ANNOTATION_END
 
 SOURCE_JAVA_TYPE_EXPRESSION_START
 
+#if 0
+// DQ (3/7/2014): Use automatically generated access functions instead (so that we get both get_ and set_ functions).
+// We need the set functions to support the AST fixup for the snippet mechanism.
+
 //
 // Return the type associated with this Type expression.
 //
@@ -6894,6 +7156,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_JAVA_TYPE_EXPRESSION_END
 

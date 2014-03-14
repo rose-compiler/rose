@@ -602,6 +602,24 @@ typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrLis
 typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
 typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
 
+// DQ (3/6/2014): Added support for Untyped IR nodes.
+class SgUntypedInitializedName;
+typedef Rose_STL_Container<SgUntypedInitializedName*> SgUntypedInitializedNamePtrList;
+typedef SgUntypedInitializedNamePtrList*              SgUntypedInitializedNamePtrListPtr;
+
+class SgUntypedStatement;
+typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
+typedef SgUntypedStatementPtrList*              SgUntypedStatementPtrListPtr;
+
+class SgUntypedDeclarationStatement;
+typedef Rose_STL_Container<SgUntypedDeclarationStatement*> SgUntypedDeclarationStatementPtrList;
+typedef SgUntypedDeclarationStatementPtrList*              SgUntypedDeclarationStatementPtrListPtr;
+
+class SgUntypedFunctionDeclaration;
+typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
+typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
+
+
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;
 class FrontierNode;
