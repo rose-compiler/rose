@@ -77,7 +77,7 @@ SnippetFile::findSnippetFunctions()
 
         void visit(SgNode *node) {
             if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node))
-                functions[fdef->get_declaration()->get_qualified_name()] = fdef;
+                functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);
         }
     } snippetFinder(functions);
     snippetFinder.traverse(ast, preorder);
@@ -88,11 +88,25 @@ SnippetFile::findSnippet(const std::string &snippetName)
 {
     assert(this!=NULL);
     assert(!snippetName.empty());
-    if (SgFunctionDefinition *fdef = functions.get_value_or(snippetName, NULL))
-        return SnippetPtr(new Snippet(snippetName, shared_from_this(), fdef));
+    FunctionDefinitionMap::const_iterator found = functions.find(snippetName);
+    if (found!=functions.end() && !found->second.empty())
+        return SnippetPtr(new Snippet(snippetName, shared_from_this(), found->second.front()));
     return SnippetPtr();
 }
 
+std::vector<SnippetPtr>
+SnippetFile::findSnippets(const std::string &snippetName)
+{
+    assert(this!=NULL);
+    assert(!snippetName.empty());
+    std::vector<SnippetPtr> retval;
+    FunctionDefinitionMap::const_iterator found = functions.find(snippetName);
+    if (found!=functions.end()) {
+        BOOST_FOREACH (SgFunctionDefinition *fdef, found->second)
+            retval.push_back(SnippetPtr(new Snippet(snippetName, shared_from_this(), fdef)));
+    }
+    return retval;
+}
 
 std::vector<std::string>
 SnippetFile::getSnippetNames() const
@@ -136,7 +150,7 @@ SnippetFile::expandSnippets(SgNode *ast)
                     SgFunctionSymbol *fsym = fcall->getAssociatedFunctionSymbol();
                     SgFunctionDeclaration *fdecl = fsym ? fsym->get_declaration() : NULL;
                     std::string called_name = fdecl ? fdecl->get_qualified_name().getString() : std::string();
-                    if (self->functions.get_value_or(called_name, NULL))
+                    if (self->functions.exists(called_name))
                         calls.insert(std::make_pair(fcall, called_name));
                 }
             }
@@ -148,11 +162,26 @@ SnippetFile::expandSnippets(SgNode *ast)
     // the snippet call is removed.
     for (SnippetCalls::iterator ci=t1.calls.begin(); ci!=t1.calls.end(); ++ci) {
         SgFunctionCallExp *fcall = ci->first;
-        SnippetPtr snippet = findSnippet(ci->second);
-        assert(fcall!=NULL && snippet!=NULL);
+        assert(fcall!=NULL);
         const SgExpressionPtrList &fcall_args = fcall->get_args()->get_expressions();
         std::vector<SgNode*> actuals(fcall_args.begin(), fcall_args.end());
         SgStatement *toReplace = SageInterface::getEnclosingNode<SgStatement>(fcall);
+        SnippetPtr snippet;
+        BOOST_FOREACH (SnippetPtr candidate, findSnippets(ci->second)) {
+            if (candidate->numberOfArguments() == actuals.size()) {
+                if (snippet!=NULL) {
+                    throw std::runtime_error("snippet call \"" + ci->second + "\" having " +
+                                             StringUtility::plural(actuals.size(), "arguments") +
+                                             " matches multiple snippet definitions");
+                }
+                snippet = candidate;
+            }
+        }
+        if (snippet==NULL) {
+            throw std::runtime_error("snippet call \"" + ci->second + "\" having " +
+                                     StringUtility::plural(actuals.size(), "arguments") +
+                                     " does not match any snippet definition");
+        }
         snippet->insert(toReplace, actuals);
         SageInterface::removeStatement(toReplace);
     }

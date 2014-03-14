@@ -8,6 +8,11 @@ public class Snippets6 {
         arg1 += tmp_offset;
     }
 
+    void randomOffByOne() {
+	// this snippet is not called recursively because it has a different number of
+	// arguments than what is used at the call site.
+    }
+
     public void notNeeded() {
         // DO_NOT_INSERT
         System.out.println("this function should not be inserted into the target");
