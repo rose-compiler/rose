@@ -298,17 +298,24 @@ for (int k = 0; k < stack.length; k++) {
         r2 = runtime.totalMemory();
         f2 = runtime.freeMemory();
         int size = units.size();
-        System.out.println();
-        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
+            System.out.println();
+        }
+
         for (CompilationUnitDeclaration unit : units) {
             System.out.println("   " + new String(unit.getFileName()));
         }
-        System.out.println();
-        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
-        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
-        System.out.println("**** Total Number of Units Processed: " + totalUnits);
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+            System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+            System.out.println("**** Total Number of Units Processed: " + totalUnits);
+            System.out.println();
+        }
     }
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
