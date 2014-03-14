@@ -276,6 +276,8 @@ namespace SgNodeHelper {
 	considers all assignment operators and arrays of any size
   */
   bool isArrayElementAssignment(SgNode* node);
+  bool isFloatingPointAssignment(SgNode* exp);
+  bool isFloatingPointType(SgType* type);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {

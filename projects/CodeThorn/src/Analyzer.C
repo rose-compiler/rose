@@ -1034,7 +1034,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           EState estate=(*i).estate;
           PState newPState=*estate.pstate();
           ConstraintSet cset=*estate.constraints();
-          newPState[lhsVar]=(*i).result;
+          // only update integer variables. Ensure values of floating-point variables are not computed
+          if(variableIdMapping.hasIntegerType(lhsVar)) {
+            newPState[lhsVar]=(*i).result;
+          }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));

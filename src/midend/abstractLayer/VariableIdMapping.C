@@ -19,6 +19,15 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return varSym->get_type();
 }
 
+bool VariableIdMapping::hasIntegerType(VariableId varId) {
+  SgType* type=getType(varId);
+  return SageInterface::isStrictIntegerType(type);
+}
+
+bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type);
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.

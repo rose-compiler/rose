@@ -1150,6 +1150,10 @@ SgNode* SgNodeHelper::getExprRootChild(SgNode* node) {
   return SgNodeHelper::getFirstChild(node);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
 bool SgNodeHelper::isArrayElementAssignment(SgNode* node) {
   if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
 	SgNode* lhs=getLhs(node);
@@ -1157,6 +1161,25 @@ bool SgNodeHelper::isArrayElementAssignment(SgNode* node) {
 	  return true;
   }
   return false;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
+bool SgNodeHelper::isFloatingPointAssignment(SgNode* node) {
+  if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
+    SgExpression* lhs=isSgExpression(getLhs(node));
+    ROSE_ASSERT(lhs);
+    SgType* type=lhs->get_type();
+    if(isFloatingPointType(type))
+      return true;
+  }
+  return false;
+}
+
+bool SgNodeHelper::isFloatingPointType(SgType* type) {
+  return isSgTypeFloat(type) || isSgTypeDouble(type) || isSgTypeLongDouble(type);
 }
 
 /*! 

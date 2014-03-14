@@ -667,7 +667,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
   while(succSet.size()>=1) {
     if(succSet.size()>1) {
 	  cerr<<estate->toString()<<endl;
-      cerr<<"Error: STG-States with more than one successor not supported yet."<<endl;
+      cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
       exit(1);
     } else {
       EStatePtrSet::iterator i=succSet.begin();
@@ -685,7 +685,7 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
       if(isSgExpressionRoot(node))
         node=SgNodeHelper::getExprRootChild(node);
       if(SgExpression* exp=isSgExpression(node)) {
-        if(SgNodeHelper::isArrayElementAssignment(node)) {
+        if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
           stgArrayUpdateSequence.push_back(make_pair(estate,exp));
         }
       }
@@ -825,14 +825,17 @@ void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapp
 	SgExpression* exp=arrayUpdates[i].second;
 	SgNode* lhs=SgNodeHelper::getLhs(exp);
 	SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs);
-	ROSE_ASSERT(arr);
-	ArrayElementAccessData access(arr,variableIdMapping);
-	if(defVarNumbers.count(access.toString(variableIdMapping))==0) {
-	  defVarNumbers[access.toString(variableIdMapping)]=1;
-	} else {
-	  defVarNumbers[access.toString(variableIdMapping)]=defVarNumbers[access.toString(variableIdMapping)]+1;
-	}
-	arr->setAttribute("Number",new NumberAstAttribute(defVarNumbers[access.toString(variableIdMapping)]));
+	if(arr) {
+          ArrayElementAccessData access(arr,variableIdMapping);
+          if(defVarNumbers.count(access.toString(variableIdMapping))==0) {
+            defVarNumbers[access.toString(variableIdMapping)]=1;
+          } else {
+            defVarNumbers[access.toString(variableIdMapping)]=defVarNumbers[access.toString(variableIdMapping)]+1;
+          }
+          arr->setAttribute("Number",new NumberAstAttribute(defVarNumbers[access.toString(variableIdMapping)]));
+        } else {
+          cerr<<"WARNING: SSA Numbering: lhs is non-array expression."<<endl;
+        }
   }
 }
 
