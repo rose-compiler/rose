@@ -884,47 +884,23 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         if (!firstInserted)
             firstInserted = declCopy;
         
-#if 0
-        // This is Dan's original code to fix up the AST for an inserted function, commented out because functions are no
-        // longer treated specially, and I'm pretty sure he's replacing all this with a call to a single generic function.
-        // [Robb P. Matzke 2014-03-14]
 
-        // DQ (3/2/2014): The copy of a statement will not handle its associated symbols if they are in a scope outside of the
-        // statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into the target
-        // scope (this is easier than fixing up the AST after the insertion, since it is less clear what has been inserted).
-        SgScopeStatement* scope = isSgScopeStatement(topInsertionPoint->get_parent());
-        ROSE_ASSERT(scope != NULL);
-        ROSE_ASSERT(scope->get_parent() != NULL);
-
-        fdecl_copy->set_scope(scope);
-
-        // Lookup the symbol in the parent scopes of the insertion point in the traget program (must exist).
-        SgFunctionSymbol* functionSymbolInTargetAST = SageInterface::lookupFunctionSymbolInParentScopes(fdecl->get_name(),
-                                                                                                        scope);
-        if (functionSymbolInTargetAST == NULL) {
-            printf ("In Snippet::insertGlobalStuff(): Can't location function: name = %s in parent scopes of "
-                    "insertion point \n",fdecl->get_name().str());
-            continue;
-        }
-        ROSE_ASSERT(functionSymbolInTargetAST != NULL);
-        SgDeclarationStatement* decl = functionSymbolInTargetAST->get_declaration();
-        ROSE_ASSERT(decl != NULL);
-
-        ROSE_ASSERT(fdecl_copy->get_scope() == scope);
-        ROSE_ASSERT(decl->get_scope() == scope);
-
-        // Set the first nondefining declaration to the declaration that exists for the target file (not the snippet file).
-        fdecl_copy->set_firstNondefiningDeclaration(decl);
-
-        // I assume this is true for function defined in libraries (fails test5c, OK).
-        // ROSE_ASSERT(fdecl_copy->get_definingDeclaration() == NULL);
-#if 0 // DEBUGGING [DQ 2014-03-07]
-        printf ("Exiting as a test! \n");
-        ROSE_ASSERT(false);
+        // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).  If we are inserting into
+        // the end of a scope then we point to the scope since there is no last statement to insert a statement before.  In
+        // this case then insertionPointIsScope == true, else it is false.  I think that in the cases called by this function
+        // insertionPointIsScope is always false.
+        bool insertionPointIsScope        = false;
+        SgStatement* toInsert             = declCopy;
+        SgStatement* original_before_copy = decl;
+        std::map<SgNode*,SgNode*> translationMap;
+#if 0 /*DEBUGGING [DQ 2014-03-14]*/
+        printf ("Fixup SgVariableDeclaration: calling SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(): "
+                "vdecl = %p \n",vdecl);
+        // ROSE_ASSERT(false);
 #endif
-#endif
+        SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope, toInsert,
+                                                                  original_before_copy, translationMap);
     }
-
 
     // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
     // and reattached to the first node we inserted.

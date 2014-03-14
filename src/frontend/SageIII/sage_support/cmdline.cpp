@@ -387,6 +387,9 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
+      { // Expand Javac's @argfile since it may contain filenames
+          argList = Rose::Cmdline::Java::ExpandArglist(argList);
+      }
 
      bool isSourceCodeCompiler = false;
 
@@ -545,6 +548,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
       // Turn "-I <path>" into "-I<path>" for subsequent processing
       local_commandLineArgumentList =
           Rose::Cmdline::NormalizeIncludePathOptions(
+              local_commandLineArgumentList);
+  }
+  { // Expand Javac's @argfile before CLI processing
+      local_commandLineArgumentList =
+          Rose::Cmdline::Java::ExpandArglist(
               local_commandLineArgumentList);
   }
 
@@ -1715,6 +1723,10 @@ OptionRequiresArgument (const std::string& option)
       option == "-cp"                       ||
       option == "-sourcepath"               ||
       option == "-d"                        ||
+      option == "-source"                   ||
+      option == "-target"                   ||
+      option == "-encoding"                 ||
+      option == "-s"                        ||
       // ROSE Options
       option == "-rose:java:cp"             ||
       option == "-rose:java:classpath"      ||
@@ -1777,13 +1789,25 @@ Rose::Cmdline::Java::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
   if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] Processing Java commandline options" << std::endl;
+  {
+      std::cout
+          << "[INFO] Processing Java commandline options: "
+          << CommandlineProcessing::generateStringFromArgList(argv, true, false)
+          << std::endl;
+  }
 
   ProcessJavaOnly(project, argv);
   ProcessClasspath(project, argv);
   ProcessSourcepath(project, argv);
   ProcessDestdir(project, argv);
   ProcessSourceDestdir(project, argv);
+  ProcessS(project, argv);
+  ProcessSource(project, argv);
+  ProcessTarget(project, argv);
+  ProcessEncoding(project, argv);
+  ProcessG(project, argv);
+  ProcessNoWarn(project, argv);
+  ProcessVerbose(project, argv);
 
   Cmdline::Java::Ecj::Process(project, argv);
 }
@@ -2000,6 +2024,290 @@ ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv)
       }// sanity check
   }// has_java_source_destdir
 }// Cmdline::Java::ProcessSourceDestdir
+
+void
+Rose::Cmdline::Java::
+ProcessS (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string generate_source_file_dir = "";
+
+  bool has_java_source_destdir =
+      // -s
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-s",
+          "",
+          generate_source_file_dir,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_source_destdir)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing javac -s option" << std::endl;
+
+      project->set_Java_s(generate_source_file_dir);
+
+      // Sanity check: Check existence of source destdir path
+      {
+          bool directory_exists = boost::filesystem::is_directory(generate_source_file_dir);
+          if (!directory_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid javac -s directory path; path does not exist: "
+                  << "'" << generate_source_file_dir << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_source_destdir
+}// Cmdline::Java::ProcessSourceDestdir
+
+void
+Rose::Cmdline::Java::
+ProcessSource (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string source = "";
+
+  bool has_java_source =
+      // -source
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-source",
+          "",
+          source,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_source)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -source " << source << std::endl;
+
+      project->set_Java_source(source);
+  }// has_java_source
+}// Cmdline::Java::ProcessSource
+
+void
+Rose::Cmdline::Java::
+ProcessTarget (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string target = "";
+
+  bool has_java_target =
+      // -target
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-target",
+          "",
+          target,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_target)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -target " << target << std::endl;
+
+      project->set_Java_target(target);
+  }// has_java_target
+}// Cmdline::Java::Processtarget
+
+void
+Rose::Cmdline::Java::
+ProcessEncoding (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string encoding = "";
+
+  bool has_java_encoding =
+      // -encoding
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-encoding",
+          "",
+          encoding,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_encoding)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -encoding " << encoding << std::endl;
+
+      project->set_Java_encoding(encoding);
+  }// has_java_encoding
+}// Cmdline::Java::Processencoding
+
+void
+Rose::Cmdline::Java::
+ProcessG (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string g = "";
+
+  bool has_java_g =
+      // -g
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-g",
+          "",
+          g,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_g)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -g[:none,source,lines,vars] " << g << std::endl;
+
+      project->set_Java_g(g);
+  }// has_java_g
+}// Cmdline::Java::Processg
+
+void
+Rose::Cmdline::Java::
+ProcessNoWarn (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_java_nowarn =
+      // -nowarn
+      CommandlineProcessing::isOption(
+          argv,
+          "-nowarn",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_nowarn)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -nowarn " << std::endl;
+  }// has_java_nowarn
+
+  project->set_Java_nowarn(has_java_nowarn);
+}// Cmdline::Java::Processnowarn
+
+void
+Rose::Cmdline::Java::
+ProcessVerbose (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_java_verbose =
+      // -verbose
+      CommandlineProcessing::isOption(
+          argv,
+          "-verbose",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_verbose)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -verbose " << std::endl;
+  }// has_java_verbose
+
+  project->set_Java_verbose(has_java_verbose);
+}// Cmdline::Java::ProcessVerbose
+
+Rose_STL_Container<std::string>
+Rose::Cmdline::Java::
+ExpandArglist (const std::string& arglist_string)
+{
+  ROSE_ASSERT(!arglist_string.empty());
+  ROSE_ASSERT(arglist_string[0] == '@'); // @filename
+
+  Rose_STL_Container<std::string> arglist;
+
+  if (arglist_string.size() < 2)
+  {
+      std::cout
+          << "[FATAL] No filename found after @ symbol "
+          << "on the command line. Should be @<filename>."
+          << std::endl;
+      ROSE_ASSERT(false);
+  }
+  else
+  {
+      std::string filename = arglist_string.substr(1);
+      ROSE_ASSERT(filename.empty() == false);
+
+      arglist = Rose::Cmdline::Java::GetListFromFile(filename);
+      if (SgProject::get_verbose() > 2)
+      {
+          printf ("[INFO] "
+                  "Expanded @%s = '%s'\n",
+                  filename.c_str(),
+                  StringUtility::listToString(arglist).c_str());
+      }
+      return arglist;
+  }
+}// Cmdline::Java::ExpandArglist
+
+// TODO: should we validate that '@arglist' is only
+// passed once on the commandline?
+Rose_STL_Container<std::string>
+Rose::Cmdline::Java::
+ExpandArglist (const Rose_STL_Container<std::string>& p_argv)
+{
+  Rose_STL_Container<std::string> argv = p_argv;
+  Rose_STL_Container<std::string>::iterator i = argv.begin();
+  while (i != argv.end())
+  {
+      std::string argument = *i;
+      if (argument[0] == '@')
+      {
+          Rose_STL_Container<std::string> arglist =
+              Rose::Cmdline::Java::ExpandArglist(argument);
+
+          // Insert actual list of arguments in-place where @filename was found
+          int i_offset = std::distance(argv.begin(), i);
+          argv.erase(i);
+          argv.insert(argv.end(), arglist.begin(), arglist.end());
+          i = argv.begin() + i_offset;
+      }
+      else
+      {
+          ++i; // next commandline argument
+      }
+  }
+  return argv;
+}
+
+std::vector<std::string>
+Rose::Cmdline::Java::
+GetListFromFile (const std::string& filename)
+{
+    ROSE_ASSERT(! filename.empty());
+
+    std::vector<std::string> list;
+    std::ifstream            file(filename.c_str());
+    std::string              line;
+
+    while (!file.fail() && std::getline(file, line))
+    {
+        // TOO1 (3/4/2014): Strip quotes surrounding arguments; this is specific
+        //                  to how Maven utilizes javac @argfiles, e.g.:
+        //
+        //                      "javac"
+        //                      "-target 1.6"
+        //                      "-source 1.6"
+        //                      "File.java"
+        //
+        //                  TODO: Re-implement since this will not handle the case
+        //                  where file paths contain spaces and require quotations:
+        //
+        //                      "javac"
+        //                      "C:\ Program Files\Foo Bar Workspace\File.java"
+        line.erase(
+            std::remove(line.begin(), line.end(), '\"'),
+            line.end());
+        list.push_back(line);
+    }
+
+    file.close();
+
+    if (list.empty())
+    {
+        std::cout
+            << "[FATAL] No arguments found in file "
+            << "'" << filename << "'"
+            << std::endl;
+        ROSE_ASSERT(false);
+    }
+
+    return list;
+}
 
 // -rose:java:ecj options have already been transformed by Cmdline::Java::StripRoseOptions.
 // Therefore, for example,
@@ -4580,7 +4888,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-
+/* TV (02/26/2014): We do not need to specify EDG_BASE anymore as dependency to predefined_macros.txt is switch off
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
     //--------------------------------------------------------------------------
     // TOO (11/12/2012) - Refactor to use generic EDG version.
@@ -4607,7 +4915,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
         commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
     }
-
+*/
 
   // display("Called from SgFile::build_EDG_CommandLine");
 

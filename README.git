@@ -916,6 +916,7 @@ then run make normally.
 Verbose mode:
    make VERBOSE=1 -j24
 
-
+For snippets work with Robb:
+    git pull origin matzke/snippets-rc
 
 
