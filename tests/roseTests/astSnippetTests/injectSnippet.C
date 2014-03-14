@@ -42,14 +42,7 @@ usage(const std::string &arg0)
               <<"    --test:copy-definitions=(yes|no)\n"
               <<"        Determines whether all snippet definitions are copied into the specimen\n"
               <<"        file.  The default is to not copy any definitions since the are normally\n"
-              <<"        inserted recursively at insertion sites in the specimen.\n"
-              <<"    --test:copy-related-things=(yes|no)\n"
-              <<"        If yes, then copy certain other things from the snippet file to the target\n"
-              <<"        file.  These include defining function declarations, non-extern variable\n"
-              <<"        declarations, non-forward C struct declarations, C preprocessor #include\n"
-              <<"        directives (conditionally if followed by a comment), and Java import\n"
-              <<"        statements.  See the \"Global Declarations\" section of the Snippet class\n"
-              <<"        documentation for details.\n";
+              <<"        inserted recursively at insertion sites in the specimen.\n";
     exit(1);
 }
 
@@ -100,7 +93,7 @@ main(int argc, char *argv[])
     std::string snippet_file_name="snippets", snippet_name, ipoint_function_name;
     Snippet::InsertMechanism insert_mechanism = Snippet::INSERT_STMTS;
     Snippet::LocalDeclarationPosition locdecls_position = Snippet::LOCDECLS_AT_END;
-    bool insert_recursively = true, copy_definitions = false, copy_related_things = true;
+    bool insert_recursively = true, copy_definitions = false;
     std::vector<std::string> frontend_args;
     frontend_args.push_back(argv[0]);
     int argno = 1;
@@ -132,10 +125,6 @@ main(int argc, char *argv[])
             copy_definitions = true;
         } else if (!strcmp(argv[argno], "--test:copy-definitions=no")) {
             copy_definitions = false;
-        } else if (!strcmp(argv[argno], "--test:copy-related-things=yes")) {
-            copy_related_things = true;
-        } else if (!strcmp(argv[argno], "--test:copy-related-things=no")) {
-            copy_related_things = false;
         } else if (!strncmp(argv[argno], "--test:ipoint-function=", 23)) {
             ipoint_function_name = argv[argno] + 23;
         } else if (!strncmp(argv[argno], "--test:", 7)) {
@@ -154,8 +143,7 @@ main(int argc, char *argv[])
               <<"    insert mechanism:         " <<stringifySnippetInsertMechanism(insert_mechanism) <<"\n"
               <<"    local decls position:     " <<stringifySnippetLocalDeclarationPosition(locdecls_position) <<"\n"
               <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
-              <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n"
-              <<"    copy related things:      " <<(copy_related_things ? "yes" : "no") <<"\n";
+              <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n";
 
 #if 0
     // DQ (2/28/2014): This code is causing memory problems.
@@ -198,7 +186,6 @@ main(int argc, char *argv[])
     assert(snippet!=NULL);
     SnippetFilePtr snippetFile = snippet->getFile();
     snippetFile->setCopyAllSnippetDefinitions(copy_definitions);
-    snippetFile->setCopyRelatedThings(copy_related_things);
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();

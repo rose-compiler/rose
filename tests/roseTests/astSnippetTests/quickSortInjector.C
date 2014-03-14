@@ -1,9 +1,6 @@
 // Inject a few things into the quicksort.c specimen
 #include "snippetTests.h"
 
-// Define this if you want to do AST fixups after each insertion.
-#define PERFORM_AST_FIXUPS
-
 using namespace rose;
 
 // Find the first statement of the specified type under the specified AST.
@@ -72,12 +69,8 @@ int main(int argc, char *argv[])
     // Load the target specimen into ROSE. This is the code which we will change by injecting snippets.  If we are performing
     // AST fixups after each snippet insertion, then the target file must include all necessary declarations upon which the
     // inserted snippets depend.
-    std::vector<std::string> args(argv, argv+argc);
-#ifdef PERFORM_AST_FIXUPS
-    args.insert(args.begin()+1, "-DDECLARE_RELATED_THINGS");
-#endif
     std::cerr <<"Parsing the target specimen...\n";
-    SgProject *project = frontend(args);
+    SgProject *project = frontend(argc, argv);
 
     // Load the snippet file that contains all the snippets we wish to inject.  It is permissible to have more than one
     // such file, but we use only one here.  The snippet files are not unparsed -- only the target specimen is eventually
@@ -87,14 +80,6 @@ int main(int argc, char *argv[])
     SnippetFilePtr snippetFile = SnippetFile::instance(snippetFileName);
     ROSE_ASSERT(snippetFile!=NULL || !"unable to load snippet file");
     snippetFile->setCopyAllSnippetDefinitions(false);
-
-    // If we're performing AST fixups after each insertion then we should not be copying things (global declarations, include
-    // directives etc) that are related to the snippets that are inserted.
-#ifdef PERFORM_AST_FIXUPS
-    snippetFile->setCopyRelatedThings(false);
-#else
-    snippetFile->setCopyRelatedThings(true);
-#endif
 
     // Find where to insert the readEnvironment snippet. Look for "SNIPPET" comments in the target specimen.  This snippet
     // should be inserted before the first "while" statement of the ::quickSort function.

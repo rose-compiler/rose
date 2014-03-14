@@ -3,13 +3,8 @@
 #ifndef snippetRelated_H
 #define snippetRelated_H
 
-#define COPY_RELATED_THINGS_no 0
-#define COPY_RELATED_THINGS_yes 1
-
-#if COPY_RELATED_THINGS == COPY_RELATED_THINGS_no
-
 /* From snippets2.c */
-int snippet_usage_counter = 0;
+extern int snippet_usage_counter;
 
 /* From snippets3.c */
 #include <stdio.h>
@@ -38,6 +33,4 @@ void addWithError(int addend1, int addend2, int result);
 void copy_string10(char *dst, const char *src);
 void allocate_string(const char *s);
 
-
-#endif
 #endif
