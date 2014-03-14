@@ -252,10 +252,6 @@ SnippetFile::isBlackListed(SgDeclarationStatement *decl)
     assert(decl!=NULL);
     bool retval = false;
 
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-    std::cerr <<"isBlackListed((" <<decl->class_name() <<"*)" <<decl <<")\n";
-#endif
-
     // Obtain the name and type for the declaration
     std::string name;
     SgType *type = NULL;
@@ -296,14 +292,6 @@ SnippetFile::isBlackListed(SgDeclarationStatement *decl)
             }
         }
     }
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-    if (!name.empty())
-        std::cerr <<"    Name = \"" <<name <<"\"\n";
-    if (type!=NULL)
-        std::cerr <<"    Type = (" <<type->class_name() <<"*)" <<type <<"\n";
-    std::cerr <<"    Black listed? " <<(retval ? "yes":"no") <<"\n";
-#endif
 
     return retval;
 }
