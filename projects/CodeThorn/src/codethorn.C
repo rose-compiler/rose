@@ -36,7 +36,7 @@ list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string prefix) {
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
       string foundPrefix=SageInterface::extractPragmaKeyword(pragmaDecl);
-      cout<<"DEBUG: PREFIX:"<<foundPrefix<<endl;
+      //cout<<"DEBUG: PREFIX:"<<foundPrefix<<endl;
       if(prefix==foundPrefix || "end"+prefix==foundPrefix) {
         pragmaList.push_back(pragmaDecl);
       }
@@ -789,23 +789,39 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
 // searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
 SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping) {
   ArrayElementAccessData useRefData(useRefNode,variableIdMapping);
-#if 0
-  cout<<"@RHS:"<<useRefNode->unparseToString()<<" ";
-  cout<<"@RHS-CHECK:"<<useRefData.toString(variableIdMapping)<<" ";
-  cout<<"@POS:"<<(*pos).second->unparseToString();
-  cout<<endl;
-#endif
-  // TODO-2: check search backwards
   do {
     SgPntrArrRefExp* lhs=isSgPntrArrRefExp(SgNodeHelper::getLhs((*pos).second));
-    ROSE_ASSERT(lhs);
-    ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
-    if(defData==useRefData) {
-      //return isSgPntrArrRefExp(lhs);
-	  (*pos).mark=true; // mark each used definition
-      return (*pos).second; // return pointer to assignment expression (instead directly to def);
-    }
-    // there is no concept for before-the-start iterator (therefore this is checked this way)
+	// there can be non-array element updates on lhs
+    if(lhs) {
+	  ArrayElementAccessData defData(isSgPntrArrRefExp(lhs),variableIdMapping);
+	  if(defData==useRefData) {
+		(*pos).mark=true; // mark each used definition
+		return (*pos).second; // return pointer to assignment expression (instead directly to def);
+	  }
+	}
+    // there is no concept for before-the-start iterator (therefore this is checked this way) -> change this rbegin/rend
+    if(pos==arrayUpdates.begin()) 
+      break;
+    --pos; 
+  } while (1);
+
+  return 0;
+}
+
+// searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
+SgNode* findDefAssignOfUse(SgVarRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping) {
+  VariableId useRefId=variableIdMapping->variableId(useRefNode);
+  do {
+    SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs((*pos).second));
+	// there can be non-var-refs updates on lhs
+    if(lhs) {
+	  VariableId defId=variableIdMapping->variableId(lhs);
+	  if(defId==useRefId) {
+		(*pos).mark=true; // mark each used definition
+		return (*pos).second; // return pointer to assignment expression (instead directly to def);
+	  }
+	}
+    // there is no concept for before-the-start iterator (therefore this is checked this way) -> change this rbegin/rend
     if(pos==arrayUpdates.begin()) 
       break;
     --pos; 
@@ -833,18 +849,28 @@ void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapp
   for(size_t i=0;i<arrayUpdates.size();++i) {
 	SgExpression* exp=arrayUpdates[i].second;
 	SgNode* lhs=SgNodeHelper::getLhs(exp);
-	SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs);
-	if(arr) {
-          ArrayElementAccessData access(arr,variableIdMapping);
-          if(defVarNumbers.count(access.toString(variableIdMapping))==0) {
-            defVarNumbers[access.toString(variableIdMapping)]=1;
-          } else {
-            defVarNumbers[access.toString(variableIdMapping)]=defVarNumbers[access.toString(variableIdMapping)]+1;
-          }
-          arr->setAttribute("Number",new NumberAstAttribute(defVarNumbers[access.toString(variableIdMapping)]));
-        } else {
-          cerr<<"WARNING: SSA Numbering: lhs is non-array expression."<<endl;
-        }
+	string name;
+	SgNode* toAnnotate=0;
+	if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+	  ArrayElementAccessData access(arr,variableIdMapping);
+	  name=access.toString(variableIdMapping);
+	  toAnnotate=arr;
+	} else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+	  VariableId varId=variableIdMapping->variableId(var);
+	  name=variableIdMapping->uniqueShortVariableName(varId);
+	  toAnnotate=var;
+	} else {
+	  cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+	  exit(1);
+	}
+	if(toAnnotate) {
+	  if(defVarNumbers.count(name)==0) {
+		defVarNumbers[name]=1;
+	  } else {
+		defVarNumbers[name]=defVarNumbers[name]+1;
+	  }
+	  toAnnotate->setAttribute("Number",new NumberAstAttribute(defVarNumbers[name]));
+	}
   }
 }
 
@@ -857,8 +883,8 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
     SgExpression* exp=(*i).second;
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-    ROSE_ASSERT(isSgPntrArrRefExp(lhs));
-    //cout<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: ";
+    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
     RoseAst rhsast(rhs);
     for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
       if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
@@ -885,8 +911,37 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
           }
           } // end switch
         }
-      }
-    }
+      } // if array
+	  // this can be rewritten once it is clear that the element type of an array is properly reported by isFloatingPointExpr(exp)
+	  else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+		ROSE_ASSERT(useRef);
+		j.skipChildrenOnForward();
+        // search for def here
+        ArrayUpdatesSequence::iterator i_copy=i;
+        --i_copy; // necessary and guaranteed to not decrement i=begin() because the loop starts at (i=begin())++
+        SgNode* defAssign=findDefAssignOfUse(useRef, arrayUpdates, i_copy, variableIdMapping);
+        if(defAssign) {
+          SgExpression* defRhs=isSgExpression(SgNodeHelper::getRhs(defAssign));
+          ROSE_ASSERT(defRhs);
+          //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
+          switch(sarMode) {
+          case SAR_SUBSTITUTE: {
+            SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            break;
+          }
+          case SAR_SSA: {
+            AstAttribute* attr=SgNodeHelper::getLhs(defAssign)->getAttribute("Number");
+            if(attr) {
+              useRef->setAttribute("Number",attr);
+            }
+            break;
+          }
+          } // end switch
+        }
+	  } else {
+		//cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+	  }
+	}
   }
 }
 
@@ -911,8 +966,8 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
 	  RoseAst ast((*i).second);
 	  for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 		if((*j)->attributeExists("Number")) {
-		  ROSE_ASSERT(isSgPntrArrRefExp(*j));
-		  AstUnparseAttribute* ssaNameAttribute=new AstUnparseAttribute(string("_")+(*j)->getAttribute("Number")->toString()+"_"+(*j)->unparseToString(),AstUnparseAttribute::e_replace);
+		  ROSE_ASSERT(isSgPntrArrRefExp(*j)||isSgVarRefExp(*j));
+		  AstUnparseAttribute* ssaNameAttribute=new AstUnparseAttribute((*j)->unparseToString()+string("_")+(*j)->getAttribute("Number")->toString(),AstUnparseAttribute::e_replace);
 		  (*j)->setAttribute("AstUnparseAttribute",ssaNameAttribute);
 		}			
 	  }
