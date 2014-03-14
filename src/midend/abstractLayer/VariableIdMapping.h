@@ -67,6 +67,10 @@ class VariableIdMapping {
   VariableId variableIdFromCode(int);
   SgSymbol* getSymbol(VariableId varId);
   SgType* getType(VariableId varId);
+  // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
+  bool hasIntegerType(VariableId varId);
+  // returns true if this variable has any floating-point type (float,double,longdouble)
+  bool hasFloatingPointType(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
