@@ -937,8 +937,9 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
  // This allows the snippet mechanism to be more general that required for use that would allow the AST fixup 
  // to be done (such as generating unparsable code, but not code that might pass an analysis phase).
     ROSE_ASSERT(getFile() != NULL);
+#if 0
     printf ("getFile()->getCopyRelatedThings() = %s \n",getFile()->getCopyRelatedThings() == true ? "true" : "false");
-
+#endif
     // Do the insertion for non-preprocessor stuff
     SgStatement *firstInserted = NULL;
     BOOST_FOREACH (SgStatement *snippetStmt, snippetStmts) {
@@ -953,7 +954,8 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
             continue;
 
         if (SgVariableDeclaration *vdecl = isSgVariableDeclaration(snippetStmt)) {
-            if (file->getCopyRelatedThings() && !vdecl->get_declarationModifier().get_storageModifier().isExtern()) {
+        // if (file->getCopyRelatedThings() && !vdecl->get_declarationModifier().get_storageModifier().isExtern()) 
+              {
                 // Insert non-extern variable declaration
                 SgTreeCopy deep;
                 SgStatement *newStmt = isSgStatement(snippetStmt->copy(deep));
@@ -962,6 +964,21 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 SageInterface::insertStatementBefore(topInsertionPoint, newStmt);
 
                 ROSE_ASSERT(file->getCopyRelatedThings());
+
+            // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).
+            // If we are inserting into the end of a scope then we point to the scope since there is no last statement 
+            // to insert a statement before.  In this case then insertionPointIsScope == true, else it is false. 
+            // I think that in the cases called by this function insertionPointIsScope is always false.
+               bool insertionPointIsScope        = false;
+               SgStatement* toInsert             = newStmt;
+               SgStatement* original_before_copy = snippetStmt;
+               std::map<SgNode*,SgNode*> translationMap;
+#if 0
+               printf ("Fixup SgVariableDeclaration: calling SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(): vdecl = %p \n",vdecl);
+            // ROSE_ASSERT(false);
+#endif
+               SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope,toInsert, original_before_copy, translationMap);
+
 #if 0 /* [Robb P. Matzke 2014-03-07]: Ast fixups not needed here since SnippetFile::getCopyRelatedThings returns true */
              // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
              // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
@@ -1077,6 +1094,20 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
                 causeUnparsing(fdecl_copy, topInsertionPoint->get_file_info());
                 SageInterface::insertStatementBefore(topInsertionPoint, fdecl_copy);
 
+            // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).
+            // If we are inserting into the end of a scope then we point to the scope since there is no last statement 
+            // to insert a statement before.  In this case then insertionPointIsScope == true, else it is false. 
+            // I think that in the cases called by this function insertionPointIsScope is always false.
+               bool insertionPointIsScope        = false;
+               SgStatement* toInsert             = fdecl_copy;
+               SgStatement* original_before_copy = snippetStmt;
+               std::map<SgNode*,SgNode*> translationMap;
+#if 0
+               printf ("Fixup SgFunctionDeclaration: calling SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(): fdecl = %p \n",fdecl);
+            // ROSE_ASSERT(false);
+#endif
+               SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope,toInsert, original_before_copy, translationMap);
+#if 0
              // DQ (3/2/2014): The copy of a statement will not handle it's associated symbols if they are in a scope outside 
              // of the statement.  So we have to explicitly build symbols for any new statements to be copied and inserted into 
              // the target scope (this is easier than fixing up the AST after the insertion, since it is less clear what has 
@@ -1105,7 +1136,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
              // Set the first nondefining declaration to the declaration that exists for the target file (not the snippet file).
                 fdecl_copy->set_firstNondefiningDeclaration(decl);
-
+#endif
              // I assume this is true for function defined in libraries (fails test5c, OK).
              // ROSE_ASSERT(fdecl_copy->get_definingDeclaration() == NULL);
 #if 0 // DEBUGGING [DQ 2014-03-07]
