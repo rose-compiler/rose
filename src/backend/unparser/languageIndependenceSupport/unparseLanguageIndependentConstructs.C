@@ -117,7 +117,10 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
 void
 UnparseLanguageIndependentConstructs::markGeneratedFile() const
    {
-     unp->u_sage->curprint ( "\n#define ROSE_GENERATED_CODE\n" );
+     unp->u_sage->curprint("\n#define ROSE_GENERATED_CODE\n");
+
+  // DQ (2/23/2014): Added to test modifications of projects to handle ROSE code when compiled with GNU gcc/g++.
+     unp->u_sage->curprint("\n#define USE_ROSE\n");
    }
 
 // This has been simplified by Markus Kowarschik. We need to introduce the

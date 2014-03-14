@@ -4,6 +4,7 @@
 #include "jni_JavaSourceCodePosition.h"
 #include "jni_utils.h"
 
+using namespace std;
 
 //
 // Replace newline character by its escape character sequence.
@@ -36,7 +37,7 @@ string normalize(string source) {
     return target;
 }
 
-string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
+std::string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
      // Note that "env" can't be passed into this function as "const".
     const char *str = env -> GetStringUTFChars(java_string, NULL);
     assert(str != NULL);

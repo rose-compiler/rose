@@ -628,6 +628,14 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
+             // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
+             // SgJavaWildcardType
+                case T_JAVA_WILD:
+                  {
+                    printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
+                    break;
+                  }
+
                default:
                   {
                     printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());

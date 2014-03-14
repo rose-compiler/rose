@@ -72,6 +72,16 @@ HEADER_START
           static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
           static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
 
+      /*! \brief Some types store internal SgType pointers explicitly while others compute them from other data.  This function is true if it has a data member that is a type (pointer, array, etc.).
+
+          Result is true if it stores a type explicitly as a data member, else false.
+
+          \internal True only if this is either a SgPointerType, SgReferenceType, PointerMemberType, 
+                    JavaParameterizedType, JavaWildcardType, ModifierType, QualifiedNameType, FunctionType, 
+                    MemberFunctionType, SgArrayType, TypeComplex, or TypeImaginary.
+       */
+          bool hasExplicitType();
+
       /*! \brief Some types can hide other type IR nodes internally.  This function is true if it can hide another type (pointer, array, etc.).
 
           Result is true if it can hide a one or more types, else false.
@@ -364,7 +374,18 @@ HEADER_JAVA_QUALIFIED_TYPE_END
 
 HEADER_JAVA_WILDCARD_TYPE_START
           SgJavaWildcardType ( const SgJavaWildcardType & X );
+          bool is_unbound();
 HEADER_JAVA_WILDCARD_TYPE_END
+
+
+HEADER_JAVA_UNION_TYPE_START
+          SgJavaUnionType ( const SgJavaUnionType & X );
+HEADER_JAVA_UNION_TYPE_END
+
+
+HEADER_JAVA_PARAMETER_TYPE_START
+          SgJavaParameterType ( const SgJavaParameterType & X );
+HEADER_JAVA_PARAMETER_TYPE_END
 
 
 HEADER_ENUM_TYPE_START
@@ -2180,6 +2201,29 @@ SgType::getAssociatedDeclaration() const
      return declaration;
    }
 
+bool SgType::hasExplicitType()
+   {
+  // DQ (3/7/2014):  Tis could be implemented as a virtual function but would require 11 functions to be 
+  // implemented. I have thus instead implemented it as a single function on the SgType instead. We
+  // can review this if it is important.
+
+  // This function returns true only if this is either a SgPointerType, SgReferenceType, SgPointerMemberType, 
+  // SgJavaParameterizedType, SgJavaWildcardType, SgModifierType, SgQualifiedNameType, SgFunctionType, 
+  // SgMemberFunctionType, SgArrayType, SgTypeComplex, or SgTypeImaginary.
+
+     bool returnValue = false;
+
+     if ( isSgPointerType(this) != NULL        || isSgArrayType(this)    != NULL          || isSgReferenceType(this) != NULL     || 
+          isSgPointerMemberType(this) != NULL  || isSgJavaParameterizedType(this) != NULL || isSgJavaWildcardType(this)  != NULL ||
+          isSgMemberFunctionType(this) != NULL || isSgTypeComplex(this) != NULL           || isSgTypeImaginary(this)  != NULL    ||
+          isSgFunctionType(this) != NULL       || isSgModifierType(this)  != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 bool
 SgType::containsInternalTypes()
@@ -2921,7 +2965,6 @@ SgJavaQualifiedType::SgJavaQualifiedType ( const SgJavaQualifiedType & X )
    {
    }
 
-
 SgName
 SgJavaQualifiedType::get_name() const
    {
@@ -2982,9 +3025,15 @@ SOURCE_JAVA_QUALIFIED_TYPE_END
 
 SOURCE_JAVA_WILDCARD_TYPE_START
 SgJavaWildcardType::SgJavaWildcardType ( const SgJavaWildcardType & X )
-   : SgType(X)
+   : SgNamedType(X)
    {
    }
+
+bool
+SgJavaWildcardType::is_unbound() {
+    return p_extends_type == NULL && p_super_type == NULL;
+}
+
 
 SgName
 SgJavaWildcardType::get_name() const
@@ -2997,22 +3046,109 @@ SgJavaWildcardType::get_mangled (void) const
    {
      ROSE_ASSERT(this != NULL);
 
-     SgName mangled_name;
-     mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
-                  << get_name().str() // name of wildcard type is "?"
-                  << (this -> get_has_extends() ? "_extends_" : "")
-                  << (this -> get_has_super() ? "_super_" : "")
-                  << (! this -> get_is_unbound() ? this -> get_bound_type() -> get_mangled() : "")
-                  << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
+     string mangled_name = "__MANGLED_ID_WILDCARD_TYPEb__";
+     mangled_name += get_name().str(); // name of wildcard type is "?"
+     if (p_extends_type != NULL) {
+         mangled_name += "_extends_" ;
+         mangled_name += p_extends_type -> get_mangled();
+     }
+     if (p_super_type != NULL) {
+         mangled_name += "_super_" ;
+         mangled_name += p_super_type -> get_mangled();
+     }
+     mangled_name += ("__MANGLED_ID_WILDCARD_TYPEe__"); // end tag
 
 #if 0
      printf ("LEAVING: In SgJavaWildcardType::get_mangled(): mangled_name = %s \n",mangled_name.str());
 #endif
 
-     return mangled_name;
+     return SgName(mangled_name);
    }
 
 SOURCE_JAVA_WILDCARD_TYPE_END
+
+
+SOURCE_JAVA_UNION_TYPE_START
+SgJavaUnionType::SgJavaUnionType ( const SgJavaUnionType & X )
+   : SgType(X)
+   {
+   }
+
+
+SgName
+SgJavaUnionType::get_name() const {
+    string name = "";
+    for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+      if (i > 0) { // != p_type_list.begin())
+            name += " | ";
+        }
+        name += isSgClassDeclaration(isSgNamedType(p_type_list[i]) -> getAssociatedDeclaration()) -> get_name();
+    }
+    return SgName(name); //. c_str()
+}
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+
+     for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+         if (i > 0) { // != p_type_list.begin())
+             mangled_name += "_|_";
+         }
+         mangled_name += p_type_list[i] -> get_mangled();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_UNION_TYPE_END
+
+
+SOURCE_JAVA_PARAMETER_TYPE_START
+SgJavaParameterType::SgJavaParameterType ( const SgJavaParameterType & X )
+   : SgClassType(X)
+   {
+   }
+
+
+SgName
+SgJavaParameterType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+  // DQ (2/10/2014): We want to iterate over the list of types and output a name from the concatination of the type names.
+  //   printf ("Implementation of SgJavaParameterType::get_mangled(void) not complete! \n");
+
+     SgClassDeclaration *class_declaration = isSgClassDeclaration(get_declaration() -> get_definingDeclaration());
+     ROSE_ASSERT(class_declaration);
+     SgName mangled_name = class_declaration -> get_mangled_name();
+     SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
+     for (int i = 0; i < bases.size(); i++) {
+         mangled_name += "_";
+         SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
+         mangled_name += super_type -> get_mangled_name();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_PARAMETER_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
@@ -5533,16 +5669,53 @@ SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE_END
 SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_START
 
 SgJavaWildcardType*
-SgJavaWildcardType::createType(SgType *bound_type /*=NULL*/, SgExpression* optional_fortran_type_kind)
+SgJavaWildcardType::createType(SgClassDeclaration *cd, SgExpression* optional_fortran_type_kind)
    {
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-     SgJavaWildcardType* returnType = new SgJavaWildcardType(bound_type, true);
+     SgJavaWildcardType* returnType = new SgJavaWildcardType(cd);
 
      return returnType;
    }
 SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_UNION_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaUnionType*
+SgJavaUnionType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_UNION_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaParameterType*
+SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+     if (! cd -> get_type()) {
+         $CLASSNAME *newType = new $CLASSNAME(cd);
+         cd -> set_type(newType);
+     }
+     return ($CLASSNAME *) cd -> get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START

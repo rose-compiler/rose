@@ -4,10 +4,9 @@ EXTRA_DIST =
 TEST_TARGETS =
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-TEST_TRANSLATOR = $(srcdir)/testQuery.conf
 INCLUDES = $(ROSE_INCLUDES)
 SPECIMENS = input1.C
-EXTRA_DIST += $(TEST_TRANSLATOR) $(SPECIMENS)
+EXTRA_DIST += $(SPECIMENS)
 
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery
@@ -17,7 +16,11 @@ testQuery_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testQuery_TEST_TARGETS = $(addprefix testQuery_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery_TEST_TARGETS)
 $(testQuery_TEST_TARGETS): testQuery_%.passed: $(srcdir)/% testQuery
-	@$(RTH_RUN) TRANSLATOR=testQuery TXFLAGS="$(ROSE_FLAGS)" INPUTS=$< $(TEST_TRANSLATOR) $@
+	@$(RTH_RUN)						\
+		TITLE="testQuery $(notdir $<) [$@]"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testQuery -c $(abspath $<)"	\
+		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery2
@@ -27,7 +30,11 @@ testQuery2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testQuery2_TEST_TARGETS = $(addprefix testQuery2_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery2_TEST_TARGETS)
 $(testQuery2_TEST_TARGETS): testQuery2_%.passed: $(srcdir)/% testQuery2
-	@$(RTH_RUN) TRANSLATOR=testQuery2 TXFLAGS="$(ROSE_FLAGS)" INPUTS=$< $(TEST_TRANSLATOR) $@
+	@$(RTH_RUN)						\
+		TITLE="testQuery2 $(notdir $<) [$@]"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testQuery2 -c $(abspath $<)"	\
+		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery3
@@ -37,7 +44,11 @@ testQuery3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testQuery3_TEST_TARGETS = $(addprefix testQuery3_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery3_TEST_TARGETS)
 $(testQuery3_TEST_TARGETS): testQuery3_%.passed: $(srcdir)/% testQuery3
-	@$(RTH_RUN) TRANSLATOR=testQuery3 TXFLAGS="$(ROSE_FLAGS)" INPUTS=$< $(TEST_TRANSLATOR) $@
+	@$(RTH_RUN)						\
+		TITLE="testQuery3 $(notdir $<) [$@]"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testQuery3 -c $(abspath $<)"	\
+		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
 # These tests were not actually ever executed in the original makefile, so they're marked as disabled.

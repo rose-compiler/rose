@@ -10,10 +10,20 @@
 #include "sage_support.h"
 #include "dwarfSupport.h"
 #include "keep_going.h"
+#include "failSafePragma.h"
+#include "cmdline.h"
+
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#   include "FortranModuleInfo.h"
+#   include "FortranParserState.h"
+#   include "unparseFortran_modfile.h"
+#endif
 
 #include <algorithm>
 
-#define BOOST_FILESYSTEM_VERSION 2
+// DQ (2/10/2014): We now want to avoid specifying this explicitly if possible.
+// #define BOOST_FILESYSTEM_VERSION 2
+
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
@@ -1454,18 +1464,28 @@ SgFile::runFrontend(int & nextErrorCode)
 // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
 // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
 // So use the explicit macros defined in rose_config header file for this level of control.
-#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// DQ (10/20/2010): Internal Java support is used for both Fortran language and Java language support.
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
-// FMZ(5/19/2008):
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-extern void jserver_init();
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace Fortran {
+namespace Ofp {
+  extern void jserver_init();
+}// Rose::Frontend::Fortran::Ofp
+}// Rose::Frontend::Fortran
+}// Rose::Frontend
+}// Rose
+#endif
 
-// DQ (10/20/2010): Note that this is not called.
-// extern void jserver_finish();
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace Java {
+namespace Ecj {
+  extern void jserver_init();
+}// Rose::Frontend::Java::Ecj
+}// Rose::Frontend::Java
+}// Rose::Frontend
+}// Rose
 #endif
 
 //! internal function to invoke the EDG frontend and generate the AST
@@ -1582,7 +1602,12 @@ SgProject::parse(const vector<string>& argv)
 // #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-                    jserver_init();
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    Rose::Frontend::Fortran::Ofp::jserver_init();
+#endif
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    Rose::Frontend::Java::Ecj::jserver_init();
+#endif
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
@@ -2589,11 +2614,11 @@ SgFile::secondaryPassOverSourceFile()
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
-  // This pass collects extra information about the soruce file thay may not have
+  // This pass collects extra information about the source file that may not have
   // been available from previous tools that operated on the file. For example:
   //    1) EDG ignores comments and so we collect the whole token stream in this phase.
   //    2) OFP ignores comments similarly to EDG and so we collect the whole token stream.
-  //    3) Binary disassemblily ignores the binary format so we collect this information
+  //    3) Binary disassembly ignores the binary format so we collect this information
   //       about the structure of the ELF binary separately.
   // For source code (C,C++,Fortran) we collect the whole token stream, for example:
   //    1) Comments
@@ -2671,6 +2696,9 @@ SgFile::secondaryPassOverSourceFile()
             // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
 #endif
+               // Liao, 1/29/2014, handle failsafe pragmas for resilience work
+               if (sourceFile->get_failsafe())
+                 FailSafe::process_fail_safe_directives (sourceFile); 
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -3029,79 +3057,6 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
    }
 #endif
 
-
-// DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
-string
-global_build_classpath()
-   {
-  // This function builds the class path for use with Java and the call to the OFP library.
-     string classpath = "-Djava.class.path=";
-  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-  // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
-
-     // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.  
-     //
-     ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
-     ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
-     if (ROSE_OFP_PATCH_VERSION_NUMBER >= 3) {
-        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar", "lib/antlr-3.3-complete.jar") + ":";
-     }
-     else {
-        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
-     }
-
-  // Open Fortran Parser (OFP) support (this is the jar file)
-  // CER (10/4/2011): Switched to using date-based version for OFP jar file.
-  //
-     string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_VERSION_STRING + string(".jar");
-     string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
-     classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
-
-  // Java (ECJ front-end) support (adding specific jar file)
-     string ecj_jar_file_name = string("ecj-3.8.jar");
-     string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
-     classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
-
-  // Java (ECJ front-end) support (adding path to source tree for the jar file).
-  // This allows us to avoid copying the jar file to the build tree which is
-  // write protected in the execution of the "make distcheck" rule.
-     string ecj_class_path = "src/3rdPartyLibraries/java-parser/";
-  // classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
-  // classpath += findRoseSupportPathFromSource(ecj_class_path, string("lib/") ) + ":";
-     classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
-
-  // Everything else?
-     classpath += ".";
-
-     if (SgProject::get_verbose() > 0)
-        {
-          printf ("In global_build_classpath(): classpath = %s \n",classpath.c_str());
-        }
-
-     return classpath;
-   }
-
-string
-SgSourceFile::build_classpath()
-   {
-     string returnClasspath;
-
-     returnClasspath = global_build_classpath();
-
-// #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifndef USE_ROSE_INTERNAL_JAVA_SUPPORT
-     fprintf(stderr, "Fortran and Java parser not supported (lack of access to internal Java support (JVM support)\n");
-     ROSE_ASSERT(false);
-#endif
-
-     return returnClasspath;
-   }
-
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -3422,31 +3377,32 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
 #if USE_GFORTRAN_IN_ROSE
-          returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
+        returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
 #else
-          printf ("backend fortran compiler (gfortran) unavailable ... (not an error) \n");
+        printf ("backend fortran compiler (gfortran) unavailable ... (not an error) \n");
 #endif
 
-       // Check that there are no errors, I think that warnings are ignored!
-          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
-             {
-               printf ("Syntax errors detected in input fortran program ... \n");
+     // Check that there are no errors, I think that warnings are ignored!
+        if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
+           {
+             printf ("Syntax errors detected in input fortran program ... \n");
 
-            // We should define some convention for error codes returned by ROSE
-               throw std::exception();
-             }
-          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+          // We should define some convention for error codes returned by ROSE
+             throw std::exception();
+           }
+        ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
 
-       // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 
 #if 0
-          printf ("Exiting as a test ... (after syntax check) \n");
-          ROSE_ASSERT(false);
+        printf ("Exiting as a test ... (after syntax check) \n");
+        ROSE_ASSERT(false);
 #endif
-        }
+      }
 
-  // Build the classpath list for Java support.
-     string classpath = build_classpath();
+    // Build the classpath list for Fortran support.
+    string classpath =
+        Rose::Cmdline::Fortran::Ofp::GetRoseClasspath();
 
   //
   // In the case of Javam add the paths specified for the input program, if any.
@@ -3860,9 +3816,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
    }
 
-
-
-
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace Java {
+namespace Ecj {
+  // TOO1 (2/13/2014): Declared in src/frontend/ECJ_ROSE_Connection/openJavaParser_main.C.
+  extern SgSourceFile* Ecj_globalFilePointer;
+}// ::Rose::Frontend::Java::Ecj
+}// ::Rose::Frontend::Java
+}// ::Rose::Frontend
+}// ::Rose
+#endif
 
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
@@ -3872,14 +3837,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      }
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  // This is how we pass the pointer to the SgFile created in ROSE before the Open
-  // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
-  // EDG the SgFile is passed through the edg_main() function, but not so with the
-  // Open Fortran Parser's openFortranParser_main() function API.  So we use this
-  // global variable to pass the SgFile (so that the parser c_action functions can
-  // build the Fotran AST using the existing SgFile.
-     extern SgSourceFile* OpenFortranParser_globalFilePointer;
-
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
  // If the classpath was specified, add it to the list of options here.
@@ -3972,11 +3929,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
           }
 
-          javaCommandLine.push_back("-classpath");
-          javaCommandLine.push_back(classpath);
+          if (classpath.size()) {
+              javaCommandLine.push_back("-classpath");
+              javaCommandLine.push_back(classpath);
+          }
 
-          javaCommandLine.push_back("-sourcepath");
-          javaCommandLine.push_back(sourcepath);
+          if (sourcepath.size()) {
+              javaCommandLine.push_back("-sourcepath");
+              javaCommandLine.push_back(sourcepath);
+          }
 
           // Specify warnings for javac compiler.
           if (backendJavaCompiler == "javac") {
@@ -4092,10 +4053,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Setup the classpath and append the classes folder ecj outputs its temporary files to
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
-         frontEndCommandLine.push_back(classpath); //  + ":" + ecjDestDir);
+         frontEndCommandLine.push_back((classpath.size() > 0 ? (classpath + ":") : "") + ecjDestDir);
 
-         frontEndCommandLine.push_back("-sourcepath");
-         frontEndCommandLine.push_back(sourcepath);
+         if (sourcepath.size()) {
+             frontEndCommandLine.push_back("-sourcepath");
+             frontEndCommandLine.push_back(sourcepath);
+         }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -4113,11 +4076,11 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser
   // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it
   // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
-     OpenFortranParser_globalFilePointer = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+     Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
 
      if ( get_verbose() > 0 )
-          printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
+          printf ("Calling ecj_main(): Ecj_globalFilePointer = %p \n", Rose::Frontend::Java::Ecj::Ecj_globalFilePointer);
 
 #if USE_ROSE_SSL_SUPPORT
   // The use of the JVM required to support Java is a problem when linking to the SSL library (either -lssl or -lcrypto)
@@ -4136,7 +4099,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
 
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
-     OpenFortranParser_globalFilePointer = NULL;
+     Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = NULL;
 
      return frontendErrorLevel;
 #else
@@ -4492,7 +4455,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Disassembler::disassembleInterpretation(interps[i]);
+            Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 
@@ -4547,7 +4510,7 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
     } else {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Disassembler::disassembleInterpretation(interps[i]);
+            Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 
@@ -5028,11 +4991,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        << endl;
                   cout.flush();
               }
-
-              this -> set_javacErrorCode(0);           // keep going !!!
-              this -> set_frontendErrorCode(0);        // keep going !!!
-              this -> set_unparserErrorCode(0);        // keep going !!!
-              this -> set_backendCompilerErrorCode(0); // keep going !!!
           }
          }
        else
@@ -5509,7 +5467,13 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
      // is generated by SgFile::generateOutputFileName()
      for (int i=0; i < numberOfFiles(); i++)
         {
-          linkingCommand.push_back(get_file(i).generateOutputFileName());
+       // DQ (2/25/2014): If this file was supressed in the compilation to build an
+       // object file then it should be supressed in being used in the linking stage.
+       // linkingCommand.push_back(get_file(i).generateOutputFileName());
+          if (get_file(i).get_skipfinalCompileStep() == false)
+             {
+                 linkingCommand.push_back(get_file(i).generateOutputFileName());
+             }
         }
 
   // Add any options specified in the original command line (after preprocessing)
