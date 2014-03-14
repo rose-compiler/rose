@@ -12,18 +12,18 @@ public class Snippets6 {
     void shouldNotBeInserted() {}
     int someOtherInteger;
     class SomeOtherStruct {
-	int dummy;
+        int dummy;
     };
 
     // Verify that some miscellaneous things are copied into the target.
     int thisIsAnInteger;
-//    class SomeStruct {
-//	int dummy;
-//    };
+    class SomeStruct {
+        int dummy;
+    };
 
     void randomOffByOne() {
-	// this snippet is not called recursively because it has a different number of
-	// arguments than what is used at the call site.
+        // this snippet is not called recursively because it has a different number of
+        // arguments than what is used at the call site.
     }
 
     public void notNeeded() {

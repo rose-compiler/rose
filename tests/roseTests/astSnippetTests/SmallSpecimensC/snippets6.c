@@ -20,9 +20,9 @@ struct SomeOtherStruct {
 // Verify that some miscellaneous things are copied into the target.
 typedef int SomeInteger;
 SomeInteger thisIsAnInteger;
-//struct SomeStruct {
-//    int dummy;
-//};
+struct SomeStruct {
+    int dummy;
+};
 
 void addWithError(int addend1, int addend2, int result)
 {
