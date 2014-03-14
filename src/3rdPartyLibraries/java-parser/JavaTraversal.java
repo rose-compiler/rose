@@ -21,6 +21,7 @@ import org.eclipse.jdt.internal.compiler.util.*;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 
 import java.util.concurrent.Callable;
+
 class JavaTraversal implements Callable<Boolean> {
     // The function JavaTraversal::main() is what is called using the JVM from ROSE.
 
@@ -42,20 +43,21 @@ class JavaTraversal implements Callable<Boolean> {
         String language_level = "";
 
         if (level == ClassFileConstants.JDK1_1)
-             language_level = "JDK1_1";
+            language_level = "JDK1_1";
         else if (level == ClassFileConstants.JDK1_2)
-             language_level = "JDK1_2";
+            language_level = "JDK1_2";
         else if (level == ClassFileConstants.JDK1_3)
-             language_level = "JDK1_3";
+            language_level = "JDK1_3";
         else if (level == ClassFileConstants.JDK1_4)
-             language_level = "JDK1_4";
+            language_level = "JDK1_4";
         else if (level == ClassFileConstants.JDK1_5)
-             language_level = "JDK1_5";
+            language_level = "JDK1_5";
         else if (level == ClassFileConstants.JDK1_6)
-             language_level = "JDK1_6";
+            language_level = "JDK1_6";
         else if (level == ClassFileConstants.JDK1_7)
-             language_level = "JDK1_7";
-        else language_level = "???";
+            language_level = "JDK1_7";
+        else
+            language_level = "???";
 
         return language_level;
     }
@@ -66,8 +68,6 @@ class JavaTraversal implements Callable<Boolean> {
 
         if (commandlineErrorLevel > 0)
             System.out.println("Processing the command line in ECJ/ROSE connection ...");
-
-        String argsForECJ[];
 
         ArrayList<String> argsList = new ArrayList<String>();
         Collections.addAll(argsList, args);
@@ -90,15 +90,14 @@ class JavaTraversal implements Callable<Boolean> {
                 // Remove the entry from the list
                 argsList.remove(j);
 
-                // String veboseLevelString = args[j+1];
-                String veboseLevelString = args[j].substring(14,args[j].length());
+                String verboseLevelString = args[j].substring(14, args[j].length());
 
                 if (commandlineErrorLevel > 0)
-                    System.out.println("Grab the integer values verbose level: " + veboseLevelString);
+                    System.out.println("Grab the integer values verbose level: " + verboseLevelString);
 
                 try {
                     // Set the class level JavaTraversal.veboseLevel data member (convert the String to an integer).
-                    verboseLevel = Integer.parseInt(veboseLevelString.trim());
+                    verboseLevel = Integer.parseInt(verboseLevelString.trim());
 
                     // print out the value after the conversion
                     if (verboseLevel > 0 || commandlineErrorLevel > 0)
@@ -109,7 +108,7 @@ class JavaTraversal implements Callable<Boolean> {
                     System.out.println("NumberFormatException: " + nfe.getMessage());
 
                     // It might be better to rethrow the exception
-                    System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
+                    System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + verboseLevelString);
                     System.exit(1);
                 }
             }
@@ -124,7 +123,7 @@ class JavaTraversal implements Callable<Boolean> {
 
         // Rebuild the array from the edited list.
         // args = ConvertToStringArray(argsList);
-        args = (String[])argsList.toArray(new String[0]);
+        args = (String[]) argsList.toArray(new String[0]);
 
         if (commandlineErrorLevel > 0) {
             for (String arg : args) {
@@ -136,35 +135,29 @@ class JavaTraversal implements Callable<Boolean> {
         return args;
     }
 
-    /** 
+    /**
      * This method was copied from Compiler.java as it is not directly accessible there.
      */
-    static protected synchronized void addCompilationUnit(Compiler compiler,
-            ICompilationUnit sourceUnit,
-            CompilationUnitDeclaration parsedUnit) {
+    static protected synchronized void addCompilationUnit(Compiler compiler, ICompilationUnit sourceUnit, CompilationUnitDeclaration parsedUnit) {
+        if (compiler.unitsToProcess == null)
+            return; // not collecting units
 
-            if (compiler.unitsToProcess == null)
-                return; // not collecting units
-
-            // append the unit to the list of ones to process later on
-            int size = compiler.unitsToProcess.length;
-            if (compiler.totalUnits == size)
-                // when growing reposition units starting at position 0
-                System.arraycopy(
-                    compiler.unitsToProcess,
-                    0,
-                    (compiler.unitsToProcess = new CompilationUnitDeclaration[size * 2]),
-                    0,
-                    compiler.totalUnits);
-            compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
+        // append the unit to the list of ones to process later on
+        int size = compiler.unitsToProcess.length;
+        if (compiler.totalUnits == size)
+            // when growing reposition units starting at position 0
+            System.arraycopy(compiler.unitsToProcess,
+                             0,
+                             (compiler.unitsToProcess = new CompilationUnitDeclaration[size * 2]),
+                             0, compiler.totalUnits);
+        compiler.unitsToProcess[compiler.totalUnits++] = parsedUnit;
     }
 
-
-    /** 
+    /**
      * This method was copied from Compiler.java as it is not directly accessible there.
      */
     static protected void internalBeginToCompile(Compiler compiler, ICompilationUnit[] sourceUnits, int maxUnits) {
-        if (! compiler.useSingleThread && maxUnits >= ReadManager.THRESHOLD)
+        if (!compiler.useSingleThread && maxUnits >= ReadManager.THRESHOLD)
             compiler.parser.readManager = new ReadManager(sourceUnits, maxUnits);
 
         // Switch the current policy and compilation result for this unit to the requested one.
@@ -177,8 +170,8 @@ class JavaTraversal implements Callable<Boolean> {
                         Messages.bind(Messages.compilation_request,
                         new String[] {
                             String.valueOf(i + 1),
-                            String.valueOf(maxUnits),
-                            new String(sourceUnits[i].getFileName())
+                            String.valueOf(maxUnits), new
+                            String(sourceUnits[i].getFileName()) 
                         }));
                 }
                 */
@@ -189,7 +182,8 @@ class JavaTraversal implements Callable<Boolean> {
                 long parseStart = System.currentTimeMillis();
                 if (compiler.totalUnits < compiler.parseThreshold) {
                     parsedUnit = compiler.parser.parse(sourceUnits[i], unitResult);
-                } else {
+                }
+                else {
                     parsedUnit = compiler.parser.dietParse(sourceUnits[i], unitResult);
                 }
                 long resolveStart = System.currentTimeMillis();
@@ -202,9 +196,10 @@ class JavaTraversal implements Callable<Boolean> {
                 if (currentPackage != null) {
                     unitResult.recordPackageName(currentPackage.tokens);
                 }
-                //} catch (AbortCompilationUnit e) {
+                // } catch (AbortCompilationUnit e) {
                 // requestor.acceptResult(unitResult.tagAsAccepted());
-            } catch (AbortCompilation a) {
+            }
+            catch (AbortCompilation a) {
                 // best effort to find a way for reporting this problem:
                 if (a.compilationResult == null)
                     a.compilationResult = unitResult;
@@ -217,7 +212,8 @@ for (int k = 0; k < stack.length; k++) {
 }
 */
                 throw a;
-            } finally {
+            }
+            finally {
                 sourceUnits[i] = null; // no longer hold onto the unit
             }
         }
@@ -229,14 +225,13 @@ for (int k = 0; k < stack.length; k++) {
         compiler.lookupEnvironment.completeTypeBindings();
     }
 
-
     /**
      * Compile and generate an AST for each input file specified in args.
      * 
      * @param args
      */
     static Main generateAst(String args[]) {
-        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/,  null/*options*/, null/*progress*/);
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/, null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
         if (verboseLevel > 0)
@@ -251,7 +246,7 @@ for (int k = 0; k < stack.length; k++) {
         }
         catch (Exception e) {
             e.printStackTrace();
-            System.out.println("(2) Error in main.configure(args): " + e.getMessage()); 
+            System.out.println("(2) Error in main.configure(args): " + e.getMessage());
             System.exit(1);
         }
 
@@ -259,22 +254,23 @@ for (int k = 0; k < stack.length; k++) {
         main.compilerOptions.performStatementsRecovery = false;
         main.compilerOptions.generateClassFiles = false;
 
-        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
-                                           main.getHandlingPolicy(),
-                                           main.compilerOptions,
-                                           main.getBatchRequestor(),
-                                           main.getProblemFactory(),
-                                           null,
-                                           main.progress
-                                          );
+        main.batchCompiler = new Compiler(main.getLibraryAccess(),
+                                          main.getHandlingPolicy(),
+                                          main.compilerOptions,
+                                          main.getBatchRequestor(),
+                                          main.getProblemFactory(),
+                                          null,
+                                          main.progress
+                                         );
 
         /**
          * Add the initial set of compilation units into the loop
-         *  ->  build compilation unit declarations, their bindings and record their results.
+         * -> build compilation unit declarations, their bindings and record their results.
          */
-        /* tps : handle compilation units--------------------------------------------- */
         /*
-         *  Expand above protected function from ECJ's Compiler class.
+         * tps : handle compilation units--------------------------------------------- */
+        /*
+         * Expand above protected function from ECJ's Compiler class.
          */
         ICompilationUnit[] sourceUnits = main.getCompilationUnits();
         int maxUnits = sourceUnits.length;
@@ -290,38 +286,45 @@ for (int k = 0; k < stack.length; k++) {
     static int totalUnits = 0;
     static Runtime runtime = Runtime.getRuntime();
     static long r1, r2, f1, f2;
-    
+
     public static void startJava() {
         System.gc();
 
         r1 = runtime.totalMemory();
         f1 = runtime.freeMemory();
     }
-    
+
     public static void endJava(ArrayList<CompilationUnitDeclaration> units) {
         r2 = runtime.totalMemory();
         f2 = runtime.freeMemory();
         int size = units.size();
-        System.out.println();
-        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");    
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
+            System.out.println();
+        }
+
         for (CompilationUnitDeclaration unit : units) {
             System.out.println("   " + new String(unit.getFileName()));
         }
-        System.out.println();
-        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
-        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
-        System.out.println("**** Total Number of Units Processed: " + totalUnits);
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+            System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+            System.out.println("**** Total Number of Units Processed: " + totalUnits);
+            System.out.println();
+        }
     }
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
 
-    	startJava();
-    	
-        assert(! processedFiles.contains(args[args.length - 1]));
+        startJava();
+
+        assert (! processedFiles.contains(args[args.length - 1]));
 
         // Filter out ROSE specific options.
         args = filterCommandline(args);
@@ -338,8 +341,8 @@ for (int k = 0; k < stack.length; k++) {
         }
 
         Compiler batchCompiler = main.batchCompiler; // get compiler to generate AST.
-//        int maxUnits = main.getCompilationUnits().length;
-        
+        // int maxUnits = main.getCompilationUnits().length;
+
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
         ArrayList<CompilationUnitDeclaration> units = new ArrayList<CompilationUnitDeclaration>();
         try {
@@ -353,12 +356,12 @@ for (int k = 0; k < stack.length; k++) {
 
             //
             // To process the source files that were specified by the user iterate up to
-            // maxUnits. To iterate over all units, including the ones that are pulled 
+            // maxUnits. To iterate over all units, including the ones that are pulled
             // in by closure, iterate up to batchCompiler.totalUnits.
             //
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
-                assert(unit != null);
+                assert (unit != null);
 
                 if (verboseLevel > 2)
                     System.out.println("calling batchCompiler.process(unit, i) ..." + new String(unit.getFileName()));
@@ -376,10 +379,12 @@ for (int k = 0; k < stack.length; k++) {
                     System.out.println("*** ECJ front-end errors detected in input java program:");
                     System.out.println(unit.compilationResult.toString());
                     System.out.println();
-//                    for (int k = 0; k < args.length; k++) {
-//                        System.out.println("    " + args[k]);
-//                    }
-//                    System.exit(1);
+                    // TODO:  Need to die more gracefully!
+                    
+                    // for (int k = 0; k < args.length; k++) {
+                    // System.out.println("    " + args[k]);
+                    // }
+                    // System.exit(1); 
                 }
             }
 
@@ -387,7 +392,7 @@ for (int k = 0; k < stack.length; k++) {
 // TODO: Remove this !
 /*
 //System.out.println("MaxUnits = " + maxUnits);
-System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");    
+System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");
 for (CompilationUnitDeclaration unit : units) {
 System.out.println("   " + new String(unit.getFileName()));
 }
@@ -396,7 +401,7 @@ System.out.println("   " + new String(unit.getFileName()));
             //
             //
             try {
-                java_parser_support = new JavaParserSupport(verboseLevel);
+                java_parser_support = new JavaParserSupport(verboseLevel, (units.size() == 1 && tempUnnamedFiles.contains(new String(units.get(0).getFileName()))));
                 java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
             }
             catch (Exception e) {
@@ -436,7 +441,7 @@ System.out.println("   " + new String(unit.getFileName()));
         JavaParser.cactionCompilationUnitListEnd();
 
         endJava(units);
-        
+
         if (verboseLevel > 2)
             System.out.println("Done compiling");
     }
@@ -453,5 +458,132 @@ System.out.println("   " + new String(unit.getFileName()));
 
     public static boolean hasConflicts(String file_name, String package_name, String class_name) {
         return java_parser_support.hasConflicts(file_name, package_name, class_name);
+    }
+
+    private static HashSet<String> tempUnnamedFiles = new HashSet<String>();
+
+    private static final String baseTempPath = System.getProperty("java.io.tmpdir");
+    private static int TEMP_DIR_ATTEMPTS = 10000;
+    private static File temp_directory = null;
+    private static String directory_name = null;
+
+    /**
+     * If a temporary directory does not yet exist, create it and return its name.
+     * 
+     * @return
+     */
+    public static String getTempDirectory() {
+        if (directory_name == null) {
+            String base_name = baseTempPath + File.separator + "dir-" + System.currentTimeMillis();
+            for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) { // variation from Google's Files.createTempDir().
+                directory_name = base_name + counter;
+                temp_directory = new File(directory_name);
+                if (temp_directory.mkdir()) {
+                    temp_directory.deleteOnExit(); // This does not work if the directory is not empty.
+                    return directory_name;
+                }
+            }
+            throw new IllegalStateException("Unable to create a temporary directory: " + directory_name + "... java");
+        }
+
+        return directory_name;
+    }
+
+    /**
+     * 
+     * Create a temporary directory for the given package name.
+     * 
+     * @param content
+     * @return
+     */
+    public static void createTempNamedDirectory(String package_name) {
+        assert (temp_directory != null);
+        String directory_name = getTempDirectory() + File.separator + package_name.replace('.', File.separatorChar);
+        File named_directory = new File(directory_name);
+        if (! named_directory.mkdir()) {
+            throw new IllegalStateException("Unable to create the directory: " + directory_name);
+        }
+        named_directory.deleteOnExit(); // This does not work if the directory is not empty.
+    }
+
+    /**
+     * 
+     * The command should be either a package or an import statement. We write
+     * it out to a temporary file and return the name of the temporary file.
+     * 
+     * @param content
+     * @return
+     */
+    private static void createFile(File file, String content) throws IOException {
+        file.deleteOnExit();
+        Writer writer = null;
+        try {
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf-8"));
+            writer.write(content);
+            writer.write("\n");
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
+        finally {
+            try {
+                writer.close();
+            }
+            catch (Exception ex) {
+               assert (false);
+            }
+        }
+    }
+
+    /**
+     * 
+     * The content should represent either a package or an import statement. We
+     * write it out to a temporary file and return the name of the temporary
+     * file.
+     * 
+     * @param content
+     * @return
+     */
+    public static String createTempFile(String content) {
+        assert (temp_directory != null);
+        String base_name = getTempDirectory() + File.separator + "tmp-";
+        try {
+            File temp_file = File.createTempFile(base_name, ".java", temp_directory); // new File(directory_name);
+            createFile(temp_file, content);
+
+            String filename = temp_file.getCanonicalPath();
+            tempUnnamedFiles.add(filename);
+
+            return filename;
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Unable to create a temporary import file: " +
+                                            temp_directory.getAbsolutePath() + File.separator +
+                                            base_name + "... .java");
+        }
+    }
+
+    /**
+     * 
+     * The content should represent a valid compilation unit. We write
+     * it out to a temporary file and return the name of the temporary file.
+     * 
+     * @param content
+     * @return
+     */
+    public static String createTempNamedFile(String simple_filename, String content) {
+        assert (temp_directory != null);
+        String filename = getTempDirectory() + File.separator + simple_filename + ".java";
+        try {
+            File named_file = new File(filename);
+            named_file.createNewFile();
+            createFile(named_file, content);
+
+            return filename;
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Unable to create the file: " + filename);
+        }
     }
 }
