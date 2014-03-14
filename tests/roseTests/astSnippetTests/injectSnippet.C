@@ -1,6 +1,8 @@
 #include "snippetTests.h"
 #include "stringify.h"
 
+#include <boost/foreach.hpp>
+
 using namespace rose;
 
 static void
@@ -197,7 +199,17 @@ main(int argc, char *argv[])
     snippetFile->doNotInsert("Snippets6.shouldNotBeInserted");
     snippetFile->doNotInsert("Snippets6.someOtherInteger");
     snippetFile->doNotInsert("Snippets6.SomeOtherStruct");
-    
+
+    // Test that we can black list functions based on their signature, not just their name.
+    std::vector<SgFunctionDefinition*> someFunctions = SnippetTests::findFunctionDefinitions(snippetFile->getAst(),
+                                                                                             "Snippets6.someFunction");
+    BOOST_FOREACH (SgFunctionDefinition *someFunction, someFunctions) {
+        SgFunctionDeclaration *fdecl = someFunction->get_declaration();
+        if (0==fdecl->get_args().size()) {
+            SgType *type = fdecl->get_type();
+            snippetFile->doNotInsert("Snippets6.someFunction", fdecl->get_type());
+        }
+    }
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
     SgFile* tmp_snippetSourceFile = snippet->getFile()->getAst();

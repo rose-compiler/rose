@@ -21,6 +21,10 @@ public class Snippets6 {
         int dummy;
     };
 
+    // Verify that black list with overloading works
+    void someFunction(int a) {}	// inserted
+    void someFunction() {}	// not inserted
+
     void randomOffByOne() {
         // this snippet is not called recursively because it has a different number of
         // arguments than what is used at the call site.
