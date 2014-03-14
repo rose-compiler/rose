@@ -1272,8 +1272,13 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
 
-ROSE_DLL_API SgVarRefExp *buildJavaArrayLengthVarRefExp();
+//! Fixup any AST moved from one file two another (references to symbols, types, etc.).
+ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy, std::map<SgNode*,SgNode*> & translationMap);
+ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap);
+ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 
+ROSE_DLL_API SgVarRefExp *buildJavaArrayLengthVarRefExp();
 ROSE_DLL_API SgScopeStatement *buildScopeStatement(SgClassDefinition * = NULL);
 ROSE_DLL_API SgJavaTypeExpression *buildJavaTypeExpression(SgType *);
 ROSE_DLL_API SgJavaMarkerAnnotation *buildJavaMarkerAnnotation(SgType *);
@@ -1281,17 +1286,14 @@ ROSE_DLL_API SgJavaMemberValuePair *buildJavaMemberValuePair(const SgName &, SgE
 ROSE_DLL_API SgJavaSingleMemberAnnotation *buildJavaSingleMemberAnnotation(SgType *, SgExpression *);
 ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *);
 ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *, std::list<SgJavaMemberValuePair *>&);
-
 ROSE_DLL_API SgInitializedName *buildJavaFormalParameter(SgType *, const SgName &, bool is_var_args = false, bool is_final = false);
 ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
 ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);
 ROSE_DLL_API SgClassDeclaration *buildJavaDefiningClassDeclaration(SgScopeStatement *, std::string, SgClassDeclaration::class_types kind = SgClassDeclaration::e_class);
 ROSE_DLL_API SgSourceFile *buildJavaSourceFile(SgProject *, std::string, SgClassDefinition *, std::string);
-
 ROSE_DLL_API SgArrayType *getUniqueJavaArrayType(SgType *, int);
 ROSE_DLL_API SgJavaParameterizedType *getUniqueJavaParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
 ROSE_DLL_API SgJavaQualifiedType *getUniqueJavaQualifiedType(SgClassDeclaration *, SgNamedType *, SgNamedType *);
-
 ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardUnbound();
 ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardExtends(SgType *);
 ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardSuper(SgType *);

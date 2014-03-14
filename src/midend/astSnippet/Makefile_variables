@@ -1,0 +1,4 @@
+# -*- makefile -*-
+
+mAstSnippet_la_sources = $(mAstSnippetPath)/Snippet.C
+mAstSnippet_includeHeaders = $(mAstSnippetPath)/Snippet.h

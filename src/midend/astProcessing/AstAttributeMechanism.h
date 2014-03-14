@@ -201,6 +201,7 @@ class AstRegExAttribute : public AstAttribute
 
           AstRegExAttribute();
           AstRegExAttribute(const std::string & s);
+          virtual AstAttribute* copy() /*override*/;
    };
 
 // PC (10/21/2012): Added new kind of attribute for handling regex trees.

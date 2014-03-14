@@ -101,6 +101,11 @@ NOINST_TUTORIAL_EXAMPLES = \
    instrumentationExample \
    instrumentEndOfFunction \
    interveneAtVariables \
+   addJavaSource \
+   addJavaTransformation \
+   addJavaAssignmentStmt \
+   addJavaExpression \
+   addJavaVariableDeclaration \
    lineReplacement \
    loopNestingInfoProcessing \
    loopOptimization \
@@ -268,6 +273,16 @@ commandlineProcessing_SOURCES = commandlineProcessing.C
 codeCoverage_SOURCES = codeCoverage.C coverageCodeFromShmuel.c
 
 interveneAtVariables_SOURCES = interveneAtVariables.C
+
+addJavaSource_SOURCES = addJavaSource.C
+
+addJavaTransformation_SOURCES = addJavaTransformation.C
+
+addJavaAssignmentStmt_SOURCES = addJavaAssignmentStmt.C
+
+addJavaExpression_SOURCES = addJavaExpression.C
+
+addJavaVariableDeclaration_SOURCES = addJavaVariableDeclaration.C
 
 changeFunction_SOURCES = changeFunction.C
 
@@ -540,6 +555,21 @@ testChangeFunction: changeFunction
 
 testInterveneAtVariables: interveneAtVariables
 	./interveneAtVariables -rose:verbose 0 -c $(srcdir)/inputCode_interveneAtVariables.C
+
+testAddJavaTransformation: addJavaTransformation
+	./addJavaTransformation -rose:verbose 0 -c $(srcdir)/InputCode_java.java
+
+testAddJavaSourcen: addJavaSource
+	./addJavaSource -rose:verbose 0 -c $(srcdir)/InputCode_java.java
+
+testAddJavaAssignmentStmt: addJavaAssignmentStmt
+	./addJavaAssignmentStmt -rose:verbose 0 -c $(srcdir)/InputCode_java.java
+
+testAddJavaExpression: addJavaExpression
+	./addJavaExpression -rose:verbose 0 -c $(srcdir)/InputCode_java.java
+
+testAddJavaVariableDeclaration: addJavaVariableDeclaration
+	./addJavaVariableDeclaration -rose:verbose 0 -c $(srcdir)/InputCode_java.java
 
 testTemplateExample1: identityTranslator
 	./identityTranslator -c $(srcdir)/inputCode_templateExample1.C
@@ -1522,6 +1552,11 @@ EXTRA_DIST = \
    inputCode_loopNestingInfoProcessing.C \
    inputCode_ChangeFunctionExample.C \
    inputCode_interveneAtVariables.C \
+   addJavaSource.C \
+   addJavaTrandformation.C \
+   addJavaAssignmentStmt.C \
+   addJavaExpression.C \
+   addJavaVariableDeclaration.C \
    inputCode_tauInstrumenter.C \
    inputCode_typeTransformation.C \
    inputCode_astFileIO_GenerateBinaryFile.C \

@@ -83,6 +83,15 @@ using namespace Rose::Frontend::Java::Ecj;
    #include "transformationSupport.h"
 #endif
 
+// We need this so that USE_CMAKE will be seen (set via configure).
+#include "rose_config.h"
+
+#ifndef USE_CMAKE
+// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+// DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
+#include "RoseAst.h"
+#endif
+
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
 
@@ -2635,6 +2644,17 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
         }
    }
 
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+void
+SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
+   {
+     SgSymbolTable* symbolTable = scope->get_symbol_table();
+     ROSE_ASSERT(symbolTable != NULL);
+
+     supportForVariableLists(scope,symbolTable,variableList);
+   }
+
+
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
    {
@@ -2682,8 +2702,6 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           supportForBaseTypeDefiningDeclaration ( symbolTable, variableDeclaration->get_baseTypeDefiningDeclaration() );
         }
    }
-
-
 
 void
 supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable )
@@ -6640,24 +6658,141 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
 
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
-{
-    ROSE_ASSERT (astNode != NULL);
+   {
+  // DQ (3/4/2014): This new version of this function supports both C/C++ and also Java.
+  // If the SgJavaPackageDeclaration is noticed then the previous parent is a 
+  // SgClassDefinition and the previous previous parent is a SgClassDeclaration whose
+  // name can be used to match the filename in the SgProject's list of files.
+  // A better implementation usign an attribute (not in place until tomorrow) and
+  // from the attribute the pointer to the associated file is directly available.
+  // The later implementation is as fast as possible.
+
+     ROSE_ASSERT (astNode != NULL);
 
   // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
      ROSE_ASSERT (isSgProject(astNode) == NULL);
 
+     SgNode* previous_parent = NULL;
+     SgNode* previous_previous_parent = NULL;
+
      SgNode* parent = astNode;
-     while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+  // while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+     while ( (parent != NULL) && (isSgFile(parent) == NULL) && isSgJavaPackageDeclaration(parent) == NULL)
         {
-       // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#if 0
+          printf ("In getEnclosingFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+          previous_previous_parent = previous_parent;
+          previous_parent = parent;
+
           parent = parent->get_parent();
         }
- if (!parent)
-   return NULL;
- else return isSgFile(parent);
 
-}
+     if (previous_previous_parent != NULL && previous_parent != NULL && isSgJavaPackageDeclaration(parent) != NULL)
+        {
+       // This is for a Java program and is contained within a SgJavaPackageDeclaration
+#if 0
+          printf ("parent                   = %p = %s \n",parent,parent->class_name().c_str());
+          printf ("previous_parent          = %p = %s \n",previous_parent,previous_parent->class_name().c_str());
+          printf ("previous_previous_parent = %p = %s \n",previous_previous_parent,previous_previous_parent->class_name().c_str());
+#endif
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(previous_previous_parent);
+          if (classDeclaration != NULL)
+             {
+#if 0
+               printf ("Class name = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+            // Find the associated Java class file.
+#if 0
+            // DQ (3/4/2014): This is the code we want to use until we get Philippe's branch in place with the attribute.
+               SgProject* project = TransformationSupport::getProject(parent);
+               ROSE_ASSERT(project != NULL);
+               SgFileList* fileList = project->get_fileList_ptr();
+               ROSE_ASSERT(fileList != NULL);
+               SgFilePtrList & vectorFile = fileList->get_listOfFiles();
+#if 0
+               printf ("Output list of files: \n");
+#endif
+               SgFilePtrList::iterator i = vectorFile.begin();
+               while (i != vectorFile.end())
+                  {
+                    SgFile* file = *i;
+                    ROSE_ASSERT(file != NULL);
+#if 0
+                    printf ("   --- filename = %s \n",file->getFileName().c_str());
+#endif
+                    string filename            = file->getFileName();
+                    string filenameWithoutPath = file->get_sourceFileNameWithoutPath();
+                    string classname           = classDeclaration->get_name();
+                    string matchingfilename    = classname + ".java";
+#if 0
+                    printf ("   ---   --- filename            = %s \n",filename.c_str());
+                    printf ("   ---   --- filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+                    printf ("   ---   --- classname           = %s \n",classname.c_str());
+                    printf ("   ---   --- matchingfilename    = %s \n",matchingfilename.c_str());
+#endif
+                    if (filenameWithoutPath == matchingfilename)
+                       {
+#if 0
+                         printf ("   return file = %p \n",file);
+#endif
+                         return file;
+                       }
+
+                    i++;
+                  }
+#else
+            // DQ (3/4/2014): This is the code we want to use when the attribute is in place (philippe's branch).
+               AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classDeclaration->getAttribute("sourcefile");
+
+               // "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
+
+               if (attribute) 
+                  {
+                 // true for all user-specified classes and false for all classes fom libraries
+                    SgSourceFile *sourcefile = isSgSourceFile(attribute->getNode());
+                    ROSE_ASSERT(sourcefile != NULL);
+                    return sourcefile;
+                  }
+#endif
+             }
+        }
+       else
+        {
+       // previous_parent was uninitialized to a non-null value or astNode is a SgJavaPackageDeclaration or SgFile.
+          if (previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+             {
+            // The input was a SgJavaPackageDeclaration (so there is no associated SgFile).
+               ROSE_ASSERT(isSgJavaPackageDeclaration(astNode) != NULL);
+               return NULL;
+             }
+            else
+             {
+               if (previous_previous_parent == NULL && isSgJavaPackageDeclaration(parent) != NULL)
+                  {
+                 // The input was a SgClassDefinition (so there is no associated SgFile).
+                    ROSE_ASSERT(isSgClassDefinition(astNode) != NULL);
+                    return NULL;
+                  }
+                 else
+                  {
+                 // This could be a C/C++ file (handled below).
+                  }
+             }
+        }
+
+  // This is where we handle the C/C++ files.
+  // if (!parent)
+     if (parent == NULL)
+        {
+          return NULL;
+        }
+       else
+        {
+          return isSgFile(parent);
+        }
+   }
 
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
@@ -7377,7 +7512,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
         if (func1->get_name() == func2->get_name())
           result = true;
       }
-      else if (is_Cxx_language())
+      else if (is_Cxx_language() || is_Java_language())
       {
          if (func1->get_qualified_name().getString() +
             func1->get_mangled_name().getString() ==
@@ -15223,11 +15358,33 @@ SageInterface::deleteAST ( SgNode* n )
                                 /*////////////////////////////////////////////////
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
-
 #if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
-
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgScopeStatement(node) !=NULL)
+                                   {
+                                     SgScopeStatement* scope = isSgScopeStatement(node);
+#if 1
+                                     printf ("Deleting the scopes type table: scope->get_type_table() = %p \n",scope->get_type_table());
+#endif
+                                     delete scope->get_type_table();
+                                   }
+#endif
+#if 0
+                             // DQ (3/2/2014): I think this might be a problem...
+                             // DQ (3/1/2014): check for a SgScopeStatement and delete the associated local type table.
+                                if (isSgTypeTable(node) !=NULL)
+                                   {
+                                     SgTypeTable* typeTable = isSgTypeTable(node);
+#if 1
+                                     printf ("Deleting the type table (SgSymbolTable): typeTable->get_type_table() = %p \n",typeTable->get_type_table());
+#endif
+                                     delete typeTable->get_type_table();
+                                   }
+#endif
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
@@ -15696,10 +15853,13 @@ SageInterface::deleteAST ( SgNode* n )
 
 #endif
 #if 0
-                        printf ("Deleting node = %p = %s \n",node,node->class_name().c_str());
+                        printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
                         delete node;
+#if 0
+                        printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
+#endif
                         }
                 };
 
@@ -15708,6 +15868,10 @@ SageInterface::deleteAST ( SgNode* n )
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
+
+#if 0
+     printf ("Leaving SageInterface::deleteAST(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
    }
 
 
@@ -17318,6 +17482,67 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     return new_var_list;
 }
+
+
+
+bool
+SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
+   {
+  // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+
+#ifndef USE_CMAKE
+  // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
+
+  // This is AST container for the ROSE AST that will provide an iterator.
+  // We want two iterators (one for the copy of the snippet and one for the 
+  // original snippet so that we can query the original snippet's AST 
+  // as we process each IR node of the AST for the copy of the snippet.
+  // Only the copy of the snippet is inserted into the target AST.
+     RoseAst ast_of_copy(tree1);
+     RoseAst ast_of_original(tree2);
+
+  // printf ("ast_of_copy.size() = %zu \n",ast_of_copy.size());
+
+  // Build the iterators so that we can increment thorugh both ASTs one IR node at a time.
+     RoseAst::iterator i_copy     = ast_of_copy.begin();
+     RoseAst::iterator i_original = ast_of_original.begin();
+
+  // Iterate of the copy of the snippet's AST.
+     while (i_copy != ast_of_copy.end())
+        {
+#if 0
+          printf ("*i_copy = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
+          printf ("*i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
+#endif
+       // DQ (2/28/2014): This is a problem for some of the test codes (TEST   store/load heap string [test7a] and [test7a])
+       // ROSE_ASSERT((*i_copy)->variantT() == (*i_original)->variantT());
+          if ((*i_copy)->variantT() != (*i_original)->variantT())
+             {
+#if 0
+               printf ("ERROR: return from SageInterface::isStructurallyEquivalentAST(): (*i_copy)->variantT() != (*i_original)->variantT() \n");
+#endif
+#if 0
+               printf ("Making this an error! \n");
+               ROSE_ASSERT(false);
+#endif
+               return false;
+             }
+
+          i_copy++;
+
+       // Verify that we have not reached the end of the ast for the original (both the 
+       // copy and the original are the same structurally, and thus the same size).
+          ROSE_ASSERT(i_original != ast_of_original.end());
+          i_original++;
+        }
+
+  // We have reached the end of both ASTs.
+     ROSE_ASSERT(i_copy == ast_of_copy.end() && i_original == ast_of_original.end());
+#endif
+
+     return true;
+   }
+
 
 #endif
 

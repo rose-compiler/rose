@@ -1333,7 +1333,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env,
     SgName method_name = convertJavaStringToCxxString(env, java_string);
 
     if (SgProject::get_verbose() > 1)
-        printf ("Entering BuildMethodSupport for name = %s \n", method_name.str());
+        printf ("Entering BuildMethodSupport for name = %s in file %s\n", method_name.str(), ::currentSourceFile -> getFileName().c_str());
 
     int number_of_type_parameters = java_number_of_type_parameters;
     int number_of_arguments = java_number_of_arguments;
