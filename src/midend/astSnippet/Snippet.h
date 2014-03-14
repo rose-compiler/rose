@@ -37,7 +37,7 @@ private:
     std::string fileName;                       // non-canonical source file name
     SgSourceFile *ast;                          // AST corresponding to the file; null after parse errors
 
-    typedef Map<std::string/*functionName*/, SgFunctionDefinition*> FunctionDefinitionMap;
+    typedef Map<std::string/*functionName*/, std::vector<SgFunctionDefinition*> > FunctionDefinitionMap;
     FunctionDefinitionMap functions;            // cache the functions so we don't have to do a traversal every lookup
 
     std::set<SgGlobal*> globals;                // global scopes where this snippet has been inserted
@@ -72,8 +72,13 @@ public:
     std::vector<std::string> getSnippetNames() const;
 
     /** Return a Snippet having the specified name.  The name must be fully a fully qualified function name. Returns null if
-     *  the snippet cannot be found in this SnippetFile. */
+     *  the snippet cannot be found in this SnippetFile. If there is more than one snippet with this name then only one is
+     *  returned (the first one). */
     SnippetPtr findSnippet(const std::string &snippetName);
+
+    /** Returns all snippets having the specified name.  All snippets in this snippet file that have the specified name are
+     *  returned in the order they are defined in the file. */
+    std::vector<SnippetPtr> findSnippets(const std::string &snippetName);
 
     /** Insert snippets in marked code. The specified AST is traversed and function calls to snippets which are defined in this
      *  SnippetFile are recursively expanded. */
