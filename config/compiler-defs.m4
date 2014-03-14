@@ -54,6 +54,10 @@ dnl predefined by a specific compiler
 
   # Support for Intel icc as a backend for compiling ROSE generated code
     icpc|icc)
+           # DQ (3/8/2014): Adding version number support for Intel compiler.
+             BACKEND_INTEL_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+             BACKEND_INTEL_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+             BACKEND_INTEL_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
 
              tmpFile="/tmp/tmpICCMacroExtraction`uname -n`$$.C"
              echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
@@ -154,7 +158,7 @@ dnl predefined by a specific compiler
 # This is now setup in a separate macro and can be specified on the command line
 # AC_DEFINE_UNQUOTED(CXX_COMPILER_NAME, "$CXX")
 
-# DQ (1/9/2010): Detec the type of compiler being used. This is used to add the
+# DQ (1/9/2010): Detect the type of compiler being used. This is used to add the
 # library libimf with libm to support use of the Intel compiler.  I have added
 # AM conditional for GNu just for completeness.
   AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
@@ -207,11 +211,13 @@ dnl predefined by a specific compiler
 
   if test "x$compilerVendorName" = xIntel; then
    # using_intel_compiler=true
-     AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+   # AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
   fi
   if test "x$compilerVendorName" = xGNU; then
    # using_gnu_compiler=true
-     AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+   # AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
   fi
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],test "x$compilerVendorName" = xIntel,[Is this an Intel compiler being used to compile ROSE.])
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],[`test $using_intel_compiler`],[Is this an Intel compiler being used to compile ROSE.])

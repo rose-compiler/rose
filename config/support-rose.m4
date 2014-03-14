@@ -1683,6 +1683,8 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -2032,6 +2034,7 @@ tests/CompileTests/C_tests/Makefile
 tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
+tests/CompileTests/Java_tests/unit_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/Cxx11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
@@ -2084,6 +2087,7 @@ tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
