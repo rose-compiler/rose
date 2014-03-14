@@ -48,12 +48,11 @@ private:
 
     static std::vector<std::string> varNameList; // list of variable names to use when renaming things
     bool copyAllSnippetDefinitions;              // should all snippet definitions be copied to global scope?
-    bool copyRelatedThings;                      // whether to copy other declarations from the snippet file
 
 protected:
     /** Use instance() instead. */
     explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL)
-        : fileName(fileName), ast(ast), copyAllSnippetDefinitions(false), copyRelatedThings(true) {}
+        : fileName(fileName), ast(ast), copyAllSnippetDefinitions(false) {}
 
 public:
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
@@ -113,15 +112,6 @@ public:
     bool getCopyAllSnippetDefinitions() const { return copyAllSnippetDefinitions; }
     void setCopyAllSnippetDefinitions(bool b=true) { copyAllSnippetDefinitions = b; }
     void clearCopyAllSnippetDefinitions() { copyAllSnippetDefinitions = false; }
-    /** @} */
-
-    /** Accessor for the property that controls copying of related declarations.  When this is true (the default) then certain
-     *  global declarations are copied from the snippet file to the target file when a snippet is inserted. See the the "Global
-     *  Declarations" section of the Snippet class documentation for details.
-     * @{ */
-    bool getCopyRelatedThings() const { return copyRelatedThings; }
-    void setCopyRelatedThings(bool b=true) { copyRelatedThings = b; }
-    void clearCopyRelatedThings() { copyRelatedThings = false; }
     /** @} */
 
 protected:
@@ -216,8 +206,7 @@ protected:
  *
  *  Snippets often require additional support in the form of global variables, data types, and function declarations. Whenever
  *  a snippet is inserted, certain things in the snippet's global scope are copied into the global scope of the insertion
- *  point.  This copying happens at most once per snippet + insertion file pair and can be turned off with
- *  <code>SnippetFile.setCopyRelatedThings(false)</code>.  The things copied are:
+ *  point.  This copying happens at most once per snippet + target file pair.  The things copied are:
  *
  *  @li Function declarations.
  *  @li Function definitions if desired (see SnippetFile::setCopyAllSnippetDefinitions), including the defintion of the snippet
@@ -421,9 +410,6 @@ protected:
 
     /** C-specific things that need to be copied from the snippet file to the target file. */
     void insertRelatedThingsForC(SgStatement *snippetInsertionPoint);
-
-    /** Insert an #include directive from a snippet's file to the insertion point.. */
-    void insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective);
 
     /** Rename snippet local variables so they don't interfere with names visible at the insertion point. Only local variables
      * whose names begin with "tmp" are renamed. */
