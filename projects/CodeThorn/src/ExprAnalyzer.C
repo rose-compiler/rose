@@ -66,9 +66,11 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
+
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
+
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "INFO: incdec-op found!"<<endl;
   }
