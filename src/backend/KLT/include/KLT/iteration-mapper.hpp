@@ -33,7 +33,7 @@ class IterationMapper {
 
       computeValidShapes(loop, shapes);
 
-      if (shapes.empty()) shape_map.erase(loop);
+//    if (shapes.empty()) shape_map.erase(loop);
 
       typename std::list<typename LoopTrees<Annotation>::node_t *>::iterator it_child;
       for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++) {

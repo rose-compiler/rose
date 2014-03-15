@@ -357,7 +357,7 @@ SgStatement * generateStatement<
       subscripts.pop_front();
       unsigned int cnt = 0;
       for (it_subscript = subscripts.begin(); it_subscript != subscripts.end(); it_subscript++) {
-        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt++].second);
+        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[++cnt].second);
         subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
         subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
       }
@@ -547,7 +547,7 @@ std::pair<SgStatement *, SgScopeStatement *> generateLoops<
     SgExpression * upper_bound = translateConstExpression(loop->upper_bound, local_symbol_maps.parameters, local_symbol_maps.iterators);
 
     SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(local_it_sym), lower_bound));
-    SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(local_it_sym), upper_bound));;
+    SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessThanOp(SageBuilder::buildVarRefExp(local_it_sym), upper_bound));;
     SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
                                 SageBuilder::buildVarRefExp(local_it_sym),
                                 SageBuilder::buildIntVal(1) /// \todo add stride expression to LoopTrees' loops
@@ -555,6 +555,21 @@ std::pair<SgStatement *, SgScopeStatement *> generateLoops<
 
     SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
     SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
+
+    Runtime::OpenACC::a_loop loop_desc;
+      loop_desc.lb = loop->lower_bound;
+      loop_desc.ub = loop->upper_bound;
+      loop_desc.tile_0 = 0;
+      loop_desc.gang   = 1;
+      loop_desc.tile_1 = 1;
+      loop_desc.worker = 1;
+      loop_desc.tile_2 = 1;
+      loop_desc.vector = 1;
+      loop_desc.tile_3 = 1;
+
+    loop_descriptors.push_back(loop_desc);
+    loop_id++;
+    assert(loop_descriptors.size() == loop_id);
 
     return std::pair<SgStatement *, SgScopeStatement *>(for_stmt, for_body);
   }
@@ -836,7 +851,7 @@ SgBasicBlock * createLocalDeclarations<
     SgType * iter_type = iter_sym->get_type();
 
     if (shape == NULL) {
-
+      std::cerr << "Create it decl for " << iter_name << " (not dist)" << std::endl;
       SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
         "local_it_" + iter_name, iter_type, NULL, kernel_body
       );
@@ -847,6 +862,7 @@ SgBasicBlock * createLocalDeclarations<
       local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
     }
     else {
+      std::cerr << "Create it decl for " << iter_name << " (dist)" << std::endl;
       assert(loop->isDistributed());
 
       SgVariableSymbol * local_sym = NULL;

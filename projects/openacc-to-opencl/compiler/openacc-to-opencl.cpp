@@ -36,21 +36,15 @@ namespace KLT {
 class SingleVersionItMapper : public IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC> {
   private:
     long tile_0;
-    long gang;
     long tile_1;
-    long worker;
     long tile_2;
-    long vector;
     long tile_3;
 
   public:
-    SingleVersionItMapper(long tile_0_, long gang_, long tile_1_, long worker_, long tile_2_, long vector_, long tile_3_) :
+    SingleVersionItMapper(long tile_0_, long tile_1_, long tile_2_, long tile_3_) :
       tile_0(tile_0_),
-      gang(gang_),
       tile_1(tile_1_),
-      worker(worker_),
       tile_2(tile_2_),
-      vector(vector_),
       tile_3(tile_3_)
     {}
 
@@ -59,6 +53,27 @@ class SingleVersionItMapper : public IterationMapper<Annotation, Language::OpenC
       LoopTrees<Annotation>::loop_t * loop,
       std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
     ) const {
+      if (!loop->isDistributed()) return;
+
+      std::vector<Annotation>::const_iterator it_annot;
+      long gang = 1;
+      long worker = 1;
+      long vector = 1;
+      for (it_annot = loop->annotations.begin(); it_annot != loop->annotations.end(); it_annot++) {
+        switch (it_annot->clause->kind) {
+          case ::DLX::OpenACC::language_t::e_acc_clause_gang:
+            gang = 0; /// \todo might have a static value (from SgExpression)
+            break;
+          case ::DLX::OpenACC::language_t::e_acc_clause_worker:
+            worker = 0; /// \todo might have a static value (from SgExpression)
+            break;
+          case ::DLX::OpenACC::language_t::e_acc_clause_vector:
+            vector = 0; /// \todo might have a static value (from SgExpression)
+            break;
+          default: break; // to avoid tons of warning...
+        }
+      }
+
       shapes.push_back(new Runtime::OpenACC::loop_shape_t(tile_0, gang, tile_1, worker, tile_2, vector, tile_3));
     }
 };
@@ -468,7 +483,7 @@ int main(int argc, char ** argv) {
   // Create a Code Generation Configuration
   KLT::CG_Config<Annotation, Language, Runtime> cg_config(
       new KLT::LoopMapper<Annotation, Language, Runtime>(),
-      new KLT::SingleVersionItMapper(t0, 0, t1, 0, t2, 1, 1),
+      new KLT::SingleVersionItMapper(t0, t1, t2, 1),
       new KLT::DataFlow<Annotation, Language, Runtime>()
   );
 

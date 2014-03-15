@@ -111,8 +111,6 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     object.shapes
   );
 
-  /// \todo add loops descriptor to 'result'
-
   unsigned loop_id = 0;
   const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & kernel_roots = object.kernel->getRoots();
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;

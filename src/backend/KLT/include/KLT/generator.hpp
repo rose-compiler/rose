@@ -135,11 +135,18 @@ void buildAllShapeConfigs(
   else {
     typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::loop_shape_t *> >::const_iterator new_curr_it = curr_it;
     new_curr_it++;
-    typename std::vector<typename Runtime::loop_shape_t *>::const_iterator it;
-    for (it = curr_it->second.begin(); it != curr_it->second.end(); it++) {
-      std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> new_curr_elem(curr_elem);
-      new_curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(curr_it->first, *it));
-      buildAllShapeConfigs<Annotation, Language, Runtime>(new_curr_elem, new_curr_it, end_it, shape_set);
+
+    if (curr_it->second.empty()) {
+      curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(curr_it->first, NULL));
+      buildAllShapeConfigs<Annotation, Language, Runtime>(curr_elem, new_curr_it, end_it, shape_set);
+    }
+    else {
+      typename std::vector<typename Runtime::loop_shape_t *>::const_iterator it;
+      for (it = curr_it->second.begin(); it != curr_it->second.end(); it++) {
+        std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> new_curr_elem(curr_elem);
+        new_curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(curr_it->first, *it));
+        buildAllShapeConfigs<Annotation, Language, Runtime>(new_curr_elem, new_curr_it, end_it, shape_set);
+      }
     }
   }
 }

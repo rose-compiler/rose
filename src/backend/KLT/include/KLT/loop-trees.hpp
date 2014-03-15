@@ -594,6 +594,8 @@ void parseRegionAnnotations(LoopTrees<Annotation> & loop_trees) {
 
   ensure('(');
 
+  if (AstFromString::afs_match_char(')')) return;
+
   do {
     Annotation::parseRegion(loop_trees.annotations);
   } while (AstFromString::afs_match_char(','));
@@ -606,6 +608,8 @@ void parseLoopAnnotations(typename LoopTrees<Annotation>::loop_t * loop) {
   assert(Annotation::matchLabel());
 
   ensure('(');
+
+  if (AstFromString::afs_match_char(')')) return;
 
   do {
     Annotation::parseLoop(loop->annotations);
