@@ -78,11 +78,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 	list<SingleEvalResultConstInt> resultList;
 	SgExpression* cond=condExp->get_conditional_exp();
 	list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
-	if(condResultList.size()!=1) {
-	  cerr<<"Error: non-const condition in conditional operator inside expressions not supported yet."<<endl;
+	if(condResultList.size()==0) {
+	  cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
+	  exit(1);
+	}
+	if(condResultList.size()>1) {
+	  cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
 	  exit(1);
 	}
 	SingleEvalResultConstInt singleResult=*condResultList.begin();
+	if(singleResult.result.isTop()) {
+	  SgExpression* trueBranch=condExp->get_true_exp();
+	  list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+	  SgExpression* falseBranch=condExp->get_false_exp();
+	  list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+	  // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
+	  trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
+	  return trueBranchResultList;
+	}
 	if(singleResult.result.isTrue()) {
 	  SgExpression* trueBranch=condExp->get_true_exp();
 	  list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
@@ -93,9 +106,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 	  list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
 	  return falseBranchResultList;
 	}
-	cerr<<"Error: condition evaluating to top in conditional operator inside expressions not supported yet."<<endl;
-	exit(1);
 	// dummy return value to avoid compiler warning
+	cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
+	exit(1);
 	return resultList;
   }
   if(dynamic_cast<SgBinaryOp*>(node)) {

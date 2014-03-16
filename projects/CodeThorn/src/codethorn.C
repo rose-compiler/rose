@@ -967,6 +967,9 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
 	  for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 		if((*j)->attributeExists("Number")) {
 		  ROSE_ASSERT(isSgPntrArrRefExp(*j)||isSgVarRefExp(*j));
+		  if((*j)->attributeExists("AstUnparseAttribute"))
+			(*j)->removeAttribute("AstUnparseAttribute");
+		  ROSE_ASSERT(!(*j)->attributeExists("AstUnparseAttribute"));
 		  AstUnparseAttribute* ssaNameAttribute=new AstUnparseAttribute((*j)->unparseToString()+string("_")+(*j)->getAttribute("Number")->toString(),AstUnparseAttribute::e_replace);
 		  (*j)->setAttribute("AstUnparseAttribute",ssaNameAttribute);
 		}			
