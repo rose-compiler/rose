@@ -9048,6 +9048,10 @@ SgDeclarationStatement::get_type() const
   // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
   // call this function and it is not a virtual function that will cause derived class versions to be called
   // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+
+  // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
+     printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
+
      return NULL;
    }
 

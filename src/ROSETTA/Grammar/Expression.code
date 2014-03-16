@@ -2311,7 +2311,8 @@ SgExpression::set_explicitly_stored_type( SgType* type )
                exp->set_expresion_type(type);
                break;
              }
-
+#endif
+#if 1
         // DQ (3/7/20145): This IR node is generated without access functions for the type.
            case V_SgJavaTypeExpression:
              {

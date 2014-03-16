@@ -530,7 +530,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
      // In the case of insertMechanism == INSERT_STMTS we also add the mapping of the scope used for the copy of the body
      // to the parent of the insertionPoint so that symbols can be reset into the scope of the insertionPoint.
      // This map connects snippet scopes (key) to target AST scopes (value).
-        std::map<SgNode*,SgNode*> translationMap;
+     // std::map<SgNode*,SgNode*> translationMap;
 
      // If we are inserting into the end of a scope then we point to the scope since there is no last statement 
      // to insert a statement before.  In this case then insertionPointIsScope == true, else it is false. 
@@ -544,11 +544,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 #endif
           // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated scope of the
           // insertionPoint.
-             if (translationMap.find(ast->get_body()) == translationMap.end());
-                  translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
+          // if (translationMap.find(ast->get_body()) == translationMap.end());
+          //      translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(), insertionPoint->get_scope() ) );
 
-             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,toInsert,
-                                                                       ast->get_body(),translationMap);
+          // SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,toInsert,ast->get_body(),translationMap);
+             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,toInsert,ast->get_body());
            }
           else
            {
@@ -576,15 +576,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 #endif
                                    // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
                                    // associated scope of the insertionPoint.
-                                      if (translationMap.find(ast->get_body()) == translationMap.end());
-                                           translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),
-                                                                                              insertionPoint->get_scope() ) );
+                                   // if (translationMap.find(ast->get_body()) == translationMap.end());
+                                   //      translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),insertionPoint->get_scope() ) );
 
                                       SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
                                                                                                 insertionPointIsScope,
                                                                                                 stmts_copy_of_snippet_ast[i],
-                                                                                                stmts_in_original_snippet_ast[i],
-                                                                                                translationMap);
+                                                                                                stmts_in_original_snippet_ast[i]);
                                       break;
 
                                  case LOCDECLS_AT_END:
@@ -599,14 +597,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 
                                    // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the
                                    // associated scope of the insertionPoint.
-                                      if (translationMap.find(ast->get_body()) == translationMap.end());
-                                           translationMap.insert( std::pair<SgNode*,SgNode*>(ast->get_body(), insertionPoint));
+                                   // if (translationMap.find(ast->get_body()) == translationMap.end());
+                                   //      translationMap.insert( std::pair<SgNode*,SgNode*>(ast->get_body(), insertionPoint));
 
                                       SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFunctionScope,
                                                                                                 insertionPointIsScope,
                                                                                                 stmts_copy_of_snippet_ast[i],
-                                                                                                stmts_in_original_snippet_ast[i],
-                                                                                                translationMap);
+                                                                                                stmts_in_original_snippet_ast[i]);
                                       break;
                                }
                           } 
@@ -619,14 +616,12 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 #endif
                          // Fill in the first entry to inlcude the mapping of the copy of the scope (body) to the associated
                          // scope of the insertionPoint.
-                            if (translationMap.find(ast->get_body()) == translationMap.end());
-                                 translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),
-                                                                                    insertionPoint->get_scope() ) );
+                         // if (translationMap.find(ast->get_body()) == translationMap.end());
+                         //      translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),insertionPoint->get_scope() ) );
 
                             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,
                                                                                       stmts_copy_of_snippet_ast[i],
-                                                                                      stmts_in_original_snippet_ast[i],
-                                                                                      translationMap);
+                                                                                      stmts_in_original_snippet_ast[i]);
                           }
                      }
                 }
@@ -903,11 +898,46 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         // Insert this declaration
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"insertRelatedThingsC: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
+        printf ("insertRelatedThingsC: inserting decl = %p = %s = %s \n",decl,decl->class_name().c_str(),SageInterface::get_name(decl).c_str());
+        decl->get_file_info()->display("insertRelatedThingsC: inserting decl: debug");
 #endif
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         removeIncludeDirectives(declCopy);
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
+
+     // Error checking on the generated copy.
+        SgClassDeclaration* classDeclaration_copy     = isSgClassDeclaration(declCopy);
+        SgClassDeclaration* classDeclaration_original = isSgClassDeclaration(decl);
+        if (classDeclaration_original != NULL)
+           {
+             ROSE_ASSERT(classDeclaration_copy != NULL);
+
+             printf ("Error checking for copy of SgClassDeclaration = %p \n",classDeclaration_copy);
+
+          // I think these types should be different,  if so then the associated non-defining 
+          // declaration must be copied, and it's types match the defining declaration.
+             ROSE_ASSERT(classDeclaration_copy->get_type() != classDeclaration_original->get_type());
+             ROSE_ASSERT(classDeclaration_copy->get_firstNondefiningDeclaration() != classDeclaration_original->get_firstNondefiningDeclaration());
+
+             SgClassDeclaration* nondefining_classDeclaration_copy     = isSgClassDeclaration(classDeclaration_copy->get_firstNondefiningDeclaration());
+             SgClassDeclaration* nondefining_classDeclaration_original = isSgClassDeclaration(classDeclaration_original->get_firstNondefiningDeclaration());
+             ROSE_ASSERT(nondefining_classDeclaration_copy->get_type() != nondefining_classDeclaration_original->get_type());
+             if (nondefining_classDeclaration_copy->get_type() != classDeclaration_copy->get_type())
+                {
+                  printf ("nondefining_classDeclaration_copy->get_type() = %p \n",nondefining_classDeclaration_copy->get_type());
+                  printf ("classDeclaration_copy->get_type()             = %p \n",classDeclaration_copy->get_type());
+                }
+             ROSE_ASSERT(nondefining_classDeclaration_copy->get_type() == classDeclaration_copy->get_type());
+             ROSE_ASSERT(nondefining_classDeclaration_original->get_type() == classDeclaration_original->get_type());
+
+             ROSE_ASSERT(classDeclaration_copy->get_definingDeclaration() != classDeclaration_original->get_definingDeclaration());
+             SgClassDeclaration* defining_classDeclaration_copy     = isSgClassDeclaration(classDeclaration_copy->get_definingDeclaration());
+             SgClassDeclaration* defining_classDeclaration_original = isSgClassDeclaration(classDeclaration_original->get_definingDeclaration());
+             ROSE_ASSERT(defining_classDeclaration_original->get_type() == nondefining_classDeclaration_original->get_type());
+             ROSE_ASSERT(defining_classDeclaration_copy->get_type() == nondefining_classDeclaration_copy->get_type());
+           }
+
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
         if (!firstInserted)
             firstInserted = declCopy;
@@ -920,12 +950,13 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         bool insertionPointIsScope        = false;
         SgStatement* toInsert             = declCopy;
         SgStatement* original_before_copy = decl;
-        std::map<SgNode*,SgNode*> translationMap;
+     // std::map<SgNode*,SgNode*> translationMap;
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"calling SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst...\n";
 #endif
-        SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope, toInsert,
-                                                                  original_before_copy, translationMap);
+     // SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope, toInsert, original_before_copy, translationMap);
+     // SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert, original_before_copy, translationMap);
+        SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert, original_before_copy);
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"call to SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst has returned.\n";
 #endif
@@ -936,39 +967,5 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
     if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
 }
-
-#if 0
-// DQ (2/27/2014): I think we should just call the refactored function directly
-// (SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst()).
-void 
-Snippet::fixupSnippetInNewTargetAST(SgStatement *insertionPoint, SgStatement *toInsert)
-   {
-      ROSE_ASSERT(insertionPoint != NULL);
-      ROSE_ASSERT(toInsert != NULL);
-
-      printf ("Inside of fixupBodyInNewTargetAST(): insertionPoint = %p = %s toInsert = %p = %s \n",
-              insertionPoint,insertionPoint->class_name().c_str(),toInsert,toInsert->class_name().c_str());
-
-#if 0
-      SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
-
-   // For Java support this might be NULL, if the insertion point was in global scope.
-      ROSE_ASSERT(targetFile != NULL);
-
-      SgFile* snippetFile = TransformationSupport::getFile(toInsert);
-
-   // At this point the parent pointers are set so that the same SgFile is found via a traversal back to the SgProject.
-      ROSE_ASSERT(snippetFile == targetFile);
-
-      printf ("targetFile  = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
-      printf ("snippetFile = %p = %s \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
-#endif
-
-   // Any node that has entries not referenced in the target file needs to be fixed up.
-   // We can assume that any referenced variable or function that is referenced in the 
-   // snippet will exist in either the snippet or the target file.
-      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,toInsert);
-   }
-#endif
 
 } // namespace
