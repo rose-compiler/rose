@@ -519,12 +519,15 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // DQ (3/2/2009): Handle the case of friend declaration.
      bool isFriendDeclaration = this->get_declarationModifier().isFriend();
 
-#if 0
+#if 1
      printf ("### this = %p = %s copyDeclarationStatement = %p definingDeclarationCopied = %s firstNondefiningDeclarationCopied = %s \n",
           this,this->class_name().c_str(),copyDeclarationStatement,definingDeclarationCopied ? "true" : "false", firstNondefiningDeclarationCopied ? "true" : "false");
      printf ("    this->get_definingDeclaration()            = %p \n",this->get_definingDeclaration());
      printf ("    this->get_firstNondefiningDeclaration()    = %p \n",this->get_firstNondefiningDeclaration());
      printf ("    this->get_declarationModifier().isFriend() = %s \n",this->get_declarationModifier().isFriend() ? "true" : "false");
+     printf ("    firstNondefiningDeclarationCopied          = %s \n",firstNondefiningDeclarationCopied ? "true" : "false");
+     printf ("    definingDeclarationCopied                  = %s \n",definingDeclarationCopied ? "true" : "false");
+     printf ("    isFriendDeclaration                        = %s \n",isFriendDeclaration ? "true" : "false");
 #endif
 
   // DQ (3/2/2009): Modified to exclude copying of friend declaration defining and non defining declarations.
@@ -546,7 +549,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // if (this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false && this == this->get_firstNondefiningDeclaration())
           if (this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false)
              {
-#if 0
+#if 1
                printf ("*** this = %p this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false && this == this->get_definingDeclaration() \n",this);
 #endif
             // Setup the firstNondefining declaration 
@@ -563,12 +566,25 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
                ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode != NULL);
                ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode->get_parent() == NULL);
-
+#if 1
+               printf ("SgDeclarationStatement::fixupCopy_scopes(): copyOfFirstNondefiningDeclarationNode = %p \n",copyOfFirstNondefiningDeclarationNode);
+               printf ("SgDeclarationStatement::fixupCopy_scopes(): this->get_firstNondefiningDeclaration() = %p \n",this->get_firstNondefiningDeclaration());
+               printf ("SgDeclarationStatement::fixupCopy_scopes(): this->get_firstNondefiningDeclaration()->get_parent() = %p \n",this->get_firstNondefiningDeclaration()->get_parent());
+               printf ("SgDeclarationStatement::fixupCopy_scopes(): firstNondefiningDeclarationCopied = %s \n",firstNondefiningDeclarationCopied ? "true" : "false");
+#endif
             // Must reset the parent (semantics of AST copy), but this will be done by reset
-               ROSE_ASSERT(this->get_firstNondefiningDeclaration()->get_parent() != NULL);
+
+            // DQ (3/14/2014): The parent might not be set if the non-defining declaration has not be added to the AST (i.e. if it has only been used to build a symbol).
+            // ROSE_ASSERT(this->get_firstNondefiningDeclaration()->get_parent() != NULL);
+
                copyOfFirstNondefiningDeclarationNode->set_parent(this->get_firstNondefiningDeclaration()->get_parent());
 
-               ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode->get_parent() != NULL);
+            // DQ (3/14/2014): The parent might not be set if the non-defining declaration has not be added to the AST (i.e. if it has only been used to build a symbol).
+            // ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode->get_parent() != NULL);
+               if (copyOfFirstNondefiningDeclarationNode->get_parent() == NULL)
+                  {
+                    printf ("Note: SgDeclarationStatement::fixupCopy_scopes(): copyOfFirstNondefiningDeclarationNode->get_parent() == NULL \n");
+                  }
 
             // printf ("Commented out setting of scopes on the this->get_firstNondefiningDeclaration() \n");
                this->get_firstNondefiningDeclaration()->fixupCopy_scopes(copyOfFirstNondefiningDeclarationNode,help);
@@ -911,6 +927,25 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // printf ("In SgFunctionDeclaration::fixupCopy_scopes(): this->get_definition() = %p \n",this->get_definition());
      if (this->get_definition() != NULL)
         {
+       // DQ (3/15/2014): The defining declaration should not be marked (isForward() == true).
+          if (isForward() == true)
+             {
+               printf ("Error: The defining declaration should not be marked (isForward() == true) \n");
+               printf ("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): functionDeclaration_copy = %p = %s \n",functionDeclaration_copy,functionDeclaration_copy->class_name().c_str());
+               printf ("   --- functionDeclaration_copy->get_firstNondefiningDeclaration() = %p \n",functionDeclaration_copy->get_firstNondefiningDeclaration());
+               printf ("   --- functionDeclaration_copy->get_definingDeclaration()         = %p \n",functionDeclaration_copy->get_definingDeclaration());
+
+               functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
+
+            // Reset this!
+               functionDeclaration_copy->unsetForward();
+
+            // DQ (3/15/2014): This is a Java specific issue. I don't want to be changing the original 
+            // version of the statement we are copying. This needs to be fixed properly in the Java AST.
+               printf ("TODO (Java): isForward() status is being reset for the original SgFunctionDeclaration as part of SgFunctionDeclaration::fixupCopy_scopes(): this = %p = %s = %s \n",this,this->class_name().c_str(),this->get_name().str());
+            // this->unsetForward();
+               this->get_definition()->get_declaration()->unsetForward();
+             }
           ROSE_ASSERT(isForward() == false);
 
        // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
@@ -1275,6 +1310,43 @@ SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
           classDefinition_original->fixupCopy_scopes(classDefinition_copy,help);
         }
+
+  // DQ (3/15/2014): Check the types since they should be equivalent.
+     ROSE_ASSERT(this->get_firstNondefiningDeclaration()->get_type() == this->get_definingDeclaration()->get_type());
+     ROSE_ASSERT(classDeclaration_copy->get_firstNondefiningDeclaration()->get_type() == classDeclaration_copy->get_definingDeclaration()->get_type());
+
+     const SgClassDeclaration* classDeclaration_original = isSgClassDeclaration(this);
+     printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_original->get_type()              = %p \n",classDeclaration_original->get_type());
+     printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy->get_type()                  = %p \n",classDeclaration_copy->get_type());
+
+     SgClassDeclaration* classDeclaration_copy_firstNondefining = isSgClassDeclaration(classDeclaration_copy->get_firstNondefiningDeclaration());
+     SgClassDeclaration* classDeclaration_copy_defining         = isSgClassDeclaration(classDeclaration_copy->get_definingDeclaration());
+     ROSE_ASSERT(classDeclaration_copy_firstNondefining != NULL);
+     ROSE_ASSERT(classDeclaration_copy_defining != NULL);
+
+     printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy_firstNondefining->get_type() = %p \n",classDeclaration_copy_firstNondefining->get_type());
+     printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy_defining->get_type()         = %p \n",classDeclaration_copy_defining->get_type());
+
+     SgClassType* classType = isSgClassType(classDeclaration_copy->get_type());
+     ROSE_ASSERT(classType != NULL);
+  // if (classDeclaration_copy_firstNondefining->get_type() == NULL)
+     if (classDeclaration_copy_firstNondefining->get_type() != classType)
+        {
+          printf ("   --- Reset the type on the classDeclaration_copy->get_firstNondefiningDeclaration() (to match the type in the copy) \n");
+          classDeclaration_copy_firstNondefining->set_type(classType);
+        }
+
+  // if (classDeclaration_copy_defining->get_type() == NULL)
+     if (classDeclaration_copy_defining->get_type() != classType)
+        {
+          printf ("   --- Reset the type on the classDeclaration_copy->get_definingDeclaration() \n");
+          classDeclaration_copy_defining->set_type(classType);
+        }
+
+#if 0
+     printf ("Warning: SgClassDeclaration::fixupCopy_scopes(): Need to check the types for equivalence \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 void

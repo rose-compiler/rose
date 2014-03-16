@@ -81,6 +81,20 @@ int main(int argc, char *argv[])
     ROSE_ASSERT(snippetFile!=NULL || !"unable to load snippet file");
     snippetFile->setCopyAllSnippetDefinitions(false);
 
+#if 1 // DEBUGGING [DQ 2014-03-07]
+    {
+    ROSE_ASSERT(project->get_fileList_ptr() != NULL);
+    SgFilePtrList & vectorFile = project->get_fileList_ptr()->get_listOfFiles();
+    printf ("project files (size = %zu): \n",vectorFile.size());
+    for (size_t i = 0; i < vectorFile.size(); i++)
+       {
+         printf ("--- filename = %p = %s \n",vectorFile[i],vectorFile[i]->getFileName().c_str());
+       }
+
+    ROSE_ASSERT(vectorFile.size() == 2);
+    }
+#endif
+
     // Find where to insert the readEnvironment snippet. Look for "SNIPPET" comments in the target specimen.  This snippet
     // should be inserted before the first "while" statement of the ::quickSort function.
     std::cerr <<"Looking for the readEnvironment insertion point...\n";
@@ -155,6 +169,48 @@ int main(int argc, char *argv[])
     arrayElementSwap->setInsertMechanism(Snippet::INSERT_BODY);
     arrayElementSwap->setInsertRecursively(false);
     arrayElementSwap->insert(arrayElementSwapInsertionPoint, var_a, var_j, var_lb, var_restoredValue);
+
+    SgFile* snippetSourceFile = snippetFile->getAst();
+    ROSE_ASSERT(snippetSourceFile != NULL);
+
+ // Disconnect the snippetSourceFile from the SgProject.
+    std::vector<SgFilePtrList::iterator> eraseTheseFiles;
+    SgFilePtrList::iterator i = project->get_fileList().begin();
+    while (i != project->get_fileList().end())
+       {
+      // Find the snippet file.
+         if (*i == snippetSourceFile)
+            {
+#if 0 // DEBUGGING [DQ 2014-03-07]
+              printf ("Removing snippetSourceFile = %p from project \n",snippetSourceFile);
+#endif
+              eraseTheseFiles.push_back(i);
+           // *i = NULL;
+            }
+
+         i++;
+       }
+
+    snippetSourceFile = NULL;
+    for (size_t j = 0; j < eraseTheseFiles.size(); j++)
+       {
+         project->get_fileList().erase(eraseTheseFiles[j]);
+       }
+
+#if 1 // DEBUGGING [DQ 2014-03-07]
+    {
+    ROSE_ASSERT(project->get_fileList_ptr() != NULL);
+    SgFilePtrList & vectorFile = project->get_fileList_ptr()->get_listOfFiles();
+    printf ("project files (size = %zu): \n",vectorFile.size());
+    for (size_t i = 0; i < vectorFile.size(); i++)
+       {
+         printf ("--- filename = %p = %s \n",vectorFile[i],vectorFile[i]->getFileName().c_str());
+       }
+
+    ROSE_ASSERT(vectorFile.size() == 1);
+    }
+#endif
+
     
     return backend(project);
 }

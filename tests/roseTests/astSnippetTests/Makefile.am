@@ -257,7 +257,7 @@ test6b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 #----------------------------------------------------------------------------------------------------
 # test7*.passed are for injectioning snippets4 into specimen2 using the storeLoad driver. These tests inject
 # two related snippets into the specimen in various ways.
-TEST_TARGETS += test7a.passed test7b.passed test7c.passed test7d.passed
+TEST_TARGETS += test7a.passed test7b.passed 
 EXTRA_DIST += SmallSpecimensC/snippets4.c SmallSpecimensC/specimen2.c
 test7a.passed: storeLoad SmallSpecimensC/snippets4.c SmallSpecimensC/specimen2.c $(STORELOAD_TEST)
 	@$(RTH_RUN)					\

@@ -14,6 +14,9 @@ int copy_me_too();
 #include <stdlib.h>
 #include <string.h>
 
+/* Added by DQ to avoid interpretation of assert macro as implicit function */
+#include <assert.h>
+
 struct Struct1 {
     int int_member;
     char char_member;

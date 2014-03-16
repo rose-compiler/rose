@@ -8,6 +8,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* DQ (3/15/2014): the new rule is that any header files included in the snippet file must appear 
+// in the target file so that declarations in header files can be seen.  The modification that 
+// the new rule makes over the older rule from Mach 6th is that declaation in the snippet file 
+// that are not in associated include files, must be copied to the target file.
+*/
+// #include <stdlib.h>
+#include <string.h>
+
 #define compGT(a, b) ((a) > (b))
 
 typedef int T;          /* type of item to be sorted */
