@@ -890,13 +890,14 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
             continue;
 
         // Insert whole function definitions (snippets) only if the user asked for this feature.
-        if (SgFunctionDeclaration *fdecl = isSgMemberFunctionDeclaration(decl)) {
+     // if (SgFunctionDeclaration *fdecl = isSgMemberFunctionDeclaration(decl)) {
+        if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(decl)) {
             if (fdecl->get_definition()!=NULL && !file->getCopyAllSnippetDefinitions())
                 continue;
         }
 
         // Insert this declaration
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"insertRelatedThingsC: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
         printf ("insertRelatedThingsC: inserting decl = %p = %s = %s \n",decl,decl->class_name().c_str(),SageInterface::get_name(decl).c_str());
         decl->get_file_info()->display("insertRelatedThingsC: inserting decl: debug");
@@ -951,13 +952,13 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         SgStatement* toInsert             = declCopy;
         SgStatement* original_before_copy = decl;
      // std::map<SgNode*,SgNode*> translationMap;
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"calling SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst...\n";
 #endif
      // SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint, insertionPointIsScope, toInsert, original_before_copy, translationMap);
      // SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert, original_before_copy, translationMap);
         SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert, original_before_copy);
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
         std::cerr <<"call to SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst has returned.\n";
 #endif
     }
