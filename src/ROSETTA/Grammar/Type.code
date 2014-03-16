@@ -2263,11 +2263,20 @@ SgType::getInternalTypes() const
      SgArrayType*     arrayType   = NULL;
      SgTypedefType*   typedefType = NULL;
 
+#if 0
+     printf ("In SgType::getInternalTypes(): TOP: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
+
+  // DQ (3/16/2014): Of coruse we need this.
   // Initialize with the input type (not clear if this is helpful).
   // internalTypes.push_back(currentType);
+     internalTypes.push_back(currentType);
 
      while (true)
         {
+#if 0
+           printf ("In SgType::getInternalTypes(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           if ( (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
@@ -2319,6 +2328,9 @@ SgType::getInternalTypes() const
                   }
              }
 
+#if 0
+           printf ("In SgType::getInternalTypes(): push_back(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           internalTypes.push_back(currentType);
         }
 

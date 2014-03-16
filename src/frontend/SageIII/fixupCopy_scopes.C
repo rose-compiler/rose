@@ -519,7 +519,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // DQ (3/2/2009): Handle the case of friend declaration.
      bool isFriendDeclaration = this->get_declarationModifier().isFriend();
 
-#if 1
+#if 0
      printf ("### this = %p = %s copyDeclarationStatement = %p definingDeclarationCopied = %s firstNondefiningDeclarationCopied = %s \n",
           this,this->class_name().c_str(),copyDeclarationStatement,definingDeclarationCopied ? "true" : "false", firstNondefiningDeclarationCopied ? "true" : "false");
      printf ("    this->get_definingDeclaration()            = %p \n",this->get_definingDeclaration());
@@ -549,7 +549,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // if (this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false && this == this->get_firstNondefiningDeclaration())
           if (this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false)
              {
-#if 1
+#if 0
                printf ("*** this = %p this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false && this == this->get_definingDeclaration() \n",this);
 #endif
             // Setup the firstNondefining declaration 
@@ -566,7 +566,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
                ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode != NULL);
                ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode->get_parent() == NULL);
-#if 1
+#if 0
                printf ("SgDeclarationStatement::fixupCopy_scopes(): copyOfFirstNondefiningDeclarationNode = %p \n",copyOfFirstNondefiningDeclarationNode);
                printf ("SgDeclarationStatement::fixupCopy_scopes(): this->get_firstNondefiningDeclaration() = %p \n",this->get_firstNondefiningDeclaration());
                printf ("SgDeclarationStatement::fixupCopy_scopes(): this->get_firstNondefiningDeclaration()->get_parent() = %p \n",this->get_firstNondefiningDeclaration()->get_parent());
@@ -1311,36 +1311,63 @@ SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           classDefinition_original->fixupCopy_scopes(classDefinition_copy,help);
         }
 
-  // DQ (3/15/2014): Check the types since they should be equivalent.
-     ROSE_ASSERT(this->get_firstNondefiningDeclaration()->get_type() == this->get_definingDeclaration()->get_type());
-     ROSE_ASSERT(classDeclaration_copy->get_firstNondefiningDeclaration()->get_type() == classDeclaration_copy->get_definingDeclaration()->get_type());
-
      const SgClassDeclaration* classDeclaration_original = isSgClassDeclaration(this);
+
+#if 0
      printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_original->get_type()              = %p \n",classDeclaration_original->get_type());
      printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy->get_type()                  = %p \n",classDeclaration_copy->get_type());
+#endif
 
+  // DQ (3/15/2014): Check the types since they should be equivalent (setup intermediate variables).
      SgClassDeclaration* classDeclaration_copy_firstNondefining = isSgClassDeclaration(classDeclaration_copy->get_firstNondefiningDeclaration());
      SgClassDeclaration* classDeclaration_copy_defining         = isSgClassDeclaration(classDeclaration_copy->get_definingDeclaration());
      ROSE_ASSERT(classDeclaration_copy_firstNondefining != NULL);
-     ROSE_ASSERT(classDeclaration_copy_defining != NULL);
+  // ROSE_ASSERT(classDeclaration_copy_defining != NULL);
 
+  // DQ (3/15/2014): Check the types since they should be equivalent (setup intermediate variables).
+     SgClassDeclaration* classDeclaration_original_firstNondefining = isSgClassDeclaration(classDeclaration_original->get_firstNondefiningDeclaration());
+     SgClassDeclaration* classDeclaration_original_defining         = isSgClassDeclaration(classDeclaration_original->get_definingDeclaration());
+     ROSE_ASSERT(classDeclaration_original_firstNondefining != NULL);
+  // ROSE_ASSERT(classDeclaration_original_defining != NULL);
+
+#if 0
      printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy_firstNondefining->get_type() = %p \n",classDeclaration_copy_firstNondefining->get_type());
      printf ("SgClassDeclaration::fixupCopy_scopes(): classDeclaration_copy_defining->get_type()         = %p \n",classDeclaration_copy_defining->get_type());
+#endif
 
      SgClassType* classType = isSgClassType(classDeclaration_copy->get_type());
      ROSE_ASSERT(classType != NULL);
-  // if (classDeclaration_copy_firstNondefining->get_type() == NULL)
+
      if (classDeclaration_copy_firstNondefining->get_type() != classType)
         {
           printf ("   --- Reset the type on the classDeclaration_copy->get_firstNondefiningDeclaration() (to match the type in the copy) \n");
           classDeclaration_copy_firstNondefining->set_type(classType);
         }
 
-  // if (classDeclaration_copy_defining->get_type() == NULL)
-     if (classDeclaration_copy_defining->get_type() != classType)
+     if (classDeclaration_copy_defining != NULL && classDeclaration_copy_defining->get_type() != classType)
         {
           printf ("   --- Reset the type on the classDeclaration_copy->get_definingDeclaration() \n");
           classDeclaration_copy_defining->set_type(classType);
+        }
+
+  // DQ (3/15/2014): Check the types since they should be equivalent (error checking).
+     if (classDeclaration_copy_defining != NULL)
+        {
+#if 0
+          if (classDeclaration_copy_firstNondefining->get_type() != classDeclaration_copy_defining->get_type())
+             {
+               printf ("classDeclaration_copy->get_type()                  = %p = %s \n",classDeclaration_copy->get_type(),classDeclaration_copy->get_type()->class_name().c_str());
+               printf ("classDeclaration_copy_firstNondefining->get_type() = %p = %s \n",classDeclaration_copy_firstNondefining->get_type(),classDeclaration_copy_firstNondefining->get_type()->class_name().c_str());
+               printf ("classDeclaration_copy_defining->get_type()         = %p = %s \n",classDeclaration_copy_defining->get_type(),classDeclaration_copy_defining->get_type()->class_name().c_str());
+             }
+#endif
+          ROSE_ASSERT(classDeclaration_copy_firstNondefining->get_type() == classDeclaration_copy_defining->get_type());
+        }
+
+  // DQ (3/15/2014): Check the types since they should be equivalent.
+     if (classDeclaration_original_defining != NULL)
+        {
+          ROSE_ASSERT(classDeclaration_original_firstNondefining->get_type() == classDeclaration_original_defining->get_type());
         }
 
 #if 0

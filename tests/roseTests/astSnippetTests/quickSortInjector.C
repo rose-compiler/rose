@@ -79,7 +79,11 @@ int main(int argc, char *argv[])
     std::string snippetFileName = SnippetTests::findSnippetFile("QuickSortC/errorSnippets.c");
     SnippetFilePtr snippetFile = SnippetFile::instance(snippetFileName);
     ROSE_ASSERT(snippetFile!=NULL || !"unable to load snippet file");
-    snippetFile->setCopyAllSnippetDefinitions(false);
+
+ // DQ (3/16/2014): After discussion with Robb, we fixed a bug in Snippet::insertRelatedThingsForC() that
+ // was overly permissive in inserting snippet declarations. As a result, I think we need this to be true.
+ // snippetFile->setCopyAllSnippetDefinitions(false);
+    snippetFile->setCopyAllSnippetDefinitions(true);
 
 #if 1 // DEBUGGING [DQ 2014-03-07]
     {
