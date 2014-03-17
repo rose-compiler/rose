@@ -12760,7 +12760,7 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                ROSE_ASSERT(snippet_enumDeclaration != NULL);
 
                SgName snippet_enumName = snippet_enumDeclaration->get_name();
-#if 1
+#if 0
                printf ("snippet snippet declaration's enum name = %s \n",snippet_enumName.str());
 #endif
                SgEnumSymbol* target_symbol = target_AST_scope->lookup_enum_symbol(snippet_enumName);
@@ -12771,7 +12771,7 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                ROSE_ASSERT(enumSymbolInTargetAST != NULL);
                SgEnumDeclaration* target_enumDeclaration = isSgEnumDeclaration(enumSymbolInTargetAST->get_declaration());
                ROSE_ASSERT(target_enumDeclaration != NULL);
-#if 1
+#if 0
                printf ("snippet: enumDeclaration = %p = %s \n",snippet_enumDeclaration,snippet_enumDeclaration->get_name().str());
                printf ("target: enumDeclaration  = %p = %s \n",target_enumDeclaration,target_enumDeclaration->get_name().str());
 #endif
@@ -13676,7 +13676,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     ROSE_ASSERT(functionDeclaration_copy_firstNondefining == functionDeclaration_copy_firstNondefining->get_firstNondefiningDeclaration());
 
                  // This is what is called internal to the get_symbol_from_symbol_table() function below.
-                    ROSE_ASSERT(targetScope->find_symbol_from_declaration(functionDeclaration_copy_firstNondefining) != NULL);
+                 // Use this function, SgFunctionDeclaration::get_symbol_from_symbol_table(), but not the template function: find_symbol_from_declaration().
+                 // ROSE_ASSERT(targetScope->find_symbol_from_declaration(functionDeclaration_copy_firstNondefining) != NULL);
 
                     ROSE_ASSERT(functionDeclaration_copy_firstNondefining->get_symbol_from_symbol_table() != NULL);
 
@@ -14450,8 +14451,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
           case V_SgEnumVal:
              {
             // SgEnumVal expressions contain a reference to the associated SgEnumDeclaration, so this may have to be updated.
-
+#if 0
                printf ("enum values contain a reference to the associated SgEnumDeclaration \n");
+#endif
                SgEnumVal* enumVal_copy     = isSgEnumVal(node_copy);
                SgEnumVal* enumVal_original = isSgEnumVal(node_original);
 
@@ -14460,7 +14462,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                if (associatedEnumDeclaration_copy == associatedEnumDeclaration_original)
                   {
-#if 1
+#if 0
                     printf ("The stored reference to the enum declaration in the SgEnumVal must be reset \n");
 #endif
                  // SgSymbol* SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
