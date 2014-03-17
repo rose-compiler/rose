@@ -13364,6 +13364,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     ROSE_ASSERT(false);
                   }
 #endif
+#if 0
+               printf ("new_type = %p \n",new_type);
+#endif
                if (new_type != NULL)
                   {
                  // Reset the base type to be the one associated with the target file.
@@ -13389,7 +13392,10 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                               ROSE_ASSERT(new_classDeclaration->get_name() == original_classDeclaration->get_name());
                             }
                        }
-
+#if 0
+                    SgType* old_type = initializedName_copy->get_type();
+                    printf ("Reset the type: initializedName_copy->set_type(new_type): old type = %p = %s new_type = %p = %s \n",old_type,old_type->class_name().c_str(),new_type,new_type->class_name().c_str());
+#endif
                     initializedName_copy->set_type(new_type);
                   }
 
@@ -13424,32 +13430,65 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                   }
                  else
                   {
-                 // Case of non-function-parameter use of SgInitializedName in AST.
-                    SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
-                    ROSE_ASSERT(symbol != NULL);
-
-                    SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
-                    ROSE_ASSERT(variableSymbol != NULL);
 #if 0
-                    printf ("Insert symbol = %p for initializedName_copy = %p = %s into targetScope = %p = %s \n",variableSymbol,initializedName_copy,initializedName_copy->get_name().str(),targetScope,targetScope->class_name().c_str());
+                    printf ("initializedName_copy->get_scope() = %p = %s \n",initializedName_copy->get_scope(),initializedName_copy->get_scope()->class_name().c_str());
 #endif
-                    targetScope->insert_symbol(initializedName_copy->get_name(),variableSymbol);
-
-                 // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
-                    initializedName_copy->set_scope(targetScope);
-
-                    SgName mangledName = variableSymbol->get_mangled_name();
-#if 0
-                    printf ("initializedName_copy: mangledName = %s \n",mangledName.str());
-#endif
-                 // DQ (3/2/2014): Make sure this is true (I think it should be, but I don't see that it was explicitly set).
-                 // ROSE_ASSERT(initializedName_copy->get_scope() == targetScope);
-                    if (initializedName_copy->get_scope() != targetScope)
+                    SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(enclosingStatement_copy);
+                    if (enumDeclaration != NULL)
                        {
-                         printf ("WARNING: initializedName_copy->get_scope() != targetScope: initializedName_copy->get_scope() = %p = %s \n",initializedName_copy->get_scope(),initializedName_copy->get_scope()->class_name().c_str());
+                      // The case of enum declarations is special because the associated SgInitializedName IR nodes has a scope 
+                      // that is external to the SgEnumDeclaration (in the scope of the SgEnumDeclaration).  The typical case in C 
+                      // is that the enum declaration is in global scope and then the enum fields (represented by SgInitializedName
+                      // objects) are have their associated symbol in the global scope.
 
-                         printf ("I think this should be an error! \n");
+                      // We have to use the name to search for the symbol instead of the pointer value of the initializedName_copy 
+                      // (since the original symbol was associated with initializedName_original).
+                      // SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
+                         SgName name = initializedName_copy->get_name();
+                         SgSymbol* symbol = initializedName_copy->get_scope()->lookup_enum_field_symbol(name);
+                         ROSE_ASSERT(symbol != NULL);
+
+                         SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
+                         ROSE_ASSERT(enumFieldSymbol != NULL);
+
+                         targetScope->insert_symbol(name,enumFieldSymbol);
+
+                      // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
+                         initializedName_copy->set_scope(targetScope);
+#if 0
+                         printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                      // Case of non-SgFunctionParameterList and non-SgEnumDeclaration use of SgInitializedName in AST.
+                         SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
+                         ROSE_ASSERT(symbol != NULL);
+
+                         SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
+                         ROSE_ASSERT(variableSymbol != NULL);
+#if 0
+                         printf ("Insert symbol = %p for initializedName_copy = %p = %s into targetScope = %p = %s \n",variableSymbol,initializedName_copy,initializedName_copy->get_name().str(),targetScope,targetScope->class_name().c_str());
+#endif
+                         targetScope->insert_symbol(initializedName_copy->get_name(),variableSymbol);
+
+                      // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
+                         initializedName_copy->set_scope(targetScope);
+
+                         SgName mangledName = variableSymbol->get_mangled_name();
+#if 0
+                         printf ("initializedName_copy: mangledName = %s \n",mangledName.str());
+#endif
+                      // DQ (3/2/2014): Make sure this is true (I think it should be, but I don't see that it was explicitly set).
+                      // ROSE_ASSERT(initializedName_copy->get_scope() == targetScope);
+                         if (initializedName_copy->get_scope() != targetScope)
+                            {
+                              printf ("WARNING: initializedName_copy->get_scope() != targetScope: initializedName_copy->get_scope() = %p = %s \n",initializedName_copy->get_scope(),initializedName_copy->get_scope()->class_name().c_str());
+
+                              printf ("I think this should be an error! \n");
+                              ROSE_ASSERT(false);
+                            }
                        }
                   }
 
@@ -13747,19 +13786,95 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
           case V_SgEnumDeclaration:
              {
             // Need to handle the referenced types
-               SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(node_copy);
-               SgEnumType* enumType = enumDeclaration->get_type();
-               ROSE_ASSERT(enumType != NULL);
+               SgEnumDeclaration* enumDeclaration_copy     = isSgEnumDeclaration(node_copy);
+               SgEnumDeclaration* enumDeclaration_original = isSgEnumDeclaration(node_original);
 
-            // DQ (3/10/2014): Added support for enum types.
+            // SgEnumType* enumType = enumDeclaration_copy->get_type();
+            // ROSE_ASSERT(enumType != NULL);
+
+            // I don't think we have to test for this being a part of the snippet file.
+                  {
+                    SgName name = enumDeclaration_copy->get_name();
+#if 0
+                 // If we randomize the names then we need to handle this case...
+                    printf ("case V_SgEnumDeclaration: targetScope = %p enumSymbol_copy->get_name() = %s \n",targetScope,name.str());
+#endif
+                    SgEnumSymbol* enumSymbolInTargetAST = lookupEnumSymbolInParentScopes(name,targetScope);
+
+                    if (enumSymbolInTargetAST == NULL)
+                       {
+                      // If could be that the symbol is in the local scope of the snippet AST.
+                         SgScopeStatement* otherPossibleScope = isSgScopeStatement(enumDeclaration_original->get_parent());
+                         ROSE_ASSERT(otherPossibleScope != NULL);
+#if 0
+                         printf ("case V_SgEnumDeclaration: otherPossibleScope = %p \n",otherPossibleScope);
+#endif
+                      // I think we are not looking in the correct scope! Or else we need to also look in the target global scope.
+#if 0
+                         printf ("Since the symbol has not been inserted yet, what symbol are we looking for? \n");
+#endif
+                         enumSymbolInTargetAST = lookupEnumSymbolInParentScopes(name,otherPossibleScope);
+
+                         ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+                         SgEnumDeclaration* enumDeclaration = enumSymbolInTargetAST->get_declaration();
+                         ROSE_ASSERT(enumDeclaration != NULL);
+
+                         ROSE_ASSERT(enumDeclaration != enumDeclaration_original);
+
+                      // SgScopeStatement* scope = enumDeclaration->get_scope();
+                         SgScopeStatement* scope = targetScope;
+                         ROSE_ASSERT(scope != NULL);
+                         enumDeclaration_copy->set_scope(scope);
+#if 0
+                         printf ("case V_SgEnumDeclaration: insert_symbol(): name = %s enumSymbolInTargetAST = %p \n",name.str(),enumSymbolInTargetAST);
+#endif
+                      // Insert the symbol into the targetScope.
+                      // targetScope->insert_symbol(classSymbol_copy->get_name(),classSymbolInTargetAST);
+                         targetScope->insert_symbol(name,enumSymbolInTargetAST);
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Found an existing enum declaration: name = %s enumSymbolInTargetAST = %p \n",name.str(),enumSymbolInTargetAST);
+#endif
+                      // In this case the symbol is in a parent scope already (find the scope and set the scope of the classDeclaration_copy.
+                         SgEnumDeclaration* enumDeclaration = enumSymbolInTargetAST->get_declaration();
+                         ROSE_ASSERT(enumDeclaration != NULL);
+#if 0
+                         SgScopeStatement* scope = enumDeclaration->get_scope();
+                         ROSE_ASSERT(scope != NULL);
+                         ROSE_ASSERT(scope == targetScope);
+                      // enumDeclaration_copy->set_scope(scope);
+#else
+                         ROSE_ASSERT(enumDeclaration->get_scope() == targetScope);
+#endif
+                       }
+
+                    ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+                  }
+#if 0
+               printf ("Exiting as a test 1! \n");
+               ROSE_ASSERT(false);
+#endif
+               SgEnumType* enumType = enumDeclaration_copy->get_type();
+               ROSE_ASSERT(enumType != NULL);
                SgType* new_type = getTargetFileType(enumType,targetScope);
+#if 0
+               printf ("Return type from getTargetFileType(): original enumType = %p new_type = %p \n",enumType,new_type);
+#endif
                SgEnumType* new_enum_type = isSgEnumType(new_type);
                if (new_enum_type != NULL)
                   {
                  // Reset the base type to be the one associated with the target file.
-                    enumDeclaration->set_type(new_enum_type);
+#if 0
+                    printf ("reset the type using the new enum type from the target AST \n");
+#endif
+                    enumDeclaration_copy->set_type(new_enum_type);
                   }
-
+#if 0
+               printf ("Exiting as a test 2! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -14385,8 +14500,8 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      while (i_copy != ast_of_copy.end())
         {
 #if 0
-          printf ("*i_copy = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
-          printf ("*i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
+          printf ("***** fixupCopyOfAstFromSeperateFileInNewTargetAst(): *i_copy     = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
+          printf ("***** fixupCopyOfAstFromSeperateFileInNewTargetAst(): *i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
 #endif
        // DQ (2/28/2014): This is a problem for some of the test codes (TEST   store/load heap string [test7a] and [test7a])
        // ROSE_ASSERT((*i_copy)->variantT() == (*i_original)->variantT());
