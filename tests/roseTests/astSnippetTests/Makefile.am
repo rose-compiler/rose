@@ -608,12 +608,25 @@ test_11:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
+test_12:
+#	./injectSnippet --test:snippet=snippet2014_07.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_07.c
+	@$(RTH_RUN)					\
+		TITLE="basic insertion [$@]"		\
+		SNIPPET=snippet2014_12.c,::print		\
+		SPECIMEN=SmallSpecimensC/specimen2014_12.c	\
+		IPOINT=::ipoint1			\
+		INSERT_MECHANISM=stmts			\
+		LOCDECLS_POSITION=end			\
+		RECURSIVE_INSERTION=yes			\
+		COPY_DEFINITIONS=no			\
+		$(C_INJECTION_TEST) $@
+
 test_java_1:
 	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
 
 
 # DQ: Tests that I can use to vizualize the whole AST (for debugging).
-local_debug_tests: test_1 test_2 test_3 test_4 test_5 test_6 test_7 test_8 test_9 test_10 test_11
+local_debug_tests: test_1 test_2 test_3 test_4 test_5 test_6 test_7 test_8 test_9 test_10 test_11 test_12
 
 ###############################################################################################################################
 # Automake boilerplate
