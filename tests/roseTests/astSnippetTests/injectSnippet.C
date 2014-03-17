@@ -206,7 +206,7 @@ main(int argc, char *argv[])
     BOOST_FOREACH (SgFunctionDefinition *someFunction, someFunctions) {
         SgFunctionDeclaration *fdecl = someFunction->get_declaration();
         if (0==fdecl->get_args().size()) {
-            SgType *type = fdecl->get_type();
+         // SgType *type = fdecl->get_type();
             snippetFile->doNotInsert("Snippets6.someFunction", fdecl->get_type());
         }
     }
