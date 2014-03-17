@@ -142,6 +142,7 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc-opt1.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+        jacobi-ompacc2.cpp \
 	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \

@@ -55,6 +55,8 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc.c \
         jacobi-ompacc-opt1.c
 
+OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
+        jacobi-ompacc2.cpp
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -162,6 +164,7 @@ ALL_TESTCODES = \
 	$(CXX_TESTCODES_REQUIRED_TO_COMPILE) \
 	$(CXX_TESTCODES_REQUIRED_TO_RUN) \
 	$(OMP_ACC_TESTCODES_REQUIRED_TO_PASS) \
+	$(OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS) \
 	$(TESTCODE_CURRENTLY_FAILING)
 
 # The runnable tests' object files
@@ -212,9 +215,13 @@ PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_COMPILE:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
 
 PASSING_OMP_ACC_TEST_CUDA_TEMP_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.cu)
+PASSING_OMP_ACC_TEST_CXX_CUDA_TEMP_Files = $(OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS:.cpp=.cu)
+
 PASSING_OMP_ACC_TEST_CUDA_Files = $(addprefix rose_, ${PASSING_OMP_ACC_TEST_CUDA_TEMP_Files})
+PASSING_OMP_ACC_TEST_CXX_CUDA_Files = $(addprefix rose_, ${PASSING_OMP_ACC_TEST_CXX_CUDA_TEMP_Files})
 
 PASSING_OMP_ACC_TEST_EXE_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.out)
+PASSING_OMP_ACC_TEST_CXX_EXE_Files = $(OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS:.cpp=.out)
 
 # rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
@@ -252,6 +259,13 @@ $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
 		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
 		$(TEST_EXIT_STATUS) $@.passed
 
+$(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
+	@$(RTH_RUN) \
+		TITLE="roseompacc $(notdir $<) [$@.passed]" \
+		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		$(TEST_EXIT_STATUS) $@.passed
+
+
 #rose_axpy_ompacc.cu:roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
 #rose_matrixmultiply-ompacc.cu:roseompacc
@@ -264,8 +278,15 @@ $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
 		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
 		$(TEST_EXIT_STATUS) $@.passed
 
+$(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
+	@$(RTH_RUN) \
+		TITLE="nvcc $(notdir $<) [$@.passed]" \
+		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
+		$(TEST_EXIT_STATUS) $@.passed
+
+
 # a short cut to run omp-acc support test
-ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
+ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
 
 #axpy_ompacc.out:rose_axpy_ompacc.cu
 #	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
@@ -307,6 +328,7 @@ check-local: roseomp
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
 	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
+	$(MAKE)	$(PASSING_OMP_ACC_TEST_CXX_CUDA_Files)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -350,6 +372,7 @@ check-local: roseomp
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
 	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
+	$(MAKE)	$(PASSING_OMP_ACC_TEST_CXX_CUDA_Files)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -370,7 +393,7 @@ else
 #-------------compile only --------------------------------	
 check-local: roseomp \
 		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
-		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
+		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -414,9 +437,15 @@ clean-local:
 	rm -f $(PASSING_OMP_ACC_TEST_CUDA_Files)
 	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
 	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CUDA_Files))
+	rm -f $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files))
 	rm -f $(PASSING_OMP_ACC_TEST_EXE_Files)
 	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_EXE_Files))
 	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_EXE_Files))
+	rm -f $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
+	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CXX_EXE_Files))
+	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CXX_EXE_Files))
 
 
 EXTRA_DIST = referenceResults
