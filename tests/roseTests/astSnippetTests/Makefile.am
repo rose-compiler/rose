@@ -442,12 +442,20 @@ noinst_PROGRAMS += quickSortInjector
 quickSortInjector_SOURCES = quickSortInjector.C snippetTests.C
 quickSortInjector_LDADD = $(ROSE_LIBS)
 
-TEST_TARGETS += quickSort.passed
-quickSort.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnippets.c
+TEST_TARGETS += quickSortC.passed quickSortJava.passed
+
+quickSortC.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnippets.c
 	@$(RTH_RUN)										\
 		TITLE="quickSort C [$@]"							\
 		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortC/quicksort.c"	\
 		SUBDDIR=yes									\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+quickSortJava.passed: quickSortInjector QuickSortJava/QuickSort.java QuickSortJava/ErrorSnippets.java
+	@$(RTH_RUN)											\
+		TITLE="quickSort Java [$@]"								\
+		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortJava/QuickSort.java"	\
+		SUBDDIR=yes										\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
