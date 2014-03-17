@@ -31,6 +31,10 @@ bool Analyzer::isIncompleteSTGReady() {
   return transitionGraph.size()>_maxTransitions;
 }
 
+ExprAnalyzer* Analyzer::getExprAnalyzer() {
+  return &exprAnalyzer;
+}
+
 void Analyzer::runSolver() {
   switch(_solver) {
   case 1: runSolver1();break;

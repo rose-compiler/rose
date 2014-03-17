@@ -426,6 +426,7 @@ struct RewriteStatistics {
 	numConstantFolding=0;
 	numVariableElim=0;
 	numArrayUpdates=0;
+	numConstExprElim=0;
   }
   int numElimMinusOperator;
   int numElimAssignOperator;
@@ -433,6 +434,7 @@ struct RewriteStatistics {
   int numConstantFolding;
   int numVariableElim;
   int numArrayUpdates; // number of array updates (i.e. assignments)
+  int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
 } dump1_stats;
 
 // not used yet
@@ -606,6 +608,43 @@ do {
   } while(someTransformationApplied);
 }
 
+void substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
+  typedef pair<SgExpression*,int> SubstitutionPair;
+  typedef list<SubstitutionPair > SubstitutionList;
+  SubstitutionList substitutionList;
+  AstMatching m;
+  MatchResult res;
+#pragma omp critical
+  {
+  res=m.performMatching("SgPntrArrRefExp(_,$ArrayIndexExpr)",root);
+  }
+  if(res.size()>0) {
+	for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+        // match found
+	  SgExpression* arrayIndexExpr=isSgExpression((*i)["$ArrayIndexExpr"]);
+	  if(arrayIndexExpr) {
+		// avoid substituting a constant by a constant
+		if(!isSgIntVal(arrayIndexExpr)) {
+		  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true, true);
+		  // only when we get exactly one result it is considered for substitution
+		  // there can be multiple const-results which do not allow to replace it with a single const
+		  if(evalResultList.size()==1) {
+			list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
+			ROSE_ASSERT(evalResultList.size()==1);
+			AValue varVal=(*i).value();
+			if(varVal.isConstInt()) {
+			  int varIntValue=varVal.getIntValue();
+			  //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
+			  SageInterface::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
+			  dump1_stats.numConstExprElim++;
+			}
+		  }
+		}
+	  }
+	}
+  }
+}
+
 void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
   typedef pair<SgExpression*,int> SubstitutionPair;
   typedef list<SubstitutionPair > SubstitutionList;
@@ -649,12 +688,13 @@ bool isAtMarker(Label lab, const EState* estate) {
   Label elab=estate->label();
   return elab==lab;
 }
-void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
+void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, bool useConstExprSubstRule=true, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
   Labeler* labeler=ana->getLabeler();
   VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
   TransitionGraph* tg=ana->getTransitionGraph();
   const EState* estate=tg->getStartEState();
   EStatePtrSet succSet=tg->succ(estate);
+  ExprAnalyzer* exprAnalyzer=ana->getExprAnalyzer();
   int numProcessedArrayUpdates=0;
   vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
@@ -710,12 +750,18 @@ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpda
   int N=stgArrayUpdateSequence.size();
 
   // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
+  //  #pragma omp parallel for
   for(int i=0;i<N;++i) {
     const EState* p_estate=stgArrayUpdateSequence[i].first;
     const PState* p_pstate=p_estate->pstate();
     SgExpression* p_exp=stgArrayUpdateSequence[i].second;
-    SgNode* p_expCopy=SageInterface::copyExpression(p_exp);
-    // print for temporary info purpose
+    SgNode* p_expCopy;
+    p_expCopy=SageInterface::copyExpression(p_exp);
+
+	// p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
+	if(useConstExprSubstRule) {
+	  substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
+	}
     substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
     rewriteAst(p_expCopy, variableIdMapping);
     SgExpression* p_expCopy2=isSgExpression(p_expCopy);
@@ -784,6 +830,7 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
       this->subscripts.push_back(subscriptint->get_value());
     }
   }
+  ROSE_ASSERT(this->subscripts.size()>0);
 }
 
 // searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
@@ -1073,6 +1120,7 @@ int main( int argc, char * argv[] ) {
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+    ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ;
 
@@ -1140,6 +1188,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
   boolOptions.registerOption("dump1",false);
+  boolOptions.registerOption("rule-const-subst",true);
 
   boolOptions.processOptions();
 
@@ -1262,6 +1311,9 @@ int main( int argc, char * argv[] ) {
   // reset dump1 in case sorted or non-sorted is used
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     boolOptions.registerOption("dump1",true);
+	if(numberOfThreadsToUse>1) {
+	  //cerr<<"Error: multi threaded rewrite not supported yet."<<endl;
+	}
   }
 
   // handle RERS mode: reconfigure options
@@ -1500,7 +1552,11 @@ int main( int argc, char * argv[] ) {
       cout<<"INFO: Fragment: end-node  : "<<fragmentEndNode<<  "  end-label  : "<<fragmentEndLabel<<endl;
     }
 
-    extractArrayUpdateOperations(&analyzer,arrayUpdates,fragmentStartLabel,fragmentEndLabel);
+	bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
+    extractArrayUpdateOperations(&analyzer,
+								 arrayUpdates,
+								 useConstSubstitutionRule,
+								 fragmentStartLabel,fragmentEndLabel);
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
     dump1_stats.numArrayUpdates=arrayUpdates.size();
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
@@ -1511,16 +1567,18 @@ int main( int argc, char * argv[] ) {
     
     cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
     timer.start();
-    if (args.count("dump-non-sorted")) {
+    if(args.count("dump-non-sorted")) {
       string filename=args["dump-non-sorted"].as<string>();
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
     }
-    if (args.count("dump-sorted")) {
+    if(args.count("dump-sorted")) {
       string filename=args["dump-sorted"].as<string>();
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
     }
-    string filename="arrayupdates.txt";
-    writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+    if(boolOptions["dump1"]) {
+	  string filename="arrayupdates.txt";
+	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+	}
     
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime;
   }
@@ -1570,7 +1628,8 @@ int main( int argc, char * argv[] ) {
         <<dump1_stats.numElimAssignOperator<<", "
         <<dump1_stats.numAddOpReordering<<", "
         <<dump1_stats.numConstantFolding<<", "
-        <<dump1_stats.numVariableElim
+        <<dump1_stats.numVariableElim<<", "
+	    <<dump1_stats.numConstExprElim
         <<endl;
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;

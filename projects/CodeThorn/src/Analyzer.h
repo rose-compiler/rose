@@ -227,6 +227,7 @@ namespace CodeThorn {
       _skipSelectedFunctionCalls=true; 
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
+	ExprAnalyzer* getExprAnalyzer();
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
