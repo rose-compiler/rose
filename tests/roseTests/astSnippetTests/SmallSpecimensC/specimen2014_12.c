@@ -16,7 +16,9 @@ ipoint1()
      return 0;
    }
 
+#if 0
 int main()
    {
      return 0;
    }
+#endif

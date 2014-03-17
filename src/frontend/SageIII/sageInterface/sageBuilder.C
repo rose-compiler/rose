@@ -12754,6 +12754,31 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                break;
              }
 
+          case V_SgEnumDeclaration:
+             {
+               SgEnumDeclaration* snippet_enumDeclaration = isSgEnumDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_enumDeclaration != NULL);
+
+               SgName snippet_enumName = snippet_enumDeclaration->get_name();
+#if 1
+               printf ("snippet snippet declaration's enum name = %s \n",snippet_enumName.str());
+#endif
+               SgEnumSymbol* target_symbol = target_AST_scope->lookup_enum_symbol(snippet_enumName);
+               ROSE_ASSERT(target_symbol != NULL);
+               returnSymbol = target_symbol;
+
+               SgEnumSymbol* enumSymbolInTargetAST = isSgEnumSymbol(returnSymbol);
+               ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+               SgEnumDeclaration* target_enumDeclaration = isSgEnumDeclaration(enumSymbolInTargetAST->get_declaration());
+               ROSE_ASSERT(target_enumDeclaration != NULL);
+#if 1
+               printf ("snippet: enumDeclaration = %p = %s \n",snippet_enumDeclaration,snippet_enumDeclaration->get_name().str());
+               printf ("target: enumDeclaration  = %p = %s \n",target_enumDeclaration,target_enumDeclaration->get_name().str());
+#endif
+               ROSE_ASSERT(snippet_enumDeclaration->get_name() == target_enumDeclaration->get_name());
+               break;
+             }
+
           default:
              {
                printf ("Error: default reached in switch: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
@@ -13821,6 +13846,17 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                          ROSE_ASSERT(enumDeclaration != enumDeclaration_original);
 
+                      // This is true, so we need to build a new sysmbol.
+                         ROSE_ASSERT(enumSymbolInTargetAST->get_declaration() == enumDeclaration_original->get_firstNondefiningDeclaration());
+
+                      // Build a new SgEnumSymbol using the enumDeclaration_copy.
+                         SgEnumSymbol* enumSymbol = new SgEnumSymbol(enumDeclaration_copy);
+                         ROSE_ASSERT(enumSymbol != NULL);
+                         enumSymbolInTargetAST = enumSymbol;
+
+                      // If this is false then we need to build a new SgEnumSymbol rather than reusing the existing one.
+                         ROSE_ASSERT(enumSymbolInTargetAST->get_declaration() != enumDeclaration_original->get_firstNondefiningDeclaration());
+
                       // SgScopeStatement* scope = enumDeclaration->get_scope();
                          SgScopeStatement* scope = targetScope;
                          ROSE_ASSERT(scope != NULL);
@@ -14410,7 +14446,46 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                break;
              }
-                     
+
+          case V_SgEnumVal:
+             {
+            // SgEnumVal expressions contain a reference to the associated SgEnumDeclaration, so this may have to be updated.
+
+               printf ("enum values contain a reference to the associated SgEnumDeclaration \n");
+               SgEnumVal* enumVal_copy     = isSgEnumVal(node_copy);
+               SgEnumVal* enumVal_original = isSgEnumVal(node_original);
+
+               SgEnumDeclaration* associatedEnumDeclaration_copy     = isSgEnumDeclaration(enumVal_copy->get_declaration());
+               SgEnumDeclaration* associatedEnumDeclaration_original = isSgEnumDeclaration(enumVal_original->get_declaration());
+
+               if (associatedEnumDeclaration_copy == associatedEnumDeclaration_original)
+                  {
+#if 1
+                    printf ("The stored reference to the enum declaration in the SgEnumVal must be reset \n");
+#endif
+                 // SgSymbol* SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
+                    SgSymbol* symbol = findAssociatedSymbolInTargetAST(associatedEnumDeclaration_original,targetScope);
+                    ROSE_ASSERT(symbol != NULL);
+                    SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
+                    ROSE_ASSERT(enumSymbol != NULL);
+                    SgEnumDeclaration* new_associatedEnumDeclaration_copy = enumSymbol->get_declaration();
+                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != NULL);
+
+                 // If this is false then in means that we should have built a new SgEnumSymbol instead of reusing the existing one from the snippet.
+                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);
+                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
+                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_definingDeclaration());
+
+                    enumVal_copy->set_declaration(new_associatedEnumDeclaration_copy);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               break;
+             }
+
           default:
              {
             // Most IR nodes do not require specialized fixup (are not processed).

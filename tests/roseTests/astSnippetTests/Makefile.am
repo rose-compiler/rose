@@ -608,7 +608,7 @@ test_11:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_12:
+test_12: injectSnippet
 #	./injectSnippet --test:snippet=snippet2014_07.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_07.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
