@@ -13011,7 +13011,7 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
 
                default:
                   {
-                    printf ("Error: In getTargetFileType(): default reached in switch \n");
+                    printf ("Error: In getTargetFileType(): default reached in switch: namedType = %p = %s \n",namedType,namedType->class_name().c_str());
                     ROSE_ASSERT(false);
                   }
              }
@@ -13031,6 +13031,189 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
         }
 
      return returnType;
+   }
+
+
+
+void
+SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning )
+   {
+#if 1
+     printf ("In errorCheckingTargetAST(): node_copy = %p = %s node_original = %p = %s \n",node_copy,node_copy->class_name().c_str(),node_original,node_original->class_name().c_str());
+#endif
+
+  // Handle what is the same about all statements before getting to the switch.
+     SgStatement* statement_copy     = isSgStatement(node_copy);
+     SgStatement* statement_original = isSgStatement(node_original);
+     if (statement_copy != NULL)
+        {
+       // Check the scope if it is stored explicitly.
+          if (statement_copy->hasExplicitScope() == true)
+             {
+            // Handle the scope for all statements.
+               SgScopeStatement* scope_copy     = statement_copy->get_scope();
+               SgScopeStatement* scope_original = statement_original->get_scope();
+               ROSE_ASSERT(scope_copy     != NULL);
+               ROSE_ASSERT(scope_original != NULL);
+
+            // if (TransformationSupport::getFile(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_original) != targetFile)
+                  {
+#if 1
+                    printf ("Warning: SgStatement: scope = %p = %s \n",scope_original,scope_original->class_name().c_str());
+#endif
+                 // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
+                    ROSE_ASSERT(snippetFile != NULL);
+                    ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
+#if 1
+                    printf ("Warning: SgStatement: scope not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
+                 // ROSE_ASSERT(false);
+#endif
+                    if (failOnWarning == true)
+                       {
+                         printf ("Exit on warning! \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#if 0
+               SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
+               printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
+
+            // SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
+            // ROSE_ASSERT(targetScope != NULL);
+
+            // SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
+            // SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
+            // SgVariableSymbol* variableSymbolInTargetAST = lookupVariableSymbolInParentScopes(variableSymbol->get_name(),targetScope);
+            // ROSE_ASSERT(variableSymbolInTargetAST != NULL);
+
+            // Unless we know that this is a declaration we can't set the scope here using the information about this being a definng declaration.
+            // If this is a defining declaration then we want to set it's scope to targetScope, else we want to lookup
+            // the symbol through the parent scope and set the scope using the symbol's first non-defining declaration.
+            // statement_copy->set_scope(targetScope);
+
+            // SgSymbol* symbol = statement_copy->search_for_symbol_from_symbol_table();
+            // ROSE_ASSERT(symbol != NULL);
+#endif
+#if 0
+               printf ("SgClassDeclaration: Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+#if 0
+               if (TransformationSupport::getFile(scope) != targetFile)
+                  {
+                    printf ("Warning: SgStatement: scope = %p = %s \n",scope,scope->class_name().c_str());
+                    SgFile* snippetFile = TransformationSupport::getFile(scope);
+                    ROSE_ASSERT(snippetFile != NULL);
+                    ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
+
+                    printf ("Warning: SgStatement: scope not in target file (snippetFile = %p = %s) \n",snippetFile,snippetFile->get_sourceFileNameWithPath().c_str());
+                 // ROSE_ASSERT(false);
+                  }
+#endif
+             }
+        }
+
+  // Handle what is the same about all declaration before getting to the switch.
+     SgDeclarationStatement* declarationStatement_copy     = isSgDeclarationStatement(node_copy);
+     SgDeclarationStatement* declarationStatement_original = isSgDeclarationStatement(node_original);
+     if (declarationStatement_copy != NULL)
+        {
+       // Check the firstnondefiningDeclaration and definingDeclaration
+          SgDeclarationStatement* firstNondefiningDeclaration_original = declarationStatement_original->get_firstNondefiningDeclaration();
+
+       // DQ (3/10/2014): We want to allow for NULL return values from getEnclosingFileNode() for Java classes that are in java.lang (for example).
+          SgFile* snippetFile = getEnclosingFileNode(firstNondefiningDeclaration_original);
+          if (snippetFile != NULL && snippetFile != targetFile)
+             {
+            // I think we want to allow this because it is a common occurence in any merged AST.  
+            // However, if might be worth fixing for other reasons.  This needs to be discussed.
+#if 1
+               printf ("Note: SgDeclarationStatement: firstNondefiningDeclaration_original is not in target file (allowed for merged ASTs) \n");
+#endif
+            // ROSE_ASSERT(false);
+               if (failOnWarning == true)
+                  {
+                    printf ("Exit on warning! \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+            else
+             {
+            // Warn about this if snippetFile == NULL.
+               if (snippetFile == NULL)
+                  {
+                    printf ("Note: firstNondefiningDeclaration_original = %p getEnclosingFileNode() returned NULL \n",firstNondefiningDeclaration_original);
+
+                    if (failOnWarning == true)
+                       {
+                         printf ("Exit on warning! \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+
+          SgDeclarationStatement* definingDeclaration_original = declarationStatement_original->get_definingDeclaration();
+          if (definingDeclaration_original != NULL)
+             {
+            // if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
+            // if (getEnclosingFileNode(definingDeclaration_original) != targetFile)
+               SgFile* snippetFile = getEnclosingFileNode(definingDeclaration_original);
+               if (snippetFile != NULL && snippetFile != targetFile)
+                  {
+#if 1
+                    printf ("Warning: SgDeclarationStatement: definingDeclaration is not in target file \n");
+                 // ROSE_ASSERT(false);
+#endif
+                    if (failOnWarning == true)
+                       {
+                         printf ("Exit on warning! \n");
+                         ROSE_ASSERT(false);
+                       }
+
+                    if (declarationStatement_original == definingDeclaration_original)
+                       {
+                      // This is a defining declaration, so we can set the scope (or can we?) 
+                      // I guess we could if the translation map were complete, but it is not complete yet.
+                       }
+                  }
+                 else
+                  {
+                 // Warn about this if snippetFile == NULL.
+                    if (snippetFile == NULL)
+                       {
+                         printf ("Note: definingDeclaration_original = %p getEnclosingFileNode() returned NULL \n",definingDeclaration_original);
+
+                         if (failOnWarning == true)
+                            {
+                              printf ("Exit on warning! \n");
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+             }
+        }
+
+  // Handle what is the same about all expressions before getting to the switch.
+     SgExpression* expression = isSgExpression(node_copy);
+     if (expression != NULL)
+        {
+       // Check the scope if it is stored explicitly.
+
+       // printf ("WARNING: Need to check if the type is explicitly stored in this expression! \n");
+
+          if (expression->hasExplicitType() == true)
+             {
+            // Handle the type for all expressions.
+               SgType* type = expression->get_type();
+               ROSE_ASSERT(type != NULL);
+             }
+        }
+
+#if 1
+     printf ("Leaving errorCheckingTargetAST() \n");
+#endif
    }
 
 
@@ -13069,7 +13252,6 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
      printf ("   --- insertionPointIsScope = %s \n",insertionPointIsScope ? "true" : "false");
 #endif
 
-#if 1
   // DQ (3/4/2014): As I recall there is a reason why we can't setup the scope here.
 
   // We also need to handle the symbol (move it from the body (SgBaicBlock) that was
@@ -13080,6 +13262,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
      SgScopeStatement* targetScope = isSgScopeStatement(insertionPointScope);
      ROSE_ASSERT(targetScope != NULL);
+
+#if 1
+  // Refactored code.
+#if 0
+     errorCheckingTargetAST(node_copy,node_original,targetFile, false);
+#endif
+#else
+
+#error "DEAD CODE!"
 
   // Handle what is the same about all statements before getting to the switch.
      SgStatement* statement_copy     = isSgStatement(node_copy);
@@ -13148,7 +13339,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
              }
         }
-#endif
+
+#error "DEAD CODE!"
 
   // Handle what is the same about all declaration before getting to the switch.
      SgDeclarationStatement* declarationStatement_copy     = isSgDeclarationStatement(node_copy);
@@ -13178,6 +13370,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                   }
              }
 
+#error "DEAD CODE!"
+
           SgDeclarationStatement* definingDeclaration_original = declarationStatement_original->get_definingDeclaration();
           if (definingDeclaration_original != NULL)
              {
@@ -13206,6 +13400,10 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                   }
              }
         }
+
+#error "DEAD CODE!"
+
+#endif
 
   // Handle what is the same about all expressions before getting to the switch.
      SgExpression* expression = isSgExpression(node_copy);
@@ -13476,7 +13674,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
                          ROSE_ASSERT(enumFieldSymbol != NULL);
 
-                         targetScope->insert_symbol(name,enumFieldSymbol);
+                      // DQ (3/17/2014): Build a new sysmbol to for the initializedName_copy instead of reusing the existing symbol 
+                      // from the snippet AST.
+                         SgEnumFieldSymbol* new_enumFieldSymbol = new SgEnumFieldSymbol(initializedName_copy);
+                         ROSE_ASSERT(new_enumFieldSymbol != NULL);
+
+                      // targetScope->insert_symbol(name,enumFieldSymbol);
+                         targetScope->insert_symbol(name,new_enumFieldSymbol);
 
                       // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
                          initializedName_copy->set_scope(targetScope);
@@ -13496,7 +13700,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #if 0
                          printf ("Insert symbol = %p for initializedName_copy = %p = %s into targetScope = %p = %s \n",variableSymbol,initializedName_copy,initializedName_copy->get_name().str(),targetScope,targetScope->class_name().c_str());
 #endif
-                         targetScope->insert_symbol(initializedName_copy->get_name(),variableSymbol);
+                      // DQ (3/17/2014): Build a new sysmbol to for the initializedName_copy instead of reusing the existing symbol 
+                      // from the snippet AST.
+                         SgVariableSymbol* new_variableSymbol = new SgVariableSymbol(initializedName_copy);
+                         ROSE_ASSERT(new_variableSymbol != NULL);
+
+                      // targetScope->insert_symbol(initializedName_copy->get_name(),variableSymbol);
+                         targetScope->insert_symbol(initializedName_copy->get_name(),new_variableSymbol);
 
                       // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
                          initializedName_copy->set_scope(targetScope);
@@ -13912,6 +14122,39 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                printf ("Exiting as a test 2! \n");
                ROSE_ASSERT(false);
 #endif
+
+               SgEnumDeclaration* enumDeclaration_copy_defining        = isSgEnumDeclaration(enumDeclaration_copy->get_definingDeclaration());
+               SgEnumDeclaration* enumDeclaration_copy_nondefining     = isSgEnumDeclaration(enumDeclaration_copy->get_firstNondefiningDeclaration());
+               SgEnumDeclaration* enumDeclaration_original_defining    = isSgEnumDeclaration(enumDeclaration_original->get_definingDeclaration());
+               SgEnumDeclaration* enumDeclaration_original_nondefining = isSgEnumDeclaration(enumDeclaration_original->get_firstNondefiningDeclaration());
+
+            // Set the scope if it is still set to the scope of the snippet AST.
+               if (enumDeclaration_copy_defining != NULL && enumDeclaration_copy_defining->get_scope() == enumDeclaration_original_defining->get_scope())
+                  {
+#if 1
+                    printf ("reset the scope of enumDeclaration_copy_defining \n");
+#endif
+                    enumDeclaration_copy_defining->set_scope(targetScope);
+                  }
+
+            // Set the scope if it is still set to the scope of the snippet AST.
+               if (enumDeclaration_copy_nondefining != NULL && enumDeclaration_copy_nondefining->get_scope() == enumDeclaration_original_nondefining->get_scope())
+                  {
+#if 1
+                    printf ("reset the scope of enumDeclaration_copy_nondefining \n");
+#endif
+                    enumDeclaration_copy_nondefining->set_scope(targetScope);
+                  }
+
+            // Set the parent if it is still set to a node of the snippet AST.
+               if (enumDeclaration_copy_nondefining != NULL && enumDeclaration_copy_nondefining->get_parent() == enumDeclaration_original_nondefining->get_parent())
+                  {
+#if 1
+                    printf ("reset the parent of enumDeclaration_copy_nondefining \n");
+#endif
+                    enumDeclaration_copy_nondefining->set_parent(enumDeclaration_copy->get_parent());
+                  }
+
                break;
              }
 
@@ -14493,6 +14736,17 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // Most IR nodes do not require specialized fixup (are not processed).
              }
         }
+
+#if 0
+  // DQ (3/17/2014): Cause failure on warnings about any constructs referencing the snippet AST.
+#if 0
+  // Assert fail on warnings.
+     errorCheckingTargetAST(node_copy,node_original,targetFile, true);
+#else
+  // Cause only warnings.
+     errorCheckingTargetAST(node_copy,node_original,targetFile, false);
+#endif
+#endif
    }
 
 
