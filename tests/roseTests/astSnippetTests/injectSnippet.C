@@ -9,7 +9,8 @@ using namespace rose;
 static void
 usage(const std::string &arg0)
 {
-    std::cerr <<"usage: " <<arg0 <<" --test:snippet=[FILE_NAME.]SNIPPET_NAME --test:ipoint-function=NAME [TEST_SWITCHES] [ROSE_SWITCHES] SPECIMEN\n"
+    std::cerr <<"usage: " <<arg0 <<" --test:snippet=FILE_NAME,SNIPPET_NAME --test:ipoint-function=NAME [TEST_SWITCHES]"
+              <<" [ROSE_SWITCHES] SPECIMEN\n"
               <<"  These two switches are required since they describe what to inject and\n"
               <<"  where to inject it:\n"
               <<"    --test:snippet=[FILE_NAME,]SNIPPET_NAME\n"
@@ -38,9 +39,9 @@ usage(const std::string &arg0)
               <<"        of the insertion point's scope, appended to the end of declarations\n"
               <<"        that are already present in the insertion point's scope, or simply inserted\n"
               <<"        along with the non-declaration statements without moving them.  The default\n"
-              <<"        is \"end\". The \"cursor\" setting only works for languages like Java and\n"
-              <<"        C++ which allow declarations and non-declarations to be mixed within a\n"
-              <<"        single scope.\n"
+              <<"        is \"end\" for C and \"cursor\" for Java. The \"cursor\" setting only works\n"
+              <<"        for languages like Java and C++ which allow declarations and non-declarations\n"
+              <<"        to be mixed within a single scope.\n"
               <<"    --test:recursive=(yes|no)\n"
               <<"        Determines whether snippets are recursively inserted when a snippet\n"
               <<"        calls other snippets that are defined in the same snippet file.  The\n"
@@ -152,7 +153,7 @@ main(int argc, char *argv[])
     if (locdecls_position) {
         std::cout <<"    local decls position:     " <<stringifySnippetLocalDeclarationPosition(*locdecls_position) <<"\n";
     } else {
-        std::cout <<"    local decls position:     depends on language (C=LOCDECLS_AT_BEGINNING; Java=LOCDECLS_AT_CURSOR)\n";
+        std::cout <<"    local decls position:     depends on language (C=LOCDECLS_AT_END; Java=LOCDECLS_AT_CURSOR)\n";
     }
     std::cout <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
               <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n";
@@ -255,7 +256,7 @@ main(int argc, char *argv[])
     if (locdecls_position) {
         snippet->setLocalDeclarationPosition(*locdecls_position);
     } else if (SageInterface::is_C_language()) {
-        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_BEGINNING);
+        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
     } else {
         assert(SageInterface::is_Java_language());
         snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_CURSOR);
