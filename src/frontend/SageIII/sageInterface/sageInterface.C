@@ -10401,11 +10401,14 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
   // SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
      SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
 
+  // DQ (3/14/2014): This is false for a copy of a class declaration being inserted into the AST.
   // DQ (9/4/2012): I want to assert this for the new EDG/ROSE connection code (at least).
-     ROSE_ASSERT(mysymbol != NULL);
+  // ROSE_ASSERT(mysymbol != NULL);
 
      if (mysymbol == NULL)
         {
+          printf ("Note: SageInterface::fixStructDeclaration(): structDecl = %p nondefdecl = %p (mysymbol == NULL) \n",structDecl,nondefdecl);
+
        // DQ (12/3/2011): This will be an error for C++ if the scope of the statment is different from the scope where it is located structurally...
        // DQ (12/4/2011): Only generate symbols and set the scope if this is the correct scope.
           ROSE_ASSERT(structDecl->get_scope() != NULL);
@@ -10432,6 +10435,10 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     defdecl->set_parent(scope);
                nondefdecl->set_parent(scope);
 #endif
+             }
+            else
+             {
+               printf ("In SageInterface::fixStructDeclaration(): (mysymbol == NULL) Skipped building an associated symbol! \n");
              }
         }
 
@@ -10471,7 +10478,17 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
              {
                printf ("ERROR: defdecl->get_type() != nondefdecl->get_type(): what are these: \n");
                printf ("   defdecl->get_type()    = %p = %s \n",defdecl   ->get_type(),defdecl   ->get_type()->class_name().c_str());
+               SgNamedType* namedType_definingDecl = isSgNamedType(defdecl->get_type());
+               if (namedType_definingDecl != NULL)
+                  {
+                    printf ("namedType_definingDecl->get_declaration() = %p = %s \n",namedType_definingDecl->get_declaration(),namedType_definingDecl->get_declaration()->class_name().c_str());
+                  }
                printf ("   nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+               SgNamedType* namedType_nondefiningDecl = isSgNamedType(nondefdecl->get_type());
+               if (namedType_nondefiningDecl != NULL)
+                  {
+                    printf ("namedType_nondefiningDecl->get_declaration() = %p = %s \n",namedType_nondefiningDecl->get_declaration(),namedType_nondefiningDecl->get_declaration()->class_name().c_str());
+                  }
              }
           ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
 
