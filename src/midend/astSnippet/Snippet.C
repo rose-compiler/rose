@@ -400,10 +400,10 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgStatement *targetFirstStatement = targetStatements.empty() ? NULL : targetStatements.front();
 
     // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
-    // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
-    // the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file and
-    // insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original scope
-    // in the snippet file.
+    // avoid unparsing problems for C where the unparser asserts things such as "the file for a function declaration's scope
+    // must be the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file
+    // and insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original
+    // scope in the snippet file.
     struct T1: AstSimpleProcessing {
         Sg_File_Info *target, *snippet;
         T1(Sg_File_Info *target, Sg_File_Info *snippet): target(target), snippet(snippet) {}
@@ -426,7 +426,8 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             }
         }
     } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
-    t1.traverse(file->getAst(), preorder);
+    if (!SageInterface::is_Java_language())
+        t1.traverse(file->getAst(), preorder);
 
   // insertionPoint->get_file_info()->display("insertionPoint: test 1: debug");
 
