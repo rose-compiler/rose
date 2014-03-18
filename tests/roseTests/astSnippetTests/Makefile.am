@@ -448,14 +448,14 @@ quickSortC.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnip
 	@$(RTH_RUN)										\
 		TITLE="quickSort C [$@]"							\
 		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortC/quicksort.c"	\
-		SUBDDIR=yes									\
+		USE_SUBDIR=yes									\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 quickSortJava.passed: quickSortInjector QuickSortJava/QuickSort.java QuickSortJava/ErrorSnippets.java
 	@$(RTH_RUN)											\
 		TITLE="quickSort Java [$@]"								\
 		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortJava/QuickSort.java"	\
-		SUBDDIR=yes										\
+		USE_SUBDIR=yes										\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
@@ -473,7 +473,10 @@ quickSortJava.passed: quickSortInjector QuickSortJava/QuickSort.java QuickSortJa
 # To run Java:
 # ./injectSnippet --test:snippet=$(src_dir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(src_dir)/HelloWorld.java $(src_dir)/SnippetGroup1.java
 
-test_1:
+#FIXME: These targets all need dependencies, otherwise "make clean; make local_debug_tests" will fail. [RPM 2014-03-18]
+
+TEST_TARGETS += test_1.passed
+test_1.passed:
 #	./injectSnippet --test:snippet=snippet2014_01.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_01.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -486,7 +489,8 @@ test_1:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_2:
+TEST_TARGETS += test_2.passed
+test_2.passed:
 #	./injectSnippet --test:snippet=snippet2014_02.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_02.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -499,7 +503,8 @@ test_2:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_3:
+TEST_TARGETS += test_3.passed
+test_3.passed:
 #	./injectSnippet --test:snippet=snippet2014_03.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_03.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -512,7 +517,8 @@ test_3:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_4:
+TEST_TARGETS += test_4.passed
+test_4.passed:
 #	./injectSnippet --test:snippet=snippet2014_04.c,::swap --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_04.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -525,7 +531,8 @@ test_4:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_5:
+TEST_TARGETS += test_5.passed
+test_5.passed:
 #	./injectSnippet --test:snippet=snippet2014_05.c,::count --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_05.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -538,7 +545,8 @@ test_5:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_6:
+TEST_TARGETS += test_6.passed
+test_6.passed:
 #	./injectSnippet --test:snippet=snippet2014_06.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_06.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -551,7 +559,8 @@ test_6:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_7:
+TEST_TARGETS += test_7.passed
+test_7.passed:
 #	./injectSnippet --test:snippet=snippet2014_07.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_07.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -564,7 +573,8 @@ test_7:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_8:
+TEST_TARGETS += test_8.passed
+test_8.passed:
 #	./injectSnippet --test:snippet=snippet2014_08.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_08.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -577,7 +587,8 @@ test_8:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_9:
+TEST_TARGETS += test_9.passed
+test_9.passed:
 #	./injectSnippet --test:snippet=snippet2014_09.c,::allocate_string --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_09.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -590,7 +601,8 @@ test_9:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_10:
+TEST_TARGETS += test_10.passed
+test_10.passed:
 #	./injectSnippet --test:snippet=snippet2014_10.c,::storeStructString --test:copy-related-things=no --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_10.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -603,7 +615,8 @@ test_10:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_11:
+TEST_TARGETS += test_11.passed
+test_11.passed:
 #	./injectSnippet --test:snippet=snippet2014_11.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_11.c
 	@$(RTH_RUN)					\
 		TITLE="basic insertion [$@]"		\
@@ -616,18 +629,19 @@ test_11:
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@
 
-test_java_1:
-	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
+#TEST_TARGETS += test_java_1.passed
+#test_java_1.passed:
+#	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
 
 
 # DQ: Tests that I can use to vizualize the whole AST (for debugging).
-local_debug_tests: test_1 test_2 test_3 test_4 test_5 test_6 test_7 test_8 test_9 test_10 test_11
+local_debug_tests: $(addsuffix .passed, test_1 test_2 test_3 test_4 test_5 test_6 test_7 test_8 test_9 test_10 test_11)
 
 ###############################################################################################################################
 # Automake boilerplate
 ###############################################################################################################################
 
-check-local: $(TEST_TARGETS) local_debug_tests
+check-local: $(TEST_TARGETS)
 	@echo "**************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astSnippetTests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
