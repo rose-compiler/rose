@@ -1,6 +1,7 @@
 #include "snippetTests.h"
 #include "stringify.h"
 
+#include <boost/algorithm/string/erase.hpp>
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 
@@ -211,6 +212,19 @@ main(int argc, char *argv[])
     snippetFile->doNotInsert("Snippets6.someOtherInteger");
     snippetFile->doNotInsert("Snippets6.SomeOtherStruct");
 
+    // Never copy the main() function from the snippet file to the target file
+    if (SageInterface::is_C_language()) {
+        snippetFile->doNotInsert("::main");
+    } else {
+        assert(SageInterface::is_Java_language());
+        size_t slashIdx = snippet_file_name.rfind('/');
+        std::string className = boost::erase_last_copy((slashIdx==std::string::npos ?
+                                                        snippet_file_name :
+                                                        snippet_file_name.substr(slashIdx+1)),
+                                                       ".java");
+        snippetFile->doNotInsert(className + ".main");
+    }
+    
     // Test that we can black list functions based on their signature, not just their name.
     std::vector<SgFunctionDefinition*> someFunctions = SnippetTests::findFunctionDefinitions(snippetFile->getAst(),
                                                                                              "Snippets6.someFunction");
