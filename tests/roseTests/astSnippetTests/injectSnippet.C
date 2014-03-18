@@ -2,6 +2,7 @@
 #include "stringify.h"
 
 #include <boost/foreach.hpp>
+#include <boost/optional.hpp>
 
 using namespace rose;
 
@@ -31,12 +32,15 @@ usage(const std::string &arg0)
               <<"        the insertion site's scope, placing variable declarations near the\n"
               <<"        top of the scope and other statements at the insertion point. The\n"
               <<"        default is \"stmts\".\n"
-              <<"    --test:locdecls-position=(beginning|end)\n"
+              <<"    --test:locdecls-position=(beginning|end|cursor)\n"
               <<"        When the insert-mechanism is \"stmts\", this switch controls whether\n"
               <<"        declaration statements in the snippet are copied to the very beginning\n"
-              <<"        of the insertion point's scope, or appended to the end of declarations\n"
-              <<"        that are already present in the insertion point's scope.  The default\n"
-              <<"        is \"end\".\n"
+              <<"        of the insertion point's scope, appended to the end of declarations\n"
+              <<"        that are already present in the insertion point's scope, or simply inserted\n"
+              <<"        along with the non-declaration statements without moving them.  The default\n"
+              <<"        is \"end\". The \"cursor\" setting only works for languages like Java and\n"
+              <<"        C++ which allow declarations and non-declarations to be mixed within a\n"
+              <<"        single scope.\n"
               <<"    --test:recursive=(yes|no)\n"
               <<"        Determines whether snippets are recursively inserted when a snippet\n"
               <<"        calls other snippets that are defined in the same snippet file.  The\n"
@@ -94,7 +98,7 @@ main(int argc, char *argv[])
     // Parse our own command-line switches
     std::string snippet_file_name="snippets", snippet_name, ipoint_function_name;
     Snippet::InsertMechanism insert_mechanism = Snippet::INSERT_STMTS;
-    Snippet::LocalDeclarationPosition locdecls_position = Snippet::LOCDECLS_AT_END;
+    boost::optional<Snippet::LocalDeclarationPosition> locdecls_position;
     bool insert_recursively = true, copy_definitions = false;
     std::vector<std::string> frontend_args;
     frontend_args.push_back(argv[0]);
@@ -123,6 +127,8 @@ main(int argc, char *argv[])
             locdecls_position = Snippet::LOCDECLS_AT_BEGINNING;
         } else if (!strcmp(argv[argno], "--test:locdecls-position=end")) {
             locdecls_position = Snippet::LOCDECLS_AT_END;
+        } else if (!strcmp(argv[argno], "--test:locdecls-position=cursor")) {
+            locdecls_position = Snippet::LOCDECLS_AT_CURSOR;
         } else if (!strcmp(argv[argno], "--test:copy-definitions=yes")) {
             copy_definitions = true;
         } else if (!strcmp(argv[argno], "--test:copy-definitions=no")) {
@@ -142,9 +148,13 @@ main(int argc, char *argv[])
               <<"    snippet file base name:   " <<snippet_file_name <<"\n"
               <<"    snippet name:             " <<snippet_name <<"\n"
               <<"    insertion point function: " <<ipoint_function_name <<"\n"
-              <<"    insert mechanism:         " <<stringifySnippetInsertMechanism(insert_mechanism) <<"\n"
-              <<"    local decls position:     " <<stringifySnippetLocalDeclarationPosition(locdecls_position) <<"\n"
-              <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
+              <<"    insert mechanism:         " <<stringifySnippetInsertMechanism(insert_mechanism) <<"\n";
+    if (locdecls_position) {
+        std::cout <<"    local decls position:     " <<stringifySnippetLocalDeclarationPosition(*locdecls_position) <<"\n";
+    } else {
+        std::cout <<"    local decls position:     depends on language (C=LOCDECLS_AT_BEGINNING; Java=LOCDECLS_AT_CURSOR)\n";
+    }
+    std::cout <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
               <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n";
 
 #if 0
@@ -244,7 +254,14 @@ main(int argc, char *argv[])
     SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
 
     snippet->setInsertMechanism(insert_mechanism);
-    snippet->setLocalDeclarationPosition(locdecls_position);
+    if (locdecls_position) {
+        snippet->setLocalDeclarationPosition(*locdecls_position);
+    } else if (SageInterface::is_C_language()) {
+        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_BEGINNING);
+    } else {
+        assert(SageInterface::is_Java_language());
+        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_CURSOR);
+    }
     snippet->setInsertRecursively(insert_recursively);
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
