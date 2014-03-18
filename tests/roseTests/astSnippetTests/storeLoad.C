@@ -8,15 +8,13 @@ using namespace rose;
 int
 main(int argc, char *argv[])
 {
-    if (argc < 4) {
-        std::cerr <<"usage: " <<argv[0] <<" HeapString|StructString yes|no [ROSE_SWITCHES] SPECIMEN\n"
-                  <<"   where 'yes|no' refers to the Snippet::copyRelatedThings property\n";
+    if (argc < 3) {
+        std::cerr <<"usage: " <<argv[0] <<" HeapString|StructString [ROSE_SWITCHES] SPECIMEN\n";
         exit(1);
     }
     std::vector<std::string> args(argv+0, argv+argc);
     std::string what = args[1];
-    bool copyRelatedThings = 0==strcmp(argv[2], "yes");
-    args.erase(args.begin()+1, args.begin()+3);
+    args.erase(args.begin()+1);
     SgProject *project = frontend(args);
     
 
@@ -26,7 +24,6 @@ main(int argc, char *argv[])
 
     SnippetFilePtr snippetFile = storeString->getFile();
     assert(snippetFile == loadString->getFile());
-    snippetFile->setCopyRelatedThings(copyRelatedThings);
 
     // Find the insertion point in the big file.
     SgFunctionDefinition *func_ipoint1 = SnippetTests::findFunctionDefinition(project, "::main");

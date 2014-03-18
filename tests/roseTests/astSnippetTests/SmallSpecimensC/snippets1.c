@@ -1,4 +1,3 @@
-
 /* Basic insertion test.  The three declarations should be inserted at the beginning of the insertionPoint scope and the three
  * other statements should be inserted right after the insertionPoint statement. */
 void

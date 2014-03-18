@@ -3,20 +3,19 @@
 #ifndef snippetRelated_H
 #define snippetRelated_H
 
-#define COPY_RELATED_THINGS_no 0
-#define COPY_RELATED_THINGS_yes 1
-
-#if COPY_RELATED_THINGS == COPY_RELATED_THINGS_no
-
 /* From snippets2.c */
-int snippet_usage_counter = 0;
+extern int snippet_usage_counter;
 
 /* From snippets3.c */
 #include <stdio.h>
+int copy_me_too();
 
 /* From snippets4.c */
 #include <stdlib.h>
 #include <string.h>
+
+/* Added by DQ to avoid interpretation of assert macro as implicit function */
+#include <assert.h>
 
 struct Struct1 {
     int int_member;
@@ -27,15 +26,14 @@ struct Struct1 {
 };
 
 /* From snippets5.c */
-void randomOffByOne(int addend1);
-void addWithError(int addend1, int addend2, int result);
-void copy_string10(char *dst, const char *src);
-void allocate_string(const char *s);
 
 /* From snippets6.c */
 #include <stdlib.h>
 #include <string.h>
 
+void randomOffByOne(int addend1);
+void addWithError(int addend1, int addend2, int result);
+void copy_string10(char *dst, const char *src);
+void allocate_string(const char *s);
 
-#endif
 #endif
