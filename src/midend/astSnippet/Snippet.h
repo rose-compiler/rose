@@ -297,11 +297,14 @@ public:
     };
 
     /** Determines where local declarations are injected when using INSERT_STMTS.  New declarations can be injected starting at
-     * the beginning of the injection site's function scope, or after the last leading declaration statement in that scope. In
-     * either case, the snippet's declarations will appear in the injected code in the same order as in the snippet. */
+     * the beginning of the injection site's function scope, after the last leading declaration statement in that scope, or
+     * in the same place that the non-declaration statements are being inserted.  The last case is only useful in languages
+     * like C++ and Java that don't require declarations to be at the beginning of a scope. In any case, the snippet's
+     * declarations will appear in the injected code in the same order as in the snippet. */
     enum LocalDeclarationPosition {
         LOCDECLS_AT_BEGINNING,                          /**< Local declarations inserted at beginning of function. */
         LOCDECLS_AT_END,                                /**< Local declarations inserted at end of leading declarations. */
+        LOCDECLS_AT_CURSOR                              /**< Local declarations are not moved to a declarations area. */
     };
 
 private:

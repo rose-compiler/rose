@@ -477,6 +477,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                         case LOCDECLS_AT_END:
                             SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
                             break;
+                        case LOCDECLS_AT_CURSOR:
+                            SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
+                            break;
                     }
                 } else {
                     SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
@@ -601,6 +604,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                                    //      translationMap.insert( std::pair<SgNode*,SgNode*>(ast->get_body(), insertionPoint));
 
                                       SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFunctionScope,
+                                                                                                insertionPointIsScope,
+                                                                                                stmts_copy_of_snippet_ast[i],
+                                                                                                stmts_in_original_snippet_ast[i]);
+                                      break;
+
+                                   case LOCDECLS_AT_CURSOR:
+                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,
                                                                                                 insertionPointIsScope,
                                                                                                 stmts_copy_of_snippet_ast[i],
                                                                                                 stmts_in_original_snippet_ast[i]);
