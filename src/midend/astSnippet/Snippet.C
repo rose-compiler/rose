@@ -843,9 +843,6 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         }
 
         // Insert this declaration
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"insertRelatedThingsJava: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
-#endif
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
@@ -919,11 +916,6 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         }
 
         // Insert this declaration
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"insertRelatedThingsC: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
-        printf ("insertRelatedThingsC: inserting decl = %p = %s = %s \n",decl,decl->class_name().c_str(),SageInterface::get_name(decl).c_str());
-        decl->get_file_info()->display("insertRelatedThingsC: inserting decl: debug");
-#endif
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         removeIncludeDirectives(declCopy);
