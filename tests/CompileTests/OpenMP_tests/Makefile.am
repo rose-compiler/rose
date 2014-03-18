@@ -228,7 +228,8 @@ check-local:
 endif
 
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c \
-			 macroIds.c macroIds.h macroIdsDef.h
+			 macroIds.c macroIds.h macroIdsDef.h \
+			 collapse_2.c 
 
 clean-local:
 	rm -f *.o rose_*.* *.out

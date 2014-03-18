@@ -422,6 +422,8 @@ test_binary_after_token_unparsing:
 	diff gcc_test2003_12.o rose_test2003_12.o
 
 #------------------------------------------------------------------------------------------------------------------------
+EXTRA_DIST = input_testUnparsingUsingTokenStream.c input_test_empty_file.c input_test_file_with_CR.c input_test_file_with_text.c \
+             input_test_02.c
 
 
 # Additional automake targets

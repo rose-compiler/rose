@@ -7,6 +7,17 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 
+# DQ (3/8/2014): Adding OFP test code
+bin_PROGRAMS = traverse
+traverse_SOURCES = traverse.cpp
+
+# ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
+ATERM_ROOT = $(ATERM_INSTALL_PATH)
+ATERM_INCLUDE = -I$(ATERM_ROOT)/include
+INCLUDES = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+# LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse -lofp
+
 TEST_F90_Objects = main_program_2008_01.f90
 
 PASSING_TEST_Objects = $(TEST_F90_Objects)
@@ -32,6 +43,10 @@ junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/exper
 junk : $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl
 	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
 
+test_ofp: traverse
+#	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/FortranFixed.tbl -o main_program_2008_01.f90.aterm
+	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o main_program_2008_01.f90.aterm
+	./traverse main_program_2008_01.f90.aterm
 
 clean-local:
 	rm -f rose_*.* *.aterm *.o

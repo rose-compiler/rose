@@ -46,7 +46,7 @@ bin_PROGRAMS += addJavaTransformation
 addJavaTransformation_SOURCES = addJavaTransformation.cpp
 
 test_addJavaTransformation: addJavaTransformation
-	./addJavaTransformation $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
 #---------------------------------------
 # test:   addJavaSource
@@ -55,7 +55,7 @@ test_addJavaTransformation: addJavaTransformation
 bin_PROGRAMS += addJavaSource
 addJavaSource_SOURCES = addJavaSource.cpp
 test_addJavaSource: addJavaSource
-	./addJavaSource $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/InputCode_java.java"
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
 #---------------------------------------
 # test:   addJavaAssignmentStmt
@@ -64,7 +64,7 @@ test_addJavaSource: addJavaSource
 bin_PROGRAMS += addJavaAssignmentStmt
 addJavaAssignmentStmt_SOURCES = addJavaAssignmentStmt.cpp
 test_addJavaAssignmentStmt: addJavaAssignmentStmt
-	./addJavaAssignmentStmt $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
 #---------------------------------------
 # test:   addJavaExpression
@@ -73,7 +73,7 @@ test_addJavaAssignmentStmt: addJavaAssignmentStmt
 bin_PROGRAMS += addJavaExpression
 addJavaExpression_SOURCES = addJavaExpression.cpp
 test_addJavaExpression: addJavaExpression
-	./addJavaExpression $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
 #---------------------------------------
 # test:   addJavaVariableDeclaration
@@ -82,5 +82,5 @@ test_addJavaExpression: addJavaExpression
 bin_PROGRAMS += addJavaVariableDeclaration
 addJavaVariableDeclaration_SOURCES = addJavaVariableDeclaration.cpp
 test_addJavaVariableDeclaration: addJavaVariableDeclaration
-	./addJavaVariableDeclaration $(CLASSPATH) $(ROSE_VERBOSE) $(srcdir)/InputCode_java.java
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
