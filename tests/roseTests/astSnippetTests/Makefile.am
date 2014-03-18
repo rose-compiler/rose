@@ -466,7 +466,7 @@ noinst_PROGRAMS += quickSortInjector
 quickSortInjector_SOURCES = quickSortInjector.C snippetTests.C
 quickSortInjector_LDADD = $(ROSE_LIBS)
 
-TEST_TARGETS += quickSortC.passed quickSortJava.passed
+TEST_TARGETS += quickSortC.passed quickSortJava.passed reverseC.passed reverseJava.passed
 
 quickSortC.passed: quickSortInjector QuickSortC/quicksort.c QuickSortC/errorSnippets.c
 	@$(RTH_RUN)										\
@@ -481,6 +481,32 @@ quickSortJava.passed: quickSortInjector QuickSortJava/QuickSort.java QuickSortJa
 		CMD="$(abs_builddir)/quickSortInjector $(abs_srcdir)/QuickSortJava/QuickSort.java"	\
 		USE_SUBDIR=yes										\
 		$(top_srcdir)/scripts/test_exit_status $@
+
+# These use quicksort, but they reverse the injection -- they treat quicksort as the snippet and inject it into
+# the "reverse" specimen.  The only purpose is to test that we can inject larger, more complex snippets.
+
+reverseJava.passed: injectSnippet QuickSortJava/QuickSort.java QuickSortJava/Reverse.java
+	@$(RTH_RUN)								\
+		TITLE="reversed quicksort injection [$@]"			\
+		SNIPPET=QuickSortJava/QuickSort.java,QuickSort.nullSnippet	\
+		SPECIMEN=QuickSortJava/Reverse.java				\
+		IPOINT=Reverse.ipoint1						\
+		INSERT_MECHANISM=stmts						\
+		RECURSIVE_INSERTION=no						\
+		COPY_DEFINITIONS=yes						\
+		$(JAVA_INJECTION_TEST) $@
+
+reverseC.passed: injectSnippet QuickSortC/quicksort.c QuickSortC/reverse.c
+	@$(RTH_RUN)								\
+		TITLE="reversed quicksort injection [$@]"			\
+		SNIPPET=QuickSortC/quicksort.c,::nullSnippet			\
+		SPECIMEN=QuickSortC/reverse.c					\
+		IPOINT=::main							\
+		INSERT_MECHANISM=stmts						\
+		RECURSIVE_INSERTION=no						\
+		COPY_DEFINITIONS=yes						\
+		$(C_INJECTION_TEST) $@
+
 
 ###############################################################################################################################
 # DQ (3/2/2014): Extra tests I have to build (these are small enough to be visualized for more detailed debugging):

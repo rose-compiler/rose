@@ -3,6 +3,8 @@
  */
 public class QuickSort {
 
+    void nullSnippet () {}
+
     boolean compGT(int a, int b) {
         return a > b;
     }
