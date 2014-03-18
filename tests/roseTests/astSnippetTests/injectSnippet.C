@@ -69,7 +69,7 @@ struct InsertionPoint {
     }
 
     bool isValid(size_t nvars=0) const {
-        return function!=NULL && last_stmt!=NULL && localvars.size() > nvars;
+        return function!=NULL && last_stmt!=NULL && localvars.size() >= nvars;
     }
 };
 
@@ -249,6 +249,12 @@ main(int argc, char *argv[])
 
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
     size_t nargs = snippet->numberOfArguments();
+    if (nargs > insertionPoint.localvars.size()) {
+        throw std::runtime_error("not enough local variables to insert " + snippet_name + " into " + ipoint_function_name +
+                                 "; the snippet needs " + StringUtility::plural(nargs, "arguments") +
+                                 " but the target function has " +
+                                 StringUtility::plural(insertionPoint.localvars.size(), "local variables"));
+    }
     std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
     SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
 

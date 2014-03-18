@@ -28,7 +28,7 @@ EXTRA_DIST += $(C_INJECTION_TEST) $(STORELOAD_TEST)
 
 #----------------------------------------------------------------------------------------------------
 # test1*.passed are for injection snippets1.c into specimen1.c in various ways.
-TEST_TARGETS += test1a.passed test1b.passed test1c.passed test1d.passed test1e.passed
+TEST_TARGETS += test1a.passed test1b.passed test1c.passed test1d.passed test1e.passed test1f.passed test1g.passed
 EXTRA_DIST += SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c
 test1a.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
 	@$(RTH_RUN)					\
@@ -86,6 +86,30 @@ test1e.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		IPOINT=::ipoint1			\
 		INSERT_MECHANISM=stmts			\
 		LOCDECLS_POSITION=beginning		\
+		RECURSIVE_INSERTION=no			\
+		COPY_DEFINITIONS=no			\
+		$(C_INJECTION_TEST) $@
+
+test1f.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)					\
+		TITLE="basic insertion [$@]"		\
+		SNIPPET=snippets1.c,::basic		\
+		SPECIMEN=SmallSpecimensC/specimen1.c	\
+		IPOINT=::ipoint4			\
+		INSERT_MECHANISM=stmts			\
+		LOCDECLS_POSITION=beginning		\
+		RECURSIVE_INSERTION=no			\
+		COPY_DEFINITIONS=no			\
+		$(C_INJECTION_TEST) $@
+
+test1g.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)					\
+		TITLE="basic insertion [$@]"		\
+		SNIPPET=snippets1.c,::basic		\
+		SPECIMEN=SmallSpecimensC/specimen1.c	\
+		IPOINT=::ipoint4			\
+		INSERT_MECHANISM=stmts			\
+		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
 		$(C_INJECTION_TEST) $@

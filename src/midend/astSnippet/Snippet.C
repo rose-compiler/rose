@@ -397,6 +397,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgStatementPtrList targetStatements = targetFunctionScope->generateStatementList();
     for (size_t i=0; targetFirstDeclaration==NULL && i<targetStatements.size(); ++i)
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
+    SgStatement *targetFirstStatement = targetStatements.empty() ? NULL : targetStatements.front();
 
     // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
     // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
@@ -472,7 +473,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                 if (isSgDeclarationStatement(stmts[i])) {
                     switch (locDeclsPosition) {
                         case LOCDECLS_AT_BEGINNING:
-                            SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                            if (targetFirstDeclaration!=NULL) {
+                                SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                            } else {
+                                SageInterface::insertStatementBefore(targetFirstStatement, stmts[i]);
+                            }
                             break;
                         case LOCDECLS_AT_END:
                             SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
@@ -581,11 +586,17 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                                    // associated scope of the insertionPoint.
                                    // if (translationMap.find(ast->get_body()) == translationMap.end());
                                    //      translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),insertionPoint->get_scope() ) );
-
-                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
-                                                                                                insertionPointIsScope,
-                                                                                                stmts_copy_of_snippet_ast[i],
-                                                                                                stmts_in_original_snippet_ast[i]);
+                                      if (targetFirstDeclaration) {
+                                          SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
+                                                                                                    insertionPointIsScope,
+                                                                                                    stmts_copy_of_snippet_ast[i],
+                                                                                                    stmts_in_original_snippet_ast[i]);
+                                      } else {
+                                          SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstStatement,
+                                                                                                    insertionPointIsScope,
+                                                                                                    stmts_copy_of_snippet_ast[i],
+                                                                                                    stmts_in_original_snippet_ast[i]);
+                                      }
                                       break;
 
                                  case LOCDECLS_AT_END:
