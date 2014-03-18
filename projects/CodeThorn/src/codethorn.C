@@ -446,328 +446,336 @@ void threadsafeReplaceExpression(SgExpression* exp1, SgExpression* exp2, bool mo
 }
 
 
-// rewrites an AST
-// requirements: all variables have been replaced by constants
-// uses AstMatching to match patterns.
+void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
 
-void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
-  //  cout<<"Rewriting AST:"<<endl;
-  bool someTransformationApplied=false;
-  bool transformationApplied=false;
-  AstMatching m;
-  // outer loop (overall fixpoint on all transformations)
-  /* Transformations:
-     1) eliminate unary operator -(integer) in tree
-     2) normalize expressions (reordering of inner nodes and leave nodes)
-     3) constant folding (leave nodes)
-  */
-
-  {
-    // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
-    if(isSgCompoundAssignOp(root)) {
-      dump1_stats.numElimAssignOperator++;
-      SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
-      SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
-      SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
-      SgExpression* newExp;
-      switch(root->variantT()) {
-      case V_SgPlusAssignOp:
-        newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
-        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-        break;
-      case V_SgDivAssignOp:
-        newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
-        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-        break;
-      case V_SgMinusAssignOp:
-        newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
-        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-        break;
-      case V_SgMultAssignOp:
-        newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
-        root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
-		break;
-      default: /* ignore all other cases - all other expr remain unmodified */
-        ;
-      }
-    }
+  // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
+  if(isSgCompoundAssignOp(root)) {
+	dump1_stats.numElimAssignOperator++;
+	SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+	SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+	SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
+	SgExpression* newExp;
+	//TODO: check whether build functions set parent pointers
+	switch(root->variantT()) {
+	case V_SgPlusAssignOp:
+	  newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
+	  root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+	  break;
+	case V_SgDivAssignOp:
+	  newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
+	  root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+	  break;
+	case V_SgMinusAssignOp:
+	  newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
+	  root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+	  break;
+	case V_SgMultAssignOp:
+	  newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
+	  root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+	  break;
+	default: /* ignore all other cases - all other expr remain unmodified */
+	  ;
+	}
   }
-  
-  do{
-    someTransformationApplied=false;
+}
+
+ 
+ // rewrites an AST
+ // requirements: all variables have been replaced by constants
+ // uses AstMatching to match patterns.
+ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
+   //  cout<<"Rewriting AST:"<<endl;
+   bool someTransformationApplied=false;
+   bool transformationApplied=false;
+   AstMatching m;
+   // outer loop (overall fixpoint on all transformations)
+   /* Transformations:
+	  1) eliminate unary operator -(integer) in tree
+	  2) normalize expressions (reordering of inner nodes and leave nodes)
+	  3) constant folding (leave nodes)
+   */
+
+   {
+	 rewriteCompoundAssignments(root,variableIdMapping);
+   }
+
+   do{
+	 someTransformationApplied=false;
 
 
-do {
-    // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
-    transformationApplied=false;
-    MatchResult res=m.performMatching(
-                                      "$UnaryOp=SgMinusOp($IntVal=SgIntVal)\
-                                      ",root);
-    if(res.size()>0) {
-      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-        // match found
-        SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
-        SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
-        //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
-        int rawval=val->get_value();
-        // replace with folded value (using integer semantics)
-        switch(op->variantT()) {
-        case V_SgMinusOp:
-          SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
-          break;
-        default:
-          cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
-          exit(1);
-        }
-        transformationApplied=true;
-        someTransformationApplied=true;
- 	    dump1_stats.numElimMinusOperator++;
-      }
-    }
- } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
+ do {
+	 // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
+	 transformationApplied=false;
+	 MatchResult res=m.performMatching(
+									   "$UnaryOp=SgMinusOp($IntVal=SgIntVal)\
+									   ",root);
+	 if(res.size()>0) {
+	   for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+		 // match found
+		 SgExpression* op=isSgExpression((*i)["$UnaryOp"]);
+		 SgIntVal* val=isSgIntVal((*i)["$IntVal"]);
+		 //cout<<"FOUND UNARY CONST: "<<op->unparseToString()<<endl;
+		 int rawval=val->get_value();
+		 // replace with folded value (using integer semantics)
+		 switch(op->variantT()) {
+		 case V_SgMinusOp:
+		   SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+		   break;
+		 default:
+		   cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+		   exit(1);
+		 }
+		 transformationApplied=true;
+		 someTransformationApplied=true;
+		 dump1_stats.numElimMinusOperator++;
+	   }
+	 }
+  } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
 
-  do {
-    // the following rules guarantee convergence
+   do {
+	 // the following rules guarantee convergence
 
-    // REWRITE: re-ordering (normalization) of expressions
-    // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
-    //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
-    transformationApplied=false;
-    MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
-    if(res.size()>0) {
-      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-        // match found
-        SgExpression* other=isSgExpression((*i)["$Other"]);
-        if(other) {
-          if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
-            //SgNode* op1=(*i)["$BinaryOp1"];
-            SgExpression* val=isSgExpression((*i)["$IntVal"]);
-            //cout<<"FOUND: "<<op1->unparseToString()<<endl;
-            
-            // replace op1-rhs with op2-rhs
-            SgExpression* other_copy=SageInterface::copyExpression(other);
-            SgExpression* val_copy=SageInterface::copyExpression(val);
-            SageInterface::replaceExpression(other,val_copy,false);
-            SageInterface::replaceExpression(val,other_copy,false);
-            //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
-            transformationApplied=true;
-            someTransformationApplied=true;
-			dump1_stats.numAddOpReordering++;
-          }       
-        }
-      }
-    }
+	 // REWRITE: re-ordering (normalization) of expressions
+	 // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
+	 //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
+	 transformationApplied=false;
+	 MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
+	 if(res.size()>0) {
+	   for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+		 // match found
+		 SgExpression* other=isSgExpression((*i)["$Other"]);
+		 if(other) {
+		   if(!isSgIntVal(other) && !isSgFloatVal(other) && !isSgDoubleVal(other)) {
+			 //SgNode* op1=(*i)["$BinaryOp1"];
+			 SgExpression* val=isSgExpression((*i)["$IntVal"]);
+			 //cout<<"FOUND: "<<op1->unparseToString()<<endl;
+
+			 // replace op1-rhs with op2-rhs
+			 SgExpression* other_copy=SageInterface::copyExpression(other);
+			 SgExpression* val_copy=SageInterface::copyExpression(val);
+			 SageInterface::replaceExpression(other,val_copy,false);
+			 SageInterface::replaceExpression(val,other_copy,false);
+			 //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
+			 transformationApplied=true;
+			 someTransformationApplied=true;
+			 dump1_stats.numAddOpReordering++;
+		   }       
+		 }
+	   }
+	 }
+   } while(transformationApplied);
+
+   // REWRITE: constant folding of constant integer (!) expressions
+   // we intentionally avoid folding of float values
+ do {
+	 // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
+	 //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
+	 transformationApplied=false;
+	 MatchResult res=m.performMatching(
+									   "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+									   |$BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+									   |$BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+									   |$BinaryOp1=SgDivideOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
+									   ",root);
+	 if(res.size()>0) {
+	   for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+		 // match found
+		 SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
+		 SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
+		 SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
+		 //cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
+		 int rawval1=val1->get_value();
+		 int rawval2=val2->get_value();
+		 // replace with folded value (using integer semantics)
+		 switch(op1->variantT()) {
+		 case V_SgAddOp:
+		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
+		   break;
+		 case V_SgSubtractOp:
+		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
+		   break;
+		 case V_SgMultiplyOp:
+		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
+		   break;
+		 case V_SgDivideOp:
+		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
+		   break;
+		 default:
+		   cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
+		   exit(1);
+		 }
+		 transformationApplied=true;
+		 someTransformationApplied=true;
+		 dump1_stats.numConstantFolding++;
+	   }
+	 }
   } while(transformationApplied);
+ //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
+   } while(someTransformationApplied);
+ }
 
-  // REWRITE: constant folding of constant integer (!) expressions
-  // we intentionally avoid folding of float values
-do {
-    // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
-    //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
-    transformationApplied=false;
-    MatchResult res=m.performMatching(
-                                      "$BinaryOp1=SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                      |$BinaryOp1=SgSubtractOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                      |$BinaryOp1=SgMultiplyOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                      |$BinaryOp1=SgDivideOp($IntVal1=SgIntVal,$IntVal2=SgIntVal)\
-                                      ",root);
-    if(res.size()>0) {
-      for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-        // match found
-        SgExpression* op1=isSgExpression((*i)["$BinaryOp1"]);
-        SgIntVal* val1=isSgIntVal((*i)["$IntVal1"]);
-        SgIntVal* val2=isSgIntVal((*i)["$IntVal2"]);
-        //cout<<"FOUND CONST: "<<op1->unparseToString()<<endl;
-        int rawval1=val1->get_value();
-        int rawval2=val2->get_value();
-        // replace with folded value (using integer semantics)
-        switch(op1->variantT()) {
-        case V_SgAddOp:
-          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
-          break;
-        case V_SgSubtractOp:
-          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
-          break;
-        case V_SgMultiplyOp:
-          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
-          break;
-        case V_SgDivideOp:
-          SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
-          break;
-        default:
-          cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
-          exit(1);
-        }
-        transformationApplied=true;
-        someTransformationApplied=true;
-		dump1_stats.numConstantFolding++;
-      }
-    }
- } while(transformationApplied);
-//if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
-  } while(someTransformationApplied);
-}
+ void substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
+   typedef pair<SgExpression*,int> SubstitutionPair;
+   typedef list<SubstitutionPair > SubstitutionList;
+   SubstitutionList substitutionList;
+   AstMatching m;
+   MatchResult res;
+ #pragma omp critical
+   {
+   res=m.performMatching("SgPntrArrRefExp(_,$ArrayIndexExpr)",root);
+   }
+   if(res.size()>0) {
+	 for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+		 // match found
+	   SgExpression* arrayIndexExpr=isSgExpression((*i)["$ArrayIndexExpr"]);
+	   if(arrayIndexExpr) {
+		 // avoid substituting a constant by a constant
+		 if(!isSgIntVal(arrayIndexExpr)) {
+		   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true, true);
+		   // only when we get exactly one result it is considered for substitution
+		   // there can be multiple const-results which do not allow to replace it with a single const
+		   if(evalResultList.size()==1) {
+			 list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
+			 ROSE_ASSERT(evalResultList.size()==1);
+			 AValue varVal=(*i).value();
+			 if(varVal.isConstInt()) {
+			   int varIntValue=varVal.getIntValue();
+			   //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
+			   SageInterface::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
+			   dump1_stats.numConstExprElim++;
+			 }
+		   }
+		 }
+	   }
+	 }
+   }
+ }
 
-void substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
-  typedef pair<SgExpression*,int> SubstitutionPair;
-  typedef list<SubstitutionPair > SubstitutionList;
-  SubstitutionList substitutionList;
-  AstMatching m;
-  MatchResult res;
-#pragma omp critical
-  {
-  res=m.performMatching("SgPntrArrRefExp(_,$ArrayIndexExpr)",root);
-  }
-  if(res.size()>0) {
-	for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
-        // match found
-	  SgExpression* arrayIndexExpr=isSgExpression((*i)["$ArrayIndexExpr"]);
-	  if(arrayIndexExpr) {
-		// avoid substituting a constant by a constant
-		if(!isSgIntVal(arrayIndexExpr)) {
-		  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true, true);
-		  // only when we get exactly one result it is considered for substitution
-		  // there can be multiple const-results which do not allow to replace it with a single const
-		  if(evalResultList.size()==1) {
-			list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
-			ROSE_ASSERT(evalResultList.size()==1);
-			AValue varVal=(*i).value();
-			if(varVal.isConstInt()) {
-			  int varIntValue=varVal.getIntValue();
-			  //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
-			  SageInterface::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
-			  dump1_stats.numConstExprElim++;
-			}
-		  }
-		}
-	  }
-	}
-  }
-}
+ void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+   typedef pair<SgExpression*,int> SubstitutionPair;
+   typedef list<SubstitutionPair > SubstitutionList;
+   SubstitutionList substitutionList;
+   RoseAst ast(node);
+   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	 if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
+	   VariableId varRefId=variableIdMapping->variableId(varRef);
+	   if(pstate->varIsConst(varRefId)) {
+		 AValue varVal=pstate->varValue(varRefId);
+		 int varIntValue=varVal.getIntValue();
+		 SubstitutionPair p=make_pair(varRef,varIntValue);
+		 substitutionList.push_back(p);
+	   }
+	 }
+   }
+   for(SubstitutionList::iterator i=substitutionList.begin(); i!=substitutionList.end(); ++i) {
+	 // buildSignedIntType()
+	 // buildFloatType()
+	 // buildDoubleType()
+	 // SgIntVal* buildIntVal(int)
+	 // replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
+	 //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
+	 SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
+   }
+   dump1_stats.numVariableElim+=substitutionList.size();
+ }
 
-void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
-  typedef pair<SgExpression*,int> SubstitutionPair;
-  typedef list<SubstitutionPair > SubstitutionList;
-  SubstitutionList substitutionList;
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-      VariableId varRefId=variableIdMapping->variableId(varRef);
-      if(pstate->varIsConst(varRefId)) {
-        AValue varVal=pstate->varValue(varRefId);
-        int varIntValue=varVal.getIntValue();
-        SubstitutionPair p=make_pair(varRef,varIntValue);
-        substitutionList.push_back(p);
-      }
-    }
-  }
-  for(SubstitutionList::iterator i=substitutionList.begin(); i!=substitutionList.end(); ++i) {
-    // buildSignedIntType()
-    // buildFloatType()
-    // buildDoubleType()
-    // SgIntVal* buildIntVal(int)
-    // replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
-    //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
-    SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
-  }
-  dump1_stats.numVariableElim+=substitutionList.size();
-}
+ struct EStateExprInfo {
+   const EState* first;
+   SgExpression* second;
+   bool mark;
+   EStateExprInfo():first(0),second(0),mark(false){}
+   EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
+ };
 
-struct EStateExprInfo {
-  const EState* first;
-  SgExpression* second;
-  bool mark;
-  EStateExprInfo():first(0),second(0),mark(false){}
-  EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
-};
+ //typedef pair<const EState*, SgExpression*> EStateExprPair;
+ typedef vector<EStateExprInfo> ArrayUpdatesSequence;
 
-//typedef pair<const EState*, SgExpression*> EStateExprPair;
-typedef vector<EStateExprInfo> ArrayUpdatesSequence;
+ bool isAtMarker(Label lab, const EState* estate) {
+   Label elab=estate->label();
+   return elab==lab;
+ }
+ void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, bool useConstExprSubstRule=true, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
+   Labeler* labeler=ana->getLabeler();
+   VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
+   TransitionGraph* tg=ana->getTransitionGraph();
+   const EState* estate=tg->getStartEState();
+   EStatePtrSet succSet=tg->succ(estate);
+   ExprAnalyzer* exprAnalyzer=ana->getExprAnalyzer();
+   int numProcessedArrayUpdates=0;
+   vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
-bool isAtMarker(Label lab, const EState* estate) {
-  Label elab=estate->label();
-  return elab==lab;
-}
-void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, bool useConstExprSubstRule=true, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
-  Labeler* labeler=ana->getLabeler();
-  VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
-  TransitionGraph* tg=ana->getTransitionGraph();
-  const EState* estate=tg->getStartEState();
-  EStatePtrSet succSet=tg->succ(estate);
-  ExprAnalyzer* exprAnalyzer=ana->getExprAnalyzer();
-  int numProcessedArrayUpdates=0;
-  vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
+   // initialize markers
+   // if NO_LABEL is specified then assume start-label at first node and that the end-label is never found (on the path).
+   bool foundStartMarker=false;
+   bool foundEndMarker=false;
+   if(startMarkerLabel==Labeler::NO_LABEL) {
+	 foundStartMarker=true;
+   } else {
+	 foundStartMarker=isAtMarker(startMarkerLabel,estate);
+   }
+   if(endMarkerLabel==Labeler::NO_LABEL) {
+	 foundEndMarker=isAtMarker(endMarkerLabel,estate);
+   } else {
+	 foundEndMarker=false;
+   }
 
-  // initialize markers
-  // if NO_LABEL is specified then assume start-label at first node and that the end-label is never found (on the path).
-  bool foundStartMarker=false;
-  bool foundEndMarker=false;
-  if(startMarkerLabel==Labeler::NO_LABEL) {
-    foundStartMarker=true;
-  } else {
-    foundStartMarker=isAtMarker(startMarkerLabel,estate);
-  }
-  if(endMarkerLabel==Labeler::NO_LABEL) {
-    foundEndMarker=isAtMarker(endMarkerLabel,estate);
-  } else {
-    foundEndMarker=false;
-  }
-  
-  while(succSet.size()>=1) {
-    if(succSet.size()>1) {
-	  cerr<<estate->toString()<<endl;
-      cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
-      exit(1);
-    } else {
-      EStatePtrSet::iterator i=succSet.begin();
-      estate=*i;
-    }  
-    foundStartMarker=foundStartMarker||isAtMarker(startMarkerLabel,estate);
-    foundEndMarker=foundEndMarker||isAtMarker(endMarkerLabel,estate);
-    if(foundStartMarker && !foundEndMarker) {
-      // investigate state
-      Label lab=estate->label();
-      SgNode* node=labeler->getNode(lab);
-      // eliminate superfluous root nodes
-      if(isSgExprStatement(node))
-        node=SgNodeHelper::getExprStmtChild(node);
-      if(isSgExpressionRoot(node))
-        node=SgNodeHelper::getExprRootChild(node);
-      if(SgExpression* exp=isSgExpression(node)) {
-        if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
-          stgArrayUpdateSequence.push_back(make_pair(estate,exp));
-        }
-      }
-    }
+   while(succSet.size()>=1) {
+	 if(succSet.size()>1) {
+	   cerr<<estate->toString()<<endl;
+	   cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
+	   exit(1);
+	 } else {
+	   EStatePtrSet::iterator i=succSet.begin();
+	   estate=*i;
+	 }  
+	 foundStartMarker=foundStartMarker||isAtMarker(startMarkerLabel,estate);
+	 foundEndMarker=foundEndMarker||isAtMarker(endMarkerLabel,estate);
+	 if(foundStartMarker && !foundEndMarker) {
+	   // investigate state
+	   Label lab=estate->label();
+	   SgNode* node=labeler->getNode(lab);
+	   // eliminate superfluous root nodes
+	   if(isSgExprStatement(node))
+		 node=SgNodeHelper::getExprStmtChild(node);
+	   if(isSgExpressionRoot(node))
+		 node=SgNodeHelper::getExprRootChild(node);
+	   if(SgExpression* exp=isSgExpression(node)) {
+		 if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
+		   stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+		 }
+	   }
+	 }
 
-    // next successor set
-    succSet=tg->succ(estate);
-  }
+	 // next successor set
+	 succSet=tg->succ(estate);
+   }
 
-  // stgArrayUpdateSequence is now a vector of all array update operations from the STG
-  // prepare array for parallel assignments of rewritten ASTs
-  arrayUpdates.resize(stgArrayUpdateSequence.size());
-  int N=stgArrayUpdateSequence.size();
+   // stgArrayUpdateSequence is now a vector of all array update operations from the STG
+   // prepare array for parallel assignments of rewritten ASTs
+   arrayUpdates.resize(stgArrayUpdateSequence.size());
+   int N=stgArrayUpdateSequence.size();
 
-  // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
-  //  #pragma omp parallel for
-  for(int i=0;i<N;++i) {
-    const EState* p_estate=stgArrayUpdateSequence[i].first;
-    const PState* p_pstate=p_estate->pstate();
-    SgExpression* p_exp=stgArrayUpdateSequence[i].second;
-    SgNode* p_expCopy;
-    p_expCopy=SageInterface::copyExpression(p_exp);
+   // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
+   //  #pragma omp parallel for
+   for(int i=0;i<N;++i) {
+	 const EState* p_estate=stgArrayUpdateSequence[i].first;
+	 const PState* p_pstate=p_estate->pstate();
+	 SgExpression* p_exp=stgArrayUpdateSequence[i].second;
+	 SgNode* p_expCopy;
+	 p_expCopy=SageInterface::copyExpression(p_exp);
 
-	// p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
-	if(useConstExprSubstRule) {
-	  substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
-	}
-    substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
-    rewriteAst(p_expCopy, variableIdMapping);
-    SgExpression* p_expCopy2=isSgExpression(p_expCopy);
-    if(!p_expCopy2) {
-      cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
-      exit(1);
+	 // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
+	 if(useConstExprSubstRule) {
+	   substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
+	   rewriteCompoundAssignments(p_expCopy,variableIdMapping);
+	 } else {
+	   substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+	   rewriteAst(p_expCopy, variableIdMapping);
+	 }
+	 SgExpression* p_expCopy2=isSgExpression(p_expCopy);
+	 if(!p_expCopy2) {
+	   cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
+	   exit(1);
     }
     numProcessedArrayUpdates++;
     if(numProcessedArrayUpdates%100==0) {

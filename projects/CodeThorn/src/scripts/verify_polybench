@@ -5,7 +5,7 @@
 
 MYBENCHPATH="."
 CODETHORN=codethorn
-CODETHORN_OPTIONS="-DARRAYSIZE=16 -DSTEPSIZE=2 -DGRIDSIZE=16 --threads=6 --edg:no_warnings --rule-const-subst=yes"
+CODETHORN_OPTIONS="-DARRAYSIZE=16 -DSTEPSIZE=2 -DGRIDSIZE=2 --threads=6 --edg:no_warnings --rule-const-subst=yes"
 
 all_benchmarks="2mm 3mm adi atax bicg cholesky correlation covariance durbin fdtd-2d floyd-warshall gemm gemver gesummv gramschmidt jacobi-1d-imper jacobi-2d-imper ludcmp lu mvt reg_detect seidel-2d symm syr2k syrk trisolv trmm"
 all_longbenchmarks="fdtd-apml doitgen"
