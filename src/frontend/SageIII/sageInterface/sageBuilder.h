@@ -1283,6 +1283,9 @@ ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* s
 //! Error checking the inserted snippet AST.
 ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
 
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
 
 ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
 ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);

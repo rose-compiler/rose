@@ -13038,7 +13038,7 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
 void
 SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning )
    {
-#if 1
+#if 0
      printf ("In errorCheckingTargetAST(): node_copy = %p = %s node_original = %p = %s \n",node_copy,node_copy->class_name().c_str(),node_original,node_original->class_name().c_str());
 #endif
 
@@ -13057,13 +13057,15 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
                ROSE_ASSERT(scope_original != NULL);
 
             // if (TransformationSupport::getFile(scope_original) != targetFile)
-               if (getEnclosingFileNode(scope_original) != targetFile)
+            // if (getEnclosingFileNode(scope_original) != targetFile)
+               if (getEnclosingFileNode(scope_copy) != targetFile)
                   {
 #if 1
                     printf ("Warning: SgStatement: scope = %p = %s \n",scope_original,scope_original->class_name().c_str());
 #endif
                  // SgFile* snippetFile = TransformationSupport::getFile(scope_original);
-                    SgFile* snippetFile = getEnclosingFileNode(scope_original);
+                 // SgFile* snippetFile = getEnclosingFileNode(scope_original);
+                    SgFile* snippetFile = getEnclosingFileNode(scope_copy);
                     ROSE_ASSERT(snippetFile != NULL);
                     ROSE_ASSERT(snippetFile->get_sourceFileNameWithPath().empty() == false);
 #if 1
@@ -13121,10 +13123,13 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
      if (declarationStatement_copy != NULL)
         {
        // Check the firstnondefiningDeclaration and definingDeclaration
+          SgDeclarationStatement* firstNondefiningDeclaration_copy     = declarationStatement_copy->get_firstNondefiningDeclaration();
           SgDeclarationStatement* firstNondefiningDeclaration_original = declarationStatement_original->get_firstNondefiningDeclaration();
 
+       // DQ (3/17/2014): Bugfix, we want to use the firstNondefiningDeclaration_copy instead of firstNondefiningDeclaration_original.
        // DQ (3/10/2014): We want to allow for NULL return values from getEnclosingFileNode() for Java classes that are in java.lang (for example).
-          SgFile* snippetFile = getEnclosingFileNode(firstNondefiningDeclaration_original);
+       // SgFile* snippetFile = getEnclosingFileNode(firstNondefiningDeclaration_original);
+          SgFile* snippetFile = getEnclosingFileNode(firstNondefiningDeclaration_copy);
           if (snippetFile != NULL && snippetFile != targetFile)
              {
             // I think we want to allow this because it is a common occurence in any merged AST.  
@@ -13154,12 +13159,15 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
                   }
              }
 
+          SgDeclarationStatement* definingDeclaration_copy     = declarationStatement_copy->get_definingDeclaration();
           SgDeclarationStatement* definingDeclaration_original = declarationStatement_original->get_definingDeclaration();
           if (definingDeclaration_original != NULL)
              {
+            // DQ (3/17/2014): Bugfix, we want to use the definingDeclaration_copy instead of definingDeclaration_original.
             // if (TransformationSupport::getFile(definingDeclaration_original) != targetFile)
             // if (getEnclosingFileNode(definingDeclaration_original) != targetFile)
-               SgFile* snippetFile = getEnclosingFileNode(definingDeclaration_original);
+            // SgFile* snippetFile = getEnclosingFileNode(definingDeclaration_original);
+               SgFile* snippetFile = getEnclosingFileNode(definingDeclaration_copy);
                if (snippetFile != NULL && snippetFile != targetFile)
                   {
 #if 1
@@ -13211,8 +13219,56 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
              }
         }
 
-#if 1
+#if 0
      printf ("Leaving errorCheckingTargetAST() \n");
+#endif
+   }
+
+
+template <class T>
+void
+SageBuilder::resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope)
+   {
+  // I'm not sure if this function is a good idea since we can't call set_scope() easily from any 
+  // SgDeclarationStatement and I don't want to make set_scope() a virtual function because it would 
+  // not make sense everywhere.
+
+#if 1
+  // DQ (3/17/2014): This code is similar to the case for SgEnumDeclaration (later we can refactor this if this works well).
+     T* classDeclaration_copy_defining        = dynamic_cast<T*>(classDeclaration_copy->get_definingDeclaration());
+     T* classDeclaration_copy_nondefining     = dynamic_cast<T*>(classDeclaration_copy->get_firstNondefiningDeclaration());
+     T* classDeclaration_original_defining    = dynamic_cast<T*>(classDeclaration_original->get_definingDeclaration());
+     T* classDeclaration_original_nondefining = dynamic_cast<T*>(classDeclaration_original->get_firstNondefiningDeclaration());
+
+  // Set the scope if it is still set to the scope of the snippet AST.
+     if (classDeclaration_copy_defining != NULL && classDeclaration_copy_defining->get_scope() == classDeclaration_original_defining->get_scope())
+        {
+#if 1
+          printf ("reset the scope of classDeclaration_copy_defining \n");
+#endif
+          classDeclaration_copy_defining->set_scope(targetScope);
+        }
+
+  // Set the scope if it is still set to the scope of the snippet AST.
+     if (classDeclaration_copy_nondefining != NULL && classDeclaration_copy_nondefining->get_scope() == classDeclaration_original_nondefining->get_scope())
+        {
+#if 1
+          printf ("reset the scope of classDeclaration_copy_nondefining \n");
+#endif
+          classDeclaration_copy_nondefining->set_scope(targetScope);
+        }
+
+  // Set the parent if it is still set to a node of the snippet AST.
+     if (classDeclaration_copy_nondefining != NULL && classDeclaration_copy_nondefining->get_parent() == classDeclaration_original_nondefining->get_parent())
+        {
+#if 1
+          printf ("reset the parent of classDeclaration_copy_nondefining \n");
+#endif
+          classDeclaration_copy_nondefining->set_parent(classDeclaration_copy->get_parent());
+        }
+#else
+     printf ("In SageBuilder::resetDeclaration(): We can't call set_scope() easily from any SgDeclarationStatement \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -13923,6 +13979,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                   }
 
+            // DQ (3/17/2014): Refactored code to support resetting the scopes in the SgDeclarationStatement IR nodes.
+               resetDeclaration(functionDeclaration_copy,functionDeclaration_original,targetScope);
 #if 0
                printf ("SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(): Need to be able to fixup the SgFunctionDeclaration \n");
                ROSE_ASSERT(false);
@@ -13979,14 +14037,18 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                       // classSymbolInTargetAST = lookupClassSymbolInParentScopes(classSymbol_copy->get_name(),otherPossibleScope);
                          classSymbolInTargetAST = lookupClassSymbolInParentScopes(name,otherPossibleScope);
-
                          ROSE_ASSERT(classSymbolInTargetAST != NULL);
+#if 0
+                      // I think this is the wrong code.
                          SgClassDeclaration* classDeclaration = classSymbolInTargetAST->get_declaration();
                          ROSE_ASSERT(classDeclaration != NULL);
                          SgScopeStatement* scope = classDeclaration->get_scope();
                          ROSE_ASSERT(scope != NULL);
                          classDeclaration_copy->set_scope(scope);
-
+#else
+                      // DQ (3/17/2014): The scope must be set to be the targetScope (at least for C, but maybe not C++).
+                         classDeclaration_copy->set_scope(targetScope);
+#endif
                       // Insert the symbol into the targetScope.
                       // targetScope->insert_symbol(classSymbol_copy->get_name(),classSymbolInTargetAST);
                          targetScope->insert_symbol(name,classSymbolInTargetAST);
@@ -14012,6 +14074,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                  // Reset the base type to be the one associated with the target file.
                     classDeclaration_copy->set_type(new_class_type);
                   }
+
+               resetDeclaration(classDeclaration_copy,classDeclaration_original,targetScope);
 #if 0
                printf ("SgClassDeclaration: Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -14123,38 +14187,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(false);
 #endif
 
-               SgEnumDeclaration* enumDeclaration_copy_defining        = isSgEnumDeclaration(enumDeclaration_copy->get_definingDeclaration());
-               SgEnumDeclaration* enumDeclaration_copy_nondefining     = isSgEnumDeclaration(enumDeclaration_copy->get_firstNondefiningDeclaration());
-               SgEnumDeclaration* enumDeclaration_original_defining    = isSgEnumDeclaration(enumDeclaration_original->get_definingDeclaration());
-               SgEnumDeclaration* enumDeclaration_original_nondefining = isSgEnumDeclaration(enumDeclaration_original->get_firstNondefiningDeclaration());
-
-            // Set the scope if it is still set to the scope of the snippet AST.
-               if (enumDeclaration_copy_defining != NULL && enumDeclaration_copy_defining->get_scope() == enumDeclaration_original_defining->get_scope())
-                  {
-#if 1
-                    printf ("reset the scope of enumDeclaration_copy_defining \n");
-#endif
-                    enumDeclaration_copy_defining->set_scope(targetScope);
-                  }
-
-            // Set the scope if it is still set to the scope of the snippet AST.
-               if (enumDeclaration_copy_nondefining != NULL && enumDeclaration_copy_nondefining->get_scope() == enumDeclaration_original_nondefining->get_scope())
-                  {
-#if 1
-                    printf ("reset the scope of enumDeclaration_copy_nondefining \n");
-#endif
-                    enumDeclaration_copy_nondefining->set_scope(targetScope);
-                  }
-
-            // Set the parent if it is still set to a node of the snippet AST.
-               if (enumDeclaration_copy_nondefining != NULL && enumDeclaration_copy_nondefining->get_parent() == enumDeclaration_original_nondefining->get_parent())
-                  {
-#if 1
-                    printf ("reset the parent of enumDeclaration_copy_nondefining \n");
-#endif
-                    enumDeclaration_copy_nondefining->set_parent(enumDeclaration_copy->get_parent());
-                  }
-
+               resetDeclaration(enumDeclaration_copy,enumDeclaration_original,targetScope);
                break;
              }
 
@@ -14256,6 +14289,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                     typedefDeclaration_copy->set_type(new_typedef_type);
                   }
+
+               resetDeclaration(typedefDeclaration_copy,typedefDeclaration_original,targetScope);
 #if 0
                printf ("Exiting as a test 2! \n");
                ROSE_ASSERT(false);
@@ -14737,9 +14772,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
              }
         }
 
-#if 0
+#if 1
   // DQ (3/17/2014): Cause failure on warnings about any constructs referencing the snippet AST.
-#if 0
+#if 1
   // Assert fail on warnings.
      errorCheckingTargetAST(node_copy,node_original,targetFile, true);
 #else
