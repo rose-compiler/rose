@@ -4,6 +4,8 @@
 #ifndef ASTATTRIBUTEMECHANISM_H
 #define ASTATTRIBUTEMECHANISM_H
 
+#include <list>
+
 #include "AttributeMechanism.h"
 #include "rosedll.h"
 

@@ -8,6 +8,28 @@ public class Snippets6 {
         arg1 += tmp_offset;
     }
 
+    // Verify that copies of some things can be suppressed. See the doNotInsert calls in injectSnippet.C
+    void shouldNotBeInserted() {}
+    int someOtherInteger;
+    class SomeOtherStruct {
+        int dummy;
+    };
+
+    // Verify that some miscellaneous things are copied into the target.
+    int thisIsAnInteger;
+    class SomeStruct {
+        int dummy;
+    };
+
+    // Verify that black list with overloading works
+    void someFunction(int a) {}	// inserted
+    void someFunction() {}	// not inserted
+
+    void randomOffByOne() {
+        // this snippet is not called recursively because it has a different number of
+        // arguments than what is used at the call site.
+    }
+
     public void notNeeded() {
         // DO_NOT_INSERT
         System.out.println("this function should not be inserted into the target");

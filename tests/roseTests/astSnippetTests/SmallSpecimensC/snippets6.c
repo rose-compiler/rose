@@ -9,9 +9,20 @@ void randomOffByOne(int arg1)
     arg1 += tmp_offset;
 }
 
-void shouldNotBeInserted()                              // DO_NOT_INSERT
-{}
+// Verify that copies of some things can be suppressed. See the doNotInsert calls in injectSnippet.C
+void shouldNotBeInserted() {}
+typedef int SomeOtherInteger;
+SomeOtherInteger someOtherInteger;
+struct SomeOtherStruct {
+    int dummy;
+};
 
+// Verify that some miscellaneous things are copied into the target.
+typedef int SomeInteger;
+SomeInteger thisIsAnInteger;
+struct SomeStruct {
+    int dummy;
+};
 
 void addWithError(int addend1, int addend2, int result)
 {
