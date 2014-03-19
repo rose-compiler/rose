@@ -1940,7 +1940,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
     // Verify that the parent is set, these AST nodes are already setup by ROSE before calling this function.
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
-     if (SgProject::get_verbose() > 0)
+
+    //
+    // At this point, the component stack should be empty.
+    //
+    ROSE_ASSERT(astJavaComponentStack.empty());
+
+    if (SgProject::get_verbose() > 0)
         printf ("Leaving Java_JavaParser_cactionCompilationUnitList \n");
 }
 
@@ -1961,35 +1967,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv *env
         printf ("Leaving Java_JavaParser_cactionCompilationUnitListEnd() \n");
 }
 
-/*
-JNIEXPORT void JNICALL Java_JavaParser_cactionSetupObject(JNIEnv *env, jclass) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionSetupObject\n");
-
-    ROSE_ASSERT(astJavaScopeStack.size());
-    ::ObjectClassDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(::ObjectClassDefinition);
-// TODO: Remove this!
-
-cout << "The object class name is " 
-<< ::ObjectClassDefinition -> get_qualified_name().getString()
-<< endl;
-cout.flush();
-
-    ROSE_ASSERT(::ObjectClassDefinition -> get_qualified_name().getString().compare("java.lang.Object") == 0);
-
-    SgName object_name = "Object";
-
-// TODO: Remove this
-//cout << "Here 5.5" << endl;
-//cout.flush();
-    ::ObjectClassType = isSgClassType(lookupTypeByName(::java_lang, object_name, 0));
-    ROSE_ASSERT(::ObjectClassType);
-
-    if (SgProject::get_verbose() > 0)
-        printf ("Leaving Java_JavaParser_cactionSetupObject\n");
-}
-*/
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSetupBasicTypes(JNIEnv *env, jclass) {
     if (SgProject::get_verbose() > 0)
@@ -2200,6 +2177,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIE
 }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionEcjFatalCompilationErrors(JNIEnv *env, jclass, jstring java_full_file_name) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionSkipErroneousCompilationUnitDeclarationEnd() \n");
+
+    //
+    // The scope stack should contain only the global scope, the component stack should be empty
+    // and the project should have been set.
+    //
+    ROSE_ASSERT(astJavaScopeStack.size() == 1);
+    ROSE_ASSERT(astJavaComponentStack.size() == 0);
+    ROSE_ASSERT(::project);
+
+    string full_file_name = convertJavaStringToCxxString(env, java_full_file_name);
+    SgSourceFile *source_file = isSgSourceFile((*::project)[full_file_name]);
+    ROSE_ASSERT(source_file);
+    ROSE_ASSERT(source_file -> get_file_info());
+    source_file -> set_javacErrorCode(-1);
+
+    source_file -> setAttribute("error", new AstRegExAttribute("Ecj fatal compilation errors detected"));
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Leaving Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
+}
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationError(JNIEnv *env, jclass, jstring java_error_message, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
@@ -2215,7 +2217,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationError(JN
         if (node -> get_parent() == NULL) { // If this node is an orphan, assign an arbitrary safe parent it.
 // TODO: Remove this !
 /*
-cout << "(1) Orphan node "
+cout << "(1) Orphan scope node "
      << node -> class_name().c_str()
      << endl;
 cout.flush();
@@ -2236,7 +2238,7 @@ cout.flush();
         if (node -> get_parent() == NULL) { // If this node is an orphan, assign an arbitrary safe parent it.
 // TODO: Remove this !
 /*
-cout << "(2) Orphan node "
+cout << "(2) Orphan Component node "
      << node -> class_name().c_str()
      << endl;
 cout.flush();
@@ -3127,116 +3129,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting  cactionMethodDeclarationEnd (method) \n");
 }
-
-
-/*
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject jToken) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside cactionArgumentTypeParameterReference\n");
-
-    SgName package_name = convertJavaStringToCxxString(env, java_package_name),
-           type_name = convertJavaStringToCxxString(env, java_type_name),
-           type_parameter_name = convertJavaStringToCxxString(env, java_type_parameter_name);
-// TODO: Remove this
-//cout << "Here 7.5" << endl;
-//cout.flush();
-SgType *enclosing_type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 *//*);
-    ROSE_ASSERT(enclosing_type);
-// TODO: Remove this !!!
-/*
-cout << "Looking for type parameter "
-<< type_parameter_name.getString()
-<< " in "
-<< getTypeName(enclosing_type)
-<< "; the method index is "  
-<< method_index
-<< endl;
-cout.flush();
-*/
-/*
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(enclosing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
-    ROSE_ASSERT(class_declaration);
-*/
-    /*
-    SgClassDefinition *class_definition = class_declaration -> get_definition();
-    ROSE_ASSERT(class_definition);
-    */
-// Testing : 1, 2, 3
-/*
-class_definition = isSgClassDefinition(astJavaScopeStack.top());
-if (! class_definition) {
-cout << "The scope found is: " << astJavaScopeStack.top() -> class_name()
- << "; method_index = " << method_index << endl;
-cout.flush();
-}
-ROSE_ASSERT(class_definition);
-*/
-
-    /*
-    SgClassSymbol *class_symbol = NULL;
-    if (method_index >= 0) { // The type parameter is enclosed in a method in the enclosing type?
-        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-type-parameter-scopes");
-        ROSE_ASSERT(method_index < attribute -> size());
-        SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(method_index));
-// TODO: Remove this !!!
-//if (!type_space){
-//  cout << " The method at index " << method_index << " is enclosed in scope " << attribute -> getNode(method_index) -> class_name() << endl;
-//  cout.flush();
-//}
-        ROSE_ASSERT(type_space);
-        class_symbol = lookupClassSymbolInScope(type_space, type_parameter_name);
-    }
-
-    //
-    // Look in the type parameter scopes for the type in question.
-    //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && *i != ::globalScope; i++) {
-        if (isSgScopeStatement(*i)) { // a type parameter scope?
-            class_symbol = lookupClassSymbolInScope(*i, type_parameter_name); // lookupSimpleNameTypeInClass(type_parameter_name, class_definition);
-        }
-    }
-    */
-
-    // 
-    //  Since this function is only called for raw parameters, we should only look for the parameter type in question in the enclosing type.
-    // 
-/*
-    AstSgNodeAttribute *type_space_attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
-    ROSE_ASSERT(type_space_attribute);
-    SgScopeStatement *type_space = (SgScopeStatement *) type_space_attribute -> getNode();
-    SgClassSymbol *class_symbol =  lookupClassSymbolInScope(type_space, type_parameter_name);
-
-// TODO: Remove this !!!
-if (! class_symbol){
-cout << "Could not find type parameter " << type_parameter_name.getString() << " enclosed in scope " << (isSgClassDefinition(astJavaScopeStack.top()) ? isSgClassDefinition(astJavaScopeStack.top()) -> get_qualified_name().getString() : astJavaScopeStack.top() -> class_name())
-<< "; method_index = " << method_index 
-<< "; Maybe it is in the containing class " << class_declaration -> get_qualified_name().getString()
-<< endl;
-cout.flush();
-cout << "...in the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); i != astJavaScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
-}
-    ROSE_ASSERT(class_symbol);
-
-    SgType *type = class_symbol -> get_type();
-    ROSE_ASSERT(type && type -> attributeExists("is_parameter_type"));
-
-    astJavaComponentStack.push(type);
-
-    if (SgProject::get_verbose() > 0)
-        printf ("Exiting cactionArgumentTypeParameterReference\n");
-}
-*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject jToken) {
@@ -6634,109 +6526,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclas
     // Pushing 'try' on the statement stack
     astJavaComponentStack.push(try_statement);
 }
-
-
-/*
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
-    if (SgProject::get_verbose() > 2)
-        printf ("Inside cactionTypeParameter \n");
-
-    // Do Nothing!
-
-    if (SgProject::get_verbose() > 2)
-        printf ("Exiting cactionTypeParameter \n");
-}
-*/
-
-/*
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jclass, jstring java_name, jboolean java_has_extends, jint java_num_bounds, jobject jToken) {
-    if (SgProject::get_verbose() > 2)
-        printf ("Inside cactionTypeParameterEnd \n");
-
-    SgName name = convertJavaStringToCxxString(env, java_name);
-    int num_bounds = java_num_bounds;
-    bool has_extends = java_has_extends;
-
-    ROSE_ASSERT(! astJavaScopeStack.empty());
-// TODO: Remove this !
-//    SgClassDefinition *outer_scope = isSgClassDefinition(astJavaScopeStack.top());
-//    ROSE_ASSERT(outer_scope);
-
-    //
-    // Look in the type parameter scopes for the type in question.
-    //
-    SgClassSymbol *class_symbol = NULL;
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); class_symbol == NULL && i != astJavaScopeStack.end(); i++) {
-        if (isSgScopeStatement(*i)) { // a type parameter scope?
-            class_symbol = lookupClassSymbolInScope(*i, name);
-        }
-    }
-
-// TODO:  Remove this!
-//    SgClassSymbol *class_symbol = lookupParameterTypeByName(name); // lookupTypeSymbol(name);
-
-// TODO: Remove this !
-if (!class_symbol){
-cout << "Could not find the parameter " << name.getString()
-     << " in the scope " << (isSgFunctionDefinition(astJavaScopeStack.top()) ? isSgFunctionDefinition(astJavaScopeStack.top()) -> get_declaration() -> get_qualified_name().getString() : astJavaScopeStack.top() -> class_name())
-<< endl;
-cout.flush();
-}
-    ROSE_ASSERT(class_symbol);
-    SgClassDeclaration *parameter_declaration = (SgClassDeclaration *) class_symbol -> get_declaration() -> get_definingDeclaration();
-    ROSE_ASSERT(parameter_declaration);
-    SgClassDefinition *parameter_definition = parameter_declaration -> get_definition();
-    ROSE_ASSERT(parameter_definition);
-    SgJavaParameterType *parameter_type = isSgJavaParameterType(parameter_declaration -> get_type());
-    ROSE_ASSERT(parameter_type && parameter_type -> attributeExists("is_parameter_type"));
-
-    //
-    //
-    //
-    string type_parameter_bounds_name = "";
-    for (int i = 0; i < num_bounds; i++) {
-        SgNamedType *bound_type = isSgNamedType(astJavaComponentStack.popType());
-        ROSE_ASSERT(bound_type);
-
-        type_parameter_bounds_name = ((i + 1 == num_bounds && has_extends) ? " extends " : " & ") + getTypeName(bound_type) + type_parameter_bounds_name;
-
-        if (SgProject::get_verbose() > 0) {
-            cout << "   Type " << getTypeName(bound_type)
-                 << endl;
-            cout.flush();
-        }
-
-// TODO:  Remove this!
-//
-//        SgClassDeclaration *bound_declaration = (isSgClassType(bound_type) 
-//                                                     ? isSgClassDeclaration(isSgClassType(bound_type) -> get_declaration() -> get_definingDeclaration())
-//                                                     : isSgJavaParameterizedType(bound_type)
-//                                                           ? isSgClassDeclaration(isSgJavaParameterizedType(bound_type)  -> get_declaration() -> get_definingDeclaration())
-//                                                                 : isSgJavaQualifiedType(bound_type)
-//                                                                       ? isSgClassDeclaration(isSgJavaQualifiedType(bound_type)  -> get_declaration() -> get_definingDeclaration())
-//                                                                       : NULL);
-//
-
-        SgClassDeclaration *bound_declaration = isSgClassDeclaration(bound_type -> getAssociatedDeclaration() -> get_definingDeclaration());
-        ROSE_ASSERT(bound_declaration);
-        SgBaseClass *base = new SgBaseClass(bound_declaration); // TODO: Why can't one associate attributes with an SgBaseClass?
-        base -> set_parent(parameter_definition);
-        parameter_definition -> prepend_inheritance(base);
-    }
-
-    parameter_type -> setAttribute("type", new AstRegExAttribute(parameter_type -> get_name().getString() + type_parameter_bounds_name));
-// TODO: Remove this!!!
-//cout << "The mangled name for "
-//     << getTypeName(parameter_type)
-//     << " is "
-//     << parameter_type -> get_mangled()
-//<< endl;
-//cout.flush();
-
-    if (SgProject::get_verbose() > 2)
-        printf ("Exiting cactionTypeParameterEnd \n");
-}
-*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv *env, jclass, jobject jToken) {
