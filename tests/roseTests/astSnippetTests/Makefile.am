@@ -507,6 +507,56 @@ reverseC.passed: injectSnippet QuickSortC/quicksort.c QuickSortC/reverse.c
 		COPY_DEFINITIONS=yes						\
 		$(C_INJECTION_TEST) $@
 
+###############################################################################################################################
+# SS_JAVA_CWE tests.  These tests are only run if the "SS_JAVA_CWES/src" directory is present under the CWD and it appears to
+# contain Java CWE implementations.
+###############################################################################################################################
+
+# Top level directory containing the Java CWE packages
+SS_JAVA_CWE_DIR = SS_JAVA_CWES/src
+
+# Those subdirectories of $(SS_JAVA_CWD_DIR) that contain CWE implementations
+SS_JAVA_CWE_CATEGORIES = Error_Handling Injection Number_Handling Tainted_Data
+
+# All the CWE_*.java files under those package directories.
+SS_JAVA_CWES := $(foreach category, $(SS_JAVA_CWE_CATEGORIES), \
+	$(shell find $(SS_JAVA_CWE_DIR)/$(category) -name 'CWE_*.java' -printf '$(category)/%P\n' 2>/dev/null))
+
+# Make one test target for each CWE file.  The name of the test target will be the package+class name with dots instead
+# of slashes.  For instance, if the SS_JAVA_CWE full name is $(SS_JAVA_CWE_DIR)/Error_Handling/CWE_209/CWE_209_0.java then
+# the target will be named "Error_Handling.CWE_209.CWE_209_0.passed"
+SS_JAVA_TEST_TARGETS = $(addsuffix .passed, $(subst /,.,$(basename $(SS_JAVA_CWES))))
+
+EXTRA_DIST += ss_java_cwes.conf
+
+# Some help if no SS_JAVA_CWES are present
+.PHONY: check-ss-java-cwes-help
+check-ss-java-cwes-help:
+	@if [ "$(SS_JAVA_TEST_TARGETS)" = "" ]; then										\
+		(														\
+			echo;													\
+		 	echo -n "Running \"make check-ss-java-cwes\" does't do anything because you have no Java CWEs ";	\
+			echo -n "installed.  You must untar the SS_JAVA_CWES.tar.gz file into $(abs_builddir) and then ";	\
+			echo "rerun \"make check-ss-java-cwes\".";								\
+			echo;													\
+		) |fold --spaces --width=120 |sed 's/^/**** /' >&2;								\
+	fi
+
+# Run each test
+.PHONY: check-ss-java-cwes
+check-ss-java-cwes: check-ss-java-cwes-help $(SS_JAVA_TEST_TARGETS)
+$(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf
+	@$(RTH_RUN) \
+		TITLE="Java CWE injection [$@]" \
+		USE_SUBDIR=yes \
+		SNIPPET_FILE="$(abspath $(SS_JAVA_CWE_DIR)/$(subst .,/,$*).java)" \
+		SNIPPET_CLASS_NAME="$*" \
+		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')" \
+		$(srcdir)/ss_java_cwes.conf $@
+
+TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
+
+
 
 ###############################################################################################################################
 # DQ (3/2/2014): Extra tests I have to build (these are small enough to be visualized for more detailed debugging):
