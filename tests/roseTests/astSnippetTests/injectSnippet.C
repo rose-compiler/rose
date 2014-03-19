@@ -308,70 +308,37 @@ main(int argc, char *argv[])
 #endif
 
 #if 1
- // DQ (2/1/2014): delete the snippet AST as a test of the fixup of the target AST.
- // SgSourceFile* snippetSourceFile = (*snippet).getAst();
-    ROSE_ASSERT(snippet->getFile() != NULL);
-    SgFile* snippetSourceFile = snippet->getFile()->getAst();
-    ROSE_ASSERT(snippetSourceFile != NULL);
-#if 0 // DEBUGGING [DQ 2014-03-07]
-    printf ("Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-            project->get_fileList().size(),snippetSourceFile,snippetSourceFile->class_name().c_str(),
-            snippetSourceFile->getFileName().c_str());
-#endif
+    if (shouldFixupAst) {
+        // DQ (2/1/2014): delete the snippet AST as a test of the fixup of the target AST.
+        ROSE_ASSERT(snippet->getFile() != NULL);
+        SgFile* snippetSourceFile = snippet->getFile()->getAst();
+        ROSE_ASSERT(snippetSourceFile != NULL);
 
-#if 0
- // DQ (4/4/2014): This fails for some header files (e.g. stdio.h).
- // So we can't use it in general (this will be scheduled to be worked on later).
- // We can use it for specific testing when the snippet file is not too complex.
-    SageInterface::deleteAST(snippetSourceFile);
-#endif
+        // Disconnect the snippetSourceFile from the SgProject.
+        std::vector<SgFilePtrList::iterator> eraseTheseFiles;
+        SgFilePtrList::iterator i = project->get_fileList().begin();
+        while (i != project->get_fileList().end()) {
+            // Find the snippet file.
+            if (*i == snippetSourceFile)
+                eraseTheseFiles.push_back(i);
+            i++;
+        }
 
- // Disconnect the snippetSourceFile from the SgProject.
-    std::vector<SgFilePtrList::iterator> eraseTheseFiles;
-    SgFilePtrList::iterator i = project->get_fileList().begin();
-    while (i != project->get_fileList().end())
-       {
-      // Find the snippet file.
-         if (*i == snippetSourceFile)
-            {
-#if 0 // DEBUGGING [DQ 2014-03-07]
-              printf ("Removing snippetSourceFile = %p from project \n",snippetSourceFile);
-#endif
-              eraseTheseFiles.push_back(i);
-           // *i = NULL;
-            }
-
-         i++;
-       }
-
-    snippetSourceFile = NULL;
-    for (size_t j = 0; j < eraseTheseFiles.size(); j++)
-       {
-         project->get_fileList().erase(eraseTheseFiles[j]);
-       }
-
-#if 0 // DEBUGGING [DQ 2014-03-07]
-    printf ("DONE: Calling SageInterface::deleteAST(): project->get_fileList().size() = %zu snippetSourceFile = %p \n",
-            project->get_fileList().size(),snippetSourceFile);
-
-    for (size_t i = 0; i < project->get_fileList().size(); i++)
-       {
-         SgFile* file = project->get_fileList()[i];
-         printf ("Remaining file = %p = %s = %s \n",file,file->class_name().c_str(),file->getFileName().c_str());
-       }
-#endif
+        snippetSourceFile = NULL;
+        for (size_t j = 0; j < eraseTheseFiles.size(); j++)
+            project->get_fileList().erase(eraseTheseFiles[j]);
+    }
 #endif
 
     // Unparse the modified source code
 #if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
-#endif 
-#if 0
-  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
-     printf ("Generate the Whole AST graph! \n");
-     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
-     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
-     printf ("DONE: Generate the Whole AST graph! \n");
+#elif 0
+    // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+    printf ("Generate the Whole AST graph! \n");
+    const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+    generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+    printf ("DONE: Generate the Whole AST graph! \n");
 #endif
 
     return backend(project);
