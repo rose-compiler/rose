@@ -315,6 +315,11 @@ std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; 
 
 int AstSgNodeListAttribute::size() { return nodeList.size(); }
 
+AstAttribute* AstSgNodeListAttribute::copy() {
+    return new AstSgNodeListAttribute(nodeList);
+}
+
+
 // ********************************************
 //              AstIntAttribute
 // ********************************************
