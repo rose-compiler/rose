@@ -12791,6 +12791,259 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
    }
 
 SgType* 
+SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope)
+   {
+  // This is the inner function to getTargetFileType()
+     SgType* returnType = NULL;
+
+     ROSE_ASSERT(snippet_type != NULL);
+     ROSE_ASSERT(targetScope != NULL);
+
+  // DQ (3/17/2014): Refactored code.
+  // See if the type might be asociated with the snippet file.
+     SgType* type_copy     = snippet_type;
+
+#if 0
+     printf ("(before type_copy->getInternalTypes()): type_copy = %p = %s \n",type_copy,type_copy->class_name().c_str());
+#endif
+
+     SgNamedType* namedType = isSgNamedType(snippet_type);
+     if (namedType != NULL)
+        {
+       // Find the associated declaration and it's corresponding declaration in the target AST.
+          SgDeclarationStatement* snippet_declaration = namedType->get_declaration();
+          ROSE_ASSERT(snippet_declaration != NULL);
+#if 0
+          printf ("Need to find the declaration in the target AST that is associated with the snippet_declaration in the snippet AST \n");
+          printf ("   --- snippet_declaration = %p = %s = %s \n",snippet_declaration,snippet_declaration->class_name().c_str(),SageInterface::get_name(snippet_declaration).c_str());
+#endif
+       // There are only a few cases here!
+          switch (namedType->variantT())
+             {
+               case V_SgClassType:
+                  {
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(snippet_declaration);
+                    if (classDeclaration != NULL)
+                       {
+                         SgClassSymbol* classSymbolInTargetAST = lookupClassSymbolInParentScopes(classDeclaration->get_name(),targetScope);
+                         if (classSymbolInTargetAST == NULL)
+                            {
+                           // For Java or C++ this could be a name qualified type and so we need a better mechanism 
+                           // to identify it thorugh it's parent scopes. Build a list of parent scope back to the 
+                           // global scope and then traverse the list backwards to identify each scope in the target 
+                           // AST's global scope until we each the associated declaration in the target AST.
+#if 0
+                              printf ("This is likely a name qualified scope (which can't be seen in a simple traversal of the parent scope (case of C++ or Java) \n");
+                              printf ("   --- Looking for target AST match for class name = %s \n",classDeclaration->get_name().str());
+#endif
+                              SgSymbol* symbol = findAssociatedSymbolInTargetAST(classDeclaration,targetScope);
+                              ROSE_ASSERT(symbol != NULL);
+
+                              classSymbolInTargetAST = isSgClassSymbol(symbol);
+                            }
+
+                         ROSE_ASSERT(classSymbolInTargetAST != NULL);
+                         SgClassDeclaration* target_classDeclaration = isSgClassDeclaration(classSymbolInTargetAST->get_declaration());
+                         ROSE_ASSERT(target_classDeclaration != NULL);
+#if 0
+                         printf ("snippet: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->get_name().str());
+                         printf ("target: classDeclaration = %p = %s \n",target_classDeclaration,target_classDeclaration->get_name().str());
+#endif
+                         ROSE_ASSERT(classDeclaration->get_name() == target_classDeclaration->get_name());
+
+                         returnType = classSymbolInTargetAST->get_type();
+                       }
+                    break;
+                  }
+
+               case V_SgTypedefType:
+                  {
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(snippet_declaration);
+                    if (typedefDeclaration != NULL)
+                       {
+                         SgTypedefSymbol* typedefSymbolInTargetAST = lookupTypedefSymbolInParentScopes(typedefDeclaration->get_name(),targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                      // ROSE_ASSERT(typedefSymbolInTargetAST != NULL);
+                      // returnType = typedefSymbolInTargetAST->get_type();
+                         if (typedefSymbolInTargetAST == NULL)
+                            {
+#if 0
+                              printf ("Error: It is an error to not have a typedef type defined in the target AST (this is an old rule, we have to support more general rules now)! \n");
+                              printf ("   --- The target AST must have a valid typedef type (and associated declaration) to support resetting the SgTypedefType: %p \n",typedefDeclaration->get_type());
+#endif
+                           // DQ (3/16/2014): Find the associated typedef declaration (from the target AST) 
+                           // for the input type associated with its declaration in the snippet AST.
+                              SgSymbol* symbol = findAssociatedSymbolInTargetAST(typedefDeclaration,targetScope);
+                              ROSE_ASSERT(symbol != NULL);
+
+                              typedefSymbolInTargetAST = isSgTypedefSymbol(symbol);
+
+                           // Note that test5d demonstrates this problem.
+                           // ROSE_ASSERT(false);
+                            }
+
+                         ROSE_ASSERT(typedefSymbolInTargetAST != NULL);
+                         SgTypedefDeclaration* target_typedefDeclaration = isSgTypedefDeclaration(typedefSymbolInTargetAST->get_declaration());
+                         ROSE_ASSERT(target_typedefDeclaration != NULL);
+#if 0
+                         printf ("snippet: typedefDeclaration = %p = %s \n",typedefDeclaration,typedefDeclaration->get_name().str());
+                         printf ("target:  typedefDeclaration = %p = %s \n",target_typedefDeclaration,target_typedefDeclaration->get_name().str());
+#endif
+                         ROSE_ASSERT(typedefDeclaration->get_name() == target_typedefDeclaration->get_name());
+
+                         returnType = typedefSymbolInTargetAST->get_type();
+                       }
+                    break;
+                  }
+
+               case V_SgEnumType:
+                  {
+                    SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(snippet_declaration);
+                    if (enumDeclaration != NULL)
+                       {
+                         ROSE_ASSERT(enumDeclaration->get_name().is_null() == false);
+                         SgEnumSymbol* enumSymbolInTargetAST = lookupEnumSymbolInParentScopes(enumDeclaration->get_name(),targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                      // ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+                      // returnType = enumSymbolInTargetAST->get_type();
+                         if (enumSymbolInTargetAST == NULL)
+                            {
+                              printf ("Error: It is an error to not have a enum type defined in the target AST! \n");
+                              printf ("   --- The target AST must have a valid enum type (and associated declaration) to support resetting the SgEnumType: %p \n",enumDeclaration->get_type());
+
+                           // We will allow this to pass for now, since it is a violation of the target AST, and not the snippet mechanism (I think).
+                              returnType = snippet_type;
+
+                           // Note that test5d demonstrates this problem.
+                           // ROSE_ASSERT(false);
+                            }
+                           else
+                            {
+                              returnType = enumSymbolInTargetAST->get_type();
+                            }
+                       }
+
+                    break;
+                  }
+
+               case V_SgJavaParameterizedType:
+                  {
+                 // DQ (3/10/2014): This type is a view of a generic class with dynamic type checking (e.g. T).
+                 // This acts more like a class with reference to the template instead of the template instantiation. 
+                 // So reset the declaration.
+
+                    printf ("In getTargetFileTypeSupport(): case V_SgJavaParameterizedType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+#if 1
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(snippet_declaration);
+                    if (classDeclaration != NULL)
+                       {
+                         SgTemplateParameterPtrList* templateParameterList              = NULL;
+                         SgTemplateArgumentPtrList*  templateSpecializationArgumentList = NULL;
+                         SgTemplateClassSymbol* templateClassSymbolInTargetAST = lookupTemplateClassSymbolInParentScopes(classDeclaration->get_name(),templateParameterList,templateSpecializationArgumentList,targetScope);
+
+                      // Not clear if we have to handle a more general case here.
+                         ROSE_ASSERT(templateClassSymbolInTargetAST != NULL);
+
+                         returnType = templateClassSymbolInTargetAST->get_type();
+                       }
+#else
+                    SgJavaParameterizedType* javaParameterizedType = isSgJavaParameterizedType(namedType);
+                    if (javaParameterizedType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaParameterizedType;
+
+                         SgType* internal_type = javaParameterizedType->get_raw_type();
+                         ROSE_ASSERT(internal_type != NULL);
+                       }
+#endif
+                    printf ("SgJavaParameterizedType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case V_SgJavaQualifiedType:
+                  {
+                 // DQ (3/10/2014): This type acts like a binary operator on types to define aggregate 
+                 // types to represent what in C++ would be name qualification. I need only set the 
+                 // declarations in each SgJavaQualifiedType to refer to a declaration in the target AST.
+                 // So reset the declaration.
+
+                    printf ("In getTargetFileTypeSupport(): case V_SgJavaQualifiedType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+
+                    SgJavaQualifiedType* javaQualifiedType = isSgJavaQualifiedType(namedType);
+                    if (javaQualifiedType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaQualifiedType;
+
+                         SgType* internal_type_1 = javaQualifiedType->get_parent_type();
+                         ROSE_ASSERT(internal_type_1 != NULL);
+                         SgType* internal_type_2 = javaQualifiedType->get_type();
+                         ROSE_ASSERT(internal_type_2 != NULL);
+                       }
+
+                    printf ("SgJavaQualifiedType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case V_SgJavaWildcardType:
+                  {
+                 // DQ (3/10/2014): This type expressed constraints on an input type.
+                 // if (?) then it is associated with the Java object type.
+                 // It can be constraint with an upper bound or lower bound.
+                 // if (?extends List) would be an upper bound for List.
+                 // if (?super Integer) would be an lower bound for List.
+                 // So reset the declaration.
+
+                    printf ("In getTargetFileTypeSupport(): case V_SgJavaWildcardType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+
+                    SgJavaWildcardType* javaWildcardType = isSgJavaWildcardType(namedType);
+                    if (javaWildcardType != NULL)
+                       {
+                      // Not clear how to lookup this type in the target AST.
+                         returnType = javaWildcardType;
+
+                         SgType* internal_type_1 = javaWildcardType->get_extends_type();
+                         ROSE_ASSERT(internal_type_1 != NULL);
+                         SgType* internal_type_2 = javaWildcardType->get_super_type();
+                         ROSE_ASSERT(internal_type_2 != NULL);
+                       }
+
+                    printf ("SgJavaWildcardType not yet tested! \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Error: In getTargetFileTypeSupport(): default reached in switch: namedType = %p = %s \n",namedType,namedType->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+          ROSE_ASSERT(returnType != NULL);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+       // Non-named types are shared, so we need not reset them.
+
+       // If this was not a named type then return NULL (which is checked at the 
+       // calling point, so that the type will not be reset).
+        }
+
+     return returnType;
+   }
+
+
+SgType* 
 SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope)
    {
      SgType* returnType = NULL;
@@ -12798,6 +13051,28 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
      ROSE_ASSERT(snippet_type != NULL);
      ROSE_ASSERT(targetScope != NULL);
 
+  // DQ (3/17/2014): Refactored code.
+  // See if the type might be asociated with the snippet file.
+     SgType* type_copy     = snippet_type;
+
+#if 0
+     printf ("(before type_copy->getInternalTypes()): type_copy = %p = %s \n",type_copy,type_copy->class_name().c_str());
+#endif
+
+  // We need to be able to reproduce the pointer types to class types, etc.
+     Rose_STL_Container<SgType*> typeList = type_copy->getInternalTypes();
+
+#if 0
+     for (size_t i = 0; i < typeList.size(); i++)
+        {
+          printf ("Input type: typeList[i=%zu] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+        }
+#endif
+
+#if 1
+  // This is the unwrapped version of the getTargetFileType() function.
+     returnType = getTargetFileTypeSupport(snippet_type,targetScope);
+#else
      SgNamedType* namedType = isSgNamedType(snippet_type);
      if (namedType != NULL)
         {
@@ -13029,6 +13304,100 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
        // If this was not a named type then return NULL (which is checked at the 
        // calling point, so that the type will not be reset).
         }
+#endif
+
+     SgType* new_type = returnType;
+
+  // DQ (3/17/2014): Refactored code.
+  // Now rebuild the type_copy as required to represent associated modifiers, typedef wrappers, pointers and references.
+     if (new_type != NULL && typeList.size() > 1)
+        {
+          int size = (int)typeList.size();
+          for (int i = size - 2; i >= 0; i--)
+             {
+#if 0
+               printf ("Rebuild type: typeList[i=%d] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+#endif
+            // SgModifierType* SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* optional_fortran_type_kind )
+               switch(typeList[i]->variantT())
+                  {
+                    case V_SgModifierType:
+                       {
+                         SgModifierType* modifierType = isSgModifierType(typeList[i]);
+                         ROSE_ASSERT(modifierType != NULL);
+                         if (modifierType->get_typeModifier().get_constVolatileModifier().isConst() == true)
+                            {
+                              ROSE_ASSERT(new_type != NULL);
+#if 0
+                              printf ("Building a SgModifierType: calling buildConstType(): new_type = %p = %s \n",new_type,new_type->class_name().c_str());
+#endif
+                              new_type = buildConstType(new_type);
+                            }
+                           else
+                            {
+                           // Flag any additional modifiers that we might require (make anything not supported an error).
+                              printf ("Modifier kind not handled (not implemented) check what sort of modifier this is: \n");
+                              modifierType->get_typeModifier().display("Modifier kind not handled");
+                              ROSE_ASSERT(false);
+                            }
+                         break;
+                       }
+
+                    case V_SgTypedefType:
+                       {
+                         SgTypedefType* typedefType = isSgTypedefType(typeList[i]);
+                         ROSE_ASSERT(typedefType != NULL);
+
+                      // DQ (3/17/2014): Call the associated support function instead.
+                      // SgType* SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope)
+                      // SgType* new_typedefType = getTargetFileType(typedefType,targetScope);
+                         SgType* new_typedefType = getTargetFileTypeSupport(typedefType,targetScope);
+                         ROSE_ASSERT(new_typedefType != NULL);
+                         ROSE_ASSERT(isSgTypedefType(new_typedefType) != NULL);
+
+                         new_type = new_typedefType;
+#if 0
+                         printf ("ERROSE: SgTypedefType kind not handled (not implemented) \n");
+                         ROSE_ASSERT(false);
+#endif
+                         break;
+                       }
+
+                    case V_SgPointerType:
+                       {
+                         SgPointerType* pointerType = isSgPointerType(typeList[i]);
+                         ROSE_ASSERT(pointerType != NULL);
+#if 0
+                         printf ("Building a SgPointerType: calling buildPointerType(): new_type = %p = %s \n",new_type,new_type->class_name().c_str());
+#endif
+                         ROSE_ASSERT(new_type != NULL);
+                         new_type = buildPointerType(new_type);
+#if 0
+                         printf ("ERROSE: SgPointerType kind not handled (not implemented) \n");
+                         ROSE_ASSERT(false);
+#endif
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Error: default reached in evaluation of typelist: typeList[i] = %p = %s \n",typeList[i],typeList[i]->class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+
+          returnType = new_type;
+        }
+
+#if 0
+     if (typeList.size() > 1)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
 
      return returnType;
    }
@@ -13475,7 +13844,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgType* type = expression->get_type();
                ROSE_ASSERT(type != NULL);
 
-               SgType* new_type = getTargetFileType(type->stripType(),targetScope);
+            // DQ (3/17/2014): Avoid calling stripType with the newly refactored getTargetFileType() function.
+            // SgType* new_type = getTargetFileType(type->stripType(),targetScope);
+               SgType* new_type = getTargetFileType(type,targetScope);
                if (new_type != NULL)
                   {
                  // Reset the base type to be the one associated with the target file.
@@ -13549,6 +13920,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #if 0
                printf ("(before type_copy->getInternalTypes()): type_copy = %p = %s \n",type_copy,type_copy->class_name().c_str());
 #endif
+#if 0
             // We need to be able to reproduce the pointer types to class types, etc.
                Rose_STL_Container<SgType*> typeList = type_copy->getInternalTypes();
 #if 0
@@ -13559,6 +13931,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
             // Note that the semantics of this function is that it can return a NULL pointer (e.g. for primative types).
                SgType* new_type = getTargetFileType(type_copy->stripType(),targetScope);
+
+#error "DEAD CODE!"
 
             // Now rebuild the type_copy as required to represent associated modifiers, typedef wrappers, pointers and references.
                if (new_type != NULL && typeList.size() > 1)
@@ -13642,6 +14016,12 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
                   }
+#endif
+#else
+            // Refactored the above code to be a part of getTargetFileType() function.
+            // Note that the semantics of this function is that it can return a NULL pointer (e.g. for primative types).
+            // SgType* new_type = getTargetFileType(type_copy->stripType(),targetScope);
+               SgType* new_type = getTargetFileType(type_copy,targetScope);
 #endif
 #if 0
                printf ("new_type = %p \n",new_type);
@@ -14066,8 +14446,10 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     ROSE_ASSERT(classSymbolInTargetAST != NULL);
                   }
 
+            // DQ (3/17/2014): Avoid calling strip type now that we have refactored the getTargetFileType() function.
             // DQ (3/10/2014): Added remaining type for this case.
-               SgType* new_type = getTargetFileType(classType->stripType(),targetScope);
+            // SgType* new_type = getTargetFileType(classType->stripType(),targetScope);
+               SgType* new_type = getTargetFileType(classType,targetScope);
                SgClassType* new_class_type = isSgClassType(new_type);
                if (new_class_type != NULL)
                   {
