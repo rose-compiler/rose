@@ -437,14 +437,23 @@ struct RewriteStatistics {
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
 } dump1_stats;
 
+void myReplaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false) {
+  SgExpression* p=isSgExpression(e1->get_parent());
+  if(p && mode!=true) {
+    p->replace_expression(e1,e2);
+    e2->set_parent(p);
+  } else {
+    SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
+  }
+}
+
 // not used yet
 void threadsafeReplaceExpression(SgExpression* exp1, SgExpression* exp2, bool mode) {
 #pragma omp critical
   {
-	SageInterface::replaceExpression(exp1,exp2,mode);
+	myReplaceExpression(exp1,exp2,mode);
   }
 }
-
 
 void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
 
@@ -519,7 +528,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 		 // replace with folded value (using integer semantics)
 		 switch(op->variantT()) {
 		 case V_SgMinusOp:
-		   SageInterface::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
+		   myReplaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
 		   break;
 		 default:
 		   cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
@@ -553,8 +562,8 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 			 // replace op1-rhs with op2-rhs
 			 SgExpression* other_copy=SageInterface::copyExpression(other);
 			 SgExpression* val_copy=SageInterface::copyExpression(val);
-			 SageInterface::replaceExpression(other,val_copy,false);
-			 SageInterface::replaceExpression(val,other_copy,false);
+			 myReplaceExpression(other,val_copy,false);
+			 myReplaceExpression(val,other_copy,false);
 			 //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
 			 transformationApplied=true;
 			 someTransformationApplied=true;
@@ -589,16 +598,16 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 		 // replace with folded value (using integer semantics)
 		 switch(op1->variantT()) {
 		 case V_SgAddOp:
-		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
+		   myReplaceExpression(op1,SageBuilder::buildIntVal(rawval1+rawval2),false);
 		   break;
 		 case V_SgSubtractOp:
-		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
+		   myReplaceExpression(op1,SageBuilder::buildIntVal(rawval1-rawval2),false);
 		   break;
 		 case V_SgMultiplyOp:
-		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
+		   myReplaceExpression(op1,SageBuilder::buildIntVal(rawval1*rawval2),false);
 		   break;
 		 case V_SgDivideOp:
-		   SageInterface::replaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
+		   myReplaceExpression(op1,SageBuilder::buildIntVal(rawval1/rawval2),false);
 		   break;
 		 default:
 		   cerr<<"Error: rewrite phase: unsopported operator in matched expression. Bailing out."<<endl;
@@ -641,7 +650,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 			 if(varVal.isConstInt()) {
 			   int varIntValue=varVal.getIntValue();
 			   //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
-			   SageInterface::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
+			   myReplaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
 			   dump1_stats.numConstExprElim++;
 			 }
 		   }
@@ -674,7 +683,12 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 	 // SgIntVal* buildIntVal(int)
 	 // replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
 	 //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
+#if 0
 	 SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
+#else
+         myReplaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
+         //isSgExpression((*i).first->get_parent())->replace_expression((*i).first,SageBuilder::buildIntVal((*i).second));
+#endif
    }
    dump1_stats.numVariableElim+=substitutionList.size();
  }
@@ -763,7 +777,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 	 SgExpression* p_exp=stgArrayUpdateSequence[i].second;
 	 SgNode* p_expCopy;
 	 p_expCopy=SageInterface::copyExpression(p_exp);
-
+#if 1
 	 // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
 	 if(useConstExprSubstRule) {
 	   substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
@@ -772,6 +786,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 	   substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
 	   rewriteAst(p_expCopy, variableIdMapping);
 	 }
+#endif
 	 SgExpression* p_expCopy2=isSgExpression(p_expCopy);
 	 if(!p_expCopy2) {
 	   cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
@@ -954,7 +969,7 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
           //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
-            SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            myReplaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
             break;
           }
           case SAR_SSA: {
@@ -981,7 +996,7 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
           //cout<<"INFO: USE:"<<useRef->unparseToString()<< " DEF:"<<defAssign->unparseToString()<<"DEF-RHS"<<defRhs->unparseToString()<<endl;
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
-            SageInterface::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            myReplaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
             break;
           }
           case SAR_SSA: {
