@@ -50,7 +50,11 @@ usage(const std::string &arg0)
               <<"    --test:copy-definitions=(yes|no)\n"
               <<"        Determines whether all snippet definitions are copied into the specimen\n"
               <<"        file.  The default is to not copy any definitions since the are normally\n"
-              <<"        inserted recursively at insertion sites in the specimen.\n";
+              <<"        inserted recursively at insertion sites in the specimen.\n"
+              <<"    --test:skip-ast-fixup\n"
+              <<"        Skip all AST fixup steps that normally occur after each injection.  This\n"
+              <<"        is mostly for debugging, so we can check that the injection mechanism works\n"
+              <<"        when the AST fixup mechanism is failing.\n";
     exit(1);
 }
 
@@ -101,7 +105,7 @@ main(int argc, char *argv[])
     std::string snippet_file_name="snippets", snippet_name, ipoint_function_name;
     Snippet::InsertMechanism insert_mechanism = Snippet::INSERT_STMTS;
     boost::optional<Snippet::LocalDeclarationPosition> locdecls_position;
-    bool insert_recursively = true, copy_definitions = false;
+    bool insert_recursively = true, copy_definitions = false, shouldFixupAst = true;
     std::vector<std::string> frontend_args;
     frontend_args.push_back(argv[0]);
     int argno = 1;
@@ -137,6 +141,8 @@ main(int argc, char *argv[])
             copy_definitions = false;
         } else if (!strncmp(argv[argno], "--test:ipoint-function=", 23)) {
             ipoint_function_name = argv[argno] + 23;
+        } else if (!strcmp(argv[argno], "--test:skip-ast-fixup")) {
+            shouldFixupAst = false;
         } else if (!strncmp(argv[argno], "--test:", 7)) {
             std::cerr <<"unknown switch: " <<argv[argno] <<"\n"
                       <<"run \"" <<argv[0] <<" --help\" to see usage information.\n";
@@ -157,7 +163,8 @@ main(int argc, char *argv[])
         std::cout <<"    local decls position:     depends on language (C=LOCDECLS_AT_END; Java=LOCDECLS_AT_CURSOR)\n";
     }
     std::cout <<"    insert recursively:       " <<(insert_recursively ? "yes" : "no") <<"\n"
-              <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n";
+              <<"    copy all definitions:     " <<(copy_definitions ? "yes" : "no") <<"\n"
+              <<"    fixup AST after inject:   " <<(shouldFixupAst ? "yes" : "no") <<"\n";
 
 #if 0
     // DQ (2/28/2014): This code is causing memory problems.
@@ -282,6 +289,7 @@ main(int argc, char *argv[])
         snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_CURSOR);
     }
     snippet->setInsertRecursively(insert_recursively);
+    snippet->setFixupAst(shouldFixupAst);
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
     printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",

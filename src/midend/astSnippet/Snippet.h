@@ -315,12 +315,13 @@ private:
     InsertMechanism insertMechanism;                    // how snippet is inserted
     LocalDeclarationPosition locDeclsPosition;          // position for local declarations for INSERT_STMTS mode
     bool insertRecursively;                             // is the insert() operation recursive?
+    bool fixupAst;                                      // whether to fix up the target AST after inserting things
 
 protected:
     // Use one of the "instance" methods instead.
     Snippet(const std::string &name, const SnippetFilePtr &file, SgFunctionDefinition *ast)
         : name(name), file(file), ast(ast), insertMechanism(INSERT_STMTS), locDeclsPosition(LOCDECLS_AT_END),
-          insertRecursively(true) {
+          insertRecursively(true), fixupAst(true) {
         assert(!name.empty());
         assert(file!=NULL);
         assert(ast!=NULL);
@@ -374,6 +375,17 @@ public:
     void insert(SgStatement *insertionPoint, SgNode *arg1, SgNode *arg2, SgNode *arg3);
     void insert(SgStatement *insertionPoint, SgNode *arg1, SgNode *arg2, SgNode *arg3, SgNode *arg4);
     void insert(SgStatement *insertionPoint, const std::vector<SgNode*> &args);
+    /** @} */
+
+    /** Determines whether the target AST should be fixed up after insertion.  Fixing up the target AST makes it so that the
+     *  things inserted from the snippet file point only to things in the target part of the AST--the snippet file part of the
+     *  AST can be deleted without consequence, and analysis will work propertly on the target AST after the insertion and
+     *  fixup.  Fixing up the AST is the default, and turning this feature off is probably only useful for debugging the
+     *  insertion mechanism itself while bypassing the AST fixups.
+     * @{ */
+    bool getFixupAst() const { return fixupAst; }
+    void setFixupAst(bool b=true) { fixupAst = b; }
+    void clearFixupAst() { fixupAst = false; }
     /** @} */
 
 protected:
