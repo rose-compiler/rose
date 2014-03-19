@@ -381,6 +381,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
 
 string readableruntime(double time) {
   stringstream s;
+  s << std::fixed << std::setprecision(2); // 2 digits past decimal point.
   if(time<1000.0) {
     s<<time<<" ms";
     return s.str();
@@ -913,7 +914,72 @@ public:
 };
 
 #include <map>
+enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
+void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  std::map<string,int> defVarNumbers;
+  for(size_t i=0;i<arrayUpdates.size();++i) {
+	SgExpression* exp=arrayUpdates[i].second;
+    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+
+	// determine SSA number of uses and attach
+    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
+    RoseAst rhsast(rhs);
+    for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+      if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+        j.skipChildrenOnForward();
+		ArrayElementAccessData access(useRef,variableIdMapping);
+		string useName=access.toString(variableIdMapping);
+		AstAttribute* attr=new NumberAstAttribute(defVarNumbers[useName]); // default creates 0 int (which is exactly what we need)
+		if(attr) {
+		  useRef->setAttribute("Number",attr);
+		}
+      } // if array
+	  // this can be rewritten once it is clear that the element type of an array is properly reported by isFloatingPointExpr(exp)
+	  else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+		ROSE_ASSERT(useRef);
+		j.skipChildrenOnForward();
+		VariableId varId=variableIdMapping->variableId(useRef);
+		string useName=variableIdMapping->uniqueShortVariableName(varId);
+		AstAttribute* attr=new NumberAstAttribute(defVarNumbers[useName]); // default creates 0 int (which is exactly what we need)
+		if(attr) {
+		  useRef->setAttribute("Number",attr);
+		}
+	  } else {
+		//cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+	  }
+	}
+
+	// compute and attach SSA number for def (lhs)
+	string name;
+	SgNode* toAnnotate=0;
+	if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+	  ArrayElementAccessData access(arr,variableIdMapping);
+	  name=access.toString(variableIdMapping);
+	  toAnnotate=arr;
+	} else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+	  VariableId varId=variableIdMapping->variableId(var);
+	  name=variableIdMapping->uniqueShortVariableName(varId);
+	  toAnnotate=var;
+	} else {
+	  cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+	  exit(1);
+	}
+	if(toAnnotate) {
+	  if(defVarNumbers.count(name)==0) {
+		defVarNumbers[name]=1;
+	  } else {
+		defVarNumbers[name]=defVarNumbers[name]+1;
+	  }
+	  toAnnotate->setAttribute("Number",new NumberAstAttribute(defVarNumbers[name]));
+	}
+  } // end assignments for loop
+}
+
+
+// this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (1/2)
 void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   std::map<string,int> defVarNumbers;
   for(size_t i=0;i<arrayUpdates.size();++i) {
@@ -944,8 +1010,7 @@ void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapp
   }
 }
 
-enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
-
+// this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (2/2)
 void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
   ++i; // we start at element 2 because no substitutions can be performed in the first one AND this simplifies passing the previous element (i-1) when starting the backward search
@@ -1584,8 +1649,12 @@ int main( int argc, char * argv[] ) {
     dump1_stats.numArrayUpdates=arrayUpdates.size();
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
+#if 0
     attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
     substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
+#else
+	createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
+#endif
     arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
     
     cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
