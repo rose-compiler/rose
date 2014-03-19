@@ -5,12 +5,13 @@
 
 MYBENCHPATH="."
 CODETHORN=codethorn
-CODETHORN_OPTIONS="-DARRAYSIZE=16 -DSTEPSIZE=2 -DGRIDSIZE=2 --threads=6 --edg:no_warnings --rule-const-subst=yes"
+CODETHORN_OPTIONS="-DARRAYSIZE=16 -DSTEPSIZE=2 -DGRIDSIZE=2 --threads=6 --edg:no_warnings --rule-const-subst=no"
 
 all_benchmarks="2mm 3mm adi atax bicg cholesky correlation covariance durbin fdtd-2d floyd-warshall gemm gemver gesummv gramschmidt jacobi-1d-imper jacobi-2d-imper ludcmp lu mvt reg_detect seidel-2d symm syr2k syrk trisolv trmm"
 all_longbenchmarks="fdtd-apml doitgen"
 some_variants1="fuse_nofuse fuse_smartfuse tile_1_5_1 tile_5_16_1 tile_8_16_1"
 some_variants2="fuse_nofuse fuse_maxfuse fuse_smartfuse tile_1_5_1 tile_5_16_1 tile_8_16_1 tile_8_5_1"
+some_variants3="fuse_smartfuse tile_8_8_1"
 all_variants1=`ls jacobi-1d-imper_mod_*.c | sed 's/jacobi-1d-imper_mod_//g'| grep -v 32 | sed 's/\.c//g'`
 all_variants2=`ls jacobi-1d-imper_mod_*.c | sed 's/jacobi-1d-imper_mod_//g'| sed 's/\.c//g'`
 
