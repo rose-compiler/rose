@@ -514,21 +514,32 @@ reverseC.passed: injectSnippet QuickSortC/quicksort.c QuickSortC/reverse.c
 ###############################################################################################################################
 
 # Top level directory containing the Java CWE packages
-SS_JAVA_CWE_DIR = SS_JAVA_CWES/src
+SS_JAVA_CWE_ROOT = $(abspath SS_JAVA_CWES)
+SS_JAVA_CWE_SRCDIR = $(SS_JAVA_CWE_ROOT)/src
+SS_JAVA_CWE_LIBDIR = $(SS_JAVA_CWE_ROOT)/lib
 
 # Those subdirectories of $(SS_JAVA_CWD_DIR) that contain CWE implementations
 SS_JAVA_CWE_CATEGORIES = Error_Handling Injection Number_Handling Tainted_Data
 
 # All the CWE_*.java files under those package directories.
 SS_JAVA_CWES := $(foreach category, $(SS_JAVA_CWE_CATEGORIES), \
-	$(shell find $(SS_JAVA_CWE_DIR)/$(category) -name 'CWE_*.java' -printf '$(category)/%P\n' 2>/dev/null))
+	$(shell find $(SS_JAVA_CWE_SRCDIR)/$(category) -name 'CWE_*.java' -printf '$(category)/%P\n' 2>/dev/null))
 
 # Make one test target for each CWE file.  The name of the test target will be the package+class name with dots instead
-# of slashes.  For instance, if the SS_JAVA_CWE full name is $(SS_JAVA_CWE_DIR)/Error_Handling/CWE_209/CWE_209_0.java then
+# of slashes.  For instance, if the SS_JAVA_CWE full name is $(SS_JAVA_CWE_SRCDIR)/Error_Handling/CWE_209/CWE_209_0.java then
 # the target will be named "Error_Handling.CWE_209.CWE_209_0.passed"
 SS_JAVA_TEST_TARGETS = $(addsuffix .passed, $(subst /,.,$(basename $(SS_JAVA_CWES))))
 
-EXTRA_DIST += ss_java_cwes.conf
+# Some of the CWEs depend on a few support classes that need to be built. Fortunately, the SS_JAVA_CWES.tar file provides
+# a makefile.
+MOSTLYCLEANFILES += ss_java_support_built
+ss_java_support_built:
+	@echo "  MAKE   building SS_JAVA_CWE support jars [$@]"
+	$(MAKE) -C $(SS_JAVA_CWE_ROOT)
+	touch $@
+
+# Class paths (use "-classpath PATH1:PATH2:..." not "-classpath PATH1 -classpath PATH2 ...")
+SS_JAVA_CLASSPATH = -classpath $$(ls $(SS_JAVA_CWE_LIBDIR)/*.jar |tr '\n' :)
 
 # Some help if no SS_JAVA_CWES are present
 .PHONY: check-ss-java-cwes-help
@@ -544,16 +555,19 @@ check-ss-java-cwes-help:
 	fi
 
 # Run each test
+EXTRA_DIST += ss_java_cwes.conf
 .PHONY: check-ss-java-cwes
 check-ss-java-cwes: check-ss-java-cwes-help $(SS_JAVA_TEST_TARGETS)
-$(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf
-	@$(RTH_RUN) \
-		TITLE="Java CWE injection [$@]" \
-		USE_SUBDIR=yes \
-		SNIPPET_FILE="$(abspath $(SS_JAVA_CWE_DIR)/$(subst .,/,$*).java)" \
-		SNIPPET_CLASS_NAME="$*" \
-		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')" \
+$(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf ss_java_support_built
+	@$(RTH_RUN)										\
+		TITLE="Java CWE injection [$@]"							\
+		USE_SUBDIR=yes									\
+		SNIPPET_FILE="$(SS_JAVA_CWE_SRCDIR)/$(subst .,/,$*).java"			\
+		SNIPPET_CLASS_NAME="$*"								\
+		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')"	\
+		SS_JAVA_CLASSPATH="$(SS_JAVA_CLASSPATH)"					\
 		$(srcdir)/ss_java_cwes.conf $@
+
 
 # DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
 # RPM (3/20/2014): To reenable these tests, enable the first line (TEST_TARGETS) and delte the second (MOSTLYCLEANFILES).
