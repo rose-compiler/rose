@@ -849,6 +849,21 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
+
+     // DQ (3/19/2014): Added fixup of AST for Java declarations copied into the AST.
+        if (fixupAst) {
+            // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).  If we are inserting into
+            // the end of a scope then we point to the scope since there is no last statement to insert a statement before.  In
+            // this case then insertionPointIsScope == true, else it is false.  I think that in the cases called by this function
+            // insertionPointIsScope is always false.
+            bool insertionPointIsScope        = false;
+            SgStatement* toInsert             = declCopy;
+            SgStatement* original_before_copy = decl;
+            // std::map<SgNode*,SgNode*> translationMap;
+
+            SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert,
+                                                                      original_before_copy);
+        }
     }
 
     // Copy import statements from the snippet's file into the target file.
