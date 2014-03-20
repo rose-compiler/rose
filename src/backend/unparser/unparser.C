@@ -2165,12 +2165,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // in the correct folder structure.
             SgSourceFile *sourcefile = isSgSourceFile(file);
             ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
+
+            SgProject *project = sourcefile -> get_project();
+            ROSE_ASSERT(project != NULL);
+
             SgJavaPackageStatement *package_statement = sourcefile -> get_package();
             string package_name = (package_statement ? package_statement -> get_name().getString() : "");
             //NOTE: Default package equals the empty string ""
             //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
             string outFolder = "";
-            SgProject *project = sourcefile -> get_project();
             string ds = project -> get_Java_source_destdir();
             if (ds != "") {
                 outFolder = ds;
@@ -2205,12 +2208,26 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
        // DQ (9/15/2013): Added assertion.
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
-#if 0
-          printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
-#endif
-          file->set_unparse_output_filename(outputFilename);
-          ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-       // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
+
+        // TOO1 (3/20/2014): Clobber the original input source file X_X
+        //
+        //            **CAUTION**RED*ALERT**CAUTION**
+        //
+        SgSourceFile* source_file = isSgSourceFile(file);
+        if (source_file != NULL)
+        {
+            if (project->get_unparser__clobber_input_file())
+            {
+                outputFilename = source_file->get_sourceFileNameWithPath();
+                std::cout
+                    << "[WARN] [Unparser] Clobbering the original input file: "
+                    << outputFilename
+                    << std::endl;
+            }
+        }
+
+        file->set_unparse_output_filename(outputFilename);
+        ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
      }
 
 #if 0

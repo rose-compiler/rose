@@ -67,6 +67,26 @@ namespace Cmdline {
   void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
+  namespace Unparser {
+    static const std::string option_prefix = "-rose:unparser:";
+
+    /** @returns true if the Unparser option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
+
+    /** Process all Unparser-specific commandline options, i.e. -rose:unparser.
+     */
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv);
+  } // namespace ::Rose::Cmdline::Unparser
+
   namespace Fortran {
     static const std::string option_prefix = "-rose:fortran:";
 

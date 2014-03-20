@@ -278,6 +278,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
+          Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Fortran::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Java::OptionRequiresArgument(argument) ||
 
@@ -881,6 +882,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_openmp_linking(true);
         }
 
+      Rose::Cmdline::Unparser::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Fortran::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
@@ -1430,6 +1432,7 @@ void
 Rose::Cmdline::
 StripRoseOptions (std::vector<std::string>& argv)
 {
+  Cmdline::Unparser::StripRoseOptions(argv);
   Cmdline::Fortran::StripRoseOptions(argv);
   Cmdline::Java::StripRoseOptions(argv);
 }// Cmdline::StripRoseOptions
@@ -1454,6 +1457,79 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
       ROSE::KeepGoing::g_keep_going = true;
   }
 }
+
+//------------------------------------------------------------------------------
+//                                  Unparser
+//------------------------------------------------------------------------------
+
+bool
+Rose::Cmdline::Unparser::
+OptionRequiresArgument (const std::string& option)
+{
+  return
+      // ROSE Options
+      option == "-rose:unparser:some_option_taking_argument";
+}// ::Rose::Cmdline:Unparser:::OptionRequiresArgument
+
+void
+Rose::Cmdline::Unparser::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  std::string argument;
+
+  // TOO1 (3/20/2014): TODO: Refactor Unparser specific CLI handling here
+  // (1) Options WITHOUT an argument
+  // Example: sla(argv, "-rose:", "($)", "(unparser)",1);
+  sla(argv, "-rose:unparser:", "($)", "(clobber_input_file)",1);
+
+  //
+  // (2) Options WITH an argument
+  //
+
+  // Remove Unparser options with ROSE-unparser prefix; option arguments removed
+  // by generateOptionWithNameParameterList.
+  //
+  // For example,
+  //
+  //    BEFORE: argv = [-rose:unparser:clobber_input_file, -rose:verbose, "3"]
+  //    AFTER:  argv = [-rose:verbose, "3"]
+  //            unparser_options = [-clobber_input_file]
+  // std::vector<std::string> unparser_options =
+  //     CommandlineProcessing::generateOptionWithNameParameterList(
+  //         argv,                               // Remove ROSE-Unparser options from here
+  //         Cmdline::Unparser::option_prefix,   // Current prefix, e.g. "-rose:unparser:"
+  //         "-");                               // New prefix, e.g. "-"
+}// ::Rose::Cmdline::Unparser::StripRoseOptions
+
+void
+Rose::Cmdline::Unparser::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Unparser commandline options" << std::endl;
+
+  ProcessClobberInputFile(project, argv);
+}// ::Rose::Cmdline::Unparser::Process
+
+void
+Rose::Cmdline::Unparser::
+ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_clobber_input_file =
+      CommandlineProcessing::isOption(
+          argv,
+          Cmdline::Unparser::option_prefix,
+          "clobber_input_file",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_clobber_input_file)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] **CAUTION** Turning on the Unparser's destructive clobber mode =O" << std::endl;
+
+      project->set_unparser__clobber_input_file(true);
+  }
+}// ::Rose::Cmdline::Unparser::ProcessClobberInputFile
 
 //------------------------------------------------------------------------------
 //                                  Fortran
@@ -2801,6 +2877,16 @@ SgFile::usage ( int status )
 "                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
+"     -rose:unparser:clobber_input_file\n"
+"                               **CAUTION**RED*ALERT**CAUTION**\n"
+"                               If you don't know what this option does, don't use it!\n"
+"                               We are not responsible for any mental or physical damage\n"
+"                               that you will incur with the use of this option :)\n"
+"\n"
+"                               Note: This option breaks parallel builds, so make sure\n"
+"                               that with this option you use ROSE, and run your build\n"
+"                               system, sequentially.\n"
+"                               **CAUTION**RED*ALERT**CAUTION**\n"
 "     -rose:unparse_line_directives\n"
 "                               unparse statements using #line directives with\n"
 "                               reference to the original file and line number\n"

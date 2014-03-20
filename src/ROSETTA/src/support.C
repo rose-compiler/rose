@@ -1586,6 +1586,10 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "keep_going", "= false",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); 
 
+  // TOO1 (03/20/2014): Dangerous rope for Pontetec, -rose:unparser:clobber_input_file
+     Project.setDataPrototype      ( "bool", "unparser__clobber_input_file", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      Project.setDataPrototype("std::string","outputFileName", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
