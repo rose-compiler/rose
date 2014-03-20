@@ -2889,6 +2889,7 @@ SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType
    {
    }
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 SgName
 SgJavaParameterizedType::get_name() const {
@@ -2934,6 +2935,8 @@ SgJavaParameterizedType::get_qualified_name() const {
     }
     return SgName(name);
 }
+
+#endif
 
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
 SgName
