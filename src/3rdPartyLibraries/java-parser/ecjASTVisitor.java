@@ -339,11 +339,11 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Entering enter(AllocationExpression, BlockScope)");
 
         if (node.type != null) {
-        	try {
+            try {
                 javaParserSupport.preprocessClass(node.type.resolvedType, this.unitInfo);
             }
             catch (Exception e) {
-            	throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -402,7 +402,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             JavaParser.cactionAnnotationMethodDeclaration(name, method_index, this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -440,7 +440,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                              this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -563,7 +563,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.preprocessClass(node.type.resolvedType, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         JavaParser.cactionArrayAllocationExpression(this.unitInfo.createJavaToken(node));
@@ -621,7 +621,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedTypeReference(node.tokens, node.tokens.length, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
 
@@ -652,7 +652,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedTypeReference(node.tokens, node.tokens.length, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
 
@@ -712,7 +712,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
 
@@ -749,7 +749,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.generateAndPushType(base_type, this.unitInfo, this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionArrayTypeReference(node.dimensions(), this.unitInfo.createJavaToken(node));
 
@@ -1142,7 +1142,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             JavaParser.cactionConstructorDeclaration(name, constructor_index, this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }           
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1388,7 +1388,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                          this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -1486,7 +1486,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
@@ -1504,7 +1504,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         String field_name = new String(node.token);
 
@@ -1523,7 +1523,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.preprocessClass(node.actualReceiverType, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         JavaParser.cactionFieldReference(new String(node.token), this.unitInfo.createJavaToken(node));
 
@@ -1541,7 +1541,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.generateAndPushType(node.actualReceiverType, this.unitInfo, this.unitInfo.createJavaToken(node)); // push the receiver type
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         String field_name = new String(node.token);
 
@@ -1951,7 +1951,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                           this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-    	    throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
         
         //
@@ -1997,7 +1997,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                              this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2023,7 +2023,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             JavaParser.cactionMethodDeclaration(name, method_index, this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2219,7 +2219,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedParameterizedTypeReference(node, this, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2247,7 +2247,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedParameterizedTypeReference(node, this, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2300,7 +2300,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                             this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (node.dimensions() > 0) {
@@ -2343,7 +2343,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
                                                             this.unitInfo.createJavaToken(node));
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (node.dimensions() > 0) {
@@ -2406,11 +2406,11 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Entering enter(QualifiedAllocationExpression, BlockScope)");
 
         if (node.type != null) {
-        	try {
+            try {
                 javaParserSupport.preprocessClass(node.type.resolvedType, this.unitInfo);
             }
             catch (Exception e) {
-            	throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
             
@@ -2448,7 +2448,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedNameReference(node, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2476,7 +2476,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedNameReference(node, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2596,7 +2596,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedTypeReference(node.tokens, node.tokens.length, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }        
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2624,7 +2624,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             javaParserSupport.processQualifiedTypeReference(node.tokens, node.tokens.length, scope, this.unitInfo);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2701,7 +2701,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             enterSingleNameReference(node);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2729,7 +2729,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             enterSingleNameReference(node);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2802,10 +2802,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             }
         }
         catch (RuntimeException e) {
-    	    throw e;
+            throw e;
         }
         catch (Throwable e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -2878,10 +2878,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             }
         }
         catch (RuntimeException e) {
-    	    throw e;
+            throw e;
         }
         catch (Throwable e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3150,7 +3150,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             enterTypeDeclaration(node);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3178,7 +3178,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             enterTypeDeclaration(node);
         }
         catch (Exception e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3203,11 +3203,11 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             System.out.println("Inside of enter(TypeDeclaration, CompilationUnitScope)");
 
         if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
-        	try {
+            try {
                 enterTypeDeclaration(node);
             }
             catch (Exception e) {
-            	throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         } 
 

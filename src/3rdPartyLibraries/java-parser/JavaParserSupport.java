@@ -679,7 +679,7 @@ class JavaParserSupport {
         // If this is a problematic reference binding, use its closest match
         //
         if (binding instanceof ProblemReferenceBinding) {
-        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
+            throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
         }
 
         return new String(binding.qualifiedPackageName());
@@ -697,7 +697,7 @@ class JavaParserSupport {
         // If this is a problematic reference binding, use its closest match
         //
         if (binding instanceof ProblemReferenceBinding) {
-        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
+            throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
         }
 
         if (binding.isArrayType()) { // an array type?
@@ -739,7 +739,7 @@ class JavaParserSupport {
         // If this is a problematic reference binding, use its closest match
         //
         if (binding instanceof ProblemReferenceBinding) {
-        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
+            throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
         }
 
         if (binding.isArrayType()) { // an array type?
@@ -2294,7 +2294,7 @@ class JavaParserSupport {
             }
             catch (Throwable e) { // If we can't even process the basic types, quit !!!
                 e.printStackTrace();
-                System.exit(1); // Make sure we exit as quickly as possible to simplify debugging.            	
+                System.exit(1); // Make sure we exit as quickly as possible to simplify debugging.            
             }
             JavaParser.cactionSetupBasicTypes();
             
@@ -2315,7 +2315,6 @@ class JavaParserSupport {
             if (unit.types != null) {
                 for (TypeDeclaration node : unit.types) {
                     if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
-System.out.println("Identifying file " + unit_info.fileName);
                         identifyUserDefinedTypes(node, unit_info);
                     }
                 }
@@ -2328,12 +2327,11 @@ System.out.println("Identifying file " + unit_info.fileName);
         for (int i = 0; i < units.size(); i++) {
             UnitInfo unit_info = unitInfos[i];
             try {
-System.out.println("Processing file " + unit_info.fileName);
-                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
-                if (unit_info.unit.ignoreFurtherInvestigation || unit_info.unit.compilationResult.hasInconsistentToplevelHierarchies) {
+                if (unit_info.unit.compilationResult.hasMandatoryErrors()) {
                     throw new Exception("Erroneous compilation unit");
                 }
 
+                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
                 preprocess(unit_info);
             }
             catch (Exception e) {
@@ -2357,18 +2355,13 @@ System.out.println("Processing file " + unit_info.fileName);
         for (int i = 0; i < units.size(); i++) {
             UnitInfo unit_info = unitInfos[i];
             try {
-System.out.println("Visiting file " + unit_info.fileName);
-                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
-                if (unit_info.unit.ignoreFurtherInvestigation || unit_info.unit.compilationResult.hasInconsistentToplevelHierarchies) {
+                if (unit_info.unit.compilationResult.hasMandatoryErrors()) { 
                     continue;
                 }
-                if (! unit_info.unit.compilationResult.hasMandatoryErrors()) {
-                    ecjASTVisitor ecjVisitor = new ecjASTVisitor(unit_info, this);
-                    unit_info.unit.traverse(ecjVisitor, unit_info.unit.scope);
-                }
-                else {
-                    throw new Exception("");
-                }
+
+                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
+                ecjASTVisitor ecjVisitor = new ecjASTVisitor(unit_info, this);
+                unit_info.unit.traverse(ecjVisitor, unit_info.unit.scope);
             }
             catch (Exception e) {
                 if (e.getMessage().length() > 0) {
