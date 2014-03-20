@@ -539,7 +539,7 @@ ss_java_support_built:
 	touch $@
 
 # Class paths (use "-classpath PATH1:PATH2:..." not "-classpath PATH1 -classpath PATH2 ...")
-SS_JAVA_CLASSPATH = -classpath $$(ls $(SS_JAVA_CWE_LIBDIR)/*.jar |tr '\n' :)
+SS_JAVA_CLASSPATH = -classpath $$(perl -e 'print join ":", @ARGV' $(wildcard $(SS_JAVA_CWE_LIBDIR)/*.jar))
 
 # Some help if no SS_JAVA_CWES are present
 .PHONY: check-ss-java-cwes-help
