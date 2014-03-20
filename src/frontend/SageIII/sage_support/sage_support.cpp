@@ -4562,7 +4562,10 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
                     this -> set_javacErrorCode(frontendErrorLevel);
-                    frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    if (this->get_project()->get_keep_going() == false)
+                    {
+                        frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    }
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
                                    "ROSE was not configured to support the Java frontend.");
@@ -5233,7 +5236,7 @@ SgProject::compileOutput()
               else
               {
                   localErrorCode = file.compileOutput(0);
-                  if (get_Java_only()) {
+                  if (get_Java_only() && this->get_keep_going() == false) {
                       localErrorCode = 0; // PC: Always keep going for Java!
                   }
               }
