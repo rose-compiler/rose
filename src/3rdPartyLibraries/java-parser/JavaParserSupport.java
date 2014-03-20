@@ -70,20 +70,11 @@ class JavaParserSupport {
         public boolean isAnonymous() { return isAnonymous; }
         public ReferenceBinding getEnclosingType() { return enclosingType; }
         
-        public String qualifiedName() {
+        public String qualifiedName() throws Exception {
             return  (isAnonymous ? (getTypeName(enclosingType) + "." + typename) : (typename + "._" + method_name + "_." + simplename));
         }
         
         public LocalOrAnonymousType(ReferenceBinding enclosing_type, String typename, String simplename, String method_name, boolean isAnonymous) {
-/*
-if (isAnonymous != (enclosing_type != null)) {
-System.out.println("Bumped into type " + simplename + " that is " + (isAnonymous ? "" : "not ") + "anonymous and its enclosing type is " + (enclosing_type == null ? "" : "not ") + "null");
-if (enclosing_type != null){
-System.out.println("The enclosing type is " + enclosing_type.debugName());
-}
-}
-//            assert(isAnonymous == (enclosing_type != null));
-*/
             this.enclosingType = enclosing_type;
             this.typename     = typename;
             this.simplename   = simplename;
@@ -156,7 +147,7 @@ System.out.println("The enclosing type is " + enclosing_type.debugName());
      * @param binding
      * @return
      */
-    public String getCanonicalName(ReferenceBinding binding) {
+    public String getCanonicalName(ReferenceBinding binding) throws Exception {
         String qualified_name;
         
         if (binding.isParameterizedType()) { // TODO: Review this !!!!
@@ -198,7 +189,7 @@ System.out.println("The enclosing type is " + enclosing_type.debugName());
      * @param method_binding
      * @return
      */
-    public String getMethodKey(MethodBinding method_binding) {
+    public String getMethodKey(MethodBinding method_binding) throws Exception {
         //
         // PC:  I bumped into either a bad bug or an Eclipse feature here. It turns out that the call to computeUniqueKey()
         // on the method binding in the AbstractMethodDeclaration yields a different result than the method binding from 
@@ -229,19 +220,10 @@ System.out.println("The enclosing type is " + enclosing_type.debugName());
      * @param method_binding
      * @return
      */
-    public int getMethodIndex(MethodBinding method_binding) {
+    public int getMethodIndex(MethodBinding method_binding) throws Exception {
         assert(method_binding != null); 
         String key = getMethodKey(method_binding);
         Integer index = typeDeclarationMethodTable.get(key);
-if (index == null) {
-try{
-System.out.println("No index found for method " + new String(method_binding.selector) + " declared in " + method_binding.declaringClass.debugName() + " with key " + key);
-throw new Throwable();
-}
-catch(Throwable e) {
-e.printStackTrace();
-}
-}
         return index;
     }
 
@@ -250,7 +232,7 @@ e.printStackTrace();
      * @param method_declaration
      * @return
      */
-    public int getMethodIndex(AbstractMethodDeclaration method_declaration) {
+    public int getMethodIndex(AbstractMethodDeclaration method_declaration) throws Exception {
         return getMethodIndex(method_declaration.binding); 
     }
 
@@ -259,7 +241,7 @@ e.printStackTrace();
      * @param method_declaration
      * @param index
      */
-    public void setMethodIndex(MethodBinding method_binding, int method_index) {
+    public void setMethodIndex(MethodBinding method_binding, int method_index) throws Exception {
         assert(method_binding != null);
         String key = getMethodKey(method_binding);
         Integer index = typeDeclarationMethodTable.get(key);
@@ -382,7 +364,7 @@ e.printStackTrace();
      * @param unit
      * 
      */
-    public void preprocess(UnitInfo unit_info) throws DuplicateTypeException {
+    public void preprocess(UnitInfo unit_info) throws Exception, DuplicateTypeException {
         CompilationUnitDeclaration unit = unit_info.unit;
     
         //
@@ -440,10 +422,6 @@ e.printStackTrace();
                     }
                     else if ((processed_object instanceof TypeDeclaration) || // a previous source was found?
                              (! new String(((ReferenceBinding) processed_object).getFileName()).equals(new String(node.binding.getFileName())))) {
-//                             (! ((processed_object instanceof BinaryTypeBinding) || 
-//                                 (new String(((SourceTypeBinding) processed_object).getFileName()).equals(new String(node.binding.getFileName())))))) {
-System.out.println("*** The processed object is of type " + processed_object.getClass().getCanonicalName());
-
                         throw new DuplicateTypeException("Invalid attempt to redefine the type " + getCanonicalName(node.binding) + 
                                                          " is in file " + new String(node.compilationResult.fileName) +
                                                          ".  The prior definition is in file " + new String(((ReferenceBinding) processed_object).getFileName()));
@@ -533,23 +511,14 @@ System.out.println("*** The processed object is of type " + processed_object.get
      * @param node
      * @param jToken
      */
-    void processQualifiedNameReference(QualifiedNameReference node, Scope scope, UnitInfo unit_info) {
+    void processQualifiedNameReference(QualifiedNameReference node, Scope scope, UnitInfo unit_info) throws Exception {
         JavaToken jToken = unit_info.createJavaToken(node);
-
-// System.out.println();
-// System.out.println("Testing Qualified Name Reference : " + node.print(0, new StringBuffer()).toString());
 
         Binding binding = scope.getPackage(node.tokens);
         PackageBinding package_binding = (binding == null || (! (binding instanceof PackageBinding)) ? null : (PackageBinding) binding);
         int first_type_index = (package_binding == null ? 0 : package_binding.compoundName.length),
             first_field_index = node.indexOfFirstFieldBinding - 1;
 
-/*
-System.out.println("The package is: " + (package_binding == null ? "" : new String(package_binding.readableName())));
-System.out.println("The first name is: " + new String(node.tokens[first_type_index]));
-System.out.println("The first type index is: " + first_type_index);
-System.out.println("The first field index is: " + first_field_index);
-*/
         //
         // If there are other bindings associated with this qualified name reference, preprocess them.
         //
@@ -572,19 +541,16 @@ System.out.println("The first field index is: " + first_field_index);
             preprocessClass(type_binding, unit_info);
             String package_name = getPackageName(type_binding),
                    type_name = getTypeName(type_binding);
-//System.out.println("Starting with type " + type_binding.debugName());
             JavaParser.cactionTypeReference(package_name, type_name, unit_info.getDefaultLocation());
             int index;
             for (index = first_type_index + 1; index < node.tokens.length; index++) {
                 type_binding =  scope.getMemberType(node.tokens[index], type_binding);
                 assert(type_binding instanceof ReferenceBinding);
                 if (!type_binding.isValidBinding()) { // not a type
-//System.out.println("What the heck !!!???");
                     assert(index == first_field_index);
                     break;
                 }
                 preprocessClass(type_binding, unit_info);
-//System.out.println("Qualifying with type " + type_binding.debugName());
                 JavaParser.cactionQualifiedTypeReference(getPackageName(type_binding), getTypeName(type_binding), unit_info.getDefaultLocation());
             }
             
@@ -592,8 +558,6 @@ System.out.println("The first field index is: " + first_field_index);
 
             for (int i = index; i < node.tokens.length; i++) {
                 String field_name = new String(node.tokens[i]);
-
-//System.out.println("Field reference 3" + (node.otherGenericCasts != null ? " with generic casts" : ""));
 
                 JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field_name, jToken);
             }
@@ -620,15 +584,7 @@ System.out.println("The first field index is: " + first_field_index);
     }
 
 
-    public void processQualifiedTypeReference(char tokens[][], int length, Scope scope, UnitInfo unit_info) {
-/*
-StringBuffer output = new StringBuffer(); 
-for (int i = 0; i < length; i++) {
-    if (i > 0) output.append('.');
-    output.append(tokens[i]);
-}
-System.out.println("Testing Qualified Type Reference : " + output.toString());
-*/
+    public void processQualifiedTypeReference(char tokens[][], int length, Scope scope, UnitInfo unit_info) throws Exception {
         Binding binding = scope.getPackage(tokens);
         PackageBinding package_binding = (binding == null || (! (binding instanceof PackageBinding)) ? null : (PackageBinding) binding);
         int first_type_index = (package_binding == null ? 0 : package_binding.compoundName.length);
@@ -647,7 +603,7 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
     }
 
 
-    public void processQualifiedParameterizedTypeReference(ParameterizedQualifiedTypeReference node, ASTVisitor visitor, Scope scope, UnitInfo unit_info) {
+    public void processQualifiedParameterizedTypeReference(ParameterizedQualifiedTypeReference node, ASTVisitor visitor, Scope scope, UnitInfo unit_info) throws Exception {
         if (node.resolvedType.isClass() || node.resolvedType.isInterface()) { 
             if (verboseLevel > 0)
                 System.out.println("(01) The parameterized qualified type referenced is bound to type " + node.resolvedType.debugName());
@@ -711,12 +667,19 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
      * @param binding
      * @return
      */
-    public String getPackageName(TypeBinding binding) {
+    public String getPackageName(TypeBinding binding) throws Exception {
         if (binding instanceof LocalTypeBinding) {
             TypeDeclaration node = ((LocalTypeBinding) binding).scope.referenceContext;
             assert(node != null);
             LocalOrAnonymousType special_type = localOrAnonymousType.get(node);
             return (special_type.isAnonymous() ? new String(special_type.getEnclosingType().qualifiedPackageName()) : "");
+        }
+
+        //
+        // If this is a problematic reference binding, use its closest match
+        //
+        if (binding instanceof ProblemReferenceBinding) {
+        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
         }
 
         return new String(binding.qualifiedPackageName());
@@ -727,8 +690,15 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
      * @param binding
      * @return
      */
-    public String getTypeName(TypeBinding binding) {
+    public String getTypeName(TypeBinding binding) throws Exception {
         String type_name;
+
+        //
+        // If this is a problematic reference binding, use its closest match
+        //
+        if (binding instanceof ProblemReferenceBinding) {
+        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
+        }
 
         if (binding.isArrayType()) { // an array type?
             binding = binding.leafComponentType();
@@ -762,8 +732,15 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
      * @param binding
      * @return
      */
-    public String getSimpleTypeName(TypeBinding binding) {
+    public String getSimpleTypeName(TypeBinding binding) throws Exception {
         String type_name;
+
+        //
+        // If this is a problematic reference binding, use its closest match
+        //
+        if (binding instanceof ProblemReferenceBinding) {
+        	throw new Exception("Unresolved type " + ((ProblemReferenceBinding) binding).debugName());
+        }
 
         if (binding.isArrayType()) { // an array type?
             binding = binding.leafComponentType();
@@ -792,7 +769,7 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
      * @param binding
      * @return
      */
-    public String getFullyQualifiedTypeName(TypeBinding binding) {
+    public String getFullyQualifiedTypeName(TypeBinding binding) throws Exception {
         String package_name = getPackageName(binding),
                type_name = getTypeName(binding),
                full_name = (package_name.length() == 0 ? type_name : package_name + "." + type_name);
@@ -803,7 +780,7 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
     }
 
  
-    public void preprocessClass(TypeBinding binding, UnitInfo unit_info) {
+    public void preprocessClass(TypeBinding binding, UnitInfo unit_info) throws Exception {
         if (binding.isBaseType()) { // A primitive type?
             ; // ignore it!
         }
@@ -832,11 +809,7 @@ System.out.println("Testing Qualified Type Reference : " + output.toString());
                 if (reference_binding instanceof ParameterizedTypeBinding) {
                     reference_binding = (ReferenceBinding) ((ParameterizedTypeBinding) reference_binding).erasure();
                 }
-/*
-if (!(reference_binding instanceof BinaryTypeBinding || reference_binding instanceof SourceTypeBinding)) {
-System.out.println("The reference binding is " + reference_binding.debugName() + " (" + reference_binding.getClass().getCanonicalName() + ")");
-}
-*/
+
                 assert(reference_binding instanceof BinaryTypeBinding || reference_binding instanceof SourceTypeBinding);
                 String package_name = new String(reference_binding.getPackage().readableName());
                 JavaParser.cactionPushPackage(package_name, unit_info.getDefaultLocation());
@@ -950,8 +923,6 @@ System.out.println("The reference binding is " + reference_binding.debugName() +
                     while (package_binding != null) {
                         binding = package_binding.getTypeOrPackage(type_name.toCharArray()); // a hit?
                         package_binding = (binding instanceof PackageBinding ? (PackageBinding) binding : null);
-if (package_binding != null)
-System.out.println("*** Found Sub-package " + package_binding.toString());
                     } 
                     ReferenceBinding reference_binding = (ReferenceBinding) binding;
                     if (reference_binding != null) {  // a hit?
@@ -980,7 +951,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * as the method index; finally, complete the declaration.
      *
      */
-    void addEnumValuesMethodDeclaration(TypeDeclaration node, UnitInfo unit_info, int method_index) {
+    void addEnumValuesMethodDeclaration(TypeDeclaration node, UnitInfo unit_info, int method_index) throws Exception {
         JavaToken location = unit_info.getDefaultLocation();
         generateAndPushType(node.binding, unit_info, location);
         JavaParser.cactionArrayTypeReference(1, location);
@@ -1017,7 +988,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * index; next, push the type of the parameter: String; finally, complete the declaration.
      *
      */
-    void addEnumValueOfMethodDeclaration(TypeDeclaration node, UnitInfo unit_info, int method_index) {
+    void addEnumValueOfMethodDeclaration(TypeDeclaration node, UnitInfo unit_info, int method_index) throws Exception {
         JavaToken location = unit_info.getDefaultLocation();
         generateAndPushType(node.binding, unit_info, location);
         method_index++; // calculate token index for method "valueOf" - one more than values()'s index.
@@ -1055,7 +1026,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * @param method_index
      * @return
      */
-    boolean addEnumValuesMethodDeclaration(ReferenceBinding type_binding, UnitInfo unit_info, int method_index) {
+    boolean addEnumValuesMethodDeclaration(ReferenceBinding type_binding, UnitInfo unit_info, int method_index) throws Exception {
         //
         // T[] values();
         // 
@@ -1103,7 +1074,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * @param method_index
      * @return
      */
-    boolean addEnumValueOfMethodDeclaration(ReferenceBinding type_binding, UnitInfo unit_info, int method_index) {
+    boolean addEnumValueOfMethodDeclaration(ReferenceBinding type_binding, UnitInfo unit_info, int method_index) throws Exception {
         //
         // T valueOf(String x);
         //
@@ -1187,7 +1158,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * 
      * @param binding
      */
-    void setupClass(TypeBinding binding, UnitInfo unit_info) {
+    void setupClass(TypeBinding binding, UnitInfo unit_info) throws Exception {
         if (binding instanceof ArrayBinding) {
             binding = ((ArrayBinding) binding).leafComponentType;
         }
@@ -1218,7 +1189,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * @param method_binding
      * @param method_index
      */
-    private void buildMethod(UnitInfo unit_info, AbstractMethodDeclaration method, int method_index) {
+    private void buildMethod(UnitInfo unit_info, AbstractMethodDeclaration method, int method_index) throws Exception {
         JavaToken default_location = unit_info.getDefaultLocation();
         JavaToken method_location = (unit_info == null ? default_location : unit_info.createJavaToken(method));
 
@@ -1316,10 +1287,10 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      *     
      * @param binding
      */
-    public void traverseReferenceBinding(ReferenceBinding binding, UnitInfo unit_info) {
+    public void traverseReferenceBinding(ReferenceBinding binding, UnitInfo unit_info) throws Exception {
         assert(binding != null);
         String qualified_name = getCanonicalName(binding);
-//System.out.println("Traversing Reference Binding for " + qualified_name);
+//      System.out.println("Traversing Reference Binding for " + qualified_name);
 
         classProcessed.put(qualified_name, binding);
 
@@ -1632,7 +1603,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
 
         JavaParser.cactionBuildClassSupportEnd(class_name, num_class_members, location);
         JavaParser.cactionPopTypeParameterScope(location);
-//System.out.println("Done Traversing Reference Binding for " + qualified_name);
+//      System.out.println("Done Traversing Reference Binding for " + qualified_name);
     }
 
     
@@ -1640,7 +1611,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * 
      * @param node
      */
-    public void traverseTypeDeclaration(TypeDeclaration node, UnitInfo unit_info) {
+    public void traverseTypeDeclaration(TypeDeclaration node, UnitInfo unit_info) throws Exception {
         assert (unit_info != null);
 
         LocalOrAnonymousType special_type = localOrAnonymousType.get(node);
@@ -1650,7 +1621,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
                                            : new String(node.name));
 
         String qualified_name = (special_type != null ? special_type.qualifiedName() : getCanonicalName(node.binding));
-//System.out.println("Traversing Type Declaration for " + qualified_name);
+//      System.out.println("Traversing Type Declaration for " + qualified_name);
 
         classProcessed.put(qualified_name, node);
 
@@ -1877,7 +1848,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
 
         JavaParser.cactionBuildClassSupportEnd(class_name, num_class_members, location);
         JavaParser.cactionPopTypeParameterScope(location); // The location is irrrelevant here!
-//System.out.println("Done Traversing Type Declaration for " + qualified_name);
+//      System.out.println("Done Traversing Type Declaration for " + qualified_name);
     }
 
 
@@ -1887,11 +1858,11 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * @param unit_info
      * @param binding
      */
-    public void updateReferenceBinding(TypeDeclaration node, UnitInfo unit_info, ReferenceBinding binding) {
+    public void updateReferenceBinding(TypeDeclaration node, UnitInfo unit_info, ReferenceBinding binding) throws Exception {
         String class_name = new String(node.name),
                qualified_name = getCanonicalName(node.binding);
         assert(qualified_name.equals(getCanonicalName(binding)));
-//System.out.println("Updating Reference Binding for " + qualified_name);
+//      System.out.println("Updating Reference Binding for " + qualified_name);
 
         assert(! (classProcessed.get(qualified_name) instanceof TypeDeclaration));
         classProcessed.put(qualified_name, node);
@@ -2136,7 +2107,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
 
         JavaParser.cactionUpdateClassSupportEnd(class_name, ((! node.binding.isInterface()) && node.binding.superclass != null), (interfaces == null ? 0 : interfaces.length), num_class_members, location);
         JavaParser.cactionPopTypeParameterScope(location); // the location does not matter
-//System.out.println("Done updating Reference Binding for " + qualified_name);
+//      System.out.println("Done updating Reference Binding for " + qualified_name);
     }
 
 
@@ -2144,7 +2115,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
      * 
      * @param type_binding
      */
-    public void generateAndPushType(TypeBinding type_binding, UnitInfo unit_info, JavaToken location) {
+    public void generateAndPushType(TypeBinding type_binding, UnitInfo unit_info, JavaToken location) throws Exception {
         assert(type_binding != null);
         if (type_binding instanceof ParameterizedTypeBinding) {
             ParameterizedTypeBinding parameterized_type_binding = (ParameterizedTypeBinding) type_binding;
@@ -2227,26 +2198,7 @@ System.out.println("*** Found Sub-package " + package_binding.toString());
                     TypeBinding enclosing_binding = (TypeBinding) scope_binding;
                     String package_name = getPackageName(enclosing_binding),
                            type_name = getTypeName(enclosing_binding);
-/*
-try{
-throw new Throwable();
-}
-catch(Throwable e) {
-e.printStackTrace();
-}
-*/      
-/*                    
-                    if (is_formal_parameter_type_mapping) {
-//System.out.println("Here with " + type_parameter_name);
-                        JavaParser.cactionArgumentTypeParameterReference(package_name, type_name, (int) -1 // no method index
-                                               , type_parameter_name, location);
-                    }
-                    else {
-*/                    
-
-                        JavaParser.cactionTypeParameterReference(package_name, type_name, (int) -1 /* no method index */, type_parameter_name, location);
-                        
-//                    }
+                    JavaParser.cactionTypeParameterReference(package_name, type_name, (int) -1 /* no method index */, type_parameter_name, location);
                 }
                 else if (scope_binding instanceof MethodBinding) {
                     MethodBinding method_binding = (MethodBinding) scope_binding;
@@ -2255,25 +2207,7 @@ e.printStackTrace();
                     TypeBinding enclosing_type_binding = method_binding.declaringClass;
                     String package_name = getPackageName(enclosing_type_binding),
                            type_name = getTypeName(enclosing_type_binding);
-/*
-try{
-throw new Throwable();
-}
-catch(Throwable e) {
-e.printStackTrace();
-}
-*/
-/*
-                    if (is_formal_parameter_type_mapping) {
-//System.out.println("There with " + type_binding.debugName());
-                        JavaParser.cactionArgumentTypeParameterReference(package_name, type_name, method_index, type_parameter_name, location);
-                    }
-                    else {
-*/
-                    
-                        JavaParser.cactionTypeParameterReference(package_name, type_name, method_index, type_parameter_name, location);
-
-//                    }
+                    JavaParser.cactionTypeParameterReference(package_name, type_name, method_index, type_parameter_name, location);
                 }
                 else {
                     throw new RuntimeException("*** No support yet for Type Variable " + new String(type_binding.shortReadableName()) + " with binding type " + type_binding.getClass().getCanonicalName() + " enclosed in " + (scope_binding == null ? "?" : scope_binding.getClass().getCanonicalName())); // System.exit(1);
@@ -2282,14 +2216,12 @@ e.printStackTrace();
         }
         else if (type_binding instanceof MemberTypeBinding) {
             MemberTypeBinding member_type_binding = (MemberTypeBinding) type_binding;
-//System.out.println("Processing Member type " + member_type_binding.debugName());
             generateAndPushType(member_type_binding.enclosingType(), unit_info, location);
             JavaParser.cactionQualifiedTypeReference(getPackageName(member_type_binding), getTypeName(member_type_binding), unit_info.getDefaultLocation());
         }
         else if (type_binding instanceof WildcardBinding) {
             WildcardBinding wildcard_binding = (WildcardBinding) type_binding;
 
-//System.out.println("Wildcard " + wildcard_binding.toString());            
             JavaParser.cactionWildcard(location);
 
             if (! wildcard_binding.isUnboundWildcard()) { // there is a bound!
@@ -2355,9 +2287,15 @@ e.printStackTrace();
         if (this.objectBinding == null) {
             UnitInfo unit_info = unitInfos[0];
             this.objectBinding = unit_info.unit.scope.getJavaLangObject(); // (ReferenceBinding) TypeBinding.wellKnownType(unit_info.unit.scope, TypeIds.T_JavaLangObject);
-            setupClass(this.objectBinding, unit_info);
-            setupClass(unit_info.unit.scope.getJavaLangString(), unit_info);
-            setupClass(unit_info.unit.scope.getJavaLangClass(), unit_info);
+            try {
+                setupClass(this.objectBinding, unit_info);
+                setupClass(unit_info.unit.scope.getJavaLangString(), unit_info);
+                setupClass(unit_info.unit.scope.getJavaLangClass(), unit_info);
+            }
+            catch (Throwable e) { // If we can't even process the basic types, quit !!!
+                e.printStackTrace();
+                System.exit(1); // Make sure we exit as quickly as possible to simplify debugging.            	
+            }
             JavaParser.cactionSetupBasicTypes();
             
             String default_package_name = "";
@@ -2377,6 +2315,7 @@ e.printStackTrace();
             if (unit.types != null) {
                 for (TypeDeclaration node : unit.types) {
                     if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
+System.out.println("Identifying file " + unit_info.fileName);
                         identifyUserDefinedTypes(node, unit_info);
                     }
                 }
@@ -2389,8 +2328,12 @@ e.printStackTrace();
         for (int i = 0; i < units.size(); i++) {
             UnitInfo unit_info = unitInfos[i];
             try {
-                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
 System.out.println("Processing file " + unit_info.fileName);
+                JavaParser.cactionSetupSourceFilename(unit_info.fileName);
+                if (unit_info.unit.ignoreFurtherInvestigation || unit_info.unit.compilationResult.hasInconsistentToplevelHierarchies) {
+                    throw new Exception("Erroneous compilation unit");
+                }
+
                 preprocess(unit_info);
             }
             catch (Exception e) {
@@ -2414,12 +2357,23 @@ System.out.println("Processing file " + unit_info.fileName);
         for (int i = 0; i < units.size(); i++) {
             UnitInfo unit_info = unitInfos[i];
             try {
+System.out.println("Visiting file " + unit_info.fileName);
                 JavaParser.cactionSetupSourceFilename(unit_info.fileName);
-                ecjASTVisitor ecjVisitor = new ecjASTVisitor(unit_info, this);
-                unit_info.unit.traverse(ecjVisitor, unit_info.unit.scope);
+                if (unit_info.unit.ignoreFurtherInvestigation || unit_info.unit.compilationResult.hasInconsistentToplevelHierarchies) {
+                    continue;
+                }
+                if (! unit_info.unit.compilationResult.hasMandatoryErrors()) {
+                    ecjASTVisitor ecjVisitor = new ecjASTVisitor(unit_info, this);
+                    unit_info.unit.traverse(ecjVisitor, unit_info.unit.scope);
+                }
+                else {
+                    throw new Exception("");
+                }
             }
             catch (Exception e) {
-                e.printStackTrace();
+                if (e.getMessage().length() > 0) {
+                    e.printStackTrace();
+                }
                 JavaParser.cactionCompilationUnitDeclarationError(e.getMessage(), unit_info.createJavaToken(unit_info.unit));
             }
             catch (Throwable e) {

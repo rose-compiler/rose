@@ -4950,12 +4950,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        }
                   }
              }
+
           //
           // If we are processing Java, ...
           //
           if (get_Java_only() == true) {
               //
-              // Report if an error detected only while compilng the output file?
+              // Report if an error detected only while compiling the output file?
               //
               if (this -> get_javacErrorCode()                   == 0 &&
                   this -> get_frontendErrorCode()                == 0 &&
@@ -4970,8 +4971,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report Error or Success of this translation.
               //
-              if (this -> get_javacErrorCode() != 0) {
-                  cout << "SYNTAX ERROR(s) found in "
+              if (this -> get_javacErrorCode() > 0) {
+                  cout << "Javac COMPILATION ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_javacErrorCode() < 0) {
+                  cout << "ECJ COMPILATION ERROR(s) found in "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
@@ -5226,6 +5233,9 @@ SgProject::compileOutput()
               else
               {
                   localErrorCode = file.compileOutput(0);
+                  if (get_Java_only()) {
+                      localErrorCode = 0; // PC: Always keep going for Java!
+                  }
               }
 
               if (localErrorCode > errorCode)
