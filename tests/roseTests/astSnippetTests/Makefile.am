@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
 EXTRA_DIST =
 TEST_TARGETS =
+MOSTLYCLEANFILES =
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -555,7 +556,9 @@ $(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf
 		$(srcdir)/ss_java_cwes.conf $@
 
 # DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
+# RPM (3/20/2014): To reenable these tests, enable the first line (TEST_TARGETS) and delte the second (MOSTLYCLEANFILES).
 # TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
+MOSTLYCLEANFILES += $(SS_JAVA_TEST_TARGETS) $(SS_JAVA_TEST_TARGETS:.passed=.failed)
 
 
 
