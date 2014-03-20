@@ -1851,6 +1851,15 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "mode_32_bit", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/19/2014): This option -rose:noclobber causes the output of source code to an existing file to be an error.
+     Project.setDataPrototype("bool", "noclobber_output_file", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/19/2014): This option -rose:noclobber causes the output of source code to an existing file to be an error if it results in a different file.
+  // Output of an identifal file is not an error.
+     Project.setDataPrototype("bool", "noclobber_if_different_output_file", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/31/2014): Added optimization for a few wireshark files. This post-processing is 
   // not required for C, but is only usefule for C++ (name qualification).  Still it is 
   // only a performance problem on a handfull of files in wireshark application. So we

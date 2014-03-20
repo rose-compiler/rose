@@ -4837,6 +4837,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
+          printf ("In SgFile::compileOutput(): outputFilename = %s \n",outputFilename.c_str());
+
           set_unparse_output_filename(outputFilename);
         }
 #endif

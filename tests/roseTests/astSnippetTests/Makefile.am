@@ -554,7 +554,8 @@ $(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf
 		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')" \
 		$(srcdir)/ss_java_cwes.conf $@
 
-TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
+# DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
+# TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
 
 
 
