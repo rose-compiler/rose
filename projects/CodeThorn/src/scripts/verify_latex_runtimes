@@ -3,6 +3,8 @@
 
 outputfile=verify-all-runtime.stats.tex
 
+rm -f $outputfile
+
 #echo "Benchmark & FrontEnd & Init & STG & ArrExtr & ArrSSA & Total\\\\\hline\hline" > ${outputfile}
 for stat in *.stats; do
   mybasename=`basename "$stat"|sed 's/.stats//g'|tr "_" "-"`

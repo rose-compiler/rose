@@ -119,6 +119,9 @@ fi
        --check)
            runallgeneralbenchmarks_param "$2"
 		   ;;
+	   --checkall)
+		   runallgeneralbenchmarks_param "$all_benchmarks $all_longbenchmarks"
+		   ;;
 	   --list)
            echo $all_benchmarks $all_longbenchmarks
 		   ;;

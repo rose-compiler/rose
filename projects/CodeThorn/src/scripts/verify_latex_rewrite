@@ -3,6 +3,8 @@
 
 outputfile=verify-all-rewrite.stats.tex
 
+rm -f $outputfile
+
 #echo "Benchmark & States & ArrayUpd & ElimMinusOp & ElimAssign & AddReord & CF & VarElim \\\\\hline\hline" > ${outputfile}
 for stat in *.stats; do
   #mybasename=`basename "$stat"|sed 's/.stats//g'|tr "_" "-"`
