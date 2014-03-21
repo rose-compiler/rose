@@ -4562,7 +4562,10 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
                     this -> set_javacErrorCode(frontendErrorLevel);
-                    frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    if (this->get_project()->get_keep_going() == false)
+                    {
+                        frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    }
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
                                    "ROSE was not configured to support the Java frontend.");
@@ -4950,12 +4953,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        }
                   }
              }
+
           //
           // If we are processing Java, ...
           //
           if (get_Java_only() == true) {
               //
-              // Report if an error detected only while compilng the output file?
+              // Report if an error detected only while compiling the output file?
               //
               if (this -> get_javacErrorCode()                   == 0 &&
                   this -> get_frontendErrorCode()                == 0 &&
@@ -4970,8 +4974,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               //
               // Report Error or Success of this translation.
               //
-              if (this -> get_javacErrorCode() != 0) {
-                  cout << "SYNTAX ERROR(s) found in "
+              if (this -> get_javacErrorCode() > 0) {
+                  cout << "Javac COMPILATION ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_javacErrorCode() < 0) {
+                  cout << "ECJ COMPILATION ERROR(s) found in "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
@@ -4991,6 +5001,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        << endl;
                   cout.flush();
               }
+
+              if (this->get_project()->get_keep_going() == false) {
+                  this -> set_javacErrorCode(0);           // keep going !!!
+                  this -> set_frontendErrorCode(0);        // keep going !!!
+                  this -> set_unparserErrorCode(0);        // keep going !!!
+                  this -> set_backendCompilerErrorCode(0); // keep going !!!
+              }
+
           }
          }
        else
@@ -5218,6 +5236,9 @@ SgProject::compileOutput()
               else
               {
                   localErrorCode = file.compileOutput(0);
+                  if (get_Java_only() && this->get_keep_going() == false) {
+                      localErrorCode = 0; // PC: Always keep going for Java!
+                  }
               }
 
               if (localErrorCode > errorCode)

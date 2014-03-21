@@ -37,6 +37,8 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         curprint (parenthesis_attribute -> expression.c_str());
     }
 
+// TODO: Remove this
+/*
     //
     // An expression may contain a Type prefix stored in the "prefix" attribute.
     //
@@ -45,6 +47,7 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
         curprint(attribute -> expression);
         curprint(".");
     }
+*/
 
     switch (expr->variant()) {
         case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
@@ -1168,6 +1171,8 @@ Unparse_Java::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_Java::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_Java::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 
+// TODO: Remove this ... PC -03/16/2014
+/*
 // Liao 11/3/2010
 // Sometimes initializers can from an included file
 //  SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
@@ -1222,15 +1227,14 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
   /* code inserted from specification */
-
+/*
      SgUnparse_Info newinfo(info);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "{");
-
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
 
-     for (size_t index =0; index < list.size(); index ++)
+     for (size_t index = 0; index < list.size(); index ++)
      {
        //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
        bool skipUnparsing = isFromAnotherFile(list[index]);
@@ -1245,6 +1249,23 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      if (aggr_init->get_need_explicit_braces())
       curprint ( "}");
    }
+*/
+
+void
+Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info) {
+    SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
+    ROSE_ASSERT(aggr_init != NULL);
+
+    SgUnparse_Info newinfo(info);
+    curprint ("{");
+    SgExpressionPtrList& list = aggr_init -> get_initializers() -> get_expressions();
+    for (size_t index = 0; index < list.size(); index ++) {
+        if (index > 0)
+             curprint ( ", ");
+        unparseExpression(list[index], newinfo);
+    }
+    curprint ("}");
+}
 
 void
 Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
@@ -1257,11 +1278,6 @@ Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
         if (i + 1 < args.size())
             curprint(", ");
     }
-
-#if 0
-  printf ("In Unparse_Java::unparseConInit expr = %p \n",expr);
-  printf ("WARNING: This is redundent with the Unparse_Java::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
-#endif
 }
 
 void
