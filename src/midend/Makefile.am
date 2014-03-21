@@ -17,6 +17,7 @@ include $(srcdir)/astProcessing/Makefile_variables
 include $(srcdir)/astMatching/Makefile_variables
 include $(srcdir)/astRewriteMechanism/Makefile_variables
 include $(srcdir)/astQuery/Makefile_variables
+include $(srcdir)/astSnippet/Makefile_variables
 include $(srcdir)/astUtil/Makefile_variables
 include $(srcdir)/astUtil/annotation/Makefile_variables
 include $(srcdir)/astUtil/astInterface/Makefile_variables
@@ -45,6 +46,7 @@ mAstProcessingPath=astProcessing#
 mAstMatchingPath=astMatching#
 mAstRewriteMechanismPath=astRewriteMechanism#
 mAstQueryPath=astQuery#
+mAstSnippetPath=astSnippet#
 mAstUtilPath=astUtil#
 mProgramTransformationPath=programTransformation#
 
@@ -94,7 +96,8 @@ libmidend_la_SOURCES=\
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
 	$(mAstMatching_la_sources) \
-	$(mAstQuery_la_sources)
+	$(mAstQuery_la_sources) \
+	$(mAstSnippet_la_sources)
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libmidend_la_SOURCES+=\
 	$(mAstRewriteMechanism_la_sources) \
@@ -118,6 +121,7 @@ include_HEADERS = \
 	$(mAstMatching_includeHeaders) \
 	$(mAstRewriteMechanism_includeHeaders) \
 	$(mAstQuery_includeHeaders) \
+	$(mAstSnippet_includeHeaders) \
 	$(mAstUtil_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 

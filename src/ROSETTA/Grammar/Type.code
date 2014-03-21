@@ -72,6 +72,16 @@ HEADER_START
           static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
           static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
 
+      /*! \brief Some types store internal SgType pointers explicitly while others compute them from other data.  This function is true if it has a data member that is a type (pointer, array, etc.).
+
+          Result is true if it stores a type explicitly as a data member, else false.
+
+          \internal True only if this is either a SgPointerType, SgReferenceType, PointerMemberType, 
+                    JavaParameterizedType, JavaWildcardType, ModifierType, QualifiedNameType, FunctionType, 
+                    MemberFunctionType, SgArrayType, TypeComplex, or TypeImaginary.
+       */
+          bool hasExplicitType();
+
       /*! \brief Some types can hide other type IR nodes internally.  This function is true if it can hide another type (pointer, array, etc.).
 
           Result is true if it can hide a one or more types, else false.
@@ -2191,6 +2201,29 @@ SgType::getAssociatedDeclaration() const
      return declaration;
    }
 
+bool SgType::hasExplicitType()
+   {
+  // DQ (3/7/2014):  Tis could be implemented as a virtual function but would require 11 functions to be 
+  // implemented. I have thus instead implemented it as a single function on the SgType instead. We
+  // can review this if it is important.
+
+  // This function returns true only if this is either a SgPointerType, SgReferenceType, SgPointerMemberType, 
+  // SgJavaParameterizedType, SgJavaWildcardType, SgModifierType, SgQualifiedNameType, SgFunctionType, 
+  // SgMemberFunctionType, SgArrayType, SgTypeComplex, or SgTypeImaginary.
+
+     bool returnValue = false;
+
+     if ( isSgPointerType(this) != NULL        || isSgArrayType(this)    != NULL          || isSgReferenceType(this) != NULL     || 
+          isSgPointerMemberType(this) != NULL  || isSgJavaParameterizedType(this) != NULL || isSgJavaWildcardType(this)  != NULL ||
+          isSgMemberFunctionType(this) != NULL || isSgTypeComplex(this) != NULL           || isSgTypeImaginary(this)  != NULL    ||
+          isSgFunctionType(this) != NULL       || isSgModifierType(this)  != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 bool
 SgType::containsInternalTypes()
@@ -2230,11 +2263,20 @@ SgType::getInternalTypes() const
      SgArrayType*     arrayType   = NULL;
      SgTypedefType*   typedefType = NULL;
 
+#if 0
+     printf ("In SgType::getInternalTypes(): TOP: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
+
+  // DQ (3/16/2014): Of coruse we need this.
   // Initialize with the input type (not clear if this is helpful).
   // internalTypes.push_back(currentType);
+     internalTypes.push_back(currentType);
 
      while (true)
         {
+#if 0
+           printf ("In SgType::getInternalTypes(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           if ( (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
@@ -2286,6 +2328,9 @@ SgType::getInternalTypes() const
                   }
              }
 
+#if 0
+           printf ("In SgType::getInternalTypes(): push_back(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           internalTypes.push_back(currentType);
         }
 

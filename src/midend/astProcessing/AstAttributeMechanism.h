@@ -197,6 +197,7 @@ class AstRegExAttribute : public AstAttribute
 
           AstRegExAttribute();
           AstRegExAttribute(const std::string & s);
+          virtual AstAttribute* copy() /*override*/;
    };
 
 // PC (10/21/2012): Added new kind of attribute for handling regex trees.
@@ -215,6 +216,7 @@ class AstSgNodeAttribute : public AstAttribute
 
           AstSgNodeAttribute();
           AstSgNodeAttribute(SgNode *node);
+          virtual AstAttribute* copy() /*override*/;
    };
 
 class AstSgNodeListAttribute : public AstAttribute
@@ -230,6 +232,8 @@ class AstSgNodeListAttribute : public AstAttribute
 
           AstSgNodeListAttribute();
           AstSgNodeListAttribute(std::vector<SgNode *> &);
+
+          virtual AstAttribute* copy() /*override*/;
    };
 
 class AstIntAttribute : public AstAttribute

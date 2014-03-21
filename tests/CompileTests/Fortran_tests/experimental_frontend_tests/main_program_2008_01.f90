@@ -1,2 +1,2 @@
 program main
-end
+end program main

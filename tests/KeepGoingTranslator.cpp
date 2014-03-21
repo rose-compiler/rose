@@ -42,7 +42,7 @@ AppendToFile(const std::string& filename, const std::string& msg);
  * @returns A map of all filenames expected to fail.
  */
 std::map<std::string, std::string>
-CreateExpectedFailuresMap(const std::string& filename);
+CreateExpectationsMap(const std::string& filename);
 
 int
 main(int argc, char * argv[])
@@ -51,7 +51,8 @@ main(int argc, char * argv[])
   bool enable_ast_tests = false;
   std::string report_filename__fail("rose-failed_files.txt");
   std::string report_filename__pass("rose-passed_files.txt");
-  std::string expectations_filename;
+  std::string expectations_filename__fail("");
+  std::string expectations_filename__pass("");
   std::string path_prefix;
 
   std::string program_name(argv[0]);
@@ -61,13 +62,14 @@ main(int argc, char * argv[])
   rose_cmdline.push_back("-rose:keep_going");
 
   {// CLI
-      std::string cli_report            = "--report="; // deprecated 2013-11-2
-      std::string cli_report__fail      = "--report-fail=";
-      std::string cli_report__pass      = "--report-pass=";
-      std::string cli_expectations      = "--expectations=";
-      std::string cli_strip_path_prefix = "--strip-path-prefix=";
-      std::string cli_enable_ast_tests = "--enable-ast-tests";
-      std::string cli_verbose           = "--verbose";
+      std::string cli_report                = "--report="; // deprecated 2013-11-2
+      std::string cli_report__fail          = "--report-fail=";
+      std::string cli_report__pass          = "--report-pass=";
+      std::string cli_expectations__fail    = "--expected-failures=";
+      std::string cli_expectations__pass    = "--expected-passes=";
+      std::string cli_strip_path_prefix     = "--strip-path-prefix=";
+      std::string cli_enable_ast_tests      = "--enable-ast-tests";
+      std::string cli_verbose               = "--verbose";
 
       for (int ii = 1; ii < argc; ++ii)
       {
@@ -139,30 +141,57 @@ main(int argc, char * argv[])
                   report_filename__pass = arg;
               }
           }
-          // --expectations
-          else if (arg.find(cli_expectations) == 0)
+          // --expected-failures
+          else if (arg.find(cli_expectations__fail) == 0)
           {
-              arg.replace(0, cli_expectations.length(), "");
+              arg.replace(0, cli_expectations__fail.length(), "");
               if (arg.empty())
               {
                   std::cerr
                       << "[ERROR] "
                       << "[" << program_name << "] "
-                      << "--expectations requires an argument, see --help"
+                      << "--expected-failures requires an argument, see --help"
                       << std::endl;
                   return 1;
               }
               else
               {
-                  expectations_filename = arg;
-                  if (!boost::filesystem::exists(expectations_filename))
+                  expectations_filename__fail = arg;
+                  if (!boost::filesystem::exists(expectations_filename__fail))
                   {
                       std::cerr
                           << "[FATAL] "
-                          << "Expectations file does not exist: "
-                          << expectations_filename
+                          << "Expected failures file does not exist: "
+                          << expectations_filename__fail
                           << std::endl;
-                      abort();
+                      exit(1);
+                  }
+              }
+          }
+          // --expected-passes
+          else if (arg.find(cli_expectations__pass) == 0)
+          {
+              arg.replace(0, cli_expectations__pass.length(), "");
+              if (arg.empty())
+              {
+                  std::cerr
+                      << "[ERROR] "
+                      << "[" << program_name << "] "
+                      << "--expected-passes requires an argument, see --help"
+                      << std::endl;
+                  return 1;
+              }
+              else
+              {
+                  expectations_filename__pass = arg;
+                  if (!boost::filesystem::exists(expectations_filename__pass))
+                  {
+                      std::cerr
+                          << "[FATAL] "
+                          << "expected passes file does not exist: "
+                          << expectations_filename__pass
+                          << std::endl;
+                      exit(1);
                   }
               }
           }
@@ -248,7 +277,7 @@ main(int argc, char * argv[])
           std::cout
               << "[ERROR] "
               << "ROSE encountered an error while processing this file: "
-              << "'" << filename << "'"
+              << "'" << path_prefix << filename << "'"
               << std::endl;
       }
 
@@ -256,6 +285,7 @@ main(int argc, char * argv[])
       std::stringstream ss;
       ss << filename << " "
          << file->get_frontendErrorCode() << " "
+         << file->get_javacErrorCode() << " "
          << file->get_unparserErrorCode() << " "
          << file->get_backendCompilerErrorCode() << " "
          << file->get_unparsedFileFailedCompilation();
@@ -275,7 +305,7 @@ main(int argc, char * argv[])
           std::cout
               << "[INFO] "
               << "ROSE successfully compiled this file: "
-              << "'" << filename << "'"
+              << "'" << path_prefix << filename << "'"
               << std::endl;
       }
 
@@ -285,11 +315,21 @@ main(int argc, char * argv[])
       AppendToFile(report_filename__pass, ss.str());
   }
 
-  if (!expectations_filename.empty())
+  if (!expectations_filename__fail.empty())
   {
       std::map<std::string, std::string> expected_failures =
-          CreateExpectedFailuresMap(expectations_filename);
-      assert(expected_failures.empty() == false);
+          CreateExpectationsMap(expectations_filename__fail);
+
+      // TOO1 (3/5/2014): Only works if all files are processed by this single commandline.
+      //if(files_with_errors.size() != expected_failures.size())
+      //{
+      //    std::cerr
+      //        << "[FATAL] "
+      //        << "Expected '" << expected_failures.size() << "' failures, but "
+      //        << "encountered '" << files_with_errors.size() << "' failures"
+      //        << std::endl;
+      //    exit(1);
+      //}
 
       BOOST_FOREACH(SgFile* file, files_with_errors)
       {
@@ -302,10 +342,10 @@ main(int argc, char * argv[])
           {
               std::cerr
                   << "[FATAL] "
-                  << "Unexpected failure for file: "
-                  << "'" << filename << "'"
+                  << "File failed unexpectedly: "
+                  << "'" << path_prefix << filename << "'"
                   << std::endl;
-              abort();
+              exit(1);
           }
           else
           {
@@ -313,8 +353,54 @@ main(int argc, char * argv[])
               {
                   std::cout
                       << "[INFO] "
-                      << "Expected failure for file: "
-                      << "'" << filename << "'"
+                      << "File failed as expected: "
+                      << "'" << path_prefix << filename << "'"
+                      << std::endl;
+              }
+          }
+      }
+  }
+
+  if (!expectations_filename__pass.empty())
+  {
+      std::map<std::string, std::string> expected_passes =
+          CreateExpectationsMap(expectations_filename__pass);
+
+      // TOO1 (3/5/2014): Only works if all files are processed by this single commandline.
+      //
+      //if(files_without_errors.size() != expected_passes.size())
+      //{
+      //    std::cerr
+      //        << "[FATAL] "
+      //        << "Expected '" << expected_passes.size() << "' passes, but "
+      //        << "encountered '" << files_without_errors.size() << "' passes"
+      //        << std::endl;
+      //    exit(1);
+      //}
+
+      BOOST_FOREACH(SgFile* file, files_without_errors)
+      {
+          std::string filename = file->getFileName();
+          filename = StripPrefix(path_prefix, filename);
+
+          std::map<std::string, std::string>::iterator it =
+              expected_passes.find(filename);
+          if (it == expected_passes.end())
+          {
+              std::cerr
+                  << "[WARN] "
+                  << "File passed unexpectedly: "
+                  << "'" << path_prefix << filename << "'"
+                  << std::endl;
+          }
+          else
+          {
+              if (verbose)
+              {
+                  std::cout
+                      << "[INFO] "
+                      << "File passed as expected: "
+                      << "'" << path_prefix << filename << "'"
                       << std::endl;
               }
           }
@@ -332,7 +418,8 @@ ShowUsage(std::string program_name)
     << "Options:\n"
     << "  --report-pass=<filename>        File to write report of passes\n"
     << "  --report-fail=<filename>        File to write report of failurest\n"
-    << "  --expectations=<filename>       File containing filenames that are expected to fail\n"
+    << "  --expected-failures=<filename>  File containing filenames that are expected to fail\n"
+    << "  --expected-passes=<filename>    File containing filenames that are expected to pass\n"
     << "  --strip-path-prefix=<filename>  Normalize filenames by stripping this path prefix from them\n"
     << "\n"
     << "  --enable-ast-tests              Enables the internal ROSE AST consistency tests\n"
@@ -444,7 +531,7 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "'" << filename << "'"
           << std::endl;
 
-      abort();
+      exit(1);
   }
 
   std::ofstream fout(filename.c_str(), std::ios::app);
@@ -457,7 +544,7 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "'" << filename << "'"
           << std::endl;
       flock.unlock();
-      abort();
+      exit(1);
   }
 
   fout
@@ -471,9 +558,9 @@ AppendToFile(const std::string& filename, const std::string& msg)
 }
 
 std::map<std::string, std::string>
-CreateExpectedFailuresMap(const std::string& filename)
+CreateExpectationsMap(const std::string& filename)
 {
-  std::map<std::string, std::string> expected_failures;
+  std::map<std::string, std::string> expectations;
 
   std::ifstream fin(filename.c_str());
   if(!fin.is_open())
@@ -483,7 +570,7 @@ CreateExpectedFailuresMap(const std::string& filename)
           << "Couldn't open "
           << "'" << filename << "'"
           << std::endl;
-      abort();
+      exit(1);
   }
   else
   {
@@ -491,12 +578,15 @@ CreateExpectedFailuresMap(const std::string& filename)
       while (fin.good())
       {
           getline (fin, line);
-          expected_failures[line] = line;
+          if (line.size() > 1)
+          {
+              expectations[line] = line;
+          }
       }
   }
 
   fin.close();
 
-  return expected_failures;
+  return expectations;
 }
 
