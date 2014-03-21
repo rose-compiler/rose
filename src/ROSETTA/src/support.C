@@ -1793,6 +1793,10 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("bool", "Java_verbose", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ("bool", "Java_deprecation", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ("std::list<std::string>", "Java_bootclasspath", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
      Project.setDataPrototype ( "bool", "addCppDirectivesToAST", "= false",
