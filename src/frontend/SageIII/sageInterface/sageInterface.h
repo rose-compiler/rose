@@ -2257,15 +2257,22 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
 
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+
+// DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+   bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
 //--------------------------------Java interface functions ---------------------
-      std::string getTempDirectory();
+      std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string);
+      void processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string, std::string);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
-      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string);
+      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
 
 }// end of namespace
 

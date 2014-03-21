@@ -14,7 +14,9 @@ include_directories(
 #-------------------------------------------------------------------------------
   ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH2}
-  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection)
+  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
+# DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
+  ${CMAKE_SOURCE_DIR}/src/midend/astMatching)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -432,6 +434,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
@@ -541,6 +544,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/FindRegisterD
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/LlvmSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/NullSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.C
