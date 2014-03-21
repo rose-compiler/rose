@@ -1795,6 +1795,7 @@ OptionRequiresArgument (const std::string& option)
 {
   return
       // Javac Options
+      option == "-bootclasspath"            ||
       option == "-classpath"                ||
       option == "-cp"                       ||
       option == "-sourcepath"               ||
@@ -1872,18 +1873,20 @@ Process (SgProject* project, std::vector<std::string>& argv)
           << std::endl;
   }
 
-  ProcessJavaOnly(project, argv);
-  ProcessClasspath(project, argv);
-  ProcessSourcepath(project, argv);
-  ProcessDestdir(project, argv);
-  ProcessSourceDestdir(project, argv);
-  ProcessS(project, argv);
-  ProcessSource(project, argv);
-  ProcessTarget(project, argv);
-  ProcessEncoding(project, argv);
-  ProcessG(project, argv);
-  ProcessNoWarn(project, argv);
-  ProcessVerbose(project, argv);
+  Cmdline::Java::ProcessJavaOnly(project, argv);
+  Cmdline::Java::ProcessClasspath(project, argv);
+  Cmdline::Java::ProcessSourcepath(project, argv);
+  Cmdline::Java::ProcessDestdir(project, argv);
+  Cmdline::Java::ProcessSourceDestdir(project, argv);
+  Cmdline::Java::ProcessS(project, argv);
+  Cmdline::Java::ProcessSource(project, argv);
+  Cmdline::Java::ProcessTarget(project, argv);
+  Cmdline::Java::ProcessEncoding(project, argv);
+  Cmdline::Java::ProcessG(project, argv);
+  Cmdline::Java::ProcessNoWarn(project, argv);
+  Cmdline::Java::ProcessVerbose(project, argv);
+  Cmdline::Java::ProcessDeprecation(project, argv);
+  Cmdline::Java::ProcessBootclasspath(project, argv);
 
   Cmdline::Java::Ecj::Process(project, argv);
 }
@@ -1971,6 +1974,47 @@ ProcessClasspath (SgProject* project, std::vector<std::string>& argv)
       }// sanity check
   }// has_java_classpath
 }// Cmdline::Java::ProcessClasspath
+
+void
+Rose::Cmdline::Java::
+ProcessBootclasspath (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string bootclasspath = "";
+
+  bool has_java_bootclasspath =
+      // -bootclasspath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-bootclasspath",
+          "",
+          bootclasspath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_bootclasspath)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -bootclasspath option" << std::endl;
+
+      // Parse and register the Java bootclasspath in the project
+      std::list<std::string> bootclasspath_list =
+          StringUtility::tokenize(bootclasspath, ':');
+      project->set_Java_bootclasspath(bootclasspath_list);
+
+      // Sanity check: Check existence of paths in Bootbootclasspath
+      BOOST_FOREACH(std::string path, bootclasspath_list)
+      {
+          bool path_exists = boost::filesystem::exists(path);
+          if (!path_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid path specified in -bootclasspath; path does not exist: "
+                  << "'" << path << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_bootclasspath
+}// Cmdline::Java::ProcessBootclasspath
 
 void
 Rose::Cmdline::Java::
@@ -2275,6 +2319,27 @@ ProcessVerbose (SgProject* project, std::vector<std::string>& argv)
 
   project->set_Java_verbose(has_java_verbose);
 }// Cmdline::Java::ProcessVerbose
+
+void
+Rose::Cmdline::Java::
+ProcessDeprecation (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_deprecation =
+      // -deprecation
+      CommandlineProcessing::isOption(
+          argv,
+          "-deprecation",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_deprecation)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -deprecation " << std::endl;
+  }
+
+  project->set_Java_deprecation(has_deprecation);
+}// ::Rose::Cmdline::Java::ProcessDeprecation
 
 Rose_STL_Container<std::string>
 Rose::Cmdline::Java::
