@@ -824,6 +824,38 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_mode_32_bit = true;
         }
 
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
+  //
+  // noclobber_output_file
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","noclobber_output_file",false) == true )
+        {
+#if 0
+          printf ("detected use of noclobber_output_file mode \n");
+#endif
+          p_noclobber_output_file = true;
+        }
+
+
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
+  //
+  // noclobber_if_different_output_file
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","noclobber_if_different_output_file",false) == true )
+        {
+#if 0
+          printf ("detected use of noclobber_if_different_output_file mode \n");
+#endif
+          p_noclobber_if_different_output_file = true;
+
+       // Make it an error to specify both of these noclobber options.
+          if (p_noclobber_output_file == true)
+             {
+               printf ("Error: options -rose:noclobber_output_file and -rose:noclobber_if_different_output_file are mutually exclusive \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
   //
   // specify compilation only option (new style command line processing)
   //
@@ -2878,6 +2910,11 @@ SgFile::usage ( int status )
 "                             This option has only shown an effect on the 2.5 million line\n"
 "                             wireshark application\n"
 "                             (not presently compatable with OpenMP or C++ code)\n"
+"     -rose:noclobber_output_file\n"
+"                             force error on rewrite of existing output file (default: false).\n"
+"     -rose:noclobber_if_different_output_file\n"
+"                             force error on rewrite of existing output file only if result\n"
+"                             if a different output file (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -4584,6 +4621,12 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (2/5/2014): Remove this option from the command line that will be handed to the backend compiler (typically GNU gcc or g++).
      optionCount = sla(argv, "-rose:", "($)", "(suppressConstantFoldingPostProcessing)",1);
+
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
+     optionCount = sla(argv, "-rose:", "($)", "noclobber_output_file",1);
+
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
+     optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))

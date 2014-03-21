@@ -930,7 +930,7 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // DQ (3/15/2014): The defining declaration should not be marked (isForward() == true).
           if (isForward() == true)
              {
-               printf ("Error: The defining declaration should not be marked (isForward() == true) \n");
+               printf ("Warning: The defining declaration should not be marked (isForward() == true) \n");
                printf ("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): functionDeclaration_copy = %p = %s \n",functionDeclaration_copy,functionDeclaration_copy->class_name().c_str());
                printf ("   --- functionDeclaration_copy->get_firstNondefiningDeclaration() = %p \n",functionDeclaration_copy->get_firstNondefiningDeclaration());
                printf ("   --- functionDeclaration_copy->get_definingDeclaration()         = %p \n",functionDeclaration_copy->get_definingDeclaration());

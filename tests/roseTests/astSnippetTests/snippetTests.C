@@ -12,7 +12,7 @@ findSnippetFile(const std::string &fileName)
         throw std::runtime_error("empty file name");
 
     if ('/'==fileName[0]) {
-        if (-1 != access(fileName.c_str(), R_OK))
+        if (0 != access(fileName.c_str(), R_OK))
             throw std::runtime_error("snippet file does not exist or is not readable: " + fileName);
         return fileName;
     }

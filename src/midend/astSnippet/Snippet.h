@@ -297,11 +297,14 @@ public:
     };
 
     /** Determines where local declarations are injected when using INSERT_STMTS.  New declarations can be injected starting at
-     * the beginning of the injection site's function scope, or after the last leading declaration statement in that scope. In
-     * either case, the snippet's declarations will appear in the injected code in the same order as in the snippet. */
+     * the beginning of the injection site's function scope, after the last leading declaration statement in that scope, or
+     * in the same place that the non-declaration statements are being inserted.  The last case is only useful in languages
+     * like C++ and Java that don't require declarations to be at the beginning of a scope. In any case, the snippet's
+     * declarations will appear in the injected code in the same order as in the snippet. */
     enum LocalDeclarationPosition {
         LOCDECLS_AT_BEGINNING,                          /**< Local declarations inserted at beginning of function. */
         LOCDECLS_AT_END,                                /**< Local declarations inserted at end of leading declarations. */
+        LOCDECLS_AT_CURSOR                              /**< Local declarations are not moved to a declarations area. */
     };
 
 private:
@@ -312,12 +315,13 @@ private:
     InsertMechanism insertMechanism;                    // how snippet is inserted
     LocalDeclarationPosition locDeclsPosition;          // position for local declarations for INSERT_STMTS mode
     bool insertRecursively;                             // is the insert() operation recursive?
+    bool fixupAst;                                      // whether to fix up the target AST after inserting things
 
 protected:
     // Use one of the "instance" methods instead.
     Snippet(const std::string &name, const SnippetFilePtr &file, SgFunctionDefinition *ast)
         : name(name), file(file), ast(ast), insertMechanism(INSERT_STMTS), locDeclsPosition(LOCDECLS_AT_END),
-          insertRecursively(true) {
+          insertRecursively(true), fixupAst(true) {
         assert(!name.empty());
         assert(file!=NULL);
         assert(ast!=NULL);
@@ -371,6 +375,17 @@ public:
     void insert(SgStatement *insertionPoint, SgNode *arg1, SgNode *arg2, SgNode *arg3);
     void insert(SgStatement *insertionPoint, SgNode *arg1, SgNode *arg2, SgNode *arg3, SgNode *arg4);
     void insert(SgStatement *insertionPoint, const std::vector<SgNode*> &args);
+    /** @} */
+
+    /** Determines whether the target AST should be fixed up after insertion.  Fixing up the target AST makes it so that the
+     *  things inserted from the snippet file point only to things in the target part of the AST--the snippet file part of the
+     *  AST can be deleted without consequence, and analysis will work propertly on the target AST after the insertion and
+     *  fixup.  Fixing up the AST is the default, and turning this feature off is probably only useful for debugging the
+     *  insertion mechanism itself while bypassing the AST fixups.
+     * @{ */
+    bool getFixupAst() const { return fixupAst; }
+    void setFixupAst(bool b=true) { fixupAst = b; }
+    void clearFixupAst() { fixupAst = false; }
     /** @} */
 
 protected:
