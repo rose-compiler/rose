@@ -438,10 +438,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         Sg_File_Info *target, *snippet;
         T1(Sg_File_Info *target, Sg_File_Info *snippet): target(target), snippet(snippet) {}
         void fixInfo(Sg_File_Info *info) {
-            if (info && info->get_file_id()==snippet->get_file_id()) {
-                info->set_file_id(target->get_file_id());
-                info->set_line(1);
-            }
+            // It is not sufficient to set only the file_id, we also need to set the physical_file_id.  It is also not
+            // sufficient to use setTransformation.  We need to be more complete, otherwise the Java unparser will not
+            // unparse anonymous classes because statementFromFile() returns false. [Robb P. Matzke 2014-03-21]
+            if (info && info->get_file_id()==snippet->get_file_id())
+                *info = *target;
         }
         void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (preorder==when) {
