@@ -18,6 +18,8 @@
 
 #define compGT(a, b) ((a) > (b))
 
+void nullSnippet() {}
+
 typedef int T;          /* type of item to be sorted */
 typedef int tblIndex;   /* type of subscript */
 void insertSort(T *a, tblIndex lb, tblIndex ub) {
