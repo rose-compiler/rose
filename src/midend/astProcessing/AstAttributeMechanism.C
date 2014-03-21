@@ -281,6 +281,11 @@ AstSgNodeAttribute::AstSgNodeAttribute(SgNode * node_)
 
 SgNode *AstSgNodeAttribute::getNode() { return node; }
 
+AstAttribute* AstSgNodeAttribute::copy() {
+    return new AstSgNodeAttribute(node);
+}
+
+
 // ********************************************
 //              AstSgNodeListAttribute
 // ********************************************
@@ -309,6 +314,11 @@ SgNode *AstSgNodeListAttribute::getNode(int signedIndex) {
 std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; }
 
 int AstSgNodeListAttribute::size() { return nodeList.size(); }
+
+AstAttribute* AstSgNodeListAttribute::copy() {
+    return new AstSgNodeListAttribute(nodeList);
+}
+
 
 // ********************************************
 //              AstIntAttribute

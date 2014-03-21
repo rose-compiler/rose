@@ -216,6 +216,7 @@ class AstSgNodeAttribute : public AstAttribute
 
           AstSgNodeAttribute();
           AstSgNodeAttribute(SgNode *node);
+          virtual AstAttribute* copy() /*override*/;
    };
 
 class AstSgNodeListAttribute : public AstAttribute
@@ -231,6 +232,8 @@ class AstSgNodeListAttribute : public AstAttribute
 
           AstSgNodeListAttribute();
           AstSgNodeListAttribute(std::vector<SgNode *> &);
+
+          virtual AstAttribute* copy() /*override*/;
    };
 
 class AstIntAttribute : public AstAttribute
