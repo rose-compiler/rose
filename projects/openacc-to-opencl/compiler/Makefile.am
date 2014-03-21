@@ -4,7 +4,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS=openacc-to-opencl
 
 openacc_to_opencl_SOURCES= \
-  openacc-to-opencl.cpp
+  openacc-to-opencl.cpp \
+  mdcg_openacc.cpp \
+  klt_itmap.cpp
 openacc_to_opencl_CXXFLAGS= \
   -g \
   -I$(top_srcdir)/src/frontend/DLX/include \
