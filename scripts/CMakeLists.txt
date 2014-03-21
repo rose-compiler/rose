@@ -1,30 +1,39 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### install files ###############
-
-#install(FILES  $(distributedScripts) DESTINATION )
-
-
-
-#original Makefile.am contents follow:
-
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-## copy the tools (scripts only) from the source tree to the source destination in the distribution
-#distributedScripts = \
-#     configure_with_SQL            runscript              \
-#     dotgen                                               \
-#     dotgen2                       lsdot                  \
-#     check-dist-file dotgenLetter  generateDirectoryGraph \
-#     libtoolcp     \
-#     dotgenLetterPDF dotgenLetterPNG \
-#     nmiBuildAndTestFarm
-#
-## scripts put into the distribution
-#EXTRA_DIST = README $(distributedScripts)
-#
-## install the tools in 'bin' (a subsect of EXTRA_DIST)
-#bin_SCRIPTS =  $(distributedScripts)
-#
+set(distributedScripts
+	autoconf-filter.pl
+  quiet-mode
+	Error.pm
+	Git.pm
+	buildExampleRoseWorkspaceScript.sh
+	check-dist-file dotgenLetter
+	configure_with_SQL
+	check_boost_linkage.sh
+	dotgen
+	dotgen2
+	dotgenLetterPDF
+	dotgenLetterPNG
+	edg-generate-sig
+	edg-unused-versions
+	generateDirectoryGraph
+	libtoolcp
+	lsdot
+	policies-checker.sh
+	policies/CaseInsensitiveFileNames.pl
+	policies/EightColumnTabstops.pl.disabled
+	policies/FileLister.pm
+	policies/NoExceedinglyLongLines.pl
+	policies/NoRoseIncludes.pl
+	policies/NoTabCharacters.pl
+	policies/NoUsingInHeaders.pl
+	policies/Policies.pm
+	policies/UniqueFortranModules.pl
+	policies/UniqueHeaderNames.pl
+	policies/UnixLineTermination.pl
+	policies/UnusedHeaders.pl
+	policies/UnusedSources.pl
+	publicConfiguration.pl
+	rth_run.pl
+	rth_stats.pl
+	runscript
+	shtool
+	stringify.pl)
+install(FILES ${distributedScripts} DESTINATION bin)

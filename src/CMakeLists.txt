@@ -137,6 +137,7 @@ endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
 )
+install(TARGETS roseutil DESTINATION lib)
 
 if (enable-php)
   set( phpFrontend_SRC 
@@ -205,6 +206,7 @@ set(POET_SRC
 add_library(poet ${POET_SRC})
 link_libraries(poet)
 add_executable(pcg ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp)
+install(TARGETS pcg DESTINATION bin)
 
 set(virtualCFG_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
@@ -983,6 +985,9 @@ add_custom_target(
      DEPENDS ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
      )
 add_dependencies(generate_stringify rosetta_generated)
+install(
+  FILES ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
+  DESTINATION include)
 
 ###############################################################################################################################
 ### The rose_config.h file generated during the configuration process contains CPP symbols that indicate what features are
@@ -998,6 +1003,7 @@ add_custom_target(
      generate_rosePublicConfig
      DEPENDS ${CMAKE_BINARY_DIR}/rosePublicConfig.h
      )
+install(FILES ${CMAKE_BINARY_DIR}/rosePublicConfig.h DESTINATION include)
 
 ###############################################################################################################################
 
@@ -1067,7 +1073,7 @@ set_target_properties(ROSE_DLL PROPERTIES
   SOVERSION 1
   DEFINE_SYMBOL ROSE_DLL_EXPORTS
 )
-install(TARGETS ROSE_DLL ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS ROSE_DLL DESTINATION lib)
 
 ########### next target ###############
 
