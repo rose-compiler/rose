@@ -6,7 +6,7 @@
 #include <string>
 
 // Run this before copy
-std::set<SgNode*> getAllNodes();
+ROSE_DLL_API std::set<SgNode*> getAllNodes();
 std::set<SgNode*> getAllNodes( SgNode* node );
 
 // Run this after copy, using the data structure produced before

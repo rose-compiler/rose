@@ -397,12 +397,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgStatementPtrList targetStatements = targetFunctionScope->generateStatementList();
     for (size_t i=0; targetFirstDeclaration==NULL && i<targetStatements.size(); ++i)
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
+    SgStatement *targetFirstStatement = targetStatements.empty() ? NULL : targetStatements.front();
 
     // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
-    // avoid unparsing problems where the unparser asserts things such as "the file for a function declaration's scope must be
-    // the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file and
-    // insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original scope
-    // in the snippet file.
+    // avoid unparsing problems for C where the unparser asserts things such as "the file for a function declaration's scope
+    // must be the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file
+    // and insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original
+    // scope in the snippet file.
     struct T1: AstSimpleProcessing {
         Sg_File_Info *target, *snippet;
         T1(Sg_File_Info *target, Sg_File_Info *snippet): target(target), snippet(snippet) {}
@@ -425,7 +426,8 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             }
         }
     } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
-    t1.traverse(file->getAst(), preorder);
+    if (!SageInterface::is_Java_language())
+        t1.traverse(file->getAst(), preorder);
 
   // insertionPoint->get_file_info()->display("insertionPoint: test 1: debug");
 
@@ -472,10 +474,17 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                 if (isSgDeclarationStatement(stmts[i])) {
                     switch (locDeclsPosition) {
                         case LOCDECLS_AT_BEGINNING:
-                            SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                            if (targetFirstDeclaration!=NULL) {
+                                SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
+                            } else {
+                                SageInterface::insertStatementBefore(targetFirstStatement, stmts[i]);
+                            }
                             break;
                         case LOCDECLS_AT_END:
                             SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+                            break;
+                        case LOCDECLS_AT_CURSOR:
+                            SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
                             break;
                     }
                 } else {
@@ -524,6 +533,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         file->expandSnippets(toInsert);
 
 #if 1
+    if (fixupAst) {
      // DQ (2/26/2014): Adding support to fixup the AST fragment (toInsert) that is being inserted into the target AST.
 
      // Build a translation map so that we can save the mapping of scopes between the target AST and the snippet AST.
@@ -578,11 +588,17 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                                    // associated scope of the insertionPoint.
                                    // if (translationMap.find(ast->get_body()) == translationMap.end());
                                    //      translationMap.insert( std::pair<SgNode*,SgNode*>( ast->get_body(),insertionPoint->get_scope() ) );
-
-                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
-                                                                                                insertionPointIsScope,
-                                                                                                stmts_copy_of_snippet_ast[i],
-                                                                                                stmts_in_original_snippet_ast[i]);
+                                      if (targetFirstDeclaration) {
+                                          SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstDeclaration,
+                                                                                                    insertionPointIsScope,
+                                                                                                    stmts_copy_of_snippet_ast[i],
+                                                                                                    stmts_in_original_snippet_ast[i]);
+                                      } else {
+                                          SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFirstStatement,
+                                                                                                    insertionPointIsScope,
+                                                                                                    stmts_copy_of_snippet_ast[i],
+                                                                                                    stmts_in_original_snippet_ast[i]);
+                                      }
                                       break;
 
                                  case LOCDECLS_AT_END:
@@ -601,6 +617,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                                    //      translationMap.insert( std::pair<SgNode*,SgNode*>(ast->get_body(), insertionPoint));
 
                                       SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(targetFunctionScope,
+                                                                                                insertionPointIsScope,
+                                                                                                stmts_copy_of_snippet_ast[i],
+                                                                                                stmts_in_original_snippet_ast[i]);
+                                      break;
+
+                                   case LOCDECLS_AT_CURSOR:
+                                      SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(insertionPoint,
                                                                                                 insertionPointIsScope,
                                                                                                 stmts_copy_of_snippet_ast[i],
                                                                                                 stmts_in_original_snippet_ast[i]);
@@ -634,6 +657,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 #else // DEBUGGING [DQ 2014-03-07]
          printf ("Skipping code to call the SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst() function \n");
 #endif
+    }
 }
 
 // class method
@@ -821,13 +845,25 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         }
 
         // Insert this declaration
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"insertRelatedThingsJava: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
-#endif
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
+
+     // DQ (3/19/2014): Added fixup of AST for Java declarations copied into the AST.
+        if (fixupAst) {
+            // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).  If we are inserting into
+            // the end of a scope then we point to the scope since there is no last statement to insert a statement before.  In
+            // this case then insertionPointIsScope == true, else it is false.  I think that in the cases called by this function
+            // insertionPointIsScope is always false.
+            bool insertionPointIsScope        = false;
+            SgStatement* toInsert             = declCopy;
+            SgStatement* original_before_copy = decl;
+            // std::map<SgNode*,SgNode*> translationMap;
+
+            SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert,
+                                                                      original_before_copy);
+        }
     }
 
     // Copy import statements from the snippet's file into the target file.
@@ -897,11 +933,6 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         }
 
         // Insert this declaration
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"insertRelatedThingsC: inserting (" <<decl->class_name() <<"*)" <<decl <<"\n";
-        printf ("insertRelatedThingsC: inserting decl = %p = %s = %s \n",decl,decl->class_name().c_str(),SageInterface::get_name(decl).c_str());
-        decl->get_file_info()->display("insertRelatedThingsC: inserting decl: debug");
-#endif
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         removeIncludeDirectives(declCopy);
@@ -943,25 +974,19 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         if (!firstInserted)
             firstInserted = declCopy;
         
+        if (fixupAst) {
+            // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).  If we are inserting into
+            // the end of a scope then we point to the scope since there is no last statement to insert a statement before.  In
+            // this case then insertionPointIsScope == true, else it is false.  I think that in the cases called by this function
+            // insertionPointIsScope is always false.
+            bool insertionPointIsScope        = false;
+            SgStatement* toInsert             = declCopy;
+            SgStatement* original_before_copy = decl;
+            // std::map<SgNode*,SgNode*> translationMap;
 
-        // DQ (3/13/2014): Added more general support for AST fixup (after insertion into the AST).  If we are inserting into
-        // the end of a scope then we point to the scope since there is no last statement to insert a statement before.  In
-        // this case then insertionPointIsScope == true, else it is false.  I think that in the cases called by this function
-        // insertionPointIsScope is always false.
-        bool insertionPointIsScope        = false;
-        SgStatement* toInsert             = declCopy;
-        SgStatement* original_before_copy = decl;
-     // std::map<SgNode*,SgNode*> translationMap;
-
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"calling SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst...\n";
-#endif
-
-        SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert, original_before_copy);
-
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-14]*/
-        std::cerr <<"call to SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst has returned.\n";
-#endif
+            SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert,
+                                                                      original_before_copy);
+        }
     }
 
     // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
