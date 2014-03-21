@@ -31,8 +31,7 @@ public class Snippets6 {
     }
 
     public void notNeeded() {
-        // DO_NOT_INSERT
-        System.out.println("this function should not be inserted into the target");
+        System.out.println("this function is not ever called");
     }
 
     void addWithError(int addend1, int addend2, int result) {

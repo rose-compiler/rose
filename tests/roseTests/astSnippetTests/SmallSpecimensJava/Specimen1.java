@@ -16,4 +16,9 @@ public class Specimen1 {
         INSERT_HERE=0;
         return f3;
     }
+
+    public static void main(String args[]) {
+	Specimen1 specimen = new Specimen1();
+	specimen.ipoint1();
+    }
 }

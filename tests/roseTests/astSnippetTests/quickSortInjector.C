@@ -1,4 +1,4 @@
-// Inject a few things into the quicksort.c specimen
+// Inject a few things into the quicksort.c or QuickSort.java specimen
 #include "snippetTests.h"
 
 using namespace rose;
@@ -64,6 +64,36 @@ static SgStatement *firstStatementInLoop(SgScopeStatement *loop) {
     return stmts[0];
 }
 
+struct LanguageSpecificInfo {
+    std::string snippetFileName;                        // name of file containing snippets
+    std::string quickSortFQN;                           // fully qualified name for the quickSort function
+    std::string readEnvironmentFQN;                     // fully qualified name for the readEnvironment snippet
+    std::string saveIntegerFQN;                         // fully qualified name for the saveInteger snippet
+    std::string partitionFQN;                           // fully qualified name for the partition function
+    std::string restoreIntegerFQN;                      // fully qualified name for the restoreInteger snippet
+    std::string arrayElementSwapFQN;                    // fully qualified name for the arrayElementSwap snippet
+    LanguageSpecificInfo() {
+        if (SageInterface::is_C_language()) {
+            snippetFileName = "QuickSortC/errorSnippets.c";
+            quickSortFQN = "::quickSort";
+            readEnvironmentFQN = "::readEnvironment";
+            saveIntegerFQN = "::saveInteger";
+            partitionFQN = "::partition";
+            restoreIntegerFQN = "::restoreInteger";
+            arrayElementSwapFQN = "::arrayElementSwap";
+        } else {
+            assert(SageInterface::is_Java_language());
+            snippetFileName = "QuickSortJava/ErrorSnippets.java";
+            quickSortFQN = "QuickSort.quickSort";
+            readEnvironmentFQN = "ErrorSnippets.readEnvironment";
+            saveIntegerFQN = "ErrorSnippets.saveInteger";
+            partitionFQN = "QuickSort.partition";
+            restoreIntegerFQN = "ErrorSnippets.restoreInteger";
+            arrayElementSwapFQN = "ErrorSnippets.arrayElementSwap";
+        }
+    }
+};
+
 int main(int argc, char *argv[])
 {
     // Load the target specimen into ROSE. This is the code which we will change by injecting snippets.  If we are performing
@@ -72,11 +102,14 @@ int main(int argc, char *argv[])
     std::cerr <<"Parsing the target specimen...\n";
     SgProject *project = frontend(argc, argv);
 
+    // Language-specific information so this test can run for both java and c specimens
+    LanguageSpecificInfo languageSpecificInfo;
+
     // Load the snippet file that contains all the snippets we wish to inject.  It is permissible to have more than one
     // such file, but we use only one here.  The snippet files are not unparsed -- only the target specimen is eventually
     // unparsed.
     std::cerr <<"Loading the snippet file...\n";
-    std::string snippetFileName = SnippetTests::findSnippetFile("QuickSortC/errorSnippets.c");
+    std::string snippetFileName = SnippetTests::findSnippetFile(languageSpecificInfo.snippetFileName);
     SnippetFilePtr snippetFile = SnippetFile::instance(snippetFileName);
     ROSE_ASSERT(snippetFile!=NULL || !"unable to load snippet file");
 
@@ -100,17 +133,17 @@ int main(int argc, char *argv[])
 #endif
 
     // Find where to insert the readEnvironment snippet. Look for "SNIPPET" comments in the target specimen.  This snippet
-    // should be inserted before the first "while" statement of the ::quickSort function.
+    // should be inserted before the first "while" statement of the quickSort function.
     std::cerr <<"Looking for the readEnvironment insertion point...\n";
-    SgFunctionDefinition *quickSort = SnippetTests::findFunctionDefinition(project, "::quickSort");
-    ROSE_ASSERT(quickSort || !"could not find ::quickSort in the target specimen");
+    SgFunctionDefinition *quickSort = SnippetTests::findFunctionDefinition(project, languageSpecificInfo.quickSortFQN);
+    ROSE_ASSERT(quickSort || !"could not find the quickSort function in the target specimen");
     SgWhileStmt *readEnvironmentInsertionPoint = findStatement<SgWhileStmt>(quickSort);
     ROSE_ASSERT(readEnvironmentInsertionPoint || !"could not find insertion point for readEnvironment");
 
     // Insert the readEnvironment snippet
     std::cerr <<"Inserting the readEnvironment snippet...\n";
-    SnippetPtr readEnvironment = snippetFile->findSnippet("::readEnvironment");
-    ROSE_ASSERT(readEnvironment!=NULL || !"unable to find ::readEnvironment snippet");
+    SnippetPtr readEnvironment = snippetFile->findSnippet(languageSpecificInfo.readEnvironmentFQN);
+    ROSE_ASSERT(readEnvironment!=NULL || !"unable to find the readEnvironment snippet");
     ROSE_ASSERT(readEnvironment->numberOfArguments()==0);
     readEnvironment->setInsertMechanism(Snippet::INSERT_STMTS);
     readEnvironment->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
@@ -127,8 +160,8 @@ int main(int argc, char *argv[])
 
     // Insert the saveInteger snippet
     std::cerr <<"Inserting the saveInteger snippet...\n";
-    SnippetPtr saveInteger = snippetFile->findSnippet("::saveInteger");
-    ROSE_ASSERT(saveInteger!=NULL || !"unable to find ::saveInteger snippet");
+    SnippetPtr saveInteger = snippetFile->findSnippet(languageSpecificInfo.saveIntegerFQN);
+    ROSE_ASSERT(saveInteger!=NULL || !"unable to find the saveInteger snippet");
     ROSE_ASSERT(saveInteger->numberOfArguments()==1);
     saveInteger->setInsertMechanism(Snippet::INSERT_STMTS);
     saveInteger->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
@@ -137,15 +170,15 @@ int main(int argc, char *argv[])
 
     // Find where to insert the restoreInteger snippet.
     std::cerr <<"Looking for the restoreInteger insertion point...\n";
-    SgFunctionDefinition *partition = SnippetTests::findFunctionDefinition(project, "::partition");
-    ROSE_ASSERT(partition || !"could not find ::partition in the target specimen");
+    SgFunctionDefinition *partition = SnippetTests::findFunctionDefinition(project, languageSpecificInfo.partitionFQN);
+    ROSE_ASSERT(partition || !"could not find the partition function in the target specimen");
     SgStatement *restoreIntegerInsertionPoint = findAssignment(partition, "i");
     ROSE_ASSERT(restoreIntegerInsertionPoint || !"could not find assignment to 'i' in partition()");
 
     // Insert restoreInteger snippet
     std::cerr <<"Inserting the restoreInteger snippet...\n";
-    SnippetPtr restoreInteger = snippetFile->findSnippet("::restoreInteger");
-    ROSE_ASSERT(restoreInteger!=NULL || !"unable to find ::restoreInteger snippet");
+    SnippetPtr restoreInteger = snippetFile->findSnippet(languageSpecificInfo.restoreIntegerFQN);
+    ROSE_ASSERT(restoreInteger!=NULL || !"unable to find the restoreInteger snippet");
     ROSE_ASSERT(restoreInteger->numberOfArguments()==0);
     restoreInteger->setInsertMechanism(Snippet::INSERT_STMTS);
     restoreInteger->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
@@ -155,7 +188,7 @@ int main(int argc, char *argv[])
     // Find where to insert the arrayElementSwap snippet
     std::cerr <<"Looking for the arrayElementSwap insertion point...\n";
     SgStatement *arrayElementSwapInsertionPoint = findLastReturnStatement(partition);
-    ROSE_ASSERT(arrayElementSwapInsertionPoint || !"could not find insertion point for ::arrayElementSwap");
+    ROSE_ASSERT(arrayElementSwapInsertionPoint || !"could not find insertion point for the arrayElementSwap snippet");
     SgInitializedName *var_a = SnippetTests::findArgumentDeclaration(partition, "a");
     ROSE_ASSERT(var_a || !"unable to find local variable 'a' in partition()");
     SgInitializedName *var_j = SnippetTests::findVariableDeclaration(partition, "j");
@@ -167,8 +200,8 @@ int main(int argc, char *argv[])
 
     // Insert the arrayElementSwap snippet
     std::cerr <<"Inserting the arrayElementSwap snippet...\n";
-    SnippetPtr arrayElementSwap = snippetFile->findSnippet("::arrayElementSwap");
-    ROSE_ASSERT(arrayElementSwap!=NULL || !"unable to find ::arrayElementSwap snippet");
+    SnippetPtr arrayElementSwap = snippetFile->findSnippet(languageSpecificInfo.arrayElementSwapFQN);
+    ROSE_ASSERT(arrayElementSwap!=NULL || !"unable to find the arrayElementSwap snippet");
     ROSE_ASSERT(arrayElementSwap->numberOfArguments()==4);
     arrayElementSwap->setInsertMechanism(Snippet::INSERT_BODY);
     arrayElementSwap->setInsertRecursively(false);

@@ -38,6 +38,11 @@ ipoint3()
     return f3;
 }
 
+double
+ipoint4()
+{
+    INSERT_HERE;
+}
 
 int
 main(int argc, char *argv[]) 

@@ -51,6 +51,7 @@ endif()
 foreach(tutorial ${tutorials})
   add_executable(${tutorial}Tutorial "${tutorial}.C")
   target_link_libraries(${tutorial}Tutorial ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS ${tutorial}Tutorial DESTINATION bin)
 endforeach()
 
 #if ROSE_HAVE_YICES
