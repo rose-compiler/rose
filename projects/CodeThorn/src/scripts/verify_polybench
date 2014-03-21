@@ -42,7 +42,7 @@ else
   echo "SKIP (does not exist)"
   # generate empty stats file
   echo "Sizes, -, -, -, -">${fullbenchname}.stats
-  echo "Runtime(readable), -, -, -, -, -">>${fullbenchname}.stats
+  echo "Runtime(readable), -, -, -, -, -, -, -, -, -">>${fullbenchname}.stats
   echo "rewrite-stats, -, -, -, -, -,-,-">>${fullbenchname}.stats
 fi
 }

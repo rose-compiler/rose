@@ -916,6 +916,7 @@ public:
 #include <map>
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
+// linear algorithm. Only works for a sequence of assignments.
 void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   std::map<string,int> defVarNumbers;
   for(size_t i=0;i<arrayUpdates.size();++i) {
@@ -1619,8 +1620,9 @@ int main( int argc, char * argv[] ) {
     cout << "STATUS: Generated assertions."<<endl;
   }
 
-  double arrayUpdateExtractionRunTime=0;
-  double arrayUpdateSsaNumberingRunTime=0;
+  double arrayUpdateExtractionRunTime=0.0;
+  double arrayUpdateSsaNumberingRunTime=0.0;
+  double sortingAndIORunTime=0.0;
   
   if(boolOptions["dump1"]) {
     ArrayUpdatesSequence arrayUpdates;
@@ -1658,21 +1660,22 @@ int main( int argc, char * argv[] ) {
     arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
     
     cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
-    timer.start();
     if(args.count("dump-non-sorted")) {
       string filename=args["dump-non-sorted"].as<string>();
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
     }
     if(args.count("dump-sorted")) {
+	  timer.start();
       string filename=args["dump-sorted"].as<string>();
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+	  sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
     }
     if(boolOptions["dump1"]) {
-	  string filename="arrayupdates.txt";
-	  writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
+	  //string filename="arrayupdates.txt";
+	  //writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
 	}
-    
-    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime;
+
+    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }
   
   if(args.count("csv-stats")) {
@@ -1691,17 +1694,19 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(frontEndRunTime)<<", "
         <<readableruntime(initRunTime)<<", "
         <<readableruntime(analysisRunTime)<<", "
-	  //<<readableruntime(ltlRunTime)<<", "
+	    <<readableruntime(ltlRunTime)<<", "
 		<<readableruntime(arrayUpdateExtractionRunTime)<<", "
 		<<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
+		<<readableruntime(sortingAndIORunTime)<<", "
         <<readableruntime(totalRunTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
         <<analysisRunTime<<", "
-	  //<<ltlRunTime<<", "
+	    <<ltlRunTime<<", "
 		<<arrayUpdateExtractionRunTime<<", "
 		<<arrayUpdateSsaNumberingRunTime<<", "
+		<<sortingAndIORunTime<<", "
         <<totalRunTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
