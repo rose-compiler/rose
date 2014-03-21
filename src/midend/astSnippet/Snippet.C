@@ -441,8 +441,11 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             // It is not sufficient to set only the file_id, we also need to set the physical_file_id.  It is also not
             // sufficient to use setTransformation.  We need to be more complete, otherwise the Java unparser will not
             // unparse anonymous classes because statementFromFile() returns false. [Robb P. Matzke 2014-03-21]
-            if (info && info->get_file_id()==snippet->get_file_id())
+            if (info && info->get_file_id()==snippet->get_file_id()) {
                 *info = *target;
+            } else if (info && SageInterface::is_Java_language()) {
+                *info = *target;
+            }
         }
         void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (preorder==when) {
@@ -458,7 +461,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                 }
             }
         }
-    } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
+    } t1(targetFunction->get_file_info(), ast->get_body()->get_file_info());
     t1.traverse(file->getAst());
 
   // insertionPoint->get_file_info()->display("insertionPoint: test 1: debug");
@@ -488,7 +491,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     ROSE_ASSERT(toInsert->get_parent() != NULL);
 
     renameTemporaries(toInsert);
-    causeUnparsing(toInsert, insertionPoint->get_file_info());
+    causeUnparsing(toInsert, targetFunction->get_file_info());
 
     switch (insertMechanism) {
         case INSERT_BODY: {
