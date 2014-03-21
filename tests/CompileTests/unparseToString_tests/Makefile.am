@@ -17,7 +17,7 @@ unparseToString_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 ########################################################################################################################
 
 # The list of specimens (which must all be from one directory so as to not be ambiguous)
-SPECIMEN_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+SPECIMEN_DIR = $(abs_top_srcdir)/tests/CompileTests/Cxx_tests
 ##DOES_NOT_WORK## include $(SPECIMEN_DIR)/Makefile-pass.inc
 include ../Cxx_tests/Makefile-pass.inc
 SPECIMENS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
