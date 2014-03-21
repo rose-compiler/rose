@@ -2263,7 +2263,11 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       void preprocessCompilationUnit(SgProject *, std::string, std::string);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
-      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
 
 }// end of namespace
 

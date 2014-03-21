@@ -86,6 +86,7 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
    #include "transformationSupport.h"
 #endif
 
+
 // DQ (4/3/2012): Addes so that I can enforce some rules as the AST is constructed.
 #include "AstConsistencyTests.h"
 
@@ -8419,7 +8420,7 @@ SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpre
   ROSE_ASSERT(expression);
   ROSE_ASSERT(body);
   SgJavaSynchronizedStatement *sync_stmt = new SgJavaSynchronizedStatement(expression, body);
-  ROSE_ASSERT(sync_stmt);
+  SageInterface::setSourcePosition(sync_stmt);
 
   expression->set_parent(sync_stmt);
   body->set_parent(sync_stmt);
@@ -12998,10 +12999,8 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
                       // Not clear how to lookup this type in the target AST.
                          returnType = javaWildcardType;
 
-                         SgType* internal_type_1 = javaWildcardType->get_extends_type();
-                         ROSE_ASSERT(internal_type_1 != NULL);
-                         SgType* internal_type_2 = javaWildcardType->get_super_type();
-                         ROSE_ASSERT(internal_type_2 != NULL);
+                         SgType* internal_type_1 = javaWildcardType->get_bound_type();
+                         // ROSE_ASSERT(internal_type_1 != NULL); // PC: 03/15/2014 - Dan, this cannot be asserted as the bound_type CAN BE NULL.
                        }
 
                     printf ("SgJavaWildcardType not yet tested! \n");
@@ -14863,13 +14862,117 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
    }
 
 /**
+ *
+ */
+SgVarRefExp *SageBuilder::buildJavaArrayLengthVarRefExp() {
+    ROSE_ASSERT(Rose::Frontend::Java::lengthSymbol);
+    SgVarRefExp *var_ref = SageBuilder::buildVarRefExp(Rose::Frontend::Java::lengthSymbol);
+    SageInterface::setSourcePosition(var_ref);
+    return var_ref;
+}
+
+/**
+ *
+ */
+SgScopeStatement *SageBuilder::buildScopeStatement(SgClassDefinition *parent_scope) {
+    SgScopeStatement *scope = new SgScopeStatement();
+    SageInterface::setSourcePosition(scope);
+    if (parent_scope != NULL) {
+        scope -> set_parent(parent_scope);
+    }
+    return scope;
+}
+
+/**
+ *
+ */
+SgJavaTypeExpression *SageBuilder::buildJavaTypeExpression(SgType *type) {
+    SgJavaTypeExpression *expr = new SgJavaTypeExpression(type);
+    SageInterface::setSourcePosition(expr);
+    return expr;
+}
+
+/**
+ *
+ */
+SgJavaMarkerAnnotation *SageBuilder::buildJavaMarkerAnnotation(SgType *type) {
+    SgJavaMarkerAnnotation *annotation = new SgJavaMarkerAnnotation(type);
+    SageInterface::setSourcePosition(annotation);
+    return annotation;
+}
+
+/**
+ *
+ */
+SgJavaMemberValuePair *SageBuilder::buildJavaMemberValuePair(const SgName &name, SgExpression *value) {
+    SgJavaMemberValuePair *pair = new SgJavaMemberValuePair();
+    SageInterface::setSourcePosition(pair);
+    pair -> set_name(name);
+    pair -> set_value(value);
+    value -> set_parent(pair);
+    return pair;
+}
+
+/**
+ *
+ */
+SgJavaSingleMemberAnnotation *SageBuilder::buildJavaSingleMemberAnnotation(SgType *type, SgExpression *value) {
+    SgJavaSingleMemberAnnotation *annotation = new SgJavaSingleMemberAnnotation(type, value);
+    SageInterface::setSourcePosition(annotation);
+    return annotation;
+}
+
+/**
+ *
+ */
+SgJavaNormalAnnotation *SageBuilder::buildJavaNormalAnnotation(SgType *type) {
+    SgJavaNormalAnnotation *annotation = new SgJavaNormalAnnotation(type);
+    SageInterface::setSourcePosition(annotation);
+    return annotation;
+}
+
+/**
+ *
+ */
+SgJavaNormalAnnotation *SageBuilder::buildJavaNormalAnnotation(SgType *type, list<SgJavaMemberValuePair *>& pair_list) {
+    SgJavaNormalAnnotation *annotation = SageBuilder::buildJavaNormalAnnotation(type);
+    for (std::list<SgJavaMemberValuePair *>::iterator i = pair_list.begin(); i != pair_list.end(); i++) {
+        SgJavaMemberValuePair *member_value_pair = *i;
+        member_value_pair -> set_parent(annotation);
+        annotation -> append_value_pair(member_value_pair);
+    }
+    return annotation;
+}
+
+
+/**
+ *
+ */
+SgInitializedName *SageBuilder::buildJavaFormalParameter(SgType *argument_type, const SgName &argument_name, bool is_var_args, bool is_final) {
+    SgInitializedName *initialized_name = NULL;
+    if (is_var_args) {
+        initialized_name = SageBuilder::buildInitializedName(argument_name, SageBuilder::getUniqueJavaArrayType(argument_type, 1), NULL);
+        initialized_name -> setAttribute("var_args", new AstRegExAttribute(""));
+    }
+    else {
+        initialized_name = SageBuilder::buildInitializedName(argument_name, argument_type, NULL);
+    }
+    SageInterface::setSourcePosition(initialized_name);
+    if (is_final) {
+        initialized_name -> setAttribute("final", new AstRegExAttribute(""));
+    }
+
+    return initialized_name;
+}
+
+/**
  * The import_info represents the qualified name of a package, type or static field.
  */
 SgJavaPackageStatement *SageBuilder::buildJavaPackageStatement(string package_name) {
     SgJavaPackageStatement *package_statement = new SgJavaPackageStatement(package_name);
+    SageInterface::setSourcePosition(package_statement);
     package_statement -> set_firstNondefiningDeclaration(package_statement);
     package_statement -> set_definingDeclaration(package_statement);
-    SageInterface::setSourcePosition(package_statement);
     return package_statement;
 }
 
@@ -14878,16 +14981,16 @@ SgJavaPackageStatement *SageBuilder::buildJavaPackageStatement(string package_na
  */
 SgJavaImportStatement *SageBuilder::buildJavaImportStatement(string import_info, bool contains_wildcard) {
     SgJavaImportStatement *import_statement = new SgJavaImportStatement(import_info, contains_wildcard);
+    SageInterface::setSourcePosition(import_statement);
     import_statement -> set_firstNondefiningDeclaration(import_statement);
     import_statement -> set_definingDeclaration(import_statement);
-    SageInterface::setSourcePosition(import_statement);
     return import_statement;
 }
 
 /**
  *  Build a class with the given name in the given scope and return its SgClassDefinition.
  */
-SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatement *scope, string name) {
+SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatement *scope, string name, SgClassDeclaration::class_types kind) {
     ROSE_ASSERT(scope);
     SgName class_name = name;
     ROSE_ASSERT(scope -> lookup_class_symbol(class_name) == NULL);
@@ -14895,7 +14998,7 @@ SgClassDeclaration *SageBuilder::buildJavaDefiningClassDeclaration(SgScopeStatem
     SgClassDeclaration* nonDefiningDecl              = NULL;
     bool buildTemplateInstantiation                  = false;
     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
-    SgClassDeclaration *class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_java_parameter, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    SgClassDeclaration *class_declaration = SageBuilder::buildClassDeclaration_nfi(class_name, kind, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
     ROSE_ASSERT(class_declaration);
     class_declaration -> set_parent(scope);
     class_declaration -> set_scope(scope);
@@ -14964,3 +15067,132 @@ SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string direct
 
     return sourcefile;
 }
+
+
+/**
+ *
+ */
+SgArrayType *SageBuilder::getUniqueJavaArrayType(SgType *base_type, int num_dimensions) {
+    ROSE_ASSERT(num_dimensions > 0);
+    if (num_dimensions > 1) {
+        base_type = getUniqueJavaArrayType(base_type, num_dimensions - 1);
+    }
+
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
+    if (attribute == NULL) {
+        SgArrayType *array_type = SageBuilder::buildArrayType(base_type);
+        array_type -> set_rank(num_dimensions);
+        attribute = new AstSgNodeAttribute(array_type);
+        base_type -> setAttribute("array", attribute);
+    }
+
+    return isSgArrayType(attribute -> getNode());
+}
+
+
+/**
+ *
+ */
+SgJavaParameterizedType *SageBuilder::getUniqueJavaParameterizedType(SgNamedType *generic_type, SgTemplateParameterPtrList *new_args) {
+    AstParameterizedTypeAttribute *attribute = (AstParameterizedTypeAttribute *) generic_type -> getAttribute("parameterized types");
+    if (! attribute) {
+        attribute = new AstParameterizedTypeAttribute(generic_type);
+        generic_type -> setAttribute("parameterized types", attribute);
+    }
+    ROSE_ASSERT(attribute);
+
+    return attribute -> findOrInsertParameterizedType(new_args);
+}
+
+
+/**
+ *
+ */
+SgJavaQualifiedType *SageBuilder::getUniqueJavaQualifiedType(SgClassDeclaration *class_declaration, SgNamedType *parent_type, SgNamedType *type) {
+    AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) type -> getAttribute("qualified types");
+    if (! attribute) {
+        attribute = new AstSgNodeListAttribute();
+        type -> setAttribute("qualified types", attribute);
+    }
+    ROSE_ASSERT(attribute);
+
+    for (int i = 0; i < attribute -> size(); i++) {
+        SgJavaQualifiedType *qualified_type = isSgJavaQualifiedType(attribute -> getNode(i));
+        ROSE_ASSERT(qualified_type);
+        if (qualified_type -> get_parent_type() == parent_type &&  qualified_type -> get_type() == type) {
+            return qualified_type;
+        }
+    }
+
+    SgJavaQualifiedType *qualified_type = new SgJavaQualifiedType(class_declaration);
+    qualified_type -> set_parent_type(parent_type);
+    qualified_type -> set_type(type);
+
+    attribute -> addNode(qualified_type);
+
+    return qualified_type;
+}
+
+
+/**
+ * Generate the unbound wildcard if it does not yet exist and return it.  Once the unbound Wildcard
+ * is generated, it is attached to the Object type so that it can be retrieved later. 
+ */
+SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardUnbound() {
+  AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) Rose::Frontend::Java::ObjectClassType -> getAttribute("unbound");
+    if (! attribute) {
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(Rose::Frontend::Java::ObjectClassType -> get_declaration());
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration -> get_definingDeclaration());
+        attribute = new AstSgNodeAttribute(wildcard);
+        Rose::Frontend::Java::ObjectClassType -> setAttribute("unbound", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+
+
+/**
+ * If it does not exist yet, generate wildcard type that extends this type.  Return the wildcard in question. 
+ */
+SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardExtends(SgType *type) {
+    ROSE_ASSERT(type);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("extends");
+    if (! attribute) {
+        SgArrayType *array_type = isSgArrayType(type);
+        SgNamedType *named_type = isSgNamedType(type);
+        ROSE_ASSERT(array_type || named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration((array_type ? (SgNamedType *) Rose::Frontend::Java::ObjectClassType : named_type) -> get_declaration());
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration -> get_definingDeclaration(), type);
+
+        wildcard -> set_has_extends(true);
+
+        attribute = new AstSgNodeAttribute(wildcard);
+        type -> setAttribute("extends", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+
+
+/**
+ * If it does not exist yet, generate a super wildcard for this type.  Return the wildcard in question.
+ */
+SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardSuper(SgType *type) {
+    ROSE_ASSERT(type);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("super");
+    if (! attribute) {
+        SgArrayType *array_type = isSgArrayType(type);
+        SgNamedType *named_type = isSgNamedType(type);
+        ROSE_ASSERT(array_type || named_type);
+        SgClassDeclaration *class_declaration = isSgClassDeclaration((array_type ? (SgNamedType *) Rose::Frontend::Java::ObjectClassType : named_type) -> get_declaration());
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(class_declaration -> get_definingDeclaration(), type);
+
+        wildcard -> set_has_super(true);
+
+        attribute = new AstSgNodeAttribute(wildcard);
+        type -> setAttribute("super", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+

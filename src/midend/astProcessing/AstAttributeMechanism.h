@@ -4,10 +4,16 @@
 #ifndef ASTATTRIBUTEMECHANISM_H
 #define ASTATTRIBUTEMECHANISM_H
 
+#include <list>
+
 #include "AttributeMechanism.h"
 #include "rosedll.h"
 
 class SgNode;
+class SgNamedType;
+class SgJavaParameterizedType;
+class SgTemplateParameter;
+class SgTemplateParameterList;
 
 class ROSE_DLL_API AstAttribute
    {
@@ -213,6 +219,7 @@ class AstSgNodeAttribute : public AstAttribute
 
      public:
           SgNode *getNode();
+          void setNode(SgNode *);
 
           AstSgNodeAttribute();
           AstSgNodeAttribute(SgNode *node);
@@ -242,5 +249,18 @@ class AstIntAttribute : public AstAttribute
 
           AstIntAttribute(int value_);
    };
+
+class AstParameterizedTypeAttribute : public AstAttribute {
+    private:
+        SgNamedType *genericType;
+        std::list<SgJavaParameterizedType *> parameterizedTypes;
+
+    public:
+        AstParameterizedTypeAttribute(SgNamedType *genericType_);
+
+        bool argumentsMatch(SgTemplateParameterList *type_arg_list, std::vector<SgTemplateParameter *> *new_args);
+        SgJavaParameterizedType *findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args);
+};
+
 
 #endif
