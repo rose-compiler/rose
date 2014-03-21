@@ -2193,8 +2193,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEcjFatalCompilationErrors(JNIEnv *
     SgSourceFile *source_file = isSgSourceFile((*::project)[full_file_name]);
     ROSE_ASSERT(source_file);
     ROSE_ASSERT(source_file -> get_file_info());
-    source_file -> set_javacErrorCode(-1);
-
+    source_file -> set_ecjErrorCode(1);
     source_file -> setAttribute("error", new AstRegExAttribute("Ecj fatal compilation errors detected"));
 
     if (SgProject::get_verbose() > 0)
