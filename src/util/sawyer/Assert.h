@@ -15,30 +15,29 @@ namespace Sawyer {                                      // documented elsewhere
 
 /** Logic assertions.
  *
- *  Sawyer defines a collection of logic assertion macros (mostly) beginning with "ASSERT_". Many of the macros come in two
- *  flavors: with or without a string argument to describe what is being asserted.  Since there is not an official portable way
- *  for macros to have a variable number of arguments, macros that take a descriptive string have "2" appended to their
- *  names. Macros with "always" in their name are always enabled, while some of the others are only enabled when NDEBUG and
- *  SAWYER_NDEBUG are both undefined. Macros that are enabled evaluate their arguments one time each, and macros that are
- *  disabled do not evaluate their arguments.
+ *  This library defines a collection of logic assertion macros (mostly) beginning with "ASSERT_". Many of the macros come in
+ *  two flavors: with or without an <code>std::string</code> argument to describe what is being asserted.  Since there is not
+ *  an official portable way for macros to have a variable number of arguments, macros that take a descriptive string have "2"
+ *  appended to their names. Macros with "always" in their name are always enabled, while some of the others are only enabled
+ *  when <code>NDEBUG</code> and <code>SAWYER_NDEBUG</code> are both undefined. Macros that are enabled evaluate their
+ *  arguments one time each, and macros that are disabled do not evaluate their arguments at all.
  *
- *  The following macros are defined (with "ASSERT_" prefix, optional "always", and optional trailing "2"):
- *  <ul>
- *    <li><code>require(<em>expr</em> [,<em>note</em>])</code>: Asserts that <em>expr</em> evaluates to true, or fails
- *        with the message "assertion failed: required" with details about the failure.</li>
- *    <li><code>forbid(<em>expr</em> [,<em>note</em>])</code>: Asserts that <em>expr</em> evaluates to false, or fails
- *        with the message "assertion failed: prohibitted" with details about the failure.</li>
- *    <li><code>not_null(<em>expr</em> [, <em>note</em>])</code>: Asserts that <em>expr</em> evaluate to non-null, or
- *        fails with the message "null pointer" with details about the failure.  This macro is different than the others
- *        in that it also returns its expression.</li>
- *    <li><code>this()</code>: Asserts that the containing function is an object method invoked on a non-null object. If
- *        the function is not an object method then the compiler will emit an error. If the object is null at the time of
- *        invocation then the program fails with the message "'this' cannot be null in an object method".</li>
- *    <li><code>not_reachable(<em>note</em>)</code>: Always fails with the message "reached impossible state". This macro
- *        is not disabled when SAWYER_NDEBUG is set.</li>
- *    <li><code>not_implemented(<em>note</em>)</code>: Always fails with the message "not implemented yet". This macro
- *        is not disabled when SAWYER_NDEBUG is set.</li>
- *  </ul>
+ *  The following macros are defined with "ASSERT_" prefix, optional "always", and optional trailing "2":
+ *  
+ *  @li <code>require(@e expr, [<em>note</em>])</code>: Asserts that <em>expr</em> evaluates to true, or fails
+ *      with the message "assertion failed: required" with details about the failure.
+ *  @li <code>forbid(<em>expr</em>, [<em>note</em>])</code>: Asserts that <em>expr</em> evaluates to false, or fails
+ *      with the message "assertion failed: prohibitted" with details about the failure.
+ *  @li <code>not_null(<em>expr</em>, [<em>note</em>])</code>: Asserts that <em>expr</em> evaluate to non-null, or
+ *      fails with the message "null pointer" with details about the failure.  This macro is different than the others
+ *      in that it also returns its expression.
+ *  @li <code>this()</code>: Asserts that the containing function is an object method invoked on a non-null object. If
+ *      the function is not an object method then the compiler will emit an error. If the object is null at the time of
+ *      invocation then the program fails with the message "'this' cannot be null in an object method".
+ *  @li <code>not_reachable(<em>note</em>)</code>: Always fails with the message "reached impossible state". This macro
+ *      is not disabled when SAWYER_NDEBUG is set.
+ *  @li <code>not_implemented(<em>note</em>)</code>: Always fails with the message "not implemented yet". This macro
+ *      is not disabled when SAWYER_NDEBUG is set.
  *
  *  Some examples:
  *
@@ -63,7 +62,7 @@ namespace Sawyer {                                      // documented elsewhere
  *  @endcode
  *
  *  The following macros do not start with "ASSERT_" because they are widely recognized by IDEs. They are aso not disabled
- *  when SAWYER_NDEBUG is set.
+ *  when <code>SAWYER_NDEBUG</code> is set.
  *
  *  <ul>
  *    <li><code>TODO(<em>note</em>)</code>: Always fails with the message "not implemented yet".</li>
@@ -93,7 +92,14 @@ inline Pointer not_null(Pointer pointer, const char *expr, const std::string &no
     return pointer;
 }
 
-/** The stream to be used for assertions. */
+/** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
+ *  initialized at the first call to @ref fail if it is a null pointer. Users can assign a different stream to it any time
+ *  before then:
+ *
+ * @code
+ * int main(int argc, char *argv[]) {
+ *     Sawyer::Assert::assertionStream = Sawer::Message::mlog[FATAL];
+ * @endcode */
 extern Message::SProxy assertionStream;
 
 } // namespace
