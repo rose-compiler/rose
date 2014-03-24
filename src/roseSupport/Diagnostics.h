@@ -9,11 +9,11 @@ namespace rose {
 
 /** Controls diagnostic messages from ROSE.
  *
- *  ROSE uses the free Sawyer library to emit diagnostic messages for events such as debugging, program tracing, informational
- *  messages, warning and error messages, progress reports, and runtime logic assertions. The Sawyer message support can be
- *  found in the Sawyer::Message name space in "Message.h", and the run-time logic assertions can be found in the
- *  Sawyer::Assert name space in "Assert.h" (which also defines a number of C preprocessor macros whose names begin with
- *  "ASSERT_".
+ *  ROSE uses the free [Sawyer](http://github.com/matzke1/sawyer) library to emit diagnostic messages for events such as
+ *  debugging, program tracing, informational messages, warning and error messages, progress reports, and runtime logic
+ *  assertions. The Sawyer message support can be found in the Sawyer::Message name space in "Message.h", and the run-time
+ *  logic assertions can be found in the Sawyer::Assert name space in "Assert.h" (which also defines a number of C preprocessor
+ *  macros whose names begin with "ASSERT_".
  *
  *  Sawyer supports multiple instances of messaging facilities (Sawyer::Message::Facility) each of which defines a std::ostream
  *  object for each of a number of message importance levels.  ROSE defines one global library-wide facility,
@@ -26,7 +26,7 @@ namespace rose {
  *
  *  ROSE looks for the command-line switch "-rose:log <em>WHAT</em>".  If <em>WHAT</em> is the word "help" then usage
  *  information is displayed; if <em>WHAT</em> is the word "list" then log settings are displayed.  Otherwise, <em>WHAT</em> is
- *  expected to be a string to pass to the Sawyer::Message::Facilities::control() function.  In short, the string is a
+ *  expected to be a string to pass to the Diagnostics::facilities.control() function.  In short, the string is a
  *  comma-separated list of importance levels to enable (or disable when preceded by "!").  Importance levels can also be
  *  enclosed in parentheses and preceded by a facility name to restrict the settings to the specified facility.  For instance,
  *  if one wanted to turn off INFO messages for all facilities, and then turn on TRACE and DEBUG messages for the BinaryLoader,
@@ -168,6 +168,8 @@ namespace rose {
  *  // you may continue to use m1 for additional messages...
  * @endcode
  *
+ *  The documentation for Sawyer::Message has additional hints and examples.
+ *
  * @section tool Usage in Tools
  *
  *  Tools that are built on top of the ROSE library can use the same Sawyer messaging support, and the tool's Facility objects
@@ -178,7 +180,7 @@ namespace rose {
  *
  * @code
  *  #include <rose/Diagnostics.h>
- *  using namespace rose::Diagnostics;
+ *  using namespace Saywer::Message::Common;
  *  Sawyer::Message::Facility mlog("toolname");
  * @endcode
  *
