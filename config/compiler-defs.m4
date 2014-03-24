@@ -53,7 +53,9 @@ dnl predefined by a specific compiler
              ;;
 
   # Support for Intel icc as a backend for compiling ROSE generated code
-    icpc|icc)
+  # DQ (3/14/2014): Added support for mpi specific versions (suggested by Jeff).
+  # icpc|icc)
+    icpc|icc|mpiicpc|mpiicc)
            # DQ (3/8/2014): Adding version number support for Intel compiler.
              BACKEND_INTEL_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_INTEL_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
