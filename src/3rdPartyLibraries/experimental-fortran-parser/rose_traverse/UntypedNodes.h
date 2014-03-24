@@ -244,8 +244,6 @@ enum ROSE_Fortran_Operators
 #endif // COMPILED_WITH_ROSE
 
 // #include "Cxx_Grammar.h"
-#include "sage3basic.h"
-// #include "rose_config.h"
 //------------------------------------------------------------------------------------------------------
 // from Cxx_Gramman.h
 //

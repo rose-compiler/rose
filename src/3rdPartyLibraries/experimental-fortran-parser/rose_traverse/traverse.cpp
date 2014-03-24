@@ -40,5 +40,9 @@ int main(int argc, char * argv[])
       printf("\nWoot!\n");
    } else return 1;
 
+   printf("\n\n----------------------------\n");
+   unparser.unparseNode(Program.getPayload());
+   printf("----------------------------\n\n");
+
    return 0;
 }

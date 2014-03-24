@@ -7,6 +7,18 @@ void OFP::FortranTextUnparser::unparseNode(SgUntypedNode * node)
 
    switch (node->variantT())
       {
+         case V_SgUntypedFile:
+            {
+               SgUntypedFile * file = isSgUntypedFile(node);  assert(file);
+               SgUntypedGlobalScope* scope = file->get_scope();
+
+               SgUntypedDeclarationStatementPtrList programUnitList = scope->get_declaration_list()->get_decl_list();
+               for (int i = 0; i < programUnitList.size(); i++) {
+                  SgUntypedFunctionDeclaration * decl = isSgUntypedFunctionDeclaration(programUnitList.at(i));  assert(decl);
+                  unparseDecl(decl);
+               }
+               break;
+            }
          case V_SgUntypedProgramHeaderDeclaration:
             {
                SgUntypedProgramHeaderDeclaration * mp = isSgUntypedProgramHeaderDeclaration(node);  assert(mp);
@@ -34,7 +46,7 @@ void OFP::FortranTextUnparser::unparseNode(SgUntypedNode * node)
             }
 
          default:
-            printf("FortranTextUnparser::UnparseUnknownNode::::::::::::::::: %d\n", node->variantT());
+            oss << "FortranTextUnparser::UnparseUnknownNode::::::::::::::::: " << node->variantT() << "\n";
       }
 }
 
@@ -57,7 +69,7 @@ void OFP::FortranTextUnparser::unparseExpr(SgUntypedExpression * expr)
               SgUntypedValueExpression * e = dynamic_cast<SgUntypedValueExpression*>(expr);
               if (e) {
                  oss << e->get_value_string();
-                 if (e->get_type()->get_has_kind()) {
+                 if (e->get_type() && e->get_type()->get_has_kind()) {
                     // TODO kind should be an expression
                     oss << "_";
                     unparseExpr(e->get_type()->get_type_kind());
@@ -77,7 +89,7 @@ void OFP::FortranTextUnparser::unparseExpr(SgUntypedExpression * expr)
            }
 
         default:
-           oss << "FortranTextUnparser::UnparseUnknownExpr::::::::::::::::::::::::\n";
+           oss << "FortranTextUnparser::UnparseUnknownExpr:::::::::::::::::::::::: " << expr->variantT() << "\n";
       }
 }
 
@@ -129,8 +141,6 @@ void OFP::FortranTextUnparser::unparseStmt(SgUntypedStatement* stmt)
 {
    if (!stmt) return;
 
-   //  printf("unparseStmt: %d\n", stmt->typeId());
-
    switch (stmt->variantT())
       {
         case V_SgUntypedAssignmentStatement:
@@ -148,16 +158,13 @@ void OFP::FortranTextUnparser::unparseStmt(SgUntypedStatement* stmt)
            {
               SgUntypedNamedStatement * s = dynamic_cast<SgUntypedNamedStatement*>(stmt);
               if (s) {
-                 unparseLabel(s->get_label_string());
-                 oss << s->get_statement_name();
-                 unparseName(s->get_statement_name(), " ", "");
-                 oss << "\n";
+                 unparseSgUntypedNamedStatement(s);
               }
               break;
            }
 
         default:
-           oss << "FortranTextUnparser::UnparseUnknownStmt::::::::::::::::::::::::\n";
+           oss << "FortranTextUnparser::UnparseUnknownStmt:::::::::::::::::::::::: " << stmt->variantT() << "\n";
       }
 }
 
@@ -165,8 +172,6 @@ void OFP::FortranTextUnparser::unparseStmt(SgUntypedStatement* stmt)
 void OFP::FortranTextUnparser::unparseDecl(SgUntypedDeclarationStatement * decl)
 {
    if (!decl) return;
-
-   //  printf("unparseDecl: %d\n", decl->typeId());
 
    switch (decl->variantT())
       {
@@ -186,10 +191,27 @@ void OFP::FortranTextUnparser::unparseDecl(SgUntypedDeclarationStatement * decl)
            {
               SgUntypedProgramHeaderDeclaration * d = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(decl);
               if (d) {
+                 SgUntypedFunctionScope * scope = d->get_scope();
+                 SgUntypedDeclarationList * declList = scope->get_declaration_list();
+                 SgUntypedStatementList   * stmtList = scope->get_statement_list();
+                 SgUntypedFunctionDeclarationList * funcList = scope->get_function_list();
+                 
                  unparseLabel(d->get_label_string());
                  oss << "PROGRAM";
                  oss << " " << d->get_name();
                  oss << "\n";
+
+                 for (int i = 0; i < declList->get_decl_list().size(); i++) {
+                    unparseDecl(declList->get_decl_list().at(i));
+                 }
+                 for (int i = 0; i < stmtList->get_stmt_list().size(); i++) {
+                    unparseStmt(stmtList->get_stmt_list().at(i));
+                 }
+                 for (int i = 0; i < funcList->get_func_list().size(); i++) {
+                    //TODO-CER-2014.3.18 unparse funcList
+                 }
+
+                 unparseSgUntypedNamedStatement(d->get_end_statement());
               }
               break;
            }
@@ -210,6 +232,28 @@ void OFP::FortranTextUnparser::unparseDecl(SgUntypedDeclarationStatement * decl)
            }
 
         default:
-           oss << "FortranTextUnparser::UnparseUnknownDecl::::::::::::::::::::::::\n";
+           oss << "FortranTextUnparser::UnparseUnknownDecl::::::::::::::::::::::::" << decl->variantT() << "\n";
       }
 }
+
+
+void OFP::FortranTextUnparser::unparseSgUntypedNamedStatement(SgUntypedNamedStatement* stmt)
+{
+   if (!stmt) return;
+
+   switch (stmt->get_statement_enum())
+      {
+        case SgToken::FORTRAN_END_PROGRAM:
+           {
+              unparseLabel(stmt->get_label_string());
+              oss << "END PROGRAM ";
+              oss << stmt->get_statement_name();
+              oss << "\n";
+              break;
+           }
+
+        default:
+           oss << "FortranTextUnparser::UnparseSgUntypedNamedStatement:::::::::::::::::::::::: " << stmt->get_statement_enum() << "\n";
+      }
+}
+

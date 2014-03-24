@@ -33,7 +33,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += \
-      C_tests Cxx_tests Cxx11_tests C11_tests C_subset_of_Cxx_tests C99_tests UPC_tests
+      C_tests Cxx_tests Cxx11_tests C11_tests C_subset_of_Cxx_tests C99_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
 endif
 endif
 
@@ -50,7 +50,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   SUBDIRS += Java_tests 
+   SUBDIRS += Java_tests MicrosoftWindows_Java_tests
 endif
 
 # DQ (10/19/2010): Moved basic languge test to the front of the list.

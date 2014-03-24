@@ -1,7 +1,8 @@
 #ifndef	OFP_NODES_H
 #define	OFP_NODES_H
 
-#include "UntypedNodes.h"
+// #include "UntypedNodes.h"
+#include "rose.h"
 
 #include <aterm2.h>
 #include <string>
@@ -30,7 +31,7 @@ class Node
 {
  public:
    Node() : optionType(0), payload(NULL) {}
-   virtual ~Node()        {if (payload) delete payload;}
+   virtual ~Node()        {} //TODO-CER-2014.3.15 {if (payload) delete payload;  payload = NULL;}
 
    enum OptionType
      {
@@ -41,6 +42,7 @@ class Node
    void setOptionType(int ot) {optionType = ot;}
    
    SgUntypedNode* getPayload()                    {return payload;}
+   SgUntypedNode* givePayload()                   {SgUntypedNode* tmp = payload; payload = NULL; return tmp;}
    void           setPayload(SgUntypedNode* node) {payload = node;}
    void           inheritPayload(Node* node)      {payload = node->getPayload();  node->setPayload(NULL);}
 
@@ -257,7 +259,7 @@ class Statement : public Node
  public:
     Statement() : pLabel(NULL), pEOS(NULL) {}
     Statement(Label * label, EOS * eos) : pLabel(label), pEOS(eos) {}
-   ~Statement()
+    virtual ~Statement()
       {
          if (pLabel) delete pLabel;
          if (pEOS)   delete pEOS;
@@ -295,7 +297,7 @@ class Name : public Node
 {
  public:
     Name() : pIdent(NULL) {}
-   ~Name();
+    virtual ~Name()       {}
 
    Name * newName()
      {
@@ -318,7 +320,7 @@ class Variable : public Node
 {
  public:
     Variable() : pValue(NULL) {}
-   ~Variable();
+    virtual ~Variable()       {}
 
    Variable* newVariable()
      {
@@ -341,7 +343,7 @@ class Expr : public Node
 {
  public:
     Expr() : pExpr(NULL) {}
-   ~Expr();
+    virtual ~Expr()      {}
 
    Expr* newExpr()
      {
@@ -364,7 +366,7 @@ class AssignmentStmt : public Statement
 {
  public:
     AssignmentStmt() : Statement(), pVariable(NULL), pExpr(NULL) {}
-   ~AssignmentStmt();
+    virtual ~AssignmentStmt() {}
 
    Variable* getVariable() {return pVariable;}
    void setVariable(Variable* variable) {pVariable = variable;}
@@ -390,7 +392,7 @@ class MainProgram : public Node
          pExecutionPart = NULL;
          pInternalSubprogramPart = NULL;
       }
-   ~MainProgram();
+    virtual ~MainProgram() {}
 
    // Constructs a new Node on the heap from one on the stack (that is about to be reclaimed).
    MainProgram* newMainProgram()
@@ -431,7 +433,7 @@ class ProgramStmt : public Statement
 {
  public:
    ProgramStmt() : Statement(), pProgramName(NULL) {}
-  ~ProgramStmt();
+   virtual ~ProgramStmt() {}
 
    ProgramStmt* newProgramStmt()
      {
@@ -455,7 +457,7 @@ class EndProgramStmt : public Statement
 {
  public:
     EndProgramStmt() : Statement(), pProgramName(NULL) {}
-   ~EndProgramStmt();
+   virtual ~EndProgramStmt() {}
 
    EndProgramStmt* newEndProgramStmt()
      {
@@ -479,7 +481,7 @@ class ImplicitPartStmt : public Statement
 {
  public:
  ImplicitPartStmt() : Statement(), pStmt(NULL) {}
-   ~ImplicitPartStmt();
+   virtual ~ImplicitPartStmt() {}
 
    ImplicitPartStmt * newImplicitPartStmt()
      {
@@ -501,7 +503,7 @@ class DeclarationConstruct : public Node
 {
  public:
    DeclarationConstruct() : pNode(NULL) {}
-  ~DeclarationConstruct();
+   virtual ~DeclarationConstruct()      {}
 
    DeclarationConstruct * newDeclarationConstruct()
      {
@@ -527,7 +529,7 @@ class DeclarationConstruct : public Node
           pImplicitStmt = NULL;
           pList = new std::vector<ImplicitPartStmt*>();
        }
-   ~ImplicitPart();
+    virtual ~ImplicitPart() {}
 
     ImplicitPart* newImplicitPart()
        {
@@ -558,7 +560,7 @@ class TypeDeclarationStmt : public Statement
 {
  public:
    TypeDeclarationStmt() : Statement() {}
-  ~TypeDeclarationStmt();
+   virtual ~TypeDeclarationStmt()      {}
 
    TypeDeclarationStmt* newTypeDeclarationStmt()
      {
@@ -582,7 +584,7 @@ class DeclarationTypeSpec : public Node
 {
  public:
    DeclarationTypeSpec() {}
-  ~DeclarationTypeSpec() {}
+   virtual ~DeclarationTypeSpec() {}
 
    DeclarationTypeSpec* newDeclarationTypeSpec()
      {
@@ -602,8 +604,8 @@ class DeclarationTypeSpec : public Node
 class IntrinsicTypeSpec : public Node
 {
  public:
-   IntrinsicTypeSpec() {}
-  ~IntrinsicTypeSpec() {}
+   IntrinsicTypeSpec()           {}
+   virtural ~IntrinsicTypeSpec() {}
 
    IntrinsicTypeSpec* newIntrinsicTypeSpec()
      {
@@ -624,7 +626,7 @@ class AttrSpecList : public Node
 {
  public:
    AttrSpecList() {pList = new std::vector<AttrSpec*>();}
-  ~AttrSpecList() {if (pList) delete pList;}
+   virtual ~AttrSpecList() {if (pList) delete pList;}
 
    AttrSpecList* newAttrSpecList()
      {
@@ -646,7 +648,7 @@ class OptAttrSpecList : public Node
 {
  public:
    OptAttrSpecList() : pAttrSpecList(NULL) {}
-  ~OptAttrSpecList() {if (pAttrSpecList) delete pAttrSpecList;}
+   virtual ~OptAttrSpecList() {if (pAttrSpecList) delete pAttrSpecList;}
 
    OptAttrSpecList* newOptAttrSpecList()
      {
@@ -667,8 +669,8 @@ class OptAttrSpecList : public Node
 class EntityDecl : public Node
 {
  public:
-   EntityDecl() {}
-  ~EntityDecl() {}
+   EntityDecl()          {}
+   virtual ~EntityDecl() {}
 
    EntityDecl* newEntityDecl()
      {
@@ -690,7 +692,7 @@ class EntityDeclList : public Node
 {
  public:
    EntityDeclList() {pList = new std::vector<EntityDecl*>();}
-  ~EntityDeclList() {if (pList) delete pList;}
+   virtual ~EntityDeclList() {if (pList) delete pList;}
 
    EntityDeclList* newEntityDeclList()
      {
