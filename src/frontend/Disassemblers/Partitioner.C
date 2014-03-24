@@ -89,7 +89,7 @@ Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
     if (progress_interval>=0 && mlog[INFO]) {
         struct timeval curtime;
         gettimeofday(&curtime, NULL);
-        if (Sawyer::Message::timeval_delta(progress_time, curtime) >= progress_interval) {
+        if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
             mlog[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
                        <<": " <<StringUtility::plural(functions.size(), "functions")
                        <<", " <<StringUtility::plural(insns.size(), "instructions")
