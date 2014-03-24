@@ -189,9 +189,8 @@ public:
     rose_addr_t vdso_mapped_va;                         /* base address where vdso is mapped, or zero */
     rose_addr_t vdso_entry_va;                          /* entry address for the vdso, or zero */
 
-    SimLoader(SgAsmInterpretation *interpretation, FILE *debug, std::string default_interpname)
+    SimLoader(SgAsmInterpretation *interpretation, std::string default_interpname)
         : interpreter(NULL), vdso(NULL), vdso_mapped_va(0), vdso_entry_va(0) {
-        set_debug(debug);
         set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
         set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
         set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
@@ -340,7 +339,7 @@ RSIM_Process::load(const char *name)
     thread->policy.writeRegister<32>(thread->policy.reg_eip, RSIM_SEMANTICS_VTYPE<32>(ep_orig_va));
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interpretation, trace, interpname);
+    SimLoader *loader = new SimLoader(interpretation, interpname);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
@@ -395,7 +394,7 @@ RSIM_Process::load(const char *name)
     /* Find a disassembler. */
     if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
-        disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
+        disassembler->set_progress_reporting(-1); /* turn off progress reporting */
     }
 
 #if 0
