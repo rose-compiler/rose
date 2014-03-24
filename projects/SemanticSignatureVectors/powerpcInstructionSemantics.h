@@ -109,7 +109,7 @@ struct PowerpcInstructionSemantics {
              default:
                 {
                   fprintf(stderr, "Bad register class %s\n",
-                          stringifyX86RegisterClass(ref->get_descriptor().get_major(), "x86_regclass_").c_str());
+                          rose::stringifyX86RegisterClass(ref->get_descriptor().get_major(), "x86_regclass_").c_str());
                   abort();
                 }
            }
@@ -207,7 +207,7 @@ struct PowerpcInstructionSemantics {
              default:
                 {
                     fprintf(stderr, "Bad register class %s\n",
-                            stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
+                            rose::stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
                   abort();
                 }
            }
