@@ -5,7 +5,6 @@ using this memory map for disassembly:
     va 0x00402000 + 0x00000200 = 0x00402200 r--- at buffer aar   + 0x00000e00 asm_code_samples_gcc.exe(.rdata)
     va 0x00403000 + 0x00000040 = 0x00403040 rw-p at anon aat     + 0x00000000 asm_code_samples_gcc.exe(.bss)
     va 0x00404000 + 0x00000200 = 0x00404200 rw-- at buffer aav   + 0x00001000 asm_code_samples_gcc.exe(.idata)
-disassembled 1940 instructions and 47 failures (use --show-bad to see errors)
 
 
 0x00401000: ================================== Function (entry point) unknown name
@@ -1108,4 +1107,3 @@ disassembled 1940 instructions and 47 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

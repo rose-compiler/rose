@@ -27,7 +27,6 @@ using this memory map for disassembly:
     va 0x00502a34 + 0x00000004 = 0x00502a38 rw-p at buffer aal   + 0x00002a34 x86-64-poweroff(LOAD#3)
     va 0x00502a38 + 0x000001b0 = 0x00502be8 r--- at buffer ach   + 0x00002a38 x86-64-poweroff(.gnu.conflict)
     va 0x00502be8 + 0x00000418 = 0x00503000 rw-p at buffer aal   + 0x00002be8 x86-64-poweroff(LOAD#3)
-disassembled 4831 instructions and 264 failures (use --show-bad to see errors)
 
 
 0x00400e70: ================================== Function (function call) unknown name
@@ -2744,4 +2743,3 @@ disassembled 4831 instructions and 264 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...
