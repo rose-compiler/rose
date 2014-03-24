@@ -291,7 +291,7 @@ Disassembler::update_progress(SgAsmInstruction *insn)
             if (progress_interval>=0 && mlog[INFO]) {
                 struct timeval curtime;
                 gettimeofday(&curtime, NULL);
-                if (Sawyer::Message::timeval_delta(progress_time, curtime) >= progress_interval) {
+                if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
                     if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
                         mlog[INFO] <<"at va " <<addrToString(insn->get_address())
                                    <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
