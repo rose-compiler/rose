@@ -530,7 +530,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f				\
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C \
-       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C
+       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C       \
+       inputbuildJavaPackage.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

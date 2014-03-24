@@ -61,15 +61,6 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// FMZ (5/19/2008):
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-   #include "FortranModuleInfo.h"
-   #include "FortranParserState.h"
-   #include "unparseFortran_modfile.h"
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#endif
-
 #ifdef HAVE_DLADDR
    #include <dlfcn.h>
 #endif

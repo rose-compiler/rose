@@ -3,6 +3,8 @@
 
 #include "JavaSourceCodePosition.h"
 
+#include <string>
+
 class Token_t {
     private:
         std::string filename;

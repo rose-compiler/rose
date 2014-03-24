@@ -13,7 +13,7 @@ target_link_libraries(qrose
   ${QT_LIBRARIES} ${QT_QT3SUPPORT_LIBRARY})
 
 set_target_properties(qrose PROPERTIES VERSION 1.0.0 SOVERSION 1)
-install(TARGETS qrose ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS qrose lib)
 
 
 ########### install files ###############

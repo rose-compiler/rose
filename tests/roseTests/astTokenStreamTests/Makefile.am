@@ -401,7 +401,16 @@ testTokenMapping:
 
 # Test code using -rose:verbose 2 to trigger output of evaluation files (*.c and *.dot files).
 test_unparsingUsingTokens : testUnparsingUsingTokenStream
-	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 2 -c $(srcdir)/input_testUnparsingUsingTokenStream.c 
+	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_testUnparsingUsingTokenStream.c 
+
+test_unparsingEmptyFileUsingTokens : testUnparsingUsingTokenStream
+	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_test_empty_file.c 
+
+test_unparsingFileWithCR_UsingTokens : testUnparsingUsingTokenStream
+	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_test_file_with_CR.c 
+
+test_unparsingFileWithText_UsingTokens : testUnparsingUsingTokenStream
+	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_test_file_with_text.c 
 
 #------------------------------------------------------------------------------------------------------------------------
 
@@ -413,13 +422,18 @@ test_binary_after_token_unparsing:
 	diff gcc_test2003_12.o rose_test2003_12.o
 
 #------------------------------------------------------------------------------------------------------------------------
+EXTRA_DIST = input_testUnparsingUsingTokenStream.c input_test_empty_file.c input_test_file_with_CR.c input_test_file_with_text.c \
+             input_test_02.c
 
 
 # Additional automake targets
 # check-local: $(LIN_TEST_TARGETS)
 check-local:
-	@$(MAKE) $(PASSING_TEST_Mapping_Source_passed)
 	@$(MAKE) test_unparsingUsingTokens
+	@$(MAKE) test_unparsingEmptyFileUsingTokens
+	@$(MAKE) test_unparsingFileWithCR_UsingTokens
+	@$(MAKE) test_unparsingFileWithText_UsingTokens
+	@$(MAKE) $(PASSING_TEST_Mapping_Source_passed)
 #	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) $(LIN_TEST_TARGETS)
 	@echo "******************************************************************************************************"

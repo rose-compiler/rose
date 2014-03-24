@@ -1,11 +1,29 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
+include_directories(${QT_INCLUDES} ${Boost_INCLUDE_DIRS})
 
 add_executable( testTranslator testTranslator.C )
 target_link_libraries(testTranslator ROSE_DLL ${edg_lib} ${link_with_libraries} )
 
+add_executable( testGraphGeneration testGraphGeneration.C )
+target_link_libraries(testGraphGeneration ROSE_DLL EDG ${link_with_libraries} )
+
+add_executable( testTokenGeneration testTokenGeneration.C )
+target_link_libraries(testTokenGeneration ROSE_DLL EDG ${link_with_libraries} )
+
+add_executable( testAnalysis testAnalysis.C )
+target_link_libraries(testAnalysis ROSE_DLL EDG ${link_with_libraries} )
+
+install(TARGETS
+  testTranslator testGraphGeneration testTokenGeneration testAnalysis
+  DESTINATION bin)
+
+option(with-ROSE_LONG_MAKE_CHECK_RULE "Specify longer internal testing" ON)
+
+add_subdirectory (CompileTests)
+add_subdirectory (roseTests)
+#add_subdirectory (RunTests)
+#add_subdirectory (PerformanceTests)
+#add_subdirectory (CompilerOptionsTests)
 add_subdirectory (translatorTests)
-enable_testing()
 
 find_program(bash bash)
 if(bash)

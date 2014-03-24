@@ -628,6 +628,14 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
+             // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
+             // SgJavaWildcardType
+                case T_JAVA_WILD:
+                  {
+                    printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
+                    break;
+                  }
+
                default:
                   {
                     printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
@@ -2692,8 +2700,26 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                  // DQ (1/9/2014): These should have been setup to be the same.
                     ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
-
-                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+#if 0
+                    printf ("In unparseArrayType(): ninfo2.supressArrayBound()  = %s \n",(ninfo2.supressArrayBound() == true) ? "true" : "false");
+#endif
+                 // DQ (2/2/2014): Allow the array bound to be subressed (e.g. in secondary declarations of array variable using "[]" syntax.
+                 // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                    if (ninfo2.supressArrayBound() == false)
+                       {
+                      // Unparse the array bound.
+                         unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In unparseArrayType(): Detected info_for_type.supressArrayBound() == true \n");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
                   }
                curprint("]");
                unparseType(array_type->get_base_type(), info); // second part

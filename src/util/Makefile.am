@@ -45,14 +45,15 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 include_HEADERS =				\
+	compilationFileDatabase.h		\
 	FormatRestorer.h			\
 	Map.h					\
-	compilationFileDatabase.h		\
+	ParallelSort.h                          \
 	processSupport.h			\
-	roseTraceLib.c				\
 	rose_getline.h				\
 	rose_paths.h				\
 	rose_strtoull.h				\
+	roseTraceLib.c				\
 	setup.h						\
 	Stopwatch.h
 

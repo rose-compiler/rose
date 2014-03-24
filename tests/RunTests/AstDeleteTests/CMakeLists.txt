@@ -10,7 +10,7 @@ kde4_add_executable(memoryTranslator ${memoryTranslator_SRCS})
 
 target_link_libraries(memoryTranslator ${KDE4_KDECORE_LIBS})
 
-install(TARGETS memoryTranslator ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS memoryTranslator DESTINATION bin)
 
 
 ########### install files ###############
