@@ -16,223 +16,249 @@
 #include <sys/time.h>
 #include <vector>
 
-// Define this if you don't have a c++-11 complaint library. If your library doesn't support std::move semantics for
-// std::ostream then you must define this.  The semantics change slightly when this is defined: instead of mlog[INFO]
-// returning a new stream each time, it returns a reference to an existing stream.  The biggest impact is that code
-// written like this:
-//
-//     mlog[INFO] <<"the sum of 1 + 2 = " <<sum(1,2) <<"\n";
-//
-// might not work as expected if sum() also writes to mlog[INFO].  The logging system will see both functions writing
-// to the same stream as if they were somehow coordinating to produce messages, some of which contain text from both
-// functions.
-//
-// Defining SAWYER_MESSAGE_USE_PROXY also means that lazy use of streams is permitted. The following creates a single message
-// when defined, but two messages (a canceled partial message and a complete message) when c++-11 move support is available:
-//
-//     mlog[INFO] <<"starting";
-//     do_something();
-//     mlog[INFO] <<" done.\n";
-//
-// The proper, non-lazy way write that (which also works if do_something writes to mlog[INFO]), is to save the "starting"
-// message's stream so the message can be completed later:
-//
-//     SProxy m1(mlog[INFO].dup());
-//     *m1 <<"starting";
-//     do_something();
-//     *m1 <<" done.\n";
-//
-// When c++-11 move support is available the stream proxy object "m1" will be replace with a Stream object and the dereference
-// on the last line will become unecessary.
-//
-// Multi-thread support will not be implemented until c++-11 move semantics are more widely available.
-#define SAWYER_MESSAGE_USE_PROXY
-
 namespace Sawyer {
 
-/** Event logging via messages.
+/** Diagnostic messages.
  *
  *  This namespace provides functionality to conditionally emit diagnostic messages based on software component and message
- *  importance.
+ *  importance.  Although the library has extensive capabilities for controlling the message format and where to send the
+ *  message, most uses of this namespace are to emit a message, so we'll describe that by way of introduction...
  *
- * @section intro Introduction
- *
- *  This system has the following features and design goals:
- *
- * <ul>
- *   <li>Familiarity. Sawyer uses C++ paradigms for output--code to emit a message looks like any code that writes to an STL
- *       output stream.</li>
- *   <li>Ease of use. Sawyer uses existing C++ output stream insertion operators, so no new code needs to be written to emit
- *       messages for objects.</li>
- *   <li>Type safety. Sawyer avoids the use of unsafe C printf-like varargs functions.</li>
- *   <li>Consistent output.  Sawyer messages have a consistent look since they all contain information about the program
- *       from whence they came.</li>
- *   <li>Partial messages. Sawyer is able to emit messages incrementally for things like progress bars.</li>
- *   <li>Readable output. Sawyer output is human readable even when partial messages overlap or messages are being generated
- *       from multiple threads.</li>
- *   <li>Granular logging. Sawyer supports multiple logging objects so each software component can have its own logging
- *       facility and coherently combines output across objects.</li>
- *   <li>Flexible output. Sawyer permits messages to be directed to one or more destinations, which can be an STL output
- *       stream, a C library FILE, a Unix file descriptor, the syslog daemon, or user-defined destinations. The user can also
- *       control how messages are formatted: information about the process, time stamps, colorized output, etc.</li>
- *   <li>Filtering and rate limiting.</li>
- *   <li>Run-time configurable. Sawyer has functions that allow collections of message streams to be controlled with a
- *       simple language that can be specified on command lines, in configuration files, from user input, etc.</li>
- * </ul>
- *
- *  Saywer messaging has two parts: low-level <em>plumbing</em> handles the transport of messages through a run-time
- *  constructed lattice to output destinations, and high-level <em>porcelain</em> is the part of the API with which most users
- *  interact.
- *
- *  The high-level porcelain's primary classes are, from bottom up:
- *
- *  <ul>
- *    <li><em>Stream</em> is a kind of std::ostream which creates messages via lines of text inserted with the <code><<</code>
- *        operator and sends them through the plumbing.</li>
- *    <li><em>Facility</em> is a collection of streams, one per importance level, all related to some particular software
- *        component.  For instance, in the ROSE Compiler project, the machine code disassembler might have its own Facility
- *        that distinct from the logging facility used by the assembly language unparser.  The importance levels are predefined
- *        as: debug, trace, where, info, warn, error, and fatal (see the Importance enum).</li>
- *    <li><em>Facilities</em> (note plural) is a collection of Facility objects that can be controlled as a group. One can
- *        think of a Facilities object as providing a name space for the Facility objects it contains. For instance, one
- *        can turn on all the debug-level messages except the disassembler messages by specifiying "debug,
- *        disassembler(!debug)" to the Facilities::control() method.</li>
- *  </ul>
- *
- * @section usage Basic message emission via porcelain
- *
- *  A useful usage pattern is to name all the Facility objects the same thing (good choices are "logger", "mlog", or "lg" since
- *  "log" can be ambiguous with the logorithm function). Define a logger in the global scope and any successively smaller
- *  scopes to the extent desired.  To emit a message, write code like:
+ * @section emitting Emitting a message
  *
  * @code
- *  #include <Sawyer/Message.h>
  *  using namespace Sawyer::Message;
- *  ...
- *  Message::mlog[DEBUG] <<"this is a debugging message.\n";
+ *  mlog[INFO] <<"about to process \"" <<filename <<"\"\n"
  * @endcode
  *
- *  The C++ compiler will resolve "mlog" to the most-locally available declaration, i.e., the most specific Facility. "[DEBUG]"
- *  selects the importance level, and the rest is normal C++ ostream idioms.  The insertion operators are all evaluated even
- *  when the stream is disabled, unless the "mlog[DEBUG]" is surrounded by the SAWYER_MESG() macro. This is a bit more typing,
- *  but is useful when the insertion operators are expensive:
+ *  The @c mlog is a message Facility that holds a number of streams, each of which can be enabled or disabled. Inserting to a
+ *  disabled message stream causes the message to be thrown away.  The @c INFO is a message Importance, of which the library
+ *  defines seven levels ranging from debug through fatal.  The expression <code>mlog[INFO]</code> selects one of the message
+ *  Stream objects from the facility. The linefeed marks the end of a message; messages are "partial" until the linefeed is
+ *  inserted, but depending on the sink (final destination) even partial messages might be shown. Since a message stream is a
+ *  subclass of std::ostream, all the usual output insertion operators just work.
+ *
+ *  One of the benefits of using this namespace is that the output will have a consistent look and feel. It can even be
+ *  colorized based on message importance (at least for ANSI terminal output). The output will look something like this:
  *
  * @code
- *  SAWYER_MESG(mlog[DEBUG]) <<"the result is " <<something_expensive() <<"\n";
+ *  identityTranslator[31044] 0.00128 disassembler[INFO]: about to process "grep"
  * @endcode
  *
- *  The SAWYER_MESG macro is just shorthand for evaluating <code>mlog[DEBUG]</code> in a boolean context and then
- *  short-circuiting the output expression:
+ *  The "identityTranslator" is the name of the executable, the 31044 is the process ID, "0.00128" is the time in seconds since
+ *  the program started, "disassembler" is the software component that is reporting this messsage (i.e., the messsage
+ *  facility), and "INFO" is the importance level.
+ *
+ * @section facility Defining facilities
+ *
+ *  Before one can start emitting messages, he needs to define a message Facility (@c mlog in the first example).  The
+ *  library defines one facility, Sawyer::Message::mlog, which can be used, but it's better to define a message facility for
+ *  each software component because then messages can be controlled per software component, and the component will be clearly
+ *  indicated in the output ("disassembler" in the previous example). A software component could be a function, class,
+ *  namespace, entire library, or entire program--whatever granularity one wants.
+ *
+ *  Here's an example that creates a facility at class level:
  *
  * @code
- *  mlog[DEBUG] and mlog[DEBUG] <<"the result is " <<something_expensive() <<"\n";
- * @endcode
- *
- *  Obviously, one can also use "if" statements and conditional compilation if desired.  In fact, another related trick is to
- *  create a temporary logging stream and use that in the "if" statements and throughout the function.  Besides being less to
- *  type, this has the benefit that since the stream is a new function-local stream, partial messages to that stream won't
- *  interfere with partial messages written to the original stream.  Here's an example:
- *
- * @code
- *  void myBigFunction() {
- *      Stream debug(mlog[DEBUG]);
+ *  class Disassembler {
+ *      static Sawyer::Message::Facility mlog;
  *      ...
- *      if (debug) {
- *          do_some_debug_stuff();
- *          debug <<"debugging results are...\n";
- *      }
- *      ...
+ *  };
+ *
+ *  Sawyer::Message::Facility Disassembler::mlog("disassembler");
+ * @endcode
+ *
+ *  The @c mlog is constructed in a useable state with all streams enabled and output going to standard error via file
+ *  descriptor 2. It is given a string name, "disassembler", that will show up in the output.  The class may want to make two
+ *  adjustments at run-time:
+ *
+ * @code
+ *  void Disassembler::initClass() {
+ *      mlog.initStreams(destination);
+ *      mfacilities.insert(mlog);
  *  }
  * @endcode
  *
+ *  The @c initStreams call reinitializes the message streams so they use your library's message plumbing, @c destination, which
+ *  is a Sawyer::Message::DestinationPtr (types whose names end with "Ptr" point to reference counted objects). The streams had
+ *  previously been using Sawyer::Message::merr, but pointing them all to your destination means that the destination
+ *  for all messages can be changed in one place: if you want messages to go to syslogd, you change how @c destination is
+ *  created. As we'll see below, the destination also controls things like colored output.
  *
- * @section facility Defining a message facility
- * 
- *  A Facility object, such as "mlog" in the previous examples is a collection of Stream objects, one per message importance
- *  level.  A user may create as many facilities as desired, and the recommended usage is to create one facility per software
- *  component: typically one global facility and a facility in each major namespace or class.  Each facility has a name as a
- *  C++ variable (often "mlog") and an optional string name. The string name appears (optionally) in the output and is also the
- *  name by which the facility is referenced when the facility is part of a collection of facilities in a Facilities
- *  object. The string name may contain "." and ":" as well as the usual C++ symbol naming syntax and is often the fully
- *  qualified name of the software component where it's defined.
+ *  The <code>mfacilities.insert</code> call registers the new @c mlog with a global Facilities object, which we describe
+ *  next...
  *
- *  By default, when a facility is created all the Stream objects it contains (one per importance level) will be connected to
- *  the same plumbing so that all the facility's messages go to the same place.  The plumbing is the second argument for the
- *  constructor (Sawyer::Message::merr is the default, which sends output to standard error).
- *
- * @code
- *  namespace Rose {
- *  namespace BinaryAnalysis {
- *  class Disassembler {
- *      static Sawyer::Message::Facility mlog;
- *  };
- *  Saywer::Message::Facility Disassembler::mlog("Rose::BinaryAnalsysis::Disassembler", Sawyer::Message::merr);
- * @endcode
- *
- * @section facilities Grouping and controlling facility objects
+ * @section facilities Collections of facility objects
  *
  *  Any combination of Facility objects can be grouped together into one or more Facilities (note plural) objects so they can
- *  be enabled and disabled collectively. A Facilities object is able to parse a simple language that can be provided
- *  from the application's command-line, a configuration file, user input, hard-coded, or some other source. Sawyer is not
- *  itself a command-line switch parser--it only parses the strings which are provided to it.
+ *  be enabled and disabled collectively. A Facilities object, also referred to as a facility group, is able to parse a
+ *  simple language provided as a string, which is often provided from the command-line parser.
  *
- *  Here's an example that creates three facilities and groups them into a single Facilities object:
+ *  This example creates three facilities and groups them together:
  *
  * @code
- *  Facility mf1("main::mf1", merr);
- *  Facility mf2("main.mf2", merr);
- *  Facility mf3("message facility 3", merr);  //this name is used in the output, but...
- *  Facilities log_facilities;
- *  log_facilities.insert(mf1);
- *  log_facilities.insert(mf2);
- *  log_facilities.insert(mf3, "main.third");  //we need a valid name for the control language
+ *  Facility mlog1("disassembler", destination);
+ *  Facility mlog2("c++ parser", destination)
+ *  Facility mlog3("StringUtility::split", destination);
+ *
+ *  Facilities facilities;
+ *  facilities.insert(mlog1);
+ *  facilities.insert(mlog2, "cpp_parser");
+ *  facilities.insert(mlog3);
  * @endcode
  *
- *  To enable output for all levels of importance except debugging, across all registered Facility objects, but only warning
- *  and higher messages for the mf1 Facility, you could do this:
+ *  The three @c insert calls incorporate the three facilities into the group by reference and give them names in the
+ *  configuration language.  The names in the config language must look like C++ names (including <code>::</code> and
+ *  <code>.</code> operators), so the second @c insert needs to supply a valid name. The other two use the facility's name,
+ *  which is also the string that is printed when messages are output. A unique, non-empty name must be supplied for each
+ *  facility in a group, although the names for the facilities themselves need not be unique or even non-empty. The library
+ *  provides Sawyer::Message::mfacilities and users are encouraged to use it as their primary facility group.
+ *
+ *  The facilities in a group can be controlled (enabled or disabled) with the Facilities::control method, which takes a string
+ *  in the control language (see method for details).  For example, to enable output for all levels of importance except
+ *  debugging, across all registered facilities, but only warning and higher messages for the disassembler's facility:
  *
  * @code
- *  log_facilities.control("all, !debug, main::mf1(>=warn)")
+ *  facilities.control("all, !debug, disassembler(>=warn)")
  * @endcode
  *
  *  The terms are processed from left to right, but only if the entire string is valid. If the string is invalid then an
- *  exception is thrown to describe the error (including the exact position in the string where the error occurred).  The
- *  entire language is described in the documentation for Facilities::control().
+ *  exception is thrown that includes an error message and the exact position in the string where the error occurred.
  *
- * @section Plumbing
- * 
- *  The plumbing is a run-time constructed lattice containing internal nodes and leaf nodes. Each leaf node is a final
- *  destination for a message, such as output to a C++ ostream, a C FILE pointer, a Unix file descriptor, the syslog daemon,
- *  etc. The internal nodes serve as multiplexers, filters, rate limiters, etc.
+ * @section plumbing Plumbing lattice
  *
- *  All plumbing objects are dynamically allocated and reference counted. Instead of using the normal C++ constructors,
- *  plumbing objects are created with static "instance" methods that perform the allocation and return a smart pointer. The
- *  type names for smart pointers are the class names with a "Ptr" suffix.  We use Boost smart pointers (boost::shared_ptr) for
- *  the implementation.
+ *  Inserting a message to a stream with <code><<</code> operators is only half the story--the plumbing lattice deals with how
+ *  a message is conveyed to the final destination(s) and what transformations happen along the way. The plumbing is a run-time
+ *  constructed lattice containing internal nodes and leaf nodes. Each leaf node is a final destination, or sink, for a message
+ *  and can be a C++ <code>std::ostream</code>, a C @c FILE pointer, a Unix file descriptor, the syslog daemon, or a
+ *  user-defined destination.  The internal nodes serve as multiplexers, filters, rate limiters, etc.
+ *
+ *  All plumbing lattice nodes are dynamically allocated and reference counted. Instead of using the normal C++ constructors,
+ *  plumbing objects are created with static @c instance methods that perform the allocation and return a smart pointer. The
+ *  type names for smart pointers are the class names with a "Ptr" suffix, and <code>boost::shared_ptr</code> serves as the
+ *  implementation.
  *
  *  For instance, a lattice that accepts any kind of message, limits the output to at most one message per second,
  *  and sends the messages to standard error and a file can be constructed like this:
  *
  * @code
- *  DestinationPtr d = TimeFilter::instance(1.0)
- *                       ->to(FdSink::instance(2),     //standard error on Unix
- *                            FileSink::instance(f));  // f is some FILE* we opened already
+ *  DestinationPtr destination = TimeFilter::instance(1.0)
+ *                                 ->to(FdSink::instance(2),     //standard error on Unix
+ *                                      FileSink::instance(f));  // f is some FILE* we opened already
  * @endcode
  *
- *  The destination can then be used to construct a Stream or a Facility. When constructing a Facility, all its contained
- *  Stream objects will share the same destination (i.e., they will be collectively limited to one message per second).
+ *  The @c destination can then be used to construct streams and facilities. The Destination class is the base class for all
+ *  plumbing lattice nodes, thus DestinationPtr is the base class for all pointers to nodes.  Of course, similar redirection
+ *  can be done outside the program using standard Unix tools and file redirection, except that performing redirection via
+ *  a plumbing lattice has a few advantages:
+ *
+ * @li the program itself can control the redirection
+ * @li different paths through the lattice can result in different message formats
+ * @li final destinations can be programmatic, such as writing to syslogd or a database
+ * @li the library might do a better presentation when two streams go to the same destination
+ *
+ * @section tips Tips and tricks
+ *
+ * @subsection name Naming tips
+ *
+ *  Avoid using the name "log" since it may conflict with <code>\::log</code> from math.h.
+ *
+ *  If facilities are consistently named (e.g., always "mlog") then code that emits messages can always use that name and will
+ *  automatically get the most narrowly scoped facility that's visible according to C++ visibility rules, which is probably the
+ *  facility that is most applicable.
+ *
+ *  A <code>using namespace Sawyer::Message</code> will prevent you from having to qualify the message importance symbols, but
+ *  if you name your facilities "mlog" they may be ambiguous with Sawyer::Message::mlog.  Sawyer also provides the namespace
+ *  Sawyer::Message::Common, which defines only the most commonly used types (the importance levels, Stream, Facility, and
+ *  Facilities).
+ *
+ * @subsection perf Performance tips
+ *
+ *  Although every attempt was made to keep the library efficient, when features and performance conflict, features win.  If
+ *  messages insert operators <code><<</code> are expensive then it is best to avoid calling them when the stream to which
+ *  they're inserted is disabled--they'd just be thrown away anyway.  Programs that already emit messages to streams probably
+ *  use @c if statements or conditional compilation already, and those constructs can continue to be used.  In fact, when a
+ *  stream is evaluated in a Boolean context it returns true when enabled and false when disabled:
  *
  * @code
- *  Facility mlog("sample", d);
+ *  if (mlog[DEBUG])
+ *      mlog[DEBUG] <<"the result is " <<something_expensive() <<"\n";
  * @endcode
  *
- *  If you want the FATAL level to not be rate limited, you could adjust it like this:
+ *  When @c if statements are used extensively for this purpose in a project whose style guide mandates that the body must be
+ *  on the following line, the logging code occupies twice as much vertical space as necessary (or three or four times, with
+ *  curly braces) and can become quite obtrusive. Here are two other ways to get the same effect:
  *
  * @code
- *  mlog[FATAL].destination(some_other_destination);
- *  //FIXME[Robb Matzke 2014-01-21]: This needs to be different when mlog[FATAL] returns
- *  // a copy of the stream.  Perhaps log.destination(FATAL, some_other_destination).
+ *  mlog[DEBUG] and mlog[DEBUG] <<"the result is " <<something_expensive() <<"\n";
+ *  SAWYER_MESG(mlog[DEBUG]) <<"the result is " <<something_expensive() <<"\n";
  * @endcode
+ *
+ * @subsection temp Temporary streams
+ *
+ *  Although <code>std::ostream</code> objects are not copyable, and not movable before c++11, Sawyer's message streams
+ *  implement a form of copying/moving. Namely, a Stream copy constructor can be used to create a new message stream identical
+ *  to the source message stream, and any partial message in the source stream is moved to the destination stream.  This
+ *  enables a way to create a temporary stream for use inside a function:
+ *
+ * @code
+ * void longFunctionWithLotsOfDebugging() {
+ *     Stream debug(mlog[DEBUG]);
+ *     ...
+ *     debug <<"got here\n";
+ * }
+ * @endcode
+ *
+ * @subsection partial Partial messages
+ *
+ *  One problem that authors often encounter when emitting diagnostics is that they want to print an incomplete line, then
+ *  perform some work, then complete the line.  But if the "some work" also prints diagnostics then the output will be all
+ *  messed up.  This library attempts to fix that, at least when the software uses this library for all its diagnostic
+ *  output. Here's the most basic form:
+ *
+ * @code
+ *  mlog[DEBUG] <<"first part";          // partial since no line-feed
+ *  mlog[INFO] <<"some other message\n"; // unrelated message
+ *  mlog[DEBUG] <<"; second part\n";     // complete the partial message
+ * @endcode
+ *
+ *  The output to sinks like standard error that support partial messages will be, sans prefixes:
+ *
+ * @code
+ *  first part...
+ *  some other message
+ *  first part; second part
+ * @endcode
+ *
+ *  But there's a slight problem with that code: if the second line had been a message written to <code>mlog[DEBUG]</code>
+ *  instead of <code>mlog[INFO]</code> then the library would not have been able to tell that "some other message" is unrelated
+ *  to "first part" and would have emitted something that's not any better than using plain old <code>std::cerr</code>:
+ *
+ * @code
+ *  first partsome other message
+ *  ; second part
+ * @endcode
+ *
+ *  This most often occurs when "some other message" is emitted from some other function, so its not immediately evident that
+ *  something is inserting a message in the midst of our partial message. A better way is to create a temporary message stream
+ *  and use that stream to complete the partial message.  Since the copy constructor also moves any partial message from the
+ *  source stream to the new stream, we can even emit the partial message on the same line as the declaration.  Here's a silly
+ *  example of the process:
+ *
+ * @code
+ *  unsigned multiply(unsigned a, unsigned b) {
+ *      Stream mesg(mlog[DEBUG] <<"multiply(" <<a <<", " <<b <<")");
+ *      unsigned result = 0;
+ *      for (unsigned i=0; i<b; ++i)
+ *          result = add(result, b); //might also write to mlog[DEBUG]
+ *      mesg <<" = " <<result <<"\n"; // finish the message
+ *      return result;
+ *  }
+ * @endcode
+ *
+ *  The @c mesg stream need not be used only for completing the one message. In fact, one of the benefits of the @ref temp hint
+ *  is that partial messages emitted using the @c debug stream cannot be interferred with from called functions that might use
+ *  <code>mlog[DEBUG]</code>.
  */
 namespace Message {
 
@@ -241,22 +267,29 @@ namespace Message {
  *  been initialized does nothing. The function always returns true. */
 bool initializeLibrary();
 
-/** True if the library has been initialized. */
+/** True if the library has been initialized. @sa initializeLibrary(). */
 extern bool isInitialized;
 
-/** Level of importance for a message. Higher values are generally of more importance than lower values. */
+/** Level of importance for a message.
+ *
+ *  The library defines only these importance levels and does not provide a mechanism by which additional levels can be
+ *  added. The reasoning is that multiple message facilities should be used to subdivide universal stream of messages into
+ *  smaller categories, and that message sinks should be able to expect a well defined set of importance levels.
+ *
+ *  The message importance symbols are sorted numerically so that more critical levels have a higher numeric value than less
+ *  critical levels. */
 enum Importance {
     DEBUG,              /**< Messages intended to be useful primarily to the author of the code. This level of importance is
                          *   not often present in publically-released source code and serves mostly as an alternative for
                          *   authors that like to debug-by-print. */
     TRACE,             /**< Detailed tracing information useful to end-users that are trying to understand program
                          *   internals. These messages can also be thought of as debug messages that are useful to end
-                         *   users. Tracing occurs in two levels, where TRACE is the low-level tracing that includes all
-                         *   traceable messages. It can be assumed that if TRACE messages are enabled then WHERE messages are
-                         *   also enabled to provide the broader context. */
+                         *   users. Tracing occurs in two levels, where @c TRACE is the low-level tracing that includes all
+                         *   traceable messages. It can be assumed that if @c TRACE messages are enabled then @c WHERE messages
+                         *   are also enabled to provide the broader context. */
     WHERE,             /**< Granular tracing information useful to end-users that are trying to understand program internals.
                          *   These can also be thought of as debug messages that are useful to end users.  Tracing occurs in
-                         *   two levels, where WHERE provides a more granular overview of the trace. */
+                         *   two levels, where @c WHERE provides a more granular overview of the trace. */
     INFO,               /**< Informative messages. These messages confer information that might be important but do not
                          *   indicate situations that are abnormal. */
     WARN,               /**< Warning messages that indicate an unusual situation from which the program was able to fully
@@ -267,23 +300,23 @@ enum Importance {
                          *   recover. Producing a message of this type does not in itself terminate the program--it merely
                          *   indicates that the program is about to terminate. Since one software component's fatal error might
                          *   be a calling components's recoverable error, exceptions should generally be thrown.  About the
-                         *   only time FATAL is used is when a logic assertion is about to fail, and even then it's usually
-                         *   called from inside assert-like functions. */
+                         *   only time @c FATAL is used is when a logic assertion is about to fail, and even then it's usually
+                         *   called from inside assert-like functions (see Sawyer::Assert for examples). */
     N_IMPORTANCE        /**< Number of distinct importance levels. */
 };
 
 /** Colors used by sinks that write to terminals. Note that most modern terminal emulators allow the user to specify the actual
  *  colors that are displayed for each of these, so the display color might not match the color name. */
-enum AnsiColor {
-    COLOR_BLACK         = 0,    // the values are important: they are the ANSI foreground and background color offsets
-    COLOR_RED           = 1,
-    COLOR_GREEN         = 2,
-    COLOR_YELLOW        = 3,
-    COLOR_BLUE          = 4,
-    COLOR_MAGENTA       = 5,
-    COLOR_CYAN          = 6,
-    COLOR_WHITE         = 7,
-    COLOR_DEFAULT       = 8
+enum AnsiColor {    // the values are important: they are the ANSI foreground and background color offsets
+    COLOR_BLACK         = 0,                            /**< ANSI "black" color. */
+    COLOR_RED           = 1,                            /**< ANSI "red" color. */
+    COLOR_GREEN         = 2,                            /**< ANSI "green" color. */
+    COLOR_YELLOW        = 3,                            /**< ANSI "yellow" color. */
+    COLOR_BLUE          = 4,                            /**< ANSI "blue" color. */
+    COLOR_MAGENTA       = 5,                            /**< ANSI "magenta" color. */
+    COLOR_CYAN          = 6,                            /**< ANSI "cyan" color. */
+    COLOR_WHITE         = 7,                            /**< ANSI "white" color. */
+    COLOR_DEFAULT       = 8                             /**< ANSI default color. */
 };
 
 
@@ -292,10 +325,10 @@ enum AnsiColor {
 //                                      Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string stringifyImportance(Importance);            /**< Convert an Importance enum to a string. */
-std::string stringifyColor(AnsiColor);                  /**< Convert an AnsiColor enum to a string. */
+std::string stringifyImportance(Importance);            /**< Convert an @ref Importance enum to a string. */
+std::string stringifyColor(AnsiColor);                  /**< Convert an @ref AnsiColor enum to a string. */
 double now();                                           /**< Return current time as floating point seconds since the epoch. */
-double timeval_delta(const timeval &begin, const timeval &end); /**< Floating ponit difference between two time values. */
+double timevalDelta(const timeval &begin, const timeval &end); /**< Floating ponit difference between two time values. */
 std::string escape(const std::string&);                 /**< Convert a string to its C representation. */
 
 
@@ -306,8 +339,8 @@ std::string escape(const std::string&);                 /**< Convert a string to
 
 /** ANSI Color specification for text written to a terminal. */
 struct ColorSpec {
-    AnsiColor foreground;                               /**< Foreground color, or COLOR_DEFAULT. */
-    AnsiColor background;                               /**< Background color, or COLOR_DEFAULT. */
+    AnsiColor foreground;                               /**< Foreground color, or @ref COLOR_DEFAULT. */
+    AnsiColor background;                               /**< Background color, or @ref COLOR_DEFAULT. */
     boost::tribool bold;                                /**< Use ANSI "bold" attribute? */
 
     /** Constructs an object with default foreground and background colors. */
@@ -327,15 +360,15 @@ struct ColorSpec {
 class ColorSet {
     ColorSpec spec_[N_IMPORTANCE];
 public:
-    /** Return a color set that uses only default colors.  Warning, error, and fatal messages will use the bold attribute, but
+    /** Returns a color set that uses only default colors.  Warning, error, and fatal messages will use the bold attribute, but
      *  no colors are employed. */
     static ColorSet blackAndWhite();
 
-    /** Return a color set that uses various foreground colors for the different message importance levels. */
+    /** Returns a color set that uses various foreground colors for the different message importance levels. */
     static ColorSet fullColor();
 
-    /** Returns a reference to the color specification for a particular message importance.
-     *  @{ */
+    /** Colors for a message. Returns a reference to the color specification for a particular message importance.
+     * @{ */
     const ColorSpec& operator[](Importance imp) const { return spec_[imp]; }
     ColorSpec& operator[](Importance imp) { return spec_[imp]; }
     /** @} */
@@ -347,17 +380,17 @@ public:
 //                                      Message Properties
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Message properties.  Each message property is optional.  When a message is sent through the plumbing, each node of the
+/** Properties for messages.  Each message property is optional.  When a message is sent through the plumbing, each node of the
  *  plumbing lattice may provide default values for properties that are not set, or may override properties that are set. */
 struct MesgProps {
     boost::optional<std::string> facilityName;          /**< The name of the logging facility that produced this message. */
-    boost::optional<Importance> importance;             /**< Message importance level. */
-    boost::tribool isBuffered;                          /**< Is output buffered and emitted on a per-message basis? */
+    boost::optional<Importance> importance;             /**< The message importance level. */
+    boost::tribool isBuffered;                          /**< Whether the output buffered and emitted on a per-message basis. */
     boost::optional<std::string> completionStr;         /**< String to append to the end of each complete message. */
     boost::optional<std::string> interruptionStr;       /**< String to append when a partial message is interrupted. */
     boost::optional<std::string> cancelationStr;        /**< String to append to a partial message when it is destroyed. */
     boost::optional<std::string> lineTermination;       /**< Line termination for completion, interruption, and cancelation. */
-    boost::tribool useColor;                            /**< Use ANSI escape sequences to colorize output? */
+    boost::tribool useColor;                            /**< Whether to use ANSI escape sequences to colorize output. */
 
     MesgProps(): isBuffered(boost::indeterminate), useColor(boost::indeterminate) {}
 
@@ -370,6 +403,7 @@ struct MesgProps {
     void print(std::ostream&) const;
 };
 
+/** Print the values for all message properties. @sa MesgProps::print(). */
 std::ostream& operator<<(std::ostream &o, const MesgProps &props);
 
 
@@ -390,9 +424,9 @@ std::ostream& operator<<(std::ostream &o, const MesgProps &props);
  *        pointer for the FileSink class is named FileSinkPtr.</li>
  *    <li>C++ constructors for such objects are protected to that users don't inadvertently create such an object on
  *        the stack and then try to use its address in a smart pointer situation.</li>
- *    <li>Users should use the "instance" class methods instead of constructors to instantiate an instance of such a class.
+ *    <li>Users should use the @c instance class methods instead of constructors to instantiate an instance of such a class.
  *        These methods allocate a new object and return a smart pointer to that object.</li>
- *    <li>Sawyer uses boost::shared_ptr for its smart pointer implementation.</li>
+ *    <li>Sawyer uses <code>boost::shared_ptr</code> for its smart pointer implementation.</li>
  * </ol>
  * @{ */
 typedef boost::shared_ptr<class Destination> DestinationPtr;
@@ -410,7 +444,13 @@ typedef boost::shared_ptr<class StreamSink> StreamSinkPtr;
 typedef boost::shared_ptr<class SyslogSink> SyslogSinkPtr;
 /** @} */
 
+/** Baked properties for a destination.  Rather than recompute properties every time characters of a message are inserted into
+ *  a stream, the library computes the properties just once when the first character of a message is inserted. This process is
+ *  called "baking the properties" and the result is an <code>std::pair</code> that contains a destination and its baked
+ *  properties. */
 typedef std::pair<DestinationPtr, MesgProps> BakedDestination;
+
+/** Baked properties for multiple destinations. */
 typedef std::vector<BakedDestination> BakedDestinations;
 
 
@@ -419,10 +459,10 @@ typedef std::vector<BakedDestination> BakedDestinations;
 //                                      Messages
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Message.  A message consists of a string and can be in a partial, completed, or canceled state.  More text can be added to
- *  a message while it is in the partial state, but once the message is marked as completed or canceled the text becomes
- *  immutable.  Messages also have properties, which are fed into the plumbing lattice and adjusted as they traverse to the
- *  final destinations during a process called "baking". */
+/** A single message.  A message consists of a string and can be in a partial, completed, or canceled state.  More text can be
+ *  added to a message while it is in the partial state, but once the message is marked as completed or canceled the text
+ *  becomes immutable.  Messages also have properties, which are fed into the plumbing lattice and adjusted as they traverse to
+ *  the final destinations during a process called "baking". */
 class Mesg {
     static unsigned nextId_;                            // class-wide unique ID numbers
     unsigned id_;                                       // unique message ID
@@ -476,12 +516,17 @@ public:
      *  are being destroyed. */
     bool isCanceled() const { return isCanceled_; }
 
-    /** Returns true if the message has no text. */
+    /** Returns true if the message has no text. This is similar, but not identical to the the inverse of the @ref
+     *  hasText method. */
     bool isEmpty() const { return text_.empty(); }
+
+    /** Returns true if the message has text other than white space. This is similar, but not identical to the inverse
+     *  of the @ref isEmpty method. */
+    bool hasText() const;
 
     /** Returns a reference to message properties. Once a message's properties are "baked" by sending them through the
      *  plumbing lattice, changing the message properties has no effect on the text that is emitted by the message
-     *  sinks. Message streams typically bake the message when text is first added.
+     *  sinks. A stream typically bakes the message when the first text is inserted.
      *  @{ */
     const MesgProps& properties() const { return props_; }
     MesgProps& properties() { return props_; }
@@ -512,8 +557,8 @@ public:
 /** Base class for all types of message destinations. This is the base class for all nodes in the plumbing lattice. */
 class Destination: public boost::enable_shared_from_this<Destination> {
 protected:
-    MesgProps dflts_;                                   // default property values merged into each incoming message
-    MesgProps overrides_;                               // overrides applied to incoming message
+    MesgProps dflts_;                                   /**< Default properties merged into each incoming message. */
+    MesgProps overrides_;                               /**< Override properties applied to incoming message. */
 protected:
     Destination() {}
 public:
@@ -527,7 +572,7 @@ public:
     MesgProps& defaultProperties() { return dflts_; }
     /** @} */
 
-    /** Overriding message properties.  Any overriding property value that is defined will override the value coming from a
+    /** Overrides message properties.  Any overriding property value that is defined will override the value coming from a
      *  higher layer in the plumbing lattice.
      *  @{ */
     const MesgProps& overrideProperties() const { return overrides_; }
@@ -537,11 +582,11 @@ public:
     /** Bakes message properties according to the plumbing lattice.  The given message properties are applied to the plumbing
      *  lattice rooted at this Destination, adjusted according to the default and override properties at this node of the
      *  lattice and all lower nodes.  The property values at the bottom nodes of the lattice are appended to the
-     *  BakedDestinations argument. */
-    virtual void bakeDestinations(const MesgProps&, BakedDestinations&);
+     *  @p baked argument. */
+    virtual void bakeDestinations(const MesgProps&, BakedDestinations &baked);
 
-    /** Causes a message to be emitted. The @p bakedProperties argument is one of the values returned by the bakeDestinations()
-     *  method. */
+    /** Causes a message to be emitted. The @p bakedProperties argument is one of the values returned by the @ref
+     *  bakeDestinations method. */
     virtual void post(const Mesg&, const MesgProps &bakedProperties) = 0;
 
     /** Merge properties of this lattice node into the specified properties.  Any property in @p props that is not set will be
@@ -556,23 +601,24 @@ class Multiplexer: public Destination {
     typedef std::list<DestinationPtr> Destinations;
     Destinations destinations_;
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Multiplexer() {}
 public:
     /** Allocating constructor. */
     static MultiplexerPtr instance() { return MultiplexerPtr(new Multiplexer); }
 
     virtual void bakeDestinations(const MesgProps&, BakedDestinations&) /*override*/;
-    virtual void post(const Mesg&, const MesgProps&);
+    virtual void post(const Mesg&, const MesgProps&) /*override*/;
 
-    /** Adds a child node to this node of the lattice.  An std::runtime_error is thrown if the addition of this child would
-     *  cause the lattice to become malformed by having a cycle. */
-    void addDestination(const DestinationPtr&);
+    /** Adds a child node to this node of the lattice.  An <code>std::runtime_error</code> is thrown if the addition of this
+     *  child would cause the lattice to become malformed by having a cycle. @sa to */
+    MultiplexerPtr addDestination(const DestinationPtr&);
 
-    /** Removes the specified child from this node of the lattice. See also, to(). */
-    void removeDestination(const DestinationPtr&);
+    /** Removes the specified child from this node of the lattice. @sa to */
+    MultiplexerPtr removeDestination(const DestinationPtr&);
 
     /** Add a child nodes to this node of the lattice and returns this node.  It is often more convenient to call this
-     *  method instead of addDestination().
+     *  method instead of @ref addDestination.
      *  @{ */
     MultiplexerPtr to(const DestinationPtr&);           // more convenient form of addDestination()
     MultiplexerPtr to(const DestinationPtr&, const DestinationPtr&);
@@ -589,6 +635,7 @@ public:
  *  exactly once for each message, usually just before the message is posted for the first time. */
 class Filter: public Multiplexer {
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Filter() {}
 public:
     virtual void bakeDestinations(const MesgProps&, BakedDestinations&) /*override*/;
@@ -604,14 +651,15 @@ public:
     virtual void forwarded(const MesgProps&) = 0;       // message was forwarded to children
 };
 
-/** Filters messages based on how many messages have been seen.  The first <em>S</em> messages are skipped (not forwarded to
- *  children), the first of every <em>T</em>th message thereafter is forwarded, for a total of <em>U</em> messages forwarded. */
+/** Filters messages based on how many messages have been seen.  The first @e n messages are skipped (not forwarded to
+ *  children), the first one of every @e m messages thereafter is forwarded, for a total of @e t messages forwarded. */
 class SequenceFilter: public Filter {
     size_t nSkip_;                                      // skip initial messages posted to this sequencer
     size_t rate_;                                       // emit only 1/Nth of the messages (0 and 1 both mean every message)
     size_t limit_;                                      // emit at most this many messages (0 means infinite)
     size_t nPosted_;                                    // number of messages posted (including those suppressed)
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     SequenceFilter(size_t nskip, size_t rate, size_t limit)
         : nSkip_(nskip), rate_(rate), limit_(limit), nPosted_(0) {}
 public:
@@ -622,24 +670,25 @@ public:
         return SequenceFilterPtr(new SequenceFilter(nskip, rate, limit));
     }
 
-    /** Number of initial messages to skip.
+    /** Property: number of initial messages to skip. The first @p n messages sent through this filter are discarded.
      *  @{ */
     size_t nSkip() const { return nSkip_; }
-    void nSkip(size_t n) { nSkip_ = n; }
+    SequenceFilterPtr nSkip(size_t n) { nSkip_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
     /** @} */
 
-    /** Rate of messages to emit after initial messages are skipped.  A rate of <em>N</em> means the first message of every
-     *  group of <em>N</em> messages is forwarded to children nodes in the plumbing lattice.  A rate of zero means the same
-     *  thing as a rate of one--every message is forwarded.
-     *  @{ */
+    /** Property: rate of messages to emit after initial messages are skipped.  A rate of @e n means the first message of
+     *  every group of @e n messages is forwarded to children nodes in the plumbing lattice.  A rate of zero means the
+     *  same thing as a rate of one--every message is forwarded.
+     * @{ */
     size_t rate() const { return rate_; }
-    void rate(size_t n) { rate_ = n; }
+    SequenceFilterPtr rate(size_t n) { rate_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
     /** @} */
 
-    /** Limit the total number of messages forwarded.  A value of zero means no limit is in effect.
+    /** Property: total number of messages forwarded.  At most @e n messages are forwarded to children in the lattice, after
+     *  which messages are discarded. A value of zero means no limit is in effect.
      *  @{ */
     size_t limit() const { return limit_; }
-    void limit(size_t n) { limit_ = n; }
+    SequenceFilterPtr limit(size_t n) { limit_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
     /** @} */
 
     /** Number of messages processed.  This includes messages forwarded and messages not forwarded. */
@@ -658,6 +707,7 @@ class TimeFilter: public Filter {
     struct timeval lastBakeTime_;                       // time cached by shouldForward, used by forwarded
     size_t nPosted_;                                    // number of messages posted (including those suppressed)
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit TimeFilter(double minInterval)
         : initialDelay_(0.0), minInterval_(minInterval) {
         memset(&prevMessageTime_, 0, sizeof(timeval));
@@ -670,16 +720,18 @@ public:
         return TimeFilterPtr(new TimeFilter(minInterval));
     }
 
-    /** The minimum time between messages.
+    /** Property: minimum time between messages.  Any message arriving within the specified interval from a previous message
+     *  that was forwarded to children in the lattice will be discarded.
      *  @{ */
     double minInterval() const { return minInterval_; }
-    void minInterval(double d);
+    TimeFilterPtr minInterval(double d);
     /** @} */
 
-    /** Delay before the next message.
+    /** Property: delay before the next message. Any message arriving within the specified number of seconds from this call
+     *  will be discarded.
      *  @{ */
     double initialDelay() const { return initialDelay_; }
-    void initialDelay(double d);
+    TimeFilterPtr initialDelay(double d);
     /** @} */
 
     /** Number of messages processed.  This includes messages forwarded and messages not forwarded. */
@@ -692,12 +744,13 @@ public:
 /** Filters messages based on importance level. For instance, to disable all messages except fatal and error messages:
  *
  * @code
- *  DestinationPtr d = ImportanceFilter::instance()->enable(FATAL)->enable(ERROR);
+ *  DestinationPtr d = ImportanceFilter::instance(false)->enable(FATAL)->enable(ERROR);
  * @endcode
  */
 class ImportanceFilter: public Filter {
     bool enabled_[N_IMPORTANCE];
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit ImportanceFilter(bool dflt) {
         memset(enabled_, dflt?0xff:0, sizeof enabled_);
     }
@@ -708,10 +761,14 @@ public:
         return ImportanceFilterPtr(new ImportanceFilter(dflt));
     }
 
-    /** The enabled/disabled state for a message importance level.
+    /** Property: the enabled/disabled state for a message importance level.  Importance levels that are enabled are forwarded
+     *  to children in the lattice, and those that are disable are discarded.
      *  @{ */
     bool enabled(Importance imp) const { return enabled_[imp]; }
-    void enabled(Importance imp, bool b) { enabled_[imp] = b; }
+    ImportanceFilterPtr enabled(Importance imp, bool b) {
+        enabled_[imp] = b;
+        return boost::dynamic_pointer_cast<ImportanceFilter>(shared_from_this());
+    }
     /** @} */
 
     /** Enable an importance level.  Returns this node so that the method can be chained. */
@@ -727,37 +784,41 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Support for final destinations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-// Keeps track of how much of a partial message was already emitted.
+
+/** @internal
+ *  Keeps track of how much of a partial message was already emitted. */
 class HighWater {
-    boost::optional<unsigned> id_;                      // ID number of last message to be emitted, if any
-    MesgProps props_;                                   // properties used for the last emission
-    size_t ntext_;                                      // number of characters of the message we've seen already
+    boost::optional<unsigned> id_;                      /**< ID number of last message to be emitted, if any. */
+    MesgProps props_;                                   /**< Properties used for the last emission. */
+    size_t ntext_;                                      /**< Number of characters of the message we've seen already. */
 public:
     HighWater(): ntext_(0) {}
     explicit HighWater(const Mesg &m, const MesgProps &p) { emitted(m, p); }
-    void emitted(const Mesg&, const MesgProps&);        // make specified message the high water mark
-    void clear() { *this = HighWater(); }               // reset to initial state
-    bool isValid() const;                               // returns true if high water is defined
-    unsigned id() const { return *id_; }                // exception unless isValid()
+    void emitted(const Mesg&, const MesgProps&);        /**< Make specified message the high water mark. */
+    void clear() { *this = HighWater(); }               /**< Reset to initial state. */
+    bool isValid() const;                               /**< Returns true if high water is defined. */
+    unsigned id() const { return *id_; }                /**< Exception unless <code>isValid()</code>. */
     const MesgProps& properties() const { return props_; }
-    size_t ntext() const { return ntext_; }             // zero if !isValid()
+    size_t ntext() const { return ntext_; }             /**< Zero if <code>!isValid()</code>. */
 };
 
-// A Gang is used to coordinate output from two or more sinks.  This is normally used by sinks writing the tty, such as a sink
-// writing to stdout and another writing to stderr -- they need to coordinate with each other if they're both going to the
-// terminal.  A gang just keeps track of what message was most recently emitted.
+/** @internal
+ *  Coordination between two or more sinks.
+ *
+ *  A Gang is used to coordinate output from two or more sinks.  This is normally used by sinks writing the tty, such as a sink
+ *  writing to stdout and another writing to stderr--they need to coordinate with each other if they're both going to the
+ *  terminal.  A gang just keeps track of what message was most recently emitted. */
 class Gang: public HighWater {
     typedef std::map<int, GangPtr> GangMap;
-    static GangMap gangs_;                              // Gangs indexed by file descriptor or other ID
-    static const int TTY_GANG = -1;
+    static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
+    static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
 protected:
     Gang() {}
 public:
     static GangPtr instance() { return GangPtr(new Gang); }
-    static GangPtr instanceForId(int id);               // return a Gang for the specified ID, creating a new one if necessary
+    static GangPtr instanceForId(int id);               /**< The gang for the specified ID, creating a new one if necessary. */
     static GangPtr instanceForTty() { return instanceForId(TTY_GANG); }
-    static void removeInstance(int id);                 // remove specified gang from global list
+    static void removeInstance(int id);                 /**< Remove specified gang from global list. */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -765,19 +826,22 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information printed at the beginning of each free-format message. */
-class Prefix {
-    ColorSet colorSet_;                                 // colors to use if props.useColor is true
-    boost::optional<std::string> programName_;          // name of program as it will be displayed (e.g., "a.out[12345]")
+class Prefix: public boost::enable_shared_from_this<Prefix> {
+    enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
+    ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
+    boost::optional<std::string> programName_;          /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
     bool showProgramName_;
     bool showThreadId_;
-    boost::optional<timeval> startTime_;                // time at which program started
+    boost::optional<timeval> startTime_;                /**< Time at which program started. */
     bool showElapsedTime_;
-    bool showFacilityName_;                             // should the facility name be displayed?
-    bool showImportance_;                               // should the message importance be displayed?
-    void initFromSystem();                              // initialize data from the operating system
+    When showFacilityName_;                             /**< Whether the facility name should be displayed. */
+    bool showImportance_;                               /**< Whether the message importance should be displayed. */
+    void initFromSystem();                              /**< Initialize data from the operating system. */
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Prefix()
-        : showProgramName_(true), showThreadId_(true), showElapsedTime_(true), showFacilityName_(true), showImportance_(true) {
+        : showProgramName_(true), showThreadId_(true), showElapsedTime_(true), showFacilityName_(SOMETIMES),
+          showImportance_(true) {
         initFromSystem();
         colorSet_ = ColorSet::fullColor();
     }
@@ -788,63 +852,70 @@ public:
      *  with information about the thread that created it, such as program name, thread ID, time of creation, etc. */
     static PrefixPtr instance() { return PrefixPtr(new Prefix); }
 
-    /** Colors to use for the prefix if coloring is enabled.
+    /** Property: colors to use for the prefix if coloring is enabled. Colors can be specified even for sinks that don't
+     *  support them--they just won't be used.
      * @{ */
     const ColorSet& colorSet() const { return colorSet_; }
     ColorSet& colorSet() { return colorSet_; }
     /** @} */
 
-    /** Program name. The default is the base name of the file that was executed.  An "lt-" prefix is removed from the base
-     *  name since this is typically added by libtool and doesn't correspond to the name that the user executed.
+    /** Property: program name. The default is the base name of the file that was executed.  An "lt-" prefix is removed from
+     *  the base name since this is typically added by libtool and doesn't correspond to the name that the user executed.
+     *  @sa setProgramName showProgramName
      * @{ */
     const boost::optional<std::string>& programName() const { return programName_; }
-    void programName(const std::string &s) { programName_ = s; }
+    PrefixPtr programName(const std::string &s) { programName_ = s; return shared_from_this(); }
     /** @} */
 
-    /** Reset the program name from operating system information. */
+    /** Reset the program name from operating system information. @sa programName showProgramName */
     void setProgramName();
 
-    /** Whether to show the program name in the message prefix area.
+    /** Property: whether to show the program name in the message prefix area.  The default is true. @sa programName
      * @{ */
     bool showProgramName() const { return showProgramName_; }
-    void showProgramName(bool b) { showProgramName_ = b; }
+    PrefixPtr showProgramName(bool b) { showProgramName_ = b; return shared_from_this(); }
     /** @} */
 
-    /** Whether to show the thread ID in the message prefix area.
+    /** Property: whether to show the thread ID in the message prefix area.  The default is true.
      * @{ */
     bool showThreadId() const { return showThreadId_; }
-    void showThreadId(bool b) { showThreadId_ = b; }
+    PrefixPtr showThreadId(bool b) { showThreadId_ = b; return shared_from_this(); }
     /** @} */
 
-    /** The start time when emitting time deltas.
+    /** Property: start time when emitting time deltas.  On some systems the start time will be the time at which this object
+     *  was created. @sa setStartTime showElapsedTime
      * @{ */
     const boost::optional<timeval> startTime() const { return startTime_; }
-    void startTime(timeval t) { startTime_ = t; }
+    PrefixPtr startTime(timeval t) { startTime_ = t; return shared_from_this(); }
     /** @} */
 
     /** Reset the start time from operating system information.  On some systems this will be the time at which the first
-     *  prefix object was created rather than the time the operating system created the main process. */
-    void setStartTime();                                // set program start time by querying the clock
+     *  prefix object was created rather than the time the operating system created the main process. @sa startTime
+     *  showElapsedTime */
+    void setStartTime();
 
-    /** Whether to show time deltas.
+    /** Property: whether to show time deltas.  Time deltas are displayed as fractional seconds since some starting time.
+     *  @sa startTime setStartTime
      * @{ */
     bool showElapsedTime() const { return showElapsedTime_; }
-    void showElapsedTime(bool b) { showElapsedTime_ = b; }
+    PrefixPtr showElapsedTime(bool b) { showElapsedTime_ = b; return shared_from_this(); }
     /** @} */
 
-    /** Whether to show the facilityName property when the property has a value.
+    /** Property: whether to show the facilityName property. When set to SOMETIMES, the facility name is shown when it differs
+     *  from the program name and the program name has been shown. In any case, the facility name is not shown if it has no
+     *  value.
      * @{ */
-    bool showFacilityName() const { return showFacilityName_; }
-    void showFacilityName(bool b) { showFacilityName_ = b; }
+    When showFacilityName() const { return showFacilityName_; }
+    PrefixPtr showFacilityName(When w) { showFacilityName_ = w; return shared_from_this(); }
     /** @} */
 
-    /** Whether to show the importance property when the property has a value.
+    /** Property: whether to show the importance property. In any case, the importance level is not shown if it has no value.
      * @{ */
     bool showImportance() const { return showImportance_; }
-    void showImportance(bool b) { showImportance_ = b; }
+    PrefixPtr showImportance(bool b) { showImportance_ = b; return shared_from_this(); }
     /** @} */
 
-    /** Return a prefix string. */
+    /** Return a prefix string. Generates a string from this prefix object. */
     virtual std::string toString(const Mesg&, const MesgProps&) const;
 };
 
@@ -857,52 +928,63 @@ class UnformattedSink: public Destination {
     GangPtr gang_;
     PrefixPtr prefix_;
 protected:
+    /** Constructor for derived classes. Non-subclass users should use <code>instance</code> factory methods instead. */
     UnformattedSink() {
         gang_ = Gang::instance();
         prefix_ = Prefix::instance();
         init();
     }
 public:
-    /** Sink gang. Message sinks use a gang to coordinate their output. For instance, two sinks that both write to the same
-     *  file should share the same gang.  A shared gang can also be used for sinks that write to two different locations that
-     *  both happen to be visible collectively, such as when writing to standard error and standard output when both are
-     *  writing to the terminal or when both have been redirected to the same file.  Not all sinks support automatically
-     *  choosing the correct gang (e.g., C++ std::ofstream doesn't have the necessary capabilities), so it must be chosen
-     *  manually sometimes for the output to be coordinated.  See Gang::instanceForId() and Gang::instanceForTty().
+    /** Property: sink gang. Message sinks use a gang to coordinate their output. For instance, two sinks that both write to
+     *  the same file should share the same gang.  A shared gang can also be used for sinks that write to two different
+     *  locations that both happen to be visible collectively, such as when writing to standard error and standard output when
+     *  both are writing to the terminal or when both have been redirected to the same file.  Not all sinks support
+     *  automatically choosing the correct gang (e.g., C++ std::ofstream doesn't have the necessary capabilities), so it must
+     *  be chosen manually sometimes for the output to be coordinated.  See Gang::instanceForId() and Gang::instanceForTty().
      * @{ */
     const GangPtr& gang() const { return gang_; }
-    void gang(const GangPtr &g) { gang_ = g; }          // cause this sink to be coordinated with others
+    UnformattedSinkPtr gang(const GangPtr &g) {
+        gangInternal(g);
+        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+    }
     /** @} */
 
-    /** Object to generate message prefixes.
+    /** Property: how to generate message prefixes. This is a pointer to the object that is responsible for generating the
+     *  string that appears at the beginning of each line and usually contains such things as the program and importance level.
      * @{ */
     const PrefixPtr& prefix() const { return prefix_; }
-    void prefix(const PrefixPtr &p) { prefix_ = p; }
+    UnformattedSinkPtr prefix(const PrefixPtr &p) {
+        prefix_ = p;
+        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+    }
     /** @} */
 
     /** Support function for emitting a message.  This string terminates the previous partial message from the same gang. This
-     *  method must be called exactly once during render() for its possible side effects, although the return value doesn't
+     *  method must be called exactly once during @ref render for its possible side effects, although the return value doesn't
      *  have to be used. */
     virtual std::string maybeTerminatePrior(const Mesg&, const MesgProps&);
 
-    /** Support function for emitting a message. This string is the prefix generated by calling Prefix::toString() if a prefix
-     *  is necessary.  This method must be called exactly once during render() for its possible side effects, although the
+    /** Support function for emitting a message. This string is the prefix generated by calling Prefix::toString if a prefix
+     *  is necessary.  This method must be called exactly once during @ref render for its possible side effects, although the
      *  return value doesn't have to be used. */
     virtual std::string maybePrefix(const Mesg&, const MesgProps&);
 
     /** Support function for emitting a message. This string is the message body, or at least the part of the body that hasn't
-     *  been emitted yet.  This method must be called exactly once during render() for its possible side effects, although the
-     *  return value doesn't have to be used. */
+     *  been emitted yet.  This method must be called exactly once during @ref render for its possible side effects, although
+     *  the return value doesn't have to be used. */
     virtual std::string maybeBody(const Mesg&, const MesgProps&);
 
     /** Support function for emitting a message.  This string is the message termination, interruption, or cancelation and the
-     *  following line termination as necessary. This method must be called exactly once during render() for its possible side
-     *  effects, although the return value doesn't have to be used. */
+     *  following line termination as necessary. This method must be called exactly once during @ref render for its possible
+     *  side effects, although the return value doesn't have to be used. */
     virtual std::string maybeFinal(const Mesg&, const MesgProps&);
 
-    /** Support function for emitting a message.  The return string is constructed by calling maybeTerminatePrior(),
-     *  maybePrefix(), maybeBody(), and maybeFinal() one time each (because some of them have side effects). */
+    /** Support function for emitting a message.  The return string is constructed by calling @ref maybeTerminatePrior,
+     *  @ref maybePrefix, @ref maybeBody, and @ref maybeFinal one time each (because some of them have side effects). */
     virtual std::string render(const Mesg&, const MesgProps&);
+protected:
+    /** Cause this sink to be coordinated with others. */
+    void gangInternal(const GangPtr &g) { gang_ = g; }
 private:
     void init();
 };
@@ -911,6 +993,7 @@ private:
 class FdSink: public UnformattedSink {
     int fd_;                                            // file descriptor or -1
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit FdSink(int fd): fd_(fd) { init(); }
 public:
     /** Allocating constructor.  Constructs a new message sink that sends messages to the specified Unix file descriptor. */
@@ -923,13 +1006,14 @@ private:
     void init();
 };
 
-/** Send free-format messages to a C FILE pointer. */
+/** Send free-format messages to a C @c FILE pointer. */
 class FileSink: public UnformattedSink {
     FILE *file_;
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit FileSink(FILE *f): file_(f) { init(); }
 public:
-    /** Allocating constructor.  Constructs a new message sink that sends messages to the specified C FILE pointer. */
+    /** Allocating constructor.  Constructs a new message sink that sends messages to the specified C @c FILE pointer. */
     static FileSinkPtr instance(FILE *f) {
         return FileSinkPtr(new FileSink(f));
     }
@@ -943,6 +1027,7 @@ private:
 class StreamSink: public UnformattedSink {
     std::ostream &stream_;
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit StreamSink(std::ostream &stream): stream_(stream) {}
 public:
     /** Allocating constructor.  Constructs a new message sink that sends messages to the specified C++ output stream. */
@@ -956,11 +1041,12 @@ public:
 /** Sends messages to the syslog daemon. */
 class SyslogSink: public Destination {
 protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     SyslogSink(const char *ident, int option, int facility);
 public:
-    /** Allocating constructor.  Constructs a new message sink that sends messages to the syslog daemon.  The syslog API doesn't
-     *  use a handle to refer to the syslog, nor does it specify what happens when openlog() is called more than once, or
-     *  whether the ident string is copied.  Best practice is to use only constant strings as the ident argument. */
+    /** Allocating constructor.  Constructs a new message sink that sends messages to the syslog daemon.  The syslog API
+     *  doesn't use a handle to refer to the syslog, nor does it specify what happens when @c openlog is called more than once,
+     *  or whether the @p ident string is copied.  Best practice is to use only constant strings as the @c ident argument. */
     static SyslogSinkPtr instance(const char *ident, int option, int facility) {
         return SyslogSinkPtr(new SyslogSink(ident, option, facility));
     }
@@ -975,16 +1061,17 @@ private:
 
 class Stream;
 
-// Only used internally; most of the API is in MessageStream
+/** @internal
+ *  Only used internally; most of the API is in MessageStream. */
 class StreamBuf: public std::streambuf {
     friend class Stream;
-    bool enabled_;                                      // is this stream enabled?
-    MesgProps dflt_props_;                              // default properties for new messages
-    Mesg message_;                                      // current message, never in an isComplete() state
-    DestinationPtr destination_;                        // where messages should be sent
-    BakedDestinations baked_;                           // destinations baked at the start of each message
-    bool isBaked_;                                      // true if baked_ is initialized
-    bool anyUnbuffered_;                                // true if any baked destinations are unbuffered
+    bool enabled_;                                      /**< Whether this stream is enabled. */
+    MesgProps dflt_props_;                              /**< Default properties for new messages. */
+    Mesg message_;                                      /**< Current message, never in an @ref isComplete state. */
+    DestinationPtr destination_;                        /**< Where messages should be sent. */
+    BakedDestinations baked_;                           /**< Destinations baked at the start of each message. */
+    bool isBaked_;                                      /**< True if @c baked_ is initialized. */
+    bool anyUnbuffered_;                                /**< True if any baked destinations are unbuffered. */
 
 protected:
     StreamBuf(): enabled_(true), isBaked_(false), anyUnbuffered_(false) {}
@@ -993,15 +1080,14 @@ protected:
     virtual int_type overflow(int_type c = traits_type::eof()) /*override*/;
 
 private:
-    void completeMessage();                             // complete and post message, then start a new one
-    void cancelMessage();                               // cancel message if necessary
-    void bake();                                        // bake the destinations
-    void post();                                        // post message if necessary
+    void completeMessage();                             /**< Complete and post message, then start a new one. */
+    void cancelMessage();                               /**< Cancel message if necessary. */
+    void bake();                                        /**< Bake the destinations. */
+    void post();                                        /**< Post message if necessary. */
 };
 
-#ifdef SAWYER_MESSAGE_USE_PROXY
-// Used only until GCC supports a c++-11 compliant library with movable std::ostream.  Adjusts reference counts for a stream
-// and deletes the stream when the reference count hits zero.
+/** @internal
+ *  Adjusts reference counts for a stream and deletes the stream when the reference count hits zero. */
 class SProxy {
     Stream *stream_;
 public:
@@ -1017,16 +1103,15 @@ public:
     operator bool() const;
     void reset();
 };
-#endif
 
-/** Converts text to messages.  A message stream is a subclass of std::ostream and therefore allows all the usual stream
- *  insertion operators (<code><<</code>).  A stream converts each line of output text to a single message, creating the
- *  message with properties defined for the stream and sending the results to a specified destination. Streams typically impart
- *  a facility name and importance level to each message via the stream's properties. */
+/** Converts text to messages.
+ *
+ *  A message stream is a subclass of <code>std::ostream</code> and therefore allows all the usual stream insertion operators
+ *  (<code><<</code>).  A stream converts each line of output text to a single message, creating the message with properties
+ *  defined for the stream and sending the results to a specified destination. Streams typically impart a facility name and
+ *  importance level to each message via the stream's properties. */
 class Stream: public std::ostream {
-#ifdef SAWYER_MESSAGE_USE_PROXY
     friend class SProxy;
-#endif
     size_t nrefs_;                                      // used when we don't have std::move semantics
     StreamBuf *streambuf_;                              // each stream has its own
 public:
@@ -1068,9 +1153,12 @@ public:
         return *this;
     }
 
-    // Same as Stream(const Stream&) but declared so we can do things like this:
-    //   Stream m1(mlog[INFO] <<"first part of the message");
-    //   m1 <<"; finalize message\n";
+    /** Copy constructor with dynamic cast.
+     * Same as <code>Stream(const Stream&)</code> but declared so we can do things like this:
+     * @code
+     *  Stream m1(mlog[INFO] <<"first part of the message");
+     *  m1 <<"; finalize message\n";
+     * @endcode */
     Stream(const std::ostream &other_)
         : std::ostream(rdbuf()), nrefs_(0), streambuf_(NULL) {
         const Stream *other = dynamic_cast<const Stream*>(&other_);
@@ -1079,9 +1167,12 @@ public:
         initFrom(*other);
     }
 
-    // Same as operator=(const Stream&) but declared so we can do things like this:
-    //   Stream m1 = mlog[INFO] <<"first part of the message");
-    //   m1 <<"; finalize message\n";
+    /** Assignment with dynamic cast.
+     *  Same as <code>operator=(const Stream&)</code> but declared so we can do things like this:
+     *  @code
+     *  Stream m1 = mlog[INFO] <<"first part of the message");
+     *  m1 <<"; finalize message\n";
+     *  @endcode */
     Stream& operator=(const std::ostream &other_) {
         const Stream *other = dynamic_cast<const Stream*>(&other_);
         if (!other)
@@ -1094,16 +1185,14 @@ public:
         delete streambuf_;
     }
 
-#ifdef SAWYER_MESSAGE_USE_PROXY
-    // Used for partial messages when std::move is missing
+    /** Used for partial messages when std::move is missing. */
     SProxy dup() const {
         return SProxy(new Stream(*this));
     }
-#endif
 
 protected:
-    // Initiaize this stream from @p other.  This stream will get its own StreamBuf (if it doesn't have one already), and
-    // any pending message from @p other will be moved (not copied) to this stream.
+    /** Initiaize this stream from @p other.  This stream will get its own StreamBuf (if it doesn't have one already), and
+     *  any pending message from @p other will be moved (not copied) to this stream. */
     void initFrom(const Stream &other) {
         assert(other.streambuf_!=NULL);
         streambuf_ = dynamic_cast<StreamBuf*>(rdbuf());
@@ -1134,20 +1223,19 @@ public:
     bool enabled() const { return streambuf_->enabled_; }
 
     /** Returns true if this stream is enabled.  This implicit conversion to bool can be used to conveniently avoid expensive
-     *  insertion operations when a stream is disabled.  For example, if printing MemoryMap is an expensive operation then the
-     *  logging can be written like this to avoid formatting memorymap when logging is disabled:
+     *  insertion operations when a stream is disabled.  For example, if printing <code>MemoryMap</code> is an expensive
+     *  operation then the logging can be written any of these ways to avoid formatting memorymap when logging is disabled:
      * @code
-     *  mlog[DEBUG] and mlog[DEBUG] <<"the memory map is:" <<memorymap <<"\n";
-     * @endcode
+     *  if (mlog[DEBUG])
+     *      mlog[DEBUG] <<"the memory map is: " <<memoryMap <<"\n";
      *
-     * In fact, the SAWYER_MESG macro does exactly this and can be used instead:
-     * @code
-     *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memorymap <<"\n";
-     * @endcode
-     */
+     *  mlog[DEBUG] and mlog[DEBUG] <<"the memory map is: " <<memoryMap <<"\n";
+     *  
+     *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
+     * @endcode */
     operator bool() { return enabled(); }
 
-    /** See Stream::bool() */
+    // See Stream::bool()
     #define SAWYER_MESG(message_stream) message_stream and message_stream
 
     /** Enable or disable a stream.  A disabled stream buffers the latest partial message and enabling the stream will cause
@@ -1171,7 +1259,7 @@ public:
 //    void indentation(size_t level) { streambuf_.sink_->indentation(level); }
 //    /** @} */
 
-    /** Set message or stream properties. If @p asDefault is false then the property is set only in the current message and
+    /** Set message or stream property. If @p asDefault is false then the property is set only in the current message and
      *  the message must be empty (e.g., just after the previous message was completed).  When @p asDefault is true the new
      *  value becomes the default for all future messages. The default also affects the current message if the current message
      *  is empty.
@@ -1182,14 +1270,15 @@ public:
     void facilityName(const std::string &s, bool asDefault=true);
      /** @} */
 
-    /** Accessor for the message destination.
+    /** Property: message destination. This is the pointer to the top of the plumbing lattice.
      *  @{ */
     const DestinationPtr& destination() const {
         return streambuf_->destination_;
     }
-    void destination(const DestinationPtr &d) {
+    Stream& destination(const DestinationPtr &d) {
         assert(d!=NULL);
         streambuf_->destination_ = d;
+        return *this;
     }
     /** @} */
 
@@ -1201,46 +1290,30 @@ public:
 };
 
 /** Collection of streams. This forms a collection of message streams for a software component and contains one stream per
- *  message importance level.  A Facility is intended to be used by a software component at whatever granularity is desired by
+ *  message importance level.  A facility is intended to be used by a software component at whatever granularity is desired by
  *  the author (program, name space, class, method, etc.) and is usually given a string name that is related to the software
  *  component which it serves.  The string name becomes part of messages and is also the default name used by
- *  Facilities::control().  All Stream objects created for the facility are given the same name, message prefix generator, and
+ *  Facilities::control.  All message streams created for the facility are given the same name, message prefix generator, and
  *  message sink, but they can be adjusted later on a per-stream basis.
  *
  *  The C++ name for the facility is often just "mlog" or "logger" (appropriately scoped) so that code to emit messages is self
- *  documenting. The name "log" is also often used, but can be ambiguous with the logorithm function.
+ *  documenting. The name "log" is sometimes used, but can be ambiguous with the <code>\::log</code> function in math.h.
  * @code
  *  mlog[ERROR] <<"I got an error\n";
- * @endcode
- *
- *  When a Facility is intended to serve an entire program, the name of the facility is redundant with the program name printed
- *  by the default message prefix.  The best way to remedy this is to supply an empty name for the facility, and if the
- *  facility is registered with a Facilities object to supply the program name when it is registered:
- *
- * @code
- *  using namespace Sawyer;
- *  Facility mlog("");
- *  Facilities facilities;
- *
- *  int main(int argc, char *argv[]) {
- *      std::string progname = get_program_name(argv[0]);
- *      facilities.insert(mlog, progname);
- *      ...
- * @endcode
- */
-class Facility {
+ * @endcode  */
+ class Facility {
     std::string name_;
     std::vector<SProxy> streams_;
 public:
     /** Construct an empty facility.  The facility will have no name and all streams will be uninitialized.  Any attempt to
-     *  emit anything to a facility in the default state will cause an std::runtime_error to be thrown with a message similar
-     *  to "stream INFO is not initialized yet".  This facility can be initialized by assigning it a value from another
-     *  initialized facility. */
+     *  emit anything to a facility in the default state will cause an <code>std::runtime_error</code> to be thrown with a
+     *  message similar to "stream INFO is not initialized yet".  This facility can be initialized by assigning it a value from
+     *  another initialized facility. */
     Facility() {}
 
     /** Create a named facility with default destinations.  All streams are enabled and all output goes to file descriptor
      *  2 (standard error) via unbuffered system calls.  Facilities initialized to this state can typically be used before the
-     *  C++ runtime is fully initialized and before Sawyer::initializeLibrary() is called. */
+     *  C++ runtime is fully initialized and before @ref Sawyer::initializeLibrary is called. */
     explicit Facility(const std::string &name): name_(name) {
         //initializeLibrary() //delay until later
         initStreams(FdSink::instance(2));
@@ -1253,39 +1326,17 @@ public:
     }
 
     /** Returns a stream for the specified importance level.  Returns a copy so that we can do things like this:
+     * @code
      *     Stream m1 = (mlog[INFO] <<"message 1 part 1");
      *     Stream m2 = (mlog[INFO] <<"message 2 part 1");
      *     m1 <<" part 2\n";
      *     m2 <<" part 2\n";
+     * @endcode
      * @{ */
-#ifdef SAWYER_MESSAGE_USE_PROXY
     Stream& get(Importance imp);
     Stream& operator[](Importance imp) {
         return get(imp);
     }
-#else
-    // g++ 4.8 does not yet have have a standard-conforming library, so this doesn't work
-    // clang 3.5 (trunk 198621) library conforms and works
-    // Microsoft's implemention is reportedly conforming as of 2014-01-20
-    // See http://www.cplusplus.com/forum/general/121964
-    // The reason we want to return a new stream is so that we can add multi-threading support and this will work:
-    //    mlog[DEBUG] <<"long message output by thread 1\n";
-    //    mlog[DEBUG] <<"long message output by thread 2\n";
-    // The two threads end up writing to different streams so that they create independent messages. If these functions
-    // returned references instead of copies then the two threads are writing to the same stream, and their concurrent output
-    // is being used to create a single sequence of messages. An individual message might have some text from one thread and
-    // other text from another thread.
-    Stream get(Importance imp) {
-        assert((size_t)imp<streams_.size());
-        Stream retval(*streams_[imp]);
-        return std::move(retval)
-    }
-    Stream operator[](Importance imp) {
-        assert((size_t)imp<streams_.size());
-        Stream retval(*streams_[imp]);
-        return std::move(retval)
-    }
-#endif
     /** @} */
 
     /** Return the name of the facility. This is a read-only field initialized at construction time. */
@@ -1293,22 +1344,22 @@ public:
 
     /** Cause all streams to use the specified destination.  This can be called for facilities that already have streams and
      *  destinations, but it can also be called to initialize the streams for a default-constructed facility. */
-    void initStreams(const DestinationPtr&);
+    Facility& initStreams(const DestinationPtr&);
 };
 
 /** Collection of facilities.
  *
- *  A Facilities collection of Facility objects allows its members to be configured collectively, such as from command-line
- *  parsing.  Each stream can be enabled/disabled individually, a member Facility can be enabled/disabled as a whole, or
- *  specific importance levels can be enabled/disabled across the entire collection.
+ *  A facility group is a collection of message facilities that allows its members to be configured collectively, such as from
+ *  command-line parsing.  Each stream can be enabled or disabled individually, a member facility can be enabled or disabled as
+ *  a whole, or specific importance levels can be enabled or disabled across the entire collection.
  *
- *  Whenever a Facility object is enabled as a whole, the current set of enabled importance levels is used.  This set is
- *  maintained automatically: when the first Facility object is inserted, its enabled importance levels initialize the default
- *  set.  Whenever a message importance level is enabled or diabled via the version of enable() or disable() that take an
- *  Importance argument, the set is adjusted. */
+ *  Whenever a member facility is enabled as a whole, the current set of enabled importance levels is used.  This set is
+ *  maintained automatically: when the first facility is inserted, its enabled importance levels initialize the default set.
+ *  Whenever a message importance level is enabled or diabled via the version of @ref enable or @ref disable that takes an
+ *  importance argument, the set is adjusted. */
 class Facilities {
 public:
-    typedef std::set<Importance> ImportanceSet;
+    typedef std::set<Importance> ImportanceSet;         /**< A set of importance levels. */
 private:
     typedef std::map<std::string, Facility*> FacilityMap;
     FacilityMap facilities_;
@@ -1327,39 +1378,41 @@ public:
         impsetInitialized_ = false;
     }
 
-    /** Return the set of default-enabled message importances. See class documentation for details. */
+    /** Return the set of default-enabled message importances. See Facilities class documentation for details. */
     const ImportanceSet& impset();
 
     /** Add or remove a default importance level. The specified level is inserted or removed from the set of default enabled
-     *  importance levels without affecting any member Facility objects.  Calling this function also prevents the first
-     *  insert() from initializing the set of default importance levels. See class documentation for details. */
-    void impset(Importance, bool enabled);
+     *  importance levels without affecting any member facility objects.  Calling this function also prevents the first @ref
+     *  insert from initializing the set of default importance levels. See Facilities class documentation for details. */
+    Facilities& impset(Importance, bool enabled);
 
-    /** Register a Facility so it can be controlled as part of a collection of facilities.  The optional @p name is the
-     *  FACILITY_NAME string of the control language for the inserted @p facility, and defaults to the facility's name.  The
-     *  name consists of one or more symbols separated by '::', or '.' and often corresponds to the source code component that
-     *  it serves.  Names are case-sensitive in the control language.  No two facilities in the same Facilities object can have
-     *  the same name, but a single Facility may appear multiple times with different names.
+    /** Register a facility so it can be controlled as part of a collection of facilities.  The optional @p name is the @e
+     *  FACILITY_NAME string of the control language for the inserted @p facility, and defaults to the facility's name (see
+     *  @ref control).  The name consists of one or more symbols separated by "::", or "." and often corresponds to the source
+     *  code component that it serves.  Names are case-sensitive in the control language.  No two facilities in the same
+     *  facility group may have the same name, but a single facility may appear multiple times in the group with different
+     *  names.
      *
-     *  This method comes in two flavors: insert(), and insertAndAdjust().  The latter immediately enables and disables the
-     *  facility's streams according to the current default importance levels of this Facilities object.  If @p facility is the
-     *  first Facility to be inserted, and it is inserted by insert() rather than insertAndAdjust(), then the facility's
-     *  currently enabled streams are used to initialize the set of default enabled importance levels.
+     *  This method comes in two flavors: @ref insert, and @ref insertAndAdjust.  The latter immediately enables and disables
+     *  the facility's streams according to the current default importance levels of this facility group.  If @p facility is
+     *  the first facility to be inserted, and it is inserted by @ref insert rather than @ref insertAndAdjust, then the
+     *  facility's currently enabled streams are used to initialize the set of default enabled importance levels.
      *
-     *  The @p facility is incorporated by reference and should not be destroyed until after this Facilities object is
+     *  The @p facility is incorporated by reference and should not be destroyed until after this facility group is
      *  destroyed.
      * @{ */
-    void insert(Facility &facility, std::string name="");
-    void insertAndAdjust(Facility &facility, std::string name="");
+    Facilities& insert(Facility &facility, std::string name="");
+    Facilities& insertAndAdjust(Facility &facility, std::string name="");
     /** @} */
 
     /** Remove a facility by name. */
-    void erase(const std::string &name) {
+    Facilities& erase(const std::string &name) {
         facilities_.erase(name);
+        return *this;
     }
 
     /** Remove all occurrences of the facility. */
-    void erase(Facility &facility);
+    Facilities& erase(Facility &facility);
 
     /** Parse a single command-line switch and enable/disable the indicated streams.  Returns an empty string on success, or an
      *  error message on failure.  No configuration changes are made if a failure occurs.
@@ -1394,52 +1447,56 @@ public:
      *  warn,frontend(!warn)            // turn on warning messages everywhere except the frontend
      * @endcode
      *
-     *  The global list (AllFacilitiesControl) also affects the list of default-enabled importance levels.
+     *  The global list, @e AllFacilitiesControl, also affects the list of default-enabled importance levels.
      */
     std::string control(const std::string &s);
 
     /** Readjust all member facilities.  All members are readjusted to enable only those importance levels that are part of
-     * this Facilities object's default importance levels.  It is as if we called disable() then enable() for each message
-     * facility by name. See impset() and class documentation for details. */
-    void reenable();
-    void reenableFrom(const Facilities &other);
+     *  this facility group's default importance levels.  It is as if we called @ref disable then @ref enable for each
+     *  message facility by name. See Facilities class documentation for details. @sa impset
+     * @{ */
+    Facilities& reenable();
+    Facilities& reenableFrom(const Facilities &other);
+    /** @} */
 
     /** Enable/disable specific importance level across all facilities.  This method also affects the set of "current
-     *  importance levels" used when enabling an entire facility.
+     *  importance levels" used when enabling an entire facility. @sa impset
      * @{ */
-    void enable(Importance, bool b=true);
-    void disable(Importance imp) { enable(imp, false); }
+    Facilities& enable(Importance, bool b=true);
+    Facilities& disable(Importance imp) { return enable(imp, false); }
     /** @} */
 
     /** Enable/disable a facility by name. When disabling, all importance levels of the specified facility are disabled. When
      *  enabling, only the current importance levels are enabled for the facility.  If the facility is not found then nothing
      *  happens.
      * @{ */
-    void disable(const std::string &switch_name) { enable(switch_name, false); }
-    void enable(const std::string &switch_name, bool b=true);
+    Facilities& disable(const std::string &switch_name) { return enable(switch_name, false); }
+    Facilities& enable(const std::string &switch_name, bool b=true);
     /** @} */
 
     /** Enable/disable all facilities.  When disabling, all importance levels of all facilities are disabled.  When enabling,
-     *  only the current importance levels are enabled for each facility. */
-    void enable(bool b=true);
-    void disable() { enable(false); }
+     *  only the current importance levels are enabled for each facility.
+     * @{ */
+    Facilities& enable(bool b=true);
+    Facilities& disable() { return enable(false); }
+    /** @} */
 
     /** Print the list of facilities and their states. This is mostly for debugging purposes. The output may have internal
      *  line feeds and will end with a line feed. */
     void print(std::ostream&) const;
 
 private:
-    // Private info used by control() to indicate what should be adjusted.
+    /** @internal Private info used by control() to indicate what should be adjusted. */
     struct ControlTerm {
         ControlTerm(const std::string &facilityName, bool enable)
             : facilityName(facilityName), lo(DEBUG), hi(DEBUG), enable(enable) {}
-        std::string toString() const;                   // string representation of this struct for debugging
-        std::string facilityName;                       // optional facility name; empty implies all facilities
-        Importance lo, hi;                              // inclusive range of importances
-        bool enable;                                    // new state
+        std::string toString() const;                   /**< String representation of this struct for debugging. */
+        std::string facilityName;                       /**< Optional facility name. Empty implies all facilities. */
+        Importance lo, hi;                              /**< Inclusive range of importances. */
+        bool enable;                                    /**< New state. */
     };
 
-    // Error information thrown internally
+    // Error information thrown internally.
     struct ControlError {
         ControlError(const std::string &mesg, const char *position): mesg(mesg), inputPosition(position) {}
         std::string mesg;
@@ -1458,9 +1515,43 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern DestinationPtr merr;                             // unbuffered output to standard error
-extern Facility mlog;                                   // global logging facility
-extern Facilities facilities;                           // global facilities object provided by Sawyer
+/** Library-provided message destination.  This is the top of a lattice that sends all messages to file descriptor 2, which is
+ *  usually standard error. */
+extern DestinationPtr merr;
+
+/** Facility used by Sawyer components. This facility is added to the @ref mfacilities group with the name "sawyer". */
+extern Facility mlog;
+
+/** Library-provided facility group. When the library is initialized, this group contains only @ref mlog with the name
+ *  "sawyer". Users are free to manipulate this facility however they choose, and if everyone uses this group then all the
+ *  facilities across all users can be controlled from this one place. */
+extern Facilities mfacilities;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      The most commonly used stuff
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Commonly used message types.
+ *
+ *  This namespace exists so that users can say <code>using namespace Sawyer::Message::Common</code> to be able to use the most
+ *  important message types without name qualification and without also bringing in all the things that are less frequently
+ *  used.  In particular, this does not include Sawyer::Message::mlog since users often name their own facilities "mlog". */
+namespace Common {
+
+using Message::DEBUG;
+using Message::TRACE;
+using Message::WHERE;
+using Message::INFO;
+using Message::WARN;
+using Message::ERROR;
+using Message::FATAL;
+
+using Message::Stream;
+using Message::Facility;
+using Message::Facilities;
+
+} // namespace
+
 
 } // namespace
 } // namespace

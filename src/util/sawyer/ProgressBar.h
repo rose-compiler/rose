@@ -45,7 +45,9 @@ public:
     void updateTextMesg(double ratio);                  // update the textMesg_
 };
 
-/** Global settings for progress bars. */
+/** Global settings for progress bars. 
+ *
+ * @sa The @ref ProgressBar class contains the top-level documentation for progress bars. */
 namespace ProgressBarSettings {
     /** Delay before first message is emitted. A relatively large delay produces fewer messages by avoiding messages when
      *  the entire task can be completed quickly.  The default is 5 seconds. This value is global, applying to all progress
@@ -79,7 +81,7 @@ namespace ProgressBarSettings {
  * @endcode
  *
  *  The progress bar is created with a name and capacity. As the progress bar is incremented the bar will increase.  Messages
- *  printed while the progress bar is active do not interfere with the progress bar. When the progress bar object is destructed
+ *  printed while the progress bar is active do not interfere with the progress bar. When the progress bar object is destroyed
  *  the progress bar disappears. */
 template<typename T>
 class ProgressBar {
@@ -100,16 +102,26 @@ private:
     bool showValue_;
 
 public:
+    /** Construct spinning progress bar.  A progress bar without a capacity results in a "spinner" that moves back and
+     *  forth instead of a 0 to 100% bar. This kind of progress bar can be used when the number of iterations to complete
+     *  a task is unknown. */
     explicit ProgressBar(const Message::SProxy &stream, const std::string &name="progress")
         : value_(0, 0, 0), bar_(stream), showValue_(true) {
         bar_.shouldSpin_ = true;
         bar_.prefix_ = name;
     }
+
+    /** Construct a progress bar incrementing from zero to some limit.  The progress bar is initialized to zero and constructed
+     *  so that when the value reaches @p rightValue the bar will read 100%. */
     ProgressBar(ValueType rightValue, const Message::SProxy &stream, const std::string &name="progress")
         : value_(0, 0, rightValue), bar_(stream), showValue_(true) {
         bar_.shouldSpin_ = isEmpty();
         bar_.prefix_ = name;
     }
+
+    /** Construct a progress bar with left and right limits.  The progress bar is set so that @p leftValue represents the zero
+     *  percent point and rightValue represents the 100% point.  The @p curValue is the current value of the progress bar,
+     *  which need not be between the the limits (the percent indications will be clipped the the specified interval). */
     ProgressBar(ValueType leftValue, ValueType curValue, ValueType rightValue, const Message::SProxy &stream,
                 const std::string &name="progress")
         : value_(leftValue, curValue, rightValue), bar_(stream), showValue_(true) {
