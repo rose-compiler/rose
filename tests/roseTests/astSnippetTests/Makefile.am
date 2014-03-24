@@ -459,6 +459,22 @@ testJava5c.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimen
 		COPY_DEFINITIONS=yes				\
 		$(JAVA_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# testJava6*.passed are for injection Snippets7.java into Specimen2.java in various ways.
+TEST_TARGETS += testJava6a.passed
+EXTRA_DIST += SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java
+testJava6a.passed: injectSnippet SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Sasha's java test [$@]"			\
+		SNIPPET=Snippets7.java,Snippets7.function0	\
+		SPECIMEN=SmallSpecimensJava/Specimen2.java	\
+		IPOINT=Specimen2.woah				\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+
 ###############################################################################################################################
 # quicksort tests
 ###############################################################################################################################
