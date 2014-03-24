@@ -458,6 +458,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (7/12/2013): Added support for type trait builtin functions.
           void unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (2/8/2014): The name of the constructor call for a SgConstructorInitializer must 
+       // be output differently for the GNU g++ 4.5 version compiler and later.
+          SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
    };
 
 #endif
