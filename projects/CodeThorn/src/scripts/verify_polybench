@@ -73,10 +73,12 @@ function check_benchmark {
 }
 
 function runallgeneralbenchmarks_param {
+  date > overallruntime.stats
   selectedbenchmarks="$1"
   for mybench in ${selectedbenchmarks}; do
     check_benchmark ${MYBENCHPATH} ${mybench}
   done
+  date >> overallruntime.stats
 }
 
 function runallgeneralbenchmarks {

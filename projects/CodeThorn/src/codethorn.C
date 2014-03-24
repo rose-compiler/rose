@@ -493,7 +493,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
  // rewrites an AST
  // requirements: all variables have been replaced by constants
  // uses AstMatching to match patterns.
- void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping) {
+void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
    bool transformationApplied=false;
@@ -542,9 +542,10 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 	 }
   } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
 
+ if(ruleAddReorder) {
    do {
 	 // the following rules guarantee convergence
-
+	 
 	 // REWRITE: re-ordering (normalization) of expressions
 	 // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other) 
 	 //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
@@ -559,7 +560,8 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 			 //SgNode* op1=(*i)["$BinaryOp1"];
 			 SgExpression* val=isSgExpression((*i)["$IntVal"]);
 			 //cout<<"FOUND: "<<op1->unparseToString()<<endl;
-
+			 if(rewriteTrace)
+			   cout<<"Rule AddOpReorder: "<<((*i)["$BinaryOp1"])->unparseToString()<<" => ";
 			 // replace op1-rhs with op2-rhs
 			 SgExpression* other_copy=SageInterface::copyExpression(other);
 			 SgExpression* val_copy=SageInterface::copyExpression(val);
@@ -568,12 +570,15 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
 			 //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
 			 transformationApplied=true;
 			 someTransformationApplied=true;
+			 if(rewriteTrace)
+			   cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
 			 dump1_stats.numAddOpReordering++;
 		   }       
 		 }
 	   }
 	 }
    } while(transformationApplied);
+ }
 
    // REWRITE: constant folding of constant integer (!) expressions
    // we intentionally avoid folding of float values
