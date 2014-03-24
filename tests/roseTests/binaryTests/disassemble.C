@@ -203,8 +203,8 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 using namespace BinaryAnalysis::InstructionSemantics;
-using namespace rose::Diagnostics;
 using namespace StringUtility;
+using namespace Sawyer::Message::Common;
 
 static Sawyer::Message::Facility mlog("tool");          // diagnostics at the tool level; further initialization in main()
 
@@ -1391,8 +1391,8 @@ main(int argc, char *argv[])
         }
     }
 
-    mlog[INFO] <<"using this memory map for disassembly:\n";
-    map.dump(mlog[INFO], "    ");
+    std::cout <<"using this memory map for disassembly:\n";
+    map.dump(std::cout, "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
@@ -1511,7 +1511,7 @@ main(int argc, char *argv[])
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
                 printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.what());
         } else {
-            printf(" (use --show-bad to see errors)\n");
+            mlog[INFO] <<"use --show-bad to see errors\n";
         }
     } else {
         printf("\n");
