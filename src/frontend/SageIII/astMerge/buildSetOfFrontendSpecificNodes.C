@@ -7,6 +7,7 @@ using namespace std;
 set<SgNode*> getSetOfNonFrontendSpecificNodes();
 
 // set<SgNode*> getSetOfFrontendSpecificNodes( const set<SgNode*> & requiredNodesTest )
+ROSE_DLL_API
 set<SgNode*>
 getSetOfFrontendSpecificNodes()
    {
