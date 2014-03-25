@@ -160,12 +160,12 @@ experimental_openFortranParser_main(int argc, char **argv)
   // Parse each filename (args not associated with "--parseTable", "--" or "-I")
      for (i = 1; i < argc; i++)
         {
-#if 0
+#if 1
           printf ("In experimental_openFortranParser_main(): i = %d argv[%d] = %s \n",i,i,argv[i]);
 #endif
           if (strncmp(argv[i], "--parseTable", 12) == 0) 
              {
-#if 0
+#if 1
                printf ("In experimental_openFortranParser_main(): argv[i+1 = %d] = %s \n",i+1,argv[i+1]);
 #endif
                commandString += "-p ";
@@ -214,7 +214,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      commandString += filenameWithoutPath;
      commandString += ".aterm";
 
-#if 0
+#if 1
      printf ("filenameWithPath    = %s \n",filenameWithPath.c_str());
      printf ("filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
 #endif
@@ -229,7 +229,7 @@ experimental_openFortranParser_main(int argc, char **argv)
   // parse the file
   // sprintf(cmd, "sglri -p %s -i %s -o %s.ptree", parse_table, argv[i], argv[i]);
 
-#if 0
+#if 1
      printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
 #endif
 
