@@ -8,6 +8,7 @@
 #include <iostream>
 #include <analysisUtils.h>
 #include "AstPDFGeneration.h"
+#include <shortCircuitingTransformation.h>
 
 using namespace std;
 

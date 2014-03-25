@@ -5,6 +5,7 @@
 #include "AstProcessing.h"
 #include "astQuery.h"
 #include <functional>
+#include "rosedll.h"
 
 // #include "variantVector.h"
 
@@ -356,14 +357,11 @@ namespace NodeQuery
    * in VariantVector.
    ********************************************************************************/
   template<typename NodeFunctional>
-  ROSE_DLL_API
-  inline
   NodeQuerySynthesizedAttributeType
   queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-     {
-       return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-     }
-
+  {
+    return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
+  }
 
   /********************************************************************************
    * The function

@@ -1,4 +1,5 @@
 add_subdirectory(abstractHandle)
+add_subdirectory(abstractMemoryObject)
 add_subdirectory(astDiagnostics)
 add_subdirectory(astProcessing)
 add_subdirectory(astMatching)
