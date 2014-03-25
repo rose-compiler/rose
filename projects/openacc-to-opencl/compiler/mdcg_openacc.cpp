@@ -5,6 +5,14 @@ namespace MDCG {
 
 namespace OpenACC {
 
+#ifndef DEBUG_FLAG
+bool add_debug_flag = false;
+const char * debug_flag = NULL;
+#else
+bool add_debug_flag = true;
+const char * debug_flag = DEBUG_FLAG;
+#endif
+
 SgExpression * LoopDesc::createFieldInitializer(
   const MDCG::CodeGenerator & codegen,
   MDCG::Model::field_t element,
@@ -198,29 +206,32 @@ SgExpression * RegionDesc::createFieldInitializer(
       /// char * file;
       return SageBuilder::buildStringVal(input.file.c_str());
     case 2:
-      /// \todo size_t num_options;
-      return SageBuilder::buildIntVal(1);
+      if (add_debug_flag)
+        return SageBuilder::buildIntVal(1);
+      else
+        return SageBuilder::buildIntVal(0);
     case 3:
-      /// \todo char ** options;
-    {
-      SgExprListExp * expr_list = SageBuilder::buildExprListExp();
-      SgInitializer * init = SageBuilder::buildAggregateInitializer(expr_list);
+      if (add_debug_flag) {
+        SgExprListExp * expr_list = SageBuilder::buildExprListExp();
+        SgInitializer * init = SageBuilder::buildAggregateInitializer(expr_list);
 
-      expr_list->append_expression(SageBuilder::buildStringVal("-g"));
+        expr_list->append_expression(SageBuilder::buildStringVal(debug_flag));
 
-      MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(
-             "ocl_compiler_opts",
-             SageBuilder::buildArrayType(
-               SageBuilder::buildPointerType(SageBuilder::buildCharType()),
-               SageBuilder::buildIntVal(1)
-             ),
-             init, NULL, file_id, false, true
-      );
+        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(
+               "ocl_compiler_opts",
+               SageBuilder::buildArrayType(
+                 SageBuilder::buildPointerType(SageBuilder::buildCharType()),
+                 SageBuilder::buildIntVal(1)
+               ),
+               init, NULL, file_id, false, true
+        );
 
-      MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = codegen.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+        MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = codegen.getDriver().build<SgVariableDeclaration>(var_decl_desc);
 
-      return SageBuilder::buildVarRefExp(var_decl_res.symbol);
-    }
+        return SageBuilder::buildVarRefExp(var_decl_res.symbol);
+      }
+      else
+        return SageBuilder::buildIntVal(0);
     case 4:
       /// size_t num_kernels;
       return SageBuilder::buildIntVal(kernels.size());
