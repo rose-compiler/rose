@@ -12,6 +12,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <streambuf>
 #include <string>
 #include <sys/time.h>
 #include <vector>
