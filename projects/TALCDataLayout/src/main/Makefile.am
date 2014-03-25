@@ -7,7 +7,7 @@ INCLUDES = $(ROSE_INCLUDES) \
 	 -I$(top_srcdir)/projects/TALCDataLayout/src/modules \
          -I$(top_srcdir)/projects/TALCDataLayout/src/utilities
 
-PROJ_LIB=$(top_builddir)/projects/TALCDataLayout/src
+PROJ_LIB=..
 
 bin_PROGRAMS = talc
 talc_SOURCES = Main.cpp 
