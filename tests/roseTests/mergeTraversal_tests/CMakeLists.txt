@@ -10,7 +10,7 @@ kde4_add_executable(traversalArray ${traversalArray_SRCS})
 
 target_link_libraries(traversalArray ${KDE4_KDECORE_LIBS})
 
-install(TARGETS traversalArray ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS traversalArray DESTINATION bin)
 
 
 ########### install files ###############

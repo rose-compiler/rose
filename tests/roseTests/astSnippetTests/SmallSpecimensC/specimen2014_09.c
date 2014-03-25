@@ -1,18 +1,22 @@
 static int INSERT_HERE;                 // a marker used by the injectSnippet test
-#include "snippetsRelated.h"
-#include <stdlib.h>
-#include <string.h>
+
+// This function declaration must be present in order to insert a function call that would reference this function. 
+// void fputs(v1, stderr);
+// typedef int FILE;
+// struct __FILE {};
+// typedef struct __FILE FILE;
+// int fputs(const char *s, FILE *stream);
+// int *stderr;
 
 int
 ipoint1()
 {
     int x = 1;
-    int y = 2;
-    int z = 3;
     INSERT_HERE;
-    return x;
+    return 0;
 }
 
+#if 0
 char *
 ipoint2()
 {
@@ -26,21 +30,4 @@ ipoint2()
     strcat(s3, s2);
     return s3;
 }
-
-double
-ipoint3()
-{
-    double f1 = 3.14;
-    double f2 = 299792458.0;
-    double f3 = f1 + f2;
-
-    INSERT_HERE;
-    return f3;
-}
-
-
-int
-main(int argc, char *argv[]) 
-{
-    return 0;
-}
+#endif

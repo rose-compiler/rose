@@ -1,9 +1,4 @@
-#include <stdlib.h>                                     // free
-#include <string.h>                                     // memcpy
-
-// DQ (3/4/2014): Added so that assert would be defined.
-#include <assert.h>
-#include <string.h>
+#include "snippetsRelated.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The rest of the file is snippets
@@ -40,15 +35,6 @@ void loadHeapString(char *to, char *from)
     checkedCopy(to, from, tmp_nbytes);
     free(from);
 }
-
-// Declared at global scope because it's needed in more than one snippet
-struct Struct1 {
-    int int_member;
-    char char_member;
-    const char *const_string_member;
-    char* string_member;
-    double double_member;
-};
 
 void storeStructString(const char *from)
 {

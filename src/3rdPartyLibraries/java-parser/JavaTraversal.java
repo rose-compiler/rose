@@ -204,12 +204,12 @@ class JavaTraversal implements Callable<Boolean> {
                 if (a.compilationResult == null)
                     a.compilationResult = unitResult;
 /*
-System.out.println("ECJ error: " + a.getMessage());
-System.out.println("ECJ cause: " + a.getCause().getClass().getCanonicalName());
-StackTraceElement stack[] = a.getCause().getStackTrace();
-for (int k = 0; k < stack.length; k++) {
-    System.out.println(stack[k].toString());
-}
+                System.out.println("ECJ error: " + a.getMessage());
+                System.out.println("ECJ cause: " + a.getCause().getClass().getCanonicalName());
+                StackTraceElement stack[] = a.getCause().getStackTrace();
+                for (int k = 0; k < stack.length; k++) {
+                    System.out.println(stack[k].toString());
+                }
 */
                 throw a;
             }
@@ -298,17 +298,24 @@ for (int k = 0; k < stack.length; k++) {
         r2 = runtime.totalMemory();
         f2 = runtime.freeMemory();
         int size = units.size();
-        System.out.println();
-        System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
+            System.out.println();
+        }
+
         for (CompilationUnitDeclaration unit : units) {
             System.out.println("   " + new String(unit.getFileName()));
         }
-        System.out.println();
-        System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
-        System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
-        System.out.println("**** Total Number of Units Processed: " + totalUnits);
-        System.out.println();
+
+        if (verboseLevel > 0) {
+            System.out.println();
+            System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
+            System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
+            System.out.println("**** Total Number of Units Processed: " + totalUnits);
+            System.out.println();
+        }
     }
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
@@ -361,35 +368,49 @@ for (int k = 0; k < stack.length; k++) {
 
                 String filename = new String(unit.getFileName());
                 if (! processedFiles.contains(filename) && JavaParser.cactionIsSpecifiedSourceFile(filename)) {
-                    batchCompiler.process(unit, i);
                     processedFiles.add(filename);
-                    units.add(unit);
-                }
+                    batchCompiler.process(unit, i);
+                    if (unit.compilationResult.hasMandatoryErrors()) {
+                        System.out.flush();
+                        System.out.println();
+                        System.out.println("*** ECJ compilation errors detected in input java program:"); // errors detected in input java program:");
+                        System.out.println(unit.compilationResult.toString());
+                        System.out.println();
 
-                if (unit.compilationResult.hasSyntaxError || unit.compilationResult.hasErrors()) {
-                    System.out.flush();
-                    System.out.println();
-                    System.out.println("*** ECJ front-end errors detected in input java program:");
-                    System.out.println(unit.compilationResult.toString());
-                    System.out.println();
-                    // TODO:  Need to die more gracefully!
-                    
-                    // for (int k = 0; k < args.length; k++) {
-                    // System.out.println("    " + args[k]);
-                    // }
-                    // System.exit(1); 
+                        /*
+                        System.out.println("****************");
+                        System.out.println("***" + filename + ":");
+                        if (unit.compilationResult.hasProblems())
+                            System.out.println("    *** This unit has problems");
+                        if (unit.hasErrors())
+                            System.out.println("    *** This unit has errors");
+                        if (unit.compilationResult.hasErrors())
+                            System.out.println("    *** This unit's compilationResult has errors");
+                        if (unit.compilationResult.hasSyntaxError)
+                            System.out.println("    *** This unit has syntax errors");
+                        if (unit.compilationResult.hasMandatoryErrors())
+                            System.out.println("    *** This unit has mandatory errors");
+                        if (unit.compilationResult.hasBeenAccepted)
+                            System.out.println("    *** This unit has been accepted");
+                        if (unit.ignoreFurtherInvestigation)
+                            System.out.println("    *** This unit requires no further investigation");
+                        if (unit.ignoreMethodBodies)
+                            System.out.println("    *** This unit's method bodies should be ignored");
+                        if (unit.hasErrors())
+                            System.out.println("    *** This unit has errors");
+                        if (unit.compilationResult.hasInconsistentToplevelHierarchies)
+                            System.out.println("    *** This unit has inconsistent Top Level Hierarchyproblems");
+                        System.out.println("****************");
+                        */
+
+                        JavaParser.cactionEcjFatalCompilationErrors(filename);                        
+                    }
+                    else units.add(unit);
                 }
             }
 
             totalUnits += units.size();
-// TODO: Remove this !
-/*
-//System.out.println("MaxUnits = " + maxUnits);
-System.out.println("Total units processed: " + totalUnits + "; In this iteration, the following " + units.size() + " unit" +  (totalUnits > 1 ? "s" : "") + " will be processed:");
-for (CompilationUnitDeclaration unit : units) {
-System.out.println("   " + new String(unit.getFileName()));
-}
-*/
+
             //
             //
             //

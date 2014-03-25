@@ -54,8 +54,29 @@
 #include <numeric>   // for std::accumulate
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-#   include "ecj.h"
 #   include "jni.h"
+
+namespace Rose {
+    namespace Frontend {
+        namespace Java {
+            namespace Ecj {
+
+                extern jclass currentJavaTraversalClass;
+                extern JNIEnv *currentEnvironment;
+                extern jmethodID mainMethod;
+                extern jmethodID hasConflictsMethod;
+                extern jmethodID getTempDirectoryMethod;
+                extern jmethodID createTempFileMethod;
+                extern jmethodID createTempNamedFileMethod;
+                extern jmethodID createTempNamedDirectoryMethod;
+
+            } // ::Rose::Frontend::Java::Ecj
+        }// ::rose::frontend::java
+    }// ::rose::frontend
+}// ::rose
+
+using namespace Rose::Frontend::Java::Ecj;
+
 #endif
 
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -6235,10 +6256,29 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 
 #endif
 
+AbstractHandle::abstract_handle* SageInterface::buildAbstractHandle(SgNode* n)
+{
+  return AbstractHandle::buildAbstractHandle(n);
+  
+}
+//! Get the enclosing scope from a node n 
+SgScopeStatement* SageInterface::getEnclosingScope(SgNode* n, const bool includingSelf/* =false*/)
+{
+  SgScopeStatement* result = getScope (n);
+  if (result == n)
+  {
+    if (!includingSelf)
+      result = getScope(n->get_parent());
+  }
+  return result;
+}
+
 // from transformationSupport.C
 SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
+
+   // Case 1: directly call get_scope() for some types of nodes  
     if (const SgSymbol* symbol = isSgSymbol(astNode))
         return symbol->get_scope();
     else if (const SgInitializedName* initName = isSgInitializedName(astNode))
@@ -6248,30 +6288,30 @@ SageInterface::getScope( const SgNode* astNode )
     else if (const SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
         return qualifiedName->get_scope();
 
-  // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
-  const SgNode* parentNode = astNode;
-  while (!isSgScopeStatement(parentNode))
-  {
-      //George Vulov (11/29/2010)
-      //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
-      //produces SgGlobal.
-      if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
-      {
-          const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
-          ROSE_ASSERT(funcDeclaration != NULL);
-          funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
-          if (funcDeclaration != NULL)
-          {
-              return funcDeclaration->get_definition();
-          }
-      }
-
-      parentNode = parentNode->get_parent();
-      if (parentNode == NULL)
-      {
-          break;
-      }
-  }
+    // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
+    const SgNode* parentNode = astNode;
+    while (!isSgScopeStatement(parentNode))
+    {
+        //George Vulov (11/29/2010)
+        //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
+        //produces SgGlobal.
+        if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
+        {
+            const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
+            ROSE_ASSERT(funcDeclaration != NULL);
+            funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
+            if (funcDeclaration != NULL)
+            {
+                return funcDeclaration->get_definition();
+            }
+        }
+  
+        parentNode = parentNode->get_parent();
+        if (parentNode == NULL)
+        {
+            break;
+        }
+    }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
@@ -6564,6 +6604,16 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
   return vis.symbols;
 }
 #endif
+
+SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf)
+{
+    SgSourceFile* temp = getEnclosingNode<SgSourceFile>(n,includingSelf);
+  if (temp)
+    return temp;
+  else
+    return NULL;
+}
+
 
 SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
 {
@@ -10380,11 +10430,14 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
   // SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
      SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
 
+  // DQ (3/14/2014): This is false for a copy of a class declaration being inserted into the AST.
   // DQ (9/4/2012): I want to assert this for the new EDG/ROSE connection code (at least).
-     ROSE_ASSERT(mysymbol != NULL);
+  // ROSE_ASSERT(mysymbol != NULL);
 
      if (mysymbol == NULL)
         {
+          printf ("Note: SageInterface::fixStructDeclaration(): structDecl = %p nondefdecl = %p (mysymbol == NULL) \n",structDecl,nondefdecl);
+
        // DQ (12/3/2011): This will be an error for C++ if the scope of the statment is different from the scope where it is located structurally...
        // DQ (12/4/2011): Only generate symbols and set the scope if this is the correct scope.
           ROSE_ASSERT(structDecl->get_scope() != NULL);
@@ -10411,6 +10464,10 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     defdecl->set_parent(scope);
                nondefdecl->set_parent(scope);
 #endif
+             }
+            else
+             {
+               printf ("In SageInterface::fixStructDeclaration(): (mysymbol == NULL) Skipped building an associated symbol! \n");
              }
         }
 
@@ -10450,7 +10507,17 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
              {
                printf ("ERROR: defdecl->get_type() != nondefdecl->get_type(): what are these: \n");
                printf ("   defdecl->get_type()    = %p = %s \n",defdecl   ->get_type(),defdecl   ->get_type()->class_name().c_str());
+               SgNamedType* namedType_definingDecl = isSgNamedType(defdecl->get_type());
+               if (namedType_definingDecl != NULL)
+                  {
+                    printf ("namedType_definingDecl->get_declaration() = %p = %s \n",namedType_definingDecl->get_declaration(),namedType_definingDecl->get_declaration()->class_name().c_str());
+                  }
                printf ("   nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+               SgNamedType* namedType_nondefiningDecl = isSgNamedType(nondefdecl->get_type());
+               if (namedType_nondefiningDecl != NULL)
+                  {
+                    printf ("namedType_nondefiningDecl->get_declaration() = %p = %s \n",namedType_nondefiningDecl->get_declaration(),namedType_nondefiningDecl->get_declaration()->class_name().c_str());
+                  }
              }
           ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
 
@@ -17532,10 +17599,13 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
 /**
  * Create a temporary directory if it does not yet exist and return its name.
  */
-std::string SageInterface::getTempDirectory(SgProject *project) {
-    jstring temp_directory = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, ::getTempDirectoryMethod);
+string SageInterface::getTempDirectory(SgProject *project) {
+    jstring temp_directory = (jstring) Rose::Frontend::Java::Ecj::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass, Rose::Frontend::Java::Ecj::getTempDirectoryMethod);
 
-    string directory_name = ::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+    const char *utf8 = Rose::Frontend::Java::Ecj::currentEnvironment -> GetStringUTFChars(temp_directory, NULL);
+    ROSE_ASSERT(utf8);
+    string directory_name = utf8;
+    Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_directory, utf8);
 
     list<string> sourcepath = project -> get_Java_sourcepath();
     sourcepath.push_back(directory_name); // push it in the back because it should have lower priority
@@ -17598,11 +17668,15 @@ string SageInterface::preprocessPackage(SgProject *project, string package_name)
     //
     // Call the Java side to create an input file with the relevant package statement; translate the file and return the file name.
     //
-    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
-                                                                           ::createTempFileMethod,
-                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+    jstring temp_file = (jstring) Rose::Frontend::Java::Ecj::currentEnvironment -> CallObjectMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass,
+                                                                                                    Rose::Frontend::Java::Ecj::createTempFileMethod,
+                                                                                                    Rose::Frontend::Java::Ecj::currentEnvironment -> NewStringUTF(command.c_str()));
 
-    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    const char *utf8 = Rose::Frontend::Java::Ecj::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    ROSE_ASSERT(utf8);
+    string filename = (string) utf8;
+    Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
+
     processFile(project, filename); // translate the file 
 
     return package_name;
@@ -17619,11 +17693,15 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
-    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
-                                                                           ::createTempFileMethod,
-                                                                           ::currentEnvironment -> NewStringUTF(command.c_str()));
+    jstring temp_file = (jstring) Rose::Frontend::Java::Ecj::currentEnvironment -> CallObjectMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass,
+                                                                                                    Rose::Frontend::Java::Ecj::createTempFileMethod,
+                                                                                                    Rose::Frontend::Java::Ecj::currentEnvironment -> NewStringUTF(command.c_str()));
 
-    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    const char *utf8 = Rose::Frontend::Java::Ecj::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    ROSE_ASSERT(utf8);
+    string filename = (string) utf8;
+    Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
+
     processFile(project, filename); // translate the file 
 
     return import_string;
@@ -17638,12 +17716,16 @@ void SageInterface::preprocessCompilationUnit(SgProject *project, string file_na
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
-    jstring temp_file = (jstring) ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
-                                                                           ::createTempNamedFileMethod,
-                                                                           ::currentEnvironment -> NewStringUTF(file_name.c_str()),
-                                                                           ::currentEnvironment -> NewStringUTF(file_content.c_str()));
+    jstring temp_file = (jstring) Rose::Frontend::Java::Ecj::currentEnvironment -> CallObjectMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass,
+                                                                                                    Rose::Frontend::Java::Ecj::createTempNamedFileMethod,
+                                                                                                    Rose::Frontend::Java::Ecj::currentEnvironment -> NewStringUTF(file_name.c_str()),
+                                                                                                    Rose::Frontend::Java::Ecj::currentEnvironment -> NewStringUTF(file_content.c_str()));
 
-    string filename = ::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    const char *utf8 = Rose::Frontend::Java::Ecj::currentEnvironment -> GetStringUTFChars(temp_file, NULL);
+    ROSE_ASSERT(utf8);
+    string filename = (string) utf8;
+    Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
+
     processFile(project, filename, true /* unparse */); // translate the file and unparse it
 }
 
@@ -17694,9 +17776,9 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
         // If requested, Create the directory associated with this package_name.
         //
         if (create_directory) {
-            ::currentEnvironment -> CallObjectMethod(::currentJavaTraversalClass,
-                                                     ::createTempNamedDirectoryMethod,
-                                                     ::currentEnvironment -> NewStringUTF(package_name.c_str()));
+            Rose::Frontend::Java::Ecj::currentEnvironment -> CallObjectMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass,
+                                                                              Rose::Frontend::Java::Ecj::createTempNamedDirectoryMethod,
+                                                                              Rose::Frontend::Java::Ecj::currentEnvironment -> NewStringUTF(package_name.c_str()));
         }
 
         package_definition = findJavaPackage(global_scope, package_name);
@@ -17710,14 +17792,81 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 
 
 /**
- * If the class_name already exists in the scope, return it. Otherwise, build the class and return it.
+ * If the class_name already exists in the scope, return it. Otherwise, import it.
  */
-SgClassDeclaration *SageInterface::findOrInsertJavaClass(SgScopeStatement *scope, string class_name) {
-    SgClassSymbol *class_symbol = scope -> lookup_class_symbol(class_name);
-    SgClassDeclaration *class_declaration = (class_symbol  // class already exists in the scope
-                                                  ? isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration())
-                                                  : buildJavaDefiningClassDeclaration(scope, class_name));
-    ROSE_ASSERT(class_declaration);
+SgClassDeclaration *SageInterface::findOrImportJavaClass(SgProject *project, SgClassDefinition *package_definition, string class_name) {
+    ROSE_ASSERT(package_definition);
+    SgClassSymbol *class_symbol = package_definition -> lookup_class_symbol(class_name);
+    SgClassDeclaration *class_declaration = (class_symbol == NULL
+                                                  ? NULL
+                                                  : isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration()));
+    if ((! class_declaration) || (! class_declaration -> attributeExists("complete"))) { // class not available in the scope
+        string qualified_name = package_definition -> get_qualified_name().getString() + "." + class_name;
+        preprocessImport(project, qualified_name);
+        class_symbol = package_definition -> lookup_class_symbol(class_name);
+    }
+
+    class_declaration = (class_symbol == NULL 
+                                       ? NULL
+                                       : isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration()));
 
     return class_declaration;
+}
+
+
+/**
+ * If the class_name already exists in the scope, return it. Otherwise, import it.
+ */
+SgClassDeclaration *SageInterface::findOrImportJavaClass(SgProject *project, string package_name, string class_name) {
+    return findOrImportJavaClass(project, findOrInsertJavaPackage(project, package_name, false), class_name);
+}
+
+
+/**
+ * If the class_name already exists in the scope, return it. Otherwise, import it.
+ */
+SgClassDeclaration *SageInterface::findOrImportJavaClass(SgProject *project, SgClassType *class_type) {
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *scope = isSgClassDefinition(class_declaration -> get_scope());
+    while (scope && (! isSgJavaPackageDeclaration(scope -> get_parent()))) {
+        class_declaration = isSgClassDeclaration(scope -> get_parent());
+        ROSE_ASSERT(class_declaration);
+        scope = isSgClassDefinition(class_declaration -> get_scope());
+    }
+
+    if (! scope) { // a local type !!!
+        return NULL;
+    }
+
+    string class_name = class_declaration -> get_name().getString();
+    return findOrImportJavaClass(project, scope, class_name);
+}
+
+
+/**
+ * Find a main method in a Java class.
+ */
+SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassDefinition *class_definition) {
+    ROSE_ASSERT(class_definition);
+    SgFunctionParameterTypeList *type_list = SageBuilder::buildFunctionParameterTypeList();
+    ROSE_ASSERT(type_list);
+    SgArrayType *string_array_type = getUniqueJavaArrayType(Rose::Frontend::Java::StringClassType, 1);
+    ROSE_ASSERT(string_array_type);
+    type_list -> append_argument(string_array_type);
+    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
+    SgFunctionSymbol *method_symbol = class_definition -> lookup_function_symbol("main", member_function_type);
+    delete type_list;
+    return (method_symbol == NULL ? NULL : isSgMemberFunctionDeclaration(method_symbol -> get_declaration()));
+}
+
+
+/**
+ * Find a main method in a Java class.
+ */
+SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassType *class_type) {
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    return findJavaMain(class_definition);
 }
