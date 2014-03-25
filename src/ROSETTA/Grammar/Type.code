@@ -1458,9 +1458,13 @@ SgType::isIntegerType() const
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_SIGNED_128BIT_INTEGER:
+          case T_UNSIGNED_128BIT_INTEGER:
           case T_BOOL:
                return true; // 1
                break;
+
           default:
                return false; // 0
         }
@@ -1494,6 +1498,10 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_CHAR:
           case T_UNSIGNED_SHORT:
           case T_UNSIGNED_INT:
+
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_UNSIGNED_LONG_LONG:
+          case T_UNSIGNED_128BIT_INTEGER:
                return 1;
                break;
           default:
@@ -2501,6 +2509,14 @@ SOURCE_TYPE_SIGNED_LONG_LONG_TYPE_END
 
 SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_START
 SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_END
+
+
+SOURCE_TYPE_SIGNED_128BIT_TYPE_START
+SOURCE_TYPE_SIGNED_128BIT_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
 
 
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START

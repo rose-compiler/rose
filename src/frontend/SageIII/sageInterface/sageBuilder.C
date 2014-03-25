@@ -8741,52 +8741,69 @@ SgTypeUnsignedLongLong * SageBuilder::buildUnsignedLongLongType()
 
 SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType() 
 { 
-  SgTypeUnsignedLong * result =SgTypeUnsignedLong::createType(); 
+  SgTypeUnsignedLong * result = SgTypeUnsignedLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType() 
 { 
-  SgTypeUnsignedInt * result =SgTypeUnsignedInt::createType(); 
+  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedShort * SageBuilder::buildSignedShortType() 
 { 
-  SgTypeSignedShort * result =SgTypeSignedShort::createType(); 
+  SgTypeSignedShort * result = SgTypeSignedShort::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedInt * SageBuilder::buildSignedIntType() 
 { 
-  SgTypeSignedInt * result =SgTypeSignedInt::createType(); 
+  SgTypeSignedInt * result = SgTypeSignedInt::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeUnsignedChar * SageBuilder::buildUnsignedCharType() 
 { 
-  SgTypeUnsignedChar * result =SgTypeUnsignedChar::createType(); 
+  SgTypeUnsignedChar * result = SgTypeUnsignedChar::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedLong * SageBuilder::buildSignedLongType() 
 { 
-  SgTypeSignedLong * result =SgTypeSignedLong::createType(); 
+  SgTypeSignedLong * result = SgTypeSignedLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedLongLong * SageBuilder::buildSignedLongLongType() 
 { 
-  SgTypeSignedLongLong * result =SgTypeSignedLongLong::createType(); 
+  SgTypeSignedLongLong * result = SgTypeSignedLongLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
+
+#if 1
+SgTypeSigned128bitInteger* SageBuilder::buildSigned128bitIntegerType()
+{
+  SgTypeSigned128bitInteger* result = SgTypeSigned128bitInteger::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
+
+SgTypeUnsigned128bitInteger* SageBuilder::buildUnsigned128bitIntegerType()
+{
+  SgTypeUnsigned128bitInteger* result = SgTypeUnsigned128bitInteger::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
+#endif
+
 
 SgTypeWchar * SageBuilder::buildWcharType() 
 { 

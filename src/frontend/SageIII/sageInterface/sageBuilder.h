@@ -151,6 +151,11 @@ ROSE_DLL_API SgTypeSignedLong*  buildSignedLongType();
 ROSE_DLL_API SgTypeSignedLongLong* buildSignedLongLongType();
 ROSE_DLL_API SgTypeSignedShort* buildSignedShortType();
 
+#if 1
+ROSE_DLL_API SgTypeSigned128bitInteger* buildSigned128bitIntegerType();
+ROSE_DLL_API SgTypeUnsigned128bitInteger* buildUnsigned128bitIntegerType();
+#endif
+
 ROSE_DLL_API SgTypeUnsignedChar* buildUnsignedCharType();
 ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType();
 ROSE_DLL_API SgTypeUnsignedLong*    buildUnsignedLongType();
