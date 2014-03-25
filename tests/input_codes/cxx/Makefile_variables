@@ -1353,9 +1353,11 @@ ROSE__CXX_TESTS__BOOST = \
 	test2013_09.C \
 	test2013_236.C
 
-# This is a point about the GNU version and not the EDG version.
+# DQ (3/25/2014): These work now with the GNU 4.7 and 4.8 compilers.
+# Previously the use if 128 bit integers was not supported in ROSE
+# and was a problem for these codes using the GNU 4.7 and 4.8 compilers.
 # if !ROSE_USE_EDG_VERSION_4_8
-if !ROSE_USING_GCC_VERSION_LATER_4_6
+# if !ROSE_USING_GCC_VERSION_LATER_4_6
 ROSE__CXX_TESTS += \
 	test2005_42.C \
 	test2012_90.C \
@@ -1368,4 +1370,4 @@ ROSE__CXX_TESTS += \
 
 ROSE__CXX_TESTS__BOOST += \
 	test2013_235.C 
-endif
+# endif

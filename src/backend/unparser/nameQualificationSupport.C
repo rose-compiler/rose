@@ -365,6 +365,11 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedInt:
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
+
+       // DQ (3/24/2014): Added support for 128-bit integers.
+          case V_SgTypeSigned128bitInteger:
+          case V_SgTypeUnsigned128bitInteger:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:

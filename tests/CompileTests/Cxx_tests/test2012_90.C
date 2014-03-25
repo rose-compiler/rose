@@ -1,8 +1,10 @@
 class Y
    {
      public:
-         Y() : pi_2(2.71)  {}
-         
+   // DQ (3/25/2014): EDG now acts exactly like GNU in this respect (initialization of pi_1 added).
+      Y() : pi_1(3.14), pi_2(2.71)  {}
+
+      // DQ (3/25/2014): EDG is backward compatable and still allows in class initialization).
       // This takes a different path in the compiler.
          const double pi_1 = 3.14;
 
