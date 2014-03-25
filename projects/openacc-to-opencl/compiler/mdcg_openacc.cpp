@@ -199,10 +199,28 @@ SgExpression * RegionDesc::createFieldInitializer(
       return SageBuilder::buildStringVal(input.file.c_str());
     case 2:
       /// \todo size_t num_options;
-      return SageBuilder::buildIntVal(0);
+      return SageBuilder::buildIntVal(1);
     case 3:
       /// \todo char ** options;
-      return SageBuilder::buildIntVal(0);
+    {
+      SgExprListExp * expr_list = SageBuilder::buildExprListExp();
+      SgInitializer * init = SageBuilder::buildAggregateInitializer(expr_list);
+
+      expr_list->append_expression(SageBuilder::buildStringVal("-g"));
+
+      MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(
+             "ocl_compiler_opts",
+             SageBuilder::buildArrayType(
+               SageBuilder::buildPointerType(SageBuilder::buildCharType()),
+               SageBuilder::buildIntVal(1)
+             ),
+             init, NULL, file_id, false, true
+      );
+
+      MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = codegen.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+
+      return SageBuilder::buildVarRefExp(var_decl_res.symbol);
+    }
     case 4:
       /// size_t num_kernels;
       return SageBuilder::buildIntVal(kernels.size());
