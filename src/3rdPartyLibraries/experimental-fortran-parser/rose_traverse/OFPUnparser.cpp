@@ -197,9 +197,12 @@ void OFP::FortranTextUnparser::unparseDecl(SgUntypedDeclarationStatement * decl)
                  SgUntypedFunctionDeclarationList * funcList = scope->get_function_list();
                  
                  unparseLabel(d->get_label_string());
-                 oss << "PROGRAM";
-                 oss << " " << d->get_name();
-                 oss << "\n";
+                 if (d->get_name().size() > 0) {
+                    //TODO-DQ-2014.3.21 add has_program_statement member variable
+                    oss << "PROGRAM";
+                    oss << " " << d->get_name();
+                    oss << "\n";
+                 }
 
                  for (int i = 0; i < declList->get_decl_list().size(); i++) {
                     unparseDecl(declList->get_decl_list().at(i));

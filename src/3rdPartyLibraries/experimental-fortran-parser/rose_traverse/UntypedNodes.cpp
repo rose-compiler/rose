@@ -37,8 +37,8 @@ SgLocatedNode::SgLocatedNode(Sg_File_Info* start) : p_startOfConstruct(start) {}
 SgLocatedNodeSupport::SgLocatedNodeSupport(Sg_File_Info* start) : SgLocatedNode(start) {}
 
 
-SgUntypedNode::~SgUntypedNode() {}
 SgUntypedNode::SgUntypedNode(Sg_File_Info* start) : SgLocatedNodeSupport(start) {}
+SgUntypedNode::~SgUntypedNode() {}  // need to allow deletion of lists
 
 VariantT SgUntypedNode::variantT() const {return V_SgUntypedNode;}
 
@@ -207,85 +207,104 @@ SgUntypedNamedStatement::SgUntypedNamedStatement(Sg_File_Info* start, std::strin
 VariantT SgUntypedNamedStatement::variantT() const {return V_SgUntypedNamedStatement;}
 
 
-const SgUntypedDeclarationStatementPtrList&  SgUntypedDeclarationList::get_decl_list() const {return p_decl_list;}
-SgUntypedDeclarationStatementPtrList& SgUntypedDeclarationList::get_decl_list()              {return p_decl_list;}
-
+//========================================================================================
+// SgUntypedDeclarationList
+//----------------------------------------------------------------------------------------
+SgUntypedDeclarationList:: SgUntypedDeclarationList(Sg_File_Info* start) : SgUntypedNode(start) {}
 SgUntypedDeclarationList::~SgUntypedDeclarationList() {}
-SgUntypedDeclarationList::SgUntypedDeclarationList(Sg_File_Info* start) : SgUntypedNode(start) {}
+
+const SgUntypedDeclarationStatementPtrList&  SgUntypedDeclarationList::get_decl_list() const {return p_decl_list;}
+      SgUntypedDeclarationStatementPtrList&  SgUntypedDeclarationList::get_decl_list()       {return p_decl_list;}
 
 
-SgUntypedDeclarationStatement::~SgUntypedDeclarationStatement() {}
+//========================================================================================
+// SgUntypedDeclarationStatement
+//----------------------------------------------------------------------------------------
 SgUntypedDeclarationStatement::SgUntypedDeclarationStatement(Sg_File_Info* start)
    : SgUntypedStatement(start)
    {
    }
+SgUntypedDeclarationStatement::~SgUntypedDeclarationStatement() {assert(0);}
 
+
+//========================================================================================
+// SgUntypedStatementList
+//----------------------------------------------------------------------------------------
+SgUntypedStatementList:: SgUntypedStatementList(Sg_File_Info* start) : SgUntypedNode(start) {}
+SgUntypedStatementList::~SgUntypedStatementList() {}  // allow deletion of lists
 
 const SgUntypedStatementPtrList&  SgUntypedStatementList::get_stmt_list() const {return p_stmt_list;}
-SgUntypedStatementPtrList& SgUntypedStatementList::get_stmt_list()              {return p_stmt_list;}
-
-SgUntypedStatementList::~SgUntypedStatementList() {}
-SgUntypedStatementList::SgUntypedStatementList(Sg_File_Info* start)
-   : SgUntypedNode(start)
-   {
-   }
+      SgUntypedStatementPtrList&  SgUntypedStatementList::get_stmt_list()       {return p_stmt_list;}
 
 
-std::string SgUntypedFunctionDeclaration::get_name() const     {return p_name;}
-void SgUntypedFunctionDeclaration::set_name(std::string name)  {p_name = name;}
-
-// SgUntypedInitializedNameList* SgUntypedFunctionDeclaration::get_parameters() const;
-// void SgUntypedFunctionDeclaration::set_parameters(SgUntypedInitializedNameList* parameters);
-
-// SgUntypedType* SgUntypedFunctionDeclaration::get_type() const;
-// void SgUntypedFunctionDeclaration::set_type(SgUntypedType* type);
-
-SgUntypedFunctionScope* SgUntypedFunctionDeclaration::get_scope() const     {return p_scope;}
-void SgUntypedFunctionDeclaration::set_scope(SgUntypedFunctionScope* scope) {p_scope = scope;}
-
-SgUntypedNamedStatement* SgUntypedFunctionDeclaration::get_end_statement() const        {return p_end_statement;}
-void SgUntypedFunctionDeclaration::set_end_statement(SgUntypedNamedStatement* end_stmt) {p_end_statement = end_stmt;}
-
-SgUntypedFunctionDeclaration::~SgUntypedFunctionDeclaration() {}
+//========================================================================================
+// SgUntypedFunctionDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedFunctionDeclaration::SgUntypedFunctionDeclaration(Sg_File_Info* start, std::string name) 
    :  SgUntypedDeclarationStatement(start), p_name(name)
    {
    }
+SgUntypedFunctionDeclaration::~SgUntypedFunctionDeclaration() {}
 
 SgUntypedFunctionDeclaration* isSgUntypedFunctionDeclaration(SgNode* node)
 {
    return dynamic_cast<SgUntypedFunctionDeclaration*>(node);   
 }
 
-SgUntypedProgramHeaderDeclaration::~SgUntypedProgramHeaderDeclaration() {}
+std::string SgUntypedFunctionDeclaration::get_name() const     {return p_name;}
+void SgUntypedFunctionDeclaration::set_name(std::string name)  {p_name = name;}
+
+SgUntypedInitializedNameList* SgUntypedFunctionDeclaration::get_parameters() const          {return p_parameters;}
+void SgUntypedFunctionDeclaration::set_parameters(SgUntypedInitializedNameList* parameters) {p_parameters = parameters;}
+
+SgUntypedType* SgUntypedFunctionDeclaration::get_type() const     {return p_type;}
+void SgUntypedFunctionDeclaration::set_type(SgUntypedType* type)  {p_type = type;}
+
+SgUntypedFunctionScope* SgUntypedFunctionDeclaration::get_scope() const      {return p_scope;}
+void SgUntypedFunctionDeclaration::set_scope(SgUntypedFunctionScope* scope)  {p_scope = scope;}
+
+SgUntypedNamedStatement* SgUntypedFunctionDeclaration::get_end_statement() const         {return p_end_statement;}
+void SgUntypedFunctionDeclaration::set_end_statement(SgUntypedNamedStatement* end_stmt)  {p_end_statement = end_stmt;}
+
+
+//========================================================================================
+// SgUntypedProgramHeaderDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedProgramHeaderDeclaration:: SgUntypedProgramHeaderDeclaration(Sg_File_Info* start, std::string name)
    :  SgUntypedFunctionDeclaration(start, name)
    {
    }
+SgUntypedProgramHeaderDeclaration::~SgUntypedProgramHeaderDeclaration() {}
 
 VariantT SgUntypedProgramHeaderDeclaration::variantT() const {return V_SgUntypedProgramHeaderDeclaration;}
 
 
-SgUntypedImplicitDeclaration::~SgUntypedImplicitDeclaration() {}
+//========================================================================================
+// SgUntypedProgramImplicitDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedImplicitDeclaration::SgUntypedImplicitDeclaration(Sg_File_Info* start)
    :  SgUntypedDeclarationStatement(start)
    {
    }
+SgUntypedImplicitDeclaration::~SgUntypedImplicitDeclaration() {}
 
 VariantT SgUntypedImplicitDeclaration::variantT() const {return V_SgUntypedImplicitDeclaration;}
 
+
+//========================================================================================
+// SgUntypedProgramImplicitDeclaration
+//----------------------------------------------------------------------------------------
+SgUntypedInitializedName::SgUntypedInitializedName(Sg_File_Info* start, SgUntypedType* type, std::string name)
+   :  SgUntypedNode(start), p_type(type), p_name(name)
+   {
+   }
+SgUntypedInitializedName::~SgUntypedInitializedName() {}
 
 SgUntypedType* SgUntypedInitializedName::get_type() const     {return p_type;}
 void SgUntypedInitializedName::set_type(SgUntypedType* type)  {p_type = type;}
 
 std::string SgUntypedInitializedName::get_name() const        {return p_name;}
 void SgUntypedInitializedName::set_name(std::string name)     {p_name = name;}
-
-SgUntypedInitializedName::~SgUntypedInitializedName() {}
-SgUntypedInitializedName::SgUntypedInitializedName(Sg_File_Info* start, SgUntypedType* type, std::string name)
-   :  SgUntypedNode(start), p_type(type), p_name(name)
-   {
-   }
 
 
 //========================================================================================
@@ -296,7 +315,7 @@ SgUntypedVariableDeclaration::SgUntypedVariableDeclaration(Sg_File_Info* start, 
    {
       p_parameters = new SgUntypedInitializedNameList(start);
    }
-SgUntypedVariableDeclaration::~SgUntypedVariableDeclaration() {}
+SgUntypedVariableDeclaration::~SgUntypedVariableDeclaration() {assert(0);}
 
 VariantT SgUntypedVariableDeclaration::variantT() const {return V_SgUntypedVariableDeclaration;}
 
@@ -307,60 +326,57 @@ SgUntypedInitializedNameList* SgUntypedVariableDeclaration::get_parameters() con
 void SgUntypedVariableDeclaration::set_parameters(SgUntypedInitializedNameList* parameters)  {p_parameters = parameters;}
 
 
-const SgUntypedInitializedNamePtrList&  SgUntypedInitializedNameList::get_name_list() const {return p_name_list;}
-SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list()              {return p_name_list;}
-
-
-SgUntypedInitializedNameList::~SgUntypedInitializedNameList() {}
+//========================================================================================
+// SgUntypedInitializedNameList
+//----------------------------------------------------------------------------------------
 SgUntypedInitializedNameList::SgUntypedInitializedNameList(Sg_File_Info* start)
    : SgUntypedNode(start)
    {
    }
+SgUntypedInitializedNameList::~SgUntypedInitializedNameList() {assert(0);}
+
+const SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list() const {return p_name_list;}
+      SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list()       {return p_name_list;}
 
 
-const SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list() const {return p_func_list;}
-SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list()             {return p_func_list;}
-
-SgUntypedFunctionDeclarationList::~SgUntypedFunctionDeclarationList() {}
+//========================================================================================
+// SgUntypedInitializedNameList
+//----------------------------------------------------------------------------------------
 SgUntypedFunctionDeclarationList::SgUntypedFunctionDeclarationList(Sg_File_Info* start)
    : SgUntypedNode(start)
    {
    }
+SgUntypedFunctionDeclarationList::~SgUntypedFunctionDeclarationList() {assert(0);}
+
+const SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list() const {return p_func_list;}
+      SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list()       {return p_func_list;}
 
 
-// SgToken::ROSE_Fortran_Operators SgUntypedUnaryOperator::get_operator_enum() const;
-// void SgUntypedUnaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum);
-
-// std::string SgUntypedUnaryOperator::get_operator_name() const;
-// void SgUntypedUnaryOperator::set_operator_name(std::string operator_name);
-
-// SgUntypedExpression* SgUntypedUnaryOperator::get_operand() const;
-// void SgUntypedUnaryOperator::set_operand(SgUntypedExpression* operand);
-
-SgUntypedUnaryOperator::~SgUntypedUnaryOperator() {}
+//========================================================================================
+// SgUntypedUnaryOperator
+//----------------------------------------------------------------------------------------
 SgUntypedUnaryOperator::SgUntypedUnaryOperator(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum,
                        SgToken::ROSE_Fortran_Operators op_enum, std::string op_name, SgUntypedExpression* op)
    : SgUntypedExpression(start, stmt_enum), p_operator_enum(op_enum), p_operator_name(op_name), p_operand(op)
    {
    }
+SgUntypedUnaryOperator::~SgUntypedUnaryOperator() {}
+
+SgToken::ROSE_Fortran_Operators SgUntypedUnaryOperator::get_operator_enum() const             {return p_operator_enum;}
+void SgUntypedUnaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum) {p_operator_enum = operator_enum;}
+
+std::string SgUntypedUnaryOperator::get_operator_name() const             {return p_operator_name;}
+void SgUntypedUnaryOperator::set_operator_name(std::string operator_name) {p_operator_name = operator_name;}
+
+SgUntypedExpression* SgUntypedUnaryOperator::get_operand() const       {return p_operand;}
+void SgUntypedUnaryOperator::set_operand(SgUntypedExpression* operand) {p_operand = operand;}
 
 
 //========================================================================================
 // SgUntypedScope
 //----------------------------------------------------------------------------------------
-SgUntypedScope::SgUntypedScope(Sg_File_Info* start)
-   : SgUntypedStatement(start)
-   {
-      p_declaration_list = new SgUntypedDeclarationList(NULL);
-      p_statement_list   = new SgUntypedStatementList(NULL);
-      p_function_list    = new SgUntypedFunctionDeclarationList(NULL);
-   }
-SgUntypedScope::~SgUntypedScope()
-   {
-      //delete p_declaration_list;
-      //delete p_statement_list;
-      //delete p_function_list;
-   }
+SgUntypedScope:: SgUntypedScope(Sg_File_Info* start) : SgUntypedStatement(start) {}
+SgUntypedScope::~SgUntypedScope() {assert(0);}
 
 SgUntypedDeclarationList* SgUntypedScope::get_declaration_list() const
    {
@@ -369,7 +385,10 @@ SgUntypedDeclarationList* SgUntypedScope::get_declaration_list() const
 void SgUntypedScope::set_declaration_list(SgUntypedDeclarationList* decl_list)
    {
       assert(decl_list);
-      //delete p_declaration_list;
+      if (p_declaration_list) {
+         assert(p_declaration_list->get_decl_list().size() == 0);
+         delete p_declaration_list;
+      }
       p_declaration_list = decl_list;
    }
 
@@ -380,7 +399,10 @@ SgUntypedStatementList* SgUntypedScope::get_statement_list() const
 void SgUntypedScope::set_statement_list(SgUntypedStatementList* stmt_list)
    {
       assert(stmt_list);
-      //delete p_statement_list;
+      if (p_statement_list) {
+         assert(p_statement_list->get_stmt_list().size() == 0);
+         delete p_statement_list;
+      }
       p_statement_list = stmt_list;
    }
 
@@ -391,9 +413,13 @@ SgUntypedFunctionDeclarationList* SgUntypedScope::get_function_list() const
 void SgUntypedScope::set_function_list(SgUntypedFunctionDeclarationList* func_list)
    {
       assert(func_list);
-      //delete p_function_list;
+      if (p_function_list) {
+         assert(p_function_list->get_func_list().size() == 0);
+         delete p_function_list;
+      }
       p_function_list = func_list;
    }
+
 
 //========================================================================================
 // SgUntypedFunctionScope

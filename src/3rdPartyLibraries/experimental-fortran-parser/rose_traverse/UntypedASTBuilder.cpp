@@ -21,11 +21,19 @@ UntypedASTBuilder::~UntypedASTBuilder()
 void UntypedASTBuilder::build_Program(Program * program)
 {
    Sg_File_Info * start = NULL;
+   SgUntypedGlobalScope * scope = NULL;
    SgUntypedFunctionDeclaration * decl = NULL;
    SgUntypedDeclarationList * declList = NULL;
 
+   // set up the global program scope
+   //
+   scope = new SgUntypedGlobalScope(start);
+   scope->set_declaration_list(new SgUntypedDeclarationList(start));  
+   scope->set_statement_list(new SgUntypedStatementList(start));  
+   scope->set_function_list(new SgUntypedFunctionDeclarationList(start));  
+
    SgUntypedFile * file = new SgUntypedFile(start);
-   file->set_scope(new SgUntypedGlobalScope(start));
+   file->set_scope(scope);
    declList = file->get_scope()->get_declaration_list();
 
    // StartCommentBlock (ignore for now)
@@ -133,6 +141,7 @@ void UntypedASTBuilder::build_ExecutionPart(ExecutionPart * executionPart)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarationTypeSpec)
 {
+   std::string name = "";
    Sg_File_Info * start = NULL;
    SgUntypedType * node = NULL;
    SgToken::ROSE_Fortran_Keywords keyword;
@@ -144,7 +153,7 @@ void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarat
    //TODO-CER- handle other possibilities
    assert(intrinsicTypeSpec);
 
-   switch (intrinsicTypeSpec->getOptionType()) {
+   switch (declarationTypeSpec->getOptionType()) {
     //TODO-DQ- new keyword FORTRAN_TYPE is needed
      case OFP::DeclarationTypeSpec::DeclarationTypeSpec_T_STAR: keyword = SgToken::FORTRAN_TYPE;   break;
      case OFP::DeclarationTypeSpec::DeclarationTypeSpec_C_STAR: keyword = SgToken::FORTRAN_CLASS;  break;
@@ -159,24 +168,29 @@ void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarat
        break;
      case OFP::DeclarationTypeSpec::DeclarationTypeSpec_ITS:
        switch (intrinsicTypeSpec->getOptionType()) {
-         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_INT:      keyword = SgToken::FORTRAN_INTEGER;         break;
-         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_REAL:     keyword = SgToken::FORTRAN_REAL;            break;
-         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_CMPLX:    keyword = SgToken::FORTRAN_COMPLEX;         break;
-         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_LOGICAL:  keyword = SgToken::FORTRAN_LOGICAL;         break;
+         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_INT:
+            name = "INTEGER";  keyword = SgToken::FORTRAN_INTEGER;         break;
+         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_REAL:
+            name = "REAL";     keyword = SgToken::FORTRAN_REAL;            break;
+         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_CMPLX:
+            name = "COMPLEX";  keyword = SgToken::FORTRAN_COMPLEX;         break;
+         case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_LOGICAL:
+            name = "LOGICAL";  keyword = SgToken::FORTRAN_LOGICAL;         break;
          case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_DBL_PREC:
-           checkKind = false;                                     keyword = SgToken::FORTRAN_DOUBLEPRECISION; break;
+            name = "DOUBLE PRECISION";
+            checkKind = false; keyword = SgToken::FORTRAN_DOUBLEPRECISION; break;
          case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_DBL_CMPLX:
            //TODO-DQ- new keyword FORTRAN_DOUBLECOMPLEX is needed (I think this is nonstandard)
-           checkKind = false;                                     keyword = SgToken::FORTRAN_DOUBLE_COMPLEX;  break;
+            name = "DOUBLE COMPLEX";
+            checkKind = false;  keyword = SgToken::FORTRAN_DOUBLE_COMPLEX;  break;
          case OFP::IntrinsicTypeSpec::IntrinsicTypeSpec_CHAR:
-           checkChar = true;                                      keyword = SgToken::FORTRAN_CHARACTER;       break;
+            name = "CHARACTER";
+            checkChar = true;   keyword = SgToken::FORTRAN_CHARACTER;       break;
        }
-       intrinsicTypeSpec = declarationTypeSpec->getIntrinsicTypeSpec();
        break;
    }
 
-   //TODO-CER- FIXME by setting type name string
-   node = new SgUntypedType(start, "INTEGER");
+   node = new SgUntypedType(start, name);
    //TODO-DQ-2014.3.7 there should be an enum for the type
    //node->set_statement_enum(keyword);
 
@@ -260,7 +274,7 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
 #endif
 
    //TODO-CER-2014.3.7 should this be variables or parameters?
-   printf("                variables: ......... ");
+   printf("               parameters: ......... ");
    parameters = stmt->get_parameters();
    for (int i = 0; i < declList->size(); i++) {
       std::string name = declList->at(i)->getObjectName()->getIdent()->getName();
@@ -332,7 +346,20 @@ void UntypedASTBuilder::build_MainProgram(MainProgram * mainProgram)
 
    // ProgramStmt
    //
-   program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(mainProgram->getProgramStmt()->getPayload());  assert(program);
+   if (mainProgram->getProgramStmt()) {
+      program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(mainProgram->getProgramStmt()->getPayload());  assert(program);
+   }
+   else {
+      // no optional ProgramStmt
+      SgUntypedFunctionScope * scope = new SgUntypedFunctionScope(NULL);
+      scope->set_declaration_list(new SgUntypedDeclarationList(NULL));  
+      scope->set_statement_list(new SgUntypedStatementList(NULL));  
+      scope->set_function_list(new SgUntypedFunctionDeclarationList(NULL));  
+
+      program = new SgUntypedProgramHeaderDeclaration(NULL, "");
+      program->set_statement_enum(SgToken::FORTRAN_PROGRAM);
+      program->set_scope(scope);
+   }
 
    printf("build_MainProgram label: ........... %s\n", program->get_label_string().c_str());
    printf("             begin name: ........... %s\n", program->get_name().c_str());
@@ -381,9 +408,16 @@ void UntypedASTBuilder::build_ProgramStmt(ProgramStmt * programStmt)
    Sg_File_Info * start = NULL;
    SgUntypedProgramHeaderDeclaration * program = NULL;
 
+   // set up the function scope
+   //
+   SgUntypedFunctionScope * scope = new SgUntypedFunctionScope(start);
+   scope->set_declaration_list(new SgUntypedDeclarationList(start));  
+   scope->set_statement_list(new SgUntypedStatementList(start));  
+   scope->set_function_list(new SgUntypedFunctionDeclarationList(start));  
+
    program = new SgUntypedProgramHeaderDeclaration(start, programStmt->getProgramName()->getIdent()->getName());
    program->set_statement_enum(SgToken::FORTRAN_PROGRAM);
-   program->set_scope(new SgUntypedFunctionScope(start));
+   program->set_scope(scope);
 
    if (programStmt->getLabel()) program->set_label_string(programStmt->getLabel()->getValue());
 
