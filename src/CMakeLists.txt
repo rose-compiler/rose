@@ -110,7 +110,6 @@ set( STORAGECLASSES_SRC
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
-      ${CMAKE_SOURCE_DIR}/src/util/Diagnostics.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
@@ -272,6 +271,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/SqlDatabase.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/LinearCongruentialGenerator.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/Combinatorics.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/Diagnostics.C
      )
 
 
