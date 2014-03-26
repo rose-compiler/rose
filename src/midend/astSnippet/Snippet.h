@@ -422,5 +422,16 @@ protected:
 
 };
 
+/** Java-aware AST traversal. This is a pre/post depth-first traversal that is aware of certain Java attributes and follows
+ *  them even when AstSimpleProcessing would not follow them.  The functor should take two arguments: SgNode*, and
+ *  AstSimpleProcessing::Order (the constant preorder or postorder depending on whether the call is before or after the
+ *  children are traversed).  Attributes are considered to be the first children of a node. */
+class SnippetAstTraversal {
+public:
+    virtual ~SnippetAstTraversal() {}
+    void traverse(SgNode *ast);
+    virtual void operator()(SgNode*, AstSimpleProcessing::Order) = 0;
+};
+
 } // namespace
 #endif
