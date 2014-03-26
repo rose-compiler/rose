@@ -32,6 +32,7 @@ include $(srcdir)/programTransformation/implicitCodeGeneration/Makefile_variable
 include $(srcdir)/programTransformation/astInlining/Makefile_variables
 include $(srcdir)/programTransformation/astOutlining/Makefile_variables
 include $(srcdir)/programTransformation/ompLowering/Makefile_variables
+include $(srcdir)/programTransformation/transformationTracking/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise

@@ -1,0 +1,14 @@
+mptTransTracking_la_sources =\
+  $(mptTransTrackingPath)/transformationTracking.cpp
+
+mptTransTracking_includeHeaders =\
+  $(mptTransTrackingPath)/transformationTracking.h
+
+mptTransTracking_extraDist=\
+  $(mptTransTrackingPath)/readme
+
+mptTransTracking_cleanLocal=\
+  rm -rf \
+   $(mptTransTrackingPath)/core \
+   $(mptTransTrackingPath)/ii_files \
+   $(mptTransTrackingPath)/Templates.DB
