@@ -276,6 +276,10 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
    //TODO-CER-2014.3.7 should this be variables or parameters?
    printf("               parameters: ......... ");
    parameters = stmt->get_parameters();
+
+// DQ (3/25/2014): Added assertion.
+   assert(parameters != NULL);
+
    for (int i = 0; i < declList->size(); i++) {
       std::string name = declList->at(i)->getObjectName()->getIdent()->getName();
       parameters->get_name_list().push_back(new SgUntypedInitializedName(start, type, name));

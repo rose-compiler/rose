@@ -1,5 +1,5 @@
 
-
+#if 0
 union X
    {
       char* b;
@@ -23,7 +23,9 @@ void foobar()
      Y y = { .a = 2 };
      foo2(y);
    }
+#endif
 
+void aba();
 
 
    

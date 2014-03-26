@@ -1,7 +1,7 @@
 
 typedef struct _HTStream HTStream;
 
-struct _HTStream {};
+struct _HTStream { int i; };
 
 typedef HTStream * HTConverter (void * param);
 

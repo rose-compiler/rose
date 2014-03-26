@@ -13,7 +13,7 @@ handle_sub(int job, int fg)
         {
           struct process *p;
 
-#if 1
+#if 0
           for (;;)
                if (0)
                   {

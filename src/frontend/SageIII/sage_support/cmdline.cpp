@@ -349,6 +349,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
           argument == "-MM" ||
+
+       // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
+       // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
+          argument == "-fp-model" ||
           false)
         {
           result = true;

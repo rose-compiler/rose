@@ -1,6 +1,6 @@
 
 void foo()
    {
-      ;
       int x;
+      ;
    }
