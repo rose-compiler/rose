@@ -5,7 +5,7 @@ if (NOT PNG_FOUND)
 endif()
 
 add_subdirectory(src)
-#add_subdirectory(include)
+add_subdirectory(include)
 
 
 ########### install files ###############

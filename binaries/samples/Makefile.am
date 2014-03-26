@@ -1,7 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(srcdir)/Specimens.inc
 
-EXTRA_DIST = CMakeLists.txt $(all_specimens) $(other_distributed)
+EXTRA_DIST = CMakeLists.txt $(all_specimens) $(other_distributed) x86-64-ctrlaltdel \
+             pocketputty.exe
 
 ###############################################################################################################################
 # Larger collections of specimens.  These follow the same naming convention except "any" can appear in one of the positions.

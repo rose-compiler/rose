@@ -2,7 +2,9 @@
 #include <fstream>
 //#include <rose.h>
 #include <string>
+#ifndef _MSC_VER
 #include <err.h>
+#endif
 #include "SgGraphTemplate.h"
 #include "graphProcessing.h"
 #include "staticCFG.h"

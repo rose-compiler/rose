@@ -68,7 +68,11 @@ int openFortranParser_main(int argc, char **argv)
   */
 
  /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
+    #ifdef USE_CMAKE
+    string new_value = findRoseSupportPathFromBuild("lib", "lib");
+    #else
     string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
+    #endif
 
  /* Save the old value */
     const char* old_value = getenv(ROSE_SHLIBPATH_VAR); // Might be null
@@ -91,7 +95,7 @@ int openFortranParser_main(int argc, char **argv)
     fortran_error_handler_begin();
 #endif
 
-    int status = jvm_ofp_processing(argc, argv);
+    int status = Rose::Frontend::Fortran::Ofp::jvm_ofp_processing(argc, argv);
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_end();

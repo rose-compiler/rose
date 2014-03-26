@@ -11,7 +11,6 @@ SUBDIRS = \
 	BinFuncDetect \
 	BinQ \
 	BinaryCloneDetection \
-   BinaryDataStructureRecognition \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
@@ -54,7 +53,8 @@ SUBDIRS = \
 	RoseBlockLevelTracing\
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
-
+# Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
+#   BinaryDataStructureRecognition 
 # DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
 
 if ROSE_WITH_ISL

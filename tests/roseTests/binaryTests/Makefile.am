@@ -769,6 +769,28 @@ multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 
 
 ###############################################################################################################################
+# LLVM tests
+###############################################################################################################################
+
+noinst_PROGRAMS += llvmTranscoder
+llvmTranscoder_SOURCES = llvmTranscoder.C
+llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+llvmTranscoder_TestTargets = $(addprefix llvm_, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
+TEST_TARGETS += $(llvmTranscoder_TestTargets)
+EXTRA_DIST += llvmTranscoder.conf
+
+$(llvmTranscoder_TestTargets): llvm_%.passed: $(BINARY_SAMPLES)/% llvmTranscoder llvmTranscoder.conf
+	@$(RTH_RUN) \
+		TITLE="LLVM transcoder for $* [$@]" \
+		SPECIMEN="$(abspath $<)" \
+		$(srcdir)/llvmTranscoder.conf $@
+
+.PHONY: check-llvm
+check-llvm: $(llvmTranscoder_TestTargets)
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
