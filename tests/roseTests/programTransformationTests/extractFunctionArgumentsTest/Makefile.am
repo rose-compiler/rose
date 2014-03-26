@@ -17,7 +17,7 @@ normalizationTranslator_SPECIMENS = $(ROSE__CXX_TESTS)
 normalizationTranslator_TEST_TARGETS = $(addsuffix .passed, $(normalizationTranslator_SPECIMENS))
 
 normalizationTranslator_SWITCHES = \
-	--edg:no_warnings -w -rose:verbose 0 -I$(normalizationTranslator_SPECIMENS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+	--edg:no_warnings -w -rose:verbose 0 $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(normalizationTranslator_SPECIMENS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 $(normalizationTranslator_TEST_TARGETS): \
 	%.passed: $(ROSE__CXX_TESTS_DIR)/% normalizationTranslator $(TEST_EXIT_STATUS)
