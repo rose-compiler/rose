@@ -796,8 +796,15 @@ cout.flush();
     if (attribute) {
         curprint(attribute -> expression);
     }
+    else if (init_name -> attributeExists("var_args")) {
+        SgArrayType *array_type = isSgArrayType(init_name -> get_type());
+        ROSE_ASSERT(array_type);
+        SgType *element_type = array_type -> get_base_type();
+        unparseType(element_type ,info);
+        curprint("...");
+    }
     else {
-      unparseType(init_name -> get_type() ,info);
+        unparseType(init_name -> get_type() ,info);
     }
     curprint(" ");
 
@@ -1185,16 +1192,13 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
+     ROSE_ASSERT(! classdecl_stmt -> get_explicit_anonymous());
 // TODO: Remove this!
 /*
 cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name().str()
 << endl;
 cout.flush();
 */
-
-     if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
-         return;
-     }
 
      AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
      if (annotations_attribute) {

@@ -459,6 +459,51 @@ testJava5c.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimen
 		COPY_DEFINITIONS=yes				\
 		$(JAVA_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# testJava6*.passed are for injection Snippets7.java into Specimen2.java in various ways.
+TEST_TARGETS += testJava6a.passed
+EXTRA_DIST += SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java
+testJava6a.passed: injectSnippet SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Sasha's java test [$@]"			\
+		SNIPPET=Snippets7.java,Snippets7.function0	\
+		SPECIMEN=SmallSpecimensJava/Specimen2.java	\
+		IPOINT=Specimen2.woah				\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+#----------------------------------------------------------------------------------------------------
+# testJava7*.passed are for injection Exotic*.java into Specimen1.java in various ways.
+TEST_TARGETS += testJava7a.passed testJava7b.passed
+EXTRA_DIST += SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Exotic2.java SmallSpecimensJava/Specimen1.java
+
+testJava7a.passed: injectSnippet SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Exotitc types [$@]"			\
+		DISABLED="Requires Java SE 7"			\
+		SNIPPET=Exotic1.java,Exotic1.snippet		\
+		SPECIMEN=SmallSpecimensJava/Specimen1.java	\
+		IPOINT=Specimen1.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Exotitc types [$@]"			\
+		SNIPPET=Exotic2.java,Exotic2.snippet		\
+		SPECIMEN=SmallSpecimensJava/Specimen1.java	\
+		IPOINT=Specimen1.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+
+
 ###############################################################################################################################
 # quicksort tests
 ###############################################################################################################################

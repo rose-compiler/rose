@@ -15,6 +15,11 @@ class ASTBuilder
    ASTBuilder()            {}
    virtual ~ASTBuilder()   {}
 
+   virtual void build_Program(Program * program) = 0;
+   virtual void build_MainProgram(MainProgram * program) = 0;
+   virtual void build_ProgramStmt(ProgramStmt * programStmt) = 0;
+   virtual void build_EndProgramStmt(EndProgramStmt * endProgramStmt) = 0;
+
    virtual void build_SpecificationPart(SpecificationPart * specificationPart) = 0;
    virtual void build_ImplicitPart(ImplicitPart * implicitPart) = 0;
    virtual void build_ExecutionPart(ExecutionPart * executionPart) = 0;
@@ -23,9 +28,9 @@ class ASTBuilder
    virtual void build_EntityDecl(EntityDecl* entityDecl) = 0;
    virtual void build_ImplicitStmt(ImplicitStmt * implicitStmt) = 0;
 
-   virtual void build_MainProgram(MainProgram * main) = 0;
-   virtual void build_ProgramStmt(ProgramStmt * programStmt) = 0;
-   virtual void build_EndProgramStmt(EndProgramStmt * endProgramStmt) = 0;
+   // Expressions
+   //
+   virtual void build_IntLiteralConstant(IntLiteralConstant * intLiteralConstant) = 0;
 
    // Operators
    //

@@ -132,6 +132,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    static const bool shouldFixupAst = true;
+    if (!shouldFixupAst)
+        std::cerr <<"NOTE: We are not fixing up the AST after snippet insertions!\n";
+
     // Find where to insert the readEnvironment snippet. Look for "SNIPPET" comments in the target specimen.  This snippet
     // should be inserted before the first "while" statement of the quickSort function.
     std::cerr <<"Looking for the readEnvironment insertion point...\n";
@@ -148,6 +152,7 @@ int main(int argc, char *argv[])
     readEnvironment->setInsertMechanism(Snippet::INSERT_STMTS);
     readEnvironment->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
     readEnvironment->setInsertRecursively(false);
+    readEnvironment->setFixupAst(shouldFixupAst);
     readEnvironment->insert(readEnvironmentInsertionPoint);
 
     // Find where to insert the saveInteger snippet, and the local variable ("qs_error" from the readEnvironment snippet) that
@@ -166,6 +171,7 @@ int main(int argc, char *argv[])
     saveInteger->setInsertMechanism(Snippet::INSERT_STMTS);
     saveInteger->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
     saveInteger->setInsertRecursively(true);
+    saveInteger->setFixupAst(shouldFixupAst);
     saveInteger->insert(saveIntegerInsertionPoint, qs_error);
 
     // Find where to insert the restoreInteger snippet.
@@ -183,6 +189,7 @@ int main(int argc, char *argv[])
     restoreInteger->setInsertMechanism(Snippet::INSERT_STMTS);
     restoreInteger->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
     restoreInteger->setInsertRecursively(true);
+    restoreInteger->setFixupAst(shouldFixupAst);
     restoreInteger->insert(restoreIntegerInsertionPoint);
 
     // Find where to insert the arrayElementSwap snippet
@@ -205,6 +212,7 @@ int main(int argc, char *argv[])
     ROSE_ASSERT(arrayElementSwap->numberOfArguments()==4);
     arrayElementSwap->setInsertMechanism(Snippet::INSERT_BODY);
     arrayElementSwap->setInsertRecursively(false);
+    arrayElementSwap->setFixupAst(shouldFixupAst);
     arrayElementSwap->insert(arrayElementSwapInsertionPoint, var_a, var_j, var_lb, var_restoredValue);
 
     SgFile* snippetSourceFile = snippetFile->getAst();

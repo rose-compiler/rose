@@ -556,7 +556,7 @@ class Program : public Node
          pStartCommentBlock = NULL;
          pProgramUnitList = new std::vector<ProgramUnit*>();
       }
-   ~Program();
+   virtual ~Program();
 
     Program* newProgram()
       {
@@ -590,7 +590,7 @@ class ProgramUnit : public Node
          pExternalSubprogram = NULL;
          pMainProgram = NULL;
       }
-   ~ProgramUnit();
+   virtual ~ProgramUnit();
 
    enum OptionType
      {
@@ -643,7 +643,7 @@ class ExternalSubprogram : public Node
          pSubroutineSubprogram = NULL;
          pFunctionSubprogram = NULL;
       }
-   ~ExternalSubprogram();
+   virtual ~ExternalSubprogram();
 
    enum OptionType
      {
@@ -683,7 +683,7 @@ class SpecificationPart : public Node
          pImplicitPart = NULL;
          pDeclarationConstructList = new std::vector<DeclarationConstruct*>();
       }
-   ~SpecificationPart();
+   virtual ~SpecificationPart();
 
     SpecificationPart* newSpecificationPart()
       {
@@ -722,7 +722,7 @@ class ImplicitPart : public Node
          pImplicitPartStmtList = new std::vector<ImplicitPartStmt*>();
          pImplicitStmt = NULL;
       }
-   ~ImplicitPart();
+   virtual ~ImplicitPart();
 
     ImplicitPart* newImplicitPart()
       {
@@ -755,7 +755,7 @@ class ImplicitPartStmt : public Node
          pParameterStmt = NULL;
          pImplicitStmt = NULL;
       }
-   ~ImplicitPartStmt();
+   virtual ~ImplicitPartStmt();
 
    enum OptionType
      {
@@ -811,7 +811,7 @@ class DeclarationConstruct : public Node
          pEntryStmt = NULL;
          pDerivedTypeDef = NULL;
       }
-   ~DeclarationConstruct();
+   virtual ~DeclarationConstruct();
 
    enum OptionType
      {
@@ -888,7 +888,7 @@ class ExecutionPart : public Node
       {
          pExecutionPartConstructList = new std::vector<ExecutionPartConstruct*>();
       }
-   ~ExecutionPart();
+   virtual ~ExecutionPart();
 
     ExecutionPart* newExecutionPart()
       {
@@ -917,7 +917,7 @@ class ExecutionPartConstruct : public Node
          pFormatStmt = NULL;
          pExecutableConstruct = NULL;
       }
-   ~ExecutionPartConstruct();
+   virtual ~ExecutionPartConstruct();
 
    enum OptionType
      {
@@ -965,7 +965,7 @@ class InternalSubprogramPart : public Node
          pContainsStmt = NULL;
          pInternalSubprogramList = new std::vector<InternalSubprogram*>();
       }
-   ~InternalSubprogramPart();
+   virtual ~InternalSubprogramPart();
 
     InternalSubprogramPart* newInternalSubprogramPart()
       {
@@ -996,7 +996,7 @@ class InternalSubprogram : public Node
          pSubroutineSubprogram = NULL;
          pFunctionSubprogram = NULL;
       }
-   ~InternalSubprogram();
+   virtual ~InternalSubprogram();
 
    enum OptionType
      {
@@ -1053,7 +1053,7 @@ class OtherSpecificationStmt : public Node
          pAllocatableStmt = NULL;
          pAccessStmt = NULL;
       }
-   ~OtherSpecificationStmt();
+   virtual ~OtherSpecificationStmt();
 
    enum OptionType
      {
@@ -1193,7 +1193,7 @@ class ExecutableConstruct : public Node
          pAssociateConstruct = NULL;
          pActionStmt = NULL;
       }
-   ~ExecutableConstruct();
+   virtual ~ExecutableConstruct();
 
    enum OptionType
      {
@@ -1306,7 +1306,7 @@ class ActionStmt : public Node
          pAllocateStmt = NULL;
          pPauseStmt = NULL;
       }
-   ~ActionStmt();
+   virtual ~ActionStmt();
 
    enum OptionType
      {
@@ -1543,7 +1543,7 @@ class Keyword : public Node
       {
          pName = NULL;
       }
-   ~Keyword();
+   virtual ~Keyword();
 
     Keyword* newKeyword()
       {
@@ -1569,7 +1569,7 @@ class Constant : public Node
       {
          pLiteralConstant = NULL;
       }
-   ~Constant();
+   virtual ~Constant();
 
     Constant* newConstant()
       {
@@ -1600,7 +1600,7 @@ class LiteralConstant : public Node
          pRealLiteralConstant = NULL;
          pIntLiteralConstant = NULL;
       }
-   ~LiteralConstant();
+   virtual ~LiteralConstant();
 
    enum OptionType
      {
@@ -1657,7 +1657,7 @@ class NamedConstant : public Node
       {
          pName = NULL;
       }
-   ~NamedConstant();
+   virtual ~NamedConstant();
 
     NamedConstant* newNamedConstant()
       {
@@ -1683,7 +1683,7 @@ class TypeParamValue : public Node
       {
          pExpr = NULL;
       }
-   ~TypeParamValue();
+   virtual ~TypeParamValue();
 
    enum OptionType
      {
@@ -1718,7 +1718,7 @@ class TypeSpec : public Node
          pDerivedTypeSpec = NULL;
          pIntrinsicTypeSpec = NULL;
       }
-   ~TypeSpec();
+   virtual ~TypeSpec();
 
    enum OptionType
      {
@@ -1756,7 +1756,7 @@ class DeclarationTypeSpec : public Node
          pDerivedTypeSpec = NULL;
          pIntrinsicTypeSpec = NULL;
       }
-   ~DeclarationTypeSpec();
+   virtual ~DeclarationTypeSpec();
 
    enum OptionType
      {
@@ -1798,7 +1798,7 @@ class IntrinsicTypeSpec : public Node
          pKindSelector = NULL;
          pCharSelector = NULL;
       }
-   ~IntrinsicTypeSpec();
+   virtual ~IntrinsicTypeSpec();
 
    enum OptionType
      {
@@ -1841,7 +1841,7 @@ class KindSelector : public Node
          pIcon = NULL;
          pExpr = NULL;
       }
-   ~KindSelector();
+   virtual ~KindSelector();
 
    enum OptionType
      {
@@ -1879,7 +1879,7 @@ class SignedIntLiteralConstant : public Node
          pSign = NULL;
          pIntLiteralConstant = NULL;
       }
-   ~SignedIntLiteralConstant();
+   virtual ~SignedIntLiteralConstant();
 
     SignedIntLiteralConstant* newSignedIntLiteralConstant()
       {
@@ -1910,7 +1910,7 @@ class IntLiteralConstant : public Node
          pDigitString = NULL;
          pKindParam = NULL;
       }
-   ~IntLiteralConstant();
+   virtual ~IntLiteralConstant();
 
     IntLiteralConstant* newIntLiteralConstant()
       {
@@ -1941,7 +1941,7 @@ class KindParam : public Node
          pScalarIntConstantName = NULL;
          pDigitString = NULL;
       }
-   ~KindParam();
+   virtual ~KindParam();
 
    enum OptionType
      {
@@ -1978,7 +1978,7 @@ class DigitString : public Node
       {
          pIcon = NULL;
       }
-   ~DigitString();
+   virtual ~DigitString();
 
     DigitString* newDigitString()
       {
@@ -2003,7 +2003,7 @@ class Sign : public Node
     Sign()
       {
       }
-   ~Sign();
+   virtual ~Sign();
 
    enum OptionType
      {
@@ -2031,7 +2031,7 @@ class SignedRealLiteralConstant : public Node
          pSign = NULL;
          pRealLiteralConstant = NULL;
       }
-   ~SignedRealLiteralConstant();
+   virtual ~SignedRealLiteralConstant();
 
     SignedRealLiteralConstant* newSignedRealLiteralConstant()
       {
@@ -2062,7 +2062,7 @@ class RealLiteralConstant : public Node
          pRcon = NULL;
          pKindParam = NULL;
       }
-   ~RealLiteralConstant();
+   virtual ~RealLiteralConstant();
 
     RealLiteralConstant* newRealLiteralConstant()
       {
@@ -2093,7 +2093,7 @@ class ComplexLiteralConstant : public Node
          pRealPart = NULL;
          pImagPart = NULL;
       }
-   ~ComplexLiteralConstant();
+   virtual ~ComplexLiteralConstant();
 
     ComplexLiteralConstant* newComplexLiteralConstant()
       {
@@ -2125,7 +2125,7 @@ class RealPart : public Node
          pSignedRealLiteralConstant = NULL;
          pSignedIntLiteralConstant = NULL;
       }
-   ~RealPart();
+   virtual ~RealPart();
 
    enum OptionType
      {
@@ -2169,7 +2169,7 @@ class ImagPart : public Node
          pSignedRealLiteralConstant = NULL;
          pSignedIntLiteralConstant = NULL;
       }
-   ~ImagPart();
+   virtual ~ImagPart();
 
    enum OptionType
      {
@@ -2213,7 +2213,7 @@ class CharSelector : public Node
          pTypeParamValue = NULL;
          pLengthSelector = NULL;
       }
-   ~CharSelector();
+   virtual ~CharSelector();
 
    enum OptionType
      {
@@ -2257,7 +2257,7 @@ class LengthSelector : public Node
          pCharLength = NULL;
          pTypeParamValue = NULL;
       }
-   ~LengthSelector();
+   virtual ~LengthSelector();
 
    enum OptionType
      {
@@ -2295,7 +2295,7 @@ class CharLength : public Node
          pIcon = NULL;
          pTypeParamValue = NULL;
       }
-   ~CharLength();
+   virtual ~CharLength();
 
    enum OptionType
      {
@@ -2333,7 +2333,7 @@ class CharLiteralConstant : public Node
          pKindParam = NULL;
          pScon = NULL;
       }
-   ~CharLiteralConstant();
+   virtual ~CharLiteralConstant();
 
     CharLiteralConstant* newCharLiteralConstant()
       {
@@ -2363,7 +2363,7 @@ class LogicalLiteralConstant : public Node
       {
          pKindParam = NULL;
       }
-   ~LogicalLiteralConstant();
+   virtual ~LogicalLiteralConstant();
 
    enum OptionType
      {
@@ -2401,7 +2401,7 @@ class DerivedTypeDef : public Node
          pTypeBoundProcedurePart = NULL;
          pEndTypeStmt = NULL;
       }
-   ~DerivedTypeDef();
+   virtual ~DerivedTypeDef();
 
     DerivedTypeDef* newDerivedTypeDef()
       {
@@ -2451,7 +2451,7 @@ class DerivedTypeStmt : public Node
          pOptTypeParamNameList = NULL;
          pEOS = NULL;
       }
-   ~DerivedTypeStmt();
+   virtual ~DerivedTypeStmt();
 
     DerivedTypeStmt* newDerivedTypeStmt()
       {
@@ -2493,7 +2493,7 @@ class OptTypeAttrSpecList : public Node
       {
          pTypeAttrSpecList = NULL;
       }
-   ~OptTypeAttrSpecList();
+   virtual ~OptTypeAttrSpecList();
 
     OptTypeAttrSpecList* newOptTypeAttrSpecList()
       {
@@ -2519,7 +2519,7 @@ class OptTypeParamNameList : public Node
       {
          pTypeParamNameList = NULL;
       }
-   ~OptTypeParamNameList();
+   virtual ~OptTypeParamNameList();
 
     OptTypeParamNameList* newOptTypeParamNameList()
       {
@@ -2546,7 +2546,7 @@ class TypeAttrSpec : public Node
          pParentTypeName = NULL;
          pAccessSpec = NULL;
       }
-   ~TypeAttrSpec();
+   virtual ~TypeAttrSpec();
 
    enum OptionType
      {
@@ -2585,7 +2585,7 @@ class TypeAttrSpecList : public Node
       {
          pTypeAttrSpecList = new std::vector<TypeAttrSpec*>();
       }
-   ~TypeAttrSpecList();
+   virtual ~TypeAttrSpecList();
 
     TypeAttrSpecList* newTypeAttrSpecList()
       {
@@ -2611,7 +2611,7 @@ class TypeParamNameList : public Node
       {
          pTypeParamNameList = new std::vector<TypeParamName*>();
       }
-   ~TypeParamNameList();
+   virtual ~TypeParamNameList();
 
     TypeParamNameList* newTypeParamNameList()
       {
@@ -2638,7 +2638,7 @@ class PrivateOrSequence : public Node
          pSequenceStmt = NULL;
          pPrivateComponentsStmt = NULL;
       }
-   ~PrivateOrSequence();
+   virtual ~PrivateOrSequence();
 
    enum OptionType
      {
@@ -2677,7 +2677,7 @@ class EndTypeStmt : public Node
          pTypeName = NULL;
          pEOS = NULL;
       }
-   ~EndTypeStmt();
+   virtual ~EndTypeStmt();
 
     EndTypeStmt* newEndTypeStmt()
       {
@@ -2712,7 +2712,7 @@ class SequenceStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~SequenceStmt();
+   virtual ~SequenceStmt();
 
     SequenceStmt* newSequenceStmt()
       {
@@ -2746,7 +2746,7 @@ class TypeParamDefStmt : public Node
          pTypeParamDeclList = NULL;
          pEOS = NULL;
       }
-   ~TypeParamDefStmt();
+   virtual ~TypeParamDefStmt();
 
     TypeParamDefStmt* newTypeParamDefStmt()
       {
@@ -2789,7 +2789,7 @@ class TypeParamDecl : public Node
          pTypeParamName = NULL;
          pExpr = NULL;
       }
-   ~TypeParamDecl();
+   virtual ~TypeParamDecl();
 
     TypeParamDecl* newTypeParamDecl()
       {
@@ -2819,7 +2819,7 @@ class TypeParamDeclList : public Node
       {
          pTypeParamDeclList = new std::vector<TypeParamDecl*>();
       }
-   ~TypeParamDeclList();
+   virtual ~TypeParamDeclList();
 
     TypeParamDeclList* newTypeParamDeclList()
       {
@@ -2844,7 +2844,7 @@ class TypeParamAttrSpec : public Node
     TypeParamAttrSpec()
       {
       }
-   ~TypeParamAttrSpec();
+   virtual ~TypeParamAttrSpec();
 
    enum OptionType
      {
@@ -2871,7 +2871,7 @@ class ComponentPart : public Node
       {
          pComponentDefStmtList = new std::vector<ComponentDefStmt*>();
       }
-   ~ComponentPart();
+   virtual ~ComponentPart();
 
     ComponentPart* newComponentPart()
       {
@@ -2898,7 +2898,7 @@ class ComponentDefStmt : public Node
          pProcComponentDefStmt = NULL;
          pDataComponentDefStmt = NULL;
       }
-   ~ComponentDefStmt();
+   virtual ~ComponentDefStmt();
 
    enum OptionType
      {
@@ -2939,7 +2939,7 @@ class DataComponentDefStmt : public Node
          pComponentDeclList = NULL;
          pEOS = NULL;
       }
-   ~DataComponentDefStmt();
+   virtual ~DataComponentDefStmt();
 
     DataComponentDefStmt* newDataComponentDefStmt()
       {
@@ -2981,7 +2981,7 @@ class OptComponentAttrSpecList : public Node
       {
          pComponentAttrSpecList = NULL;
       }
-   ~OptComponentAttrSpecList();
+   virtual ~OptComponentAttrSpecList();
 
     OptComponentAttrSpecList* newOptComponentAttrSpecList()
       {
@@ -3009,7 +3009,7 @@ class ComponentAttrSpec : public Node
          pCoarraySpec = NULL;
          pAccessSpec = NULL;
       }
-   ~ComponentAttrSpec();
+   virtual ~ComponentAttrSpec();
 
    enum OptionType
      {
@@ -3054,7 +3054,7 @@ class ComponentAttrSpecList : public Node
       {
          pComponentAttrSpecList = new std::vector<ComponentAttrSpec*>();
       }
-   ~ComponentAttrSpecList();
+   virtual ~ComponentAttrSpecList();
 
     ComponentAttrSpecList* newComponentAttrSpecList()
       {
@@ -3084,7 +3084,7 @@ class ComponentDecl : public Node
          pCharLength = NULL;
          pComponentInitialization = NULL;
       }
-   ~ComponentDecl();
+   virtual ~ComponentDecl();
 
     ComponentDecl* newComponentDecl()
       {
@@ -3126,7 +3126,7 @@ class ComponentDeclList : public Node
       {
          pComponentDeclList = new std::vector<ComponentDecl*>();
       }
-   ~ComponentDeclList();
+   virtual ~ComponentDeclList();
 
     ComponentDeclList* newComponentDeclList()
       {
@@ -3153,7 +3153,7 @@ class ComponentArraySpec : public Node
          pDeferredShapeSpecList = NULL;
          pExplicitShapeSpecList = NULL;
       }
-   ~ComponentArraySpec();
+   virtual ~ComponentArraySpec();
 
    enum OptionType
      {
@@ -3194,7 +3194,7 @@ class ProcComponentDefStmt : public Node
          pProcDeclList = NULL;
          pEOS = NULL;
       }
-   ~ProcComponentDefStmt();
+   virtual ~ProcComponentDefStmt();
 
     ProcComponentDefStmt* newProcComponentDefStmt()
       {
@@ -3236,7 +3236,7 @@ class ProcComponentAttrSpec : public Node
       {
          pAccessSpec = NULL;
       }
-   ~ProcComponentAttrSpec();
+   virtual ~ProcComponentAttrSpec();
 
    enum OptionType
      {
@@ -3271,7 +3271,7 @@ class ProcComponentAttrSpecList : public Node
       {
          pProcComponentAttrSpecList = new std::vector<ProcComponentAttrSpec*>();
       }
-   ~ProcComponentAttrSpecList();
+   virtual ~ProcComponentAttrSpecList();
 
     ProcComponentAttrSpecList* newProcComponentAttrSpecList()
       {
@@ -3299,7 +3299,7 @@ class ComponentInitialization : public Node
          pNullInit = NULL;
          pExpr = NULL;
       }
-   ~ComponentInitialization();
+   virtual ~ComponentInitialization();
 
    enum OptionType
      {
@@ -3341,7 +3341,7 @@ class InitialDataTarget : public Node
       {
          pDesignator = NULL;
       }
-   ~InitialDataTarget();
+   virtual ~InitialDataTarget();
 
     InitialDataTarget* newInitialDataTarget()
       {
@@ -3368,7 +3368,7 @@ class PrivateComponentsStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~PrivateComponentsStmt();
+   virtual ~PrivateComponentsStmt();
 
     PrivateComponentsStmt* newPrivateComponentsStmt()
       {
@@ -3400,7 +3400,7 @@ class TypeBoundProcedurePart : public Node
          pBindingPrivateStmt = NULL;
          pTypeBoundProcBindingList = new std::vector<TypeBoundProcBinding*>();
       }
-   ~TypeBoundProcedurePart();
+   virtual ~TypeBoundProcedurePart();
 
     TypeBoundProcedurePart* newTypeBoundProcedurePart()
       {
@@ -3435,7 +3435,7 @@ class BindingPrivateStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~BindingPrivateStmt();
+   virtual ~BindingPrivateStmt();
 
     BindingPrivateStmt* newBindingPrivateStmt()
       {
@@ -3467,7 +3467,7 @@ class TypeBoundProcBinding : public Node
          pTypeBoundGenericStmt = NULL;
          pTypeBoundProcedureStmt = NULL;
       }
-   ~TypeBoundProcBinding();
+   virtual ~TypeBoundProcBinding();
 
    enum OptionType
      {
@@ -3514,7 +3514,7 @@ class TypeBoundProcedureStmt : public Node
          pEOS = NULL;
          pTypeBoundProcDeclList = NULL;
       }
-   ~TypeBoundProcedureStmt();
+   virtual ~TypeBoundProcedureStmt();
 
    enum OptionType
      {
@@ -3568,7 +3568,7 @@ class BindingNameList : public Node
       {
          pBindingNameList = new std::vector<BindingName*>();
       }
-   ~BindingNameList();
+   virtual ~BindingNameList();
 
     BindingNameList* newBindingNameList()
       {
@@ -3594,7 +3594,7 @@ class BindingAttrList : public Node
       {
          pBindingAttrList = new std::vector<BindingAttr*>();
       }
-   ~BindingAttrList();
+   virtual ~BindingAttrList();
 
     BindingAttrList* newBindingAttrList()
       {
@@ -3621,7 +3621,7 @@ class TypeBoundProcDecl : public Node
          pBindingName = NULL;
          pProcedureName = NULL;
       }
-   ~TypeBoundProcDecl();
+   virtual ~TypeBoundProcDecl();
 
     TypeBoundProcDecl* newTypeBoundProcDecl()
       {
@@ -3651,7 +3651,7 @@ class TypeBoundProcDeclList : public Node
       {
          pTypeBoundProcDeclList = new std::vector<TypeBoundProcDecl*>();
       }
-   ~TypeBoundProcDeclList();
+   virtual ~TypeBoundProcDeclList();
 
     TypeBoundProcDeclList* newTypeBoundProcDeclList()
       {
@@ -3681,7 +3681,7 @@ class TypeBoundGenericStmt : public Node
          pBindingNameList = NULL;
          pEOS = NULL;
       }
-   ~TypeBoundGenericStmt();
+   virtual ~TypeBoundGenericStmt();
 
     TypeBoundGenericStmt* newTypeBoundGenericStmt()
       {
@@ -3724,7 +3724,7 @@ class BindingAttr : public Node
          pAccessSpec = NULL;
          pArgName = NULL;
       }
-   ~BindingAttr();
+   virtual ~BindingAttr();
 
    enum OptionType
      {
@@ -3766,7 +3766,7 @@ class FinalProcedureStmt : public Node
          pFinalSubroutineNameList = NULL;
          pEOS = NULL;
       }
-   ~FinalProcedureStmt();
+   virtual ~FinalProcedureStmt();
 
     FinalProcedureStmt* newFinalProcedureStmt()
       {
@@ -3800,7 +3800,7 @@ class FinalSubroutineNameList : public Node
       {
          pFinalSubroutineNameList = new std::vector<FinalSubroutineName*>();
       }
-   ~FinalSubroutineNameList();
+   virtual ~FinalSubroutineNameList();
 
     FinalSubroutineNameList* newFinalSubroutineNameList()
       {
@@ -3827,7 +3827,7 @@ class DerivedTypeSpec : public Node
          pTypeName = NULL;
          pTypeParamSpecList = NULL;
       }
-   ~DerivedTypeSpec();
+   virtual ~DerivedTypeSpec();
 
     DerivedTypeSpec* newDerivedTypeSpec()
       {
@@ -3858,7 +3858,7 @@ class TypeParamSpec : public Node
          pKeyword = NULL;
          pTypeParamValue = NULL;
       }
-   ~TypeParamSpec();
+   virtual ~TypeParamSpec();
 
     TypeParamSpec* newTypeParamSpec()
       {
@@ -3888,7 +3888,7 @@ class TypeParamSpecList : public Node
       {
          pTypeParamSpecList = new std::vector<TypeParamSpec*>();
       }
-   ~TypeParamSpecList();
+   virtual ~TypeParamSpecList();
 
     TypeParamSpecList* newTypeParamSpecList()
       {
@@ -3915,7 +3915,7 @@ class StructureConstructor : public Node
          pDerivedTypeSpec = NULL;
          pComponentSpecList = new std::vector<ComponentSpec*>();
       }
-   ~StructureConstructor();
+   virtual ~StructureConstructor();
 
     StructureConstructor* newStructureConstructor()
       {
@@ -3946,7 +3946,7 @@ class ComponentSpec : public Node
          pKeyword = NULL;
          pComponentDataSource = NULL;
       }
-   ~ComponentSpec();
+   virtual ~ComponentSpec();
 
     ComponentSpec* newComponentSpec()
       {
@@ -3978,7 +3978,7 @@ class ComponentDataSource : public Node
          pDataTarget = NULL;
          pExpr = NULL;
       }
-   ~ComponentDataSource();
+   virtual ~ComponentDataSource();
 
    enum OptionType
      {
@@ -4022,7 +4022,7 @@ class EnumDef : public Node
          pEnumeratorDefStmtList = new std::vector<EnumeratorDefStmt*>();
          pEndEnumStmt = NULL;
       }
-   ~EnumDef();
+   virtual ~EnumDef();
 
     EnumDef* newEnumDef()
       {
@@ -4057,7 +4057,7 @@ class EnumDefStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~EnumDefStmt();
+   virtual ~EnumDefStmt();
 
     EnumDefStmt* newEnumDefStmt()
       {
@@ -4089,7 +4089,7 @@ class EnumeratorDefStmt : public Node
          pEnumeratorList = NULL;
          pEOS = NULL;
       }
-   ~EnumeratorDefStmt();
+   virtual ~EnumeratorDefStmt();
 
     EnumeratorDefStmt* newEnumeratorDefStmt()
       {
@@ -4124,7 +4124,7 @@ class Enumerator : public Node
          pNamedConstant = NULL;
          pIntConstantExpr = NULL;
       }
-   ~Enumerator();
+   virtual ~Enumerator();
 
     Enumerator* newEnumerator()
       {
@@ -4154,7 +4154,7 @@ class EnumeratorList : public Node
       {
          pEnumeratorList = new std::vector<Enumerator*>();
       }
-   ~EnumeratorList();
+   virtual ~EnumeratorList();
 
     EnumeratorList* newEnumeratorList()
       {
@@ -4181,7 +4181,7 @@ class EndEnumStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~EndEnumStmt();
+   virtual ~EndEnumStmt();
 
     EndEnumStmt* newEndEnumStmt()
       {
@@ -4213,7 +4213,7 @@ class BozLiteralConstant : public Node
          pOctalConstant = NULL;
          pBinaryConstant = NULL;
       }
-   ~BozLiteralConstant();
+   virtual ~BozLiteralConstant();
 
    enum OptionType
      {
@@ -4255,7 +4255,7 @@ class ArrayConstructor : public Node
       {
          pAcSpec = NULL;
       }
-   ~ArrayConstructor();
+   virtual ~ArrayConstructor();
 
     ArrayConstructor* newArrayConstructor()
       {
@@ -4282,7 +4282,7 @@ class AcSpec : public Node
          pTypeSpec = NULL;
          pAcValueList = NULL;
       }
-   ~AcSpec();
+   virtual ~AcSpec();
 
    enum OptionType
      {
@@ -4320,7 +4320,7 @@ class AcValue : public Node
          pAcImpliedDo = NULL;
          pExpr = NULL;
       }
-   ~AcValue();
+   virtual ~AcValue();
 
    enum OptionType
      {
@@ -4357,7 +4357,7 @@ class AcValueList : public Node
       {
          pAcValueList = new std::vector<AcValue*>();
       }
-   ~AcValueList();
+   virtual ~AcValueList();
 
     AcValueList* newAcValueList()
       {
@@ -4384,7 +4384,7 @@ class AcImpliedDo : public Node
          pAcValueList = NULL;
          pAcImpliedDoControl = NULL;
       }
-   ~AcImpliedDo();
+   virtual ~AcImpliedDo();
 
     AcImpliedDo* newAcImpliedDo()
       {
@@ -4415,7 +4415,7 @@ class AcImpliedDoControl : public Node
          pAcDoVariable = NULL;
          pExpr = NULL;
       }
-   ~AcImpliedDoControl();
+   virtual ~AcImpliedDoControl();
 
     AcImpliedDoControl* newAcImpliedDoControl()
       {
@@ -4445,7 +4445,7 @@ class AcDoVariable : public Node
       {
          pDoVariable = NULL;
       }
-   ~AcDoVariable();
+   virtual ~AcDoVariable();
 
     AcDoVariable* newAcDoVariable()
       {
@@ -4475,7 +4475,7 @@ class TypeDeclarationStmt : public Node
          pEntityDeclList = NULL;
          pEOS = NULL;
       }
-   ~TypeDeclarationStmt();
+   virtual ~TypeDeclarationStmt();
 
     TypeDeclarationStmt* newTypeDeclarationStmt()
       {
@@ -4517,7 +4517,7 @@ class OptAttrSpecList : public Node
       {
          pAttrSpecList = NULL;
       }
-   ~OptAttrSpecList();
+   virtual ~OptAttrSpecList();
 
     OptAttrSpecList* newOptAttrSpecList()
       {
@@ -4547,7 +4547,7 @@ class AttrSpec : public Node
          pCoarraySpec = NULL;
          pAccessSpec = NULL;
       }
-   ~AttrSpec();
+   virtual ~AttrSpec();
 
    enum OptionType
      {
@@ -4612,7 +4612,7 @@ class AttrSpecList : public Node
       {
          pAttrSpecList = new std::vector<AttrSpec*>();
       }
-   ~AttrSpecList();
+   virtual ~AttrSpecList();
 
     AttrSpecList* newAttrSpecList()
       {
@@ -4642,7 +4642,7 @@ class EntityDecl : public Node
          pCharLength = NULL;
          pInitialization = NULL;
       }
-   ~EntityDecl();
+   virtual ~EntityDecl();
 
     EntityDecl* newEntityDecl()
       {
@@ -4684,7 +4684,7 @@ class EntityDeclList : public Node
       {
          pEntityDeclList = new std::vector<EntityDecl*>();
       }
-   ~EntityDeclList();
+   virtual ~EntityDeclList();
 
     EntityDeclList* newEntityDeclList()
       {
@@ -4712,7 +4712,7 @@ class Initialization : public Node
          pNullInit = NULL;
          pConstantExpr = NULL;
       }
-   ~Initialization();
+   virtual ~Initialization();
 
    enum OptionType
      {
@@ -4754,7 +4754,7 @@ class NullInit : public Node
       {
          pFunctionReference = NULL;
       }
-   ~NullInit();
+   virtual ~NullInit();
 
     NullInit* newNullInit()
       {
@@ -4779,7 +4779,7 @@ class AccessSpec : public Node
     AccessSpec()
       {
       }
-   ~AccessSpec();
+   virtual ~AccessSpec();
 
    enum OptionType
      {
@@ -4806,7 +4806,7 @@ class LanguageBindingSpec : public Node
       {
          pScon = NULL;
       }
-   ~LanguageBindingSpec();
+   virtual ~LanguageBindingSpec();
 
     LanguageBindingSpec* newLanguageBindingSpec()
       {
@@ -4833,7 +4833,7 @@ class CoarraySpec : public Node
          pExplicitCoshapeSpec = NULL;
          pDeferredCoshapeSpecList = NULL;
       }
-   ~CoarraySpec();
+   virtual ~CoarraySpec();
 
    enum OptionType
      {
@@ -4869,7 +4869,7 @@ class DeferredCoshapeSpec : public Node
     DeferredCoshapeSpec()
       {
       }
-   ~DeferredCoshapeSpec();
+   virtual ~DeferredCoshapeSpec();
 
     DeferredCoshapeSpec* newDeferredCoshapeSpec()
       {
@@ -4889,7 +4889,7 @@ class DeferredCoshapeSpecList : public Node
       {
          pDeferredCoshapeSpecList = new std::vector<DeferredCoshapeSpec*>();
       }
-   ~DeferredCoshapeSpecList();
+   virtual ~DeferredCoshapeSpecList();
 
     DeferredCoshapeSpecList* newDeferredCoshapeSpecList()
       {
@@ -4916,7 +4916,7 @@ class ExplicitCoshapeSpec : public Node
          pCoboundsEntryList = new std::vector<CoboundsEntry*>();
          pLowerCobound = NULL;
       }
-   ~ExplicitCoshapeSpec();
+   virtual ~ExplicitCoshapeSpec();
 
     ExplicitCoshapeSpec* newExplicitCoshapeSpec()
       {
@@ -4947,7 +4947,7 @@ class CoboundsEntry : public Node
          pLowerCobound = NULL;
          pUpperCobound = NULL;
       }
-   ~CoboundsEntry();
+   virtual ~CoboundsEntry();
 
     CoboundsEntry* newCoboundsEntry()
       {
@@ -4977,7 +4977,7 @@ class LowerCobound : public Node
       {
          pSpecificationExpr = NULL;
       }
-   ~LowerCobound();
+   virtual ~LowerCobound();
 
     LowerCobound* newLowerCobound()
       {
@@ -5003,7 +5003,7 @@ class UpperCobound : public Node
       {
          pSpecificationExpr = NULL;
       }
-   ~UpperCobound();
+   virtual ~UpperCobound();
 
     UpperCobound* newUpperCobound()
       {
@@ -5034,7 +5034,7 @@ class ArraySpec : public Node
          pAssumedShapeSpecList = NULL;
          pExplicitShapeSpecList = NULL;
       }
-   ~ArraySpec();
+   virtual ~ArraySpec();
 
    enum OptionType
      {
@@ -5092,7 +5092,7 @@ class ExplicitShapeSpec : public Node
          pLowerBound = NULL;
          pUpperBound = NULL;
       }
-   ~ExplicitShapeSpec();
+   virtual ~ExplicitShapeSpec();
 
     ExplicitShapeSpec* newExplicitShapeSpec()
       {
@@ -5122,7 +5122,7 @@ class ExplicitShapeSpecList : public Node
       {
          pExplicitShapeSpecList = new std::vector<ExplicitShapeSpec*>();
       }
-   ~ExplicitShapeSpecList();
+   virtual ~ExplicitShapeSpecList();
 
     ExplicitShapeSpecList* newExplicitShapeSpecList()
       {
@@ -5148,7 +5148,7 @@ class LowerBound : public Node
       {
          pSpecificationExpr = NULL;
       }
-   ~LowerBound();
+   virtual ~LowerBound();
 
     LowerBound* newLowerBound()
       {
@@ -5174,7 +5174,7 @@ class UpperBound : public Node
       {
          pSpecificationExpr = NULL;
       }
-   ~UpperBound();
+   virtual ~UpperBound();
 
     UpperBound* newUpperBound()
       {
@@ -5200,7 +5200,7 @@ class AssumedShapeSpec : public Node
       {
          pLowerBound = NULL;
       }
-   ~AssumedShapeSpec();
+   virtual ~AssumedShapeSpec();
 
     AssumedShapeSpec* newAssumedShapeSpec()
       {
@@ -5226,7 +5226,7 @@ class AssumedShapeSpecList : public Node
       {
          pAssumedShapeSpecList = new std::vector<AssumedShapeSpec*>();
       }
-   ~AssumedShapeSpecList();
+   virtual ~AssumedShapeSpecList();
 
     AssumedShapeSpecList* newAssumedShapeSpecList()
       {
@@ -5251,7 +5251,7 @@ class DeferredShapeSpec : public Node
     DeferredShapeSpec()
       {
       }
-   ~DeferredShapeSpec();
+   virtual ~DeferredShapeSpec();
 
     DeferredShapeSpec* newDeferredShapeSpec()
       {
@@ -5271,7 +5271,7 @@ class DeferredShapeSpecList : public Node
       {
          pDeferredShapeSpecList = new std::vector<DeferredShapeSpec*>();
       }
-   ~DeferredShapeSpecList();
+   virtual ~DeferredShapeSpecList();
 
     DeferredShapeSpecList* newDeferredShapeSpecList()
       {
@@ -5298,7 +5298,7 @@ class AssumedSizeSpec : public Node
          pExplicitShapeSpecList = new std::vector<ExplicitShapeSpec*>();
          pLowerBound = NULL;
       }
-   ~AssumedSizeSpec();
+   virtual ~AssumedSizeSpec();
 
     AssumedSizeSpec* newAssumedSizeSpec()
       {
@@ -5327,7 +5327,7 @@ class AssumedRankSpec : public Node
     AssumedRankSpec()
       {
       }
-   ~AssumedRankSpec();
+   virtual ~AssumedRankSpec();
 
     AssumedRankSpec* newAssumedRankSpec()
       {
@@ -5347,7 +5347,7 @@ class ImpliedShapeSpec : public Node
       {
          pLowerBound = NULL;
       }
-   ~ImpliedShapeSpec();
+   virtual ~ImpliedShapeSpec();
 
     ImpliedShapeSpec* newImpliedShapeSpec()
       {
@@ -5373,7 +5373,7 @@ class ImpliedShapeSpecList : public Node
       {
          pImpliedShapeSpecList = new std::vector<ImpliedShapeSpec*>();
       }
-   ~ImpliedShapeSpecList();
+   virtual ~ImpliedShapeSpecList();
 
     ImpliedShapeSpecList* newImpliedShapeSpecList()
       {
@@ -5398,7 +5398,7 @@ class IntentSpec : public Node
     IntentSpec()
       {
       }
-   ~IntentSpec();
+   virtual ~IntentSpec();
 
    enum OptionType
      {
@@ -5429,7 +5429,7 @@ class AccessStmt : public Node
          pAccessIdList = NULL;
          pEOS = NULL;
       }
-   ~AccessStmt();
+   virtual ~AccessStmt();
 
    enum OptionType
      {
@@ -5474,7 +5474,7 @@ class AccessId : public Node
       {
          pGenericSpec = NULL;
       }
-   ~AccessId();
+   virtual ~AccessId();
 
     AccessId* newAccessId()
       {
@@ -5500,7 +5500,7 @@ class AccessIdList : public Node
       {
          pAccessIdList = new std::vector<AccessId*>();
       }
-   ~AccessIdList();
+   virtual ~AccessIdList();
 
     AccessIdList* newAccessIdList()
       {
@@ -5528,7 +5528,7 @@ class AllocatableStmt : public Node
          pAllocatableDeclList = NULL;
          pEOS = NULL;
       }
-   ~AllocatableStmt();
+   virtual ~AllocatableStmt();
 
     AllocatableStmt* newAllocatableStmt()
       {
@@ -5564,7 +5564,7 @@ class AllocatableDecl : public Node
          pArraySpec = NULL;
          pCoarraySpec = NULL;
       }
-   ~AllocatableDecl();
+   virtual ~AllocatableDecl();
 
     AllocatableDecl* newAllocatableDecl()
       {
@@ -5598,7 +5598,7 @@ class AllocatableDeclList : public Node
       {
          pAllocatableDeclList = new std::vector<AllocatableDecl*>();
       }
-   ~AllocatableDeclList();
+   virtual ~AllocatableDeclList();
 
     AllocatableDeclList* newAllocatableDeclList()
       {
@@ -5626,7 +5626,7 @@ class AsynchronousStmt : public Node
          pObjectNameList = NULL;
          pEOS = NULL;
       }
-   ~AsynchronousStmt();
+   virtual ~AsynchronousStmt();
 
     AsynchronousStmt* newAsynchronousStmt()
       {
@@ -5663,7 +5663,7 @@ class BindStmt : public Node
          pBindEntityList = NULL;
          pEOS = NULL;
       }
-   ~BindStmt();
+   virtual ~BindStmt();
 
     BindStmt* newBindStmt()
       {
@@ -5702,7 +5702,7 @@ class BindEntity : public Node
          pCommonBlockName = NULL;
          pEntityName = NULL;
       }
-   ~BindEntity();
+   virtual ~BindEntity();
 
    enum OptionType
      {
@@ -5739,7 +5739,7 @@ class BindEntityList : public Node
       {
          pBindEntityList = new std::vector<BindEntity*>();
       }
-   ~BindEntityList();
+   virtual ~BindEntityList();
 
     BindEntityList* newBindEntityList()
       {
@@ -5767,7 +5767,7 @@ class CodimensionStmt : public Node
          pCodimensionDeclList = NULL;
          pEOS = NULL;
       }
-   ~CodimensionStmt();
+   virtual ~CodimensionStmt();
 
     CodimensionStmt* newCodimensionStmt()
       {
@@ -5802,7 +5802,7 @@ class CodimensionDecl : public Node
          pCoarrayName = NULL;
          pCoarraySpec = NULL;
       }
-   ~CodimensionDecl();
+   virtual ~CodimensionDecl();
 
     CodimensionDecl* newCodimensionDecl()
       {
@@ -5832,7 +5832,7 @@ class CodimensionDeclList : public Node
       {
          pCodimensionDeclList = new std::vector<CodimensionDecl*>();
       }
-   ~CodimensionDeclList();
+   virtual ~CodimensionDeclList();
 
     CodimensionDeclList* newCodimensionDeclList()
       {
@@ -5860,7 +5860,7 @@ class ContiguousStmt : public Node
          pObjectNameList = NULL;
          pEOS = NULL;
       }
-   ~ContiguousStmt();
+   virtual ~ContiguousStmt();
 
     ContiguousStmt* newContiguousStmt()
       {
@@ -5894,7 +5894,7 @@ class ObjectNameList : public Node
       {
          pObjectNameList = new std::vector<ObjectName*>();
       }
-   ~ObjectNameList();
+   virtual ~ObjectNameList();
 
     ObjectNameList* newObjectNameList()
       {
@@ -5922,7 +5922,7 @@ class DataStmt : public Node
          pDataStmtSetList = NULL;
          pEOS = NULL;
       }
-   ~DataStmt();
+   virtual ~DataStmt();
 
     DataStmt* newDataStmt()
       {
@@ -5957,7 +5957,7 @@ class DataStmtSet : public Node
          pDataStmtObjectList = NULL;
          pDataStmtValueList = NULL;
       }
-   ~DataStmtSet();
+   virtual ~DataStmtSet();
 
     DataStmtSet* newDataStmtSet()
       {
@@ -5987,7 +5987,7 @@ class DataStmtSetList : public Node
       {
          pDataStmtSet = NULL;
       }
-   ~DataStmtSetList();
+   virtual ~DataStmtSetList();
 
    enum OptionType
      {
@@ -6021,7 +6021,7 @@ class DataStmtObject : public Node
          pDataImpliedDo = NULL;
          pVariable = NULL;
       }
-   ~DataStmtObject();
+   virtual ~DataStmtObject();
 
    enum OptionType
      {
@@ -6058,7 +6058,7 @@ class DataStmtObjectList : public Node
       {
          pDataStmtObjectList = new std::vector<DataStmtObject*>();
       }
-   ~DataStmtObjectList();
+   virtual ~DataStmtObjectList();
 
     DataStmtObjectList* newDataStmtObjectList()
       {
@@ -6086,7 +6086,7 @@ class DataImpliedDo : public Node
          pDataIDoVariable = NULL;
          pExpr = NULL;
       }
-   ~DataImpliedDo();
+   virtual ~DataImpliedDo();
 
     DataImpliedDo* newDataImpliedDo()
       {
@@ -6122,7 +6122,7 @@ class DataIDoObject : public Node
          pStructureComponent = NULL;
          pArrayElement = NULL;
       }
-   ~DataIDoObject();
+   virtual ~DataIDoObject();
 
    enum OptionType
      {
@@ -6164,7 +6164,7 @@ class DataIDoObjectList : public Node
       {
          pDataIDoObjectList = new std::vector<DataIDoObject*>();
       }
-   ~DataIDoObjectList();
+   virtual ~DataIDoObjectList();
 
     DataIDoObjectList* newDataIDoObjectList()
       {
@@ -6190,7 +6190,7 @@ class DataIDoVariable : public Node
       {
          pDoVariable = NULL;
       }
-   ~DataIDoVariable();
+   virtual ~DataIDoVariable();
 
     DataIDoVariable* newDataIDoVariable()
       {
@@ -6217,7 +6217,7 @@ class DataStmtValue : public Node
          pDataStmtRepeat = NULL;
          pDataStmtConstant = NULL;
       }
-   ~DataStmtValue();
+   virtual ~DataStmtValue();
 
     DataStmtValue* newDataStmtValue()
       {
@@ -6247,7 +6247,7 @@ class DataStmtValueList : public Node
       {
          pDataStmtValueList = new std::vector<DataStmtValue*>();
       }
-   ~DataStmtValueList();
+   virtual ~DataStmtValueList();
 
     DataStmtValueList* newDataStmtValueList()
       {
@@ -6274,7 +6274,7 @@ class DataStmtRepeat : public Node
          pIntConstantSubobject = NULL;
          pIcon = NULL;
       }
-   ~DataStmtRepeat();
+   virtual ~DataStmtRepeat();
 
    enum OptionType
      {
@@ -6317,7 +6317,7 @@ class DataStmtConstant : public Node
          pConstantSubobject = NULL;
          pConstant = NULL;
       }
-   ~DataStmtConstant();
+   virtual ~DataStmtConstant();
 
    enum OptionType
      {
@@ -6379,7 +6379,7 @@ class IntConstantSubobject : public Node
       {
          pConstantSubobject = NULL;
       }
-   ~IntConstantSubobject();
+   virtual ~IntConstantSubobject();
 
     IntConstantSubobject* newIntConstantSubobject()
       {
@@ -6405,7 +6405,7 @@ class ConstantSubobject : public Node
       {
          pDesignator = NULL;
       }
-   ~ConstantSubobject();
+   virtual ~ConstantSubobject();
 
     ConstantSubobject* newConstantSubobject()
       {
@@ -6433,7 +6433,7 @@ class DimensionStmt : public Node
          pArrayNameSpecList = NULL;
          pEOS = NULL;
       }
-   ~DimensionStmt();
+   virtual ~DimensionStmt();
 
     DimensionStmt* newDimensionStmt()
       {
@@ -6468,7 +6468,7 @@ class ArrayNameSpec : public Node
          pArrayName = NULL;
          pArraySpec = NULL;
       }
-   ~ArrayNameSpec();
+   virtual ~ArrayNameSpec();
 
     ArrayNameSpec* newArrayNameSpec()
       {
@@ -6498,7 +6498,7 @@ class ArrayNameSpecList : public Node
       {
          pArrayNameSpecList = new std::vector<ArrayNameSpec*>();
       }
-   ~ArrayNameSpecList();
+   virtual ~ArrayNameSpecList();
 
     ArrayNameSpecList* newArrayNameSpecList()
       {
@@ -6527,7 +6527,7 @@ class IntentStmt : public Node
          pDummyArgNameList = NULL;
          pEOS = NULL;
       }
-   ~IntentStmt();
+   virtual ~IntentStmt();
 
     IntentStmt* newIntentStmt()
       {
@@ -6565,7 +6565,7 @@ class DummyArgNameList : public Node
       {
          pDummyArgNameList = new std::vector<DummyArgName*>();
       }
-   ~DummyArgNameList();
+   virtual ~DummyArgNameList();
 
     DummyArgNameList* newDummyArgNameList()
       {
@@ -6593,7 +6593,7 @@ class OptionalStmt : public Node
          pDummyArgNameList = NULL;
          pEOS = NULL;
       }
-   ~OptionalStmt();
+   virtual ~OptionalStmt();
 
     OptionalStmt* newOptionalStmt()
       {
@@ -6629,7 +6629,7 @@ class ParameterStmt : public Node
          pNamedConstantDefList = NULL;
          pEOS = NULL;
       }
-   ~ParameterStmt();
+   virtual ~ParameterStmt();
 
     ParameterStmt* newParameterStmt()
       {
@@ -6664,7 +6664,7 @@ class NamedConstantDef : public Node
          pNamedConstant = NULL;
          pConstantExpr = NULL;
       }
-   ~NamedConstantDef();
+   virtual ~NamedConstantDef();
 
     NamedConstantDef* newNamedConstantDef()
       {
@@ -6694,7 +6694,7 @@ class NamedConstantDefList : public Node
       {
          pNamedConstantDefList = new std::vector<NamedConstantDef*>();
       }
-   ~NamedConstantDefList();
+   virtual ~NamedConstantDefList();
 
     NamedConstantDefList* newNamedConstantDefList()
       {
@@ -6722,7 +6722,7 @@ class PointerStmt : public Node
          pPointerDeclList = NULL;
          pEOS = NULL;
       }
-   ~PointerStmt();
+   virtual ~PointerStmt();
 
     PointerStmt* newPointerStmt()
       {
@@ -6758,7 +6758,7 @@ class PointerDecl : public Node
          pObjectName = NULL;
          pDeferredShapeSpecList = NULL;
       }
-   ~PointerDecl();
+   virtual ~PointerDecl();
 
    enum OptionType
      {
@@ -6799,7 +6799,7 @@ class PointerDeclList : public Node
       {
          pPointerDeclList = new std::vector<PointerDecl*>();
       }
-   ~PointerDeclList();
+   virtual ~PointerDeclList();
 
     PointerDeclList* newPointerDeclList()
       {
@@ -6827,7 +6827,7 @@ class ProtectedStmt : public Node
          pEntityNameList = NULL;
          pEOS = NULL;
       }
-   ~ProtectedStmt();
+   virtual ~ProtectedStmt();
 
     ProtectedStmt* newProtectedStmt()
       {
@@ -6861,7 +6861,7 @@ class EntityNameList : public Node
       {
          pEntityNameList = new std::vector<EntityName*>();
       }
-   ~EntityNameList();
+   virtual ~EntityNameList();
 
     EntityNameList* newEntityNameList()
       {
@@ -6889,7 +6889,7 @@ class SaveStmt : public Node
          pEOS = NULL;
          pSavedEntityList = NULL;
       }
-   ~SaveStmt();
+   virtual ~SaveStmt();
 
    enum OptionType
      {
@@ -6931,7 +6931,7 @@ class SavedEntity : public Node
          pCommonBlockName = NULL;
          pObjectName = NULL;
       }
-   ~SavedEntity();
+   virtual ~SavedEntity();
 
    enum OptionType
      {
@@ -6968,7 +6968,7 @@ class SavedEntityList : public Node
       {
          pSavedEntityList = new std::vector<SavedEntity*>();
       }
-   ~SavedEntityList();
+   virtual ~SavedEntityList();
 
     SavedEntityList* newSavedEntityList()
       {
@@ -6994,7 +6994,7 @@ class ProcPointerName : public Node
       {
          pIdent = NULL;
       }
-   ~ProcPointerName();
+   virtual ~ProcPointerName();
 
     ProcPointerName* newProcPointerName()
       {
@@ -7022,7 +7022,7 @@ class TargetStmt : public Node
          pTargetDeclList = NULL;
          pEOS = NULL;
       }
-   ~TargetStmt();
+   virtual ~TargetStmt();
 
     TargetStmt* newTargetStmt()
       {
@@ -7058,7 +7058,7 @@ class TargetDecl : public Node
          pArraySpec = NULL;
          pCoarraySpec = NULL;
       }
-   ~TargetDecl();
+   virtual ~TargetDecl();
 
     TargetDecl* newTargetDecl()
       {
@@ -7092,7 +7092,7 @@ class TargetDeclList : public Node
       {
          pTargetDeclList = new std::vector<TargetDecl*>();
       }
-   ~TargetDeclList();
+   virtual ~TargetDeclList();
 
     TargetDeclList* newTargetDeclList()
       {
@@ -7120,7 +7120,7 @@ class ValueStmt : public Node
          pDummyArgNameList = NULL;
          pEOS = NULL;
       }
-   ~ValueStmt();
+   virtual ~ValueStmt();
 
     ValueStmt* newValueStmt()
       {
@@ -7156,7 +7156,7 @@ class VolatileStmt : public Node
          pObjectNameList = NULL;
          pEOS = NULL;
       }
-   ~VolatileStmt();
+   virtual ~VolatileStmt();
 
     VolatileStmt* newVolatileStmt()
       {
@@ -7192,7 +7192,7 @@ class ImplicitStmt : public Node
          pEOS = NULL;
          pImplicitSpecList = NULL;
       }
-   ~ImplicitStmt();
+   virtual ~ImplicitStmt();
 
    enum OptionType
      {
@@ -7234,7 +7234,7 @@ class ImplicitSpec : public Node
          pDeclarationTypeSpec = NULL;
          pLetterSpecList = NULL;
       }
-   ~ImplicitSpec();
+   virtual ~ImplicitSpec();
 
     ImplicitSpec* newImplicitSpec()
       {
@@ -7264,7 +7264,7 @@ class ImplicitSpecList : public Node
       {
          pImplicitSpecList = new std::vector<ImplicitSpec*>();
       }
-   ~ImplicitSpecList();
+   virtual ~ImplicitSpecList();
 
     ImplicitSpecList* newImplicitSpecList()
       {
@@ -7290,7 +7290,7 @@ class LetterSpec : public Node
       {
          pLetter = NULL;
       }
-   ~LetterSpec();
+   virtual ~LetterSpec();
 
     LetterSpec* newLetterSpec()
       {
@@ -7316,7 +7316,7 @@ class LetterSpecList : public Node
       {
          pLetterSpecList = new std::vector<LetterSpec*>();
       }
-   ~LetterSpecList();
+   virtual ~LetterSpecList();
 
     LetterSpecList* newLetterSpecList()
       {
@@ -7344,7 +7344,7 @@ class NamelistStmt : public Node
          pNamelistEntryList = NULL;
          pEOS = NULL;
       }
-   ~NamelistStmt();
+   virtual ~NamelistStmt();
 
     NamelistStmt* newNamelistStmt()
       {
@@ -7379,7 +7379,7 @@ class NamelistEntry : public Node
          pNamelistGroupName = NULL;
          pNamelistGroupObjectList = NULL;
       }
-   ~NamelistEntry();
+   virtual ~NamelistEntry();
 
     NamelistEntry* newNamelistEntry()
       {
@@ -7409,7 +7409,7 @@ class NamelistEntryList : public Node
       {
          pNamelistEntry = NULL;
       }
-   ~NamelistEntryList();
+   virtual ~NamelistEntryList();
 
    enum OptionType
      {
@@ -7442,7 +7442,7 @@ class NamelistGroupObject : public Node
       {
          pVariableName = NULL;
       }
-   ~NamelistGroupObject();
+   virtual ~NamelistGroupObject();
 
     NamelistGroupObject* newNamelistGroupObject()
       {
@@ -7468,7 +7468,7 @@ class NamelistGroupObjectList : public Node
       {
          pNamelistGroupObjectList = new std::vector<NamelistGroupObject*>();
       }
-   ~NamelistGroupObjectList();
+   virtual ~NamelistGroupObjectList();
 
     NamelistGroupObjectList* newNamelistGroupObjectList()
       {
@@ -7496,7 +7496,7 @@ class EquivalenceStmt : public Node
          pEquivalenceSetList = NULL;
          pEOS = NULL;
       }
-   ~EquivalenceStmt();
+   virtual ~EquivalenceStmt();
 
     EquivalenceStmt* newEquivalenceStmt()
       {
@@ -7531,7 +7531,7 @@ class EquivalenceSet : public Node
          pEquivalenceObject = NULL;
          pEquivalenceObjectList = NULL;
       }
-   ~EquivalenceSet();
+   virtual ~EquivalenceSet();
 
     EquivalenceSet* newEquivalenceSet()
       {
@@ -7561,7 +7561,7 @@ class EquivalenceSetList : public Node
       {
          pEquivalenceSetList = new std::vector<EquivalenceSet*>();
       }
-   ~EquivalenceSetList();
+   virtual ~EquivalenceSetList();
 
     EquivalenceSetList* newEquivalenceSetList()
       {
@@ -7587,7 +7587,7 @@ class EquivalenceObject : public Node
       {
          pVariable = NULL;
       }
-   ~EquivalenceObject();
+   virtual ~EquivalenceObject();
 
     EquivalenceObject* newEquivalenceObject()
       {
@@ -7613,7 +7613,7 @@ class EquivalenceObjectList : public Node
       {
          pEquivalenceObjectList = new std::vector<EquivalenceObject*>();
       }
-   ~EquivalenceObjectList();
+   virtual ~EquivalenceObjectList();
 
     EquivalenceObjectList* newEquivalenceObjectList()
       {
@@ -7642,7 +7642,7 @@ class CommonStmt : public Node
          pCommonBlockEntryList = new std::vector<CommonBlockEntry*>();
          pEOS = NULL;
       }
-   ~CommonStmt();
+   virtual ~CommonStmt();
 
     CommonStmt* newCommonStmt()
       {
@@ -7681,7 +7681,7 @@ class CommonBlockEntry1 : public Node
          pCommonBlockObjectList = NULL;
          pCommonBlockName = NULL;
       }
-   ~CommonBlockEntry1();
+   virtual ~CommonBlockEntry1();
 
    enum OptionType
      {
@@ -7719,7 +7719,7 @@ class CommonBlockEntry : public Node
          pCommonBlockName = NULL;
          pCommonBlockObjectList = NULL;
       }
-   ~CommonBlockEntry();
+   virtual ~CommonBlockEntry();
 
     CommonBlockEntry* newCommonBlockEntry()
       {
@@ -7750,7 +7750,7 @@ class CommonBlockObject : public Node
          pVariableName = NULL;
          pArraySpec = NULL;
       }
-   ~CommonBlockObject();
+   virtual ~CommonBlockObject();
 
     CommonBlockObject* newCommonBlockObject()
       {
@@ -7780,7 +7780,7 @@ class CommonBlockObjectList : public Node
       {
          pCommonBlockObjectList = new std::vector<CommonBlockObject*>();
       }
-   ~CommonBlockObjectList();
+   virtual ~CommonBlockObjectList();
 
     CommonBlockObjectList* newCommonBlockObjectList()
       {
@@ -7807,7 +7807,7 @@ class Designator : public Node
          pSubstring = NULL;
          pDataRef = NULL;
       }
-   ~Designator();
+   virtual ~Designator();
 
    enum OptionType
      {
@@ -7844,7 +7844,7 @@ class Variable : public Node
       {
          pDesignator = NULL;
       }
-   ~Variable();
+   virtual ~Variable();
 
     Variable* newVariable()
       {
@@ -7870,7 +7870,7 @@ class VariableName : public Node
       {
          pIdent = NULL;
       }
-   ~VariableName();
+   virtual ~VariableName();
 
     VariableName* newVariableName()
       {
@@ -7896,7 +7896,7 @@ class LogicalVariable : public Node
       {
          pVariable = NULL;
       }
-   ~LogicalVariable();
+   virtual ~LogicalVariable();
 
     LogicalVariable* newLogicalVariable()
       {
@@ -7922,7 +7922,7 @@ class CharVariable : public Node
       {
          pVariable = NULL;
       }
-   ~CharVariable();
+   virtual ~CharVariable();
 
     CharVariable* newCharVariable()
       {
@@ -7948,7 +7948,7 @@ class DefaultCharVariable : public Node
       {
          pVariable = NULL;
       }
-   ~DefaultCharVariable();
+   virtual ~DefaultCharVariable();
 
     DefaultCharVariable* newDefaultCharVariable()
       {
@@ -7974,7 +7974,7 @@ class IntVariable : public Node
       {
          pVariable = NULL;
       }
-   ~IntVariable();
+   virtual ~IntVariable();
 
     IntVariable* newIntVariable()
       {
@@ -8001,7 +8001,7 @@ class Substring : public Node
          pParentString = NULL;
          pSubstringRange = NULL;
       }
-   ~Substring();
+   virtual ~Substring();
 
     Substring* newSubstring()
       {
@@ -8035,7 +8035,7 @@ class ParentString : public Node
          pArrayElement = NULL;
          pScalarVariableName = NULL;
       }
-   ~ParentString();
+   virtual ~ParentString();
 
    enum OptionType
      {
@@ -8087,7 +8087,7 @@ class SubstringRange : public Node
       {
          pIntExpr = NULL;
       }
-   ~SubstringRange();
+   virtual ~SubstringRange();
 
     SubstringRange* newSubstringRange()
       {
@@ -8113,7 +8113,7 @@ class DataRef : public Node
       {
          pPartRefList = new std::vector<PartRef*>();
       }
-   ~DataRef();
+   virtual ~DataRef();
 
     DataRef* newDataRef()
       {
@@ -8141,7 +8141,7 @@ class PartRef : public Node
          pSectionSubscriptList = NULL;
          pImageSelector = NULL;
       }
-   ~PartRef();
+   virtual ~PartRef();
 
     PartRef* newPartRef()
       {
@@ -8175,7 +8175,7 @@ class StructureComponent : public Node
       {
          pDataRef = NULL;
       }
-   ~StructureComponent();
+   virtual ~StructureComponent();
 
     StructureComponent* newStructureComponent()
       {
@@ -8201,7 +8201,7 @@ class CoindexedNamedObject : public Node
       {
          pDataRef = NULL;
       }
-   ~CoindexedNamedObject();
+   virtual ~CoindexedNamedObject();
 
     CoindexedNamedObject* newCoindexedNamedObject()
       {
@@ -8228,7 +8228,7 @@ class TypeParamInquiry : public Node
          pDesignator = NULL;
          pTypeParamName = NULL;
       }
-   ~TypeParamInquiry();
+   virtual ~TypeParamInquiry();
 
     TypeParamInquiry* newTypeParamInquiry()
       {
@@ -8258,7 +8258,7 @@ class ArrayElement : public Node
       {
          pDataRef = NULL;
       }
-   ~ArrayElement();
+   virtual ~ArrayElement();
 
     ArrayElement* newArrayElement()
       {
@@ -8284,7 +8284,7 @@ class Subscript : public Node
       {
          pIntExpr = NULL;
       }
-   ~Subscript();
+   virtual ~Subscript();
 
     Subscript* newSubscript()
       {
@@ -8311,7 +8311,7 @@ class SectionSubscript : public Node
          pSubscriptTriplet = NULL;
          pSubscript = NULL;
       }
-   ~SectionSubscript();
+   virtual ~SectionSubscript();
 
    enum OptionType
      {
@@ -8348,7 +8348,7 @@ class SectionSubscriptList : public Node
       {
          pSectionSubscriptList = new std::vector<SectionSubscript*>();
       }
-   ~SectionSubscriptList();
+   virtual ~SectionSubscriptList();
 
     SectionSubscriptList* newSectionSubscriptList()
       {
@@ -8375,7 +8375,7 @@ class SubscriptTriplet : public Node
          pSubscript = NULL;
          pStride = NULL;
       }
-   ~SubscriptTriplet();
+   virtual ~SubscriptTriplet();
 
     SubscriptTriplet* newSubscriptTriplet()
       {
@@ -8405,7 +8405,7 @@ class Stride : public Node
       {
          pIntExpr = NULL;
       }
-   ~Stride();
+   virtual ~Stride();
 
     Stride* newStride()
       {
@@ -8431,7 +8431,7 @@ class ImageSelector : public Node
       {
          pCosubscriptList = NULL;
       }
-   ~ImageSelector();
+   virtual ~ImageSelector();
 
     ImageSelector* newImageSelector()
       {
@@ -8457,7 +8457,7 @@ class Cosubscript : public Node
       {
          pIntExpr = NULL;
       }
-   ~Cosubscript();
+   virtual ~Cosubscript();
 
     Cosubscript* newCosubscript()
       {
@@ -8483,7 +8483,7 @@ class CosubscriptList : public Node
       {
          pCosubscriptList = new std::vector<Cosubscript*>();
       }
-   ~CosubscriptList();
+   virtual ~CosubscriptList();
 
     CosubscriptList* newCosubscriptList()
       {
@@ -8513,7 +8513,7 @@ class AllocateStmt : public Node
          pAllocOptList = NULL;
          pEOS = NULL;
       }
-   ~AllocateStmt();
+   virtual ~AllocateStmt();
 
     AllocateStmt* newAllocateStmt()
       {
@@ -8557,7 +8557,7 @@ class AllocOpt : public Node
          pExpr = NULL;
          pErrmsgVariable = NULL;
       }
-   ~AllocOpt();
+   virtual ~AllocOpt();
 
    enum OptionType
      {
@@ -8600,7 +8600,7 @@ class AllocOptList : public Node
       {
          pAllocOptList = new std::vector<AllocOpt*>();
       }
-   ~AllocOptList();
+   virtual ~AllocOptList();
 
     AllocOptList* newAllocOptList()
       {
@@ -8626,7 +8626,7 @@ class StatVariable : public Node
       {
          pIntVariable = NULL;
       }
-   ~StatVariable();
+   virtual ~StatVariable();
 
     StatVariable* newStatVariable()
       {
@@ -8652,7 +8652,7 @@ class ErrmsgVariable : public Node
       {
          pDefaultCharVariable = NULL;
       }
-   ~ErrmsgVariable();
+   virtual ~ErrmsgVariable();
 
     ErrmsgVariable* newErrmsgVariable()
       {
@@ -8680,7 +8680,7 @@ class Allocation : public Node
          pAllocateShapeSpecList = NULL;
          pAllocateCoarraySpec = NULL;
       }
-   ~Allocation();
+   virtual ~Allocation();
 
     Allocation* newAllocation()
       {
@@ -8714,7 +8714,7 @@ class AllocationList : public Node
       {
          pAllocationList = new std::vector<Allocation*>();
       }
-   ~AllocationList();
+   virtual ~AllocationList();
 
     AllocationList* newAllocationList()
       {
@@ -8740,7 +8740,7 @@ class AllocateObject : public Node
       {
          pStructureComponent = NULL;
       }
-   ~AllocateObject();
+   virtual ~AllocateObject();
 
     AllocateObject* newAllocateObject()
       {
@@ -8766,7 +8766,7 @@ class AllocateObjectList : public Node
       {
          pAllocateObjectList = new std::vector<AllocateObject*>();
       }
-   ~AllocateObjectList();
+   virtual ~AllocateObjectList();
 
     AllocateObjectList* newAllocateObjectList()
       {
@@ -8793,7 +8793,7 @@ class AllocateShapeSpec : public Node
          pLowerBoundExpr = NULL;
          pUpperBoundExpr = NULL;
       }
-   ~AllocateShapeSpec();
+   virtual ~AllocateShapeSpec();
 
     AllocateShapeSpec* newAllocateShapeSpec()
       {
@@ -8823,7 +8823,7 @@ class AllocateShapeSpecList : public Node
       {
          pAllocateShapeSpecList = new std::vector<AllocateShapeSpec*>();
       }
-   ~AllocateShapeSpecList();
+   virtual ~AllocateShapeSpecList();
 
     AllocateShapeSpecList* newAllocateShapeSpecList()
       {
@@ -8849,7 +8849,7 @@ class LowerBoundExpr : public Node
       {
          pIntExpr = NULL;
       }
-   ~LowerBoundExpr();
+   virtual ~LowerBoundExpr();
 
     LowerBoundExpr* newLowerBoundExpr()
       {
@@ -8875,7 +8875,7 @@ class UpperBoundExpr : public Node
       {
          pIntExpr = NULL;
       }
-   ~UpperBoundExpr();
+   virtual ~UpperBoundExpr();
 
     UpperBoundExpr* newUpperBoundExpr()
       {
@@ -8902,7 +8902,7 @@ class AllocateCoarraySpec : public Node
          pAllocateCoshapeSpecList = NULL;
          pLowerBoundExpr = NULL;
       }
-   ~AllocateCoarraySpec();
+   virtual ~AllocateCoarraySpec();
 
     AllocateCoarraySpec* newAllocateCoarraySpec()
       {
@@ -8933,7 +8933,7 @@ class AllocateCoshapeSpec : public Node
          pLowerBoundExpr = NULL;
          pUpperBoundExpr = NULL;
       }
-   ~AllocateCoshapeSpec();
+   virtual ~AllocateCoshapeSpec();
 
     AllocateCoshapeSpec* newAllocateCoshapeSpec()
       {
@@ -8963,7 +8963,7 @@ class AllocateCoshapeSpecList : public Node
       {
          pAllocateCoshapeSpecList = new std::vector<AllocateCoshapeSpec*>();
       }
-   ~AllocateCoshapeSpecList();
+   virtual ~AllocateCoshapeSpecList();
 
     AllocateCoshapeSpecList* newAllocateCoshapeSpecList()
       {
@@ -8991,7 +8991,7 @@ class NullifyStmt : public Node
          pPointerObjectList = NULL;
          pEOS = NULL;
       }
-   ~NullifyStmt();
+   virtual ~NullifyStmt();
 
     NullifyStmt* newNullifyStmt()
       {
@@ -9027,7 +9027,7 @@ class PointerObject : public Node
          pStructureComponent = NULL;
          pVariableName = NULL;
       }
-   ~PointerObject();
+   virtual ~PointerObject();
 
    enum OptionType
      {
@@ -9069,7 +9069,7 @@ class PointerObjectList : public Node
       {
          pPointerObjectList = new std::vector<PointerObject*>();
       }
-   ~PointerObjectList();
+   virtual ~PointerObjectList();
 
     PointerObjectList* newPointerObjectList()
       {
@@ -9098,7 +9098,7 @@ class DeallocateStmt : public Node
          pDeallocOptList = NULL;
          pEOS = NULL;
       }
-   ~DeallocateStmt();
+   virtual ~DeallocateStmt();
 
     DeallocateStmt* newDeallocateStmt()
       {
@@ -9137,7 +9137,7 @@ class DeallocOpt : public Node
          pErrmsgVariable = NULL;
          pStatVariable = NULL;
       }
-   ~DeallocOpt();
+   virtual ~DeallocOpt();
 
    enum OptionType
      {
@@ -9174,7 +9174,7 @@ class DeallocOptList : public Node
       {
          pDeallocOptList = new std::vector<DeallocOpt*>();
       }
-   ~DeallocOptList();
+   virtual ~DeallocOptList();
 
     DeallocOptList* newDeallocOptList()
       {
@@ -9202,7 +9202,7 @@ class DefinedOperator : public Node
          pDefinedBinaryOp = NULL;
          pDefinedUnaryOp = NULL;
       }
-   ~DefinedOperator();
+   virtual ~DefinedOperator();
 
    enum OptionType
      {
@@ -9244,7 +9244,7 @@ class ExtendedIntrinsicOp : public Node
       {
          pIntrinsicOperator = NULL;
       }
-   ~ExtendedIntrinsicOp();
+   virtual ~ExtendedIntrinsicOp();
 
     ExtendedIntrinsicOp* newExtendedIntrinsicOp()
       {
@@ -9276,7 +9276,7 @@ class Primary : public Node
          pDesignator = NULL;
          pConstant = NULL;
       }
-   ~Primary();
+   virtual ~Primary();
 
    enum OptionType
      {
@@ -9338,7 +9338,7 @@ class DefinedUnaryOp : public Node
       {
          pDop = NULL;
       }
-   ~DefinedUnaryOp();
+   virtual ~DefinedUnaryOp();
 
     DefinedUnaryOp* newDefinedUnaryOp()
       {
@@ -9365,7 +9365,7 @@ class DefinedBinaryOp : public Node
       {
          pDop = NULL;
       }
-   ~DefinedBinaryOp();
+   virtual ~DefinedBinaryOp();
 
     DefinedBinaryOp* newDefinedBinaryOp()
       {
@@ -9391,7 +9391,7 @@ class LogicalExpr : public Node
       {
          pExpr = NULL;
       }
-   ~LogicalExpr();
+   virtual ~LogicalExpr();
 
     LogicalExpr* newLogicalExpr()
       {
@@ -9417,7 +9417,7 @@ class DefaultCharExpr : public Node
       {
          pExpr = NULL;
       }
-   ~DefaultCharExpr();
+   virtual ~DefaultCharExpr();
 
     DefaultCharExpr* newDefaultCharExpr()
       {
@@ -9443,7 +9443,7 @@ class IntExpr : public Node
       {
          pExpr = NULL;
       }
-   ~IntExpr();
+   virtual ~IntExpr();
 
     IntExpr* newIntExpr()
       {
@@ -9469,7 +9469,7 @@ class SpecificationExpr : public Node
       {
          pIntExpr = NULL;
       }
-   ~SpecificationExpr();
+   virtual ~SpecificationExpr();
 
     SpecificationExpr* newSpecificationExpr()
       {
@@ -9495,7 +9495,7 @@ class ConstantExpr : public Node
       {
          pExpr = NULL;
       }
-   ~ConstantExpr();
+   virtual ~ConstantExpr();
 
     ConstantExpr* newConstantExpr()
       {
@@ -9521,7 +9521,7 @@ class IntConstantExpr : public Node
       {
          pIntExpr = NULL;
       }
-   ~IntConstantExpr();
+   virtual ~IntConstantExpr();
 
     IntConstantExpr* newIntConstantExpr()
       {
@@ -9550,7 +9550,7 @@ class AssignmentStmt : public Node
          pExpr = NULL;
          pEOS = NULL;
       }
-   ~AssignmentStmt();
+   virtual ~AssignmentStmt();
 
     AssignmentStmt* newAssignmentStmt()
       {
@@ -9595,7 +9595,7 @@ class PointerAssignmentStmt : public Node
          pDataTarget = NULL;
          pBoundsSpecList = NULL;
       }
-   ~PointerAssignmentStmt();
+   virtual ~PointerAssignmentStmt();
 
    enum OptionType
      {
@@ -9659,7 +9659,7 @@ class DataPointerObject : public Node
          pDataPointerComponentName = NULL;
          pVariableName = NULL;
       }
-   ~DataPointerObject();
+   virtual ~DataPointerObject();
 
    enum OptionType
      {
@@ -9700,7 +9700,7 @@ class BoundsSpec : public Node
       {
          pLowerBoundExpr = NULL;
       }
-   ~BoundsSpec();
+   virtual ~BoundsSpec();
 
     BoundsSpec* newBoundsSpec()
       {
@@ -9726,7 +9726,7 @@ class BoundsSpecList : public Node
       {
          pBoundsSpecList = new std::vector<BoundsSpec*>();
       }
-   ~BoundsSpecList();
+   virtual ~BoundsSpecList();
 
     BoundsSpecList* newBoundsSpecList()
       {
@@ -9753,7 +9753,7 @@ class BoundsRemapping : public Node
          pLowerBoundExpr = NULL;
          pUpperBoundExpr = NULL;
       }
-   ~BoundsRemapping();
+   virtual ~BoundsRemapping();
 
     BoundsRemapping* newBoundsRemapping()
       {
@@ -9783,7 +9783,7 @@ class BoundsRemappingList : public Node
       {
          pBoundsRemappingList = new std::vector<BoundsRemapping*>();
       }
-   ~BoundsRemappingList();
+   virtual ~BoundsRemappingList();
 
     BoundsRemappingList* newBoundsRemappingList()
       {
@@ -9809,7 +9809,7 @@ class DataTarget : public Node
       {
          pExpr = NULL;
       }
-   ~DataTarget();
+   virtual ~DataTarget();
 
     DataTarget* newDataTarget()
       {
@@ -9836,7 +9836,7 @@ class ProcPointerObject : public Node
          pProcComponentRef = NULL;
          pProcPointerName = NULL;
       }
-   ~ProcPointerObject();
+   virtual ~ProcPointerObject();
 
    enum OptionType
      {
@@ -9874,7 +9874,7 @@ class ProcComponentRef : public Node
          pVariable = NULL;
          pProcedureComponentName = NULL;
       }
-   ~ProcComponentRef();
+   virtual ~ProcComponentRef();
 
     ProcComponentRef* newProcComponentRef()
       {
@@ -9906,7 +9906,7 @@ class ProcTarget : public Node
          pProcedureName = NULL;
          pExpr = NULL;
       }
-   ~ProcTarget();
+   virtual ~ProcTarget();
 
    enum OptionType
      {
@@ -9950,7 +9950,7 @@ class WhereStmt : public Node
          pMaskExpr = NULL;
          pWhereAssignmentStmt = NULL;
       }
-   ~WhereStmt();
+   virtual ~WhereStmt();
 
     WhereStmt* newWhereStmt()
       {
@@ -9988,7 +9988,7 @@ class WhereConstruct : public Node
          pElsewhereClause = NULL;
          pEndWhereStmt = NULL;
       }
-   ~WhereConstruct();
+   virtual ~WhereConstruct();
 
     WhereConstruct* newWhereConstruct()
       {
@@ -10031,7 +10031,7 @@ class MaskedElsewhereClause : public Node
          pMaskedElsewhereStmt = NULL;
          pWhereBodyConstructList = new std::vector<WhereBodyConstruct*>();
       }
-   ~MaskedElsewhereClause();
+   virtual ~MaskedElsewhereClause();
 
     MaskedElsewhereClause* newMaskedElsewhereClause()
       {
@@ -10062,7 +10062,7 @@ class ElsewhereClause : public Node
          pElsewhereStmt = NULL;
          pWhereBodyConstructList = new std::vector<WhereBodyConstruct*>();
       }
-   ~ElsewhereClause();
+   virtual ~ElsewhereClause();
 
     ElsewhereClause* newElsewhereClause()
       {
@@ -10095,7 +10095,7 @@ class WhereConstructStmt : public Node
          pMaskExpr = NULL;
          pEOS = NULL;
       }
-   ~WhereConstructStmt();
+   virtual ~WhereConstructStmt();
 
     WhereConstructStmt* newWhereConstructStmt()
       {
@@ -10135,7 +10135,7 @@ class WhereBodyConstruct : public Node
          pWhereStmt = NULL;
          pWhereAssignmentStmt = NULL;
       }
-   ~WhereBodyConstruct();
+   virtual ~WhereBodyConstruct();
 
    enum OptionType
      {
@@ -10177,7 +10177,7 @@ class WhereAssignmentStmt : public Node
       {
          pAssignmentStmt = NULL;
       }
-   ~WhereAssignmentStmt();
+   virtual ~WhereAssignmentStmt();
 
     WhereAssignmentStmt* newWhereAssignmentStmt()
       {
@@ -10203,7 +10203,7 @@ class MaskExpr : public Node
       {
          pLogicalExpr = NULL;
       }
-   ~MaskExpr();
+   virtual ~MaskExpr();
 
     MaskExpr* newMaskExpr()
       {
@@ -10232,7 +10232,7 @@ class MaskedElsewhereStmt : public Node
          pIdent = NULL;
          pEOS = NULL;
       }
-   ~MaskedElsewhereStmt();
+   virtual ~MaskedElsewhereStmt();
 
     MaskedElsewhereStmt* newMaskedElsewhereStmt()
       {
@@ -10272,7 +10272,7 @@ class ElsewhereStmt : public Node
          pIdent = NULL;
          pEOS = NULL;
       }
-   ~ElsewhereStmt();
+   virtual ~ElsewhereStmt();
 
     ElsewhereStmt* newElsewhereStmt()
       {
@@ -10308,7 +10308,7 @@ class EndWhereStmt : public Node
          pIdent = NULL;
          pEOS = NULL;
       }
-   ~EndWhereStmt();
+   virtual ~EndWhereStmt();
 
     EndWhereStmt* newEndWhereStmt()
       {
@@ -10344,7 +10344,7 @@ class ForallConstruct : public Node
          pForallBodyConstructList = new std::vector<ForallBodyConstruct*>();
          pEndForallStmt = NULL;
       }
-   ~ForallConstruct();
+   virtual ~ForallConstruct();
 
     ForallConstruct* newForallConstruct()
       {
@@ -10381,7 +10381,7 @@ class ForallConstructStmt : public Node
          pForallHeader = NULL;
          pEOS = NULL;
       }
-   ~ForallConstructStmt();
+   virtual ~ForallConstructStmt();
 
     ForallConstructStmt* newForallConstructStmt()
       {
@@ -10421,7 +10421,7 @@ class ForallHeader : public Node
          pForallTripletSpecList = NULL;
          pMaskExpr = NULL;
       }
-   ~ForallHeader();
+   virtual ~ForallHeader();
 
     ForallHeader* newForallHeader()
       {
@@ -10457,7 +10457,7 @@ class ForallTripletSpec : public Node
          pForallLimit = NULL;
          pForallStep = NULL;
       }
-   ~ForallTripletSpec();
+   virtual ~ForallTripletSpec();
 
     ForallTripletSpec* newForallTripletSpec()
       {
@@ -10491,7 +10491,7 @@ class ForallTripletSpecList : public Node
       {
          pForallTripletSpecList = new std::vector<ForallTripletSpec*>();
       }
-   ~ForallTripletSpecList();
+   virtual ~ForallTripletSpecList();
 
     ForallTripletSpecList* newForallTripletSpecList()
       {
@@ -10517,7 +10517,7 @@ class ForallLimit : public Node
       {
          pIntExpr = NULL;
       }
-   ~ForallLimit();
+   virtual ~ForallLimit();
 
     ForallLimit* newForallLimit()
       {
@@ -10543,7 +10543,7 @@ class ForallStep : public Node
       {
          pIntExpr = NULL;
       }
-   ~ForallStep();
+   virtual ~ForallStep();
 
     ForallStep* newForallStep()
       {
@@ -10573,7 +10573,7 @@ class ForallBodyConstruct : public Node
          pWhereStmt = NULL;
          pForallAssignmentStmt = NULL;
       }
-   ~ForallBodyConstruct();
+   virtual ~ForallBodyConstruct();
 
    enum OptionType
      {
@@ -10626,7 +10626,7 @@ class ForallAssignmentStmt : public Node
          pPointerAssignmentStmt = NULL;
          pAssignmentStmt = NULL;
       }
-   ~ForallAssignmentStmt();
+   virtual ~ForallAssignmentStmt();
 
    enum OptionType
      {
@@ -10665,7 +10665,7 @@ class EndForallStmt : public Node
          pForallConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndForallStmt();
+   virtual ~EndForallStmt();
 
     EndForallStmt* newEndForallStmt()
       {
@@ -10701,7 +10701,7 @@ class ForallStmt : public Node
          pForallHeader = NULL;
          pForallAssignmentStmt = NULL;
       }
-   ~ForallStmt();
+   virtual ~ForallStmt();
 
     ForallStmt* newForallStmt()
       {
@@ -10735,7 +10735,7 @@ class Block : public Node
       {
          pExecutionPartConstructList = new std::vector<ExecutionPartConstruct*>();
       }
-   ~Block();
+   virtual ~Block();
 
     Block* newBlock()
       {
@@ -10763,7 +10763,7 @@ class AssociateConstruct : public Node
          pBlock = NULL;
          pEndAssociateStmt = NULL;
       }
-   ~AssociateConstruct();
+   virtual ~AssociateConstruct();
 
     AssociateConstruct* newAssociateConstruct()
       {
@@ -10800,7 +10800,7 @@ class AssociateStmt : public Node
          pAssociationList = NULL;
          pEOS = NULL;
       }
-   ~AssociateStmt();
+   virtual ~AssociateStmt();
 
     AssociateStmt* newAssociateStmt()
       {
@@ -10839,7 +10839,7 @@ class Association : public Node
          pAssociateName = NULL;
          pSelector = NULL;
       }
-   ~Association();
+   virtual ~Association();
 
     Association* newAssociation()
       {
@@ -10869,7 +10869,7 @@ class AssociationList : public Node
       {
          pAssociationList = new std::vector<Association*>();
       }
-   ~AssociationList();
+   virtual ~AssociationList();
 
     AssociationList* newAssociationList()
       {
@@ -10896,7 +10896,7 @@ class Selector : public Node
          pVariable = NULL;
          pExpr = NULL;
       }
-   ~Selector();
+   virtual ~Selector();
 
    enum OptionType
      {
@@ -10935,7 +10935,7 @@ class EndAssociateStmt : public Node
          pAssociateConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndAssociateStmt();
+   virtual ~EndAssociateStmt();
 
     EndAssociateStmt* newEndAssociateStmt()
       {
@@ -10972,7 +10972,7 @@ class BlockConstruct : public Node
          pBlock = NULL;
          pEndBlockStmt = NULL;
       }
-   ~BlockConstruct();
+   virtual ~BlockConstruct();
 
     BlockConstruct* newBlockConstruct()
       {
@@ -11012,7 +11012,7 @@ class BlockStmt : public Node
          pBlockConstructName = NULL;
          pEOS = NULL;
       }
-   ~BlockStmt();
+   virtual ~BlockStmt();
 
     BlockStmt* newBlockStmt()
       {
@@ -11048,7 +11048,7 @@ class EndBlockStmt : public Node
          pBlockConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndBlockStmt();
+   virtual ~EndBlockStmt();
 
     EndBlockStmt* newEndBlockStmt()
       {
@@ -11084,7 +11084,7 @@ class CriticalConstruct : public Node
          pBlock = NULL;
          pEndCriticalStmt = NULL;
       }
-   ~CriticalConstruct();
+   virtual ~CriticalConstruct();
 
     CriticalConstruct* newCriticalConstruct()
       {
@@ -11120,7 +11120,7 @@ class CriticalStmt : public Node
          pCriticalConstructName = NULL;
          pEOS = NULL;
       }
-   ~CriticalStmt();
+   virtual ~CriticalStmt();
 
     CriticalStmt* newCriticalStmt()
       {
@@ -11156,7 +11156,7 @@ class EndCriticalStmt : public Node
          pCriticalConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndCriticalStmt();
+   virtual ~EndCriticalStmt();
 
     EndCriticalStmt* newEndCriticalStmt()
       {
@@ -11194,7 +11194,7 @@ class LabelDoStmt : public Node
          pLoopControl = NULL;
          pEOS = NULL;
       }
-   ~LabelDoStmt();
+   virtual ~LabelDoStmt();
 
     LabelDoStmt* newLabelDoStmt()
       {
@@ -11239,7 +11239,7 @@ class NonlabelDoStmt : public Node
          pLoopControl = NULL;
          pEOS = NULL;
       }
-   ~NonlabelDoStmt();
+   virtual ~NonlabelDoStmt();
 
     NonlabelDoStmt* newNonlabelDoStmt()
       {
@@ -11279,7 +11279,7 @@ class LoopControl : public Node
          pExpr = NULL;
          pDoVariable = NULL;
       }
-   ~LoopControl();
+   virtual ~LoopControl();
 
    enum OptionType
      {
@@ -11321,7 +11321,7 @@ class DoVariable : public Node
       {
          pScalarIntVariableName = NULL;
       }
-   ~DoVariable();
+   virtual ~DoVariable();
 
     DoVariable* newDoVariable()
       {
@@ -11349,7 +11349,7 @@ class EndDoStmt : public Node
          pDoConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndDoStmt();
+   virtual ~EndDoStmt();
 
     EndDoStmt* newEndDoStmt()
       {
@@ -11385,7 +11385,7 @@ class CycleStmt : public Node
          pDoConstructName = NULL;
          pEOS = NULL;
       }
-   ~CycleStmt();
+   virtual ~CycleStmt();
 
     CycleStmt* newCycleStmt()
       {
@@ -11423,7 +11423,7 @@ class IfConstruct : public Node
          pElseStmtAndBlock = NULL;
          pEndIfStmt = NULL;
       }
-   ~IfConstruct();
+   virtual ~IfConstruct();
 
     IfConstruct* newIfConstruct()
       {
@@ -11466,7 +11466,7 @@ class ElseIfStmtAndBlock : public Node
          pElseIfStmt = NULL;
          pBlock = NULL;
       }
-   ~ElseIfStmtAndBlock();
+   virtual ~ElseIfStmtAndBlock();
 
     ElseIfStmtAndBlock* newElseIfStmtAndBlock()
       {
@@ -11497,7 +11497,7 @@ class ElseStmtAndBlock : public Node
          pElseStmt = NULL;
          pBlock = NULL;
       }
-   ~ElseStmtAndBlock();
+   virtual ~ElseStmtAndBlock();
 
     ElseStmtAndBlock* newElseStmtAndBlock()
       {
@@ -11530,7 +11530,7 @@ class IfThenStmt : public Node
          pLogicalExpr = NULL;
          pEOS = NULL;
       }
-   ~IfThenStmt();
+   virtual ~IfThenStmt();
 
     IfThenStmt* newIfThenStmt()
       {
@@ -11571,7 +11571,7 @@ class ElseIfStmt : public Node
          pIfConstructName = NULL;
          pEOS = NULL;
       }
-   ~ElseIfStmt();
+   virtual ~ElseIfStmt();
 
     ElseIfStmt* newElseIfStmt()
       {
@@ -11611,7 +11611,7 @@ class ElseStmt : public Node
          pIfConstructName = NULL;
          pEOS = NULL;
       }
-   ~ElseStmt();
+   virtual ~ElseStmt();
 
     ElseStmt* newElseStmt()
       {
@@ -11647,7 +11647,7 @@ class EndIfStmt : public Node
          pIfConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndIfStmt();
+   virtual ~EndIfStmt();
 
     EndIfStmt* newEndIfStmt()
       {
@@ -11683,7 +11683,7 @@ class IfStmt : public Node
          pLogicalExpr = NULL;
          pActionStmt = NULL;
       }
-   ~IfStmt();
+   virtual ~IfStmt();
 
     IfStmt* newIfStmt()
       {
@@ -11719,7 +11719,7 @@ class CaseConstruct : public Node
          pCaseStmtAndBlockList = new std::vector<CaseStmtAndBlock*>();
          pEndSelectStmt = NULL;
       }
-   ~CaseConstruct();
+   virtual ~CaseConstruct();
 
     CaseConstruct* newCaseConstruct()
       {
@@ -11754,7 +11754,7 @@ class CaseStmtAndBlock : public Node
          pCaseStmt = NULL;
          pBlock = NULL;
       }
-   ~CaseStmtAndBlock();
+   virtual ~CaseStmtAndBlock();
 
     CaseStmtAndBlock* newCaseStmtAndBlock()
       {
@@ -11787,7 +11787,7 @@ class SelectCaseStmt : public Node
          pCaseExpr = NULL;
          pEOS = NULL;
       }
-   ~SelectCaseStmt();
+   virtual ~SelectCaseStmt();
 
     SelectCaseStmt* newSelectCaseStmt()
       {
@@ -11828,7 +11828,7 @@ class CaseStmt : public Node
          pCaseConstructName = NULL;
          pEOS = NULL;
       }
-   ~CaseStmt();
+   virtual ~CaseStmt();
 
     CaseStmt* newCaseStmt()
       {
@@ -11868,7 +11868,7 @@ class EndSelectStmt : public Node
          pCaseConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndSelectStmt();
+   virtual ~EndSelectStmt();
 
     EndSelectStmt* newEndSelectStmt()
       {
@@ -11902,7 +11902,7 @@ class CaseExpr : public Node
       {
          pExpr = NULL;
       }
-   ~CaseExpr();
+   virtual ~CaseExpr();
 
     CaseExpr* newCaseExpr()
       {
@@ -11928,7 +11928,7 @@ class CaseSelector : public Node
       {
          pCaseValueRangeList = NULL;
       }
-   ~CaseSelector();
+   virtual ~CaseSelector();
 
    enum OptionType
      {
@@ -11961,7 +11961,7 @@ class CaseValueRange : public Node
       {
          pCaseValue = NULL;
       }
-   ~CaseValueRange();
+   virtual ~CaseValueRange();
 
    enum OptionType
      {
@@ -11994,7 +11994,7 @@ class CaseValueRangeList : public Node
       {
          pCaseValueRangeList = new std::vector<CaseValueRange*>();
       }
-   ~CaseValueRangeList();
+   virtual ~CaseValueRangeList();
 
     CaseValueRangeList* newCaseValueRangeList()
       {
@@ -12020,7 +12020,7 @@ class CaseValue : public Node
       {
          pConstantExpr = NULL;
       }
-   ~CaseValue();
+   virtual ~CaseValue();
 
     CaseValue* newCaseValue()
       {
@@ -12048,7 +12048,7 @@ class SelectTypeConstruct : public Node
          pTypeGuardStmtAndBlockList = new std::vector<TypeGuardStmtAndBlock*>();
          pEndSelectTypeStmt = NULL;
       }
-   ~SelectTypeConstruct();
+   virtual ~SelectTypeConstruct();
 
     SelectTypeConstruct* newSelectTypeConstruct()
       {
@@ -12083,7 +12083,7 @@ class TypeGuardStmtAndBlock : public Node
          pTypeGuardStmt = NULL;
          pBlock = NULL;
       }
-   ~TypeGuardStmtAndBlock();
+   virtual ~TypeGuardStmtAndBlock();
 
     TypeGuardStmtAndBlock* newTypeGuardStmtAndBlock()
       {
@@ -12116,7 +12116,7 @@ class SelectTypeStmt : public Node
          pSelector = NULL;
          pEOS = NULL;
       }
-   ~SelectTypeStmt();
+   virtual ~SelectTypeStmt();
 
     SelectTypeStmt* newSelectTypeStmt()
       {
@@ -12157,7 +12157,7 @@ class TypeGuardStmt : public Node
          pDerivedTypeSpec = NULL;
          pTypeSpec = NULL;
       }
-   ~TypeGuardStmt();
+   virtual ~TypeGuardStmt();
 
    enum OptionType
      {
@@ -12204,7 +12204,7 @@ class EndSelectTypeStmt : public Node
          pSelectConstructName = NULL;
          pEOS = NULL;
       }
-   ~EndSelectTypeStmt();
+   virtual ~EndSelectTypeStmt();
 
     EndSelectTypeStmt* newEndSelectTypeStmt()
       {
@@ -12236,7 +12236,7 @@ class ExitStmt : public Node
          pConstructName = NULL;
          pEOS = NULL;
       }
-   ~ExitStmt();
+   virtual ~ExitStmt();
 
     ExitStmt* newExitStmt()
       {
@@ -12272,7 +12272,7 @@ class GotoStmt : public Node
          pLblRef = NULL;
          pEOS = NULL;
       }
-   ~GotoStmt();
+   virtual ~GotoStmt();
 
     GotoStmt* newGotoStmt()
       {
@@ -12309,7 +12309,7 @@ class ComputedGotoStmt : public Node
          pExpr = NULL;
          pEOS = NULL;
       }
-   ~ComputedGotoStmt();
+   virtual ~ComputedGotoStmt();
 
     ComputedGotoStmt* newComputedGotoStmt()
       {
@@ -12350,7 +12350,7 @@ class ArithmeticIfStmt : public Node
          pLblRef = NULL;
          pEOS = NULL;
       }
-   ~ArithmeticIfStmt();
+   virtual ~ArithmeticIfStmt();
 
     ArithmeticIfStmt* newArithmeticIfStmt()
       {
@@ -12389,7 +12389,7 @@ class ContinueStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~ContinueStmt();
+   virtual ~ContinueStmt();
 
     ContinueStmt* newContinueStmt()
       {
@@ -12421,7 +12421,7 @@ class StopStmt : public Node
          pStopCode = NULL;
          pEOS = NULL;
       }
-   ~StopStmt();
+   virtual ~StopStmt();
 
     StopStmt* newStopStmt()
       {
@@ -12457,7 +12457,7 @@ class ErrorStopStmt : public Node
          pStopCode = NULL;
          pEOS = NULL;
       }
-   ~ErrorStopStmt();
+   virtual ~ErrorStopStmt();
 
     ErrorStopStmt* newErrorStopStmt()
       {
@@ -12492,7 +12492,7 @@ class StopCode : public Node
          pIcon = NULL;
          pScon = NULL;
       }
-   ~StopCode();
+   virtual ~StopCode();
 
    enum OptionType
      {
@@ -12531,7 +12531,7 @@ class SyncAllStmt : public Node
          pEOS = NULL;
          pSyncStatList = NULL;
       }
-   ~SyncAllStmt();
+   virtual ~SyncAllStmt();
 
    enum OptionType
      {
@@ -12573,7 +12573,7 @@ class SyncStat : public Node
          pErrmsgVariable = NULL;
          pStatVariable = NULL;
       }
-   ~SyncStat();
+   virtual ~SyncStat();
 
    enum OptionType
      {
@@ -12610,7 +12610,7 @@ class SyncStatList : public Node
       {
          pSyncStatList = new std::vector<SyncStat*>();
       }
-   ~SyncStatList();
+   virtual ~SyncStatList();
 
     SyncStatList* newSyncStatList()
       {
@@ -12639,7 +12639,7 @@ class SyncImagesStmt : public Node
          pSyncStatList = NULL;
          pEOS = NULL;
       }
-   ~SyncImagesStmt();
+   virtual ~SyncImagesStmt();
 
     SyncImagesStmt* newSyncImagesStmt()
       {
@@ -12677,7 +12677,7 @@ class ImageSet : public Node
       {
          pIntExpr = NULL;
       }
-   ~ImageSet();
+   virtual ~ImageSet();
 
    enum OptionType
      {
@@ -12712,7 +12712,7 @@ class SyncMemoryStmt : public Node
          pEOS = NULL;
          pSyncStatList = NULL;
       }
-   ~SyncMemoryStmt();
+   virtual ~SyncMemoryStmt();
 
    enum OptionType
      {
@@ -12756,7 +12756,7 @@ class LockStmt : public Node
          pLockStatList = NULL;
          pEOS = NULL;
       }
-   ~LockStmt();
+   virtual ~LockStmt();
 
     LockStmt* newLockStmt()
       {
@@ -12795,7 +12795,7 @@ class LockStat : public Node
          pSyncStat = NULL;
          pLogicalVariable = NULL;
       }
-   ~LockStat();
+   virtual ~LockStat();
 
    enum OptionType
      {
@@ -12832,7 +12832,7 @@ class LockStatList : public Node
       {
          pLockStatList = new std::vector<LockStat*>();
       }
-   ~LockStatList();
+   virtual ~LockStatList();
 
     LockStatList* newLockStatList()
       {
@@ -12861,7 +12861,7 @@ class UnlockStmt : public Node
          pSyncStatList = NULL;
          pEOS = NULL;
       }
-   ~UnlockStmt();
+   virtual ~UnlockStmt();
 
     UnlockStmt* newUnlockStmt()
       {
@@ -12899,7 +12899,7 @@ class LockVariable : public Node
       {
          pVariable = NULL;
       }
-   ~LockVariable();
+   virtual ~LockVariable();
 
     LockVariable* newLockVariable()
       {
@@ -12927,7 +12927,7 @@ class PauseStmt : public Node
          pStopCode = NULL;
          pEOS = NULL;
       }
-   ~PauseStmt();
+   virtual ~PauseStmt();
 
     PauseStmt* newPauseStmt()
       {
@@ -12962,7 +12962,7 @@ class IoUnit : public Node
          pCharVariable = NULL;
          pIntExpr = NULL;
       }
-   ~IoUnit();
+   virtual ~IoUnit();
 
    enum OptionType
      {
@@ -13000,7 +13000,7 @@ class FileUnitNumber : public Node
       {
          pIntExpr = NULL;
       }
-   ~FileUnitNumber();
+   virtual ~FileUnitNumber();
 
     FileUnitNumber* newFileUnitNumber()
       {
@@ -13028,7 +13028,7 @@ class OpenStmt : public Node
          pConnectSpecList = NULL;
          pEOS = NULL;
       }
-   ~OpenStmt();
+   virtual ~OpenStmt();
 
     OpenStmt* newOpenStmt()
       {
@@ -13068,7 +13068,7 @@ class ConnectSpec : public Node
          pLblRef = NULL;
          pFileUnitNumber = NULL;
       }
-   ~ConnectSpec();
+   virtual ~ConnectSpec();
 
    enum OptionType
      {
@@ -13143,7 +13143,7 @@ class ConnectSpecList : public Node
       {
          pConnectSpecList = new std::vector<ConnectSpec*>();
       }
-   ~ConnectSpecList();
+   virtual ~ConnectSpecList();
 
     ConnectSpecList* newConnectSpecList()
       {
@@ -13169,7 +13169,7 @@ class FileNameExpr : public Node
       {
          pDefaultCharExpr = NULL;
       }
-   ~FileNameExpr();
+   virtual ~FileNameExpr();
 
     FileNameExpr* newFileNameExpr()
       {
@@ -13195,7 +13195,7 @@ class IomsgVariable : public Node
       {
          pDefaultCharExpr = NULL;
       }
-   ~IomsgVariable();
+   virtual ~IomsgVariable();
 
     IomsgVariable* newIomsgVariable()
       {
@@ -13223,7 +13223,7 @@ class CloseStmt : public Node
          pCloseSpecList = NULL;
          pEOS = NULL;
       }
-   ~CloseStmt();
+   virtual ~CloseStmt();
 
     CloseStmt* newCloseStmt()
       {
@@ -13261,7 +13261,7 @@ class CloseSpec : public Node
          pIntVariable = NULL;
          pFileUnitNumber = NULL;
       }
-   ~CloseSpec();
+   virtual ~CloseSpec();
 
    enum OptionType
      {
@@ -13313,7 +13313,7 @@ class CloseSpecList : public Node
       {
          pCloseSpecList = new std::vector<CloseSpec*>();
       }
-   ~CloseSpecList();
+   virtual ~CloseSpecList();
 
     CloseSpecList* newCloseSpecList()
       {
@@ -13343,7 +13343,7 @@ class ReadStmt : public Node
          pEOS = NULL;
          pIoControlSpecList = NULL;
       }
-   ~ReadStmt();
+   virtual ~ReadStmt();
 
    enum OptionType
      {
@@ -13395,7 +13395,7 @@ class WriteStmt : public Node
          pOutputItemList = NULL;
          pEOS = NULL;
       }
-   ~WriteStmt();
+   virtual ~WriteStmt();
 
     WriteStmt* newWriteStmt()
       {
@@ -13436,7 +13436,7 @@ class PrintStmt : public Node
          pOutputItemList = NULL;
          pEOS = NULL;
       }
-   ~PrintStmt();
+   virtual ~PrintStmt();
 
     PrintStmt* newPrintStmt()
       {
@@ -13482,7 +13482,7 @@ class IoControlSpec : public Node
          pFormat = NULL;
          pIoUnit = NULL;
       }
-   ~IoControlSpec();
+   virtual ~IoControlSpec();
 
    enum OptionType
      {
@@ -13565,7 +13565,7 @@ class IoControlSpecList : public Node
       {
          pIoControlSpecList = new std::vector<IoControlSpec*>();
       }
-   ~IoControlSpecList();
+   virtual ~IoControlSpecList();
 
     IoControlSpecList* newIoControlSpecList()
       {
@@ -13591,7 +13591,7 @@ class IdVariable : public Node
       {
          pIntVariable = NULL;
       }
-   ~IdVariable();
+   virtual ~IdVariable();
 
     IdVariable* newIdVariable()
       {
@@ -13618,7 +13618,7 @@ class Format : public Node
          pLabel = NULL;
          pDefaultCharExpr = NULL;
       }
-   ~Format();
+   virtual ~Format();
 
    enum OptionType
      {
@@ -13657,7 +13657,7 @@ class InputItem : public Node
          pIoImpliedDo = NULL;
          pVariable = NULL;
       }
-   ~InputItem();
+   virtual ~InputItem();
 
    enum OptionType
      {
@@ -13694,7 +13694,7 @@ class InputItemList : public Node
       {
          pInputItemList = new std::vector<InputItem*>();
       }
-   ~InputItemList();
+   virtual ~InputItemList();
 
     InputItemList* newInputItemList()
       {
@@ -13721,7 +13721,7 @@ class OutputItem : public Node
          pIoImpliedDo = NULL;
          pExpr = NULL;
       }
-   ~OutputItem();
+   virtual ~OutputItem();
 
    enum OptionType
      {
@@ -13758,7 +13758,7 @@ class OutputItemList : public Node
       {
          pOutputItemList = new std::vector<OutputItem*>();
       }
-   ~OutputItemList();
+   virtual ~OutputItemList();
 
     OutputItemList* newOutputItemList()
       {
@@ -13785,7 +13785,7 @@ class IoImpliedDo : public Node
          pIoImpliedDoObjectList = NULL;
          pIoImpliedDoControl = NULL;
       }
-   ~IoImpliedDo();
+   virtual ~IoImpliedDo();
 
     IoImpliedDo* newIoImpliedDo()
       {
@@ -13816,7 +13816,7 @@ class IoImpliedDoObject : public Node
          pOutputItem = NULL;
          pInputItem = NULL;
       }
-   ~IoImpliedDoObject();
+   virtual ~IoImpliedDoObject();
 
    enum OptionType
      {
@@ -13853,7 +13853,7 @@ class IoImpliedDoObjectList : public Node
       {
          pIoImpliedDoObjectList = new std::vector<IoImpliedDoObject*>();
       }
-   ~IoImpliedDoObjectList();
+   virtual ~IoImpliedDoObjectList();
 
     IoImpliedDoObjectList* newIoImpliedDoObjectList()
       {
@@ -13880,7 +13880,7 @@ class IoImpliedDoControl : public Node
          pDoVariable = NULL;
          pIntExpr = NULL;
       }
-   ~IoImpliedDoControl();
+   virtual ~IoImpliedDoControl();
 
     IoImpliedDoControl* newIoImpliedDoControl()
       {
@@ -13912,7 +13912,7 @@ class WaitStmt : public Node
          pWaitSpecList = NULL;
          pEOS = NULL;
       }
-   ~WaitStmt();
+   virtual ~WaitStmt();
 
     WaitStmt* newWaitStmt()
       {
@@ -13949,7 +13949,7 @@ class WaitSpec : public Node
          pLblRef = NULL;
          pFileUnitNumber = NULL;
       }
-   ~WaitSpec();
+   virtual ~WaitSpec();
 
    enum OptionType
      {
@@ -13999,7 +13999,7 @@ class WaitSpecList : public Node
       {
          pWaitSpecList = new std::vector<WaitSpec*>();
       }
-   ~WaitSpecList();
+   virtual ~WaitSpecList();
 
     WaitSpecList* newWaitSpecList()
       {
@@ -14028,7 +14028,7 @@ class BackspaceStmt : public Node
          pEOS = NULL;
          pFileUnitNumber = NULL;
       }
-   ~BackspaceStmt();
+   virtual ~BackspaceStmt();
 
    enum OptionType
      {
@@ -14076,7 +14076,7 @@ class EndfileStmt : public Node
          pEOS = NULL;
          pFileUnitNumber = NULL;
       }
-   ~EndfileStmt();
+   virtual ~EndfileStmt();
 
    enum OptionType
      {
@@ -14124,7 +14124,7 @@ class RewindStmt : public Node
          pEOS = NULL;
          pFileUnitNumber = NULL;
       }
-   ~RewindStmt();
+   virtual ~RewindStmt();
 
    enum OptionType
      {
@@ -14172,7 +14172,7 @@ class PositionSpec : public Node
          pIntVariable = NULL;
          pFileUnitNumber = NULL;
       }
-   ~PositionSpec();
+   virtual ~PositionSpec();
 
    enum OptionType
      {
@@ -14219,7 +14219,7 @@ class PositionSpecList : public Node
       {
          pPositionSpecList = new std::vector<PositionSpec*>();
       }
-   ~PositionSpecList();
+   virtual ~PositionSpecList();
 
     PositionSpecList* newPositionSpecList()
       {
@@ -14248,7 +14248,7 @@ class FlushStmt : public Node
          pEOS = NULL;
          pFileUnitNumber = NULL;
       }
-   ~FlushStmt();
+   virtual ~FlushStmt();
 
    enum OptionType
      {
@@ -14296,7 +14296,7 @@ class FlushSpec : public Node
          pIntVariable = NULL;
          pFileUnitNumber = NULL;
       }
-   ~FlushSpec();
+   virtual ~FlushSpec();
 
    enum OptionType
      {
@@ -14343,7 +14343,7 @@ class FlushSpecList : public Node
       {
          pFlushSpecList = new std::vector<FlushSpec*>();
       }
-   ~FlushSpecList();
+   virtual ~FlushSpecList();
 
     FlushSpecList* newFlushSpecList()
       {
@@ -14373,7 +14373,7 @@ class InquireStmt : public Node
          pEOS = NULL;
          pInquireSpecList = NULL;
       }
-   ~InquireStmt();
+   virtual ~InquireStmt();
 
    enum OptionType
      {
@@ -14429,7 +14429,7 @@ class InquireSpec : public Node
          pFileNameExpr = NULL;
          pFileUnitNumber = NULL;
       }
-   ~InquireSpec();
+   virtual ~InquireSpec();
 
    enum OptionType
      {
@@ -14524,7 +14524,7 @@ class InquireSpecList : public Node
       {
          pInquireSpecList = new std::vector<InquireSpec*>();
       }
-   ~InquireSpecList();
+   virtual ~InquireSpecList();
 
     InquireSpecList* newInquireSpecList()
       {
@@ -14552,7 +14552,7 @@ class FormatStmt : public Node
          pFormatSpecification = NULL;
          pEOS = NULL;
       }
-   ~FormatStmt();
+   virtual ~FormatStmt();
 
     FormatStmt* newFormatStmt()
       {
@@ -14587,7 +14587,7 @@ class FormatSpecification : public Node
          pFormatItems = NULL;
          pUnlimitedFormatItem = NULL;
       }
-   ~FormatSpecification();
+   virtual ~FormatSpecification();
 
    enum OptionType
      {
@@ -14624,7 +14624,7 @@ class FormatItems : public Node
       {
          pFormatItem = NULL;
       }
-   ~FormatItems();
+   virtual ~FormatItems();
 
    enum OptionType
      {
@@ -14661,7 +14661,7 @@ class FormatItem : public Node
          pControlEditDesc = NULL;
          pDataEditDesc = NULL;
       }
-   ~FormatItem();
+   virtual ~FormatItem();
 
    enum OptionType
      {
@@ -14712,7 +14712,7 @@ class UnlimitedFormatItem : public Node
       {
          pFormatItems = NULL;
       }
-   ~UnlimitedFormatItem();
+   virtual ~UnlimitedFormatItem();
 
     UnlimitedFormatItem* newUnlimitedFormatItem()
       {
@@ -14738,7 +14738,7 @@ class REditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~REditDesc();
+   virtual ~REditDesc();
 
     REditDesc* newREditDesc()
       {
@@ -14766,7 +14766,7 @@ class DataEditDesc : public Node
          pVEditDescList = NULL;
          pIcon = NULL;
       }
-   ~DataEditDesc();
+   virtual ~DataEditDesc();
 
    enum OptionType
      {
@@ -14819,7 +14819,7 @@ class WEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~WEditDesc();
+   virtual ~WEditDesc();
 
     WEditDesc* newWEditDesc()
       {
@@ -14845,7 +14845,7 @@ class MEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~MEditDesc();
+   virtual ~MEditDesc();
 
     MEditDesc* newMEditDesc()
       {
@@ -14871,7 +14871,7 @@ class DEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~DEditDesc();
+   virtual ~DEditDesc();
 
     DEditDesc* newDEditDesc()
       {
@@ -14897,7 +14897,7 @@ class EEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~EEditDesc();
+   virtual ~EEditDesc();
 
     EEditDesc* newEEditDesc()
       {
@@ -14923,7 +14923,7 @@ class VEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~VEditDesc();
+   virtual ~VEditDesc();
 
     VEditDesc* newVEditDesc()
       {
@@ -14949,7 +14949,7 @@ class VEditDescList : public Node
       {
          pVEditDescList = new std::vector<VEditDesc*>();
       }
-   ~VEditDescList();
+   virtual ~VEditDescList();
 
     VEditDescList* newVEditDescList()
       {
@@ -14981,7 +14981,7 @@ class ControlEditDesc : public Node
          pIcon = NULL;
          pPositionEditDesc = NULL;
       }
-   ~ControlEditDesc();
+   virtual ~ControlEditDesc();
 
    enum OptionType
      {
@@ -15044,7 +15044,7 @@ class KEditDesc : public Node
       {
          pSignedIntLiteralConstant = NULL;
       }
-   ~KEditDesc();
+   virtual ~KEditDesc();
 
     KEditDesc* newKEditDesc()
       {
@@ -15070,7 +15070,7 @@ class PositionEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~PositionEditDesc();
+   virtual ~PositionEditDesc();
 
    enum OptionType
      {
@@ -15105,7 +15105,7 @@ class NEditDesc : public Node
       {
          pIcon = NULL;
       }
-   ~NEditDesc();
+   virtual ~NEditDesc();
 
     NEditDesc* newNEditDesc()
       {
@@ -15130,7 +15130,7 @@ class SignEditDesc : public Node
     SignEditDesc()
       {
       }
-   ~SignEditDesc();
+   virtual ~SignEditDesc();
 
    enum OptionType
      {
@@ -15157,7 +15157,7 @@ class BlankInterpEditDesc : public Node
     BlankInterpEditDesc()
       {
       }
-   ~BlankInterpEditDesc();
+   virtual ~BlankInterpEditDesc();
 
    enum OptionType
      {
@@ -15183,7 +15183,7 @@ class RoundEditDesc : public Node
     RoundEditDesc()
       {
       }
-   ~RoundEditDesc();
+   virtual ~RoundEditDesc();
 
    enum OptionType
      {
@@ -15213,7 +15213,7 @@ class DecimalEditDesc : public Node
     DecimalEditDesc()
       {
       }
-   ~DecimalEditDesc();
+   virtual ~DecimalEditDesc();
 
    enum OptionType
      {
@@ -15240,7 +15240,7 @@ class CharStringEditDesc : public Node
       {
          pScon = NULL;
       }
-   ~CharStringEditDesc();
+   virtual ~CharStringEditDesc();
 
     CharStringEditDesc* newCharStringEditDesc()
       {
@@ -15270,7 +15270,7 @@ class MainProgram : public Node
          pInternalSubprogramPart = NULL;
          pEndProgramStmt = NULL;
       }
-   ~MainProgram();
+   virtual ~MainProgram();
 
     MainProgram* newMainProgram()
       {
@@ -15314,7 +15314,7 @@ class ProgramStmt : public Node
          pProgramName = NULL;
          pEOS = NULL;
       }
-   ~ProgramStmt();
+   virtual ~ProgramStmt();
 
     ProgramStmt* newProgramStmt()
       {
@@ -15350,7 +15350,7 @@ class EndProgramStmt : public Node
          pProgramName = NULL;
          pEOS = NULL;
       }
-   ~EndProgramStmt();
+   virtual ~EndProgramStmt();
 
     EndProgramStmt* newEndProgramStmt()
       {
@@ -15387,7 +15387,7 @@ class Module : public Node
          pModuleSubprogramPart = NULL;
          pEndModuleStmt = NULL;
       }
-   ~Module();
+   virtual ~Module();
 
     Module* newModule()
       {
@@ -15427,7 +15427,7 @@ class ModuleStmt : public Node
          pModuleName = NULL;
          pEOS = NULL;
       }
-   ~ModuleStmt();
+   virtual ~ModuleStmt();
 
     ModuleStmt* newModuleStmt()
       {
@@ -15463,7 +15463,7 @@ class EndModuleStmt : public Node
          pModuleName = NULL;
          pEOS = NULL;
       }
-   ~EndModuleStmt();
+   virtual ~EndModuleStmt();
 
     EndModuleStmt* newEndModuleStmt()
       {
@@ -15498,7 +15498,7 @@ class ModuleSubprogramPart : public Node
          pContainsStmt = NULL;
          pModuleSubprogramList = new std::vector<ModuleSubprogram*>();
       }
-   ~ModuleSubprogramPart();
+   virtual ~ModuleSubprogramPart();
 
     ModuleSubprogramPart* newModuleSubprogramPart()
       {
@@ -15530,7 +15530,7 @@ class ModuleSubprogram : public Node
          pSubroutineSubprogram = NULL;
          pFunctionSubprogram = NULL;
       }
-   ~ModuleSubprogram();
+   virtual ~ModuleSubprogram();
 
    enum OptionType
      {
@@ -15577,7 +15577,7 @@ class UseStmt : public Node
          pEOS = NULL;
          pRenameList = NULL;
       }
-   ~UseStmt();
+   virtual ~UseStmt();
 
    enum OptionType
      {
@@ -15629,7 +15629,7 @@ class ModuleNature : public Node
     ModuleNature()
       {
       }
-   ~ModuleNature();
+   virtual ~ModuleNature();
 
    enum OptionType
      {
@@ -15659,7 +15659,7 @@ class Rename : public Node
          pLocalName = NULL;
          pUseName = NULL;
       }
-   ~Rename();
+   virtual ~Rename();
 
    enum OptionType
      {
@@ -15704,7 +15704,7 @@ class RenameList : public Node
       {
          pRenameList = new std::vector<Rename*>();
       }
-   ~RenameList();
+   virtual ~RenameList();
 
     RenameList* newRenameList()
       {
@@ -15731,7 +15731,7 @@ class Only : public Node
          pRename = NULL;
          pOnlyUseName = NULL;
       }
-   ~Only();
+   virtual ~Only();
 
    enum OptionType
      {
@@ -15768,7 +15768,7 @@ class OnlyList : public Node
       {
          pOnlyList = new std::vector<Only*>();
       }
-   ~OnlyList();
+   virtual ~OnlyList();
 
     OnlyList* newOnlyList()
       {
@@ -15794,7 +15794,7 @@ class OnlyUseName : public Node
       {
          pIdent = NULL;
       }
-   ~OnlyUseName();
+   virtual ~OnlyUseName();
 
     OnlyUseName* newOnlyUseName()
       {
@@ -15821,7 +15821,7 @@ class LocalDefinedOperator : public Node
          pDefinedBinaryOp = NULL;
          pDefinedUnaryOp = NULL;
       }
-   ~LocalDefinedOperator();
+   virtual ~LocalDefinedOperator();
 
    enum OptionType
      {
@@ -15859,7 +15859,7 @@ class UseDefinedOperator : public Node
          pDefinedBinaryOp = NULL;
          pDefinedUnaryOp = NULL;
       }
-   ~UseDefinedOperator();
+   virtual ~UseDefinedOperator();
 
    enum OptionType
      {
@@ -15899,7 +15899,7 @@ class Submodule : public Node
          pModuleSubprogramPart = NULL;
          pEndSubmoduleStmt = NULL;
       }
-   ~Submodule();
+   virtual ~Submodule();
 
     Submodule* newSubmodule()
       {
@@ -15940,7 +15940,7 @@ class SubmoduleStmt : public Node
          pSubmoduleName = NULL;
          pEOS = NULL;
       }
-   ~SubmoduleStmt();
+   virtual ~SubmoduleStmt();
 
     SubmoduleStmt* newSubmoduleStmt()
       {
@@ -15979,7 +15979,7 @@ class ParentIdentifier : public Node
          pAncestorModuleName = NULL;
          pParentSubmoduleName = NULL;
       }
-   ~ParentIdentifier();
+   virtual ~ParentIdentifier();
 
     ParentIdentifier* newParentIdentifier()
       {
@@ -16011,7 +16011,7 @@ class EndSubmoduleStmt : public Node
          pSubmoduleName = NULL;
          pEOS = NULL;
       }
-   ~EndSubmoduleStmt();
+   virtual ~EndSubmoduleStmt();
 
     EndSubmoduleStmt* newEndSubmoduleStmt()
       {
@@ -16047,7 +16047,7 @@ class BlockData : public Node
          pSpecificationPart = NULL;
          pEndBlockDataStmt = NULL;
       }
-   ~BlockData();
+   virtual ~BlockData();
 
     BlockData* newBlockData()
       {
@@ -16083,7 +16083,7 @@ class BlockDataStmt : public Node
          pBlockDataName = NULL;
          pEOS = NULL;
       }
-   ~BlockDataStmt();
+   virtual ~BlockDataStmt();
 
     BlockDataStmt* newBlockDataStmt()
       {
@@ -16119,7 +16119,7 @@ class EndBlockDataStmt : public Node
          pEOS = NULL;
          pBlockDataName = NULL;
       }
-   ~EndBlockDataStmt();
+   virtual ~EndBlockDataStmt();
 
    enum OptionType
      {
@@ -16162,7 +16162,7 @@ class InterfaceBlock : public Node
          pInterfaceSpecificationList = new std::vector<InterfaceSpecification*>();
          pEndInterfaceStmt = NULL;
       }
-   ~InterfaceBlock();
+   virtual ~InterfaceBlock();
 
     InterfaceBlock* newInterfaceBlock()
       {
@@ -16197,7 +16197,7 @@ class InterfaceSpecification : public Node
          pProcedureStmt = NULL;
          pInterfaceBody = NULL;
       }
-   ~InterfaceSpecification();
+   virtual ~InterfaceSpecification();
 
    enum OptionType
      {
@@ -16236,7 +16236,7 @@ class InterfaceStmt : public Node
          pEOS = NULL;
          pGenericSpec = NULL;
       }
-   ~InterfaceStmt();
+   virtual ~InterfaceStmt();
 
    enum OptionType
      {
@@ -16279,7 +16279,7 @@ class EndInterfaceStmt : public Node
          pGenericSpec = NULL;
          pEOS = NULL;
       }
-   ~EndInterfaceStmt();
+   virtual ~EndInterfaceStmt();
 
     EndInterfaceStmt* newEndInterfaceStmt()
       {
@@ -16317,7 +16317,7 @@ class InterfaceBody : public Node
          pFunctionStmt = NULL;
          pEndFunctionStmt = NULL;
       }
-   ~InterfaceBody();
+   virtual ~InterfaceBody();
 
    enum OptionType
      {
@@ -16368,7 +16368,7 @@ class ProcedureStmt : public Node
          pProcedureNameList = NULL;
          pEOS = NULL;
       }
-   ~ProcedureStmt();
+   virtual ~ProcedureStmt();
 
    enum OptionType
      {
@@ -16409,7 +16409,7 @@ class ProcedureNameList : public Node
       {
          pProcedureNameList = new std::vector<ProcedureName*>();
       }
-   ~ProcedureNameList();
+   virtual ~ProcedureNameList();
 
     ProcedureNameList* newProcedureNameList()
       {
@@ -16437,7 +16437,7 @@ class GenericSpec : public Node
          pDefinedOperator = NULL;
          pGenericName = NULL;
       }
-   ~GenericSpec();
+   virtual ~GenericSpec();
 
    enum OptionType
      {
@@ -16479,7 +16479,7 @@ class DefinedIoGenericSpec : public Node
     DefinedIoGenericSpec()
       {
       }
-   ~DefinedIoGenericSpec();
+   virtual ~DefinedIoGenericSpec();
 
    enum OptionType
      {
@@ -16510,7 +16510,7 @@ class ImportStmt : public Node
          pEOS = NULL;
          pImportNameList = NULL;
       }
-   ~ImportStmt();
+   virtual ~ImportStmt();
 
    enum OptionType
      {
@@ -16551,7 +16551,7 @@ class ImportNameList : public Node
       {
          pImportNameList = new std::vector<ImportName*>();
       }
-   ~ImportNameList();
+   virtual ~ImportNameList();
 
     ImportNameList* newImportNameList()
       {
@@ -16579,7 +16579,7 @@ class ExternalStmt : public Node
          pExternalNameList = NULL;
          pEOS = NULL;
       }
-   ~ExternalStmt();
+   virtual ~ExternalStmt();
 
     ExternalStmt* newExternalStmt()
       {
@@ -16617,7 +16617,7 @@ class ProcedureDeclarationStmt : public Node
          pProcDeclList = NULL;
          pEOS = NULL;
       }
-   ~ProcedureDeclarationStmt();
+   virtual ~ProcedureDeclarationStmt();
 
     ProcedureDeclarationStmt* newProcedureDeclarationStmt()
       {
@@ -16660,7 +16660,7 @@ class ProcInterface : public Node
          pDeclarationTypeSpec = NULL;
          pInterfaceName = NULL;
       }
-   ~ProcInterface();
+   virtual ~ProcInterface();
 
    enum OptionType
      {
@@ -16699,7 +16699,7 @@ class ProcAttrSpec : public Node
          pProcLanguageBindingSpec = NULL;
          pAccessSpec = NULL;
       }
-   ~ProcAttrSpec();
+   virtual ~ProcAttrSpec();
 
    enum OptionType
      {
@@ -16744,7 +16744,7 @@ class ProcAttrSpecList : public Node
       {
          pProcAttrSpecList = new std::vector<ProcAttrSpec*>();
       }
-   ~ProcAttrSpecList();
+   virtual ~ProcAttrSpecList();
 
     ProcAttrSpecList* newProcAttrSpecList()
       {
@@ -16771,7 +16771,7 @@ class ProcDecl : public Node
          pProcedureEntityName = NULL;
          pProcPointerInit = NULL;
       }
-   ~ProcDecl();
+   virtual ~ProcDecl();
 
     ProcDecl* newProcDecl()
       {
@@ -16801,7 +16801,7 @@ class ProcDeclList : public Node
       {
          pProcDeclList = new std::vector<ProcDecl*>();
       }
-   ~ProcDeclList();
+   virtual ~ProcDeclList();
 
     ProcDeclList* newProcDeclList()
       {
@@ -16827,7 +16827,7 @@ class InterfaceName : public Node
       {
          pIdent = NULL;
       }
-   ~InterfaceName();
+   virtual ~InterfaceName();
 
     InterfaceName* newInterfaceName()
       {
@@ -16854,7 +16854,7 @@ class ProcPointerInit : public Node
          pInitialProcTarget = NULL;
          pNullInit = NULL;
       }
-   ~ProcPointerInit();
+   virtual ~ProcPointerInit();
 
    enum OptionType
      {
@@ -16891,7 +16891,7 @@ class InitialProcTarget : public Node
       {
          pProcedureName = NULL;
       }
-   ~InitialProcTarget();
+   virtual ~InitialProcTarget();
 
     InitialProcTarget* newInitialProcTarget()
       {
@@ -16919,7 +16919,7 @@ class IntrinsicStmt : public Node
          pIntrinsicProcedureNameList = NULL;
          pEOS = NULL;
       }
-   ~IntrinsicStmt();
+   virtual ~IntrinsicStmt();
 
     IntrinsicStmt* newIntrinsicStmt()
       {
@@ -16953,7 +16953,7 @@ class IntrinsicProcedureNameList : public Node
       {
          pIntrinsicProcedureNameList = new std::vector<IntrinsicProcedureName*>();
       }
-   ~IntrinsicProcedureNameList();
+   virtual ~IntrinsicProcedureNameList();
 
     IntrinsicProcedureNameList* newIntrinsicProcedureNameList()
       {
@@ -16980,7 +16980,7 @@ class FunctionReference : public Node
          pProcedureDesignator = NULL;
          pActualArgSpecList = NULL;
       }
-   ~FunctionReference();
+   virtual ~FunctionReference();
 
     FunctionReference* newFunctionReference()
       {
@@ -17013,7 +17013,7 @@ class CallStmt : public Node
          pActualArgSpecList = NULL;
          pEOS = NULL;
       }
-   ~CallStmt();
+   virtual ~CallStmt();
 
     CallStmt* newCallStmt()
       {
@@ -17053,7 +17053,7 @@ class ProcedureDesignator : public Node
          pBindingName = NULL;
          pProcedureName = NULL;
       }
-   ~ProcedureDesignator();
+   virtual ~ProcedureDesignator();
 
    enum OptionType
      {
@@ -17095,7 +17095,7 @@ class ActualArgSpec : public Node
          pKeyword = NULL;
          pActualArg = NULL;
       }
-   ~ActualArgSpec();
+   virtual ~ActualArgSpec();
 
     ActualArgSpec* newActualArgSpec()
       {
@@ -17125,7 +17125,7 @@ class ActualArgSpecList : public Node
       {
          pActualArgSpecList = new std::vector<ActualArgSpec*>();
       }
-   ~ActualArgSpecList();
+   virtual ~ActualArgSpecList();
 
     ActualArgSpecList* newActualArgSpecList()
       {
@@ -17152,7 +17152,7 @@ class ActualArg : public Node
          pAltReturnSpec = NULL;
          pExpr = NULL;
       }
-   ~ActualArg();
+   virtual ~ActualArg();
 
    enum OptionType
      {
@@ -17189,7 +17189,7 @@ class AltReturnSpec : public Node
       {
          pLabel = NULL;
       }
-   ~AltReturnSpec();
+   virtual ~AltReturnSpec();
 
     AltReturnSpec* newAltReturnSpec()
       {
@@ -17215,7 +17215,7 @@ class Prefix : public Node
       {
          pPrefixSpecList = new std::vector<PrefixSpec*>();
       }
-   ~Prefix();
+   virtual ~Prefix();
 
     Prefix* newPrefix()
       {
@@ -17241,7 +17241,7 @@ class PrefixSpec : public Node
       {
          pDeclarationTypeSpec = NULL;
       }
-   ~PrefixSpec();
+   virtual ~PrefixSpec();
 
    enum OptionType
      {
@@ -17282,7 +17282,7 @@ class FunctionSubprogram : public Node
          pInternalSubprogramPart = NULL;
          pEndFunctionStmt = NULL;
       }
-   ~FunctionSubprogram();
+   virtual ~FunctionSubprogram();
 
     FunctionSubprogram* newFunctionSubprogram()
       {
@@ -17329,7 +17329,7 @@ class FunctionStmt : public Node
          pSuffix = NULL;
          pEOS = NULL;
       }
-   ~FunctionStmt();
+   virtual ~FunctionStmt();
 
     FunctionStmt* newFunctionStmt()
       {
@@ -17375,7 +17375,7 @@ class ProcLanguageBindingSpec : public Node
       {
          pLanguageBindingSpec = NULL;
       }
-   ~ProcLanguageBindingSpec();
+   virtual ~ProcLanguageBindingSpec();
 
     ProcLanguageBindingSpec* newProcLanguageBindingSpec()
       {
@@ -17401,7 +17401,7 @@ class DummyArgName : public Node
       {
          pIdent = NULL;
       }
-   ~DummyArgName();
+   virtual ~DummyArgName();
 
     DummyArgName* newDummyArgName()
       {
@@ -17428,7 +17428,7 @@ class Suffix : public Node
          pResultName = NULL;
          pProcLanguageBindingSpec = NULL;
       }
-   ~Suffix();
+   virtual ~Suffix();
 
    enum OptionType
      {
@@ -17467,7 +17467,7 @@ class EndFunctionStmt : public Node
          pFunctionName = NULL;
          pEOS = NULL;
       }
-   ~EndFunctionStmt();
+   virtual ~EndFunctionStmt();
 
     EndFunctionStmt* newEndFunctionStmt()
       {
@@ -17505,7 +17505,7 @@ class SubroutineSubprogram : public Node
          pInternalSubprogramPart = NULL;
          pEndSubroutineStmt = NULL;
       }
-   ~SubroutineSubprogram();
+   virtual ~SubroutineSubprogram();
 
     SubroutineSubprogram* newSubroutineSubprogram()
       {
@@ -17552,7 +17552,7 @@ class SubroutineStmt : public Node
          pDummyArgList = NULL;
          pProcLanguageBindingSpec = NULL;
       }
-   ~SubroutineStmt();
+   virtual ~SubroutineStmt();
 
    enum OptionType
      {
@@ -17605,7 +17605,7 @@ class DummyArg : public Node
       {
          pDummyArgName = NULL;
       }
-   ~DummyArg();
+   virtual ~DummyArg();
 
    enum OptionType
      {
@@ -17638,7 +17638,7 @@ class DummyArgList : public Node
       {
          pDummyArgList = new std::vector<DummyArg*>();
       }
-   ~DummyArgList();
+   virtual ~DummyArgList();
 
     DummyArgList* newDummyArgList()
       {
@@ -17666,7 +17666,7 @@ class EndSubroutineStmt : public Node
          pSubroutineName = NULL;
          pEOS = NULL;
       }
-   ~EndSubroutineStmt();
+   virtual ~EndSubroutineStmt();
 
     EndSubroutineStmt* newEndSubroutineStmt()
       {
@@ -17704,7 +17704,7 @@ class SeparateModuleSubprogram : public Node
          pInternalSubprogramPart = NULL;
          pEndMpSubprogramStmt = NULL;
       }
-   ~SeparateModuleSubprogram();
+   virtual ~SeparateModuleSubprogram();
 
     SeparateModuleSubprogram* newSeparateModuleSubprogram()
       {
@@ -17748,7 +17748,7 @@ class MpSubprogramStmt : public Node
          pProcedureName = NULL;
          pEOS = NULL;
       }
-   ~MpSubprogramStmt();
+   virtual ~MpSubprogramStmt();
 
     MpSubprogramStmt* newMpSubprogramStmt()
       {
@@ -17784,7 +17784,7 @@ class EndMpSubprogramStmt : public Node
          pProcedureName = NULL;
          pEOS = NULL;
       }
-   ~EndMpSubprogramStmt();
+   virtual ~EndMpSubprogramStmt();
 
     EndMpSubprogramStmt* newEndMpSubprogramStmt()
       {
@@ -17822,7 +17822,7 @@ class EntryStmt : public Node
          pDummyArgList = NULL;
          pSuffix = NULL;
       }
-   ~EntryStmt();
+   virtual ~EntryStmt();
 
    enum OptionType
      {
@@ -17873,7 +17873,7 @@ class ReturnStmt : public Node
          pExpr = NULL;
          pEOS = NULL;
       }
-   ~ReturnStmt();
+   virtual ~ReturnStmt();
 
     ReturnStmt* newReturnStmt()
       {
@@ -17908,7 +17908,7 @@ class ContainsStmt : public Node
          pLabel = NULL;
          pEOS = NULL;
       }
-   ~ContainsStmt();
+   virtual ~ContainsStmt();
 
     ContainsStmt* newContainsStmt()
       {
@@ -17942,7 +17942,7 @@ class StmtFunctionStmt : public Node
          pExpr = NULL;
          pEOS = NULL;
       }
-   ~StmtFunctionStmt();
+   virtual ~StmtFunctionStmt();
 
     StmtFunctionStmt* newStmtFunctionStmt()
       {
@@ -17984,7 +17984,7 @@ class AncestorModuleName : public Node
       {
          pIdent = NULL;
       }
-   ~AncestorModuleName();
+   virtual ~AncestorModuleName();
 
     AncestorModuleName* newAncestorModuleName()
       {
@@ -18010,7 +18010,7 @@ class ArgName : public Node
       {
          pIdent = NULL;
       }
-   ~ArgName();
+   virtual ~ArgName();
 
     ArgName* newArgName()
       {
@@ -18036,7 +18036,7 @@ class ArrayName : public Node
       {
          pIdent = NULL;
       }
-   ~ArrayName();
+   virtual ~ArrayName();
 
     ArrayName* newArrayName()
       {
@@ -18062,7 +18062,7 @@ class AssociateConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~AssociateConstructName();
+   virtual ~AssociateConstructName();
 
     AssociateConstructName* newAssociateConstructName()
       {
@@ -18088,7 +18088,7 @@ class AssociateName : public Node
       {
          pIdent = NULL;
       }
-   ~AssociateName();
+   virtual ~AssociateName();
 
     AssociateName* newAssociateName()
       {
@@ -18114,7 +18114,7 @@ class BindingName : public Node
       {
          pIdent = NULL;
       }
-   ~BindingName();
+   virtual ~BindingName();
 
     BindingName* newBindingName()
       {
@@ -18140,7 +18140,7 @@ class BlockConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~BlockConstructName();
+   virtual ~BlockConstructName();
 
     BlockConstructName* newBlockConstructName()
       {
@@ -18166,7 +18166,7 @@ class BlockDataName : public Node
       {
          pIdent = NULL;
       }
-   ~BlockDataName();
+   virtual ~BlockDataName();
 
     BlockDataName* newBlockDataName()
       {
@@ -18192,7 +18192,7 @@ class CaseConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~CaseConstructName();
+   virtual ~CaseConstructName();
 
     CaseConstructName* newCaseConstructName()
       {
@@ -18218,7 +18218,7 @@ class CoarrayName : public Node
       {
          pIdent = NULL;
       }
-   ~CoarrayName();
+   virtual ~CoarrayName();
 
     CoarrayName* newCoarrayName()
       {
@@ -18244,7 +18244,7 @@ class CommonBlockName : public Node
       {
          pIdent = NULL;
       }
-   ~CommonBlockName();
+   virtual ~CommonBlockName();
 
     CommonBlockName* newCommonBlockName()
       {
@@ -18270,7 +18270,7 @@ class ComponentName : public Node
       {
          pIdent = NULL;
       }
-   ~ComponentName();
+   virtual ~ComponentName();
 
     ComponentName* newComponentName()
       {
@@ -18296,7 +18296,7 @@ class ConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~ConstructName();
+   virtual ~ConstructName();
 
     ConstructName* newConstructName()
       {
@@ -18322,7 +18322,7 @@ class CriticalConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~CriticalConstructName();
+   virtual ~CriticalConstructName();
 
     CriticalConstructName* newCriticalConstructName()
       {
@@ -18348,7 +18348,7 @@ class DataPointerComponentName : public Node
       {
          pIdent = NULL;
       }
-   ~DataPointerComponentName();
+   virtual ~DataPointerComponentName();
 
     DataPointerComponentName* newDataPointerComponentName()
       {
@@ -18374,7 +18374,7 @@ class DoConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~DoConstructName();
+   virtual ~DoConstructName();
 
     DoConstructName* newDoConstructName()
       {
@@ -18400,7 +18400,7 @@ class EntityName : public Node
       {
          pIdent = NULL;
       }
-   ~EntityName();
+   virtual ~EntityName();
 
     EntityName* newEntityName()
       {
@@ -18426,7 +18426,7 @@ class EntryName : public Node
       {
          pIdent = NULL;
       }
-   ~EntryName();
+   virtual ~EntryName();
 
     EntryName* newEntryName()
       {
@@ -18452,7 +18452,7 @@ class ExternalName : public Node
       {
          pIdent = NULL;
       }
-   ~ExternalName();
+   virtual ~ExternalName();
 
     ExternalName* newExternalName()
       {
@@ -18478,7 +18478,7 @@ class FinalSubroutineName : public Node
       {
          pIdent = NULL;
       }
-   ~FinalSubroutineName();
+   virtual ~FinalSubroutineName();
 
     FinalSubroutineName* newFinalSubroutineName()
       {
@@ -18504,7 +18504,7 @@ class ForallConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~ForallConstructName();
+   virtual ~ForallConstructName();
 
     ForallConstructName* newForallConstructName()
       {
@@ -18530,7 +18530,7 @@ class FunctionName : public Node
       {
          pIdent = NULL;
       }
-   ~FunctionName();
+   virtual ~FunctionName();
 
     FunctionName* newFunctionName()
       {
@@ -18556,7 +18556,7 @@ class GenericName : public Node
       {
          pIdent = NULL;
       }
-   ~GenericName();
+   virtual ~GenericName();
 
     GenericName* newGenericName()
       {
@@ -18582,7 +18582,7 @@ class IfConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~IfConstructName();
+   virtual ~IfConstructName();
 
     IfConstructName* newIfConstructName()
       {
@@ -18608,7 +18608,7 @@ class ImportName : public Node
       {
          pIdent = NULL;
       }
-   ~ImportName();
+   virtual ~ImportName();
 
     ImportName* newImportName()
       {
@@ -18634,7 +18634,7 @@ class IndexName : public Node
       {
          pIdent = NULL;
       }
-   ~IndexName();
+   virtual ~IndexName();
 
     IndexName* newIndexName()
       {
@@ -18660,7 +18660,7 @@ class IntrinsicProcedureName : public Node
       {
          pIdent = NULL;
       }
-   ~IntrinsicProcedureName();
+   virtual ~IntrinsicProcedureName();
 
     IntrinsicProcedureName* newIntrinsicProcedureName()
       {
@@ -18686,7 +18686,7 @@ class LocalName : public Node
       {
          pIdent = NULL;
       }
-   ~LocalName();
+   virtual ~LocalName();
 
     LocalName* newLocalName()
       {
@@ -18712,7 +18712,7 @@ class ModuleName : public Node
       {
          pIdent = NULL;
       }
-   ~ModuleName();
+   virtual ~ModuleName();
 
     ModuleName* newModuleName()
       {
@@ -18738,7 +18738,7 @@ class Name : public Node
       {
          pIdent = NULL;
       }
-   ~Name();
+   virtual ~Name();
 
     Name* newName()
       {
@@ -18764,7 +18764,7 @@ class NamelistGroupName : public Node
       {
          pIdent = NULL;
       }
-   ~NamelistGroupName();
+   virtual ~NamelistGroupName();
 
     NamelistGroupName* newNamelistGroupName()
       {
@@ -18790,7 +18790,7 @@ class ObjectName : public Node
       {
          pIdent = NULL;
       }
-   ~ObjectName();
+   virtual ~ObjectName();
 
     ObjectName* newObjectName()
       {
@@ -18816,7 +18816,7 @@ class ParentSubmoduleName : public Node
       {
          pIdent = NULL;
       }
-   ~ParentSubmoduleName();
+   virtual ~ParentSubmoduleName();
 
     ParentSubmoduleName* newParentSubmoduleName()
       {
@@ -18842,7 +18842,7 @@ class ParentTypeName : public Node
       {
          pIdent = NULL;
       }
-   ~ParentTypeName();
+   virtual ~ParentTypeName();
 
     ParentTypeName* newParentTypeName()
       {
@@ -18868,7 +18868,7 @@ class PartName : public Node
       {
          pIdent = NULL;
       }
-   ~PartName();
+   virtual ~PartName();
 
     PartName* newPartName()
       {
@@ -18894,7 +18894,7 @@ class ProcedureComponentName : public Node
       {
          pIdent = NULL;
       }
-   ~ProcedureComponentName();
+   virtual ~ProcedureComponentName();
 
     ProcedureComponentName* newProcedureComponentName()
       {
@@ -18920,7 +18920,7 @@ class ProcedureEntityName : public Node
       {
          pIdent = NULL;
       }
-   ~ProcedureEntityName();
+   virtual ~ProcedureEntityName();
 
     ProcedureEntityName* newProcedureEntityName()
       {
@@ -18946,7 +18946,7 @@ class ProcedureName : public Node
       {
          pIdent = NULL;
       }
-   ~ProcedureName();
+   virtual ~ProcedureName();
 
     ProcedureName* newProcedureName()
       {
@@ -18972,7 +18972,7 @@ class ProcEntityName : public Node
       {
          pIdent = NULL;
       }
-   ~ProcEntityName();
+   virtual ~ProcEntityName();
 
     ProcEntityName* newProcEntityName()
       {
@@ -18998,7 +18998,7 @@ class ProgramName : public Node
       {
          pIdent = NULL;
       }
-   ~ProgramName();
+   virtual ~ProgramName();
 
     ProgramName* newProgramName()
       {
@@ -19024,7 +19024,7 @@ class ResultName : public Node
       {
          pIdent = NULL;
       }
-   ~ResultName();
+   virtual ~ResultName();
 
     ResultName* newResultName()
       {
@@ -19050,7 +19050,7 @@ class ScalarIntConstantName : public Node
       {
          pIdent = NULL;
       }
-   ~ScalarIntConstantName();
+   virtual ~ScalarIntConstantName();
 
     ScalarIntConstantName* newScalarIntConstantName()
       {
@@ -19076,7 +19076,7 @@ class ScalarIntVariableName : public Node
       {
          pIdent = NULL;
       }
-   ~ScalarIntVariableName();
+   virtual ~ScalarIntVariableName();
 
     ScalarIntVariableName* newScalarIntVariableName()
       {
@@ -19102,7 +19102,7 @@ class ScalarVariableName : public Node
       {
          pIdent = NULL;
       }
-   ~ScalarVariableName();
+   virtual ~ScalarVariableName();
 
     ScalarVariableName* newScalarVariableName()
       {
@@ -19128,7 +19128,7 @@ class SelectConstructName : public Node
       {
          pIdent = NULL;
       }
-   ~SelectConstructName();
+   virtual ~SelectConstructName();
 
     SelectConstructName* newSelectConstructName()
       {
@@ -19154,7 +19154,7 @@ class SubmoduleName : public Node
       {
          pIdent = NULL;
       }
-   ~SubmoduleName();
+   virtual ~SubmoduleName();
 
     SubmoduleName* newSubmoduleName()
       {
@@ -19180,7 +19180,7 @@ class SubroutineName : public Node
       {
          pIdent = NULL;
       }
-   ~SubroutineName();
+   virtual ~SubroutineName();
 
     SubroutineName* newSubroutineName()
       {
@@ -19206,7 +19206,7 @@ class TypeName : public Node
       {
          pIdent = NULL;
       }
-   ~TypeName();
+   virtual ~TypeName();
 
     TypeName* newTypeName()
       {
@@ -19232,7 +19232,7 @@ class TypeParamName : public Node
       {
          pIdent = NULL;
       }
-   ~TypeParamName();
+   virtual ~TypeParamName();
 
     TypeParamName* newTypeParamName()
       {
@@ -19258,7 +19258,7 @@ class UseName : public Node
       {
          pIdent = NULL;
       }
-   ~UseName();
+   virtual ~UseName();
 
     UseName* newUseName()
       {
@@ -19284,7 +19284,7 @@ class ExternalNameList : public Node
       {
          pExternalNameList = new std::vector<ExternalName*>();
       }
-   ~ExternalNameList();
+   virtual ~ExternalNameList();
 
     ExternalNameList* newExternalNameList()
       {
@@ -19310,7 +19310,7 @@ class LabelList : public Node
       {
          pLblRefList = new std::vector<LblRef*>();
       }
-   ~LabelList();
+   virtual ~LabelList();
 
     LabelList* newLabelList()
       {
