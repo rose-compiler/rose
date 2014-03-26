@@ -1868,11 +1868,13 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
       /*! A declaration can be of either class, struct, or union */
           enum class_types
              {
-               e_class,             /*!< class declaration (default) */
-               e_struct,            /*!< struct declaration */
-               e_union,             /*!< union declaration */
+               e_class,              /*!< class declaration (default) */
+               e_struct,             /*!< struct declaration */
+               e_union,              /*!< union declaration */
                e_template_parameter, /*!< type parameter in a template declaration */
-               e_java_parameter      /*!< A Java parameter type */
+               e_java_interface,     /*!< A Java interface type declaration */
+               e_java_enum,          /*!< A Java enum type declaration */
+               e_java_parameter      /*!< A Java parameter type declaration */
              };
 
           virtual SgName get_qualified_name() const;

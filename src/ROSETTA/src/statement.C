@@ -1425,6 +1425,9 @@ Grammar::setUpStatements ()
      ClassDeclaration.setDataPrototype ( "bool", "explicit_enum", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     ClassDeclaration.setDataPrototype ( "bool", "explicit_anonymous", "= false",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      /* driscoll6 (7/19/11) support for python decorators */
      ClassDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

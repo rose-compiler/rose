@@ -535,6 +535,8 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 0
      UntypedFunctionDeclaration.setDataPrototype     ( "UntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -542,8 +544,8 @@ Grammar::setUpNodes ()
 
   // These are derived from UntypedFunctionDeclaration
      UntypedProgramHeaderDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_PROGRAM_HEADER_DECLARATION", "../Grammar/LocatedNode.code");
-     UntypedProgramHeaderDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // UntypedProgramHeaderDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedSubroutineDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
 
      UntypedModuleDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
