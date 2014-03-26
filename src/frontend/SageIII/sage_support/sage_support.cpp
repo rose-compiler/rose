@@ -4565,13 +4565,46 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                if ( get_Java_only() == true )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+                    //
+                    // PC 03/20/14 - This invocation of build_Java_AST will first invoke Javac (if the -rose:skip_syntax_check 
+                    //               option was not requested) to check whether or not the input is correct.  In such a case,
+                    //               if the input is incorrect then processing is stopped and the return code produced by javac
+                    //               is returned here.  If, on the other hand, the input is correct then processing continues with
+                    //               an invocation of the Java-ROSE translator. When Java-ROSE detects a fatal error, it exits the
+                    //               program instead of returning a code. Thus, only the javac error code ever reaches this point!
+                    //               If the Java-ROSE translator encounters a recoverable error, it sets the ecjErrorCode to
+                    //               indicate that an error was detected and continues with the translation.
+                    //
+                    //               SUGGESTION: The fact that this arrangement requires so much explanation suggests that it's
+                    //               not a good one.  For clarity, I would have factored the syntax check out of the build_Java_AST
+                    //               function like this:
+                    // 
+                    //                       if (syntaxCheckInputCode == true) {
+                    //                           frontendErrorLevel = syntaxCheck(argv, inputCommandLine);
+                    //                           this -> set_javacErrorCode(frontendErrorLevel);
+                    //                       }
+                    //                       if (frontendErrorLevel == 0) { // if the syntax check was successful...
+                    //                           frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
+                    //                           this -> set_ecjErrorCode(frontendErrorLevel);
+                    //                           /* 
+                    //                              I still think it's prefarable to let the translator set this code rather than
+                    //                              having the C++ function (JavaParserActionRose.C) return a code to a Java
+                    //                              method (JavaTraversal.java) which in turn would return that code (indirectly)
+                    //                              to this function.
+                    //                           */
+                    //                       }
+                    //
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
                     this -> set_javacErrorCode(frontendErrorLevel);
-                    frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    if (this->get_project()->get_keep_going() == false)
+                    {
+                        frontendErrorLevel = 0; // PC: Always keep going for Java!
+                    }
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
                                    "ROSE was not configured to support the Java frontend.");
 #endif
+
                   }
                  else
                   {
@@ -4943,7 +4976,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                  // 1. We already failed the compilation of the ROSE unparsed file.
                  // 2. Now we tried to compile the original input file --
-                 //    what was just compiled above -- and failed also.
+                 //    that was just compiled above -- and failed also.
                     if (this->get_unparsedFileFailedCompilation())
                        {
                          this->set_backendCompilerErrorCode(-1);
@@ -4965,15 +4998,34 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          returnValueForCompiler = this->compileOutput(argv, fileNameIndex);
                        }
                   }
+               //
+               // Note that in the case of java, a correct unparsed file may not compile because it 
+               // depends on another file that has errors.  We test for this condition by checking
+               // whether or not the original input file compiles correctly with javac.
+               //
+               // Note that the fact that Javac fails on the original input does not prove that 
+               // the unparsed file is correct. It simply proves that the input file is incorrect.
+               //
+               else if (get_Java_only() == true) {
+                   compilerCmdLine[compilerCmdLine.size() - 1] = this -> get_sourceFileNameWithPath();
+                   int original_code = systemFromVector(compilerCmdLine);
+                   if (original_code != 0) { // The original file is erroneous too?
+                       returnValueForCompiler = 0;
+                       this->set_backendCompilerErrorCode(0);
+                       this -> set_ecjErrorCode(1); // Report this error as an ECJ error.
+                   }
+               }
              }
+
           //
           // If we are processing Java, ...
           //
           if (get_Java_only() == true) {
               //
-              // Report if an error detected only while compilng the output file?
+              // Report if an error detected only while compiling the output file?
               //
               if (this -> get_javacErrorCode()                   == 0 &&
+                  this -> get_ecjErrorCode()                     == 0 &&
                   this -> get_frontendErrorCode()                == 0 &&
                   this -> get_project() -> get_midendErrorCode() == 0 &&
                   this -> get_unparserErrorCode()                == 0 &&
@@ -4987,7 +5039,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               // Report Error or Success of this translation.
               //
               if (this -> get_javacErrorCode() != 0) {
-                  cout << "SYNTAX ERROR(s) found in "
+                  cout << "Javac COMPILATION ERROR(s) found in "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+              }
+              else if (this -> get_ecjErrorCode() != 0) {
+                  cout << "ECJ COMPILATION ERROR(s) found in "
                        << this -> getFileName()
                        << endl;
                   cout.flush();
@@ -5006,6 +5064,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        << this -> getFileName()
                        << endl;
                   cout.flush();
+              }
+
+              if (this->get_project()->get_keep_going() == false) {
+                  this -> set_javacErrorCode(0);           // keep going !!!
+                  this -> set_ecjErrorCode(0);             // keep going !!!
+                  this -> set_frontendErrorCode(0);        // keep going !!!
+                  this -> set_unparserErrorCode(0);        // keep going !!!
+                  this -> set_backendCompilerErrorCode(0); // keep going !!!
               }
           }
          }
@@ -5234,6 +5300,9 @@ SgProject::compileOutput()
               else
               {
                   localErrorCode = file.compileOutput(0);
+                  if (get_Java_only() && this->get_keep_going() == false) {
+                      localErrorCode = 0; // PC: Always keep going for Java!
+                  }
               }
 
               if (localErrorCode > errorCode)
