@@ -570,7 +570,7 @@ $(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf ss_java_suppo
 
 
 # DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
-# RPM (3/20/2014): To reenable these tests, enable the first line (TEST_TARGETS) and delte the second (MOSTLYCLEANFILES).
+# RPM (3/20/2014): To reenable these tests, enable the first line (TEST_TARGETS) and delete the second (MOSTLYCLEANFILES).
 # TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
 MOSTLYCLEANFILES += $(SS_JAVA_TEST_TARGETS) $(SS_JAVA_TEST_TARGETS:.passed=.failed)
 
@@ -763,6 +763,21 @@ test_12.passed: injectSnippet
 
 test_java_1.passed:
 	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
+
+
+# TEST_TARGETS += testJava2014_01.passed 
+# EXTRA_DIST += SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java
+testJava2014_01.passed: injectSnippet SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=Snippet2014_01.java,Snippet2014_01.basic		\
+		SPECIMEN=SmallSpecimensJava/Specimen2014_01.java	\
+		IPOINT=Specimen2014_01.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		$(JAVA_INJECTION_TEST) $@
+
 
 
 # DQ: Tests that I can use to vizualize the whole AST (for debugging).

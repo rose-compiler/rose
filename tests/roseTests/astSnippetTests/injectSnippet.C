@@ -331,9 +331,11 @@ main(int argc, char *argv[])
 #endif
 
     // Unparse the modified source code
-#if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
+#if 1 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
-#elif 0
+#endif
+// #elif 0
+#if 0
     // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
     printf ("Generate the Whole AST graph! \n");
     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
