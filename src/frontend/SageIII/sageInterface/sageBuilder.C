@@ -15184,11 +15184,25 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                break;
              }
 
+       // DQ (3/21/2014): I think we need this.
+          case V_SgTryStmt:
+             {
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
        // DQ (3/19/2014): Just found this case in a few of the CWE Java snippet tests.
           case V_SgCatchStatementSeq:
              {
             // DQ (3/19/2014): Note sure that we need to handle this specific case.
 
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -15200,6 +15214,12 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                SgCatchOptionStmt* catchOptionStatement_copy     = isSgCatchOptionStmt(node_copy);
                ROSE_ASSERT(catchOptionStatement_copy);
 
+               printf ("Need to check the symbol table of the SgCatchOptionStmt (which is a SgScopeStatement) \n");
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
