@@ -17,6 +17,21 @@ typedef boost::shared_ptr<class SnippetFile> SnippetFilePtr;
 /** Smart pointer to a Snippet object. Snippet objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class Snippet> SnippetPtr;
 
+/** Information about something that was inserted.
+ *
+ *  A record of what was inserted, where it came from, and where it was inserted. */
+struct SnippetInsertion {
+    SgNode *inserted;                                   /**< What was inserted */
+    SgNode *original;                                   /**< Copied from this node of the snippet file */
+    SgNode *insertedBefore;                             /**< Inserted before this node in the target file */
+    SnippetInsertion()
+        : inserted(NULL), original(NULL), insertedBefore(NULL) {}
+    SnippetInsertion(SgNode *inserted, SgNode *original, SgNode *insertedBefore)
+        : inserted(inserted), original(original), insertedBefore(insertedBefore) {}
+};
+
+std::ostream& operator<<(std::ostream&, const SnippetInsertion&);
+
 /** Represents a source file containing related snippets.
  *
  *  See Snippet class for top-level documentation.
@@ -33,23 +48,26 @@ typedef boost::shared_ptr<class Snippet> SnippetPtr;
  *  creating a new one.  The lookup is performed according to the source file name supplied to the instance() constructor (no
  *  attempt is made to determine when unequal names resolve to the same source file). */
 class SnippetFile: public boost::enable_shared_from_this<SnippetFile> {
+    friend class Snippet;
 private:
-    std::string fileName;                       // non-canonical source file name
-    SgSourceFile *ast;                          // AST corresponding to the file; null after parse errors
+    std::string fileName;                               // non-canonical source file name
+    SgSourceFile *ast;                                  // AST corresponding to the file; null after parse errors
 
     typedef Map<std::string/*functionName*/, std::vector<SgFunctionDefinition*> > FunctionDefinitionMap;
-    FunctionDefinitionMap functions;            // cache the functions so we don't have to do a traversal every lookup
+    FunctionDefinitionMap functions;                    // cache the functions so we don't have to do a traversal every lookup
 
-    std::set<SgGlobal*> globals;                // global scopes where this snippet has been inserted
+    std::set<SgGlobal*> globals;                        // global scopes where this snippet has been inserted
     std::map<std::string/*filename*/, std::set<SgGlobal*>/*insertion points*/> headersIncluded;
 
     typedef Map<std::string/*fileName*/, SnippetFilePtr> Registry;
     static Registry registry;
 
-    static std::vector<std::string> varNameList; // list of variable names to use when renaming things
-    bool copyAllSnippetDefinitions;              // should all snippet definitions be copied to global scope?
+    static std::vector<std::string> varNameList;        // list of variable names to use when renaming things
+    bool copyAllSnippetDefinitions;                     // should all snippet definitions be copied to global scope?
 
     Map<std::string, SgTypePtrList> blackListedDeclarations; // things we don't want to copy to the target AST
+
+    std::vector<SnippetInsertion> insertions;           // list of everything we've inserted related to this snippet file
 
 protected:
     /** Use instance() instead. */
@@ -124,6 +142,9 @@ public:
     /** Return true if the declaration is black listed. */
     bool isBlackListed(SgDeclarationStatement*);
 
+    /** Information about things that have been inserted. */
+    const std::vector<SnippetInsertion>& getInsertedItems() const { return insertions; }
+
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
      *  class method. Throws an std::runtime_error on failure. */
@@ -131,6 +152,9 @@ protected:
 
     /** Find all snippet functions (they are the top-level function definitions) and add them to this SnippetFile. */
     void findSnippetFunctions();
+
+    /** Add an insertion record. */
+    void addInsertionRecord(const SnippetInsertion &inserted) { insertions.push_back(inserted); }
 };
 
 
