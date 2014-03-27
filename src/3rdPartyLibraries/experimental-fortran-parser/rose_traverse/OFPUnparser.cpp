@@ -187,6 +187,36 @@ void OFP::FortranTextUnparser::unparseDecl(SgUntypedDeclarationStatement * decl)
               }
               break;
            }
+        case V_SgUntypedSubroutineDeclaration:
+           {
+              SgUntypedSubroutineDeclaration * d = dynamic_cast<SgUntypedSubroutineDeclaration*>(decl);
+              if (d) {
+                 SgUntypedFunctionScope * scope = d->get_scope();
+                 SgUntypedDeclarationList * declList = scope->get_declaration_list();
+                 SgUntypedStatementList   * stmtList = scope->get_statement_list();
+                 SgUntypedFunctionDeclarationList * funcList = scope->get_function_list();
+                 
+                 unparseLabel(d->get_label_string());
+                 if (d->get_name().size() > 0) {
+                    oss << "SUBROUTINE";
+                    oss << " " << d->get_name();
+                    oss << "\n";
+                 }
+
+                 for (int i = 0; i < declList->get_decl_list().size(); i++) {
+                    unparseDecl(declList->get_decl_list().at(i));
+                 }
+                 for (int i = 0; i < stmtList->get_stmt_list().size(); i++) {
+                    unparseStmt(stmtList->get_stmt_list().at(i));
+                 }
+                 for (int i = 0; i < funcList->get_func_list().size(); i++) {
+                    //TODO-CER-2014.3.18 unparse funcList
+                 }
+
+                 unparseSgUntypedNamedStatement(d->get_end_statement());
+              }
+              break;
+           }
         case V_SgUntypedProgramHeaderDeclaration:
            {
               SgUntypedProgramHeaderDeclaration * d = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(decl);
@@ -250,6 +280,14 @@ void OFP::FortranTextUnparser::unparseSgUntypedNamedStatement(SgUntypedNamedStat
            {
               unparseLabel(stmt->get_label_string());
               oss << "END PROGRAM ";
+              oss << stmt->get_statement_name();
+              oss << "\n";
+              break;
+           }
+        case SgToken::FORTRAN_END_SUBROUTINE:
+           {
+              unparseLabel(stmt->get_label_string());
+              oss << "END SUBROUTINE ";
               oss << stmt->get_statement_name();
               oss << "\n";
               break;
