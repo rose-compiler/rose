@@ -1025,6 +1025,10 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert,
                                                                       original_before_copy);
+#if 0
+            printf ("Exiting as a test! \n");
+            ROSE_ASSERT(false);
+#endif
         }
     }
 
@@ -1032,6 +1036,11 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
     // and reattached to the first node we inserted.
     if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
+
+#if 1
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
+#endif
 }
 
 } // namespace

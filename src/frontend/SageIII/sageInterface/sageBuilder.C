@@ -13653,7 +13653,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
   // qualified (which are C++ specific). These are a performance option to simplify tacking back 
   // through scopes with code similarly complex as to what is supported in the name qualification 
   // support.
-#if 0
+#if 1
      printf ("In fixupCopyOfNodeFromSeperateFileInNewTargetAst: node_copy = %p = %s \n",node_copy,node_copy->class_name().c_str());
 #endif
 
@@ -14226,6 +14226,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                break;
              }
 
+#define DEBUG_FUNCTION_DECLARATION 1
+
           case V_SgFunctionDeclaration:
              {
             // SgFunctionDeclaration is handled directly in the snippet support (insertRelatedThingsForC() function).
@@ -14243,7 +14245,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(functionType_copy != NULL);
                ROSE_ASSERT(functionType_original != NULL);
                ROSE_ASSERT(functionType_copy == functionType_original);
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                printf ("case SgFunctionDeclaration: part 1: Calling functionDeclaration_copy->search_for_symbol_from_symbol_table() \n");
 #endif
             // SgSymbol* symbol_copy = functionDeclaration_copy->search_for_symbol_from_symbol_table();
@@ -14256,7 +14258,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                ROSE_ASSERT(snippetFile != NULL);
                if (snippetFile != targetFile)
                   {
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                     printf ("Warning: case V_SgFunctionDeclaration: functionSymbol_original not in target file \n");
 #endif
                  // DQ (3/13/2014): Handle the case of a member function seperately (I think this can't appear in Java, only in C++).
@@ -14270,7 +14272,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                     SgName name = functionDeclaration_copy->get_name();
                     SgType* functionType = functionDeclaration_copy->get_type();
                     ROSE_ASSERT(functionType != NULL);
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                     printf ("case V_SgFunctionDeclaration: name                  = %s \n",name.str());
                     printf ("case V_SgFunctionDeclaration: functionType          = %p \n",functionType);
                     printf ("case V_SgFunctionDeclaration: functionType_original = %p \n",functionType_original);
@@ -14288,13 +14290,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                     if (functionSymbolInTargetAST == NULL)
                        {
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                          printf ("functionSymbolInTargetAST not found in targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
 #endif
                       // If could be that the symbol is in the local scope of the snippet AST.
                          SgScopeStatement* otherPossibleScope = isSgScopeStatement(functionDeclaration_original->get_parent());
                          ROSE_ASSERT(otherPossibleScope != NULL);
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                          printf ("case V_SgFunctionDeclaration: otherPossibleScope = %p = %s \n",otherPossibleScope,otherPossibleScope->class_name().c_str());
 #endif
                       // We want to out serch the additional other scope and not it's parent scope.
@@ -14307,7 +14309,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                             }
 
                          ROSE_ASSERT(functionSymbolInTargetAST != NULL);
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                          printf ("(building a new SgFunctionSymbol): functionSymbolInTargetAST->get_declaration() = %p \n",functionSymbolInTargetAST->get_declaration());
 #endif
                       // DQ (3/15/2014): We need to insert a new symbol into the targetScope instead of reusing
@@ -14321,6 +14323,9 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          targetScope->insert_symbol(name,new_symbol);
 
                          functionSymbolInTargetAST = new_symbol;
+
+                      // DQ (3/26/2014): Added assertion.
+                         ROSE_ASSERT(lookupFunctionSymbolInParentScopes(name,functionType,targetScope) != NULL);
                        }
                       else
                        {
@@ -14328,7 +14333,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // set the first nondefining declaration pointer to the symbol's associate declaration.
                       // This is the case of the test3a test code (because the snippet functions declaration is 
                       // in the target AST file (likely a mistake, but we should handle it properly).
-#if 0
+#if DEBUG_FUNCTION_DECLARATION
                          printf ("(using existing symbol found in target scope): functionSymbolInTargetAST->get_declaration() = %p \n",functionSymbolInTargetAST->get_declaration());
 #endif
                          functionDeclaration_copy_firstNondefining = isSgFunctionDeclaration(functionSymbolInTargetAST->get_declaration());
@@ -14883,12 +14888,12 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // if (TransformationSupport::getFile(functionSymbol) != targetFile)
                if (getEnclosingFileNode(functionSymbol_copy) != targetFile)
                   {
-#if 0
+#if 1
                     printf ("Warning: case V_SgFunctionRefExp: functionSymbol_copy not in target file (find function = %s) \n",functionSymbol_copy->get_name().str());
 #endif
                  // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
 #if 0
-                 // printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
+                    printf ("insertionPointIsScope = %s insertionPointScope = %p = %s \n",insertionPointIsScope ? "true" : "false",insertionPointScope,insertionPointScope->class_name().c_str());
 #endif
                  // Find the nearest variable with the same name in an outer scope (starting at insertionPointScope).
 
@@ -14912,6 +14917,15 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // inserted into the target AST and this visible from this injection point in the target AST.
 
                          printf ("Error: The associated function = %s should have been found in a parent scope of the target AST \n",name.str());
+
+                         printf ("targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
+                         SgGlobal* globalScope = TransformationSupport::getGlobalScope(targetScope);
+                         ROSE_ASSERT(globalScope != NULL);
+                         printf ("globalScope = %p = %s \n",globalScope,globalScope->class_name().c_str());
+#if 1
+                         targetScope->get_file_info()->display("case V_SgFunctionRefExp: targetScope: debug");
+                         node_original->get_file_info()->display("case V_SgFunctionRefExp: node_original: debug");
+#endif
 #if 0
                       // DQ (3/10/2014): This might be important for friend functions in C++ (but we can ignore it for now).
 #error "DEAD CODE!"
@@ -15288,7 +15302,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      ROSE_ASSERT(toInsert != NULL);
      ROSE_ASSERT(original_before_copy != NULL);
 
-#if 0
+#if 1
      printf ("Inside of fixupCopyOfAstFromSeperateFileInNewTargetAst(): insertionPoint = %p = %s toInsert = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str(),toInsert,toInsert->class_name().c_str());
      printf ("   --- original_before_copy = %p = %s \n",original_before_copy,original_before_copy->class_name().c_str());
 #endif
@@ -15314,7 +15328,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
 
      ROSE_ASSERT(snippetFile_of_original != targetFile);
 
-#if 0
+#if 1
      printf ("targetFile              = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
      printf ("snippetFile_of_copy     = %p = %s \n",snippetFile_of_copy,snippetFile_of_copy->get_sourceFileNameWithPath().c_str());
      printf ("snippetFile_of_original = %p = %s \n",snippetFile_of_original,snippetFile_of_original->get_sourceFileNameWithPath().c_str());
@@ -15353,6 +15367,17 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      RoseAst::iterator i_copy     = ast_of_copy.begin();
      RoseAst::iterator i_original = ast_of_original.begin();
 
+#if 1
+     printf ("i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
+     (*i_copy)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_copy: debug");
+     (*i_original)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_original: debug");
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(original_before_copy);
+     if (functionDeclaration != NULL)
+        {
+          printf ("In of fixupCopyOfAstFromSeperateFileInNewTargetAst(): functionDeclaration = %s \n",functionDeclaration->get_name().str());
+        }
+#endif
+
   // Iterate of the copy of the snippet's AST.
      while (i_copy != ast_of_copy.end())
         {
@@ -15388,6 +15413,15 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
 
   // DQ (3/8/2014): ENDIF: Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 #endif
+
+     if (functionDeclaration != NULL)
+        {
+          printf ("functionDeclaration = %s \n",functionDeclaration->get_name().str());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
    }
 
 /**
