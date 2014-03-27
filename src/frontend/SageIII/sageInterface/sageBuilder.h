@@ -1272,6 +1272,12 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
 
+// 03/17/2014 PHL
+// //! Build an equivalence statement from two expression operands
+ROSE_DLL_API SgEquivalenceStatement* 
+buildEquivalenceStatement(SgExpression* lhs,SgExpression* rhs);
+
+
 //! Fixup any AST moved from one file two another (references to symbols, types, etc.).
 // ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy, std::map<SgNode*,SgNode*> & translationMap);
 // ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap);

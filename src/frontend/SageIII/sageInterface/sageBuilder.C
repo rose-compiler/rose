@@ -12606,6 +12606,23 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 }
 #endif
 
+SgEquivalenceStatement*
+SageBuilder::buildEquivalenceStatement(SgExpression* exp1,SgExpression* exp2)
+{
+  ROSE_ASSERT(exp1 != NULL); 
+  ROSE_ASSERT(exp2 != NULL); 
+  
+  SgExprListExp* tuple = buildExprListExp(exp1,exp2);
+  SgExprListExp* setList = buildExprListExp(tuple);
+  SgEquivalenceStatement* equivalenceStatement = new SgEquivalenceStatement();
+  ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() == NULL);
+  equivalenceStatement->set_equivalence_set_list(setList);
+  ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() != NULL);
+  equivalenceStatement->set_firstNondefiningDeclaration(equivalenceStatement);
+  setOneSourcePositionForTransformation(equivalenceStatement); 
+  return equivalenceStatement;
+}
+
 SgSymbol*
 SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
    {
