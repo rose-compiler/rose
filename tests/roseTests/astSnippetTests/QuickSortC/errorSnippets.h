@@ -2,19 +2,18 @@
 #ifndef errorSnippets_H
 #define errorSnippets_H
 
-#ifdef DECLARE_RELATED_THINGS
-
 #include <stdlib.h>
 #include <string.h>
 
 static int *savedInteger;
 
-/* Declarations for snippets that are inserted recursively. The target AST will only have transient calls to these
- * functions since they'll be expanded as snippets, but they must be declared nonetheless when AST fixups are enabled
- * because the fixups run at each level of the recursion. */
+/* Declarations for all functions that might be copied to the target as a function. */
+void readEnvironment(void);
 void allocateSavedInteger(int *addr);
 void rotateRight(int, int);
 void rotateLeft(int, int);
+void saveInteger(int);
+void restoreInteger(void);
+void arrayElementSwap(int*, int, int, int);
 
-#endif
 #endif
