@@ -19,6 +19,10 @@ noinst_PROGRAMS += storeLoad
 storeLoad_SOURCES = storeLoad.C snippetTests.C
 storeLoad_LDADD = $(ROSE_LIBS)
 
+noinst_PROGRAMS += listSnippets
+listSnippets_SOURCES = listSnippets.C
+listSnippets_LDADD = $(ROSE_LIBS)
+
 
 ###############################################################################################################################
 # Small C Tests
