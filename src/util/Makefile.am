@@ -47,6 +47,7 @@ include_HEADERS =				\
 	compilationFileDatabase.h		\
 	FormatRestorer.h			\
 	Map.h					\
+	ParallelSort.h                          \
 	processSupport.h			\
 	rose_getline.h				\
 	rose_paths.h				\

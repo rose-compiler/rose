@@ -96,7 +96,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #if 0
           printf ("In unparseOneElemConInit(): con_init->get_declaration() = %p \n",con_init->get_declaration());
 #endif
-          if(con_init->get_declaration())
+          if (con_init->get_declaration())
              {
             // DQ (11/12/2004)  Use the qualified name always (since get_need_qualifier() does
             //                  not appear to get set correctly (perhaps within EDG as before)
@@ -112,8 +112,29 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
-               name = nameQualifier + con_init->get_declaration()->get_name();
 
+            // DQ (2/8/2014): Adding the trimming of the constructor name where it is required for the
+            // GNU g++ version 4.5 and greater compilers (used in the backend compilation within ROSE).
+               bool skipOutputOfFunctionName = false;
+               nameQualifier = trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(nameQualifier,skipOutputOfFunctionName);
+
+            // name = nameQualifier + con_init->get_declaration()->get_name();
+               if (skipOutputOfFunctionName == false)
+                  {
+                 // Case for g++ version less than version 4.5
+                    name = nameQualifier + con_init->get_declaration()->get_name();
+                  }
+                 else
+                  {
+                 // Case for g++ versions equal to or greater than version 4.5
+                    name = nameQualifier;
+                  }
+#if 0
+               printf ("In unparseOneElemConInit(): name = %s \n",name.str());
+#endif
+#if 0
+               curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() != NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
+#endif
             // DQ (8/19/2013): I am not sure that this will include name qualification on possible template arguments.
             // We need an example of this.
                if ( unp->u_sage->printConstructorName(con_init))
@@ -147,11 +168,18 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
 
+#if 0
+                    printf ("In unparseOneElemConInit(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+
                  // DQ (8/19/2013): We need to unparse the type using any possible qualification on the type name (e.g. name qualification on template arguments).
                     if ( unp->u_sage->printConstructorName(con_init))
                        {
 #if 0
                          printf ("In unparseOneElemConInit(): Unparse the nameQualifier = %s \n",nameQualifier.str());
+#endif
+#if 0
+                         curprint( "\n /* In unparseOneElemConInit(): (con_init->get_declaration() == NULL): unp->u_sage->printConstructorName(con_init) == true */ \n");
 #endif
                          curprint(nameQualifier.str());
 #if 0
@@ -191,7 +219,9 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
         }
 
-  // curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#if 0
+     curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
 
   // taken from unparseExprList
   // check whether the constructor name was printed. If so, we need to surround
@@ -229,6 +259,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
 #if 0
      printf ("Leaving of Unparse_MOD_SAGE::unparseOneElemConInit \n\n\n");
+     curprint( "\n /* Leaving of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
    }
 
@@ -2561,6 +2592,15 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          break;
                        }
 
+                 // DQ (2/16/2014): The SystemC example (in systemc_tests) demonstrates where this case must be handled.
+                 // I think it should be the scope of the SgTypedefDeclaration.
+                    case V_SgTypedefDeclaration:
+                       {
+                         SgTypedefDeclaration* declaration = isSgTypedefDeclaration(parentOfFunctionDeclaration);
+                         currentScope = declaration->get_scope();
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
@@ -2899,12 +2939,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
+                 // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
+                 // because it doesn't try to resolve any conflicts with symbols, but if the following assertion is
+                 // commented out it at least works.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
 
                  // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
                        {
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
+                         printf ("firstNondefiningFunction = %s \n",firstNondefiningFunction->get_name().str());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
                          printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
@@ -2913,7 +2959,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
+                 // copied-and-inserted declaration is unparsed correctly if this assert is commented out.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
                   }
 #if 0
                printf ("Unparser: firstNondefiningFunction = %p \n",firstNondefiningFunction);
@@ -2922,7 +2971,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (3/4/2009): This test appear to only fail for tutorial/rose_inputCode_InstrumentationTranslator.C 
                if (firstNondefiningFunction->get_symbol_from_symbol_table() == NULL)
                   {
-                    printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() != NULL, apepars to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
+                    printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() != NULL, appears to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
                   }
             // ROSE_ASSERT(firstNondefiningFunction->get_symbol_from_symbol_table() != NULL);
              }
@@ -6219,15 +6268,51 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Output the "asm" keyword.
   // DQ (8/31/2013): We have to output either "__asm__" or "asm" (for MSVisual C++ I think we might need "__asm").
+#if 0
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
      if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
         {
-          curprint("__asm__ ");
+       // curprint("__asm__ ");
+          curprint("asm ");
         }
        else
         {
           curprint("asm ");
         }
+#else
+
+// DQ (2/25/2014): Note that the 4.2.4 compiler will define both BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+// So we need to use another macro BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM that will work uniformally on both 4.4.7 and 4.2.4 versions of 
+// the GNU compiler.  This is truely strange behavior.
+// DQ (2/25/2014): This is the new support for use of "asm" or "__asm__" (which should maybe be refactored).
+// #if (defined(BACKEND_C_COMPILER_SUPPORTS_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+//    #error "Error: BACKEND_C_COMPILER_SUPPORTS_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
+// #endif
+#ifndef _MSC_VER
+#if (defined(BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM) && defined(BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM))
+// DQ (2/26/2014): Allow the CMake tests to pass for now.
+   #warning "Warning: BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM and BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM are both defined!"
+#endif
+
+// #ifdef BACKEND_C_COMPILER_SUPPORTS_ASM
+#ifdef BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM
+     curprint("asm ");
+#else
+#ifdef BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+     curprint("__asm__ ");
+#else
+   #warning "Warning: either BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM or BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM should be defined (but not both)!"
+
+  // DQ (2/26/2014): Allow the default behavior on CMake build systems to use the GNU compiler specific version or "__asm__".
+     curprint("__asm__ ");
+#endif
+#endif
+#else
+  // DQ (2/26/2014): I assume that MSVC would use the C standard representation.
+     curprint("asm ");
+#endif
+
+#endif
 
      curprint("(");
 

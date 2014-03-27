@@ -72,14 +72,14 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      TypeOfQueryTypeOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NumberQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * > nodeList,
      TypeOfQueryTypeOneParameter elementReturnType);
 
@@ -91,14 +91,14 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      roseFunctionPointerOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NumberQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      roseFunctionPointerOneParameter querySolverFunction);
 
@@ -113,7 +113,7 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      std::string traversal,
@@ -121,7 +121,7 @@ namespace NumberQuery{
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NumberQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      std::string targetNode,
      roseFunctionPointerTwoParameters querySolverFunction);
@@ -135,7 +135,7 @@ namespace NumberQuery{
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
 
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      std::string traversal,
@@ -143,7 +143,7 @@ namespace NumberQuery{
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NumberQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      std::string targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
 
@@ -175,7 +175,7 @@ namespace NumberQuery{
    * will on every node of the memory pool which has a corresponding variant in VariantVector
    * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     queryMemoryPool
     (
      std::string traversal,
@@ -189,7 +189,7 @@ namespace NumberQuery{
    * will on every node of the memory pool which has a corresponding variant in VariantVector
    * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     queryMemoryPool
     (
      std::string traversal,
@@ -205,7 +205,7 @@ namespace NumberQuery{
    * NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
 
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     queryMemoryPool
     (
      std::string traversal,
@@ -222,7 +222,7 @@ namespace NumberQuery{
    * NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
 
-  NumberQuerySynthesizedAttributeType
+  ROSE_DLL_API NumberQuerySynthesizedAttributeType
     queryMemoryPool
     (
      TypeOfQueryTypeOneParameter elementReturnType,

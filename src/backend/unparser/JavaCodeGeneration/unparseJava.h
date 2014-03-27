@@ -242,19 +242,22 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
-          virtual void unparsePointerType(SgPointerType* type, SgUnparse_Info& info);
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
 
+          virtual void unparseJavaQualifiedType(SgJavaQualifiedType *type, SgUnparse_Info& info);
           virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
           virtual void unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info);
+          virtual void unparseJavaUnionType(SgJavaUnionType* type, SgUnparse_Info& info);
 
           virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseExpression(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info);
 
+
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
           void unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info);
+          void unparseTypeArguments(SgTemplateParameterList *type_list, SgUnparse_Info& info);
 
           void unparseJavaMarkerAnnotation(SgExpression *, SgUnparse_Info& info);
           void unparseJavaSingleMemberAnnotation(SgExpression *, SgUnparse_Info& info);

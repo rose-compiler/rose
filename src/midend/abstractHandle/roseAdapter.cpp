@@ -7,6 +7,7 @@
 
 #include "abstract_handle.h"
 #include "roseAdapter.h"
+#include <vector>
 
 using namespace std;
 //using namespace AbstractHandle;
@@ -76,10 +77,16 @@ namespace AbstractHandle{
     if (isSgFile(mNode)) 
     {
       return isSgFile(mNode)->get_file_info()->get_filenameString ();
-    } else  if (isSgProject(mNode))
+    } 
+    else  if (isSgProject(mNode))
     { // No name field for rose projects
       return "";
     }
+    else if (isSgFunctionDefinition(mNode))
+    {
+      SgFunctionDefinition* def = isSgFunctionDefinition(mNode);
+      return (def->get_declaration()->search_for_symbol_from_symbol_table()->get_name()).getString();
+    }  
 
     SgDeclarationStatement* decl = isSgDeclarationStatement(mNode); 
     if (decl)
@@ -103,7 +110,7 @@ namespace AbstractHandle{
             ROSE_ASSERT(result.length()!=0);
             break;
           }
-          // No explicit name available
+         // No explicit name available
         case V_SgCtorInitializerList:
         case V_SgPragmaDeclaration:
         case V_SgFunctionParameterList:
@@ -304,6 +311,75 @@ namespace AbstractHandle{
     return (mNode ==other_node);
   }
 
+
+  //! A helper function to build a single abstract handle item
+  static abstract_handle * buildSingleAbstractHandle(SgNode* snode, abstract_handle * p_handle = NULL)
+  {
+    abstract_handle *  result = NULL; 
+    ROSE_ASSERT (snode != NULL);
+    abstract_node * anode = buildroseNode(snode);
+    ROSE_ASSERT (anode != NULL);
+
+    // look up first
+    result = handle_map[anode];
+    if (result != NULL)
+      return result;
+
+    //Create the single handle item 
+    if (isSgSourceFile (snode) || isSgProject(snode) ||isSgGlobal(snode))
+      result = new abstract_handle (anode); // default name or file location specifiers are used
+    else 
+    {
+      // any other types of AST node, use numbering or name within the parent handle
+      ROSE_ASSERT (p_handle != NULL);
+      if (isSgFunctionDefinition(snode))
+        result = new abstract_handle  (anode, e_name, p_handle);
+      else  
+        result = new abstract_handle  (anode, e_numbering, p_handle);
+    }  
+
+    ROSE_ASSERT (result != NULL);
+    // cache the result
+    handle_map[anode] = result;   
+
+    return result;
+  }
+
+  //! A default builder function handles all details: file use name, others use numbering  
+  //  Algorithm:
+  //   Go through all parent scopes until reach SgSourceFile. store them into a list
+  //   iterate on the list to generate all abstract handles, with optional the parent handle information
+  abstract_handle * buildAbstractHandle(SgNode* snode)
+  {
+    ROSE_ASSERT (snode != NULL);
+    // simple nodes
+    if  (isSgSourceFile (snode) || isSgProject(snode) ||isSgGlobal(snode))
+      return buildSingleAbstractHandle (snode);
+
+    // all other nodes, trace back to SgGlobal, store all intermediate scope nodes
+    std::vector<SgNode*> scope_list; 
+    SgScopeStatement* p_scope = SageInterface::getEnclosingScope(snode);
+    while (!isSgGlobal(p_scope))
+    {
+      scope_list.push_back(p_scope);
+      p_scope =  SageInterface::getEnclosingScope(p_scope);
+    }
+    
+    ROSE_ASSERT (isSgGlobal(p_scope));
+    abstract_handle * p_handle = buildSingleAbstractHandle (p_scope);
+   
+   // Now go through the list to generate numbering handles
+    std::vector<SgNode*>::reverse_iterator riter;
+    for (riter = scope_list.rbegin(); riter!= scope_list.rend(); riter++)
+    {
+      SgNode* c_node = *riter;
+      p_handle = buildSingleAbstractHandle (c_node, p_handle);
+    }
+   
+   ROSE_ASSERT (p_handle != NULL);
+
+   return buildSingleAbstractHandle (snode, p_handle);
+  }
 
 } // end of namespace
 
