@@ -341,6 +341,9 @@ public:
     /** Return the file where this snippet is defined. */
     SnippetFilePtr getFile() const { return file; }
 
+    /** Return the function definition for this snippet. */
+    SgFunctionDefinition* getDefinition() const { return ast; }
+
     /** Returns the number of formal arguments for the snippet. */
     size_t numberOfArguments() const;
 
