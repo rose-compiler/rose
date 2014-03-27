@@ -472,6 +472,31 @@ StringUtility::numberToString ( double x )
      return string(numberString);
    }
 
+#ifndef _MSC_VER
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
+// DQ (2/22/2014): Required code for GNU versions greater than 4.6.
+string
+StringUtility::numberToString ( __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     long long temp_x = (long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
+
+string
+StringUtility::numberToString ( unsigned __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     unsigned long long temp_x = (unsigned long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
+   #endif
+#endif
+
+// DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
+// string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
 std::string
 StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, bool show_signed_decimal,
                       uint64_t decimal_threshold)

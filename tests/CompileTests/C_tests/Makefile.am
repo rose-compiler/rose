@@ -267,7 +267,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_170.c \
      test2012_171.c \
      test2012_172.c \
-     test2012_173.c \
      test2012_174.c \
      test2012_175.c \
      test2013_01.c \
@@ -475,7 +474,18 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_12.c \
      test2010_11.c \
      test2010_14.c \
-     constants.c
+     constants.c \
+     $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+if OS_VENDOR_REDHAT_REL5
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173.c
+endif
+
+if OS_VENDOR_REDHAT_REL6
+   EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173_redhat_rel6.c
+endif
+
+
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
@@ -746,6 +756,10 @@ test_gnu_S_option:
 test_link_using_alias_attribute: $(testTranslator)
 	$(testTranslator) -o test2014_93 $(top_srcdir)/tests/CompileTests/C_tests/test2014_93.c
 
+# DQ (2/17/2014): Added to force test of two week old asm fix for linking that didn't make it out in github.
+test_link_using_asm_symbol_injection: $(testTranslator)
+	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
+
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -782,9 +796,32 @@ test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
-             test2006_134.h test2010_08.h predict.def test2010_15.h \
-             test2009_18.c test2009_20.c grep_verify.h test2012_75.h \
-             test2012_78.h test2012_155.h test2012_156.h
+             predict.def test2009_18.c test2009_20.c test2014_20_inc.c test2014_27_inc.c test2014_28_inc.c \
+	     test2012_145.c conftest.c test2005_168.c \
+	     confdefs.h grep_verify.h verify.h \
+	     test2006_134.h \
+	     test2010_08.h \
+	     test2010_15.h \
+	     test2012_155.h \
+	     test2012_156.h \
+	     test2012_63.h \
+	     test2012_75.h \
+	     test2012_78.h \
+	     test2013_05.h \
+	     test2013_06.h \
+	     test2013_114.h \
+	     test2014_06.h \
+	     test2014_07.h \
+	     test2014_19.h \
+	     test2014_33.h \
+	     test2014_36.h \
+	     test2014_43.h \
+	     test2014_56.h \
+	     test2014_59.h \
+	     test2014_60_data_members.h \
+	     test2014_60_values.h \
+	     test2014_66.h \
+	     test2014_73.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
@@ -798,6 +835,7 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_link_using_asm_symbol_injection
 	@$(MAKE) test_link_using_alias_attribute
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed

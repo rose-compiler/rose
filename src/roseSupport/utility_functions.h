@@ -143,8 +143,8 @@ namespace ROSE
           int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
           bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
 
-          std::string getWorkingDirectory (); //! get the current directory
-          std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
+          ROSE_DLL_API std::string getWorkingDirectory (); //! get the current directory
+          ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
           ROSE_DLL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename

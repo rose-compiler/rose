@@ -65,6 +65,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_05.C \
    test2014_06.C
 
+# Note that these will not compile with the GNU 4.7 header files.
+# It might be a boost issue.  The error is always the same.
+# test2013_234.C
+# test2013_235.C
+# test2013_240.C
+# test2013_241.C
+# test2013_242.C
+# test2013_246.C
+
 # Current problem test codes:
 #  test2013_262.C 
 #  test2013_263.C 
@@ -585,7 +594,7 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING)
+$(TESTCODE_CURRENTLY_FAILING) 
 
 # DQ (2/4/2014): Unparse the asm commands as a test.
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
@@ -769,14 +778,19 @@ test2005_56.qmt: $(TEST_TRANSLATOR)
 include $(top_srcdir)/config/QMTest_makefile.inc
 
 # Make sure that all the test codes end up in the distribution
-EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) test_CplusplusMacro_C.C test2006_137.C \
+#      $(TESTCODE_CURRENTLY_FAILING_ON_OSX) $(STATISTICALLY_FAILING_TESTS) $(UNMENTIONED_SOURCE_FILES)
+EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) \
+     $(TESTCODE_CURRENTLY_FAILING_ON_OSX) $(STATISTICALLY_FAILING_TESTS) $(UNMENTIONED_SOURCE_FILES) \
+     test_CplusplusMacro_C.C test2006_137.C \
      confdefs.h  test2001_05.h  test2001_11.h test2001_18A.h  test2003_08.h  test2003_12.h  test2003_24.h  test2004_40.h \
      test2005_154.h  test2005_158.h  test2005_15.h   test2005_26.h  test2005_81.h  test2006_33.h foo.h \
      test2001_15.h  test2001_18B.h  test2003_09.h  test2003_14.h  test2003_25.h  test2005_133.h  test2005_157.h \
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h
+     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
+     test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
+     test2004_82.C 
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

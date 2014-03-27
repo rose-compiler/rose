@@ -680,6 +680,14 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // ROSE_ASSERT(false);
                     break;
                   }
+
+            // DQ (2/10/2014): Added this case to avoid compiler warning (I think there is nothing to do here).
+               case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+                 // printf ("Error: resetParentPointersInTemplateArgumentList() SgTemplateArgument::start_of_pack_expansion_argument case not implemented \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
              }
 
        // Increment to next template argument
@@ -703,7 +711,15 @@ ResetParentPointers::evaluateInheritedAttribute (
 
 #if 0
      printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->sage_class_name());
-
+#endif
+#if 0
+  // ROSE_ASSERT(node->get_file_info() != NULL);
+     if (node->get_file_info() != NULL)
+        {
+          node->get_file_info()->display("ResetParentPointers::evaluateInheritedAttribute: debug");
+        }
+#endif
+#if 0
      if (isSgTryStmt(node) != NULL)
         {
           printf ("\n\n################ FOUND TRY STATEMENT ##################### \n\n\n");
@@ -1370,8 +1386,19 @@ ResetParentPointers::evaluateInheritedAttribute (
                        }
                       else
                        {
+                      // DQ (2/9/2014): This was an error, but it only shows up in the use of the GNU 4.6 header files 
+                      // (and it is not clear that it should be an error).  So output a message as we debug this issue.
+                         if (declaration->get_parent() != directive)
+                            {
+                              printf ("Error: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+                              printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
+                              printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+                              declaration->get_file_info()->display("location of problem code: declaration: debug");
+                              directive->get_file_info()->display("location of problem code: directive: debug");
+                            }
+
                       // DQ (3/15/2006): Why is it an error to have this be a valid pointer?  The parent should be the directive, I think.
-                         ROSE_ASSERT(declaration->get_parent() == directive);
+                      // ROSE_ASSERT(declaration->get_parent() == directive);
 #if 0
                          printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
                          printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());

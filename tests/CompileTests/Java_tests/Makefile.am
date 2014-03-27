@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = \
+	unit_tests
+
 ##################################################################################
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
@@ -125,7 +128,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_while1.java \
      cave3_while2.java \
      cave3_while3.java \
-     cave3_while4.java
+     cave3_while4.java \
+     testQualifiedType.java
 
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
@@ -160,7 +164,9 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_foreach5.java \
      cave3_foreach6.java \
      cave3_foreach7.java \
-     cave3_labelBreak4.java
+     cave3_labelBreak4.java \
+     \
+     InterfaceWithGenericMethod.java
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = 
 
@@ -511,8 +517,85 @@ testWithoutJavaSpecification: $(testTranslator)
 testJava_option: $(testTranslator)
 	$(testTranslator) -rose:java:source 1.6 -rose:java:target 1.6 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
+#-------------------------------------------------------------------------------
+# TOO1 (2/6/2014): Won't fail in some cases, e.g. GCC's "unrecognized option" message
+#                  will only fail in version 4.6+.
+#                  (See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=15303)
+#-------------------------------------------------------------------------------
+testJavaCommandlineOptions: $(testTranslator)
+	mkdir -p "$(builddir)/tmp"
+#-----------------------------
+# Java only
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java
+#-----------------------------
+# Classpath
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:cp "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -classpath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -cp "/path/1:/path/2"
+#-----------------------------
+# Sourcepath
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:sourcepath "/path/1:/path/2"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -sourcepath "/path/1:/path/2"
+#-----------------------------
+# Destdir
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/tmp/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/tmp/destdir"
+# Source Destdir
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/tmp/source_destdir"
+#-----------------------------
+# Source
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.5
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.7
+#-----------------------------
+# Target
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.6 -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.7 -source 1.7
+#-----------------------------
+# Encoding
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding UTF8
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding ISO8859-1
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding SJIS
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding EUCJIS
+#-----------------------------
+# -s
+#-----------------------------
+	mkdir -p "$(builddir)/tmp/generated_source_destdir" && \
+			$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -s "$(builddir)/tmp/generated_source_destdir"
+#-----------------------------
+# -nowarn
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -nowarn
+#-----------------------------
+# -verbose
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -verbose
+#-----------------------------
+# @argfile
+#-----------------------------
+	echo "$(top_srcdir)/tests/input_codes/minimal/minimal.java" > argfile.txt && \
+			$(testTranslator) @argfile.txt
+#-----------------------------
+# JVM Options
+#-----------------------------
+# Increase ECJ's JVM stack size
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:jvm_options "-Xss5m"
+#-----------------------------
+# Remote JVM Debugging
+# TOO1 (2/6/2014): Can't perform this test since it is interactive
+#-----------------------------
+#	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ecj:enable_remote_debugging
+
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option testJavaCommandlineOptions graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -561,6 +644,8 @@ clean-local:
 	rm -fr rose-output* ecj-classes-* javac-output-classes javac-syntax-check-classes
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+	rm -f core.*
+	rm -rf ./tmp
 
 # driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
 check-view: $(TEST_Objects:.o=.view)
