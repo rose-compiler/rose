@@ -356,14 +356,12 @@ void UntypedASTBuilder::build_PartRef(PartRef * partRef)
 
    //TODO-CER-2014.3.14 handle SectionSubscriptList and ImageSelector
 
-   assert(partRef != NULL);
-   assert(partRef->getPartName() != NULL);
-   assert(partRef->getPartName()->getIdent() != NULL);
+   //TODO-CER-2014.3.28 - this should go away along with unparseExpr below
+   printf("ROSE PartRef: .......................(%p) ", partRef);
 
    expr = new SgUntypedReferenceExpression(start, SgToken::FORTRAN_UNKNOWN, partRef->getPartName()->getIdent()->getValue().c_str());
    partRef->setPayload(expr);
 
-   printf("ROSE PartRef: ....................... ");
    unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(partRef->getPayload()));  printf("\n");
 }
 
@@ -604,6 +602,12 @@ void UntypedASTBuilder::build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operat
    SgUntypedExpression * lhs = dynamic_cast<SgUntypedExpression*>(expr->getExpr1()->getPayload());
    SgUntypedExpression * rhs = dynamic_cast<SgUntypedExpression*>(expr->getExpr2()->getPayload());
    assert(rhs);  assert(lhs);
+
+   printf("======================build_BinaryOp(%p): %s ", expr, name.c_str());
+   unparser->unparseExpr(lhs);
+   printf(" ");
+   unparser->unparseExpr(rhs);
+   printf("\n");
 
    //TODO-DQ-2014.3.7 I don't think a Fortran enum should be in constructor
    binop = new SgUntypedBinaryOperator(start, SgToken::FORTRAN_UNKNOWN, op, name, lhs, rhs); 

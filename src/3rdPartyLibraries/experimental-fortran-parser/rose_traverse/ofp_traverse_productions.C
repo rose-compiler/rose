@@ -661,21 +661,31 @@ ATbool ofp_traverse_InternalSubprogram(ATerm term, OFP::InternalSubprogram* Inte
 #endif
 
  OFP::SubroutineSubprogram SubroutineSubprogram;
- if (ATmatch(term, "InternalSubprogram(<term>)", &SubroutineSubprogram.term)) {
+ if (ATmatch(term, "InternalSubprogram_SS(<term>)", &SubroutineSubprogram.term)) {
 
       if (ofp_traverse_SubroutineSubprogram(SubroutineSubprogram.term, &SubroutineSubprogram)) {
          // MATCHED SubroutineSubprogram
+         InternalSubprogram->setSubroutineSubprogram(SubroutineSubprogram.newSubroutineSubprogram());
+         InternalSubprogram->inheritPayload(InternalSubprogram->getSubroutineSubprogram());
       } else return ATfalse;
+
+   // MATCHED InternalSubprogram_SS
+   InternalSubprogram->setOptionType(OFP::InternalSubprogram::InternalSubprogram_SS);
 
    return ATtrue;
  }
 
  OFP::FunctionSubprogram FunctionSubprogram;
- if (ATmatch(term, "InternalSubprogram(<term>)", &FunctionSubprogram.term)) {
+ if (ATmatch(term, "InternalSubprogram_FS(<term>)", &FunctionSubprogram.term)) {
 
       if (ofp_traverse_FunctionSubprogram(FunctionSubprogram.term, &FunctionSubprogram)) {
          // MATCHED FunctionSubprogram
+         InternalSubprogram->setFunctionSubprogram(FunctionSubprogram.newFunctionSubprogram());
+         InternalSubprogram->inheritPayload(InternalSubprogram->getFunctionSubprogram());
       } else return ATfalse;
+
+   // MATCHED InternalSubprogram_FS
+   InternalSubprogram->setOptionType(OFP::InternalSubprogram::InternalSubprogram_FS);
 
    return ATtrue;
  }
@@ -8768,6 +8778,7 @@ ATbool ofp_traverse_PartRef(ATerm term, OFP::PartRef* PartRef)
       } else return ATfalse;
    }
 
+   printf("==============will call build_PartRef %p\n", PartRef);
    ast->build_PartRef(PartRef);
 
    return ATtrue;
