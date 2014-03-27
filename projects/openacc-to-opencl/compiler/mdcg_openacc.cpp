@@ -79,6 +79,9 @@ SgExpression * KernelVersion::createFieldInitializer(
     case 4:
       /// char * suffix;
       return SageBuilder::buildStringVal(input->kernel_name);
+    case 5:
+      /// acc_device_t device_affinity;
+      return SageBuilder::buildIntVal(0); /// \todo use 'acc_device_any'
     default:
       assert(false);
   }
