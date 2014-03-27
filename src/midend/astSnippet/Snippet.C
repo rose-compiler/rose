@@ -13,6 +13,14 @@
 
 namespace rose {
 
+std::ostream& operator<<(std::ostream &o, const SnippetInsertion &inserted) {
+    o <<"(inserted=(" <<inserted.inserted->class_name() <<"*)" <<inserted.inserted
+      <<", original=(" <<inserted.original->class_name() <<"*)" <<inserted.original
+      <<", insertedBefore=(" <<inserted.insertedBefore->class_name() <<"*)" <<inserted.insertedBefore
+      <<")";
+    return o;
+}
+
 /*******************************************************************************************************************************
  *                                      Snippet AST Traversals
  *******************************************************************************************************************************/
@@ -510,6 +518,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         case INSERT_BODY: {
             // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
             // one snippet can't be used in a later snippet injected into the same function.
+            file->addInsertionRecord(SnippetInsertion(toInsert, ast->get_body(), insertionPoint));
             SageInterface::insertStatementBefore(insertionPoint, toInsert);
             break;
         }
@@ -518,24 +527,31 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             // which means that snippet variables cannot always be inialized in their declarations because the initialization
             // expression might be something that's only well defined at the point of insertion.
             const SgStatementPtrList &stmts = toInsert->getStatementList();
+            const SgStatementPtrList &stmtsOrig = ast->get_body()->getStatementList();
+            assert(stmts.size()==stmtsOrig.size());
             for (size_t i=0; i<stmts.size(); ++i) {
                 if (isSgDeclarationStatement(stmts[i])) {
                     switch (locDeclsPosition) {
                         case LOCDECLS_AT_BEGINNING:
                             if (targetFirstDeclaration!=NULL) {
+                                file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFirstDeclaration));
                                 SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
                             } else {
+                                file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFirstStatement));
                                 SageInterface::insertStatementBefore(targetFirstStatement, stmts[i]);
                             }
                             break;
                         case LOCDECLS_AT_END:
+                            file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFunctionScope));
                             SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
                             break;
                         case LOCDECLS_AT_CURSOR:
+                            file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
                             SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
                             break;
                     }
                 } else {
+                    file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
                     SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
                 }
             }
@@ -895,6 +911,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
+        file->addInsertionRecord(SnippetInsertion(declCopy, decl, topInsertionPoint));
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
 
      // DQ (3/19/2014): Added fixup of AST for Java declarations copied into the AST.
@@ -925,6 +942,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         SgTreeCopy deep;
         SgJavaImportStatement *newImport = isSgJavaImportStatement(snippetImport->copy(deep));
         causeUnparsing(newImport, topInsertionPoint->get_file_info());
+        file->addInsertionRecord(SnippetInsertion(newImport, snippetImport, targetImports));
         targetImports->get_java_import_list().push_back(newImport);
         newImport->set_parent(targetImports);
     }
@@ -1016,6 +1034,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
              ROSE_ASSERT(defining_classDeclaration_copy->get_type() == nondefining_classDeclaration_copy->get_type());
            }
 
+        file->addInsertionRecord(SnippetInsertion(declCopy, decl, topInsertionPoint));
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
         if (!firstInserted)
             firstInserted = declCopy;
