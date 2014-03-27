@@ -19,6 +19,10 @@ noinst_PROGRAMS += storeLoad
 storeLoad_SOURCES = storeLoad.C snippetTests.C
 storeLoad_LDADD = $(ROSE_LIBS)
 
+noinst_PROGRAMS += listSnippets
+listSnippets_SOURCES = listSnippets.C
+listSnippets_LDADD = $(ROSE_LIBS)
+
 
 ###############################################################################################################################
 # Small C Tests
@@ -619,6 +623,58 @@ $(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf ss_java_suppo
 # TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
 MOSTLYCLEANFILES += $(SS_JAVA_TEST_TARGETS) $(SS_JAVA_TEST_TARGETS:.passed=.failed)
 
+###############################################################################################################################
+# Extra, optional snippet tests.  Any .c or .java file that's found in $(srcdir)/ExtraSnippets will treated as a snippet file,
+# and all void functions or methods that take no arguments will be treated as snippets.  The snippets will each be inserted
+# in turn into its own target specimen.
+###############################################################################################################################
+
+INJECT_ALL_TEST = $(srcdir)/injectAllSnippets.conf
+EXTRA_DIST += $(INJECT_ALL_TEST)
+
+EXTRAS_SNIPPET_DIR = $(srcdir)/ExtraSnippets
+EXTRA_DIST += $(EXTRAS_SNIPPET_DIR)/0_README $(INJECT_ALL_TEST)
+
+EXTRAS_SNIPPET_FILES_C = $(notdir $(wildcard $(EXTRAS_SNIPPET_DIR)/*.c))
+EXTRAS_TARGETS_C = $(addprefix extras_, $(addsuffix .passed, $(EXTRAS_SNIPPET_FILES_C)))
+EXTRAS_SPECIMEN_C = $(srcdir)/SmallSpecimensC/specimen1.c
+TEST_TARGETS += $(EXTRAS_TARGETS_C)
+
+$(EXTRAS_TARGETS_C): extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPET_DIR)/% $(EXTRAS_SPECIMEN_C) $(INJECT_ALL_TEST)
+	@$(RTH_RUN)						\
+		TITLE="extra snippet $* [$@]"			\
+		SNIPPET_FILE="$(EXTRAS_SNIPPET_DIR)/$*"		\
+		SPECIMEN="$(EXTRAS_SPECIMEN_C)"			\
+		IPOINT="::ipoint1"				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		COMPILER_FLAGS="-I$(EXTRAS_SNIPPET_DIR)"	\
+		$(INJECT_ALL_TEST) $@
+
+# funky name because *_JAVA is apparently reserved by automake
+EXTRAS_SNIPPET_FILES_J = $(notdir $(wildcard $(EXTRAS_SNIPPET_DIR)/*.java))
+EXTRAS_TARGETS_J = $(addprefix extras_, $(addsuffix .passed, $(EXTRAS_SNIPPET_FILES_J)))
+EXTRAS_SPECIMEN_J = $(srcdir)/SmallSpecimensJava/Specimen1.java
+TEST_TARGETS += $(EXTRAS_TARGETS_J)
+
+$(EXTRAS_TARGETS_J): \
+extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPET_DIR)/% $(EXTRAS_SPECIMEN_J) $(INJECT_ALL_TEST)
+	@$(RTH_RUN)						\
+		TITLE="extra snippet $* [$@]"			\
+		SNIPPET_FILE="$(EXTRAS_SNIPPET_DIR)/$*"		\
+		SPECIMEN="$(EXTRAS_SPECIMEN_J)"			\
+		IPOINT="Specimen1.ipoint1"			\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(INJECT_ALL_TEST) $@
+
+
+.phony: check-extras
+check-extra-snippets: $(EXTRAS_TARGETS_C) $(EXTRAS_TARGETS_J)
 
 
 ###############################################################################################################################
