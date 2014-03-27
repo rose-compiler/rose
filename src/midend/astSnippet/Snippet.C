@@ -103,8 +103,14 @@ SnippetFile::findSnippetFunctions()
         SnippetFinder(FunctionDefinitionMap &functions): functions(functions) {}
         void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (preorder==when) {
-                if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node))
-                    functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);
+                if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node)) {
+                    SgFunctionDeclaration *fdecl = fdef->get_declaration();
+                    SgFunctionType *ftype = fdecl ? fdecl->get_type() : NULL;
+                    SgType *rettype = ftype ? ftype->get_return_type() : NULL;
+                    if (rettype==SageBuilder::buildVoidType() && // snippets must return void
+                        !boost::contains(fdecl->get_qualified_name().getString(), "<")) // and not have funky names
+                        functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);
+                }
             }
         }
     };
