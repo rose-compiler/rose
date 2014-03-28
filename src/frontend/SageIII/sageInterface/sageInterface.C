@@ -2632,7 +2632,10 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
              }
             else
              {
-               printf ("WARNING: Scopes do NOT match! variable = %p = %s (could this be a static variable, or has the symbol table been setup before the scopes have been set?) \n",variable,variable->get_name().str());
+               if (SgProject::get_verbose() > 0)
+                  {
+                    printf ("WARNING: Scopes do NOT match! variable = %p = %s (could this be a static variable, or has the symbol table been setup before the scopes have been set?) \n",variable,variable->get_name().str());
+                  }
              }
 
           SgSymbol* symbol = new SgVariableSymbol(variable);
@@ -2843,6 +2846,18 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                  // DQ (10/8/2007): It turns out that this is always NULL, because the parent of the functionDeclaration has not yet been set in the copy mechanism!
                     if (functionDeclaration != NULL)
                        {
+                      // DQ (3/28/2014): After a call with Philippe, this Java specific issues is fixed and we don't seem to see this problem any more.
+                         if (functionDeclaration->isForward() == true)
+                            {
+                              printf ("ERROR: functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                              printf ("   --- functionDeclaration (get_name())   = %s \n",get_name(functionDeclaration).c_str());
+                              printf ("   --- functionDeclaration (mangled name) = %s \n",functionDeclaration->get_mangled_name().str());
+                              SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+                              if (memberFunctionDeclaration != NULL)
+                                 {
+                                   printf ("memberFunctionDeclaration != NULL \n");
+                                 }
+                            }
                          ROSE_ASSERT(functionDeclaration->isForward() == false);
                          SgInitializedNamePtrList & argumentList = functionDeclaration->get_args();
                          supportForVariableLists(scope,symbolTable,argumentList);

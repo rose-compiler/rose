@@ -1063,7 +1063,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
     if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
 
-#if 1
+#if 0
     printf ("Exiting as a test! \n");
     ROSE_ASSERT(false);
 #endif
