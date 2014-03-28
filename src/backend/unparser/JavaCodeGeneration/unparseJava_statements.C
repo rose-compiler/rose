@@ -1083,7 +1083,8 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
-     if (mfuncdecl_stmt -> isForward()) {
+  // if (mfuncdecl_stmt -> isForward()) {
+     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
          curprint(")");
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
 

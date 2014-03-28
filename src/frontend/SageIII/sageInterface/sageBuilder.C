@@ -13653,7 +13653,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
   // qualified (which are C++ specific). These are a performance option to simplify tacking back 
   // through scopes with code similarly complex as to what is supported in the name qualification 
   // support.
-#if 1
+#if 0
      printf ("In fixupCopyOfNodeFromSeperateFileInNewTargetAst: node_copy = %p = %s \n",node_copy,node_copy->class_name().c_str());
 #endif
 
@@ -14226,7 +14226,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                break;
              }
 
-#define DEBUG_FUNCTION_DECLARATION 1
+#define DEBUG_FUNCTION_DECLARATION 0
 
           case V_SgFunctionDeclaration:
              {
@@ -15207,7 +15207,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
              {
             // DQ (3/19/2014): Note sure that we need to handle this specific case.
 
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -15224,7 +15224,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                printf ("Need to check the symbol table of the SgCatchOptionStmt (which is a SgScopeStatement) \n");
 
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -15302,7 +15302,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      ROSE_ASSERT(toInsert != NULL);
      ROSE_ASSERT(original_before_copy != NULL);
 
-#if 1
+#if 0
      printf ("Inside of fixupCopyOfAstFromSeperateFileInNewTargetAst(): insertionPoint = %p = %s toInsert = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str(),toInsert,toInsert->class_name().c_str());
      printf ("   --- original_before_copy = %p = %s \n",original_before_copy,original_before_copy->class_name().c_str());
 #endif
@@ -15328,7 +15328,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
 
      ROSE_ASSERT(snippetFile_of_original != targetFile);
 
-#if 1
+#if 0
      printf ("targetFile              = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
      printf ("snippetFile_of_copy     = %p = %s \n",snippetFile_of_copy,snippetFile_of_copy->get_sourceFileNameWithPath().c_str());
      printf ("snippetFile_of_original = %p = %s \n",snippetFile_of_original,snippetFile_of_original->get_sourceFileNameWithPath().c_str());
@@ -15367,7 +15367,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      RoseAst::iterator i_copy     = ast_of_copy.begin();
      RoseAst::iterator i_original = ast_of_original.begin();
 
-#if 1
+#if 0
      printf ("i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
      (*i_copy)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_copy: debug");
      (*i_original)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_original: debug");
@@ -15414,6 +15414,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
   // DQ (3/8/2014): ENDIF: Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 #endif
 
+#if 0
      if (functionDeclaration != NULL)
         {
           printf ("functionDeclaration = %s \n",functionDeclaration->get_name().str());
@@ -15422,6 +15423,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
           ROSE_ASSERT(false);
 #endif
         }
+#endif
    }
 
 /**

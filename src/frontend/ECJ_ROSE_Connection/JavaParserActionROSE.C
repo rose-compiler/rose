@@ -1386,11 +1386,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env,
     }
     if (is_abstract) {
         method_declaration -> get_declarationModifier().setJavaAbstract();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
+     // method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
     if (is_native) {
         method_declaration -> get_functionModifier().setJavaNative();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
+     // method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     if (number_of_type_parameters > 0) {
@@ -3028,13 +3028,13 @@ cout.flush();
     // Set the Java specific modifiers
     if (isAbstract) {
         method_declaration -> get_declarationModifier().setJavaAbstract();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
+     // method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     // Set the Java specific modifiers
     if (isNative) {
         method_declaration -> get_functionModifier().setJavaNative();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
+     // method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     // Set the specific modifier, this modifier is common to C/C++.

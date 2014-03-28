@@ -935,7 +935,7 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                printf ("   --- functionDeclaration_copy->get_firstNondefiningDeclaration() = %p \n",functionDeclaration_copy->get_firstNondefiningDeclaration());
                printf ("   --- functionDeclaration_copy->get_definingDeclaration()         = %p \n",functionDeclaration_copy->get_definingDeclaration());
 
-               functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
+            // functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
 
             // Reset this!
                functionDeclaration_copy->unsetForward();
