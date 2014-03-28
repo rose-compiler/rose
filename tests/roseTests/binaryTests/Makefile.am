@@ -477,6 +477,7 @@ disassemble2_buffer2.raw.passed: $(disassemble2_directory)/buffer2.raw disassemb
 
 disassemble2_vm-final.raw.passed: $(disassemble2_directory)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
 	@$(RTH_RUN) \
+		DISABLED="This takes forever to run" \
 		TITLE="disassemble $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
 		EXE="$$(pwd)/disassemble" \
