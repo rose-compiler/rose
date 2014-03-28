@@ -65,7 +65,7 @@ add_library(libhpdf STATIC ${hpdf_LIB_SRCS})
 #target_link_libraries(libhpdf ${KDE4_KDECORE_LIBS})
 
 #set_target_properties(hpdf PROPERTIES VERSION 1.0.0 SOVERSION 1)
-install(TARGETS libhpdf ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS libhpdf DESTINATION lib)
 
 
 ########### install files ###############

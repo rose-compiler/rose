@@ -1,35 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS =  \
-#      PHPTests \
-#      astFileIOTests \
-#      astInliningTests \
-#      astInterfaceTests \
-#      astMergeTests \
-#      astOutliningTests \
-#      astPerformanceTests \
-#      astProcessingTests \
-#      astQueryTests \
-#      astRewriteTests \
-#      astSymbolTableTests \
-#      astTokenStreamTests \
-#      binaryTests \
-#      loopProcessingTests \
-#      ompLoweringTests \
-#      programAnalysisTests \
-#      programTransformationTests \
-#      roseHPCToolkitTests \
-#      utilTests \
-#      fileLocation_tests \
-#      graph_tests \
-#      mergeTraversal_tests
-
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
-              astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
+              astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
 	      astLValueTests abstractMemoryObjectTests

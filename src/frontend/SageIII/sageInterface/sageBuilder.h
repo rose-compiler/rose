@@ -1272,13 +1272,59 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
 
+//! Fixup any AST moved from one file two another (references to symbols, types, etc.).
+// ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy, std::map<SgNode*,SgNode*> & translationMap);
+// ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap);
+ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy);
+ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original);
+ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
+ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
+
+ROSE_DLL_API SgVarRefExp *buildJavaArrayLengthVarRefExp();
+ROSE_DLL_API SgScopeStatement *buildScopeStatement(SgClassDefinition * = NULL);
+ROSE_DLL_API SgJavaTypeExpression *buildJavaTypeExpression(SgType *);
+ROSE_DLL_API SgJavaMarkerAnnotation *buildJavaMarkerAnnotation(SgType *);
+ROSE_DLL_API SgJavaMemberValuePair *buildJavaMemberValuePair(const SgName &, SgExpression *);
+ROSE_DLL_API SgJavaSingleMemberAnnotation *buildJavaSingleMemberAnnotation(SgType *, SgExpression *);
+ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *);
+ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *, std::list<SgJavaMemberValuePair *>&);
+ROSE_DLL_API SgInitializedName *buildJavaFormalParameter(SgType *, const SgName &, bool is_var_args = false, bool is_final = false);
+
+//! Error checking the inserted snippet AST.
+ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
+
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
+
 ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
 ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);
-ROSE_DLL_API SgClassDeclaration *buildJavaDefiningClassDeclaration(SgScopeStatement *, std::string);
+ROSE_DLL_API SgClassDeclaration *buildJavaDefiningClassDeclaration(SgScopeStatement *, std::string, SgClassDeclaration::class_types kind = SgClassDeclaration::e_class);
 ROSE_DLL_API SgSourceFile *buildJavaSourceFile(SgProject *, std::string, SgClassDefinition *, std::string);
+ROSE_DLL_API SgArrayType *getUniqueJavaArrayType(SgType *, int);
+ROSE_DLL_API SgJavaParameterizedType *getUniqueJavaParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
+ROSE_DLL_API SgJavaQualifiedType *getUniqueJavaQualifiedType(SgClassDeclaration *, SgNamedType *, SgNamedType *);
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardUnbound();
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardExtends(SgType *);
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardSuper(SgType *);
 
 //@}
 
 } // end of namespace
+
+namespace Rose {
+    namespace Frontend {
+        namespace Java {
+
+            extern SgClassDefinition *javaLangPackageDefinition;
+            extern SgClassType *ObjectClassType;
+            extern SgClassType *StringClassType;
+            extern SgClassType *ClassClassType;
+            extern SgVariableSymbol *lengthSymbol;
+
+        }// ::rose::frontend::java
+    }// ::rose::frontend
+}// ::rose
 
 #endif //ROSE_SAGE_BUILDER_INTERFACE
