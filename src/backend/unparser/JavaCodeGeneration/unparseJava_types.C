@@ -135,16 +135,14 @@ void
 Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* wildcard_type, SgUnparse_Info& info) {
      curprint("?");
 
-     SgType *extends_type = wildcard_type -> get_extends_type(),
-            *super_type = wildcard_type -> get_super_type();
-     if (extends_type) {
+     SgType *bound_type = wildcard_type -> get_bound_type();
+     if (wildcard_type -> get_has_extends()) {
          curprint(" extends "); 
-         unparseType(extends_type, info);
      }
-     else if (super_type) {
+     else if (wildcard_type -> get_has_super()) {
          curprint(" super "); 
-         unparseType(super_type, info);
      }
+     unparseType(bound_type, info);
 }
 
 

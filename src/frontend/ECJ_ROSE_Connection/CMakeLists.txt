@@ -1,24 +1,23 @@
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
-  ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
-  ${JNI_INCLUDE_DIRS})
+  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/java-parser
+  ${QT_INCLUDES} ${JNI_INCLUDE_DIRS})
 
 
 ########### next target ###############
 
+set(JavaTraversal_LIB_SRCS
+  JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C
+  JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C
+  jni_utils.C java_support.C)
 
-set(libJavaTraversal_LIB_SRCS
-  openJavaParser_main.C
-  ecj.C
-  )
+add_library(JavaTraversal SHARED ${JavaTraversal_LIB_SRCS})
 
-add_library(libJavaTraversal SHARED ${libJavaTraversal_LIB_SRCS})
-target_link_libraries(libJavaTraversal ${KDE4_KDECORE_LIBS})
-
-set_target_properties(libJavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
-add_dependencies(libJavaTraversal rosetta_generated)
-install(TARGETS libJavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
+set_target_properties(JavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
+add_dependencies(JavaTraversal
+  rosetta_generated extract_rose_required_ecj_source_files)
+install(TARGETS JavaTraversal DESTINATION lib)
 
 
 ########### next target ###############
@@ -26,12 +25,14 @@ install(TARGETS libJavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
 set(libroseJava_SOURCES openJavaParser_main.C ecj.C jserver.C)
 
 add_library(roseJava ${libroseJava_SOURCES})
-add_dependencies(roseJava rosetta_generated)
+add_dependencies(roseJava
+  rosetta_generated extract_rose_required_ecj_source_files)
 
 
 ########### install files ###############
 
-#install(FILES  DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
+install(FILES  ecj.h JavaSourceCodePosition.h java_support.h
+               jni_JavaSourceCodePosition.h jni_token.h jni_utils.h
+               VisitorContext.h
+        DESTINATION include)
 
