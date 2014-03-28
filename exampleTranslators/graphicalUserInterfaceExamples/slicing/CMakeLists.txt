@@ -10,7 +10,7 @@ kde4_add_executable(slicing ${slicing_SRCS})
 
 target_link_libraries(slicing ${KDE4_KDECORE_LIBS})
 
-install(TARGETS slicing ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS slicing DESTINATION bin)
 
 
 ########### install files ###############
