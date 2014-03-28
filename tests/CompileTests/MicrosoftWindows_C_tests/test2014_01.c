@@ -1,14 +1,10 @@
 
 struct line 
    {
-     union
-        {
-          unsigned serial;
-        };
+     int a;
    };
 
 void foo()
    {
      struct line *b;
-     b->serial;
    }

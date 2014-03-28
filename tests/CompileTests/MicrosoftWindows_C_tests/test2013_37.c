@@ -1,1 +1,1 @@
-int multidimensionalArray[11][22] = { [3][4] = 76 };
+int multidimensionalArray[11][22]; /* = { [3][4] = 76 }; */

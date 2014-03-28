@@ -4,7 +4,7 @@ typedef struct ebml_master
      int   sizebytes;
    } ebml_master;
 
-static ebml_master start_ebml_master()
+static int start_ebml_master()
    {
-     return (ebml_master){ 1, 2 };
+      return 42;
    }

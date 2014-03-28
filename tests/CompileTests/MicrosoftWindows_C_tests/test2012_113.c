@@ -7,6 +7,8 @@ void handle_sub(int job, int fg)
 
      for (;;)
         {
+#if 0
+       /* No support for GNU extensions under Windlws */
           if ((((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0x7f)) 
              {
                if (2)
@@ -17,7 +19,7 @@ void handle_sub(int job, int fg)
                if (6)
                     kill(((((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0xff00) >> 8),"");
              }
-
+#endif
           break;
         }
    }

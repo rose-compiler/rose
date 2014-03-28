@@ -9,8 +9,6 @@ void foo1()
 void foo2()
    {
      int x;
-     if (1)
-        {}
      int a;
      int b;
      int c;
@@ -18,6 +16,8 @@ void foo2()
      int e = VAR;
      x = VAR;
      a = VAR;
+     if (1)
+        {}
      b = VAR;
      c = VAR;
      d = VAR;

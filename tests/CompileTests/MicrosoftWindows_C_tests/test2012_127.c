@@ -4,7 +4,7 @@ void foobar()
 
      for(;;)
         {
-          x = ({ union { int i; } u; u.i = 42; });
+       /* No GNU extensions: x = ({ union { int i; } u; u.i = 42; }); */
           break;         
         }
    }

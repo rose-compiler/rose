@@ -19,6 +19,8 @@
 void foobar()
    {
       for (;;)
+           break;
+#if 0
          if (((({ union {
               long __in;
               int __i;}__u;
@@ -28,7 +30,7 @@ void foobar()
          {
             break;
          }
-      
+#endif      
    }
 
 
