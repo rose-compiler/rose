@@ -18,7 +18,11 @@ INCLUDES = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/ros
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse -lofp
 
-TEST_F90_Objects = main_program_2008_01.f90
+# TEST_F90_Objects = main_program_2008_01.f90 main_program_2014_01.f90
+F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
+
+TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+TEST_F90_Sources = ${F90_TESTCODES:.f90=.f90.passed}
 
 PASSING_TEST_Objects = $(TEST_F90_Objects)
 
@@ -31,9 +35,11 @@ PASSING_TEST_Objects = $(TEST_F90_Objects)
 testTranslator: ../../../testTranslator
 
 $(TEST_F90_Objects): ../../../testTranslator
-	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+#	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
+#	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
+	sglri -i $(srcdir)/$(@:.o=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o $(@:.o=.f90.aterm)
+	./traverse -i $(@:.o=.f90.aterm)
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl
@@ -46,7 +52,7 @@ junk : $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-for
 test_ofp: traverse
 #	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/FortranFixed.tbl -o main_program_2008_01.f90.aterm
 	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o main_program_2008_01.f90.aterm
-	./traverse main_program_2008_01.f90.aterm
+	./traverse -i main_program_2008_01.f90.aterm
 
 clean-local:
 	rm -f rose_*.* *.aterm *.o
@@ -55,6 +61,7 @@ check-local:
 	@echo "Tests for experimental Fortran frontend."
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) test_ofp
 	@echo "*******************************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests/experimental_frontend_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************************"

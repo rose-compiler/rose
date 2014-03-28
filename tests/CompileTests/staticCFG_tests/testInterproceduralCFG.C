@@ -2,7 +2,12 @@
 #include "rose.h"
 #include "interproceduralCFG.h"
 #include <string>
+#ifndef _MSC_VER
 #include <err.h>
+#else
+#define warnx printf
+#endif
+
 using namespace std;
 
 int main(int argc, char *argv[]) 

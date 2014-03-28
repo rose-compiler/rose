@@ -3,7 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2014_01.c \
-test2014_02.c \
 last.c
 
 
@@ -13,6 +12,7 @@ test2012_04.c \
 test2012_05.c \
 test2012_06.c \
 test2012_07.c \
+test2014_02.c \
 last.c
 
 # Note: last.C just simplifies the Makefile.am it

@@ -2043,11 +2043,14 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/MicrosoftWindows_C_tests/Makefile
 tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Java_tests/unit_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/CompileTests/Cxx11_tests/Makefile
 tests/CompileTests/C11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile

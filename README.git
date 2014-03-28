@@ -910,7 +910,7 @@ Command to sync branch on RH5 to RH6 machines (and visa versa)
 
 
 Compiling with CMake:
-   CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-too-snippet-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
+   CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-edg4x-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
 then run make normally.
 
 Verbose mode:

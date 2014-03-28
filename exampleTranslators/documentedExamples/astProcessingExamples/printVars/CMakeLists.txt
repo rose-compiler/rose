@@ -10,7 +10,7 @@ kde4_add_executable(printVars ${printVars_SRCS})
 
 target_link_libraries(printVars ${KDE4_KDECORE_LIBS})
 
-install(TARGETS printVars ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS printVars DESTINATION bin)
 
 
 ########### install files ###############

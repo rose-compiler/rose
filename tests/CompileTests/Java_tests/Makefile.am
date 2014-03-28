@@ -128,7 +128,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_while1.java \
      cave3_while2.java \
      cave3_while3.java \
-     cave3_while4.java
+     cave3_while4.java \
+     testQualifiedType.java
 
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
@@ -522,6 +523,7 @@ testJava_option: $(testTranslator)
 #                  (See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=15303)
 #-------------------------------------------------------------------------------
 testJavaCommandlineOptions: $(testTranslator)
+	mkdir -p "$(builddir)/tmp"
 #-----------------------------
 # Java only
 #-----------------------------
@@ -541,10 +543,46 @@ testJavaCommandlineOptions: $(testTranslator)
 #-----------------------------
 # Destdir
 #-----------------------------
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/destdir"
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/tmp/destdir"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/tmp/destdir"
 # Source Destdir
-	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/source_destdir"
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/tmp/source_destdir"
+#-----------------------------
+# Source
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.5
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -source 1.7
+#-----------------------------
+# Target
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.6 -source 1.6
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -target 1.7 -source 1.7
+#-----------------------------
+# Encoding
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding UTF8
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding ISO8859-1
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding SJIS
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -encoding EUCJIS
+#-----------------------------
+# -s
+#-----------------------------
+	mkdir -p "$(builddir)/tmp/generated_source_destdir" && \
+			$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -s "$(builddir)/tmp/generated_source_destdir"
+#-----------------------------
+# -nowarn
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -nowarn
+#-----------------------------
+# -verbose
+#-----------------------------
+	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -verbose
+#-----------------------------
+# @argfile
+#-----------------------------
+	echo "$(top_srcdir)/tests/input_codes/minimal/minimal.java" > argfile.txt && \
+			$(testTranslator) @argfile.txt
 #-----------------------------
 # JVM Options
 #-----------------------------
@@ -606,6 +644,8 @@ clean-local:
 	rm -fr rose-output* ecj-classes-* javac-output-classes javac-syntax-check-classes
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+	rm -f core.*
+	rm -rf ./tmp
 
 # driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
 check-view: $(TEST_Objects:.o=.view)

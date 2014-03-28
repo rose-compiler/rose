@@ -4,6 +4,7 @@
 #include "OFPNodes.h"
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 namespace OFP {
@@ -28,6 +29,7 @@ class Unparser
 {
  public:
    Unparser() : oss(std::cout) {}
+   Unparser(std::ostream & os) : oss(os) {}
    Unparser(UnparseInfo & infoObj) : oss(std::cout) {info = infoObj;}
    virtual ~Unparser() {}
 
@@ -39,6 +41,8 @@ class Unparser
    virtual void unparseOpEnum(SgToken::ROSE_Fortran_Operators e) = 0;
    virtual void unparseStmt(SgUntypedStatement  * stmt) = 0;
 
+   virtual void unparseSgUntypedNamedStatement(SgUntypedNamedStatement  * stmt) = 0;
+
  protected:
    std::ostream & oss;
 
@@ -49,9 +53,10 @@ class Unparser
 class FortranTextUnparser : public Unparser
 {
  public:
-   FortranTextUnparser()                      {}
-   FortranTextUnparser(UnparseInfo & infoObj) {}
-  ~FortranTextUnparser()                      {}
+   FortranTextUnparser()                                  {}
+   FortranTextUnparser(std::ostream & os) : Unparser(os)  {}
+   FortranTextUnparser(UnparseInfo & infoObj)             {}
+  ~FortranTextUnparser()                                  {}
 
    void unparseNode(SgUntypedNode * node);
    void unparseDecl(SgUntypedDeclarationStatement * decl);
@@ -60,6 +65,8 @@ class FortranTextUnparser : public Unparser
    void unparseName(std::string name, std::string pre, std::string post);
    void unparseStmt(SgUntypedStatement  * stmt);
    void unparseOpEnum(SgToken::ROSE_Fortran_Operators e);
+
+   void unparseSgUntypedNamedStatement(SgUntypedNamedStatement  * stmt);
 
  private:
    

@@ -11,6 +11,11 @@ class UntypedASTBuilder : public ASTBuilder
    UntypedASTBuilder();
   ~UntypedASTBuilder();
 
+   virtual void build_Program(Program * program);
+   virtual void build_MainProgram(MainProgram * mainProgram);
+   virtual void build_ProgramStmt(ProgramStmt * programStmt);
+   virtual void build_EndProgramStmt(EndProgramStmt * endProgramStmt);
+
    virtual void build_SpecificationPart(SpecificationPart * specificationPart);
    virtual void build_ImplicitPart(ImplicitPart * implicitPart);
    virtual void build_ExecutionPart(ExecutionPart * executionPart);
@@ -18,11 +23,17 @@ class UntypedASTBuilder : public ASTBuilder
    virtual void build_TypeDeclarationStmt(TypeDeclarationStmt * typeDeclarationStmt);
    virtual void build_EntityDecl(EntityDecl* entityDecl);
    virtual void build_ImplicitStmt(ImplicitStmt * implicitStmt);
+   virtual void build_DataRef(DataRef * dataRef);
+   virtual void build_PartRef(PartRef * partRef);
+   virtual void build_AssignmentStmt(AssignmentStmt * assignmentStmt);
+   virtual void build_SubroutineSubprogram(SubroutineSubprogram * subroutineSubprogram);
+   virtual void build_SubroutineStmt(SubroutineStmt * subroutineStmt);
+   virtual void build_EndSubroutineStmt(EndSubroutineStmt * endSubroutineStmt);
 
-   virtual void build_MainProgram(MainProgram * main);
-   virtual void build_ProgramStmt(ProgramStmt * programStmt);
-   virtual void build_EndProgramStmt(EndProgramStmt * endProgramStmt);
-   
+   // Expressions
+   //
+   virtual void build_IntLiteralConstant(IntLiteralConstant * intLiteralConstant);
+
    // Operators
    //
    virtual void build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operators op, std::string name);

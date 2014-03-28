@@ -2101,14 +2101,6 @@ SgType::getCurrentScope()
      extern bool emptyFortranStateStack();
 #endif
 
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-  // This is what is used in the Java connection to ECJ.
-     extern SgScopeStatement* getTopOfJavaScopeStack();
-
-  // This is what is used to test when we can use the Java specific function (above).
-     extern bool emptyJavaStateStack();
-#endif
-
   // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
   // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
@@ -2147,16 +2139,6 @@ SgType::getCurrentScope()
             else
 #endif
              {
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-            // DQ (10/26/2010): If Java is not enabled then these functions will not be available.
-               if (emptyJavaStateStack() == false)
-                  {
-                 // Fortran AST being generated
-                    currentScope = getTopOfJavaScopeStack();
-                    ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
-                  }
-                 else
-#endif
                   {
                  // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
                 // Liao 10/29/2010. We allow users to build types during AST transformation, which will trigger this line.
@@ -2271,11 +2253,20 @@ SgType::getInternalTypes() const
      SgArrayType*     arrayType   = NULL;
      SgTypedefType*   typedefType = NULL;
 
+#if 0
+     printf ("In SgType::getInternalTypes(): TOP: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
+
+  // DQ (3/16/2014): Of coruse we need this.
   // Initialize with the input type (not clear if this is helpful).
   // internalTypes.push_back(currentType);
+     internalTypes.push_back(currentType);
 
      while (true)
         {
+#if 0
+           printf ("In SgType::getInternalTypes(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           if ( (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
@@ -2327,6 +2318,9 @@ SgType::getInternalTypes() const
                   }
              }
 
+#if 0
+           printf ("In SgType::getInternalTypes(): push_back(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
           internalTypes.push_back(currentType);
         }
 
@@ -2911,15 +2905,54 @@ SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType
    {
    }
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 SgName
-SgJavaParameterizedType::get_name() const
-   {
-     if(get_declaration())
-          return isSgClassDeclaration(get_declaration())->get_name();
-       else
-          return SgName((char *)0L);
-   }
+SgJavaParameterizedType::get_name() const {
+    if (get_declaration()) {
+        string name = get_raw_type() -> get_name().getString();
+        if (get_type_list() != NULL) {
+            name += "<";
+            SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+            for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                if (i != templateParameters.begin()) {
+                    name += ", ";
+                }
+                SgType *type = (*i) -> get_type();
+                SgArrayType *array_type = isSgArrayType(type);
+                ROSE_ASSERT(array_type || isSgNamedType(type));
+                name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+            }
+            name += ">";
+        }
+        return SgName(name);
+    }
+    else
+        return SgName((char *)0L);
+}
+
+
+SgName
+SgJavaParameterizedType::get_qualified_name() const {
+    string name = get_raw_type() -> get_qualified_name().getString();
+    if (get_type_list() != NULL) {
+        name += "<";
+        SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+        for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+            if (i != templateParameters.begin()) {
+                name += ", ";
+            }
+            SgType *type = (*i) -> get_type();
+            SgArrayType *array_type = isSgArrayType(type);
+            ROSE_ASSERT(array_type || isSgNamedType(type));
+            name += (array_type ? array_type -> get_qualified_name() : isSgNamedType(type) -> get_qualified_name()).getString();
+        }
+        name += ">";
+    }
+    return SgName(name);
+}
+
+#endif
 
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
 SgName
@@ -2933,33 +2966,6 @@ $CLASSNAME::get_mangled(void) const
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
         {
- // TODO: Remove this !
- /*
-          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
-          if (class_decl != NULL)
-             {
-            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
-               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
-               if (template_class_decl != NULL)
-                  {
-                    mangled_name = template_class_decl->get_mangled_name();
-#if 0
-                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
-#endif
-#if 0
-                    printf ("Need to get the mangled names of the template arguments \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-                 else
-                  {
-                 // This is for just a simple SgClassDeclaration.
-                    mangled_name = class_decl->get_mangled_name();
-                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
-                  }
-             }
-*/
              mangled_name = get_raw_type() -> get_mangled();
              if (get_type_list() != NULL) {
                  SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
@@ -2990,6 +2996,13 @@ SgJavaQualifiedType::get_name() const
           return SgName((char *)0L);
    }
 
+SgName
+SgJavaQualifiedType::get_qualified_name() const
+   {
+       return p_parent_type -> get_qualified_name().getString() + "." + p_type -> get_name().getString();
+   }
+
+
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
 SgName
 $CLASSNAME::get_mangled(void) const
@@ -3002,33 +3015,6 @@ $CLASSNAME::get_mangled(void) const
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
         {
- // TODO: Remove this !
- /*
-          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
-          if (class_decl != NULL)
-             {
-            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
-               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
-               if (template_class_decl != NULL)
-                  {
-                    mangled_name = template_class_decl->get_mangled_name();
-#if 0
-                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
-#endif
-#if 0
-                    printf ("Need to get the mangled names of the template arguments \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-                 else
-                  {
-                 // This is for just a simple SgClassDeclaration.
-                    mangled_name = class_decl->get_mangled_name();
-                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
-                  }
-             }
-*/
              mangled_name = get_parent_type() -> get_mangled();
              mangled_name += "_";
              mangled_name += get_type() -> get_mangled();
@@ -3047,15 +3033,50 @@ SgJavaWildcardType::SgJavaWildcardType ( const SgJavaWildcardType & X )
 
 bool
 SgJavaWildcardType::is_unbound() {
-    return p_extends_type == NULL && p_super_type == NULL;
+    return p_bound_type == NULL;
 }
 
+SgName
+SgJavaWildcardType::get_name() const {
+    string name = "?";
+
+    if (p_bound_type != NULL) {
+        if (p_has_extends) {
+            name += " extends ";
+        }
+        else if (p_has_super) {
+            name += " super ";
+        }
+
+        SgType *type = p_bound_type;
+        SgArrayType *array_type = isSgArrayType(type);
+	ROSE_ASSERT(array_type || isSgNamedType(type));
+        name += (array_type ? array_type -> get_name() : isSgNamedType(type) -> get_name()).getString();
+    }
+
+    return SgName(name);
+}
 
 SgName
-SgJavaWildcardType::get_name() const
-   {
-       return SgName("?");
-   }
+SgJavaWildcardType::get_qualified_name() const {
+    string name = "?";
+
+    if (p_bound_type != NULL) {
+        if (p_has_extends) {
+            name += " extends ";
+        }
+        else if (p_has_super) {
+            name += " super ";
+        }
+
+        SgType *type = p_bound_type;
+        SgArrayType *array_type = isSgArrayType(type);
+	ROSE_ASSERT(array_type || isSgNamedType(type));
+        name += (array_type ? array_type -> get_qualified_name() : isSgNamedType(type) -> get_qualified_name()).getString();
+    }
+
+    return SgName(name);
+}
 
 SgName
 SgJavaWildcardType::get_mangled (void) const
@@ -3064,13 +3085,9 @@ SgJavaWildcardType::get_mangled (void) const
 
      string mangled_name = "__MANGLED_ID_WILDCARD_TYPEb__";
      mangled_name += get_name().str(); // name of wildcard type is "?"
-     if (p_extends_type != NULL) {
-         mangled_name += "_extends_" ;
-         mangled_name += p_extends_type -> get_mangled();
-     }
-     if (p_super_type != NULL) {
-         mangled_name += "_super_" ;
-         mangled_name += p_super_type -> get_mangled();
+     if (p_bound_type != NULL) {
+         mangled_name += (p_has_extends ? "_extends_" : "_super_");
+         mangled_name += p_bound_type -> get_mangled();
      }
      mangled_name += ("__MANGLED_ID_WILDCARD_TYPEe__"); // end tag
 
@@ -3139,6 +3156,12 @@ SgJavaParameterType::get_name() const
           return isSgClassDeclaration(get_declaration())->get_name();
        else
           return SgName((char *)0L);
+   }
+
+SgName
+SgJavaParameterType::get_qualified_name() const
+   {
+       return this -> get_name();
    }
 
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
@@ -4653,6 +4676,105 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_ARRAY_TYPE_START
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+SgName
+SgArrayType::get_name(void) const {
+    string dimensions = "[]";
+    SgType *type = p_base_type;
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+        dimensions += "[]";
+        type = array_type -> get_base_type();
+    }
+
+    string name;
+    if (isSgTypeBool(type)) {
+        name = "boolean";
+    }
+    else if (isSgTypeSignedChar(type)) {
+        name = "byte";
+    }
+    else if (isSgTypeWchar(type)) {
+        name = "char";
+    }
+    else if (isSgTypeInt(type)) {
+        name = "int";
+    }
+    else if (isSgTypeShort(type)) {
+        name = "short";
+    }
+    else if (isSgTypeFloat(type)) {
+        name = "float";
+    }
+    else if (isSgTypeLong(type)) {
+        name = "long";
+    }
+    else if (isSgTypeDouble(type)) {
+        name = "double";
+    }
+    else if (isSgTypeVoid(type)) {
+        name = "void";
+    }
+    else if (isSgTypeString(type)) {
+        name = "String";
+    }
+    else if (isSgNamedType(type)) {
+        name = isSgNamedType(type) -> get_name().getString();
+    }
+    name += dimensions;
+
+    return SgName(name);
+}
+
+SgName
+SgArrayType::get_qualified_name(void) const {
+    string dimensions = "[]";
+    SgType *type = p_base_type;
+    for (SgArrayType *array_type = isSgArrayType(type); array_type; array_type = isSgArrayType(type)) {
+        dimensions += "[]";
+        type = array_type -> get_base_type();
+    }
+
+    string name;
+    if (isSgTypeBool(type)) {
+        name = "boolean";
+    }
+    else if (isSgTypeSignedChar(type)) {
+        name = "byte";
+    }
+    else if (isSgTypeWchar(type)) {
+        name = "char";
+    }
+    else if (isSgTypeInt(type)) {
+        name = "int";
+    }
+    else if (isSgTypeShort(type)) {
+        name = "short";
+    }
+    else if (isSgTypeFloat(type)) {
+        name = "float";
+    }
+    else if (isSgTypeLong(type)) {
+        name = "long";
+    }
+    else if (isSgTypeDouble(type)) {
+        name = "double";
+    }
+    else if (isSgTypeVoid(type)) {
+        name = "void";
+    }
+    else if (isSgTypeString(type)) {
+        name = "String";
+    }
+    else if (isSgNamedType(type)) {
+        name = isSgNamedType(type) -> get_qualified_name().getString();
+    }
+    name += dimensions;
+
+    return SgName(name);
+}
+
+#endif
+
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
 SgArrayType::get_mangled(void) const

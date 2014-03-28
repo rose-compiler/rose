@@ -1,4 +1,5 @@
 #include "UntypedNodes.h"
+#include <assert.h>
 
 SgUntypedType* isSgUntypedType(SgNode* node)
 {
@@ -25,16 +26,6 @@ SgUntypedStatement* isSgUntypedStatement(SgNode* node)
    return dynamic_cast<SgUntypedStatement*>(node);   
 }
 
-SgUntypedDeclarationList* SgUntypedScope::get_declaration_list() const
-{
-   return p_declaration_list;
-}
-
-void SgUntypedScope::set_declaration_list(SgUntypedDeclarationList* declaration_list)
-{
-   p_declaration_list = declaration_list;
-}
-
 
 Sg_File_Info* SgLocatedNode::get_startOfConstruct() const {return p_startOfConstruct;}
 //void SgLocatedNode::set_startOfConstruct(Sg_File_Info* startOfConstruct);
@@ -46,8 +37,8 @@ SgLocatedNode::SgLocatedNode(Sg_File_Info* start) : p_startOfConstruct(start) {}
 SgLocatedNodeSupport::SgLocatedNodeSupport(Sg_File_Info* start) : SgLocatedNode(start) {}
 
 
-SgUntypedNode::~SgUntypedNode() {}
 SgUntypedNode::SgUntypedNode(Sg_File_Info* start) : SgLocatedNodeSupport(start) {}
+SgUntypedNode::~SgUntypedNode() {}  // need to allow deletion of lists
 
 VariantT SgUntypedNode::variantT() const {return V_SgUntypedNode;}
 
@@ -62,25 +53,48 @@ SgUntypedStatement::~SgUntypedStatement() {}
 SgUntypedStatement::SgUntypedStatement(Sg_File_Info* start) : SgUntypedNode(start) {}
 
 
-SgToken::ROSE_Fortran_Keywords SgUntypedExpression::get_statement_enum() const         {return p_statement_enum;}
-void SgUntypedExpression::set_statement_enum(SgToken::ROSE_Fortran_Keywords stmt_enum) {p_statement_enum = stmt_enum;}
-
-SgUntypedExpression::~SgUntypedExpression() {}
+//========================================================================================
+// SgUntypedExpression
+//----------------------------------------------------------------------------------------
 SgUntypedExpression::SgUntypedExpression(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum)
    : SgUntypedNode(start), p_statement_enum(stmt_enum)
    {
    }
+SgUntypedExpression::~SgUntypedExpression() {}
+
+VariantT SgUntypedExpression::variantT() const {return V_SgUntypedExpression;}
+
+SgToken::ROSE_Fortran_Keywords SgUntypedExpression::get_statement_enum() const         {return p_statement_enum;}
+void SgUntypedExpression::set_statement_enum(SgToken::ROSE_Fortran_Keywords stmt_enum) {p_statement_enum = stmt_enum;}
 
 
-std::string SgUntypedReferenceExpression::get_name() const             {return p_name;}
-void        SgUntypedReferenceExpression::set_name(std::string name)   {p_name = name;}
-
-SgUntypedReferenceExpression::~SgUntypedReferenceExpression() {}
+//========================================================================================
+// SgUntypedReferenceExpression
+//----------------------------------------------------------------------------------------
 SgUntypedReferenceExpression::SgUntypedReferenceExpression(Sg_File_Info* start,
                                                            SgToken::ROSE_Fortran_Keywords stmt_enum, std::string name)
    : SgUntypedExpression(start, stmt_enum), p_name(name)
    {
    }
+SgUntypedReferenceExpression::~SgUntypedReferenceExpression() {}
+
+VariantT SgUntypedReferenceExpression::variantT() const {return V_SgUntypedReferenceExpression;}
+
+std::string SgUntypedReferenceExpression::get_name() const             {return p_name;}
+void        SgUntypedReferenceExpression::set_name(std::string name)   {p_name = name;}
+
+
+//========================================================================================
+// SgUntypedValueExpression
+//----------------------------------------------------------------------------------------
+SgUntypedValueExpression::SgUntypedValueExpression(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum,
+                                                   std::string value_string, SgUntypedType* type)
+   : SgUntypedExpression(start, stmt_enum), p_value_string(value_string), p_type(type)
+   {
+   }
+SgUntypedValueExpression::~SgUntypedValueExpression() {}
+
+VariantT SgUntypedValueExpression::variantT() const {return V_SgUntypedValueExpression;}
 
 std::string SgUntypedValueExpression::get_value_string() const            {return p_value_string;}
 void SgUntypedValueExpression::set_value_string(std::string value_string) {p_value_string = value_string;}
@@ -88,21 +102,28 @@ void SgUntypedValueExpression::set_value_string(std::string value_string) {p_val
 SgUntypedType* SgUntypedValueExpression::get_type() const    {return p_type;}
 void SgUntypedValueExpression::set_type(SgUntypedType* type) {p_type = type;}
 
-SgUntypedValueExpression::~SgUntypedValueExpression() {}
-SgUntypedValueExpression::SgUntypedValueExpression(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum,
-                                                   std::string value_string, SgUntypedType* type)
-   : SgUntypedExpression(start, stmt_enum), p_value_string(value_string), p_type(type)
-{
-}
+
+//========================================================================================
+// SgUntypedType
+//----------------------------------------------------------------------------------------
+SgUntypedType::SgUntypedType(Sg_File_Info* start, std::string type_name)
+   : SgUntypedNode(start), p_type_name(type_name)
+   {
+   }
+SgUntypedType::~SgUntypedType() {}
 
 std::string SgUntypedType::get_type_name() const {return p_type_name;}
 //void SgUntypedType::set_type_name(std::string type_name);
 
-SgUntypedExpression* SgUntypedType::get_type_kind() const {return p_type_kind;}
-//void SgUntypedType::set_type_kind(SgUntypedExpression* type_kind);
+SgUntypedExpression* SgUntypedType::get_type_kind() const  {return p_type_kind;}
+void SgUntypedType::set_type_kind(SgUntypedExpression* type_kind)
+   {
+      p_has_kind = true;
+      p_type_kind = type_kind;
+   }
 
-bool SgUntypedType::get_has_kind() const  {return p_has_kind;}
-//void SgUntypedType::set_has_kind(bool has_kind);
+bool SgUntypedType::get_has_kind() const            {return p_has_kind;}
+void SgUntypedType::set_has_kind(bool has_kind)     {p_has_kind = has_kind;}
 
 //bool SgUntypedType::get_is_literal() const;
 void SgUntypedType::set_is_literal(bool is_literal) {p_is_literal = is_literal;}
@@ -128,46 +149,51 @@ void SgUntypedType::set_is_constant(bool is_constant) {p_is_constant = is_consta
 //bool SgUntypedType::get_char_length_is_string() const;
 //void SgUntypedType::set_char_length_is_string(bool char_length_is_string);
 
-SgUntypedType::~SgUntypedType() {}
 
-SgUntypedType::SgUntypedType(Sg_File_Info* start, std::string type_name)
-   : SgUntypedNode(start), p_type_name(type_name)
-{
-}
-
-SgUntypedExpression* SgUntypedAssignmentStatement::get_lhs_operand() const  {return p_lhs_operand;}
-//void SgUntypedAssignmentStatement::set_lhs_operand(SgUntypedExpression* lhs_operand);
-
-SgUntypedExpression* SgUntypedAssignmentStatement::get_rhs_operand() const  {return p_rhs_operand;}
-//void SgUntypedAssignmentStatement::set_rhs_operand(SgUntypedExpression* rhs_operand);
-
-SgUntypedAssignmentStatement::~SgUntypedAssignmentStatement() {}
-
+//========================================================================================
+// SgUntypedAssignmentStatement
+//----------------------------------------------------------------------------------------
 SgUntypedAssignmentStatement::SgUntypedAssignmentStatement(Sg_File_Info* start, SgUntypedExpression* lhs, SgUntypedExpression* rhs)
    : SgUntypedStatement(start), p_lhs_operand(lhs), p_rhs_operand(rhs)
-{
-}
+   {
+   }
+SgUntypedAssignmentStatement::~SgUntypedAssignmentStatement() {}
 
-SgToken::ROSE_Fortran_Operators SgUntypedBinaryOperator::get_operator_enum() const {return p_operator_enum;}
-//void SgUntypedBinaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum);
+VariantT SgUntypedAssignmentStatement::variantT() const {return V_SgUntypedAssignmentStatement;}
 
-//std::string SgUntypedBinaryOperator::get_operator_name() const;
-//void SgUntypedBinaryOperator::set_operator_name(std::string operator_name);
+SgUntypedExpression* SgUntypedAssignmentStatement::get_lhs_operand() const           {return p_lhs_operand;}
+void SgUntypedAssignmentStatement::set_lhs_operand(SgUntypedExpression* lhs_operand) {p_lhs_operand = lhs_operand;}
 
-SgUntypedExpression* SgUntypedBinaryOperator::get_lhs_operand() const  {return p_lhs_operand;}
-//void SgUntypedBinaryOperator::set_lhs_operand(SgUntypedExpression* lhs_operand);
+SgUntypedExpression* SgUntypedAssignmentStatement::get_rhs_operand() const           {return p_rhs_operand;}
+void SgUntypedAssignmentStatement::set_rhs_operand(SgUntypedExpression* rhs_operand) {p_rhs_operand = rhs_operand;}
 
-SgUntypedExpression* SgUntypedBinaryOperator::get_rhs_operand() const  {return p_rhs_operand;}
-//void SgUntypedBinaryOperator::set_rhs_operand(SgUntypedExpression* rhs_operand);
 
-SgUntypedBinaryOperator::~SgUntypedBinaryOperator() {}
+//========================================================================================
+// SgUntypedBinaryOperator
+//----------------------------------------------------------------------------------------
 SgUntypedBinaryOperator::SgUntypedBinaryOperator(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum,
                                                  SgToken::ROSE_Fortran_Operators operator_enum, std::string name,
                                                  SgUntypedExpression* lhs, SgUntypedExpression* rhs)
    : SgUntypedExpression(start, stmt_enum), p_operator_enum(operator_enum),
      p_operator_name(name), p_lhs_operand(lhs), p_rhs_operand(rhs)
-{
-}
+   {
+   }
+SgUntypedBinaryOperator::~SgUntypedBinaryOperator() {}
+
+VariantT SgUntypedBinaryOperator::variantT() const {return V_SgUntypedBinaryOperator;}
+
+SgToken::ROSE_Fortran_Operators SgUntypedBinaryOperator::get_operator_enum() const             {return p_operator_enum;}
+void SgUntypedBinaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum) {p_operator_enum = operator_enum;}
+
+std::string SgUntypedBinaryOperator::get_operator_name() const                   {return p_operator_name;}
+void SgUntypedBinaryOperator::set_operator_name(std::string operator_name)       {p_operator_name = operator_name;}
+
+SgUntypedExpression* SgUntypedBinaryOperator::get_lhs_operand() const            {return p_lhs_operand;}
+void SgUntypedBinaryOperator::set_lhs_operand(SgUntypedExpression* lhs_operand)  {p_lhs_operand = lhs_operand;}
+
+SgUntypedExpression* SgUntypedBinaryOperator::get_rhs_operand() const            {return p_rhs_operand;}
+void SgUntypedBinaryOperator::set_rhs_operand(SgUntypedExpression* rhs_operand)  {p_rhs_operand = rhs_operand;}
+
 
 std::string SgUntypedNamedStatement::get_statement_name() const            {return p_statement_name;}
 void        SgUntypedNamedStatement::set_statement_name(std::string name)  {p_statement_name = name;}
@@ -175,138 +201,261 @@ void        SgUntypedNamedStatement::set_statement_name(std::string name)  {p_st
 SgUntypedNamedStatement::~SgUntypedNamedStatement() {}
 SgUntypedNamedStatement::SgUntypedNamedStatement(Sg_File_Info* start, std::string statement_name)
    : SgUntypedStatement(start), p_statement_name(statement_name)
-{
-}
+   {
+   }
 
-SgUntypedStatementList* SgUntypedScope::get_statement_list() const          {return p_statement_list;}
-void SgUntypedScope::set_statement_list(SgUntypedStatementList* stmt_list)  {p_statement_list = stmt_list;}
+VariantT SgUntypedNamedStatement::variantT() const {return V_SgUntypedNamedStatement;}
 
-SgUntypedFunctionDeclarationList* SgUntypedScope::get_function_list() const {return p_function_list;}
-//void SgUntypedScope::set_function_list(SgUntypedFunctionDeclarationList* function_list);
 
-SgUntypedScope::~SgUntypedScope() {}
-SgUntypedScope::SgUntypedScope(Sg_File_Info* start) : SgUntypedStatement(start) {}
-
+//========================================================================================
+// SgUntypedDeclarationList
+//----------------------------------------------------------------------------------------
+SgUntypedDeclarationList:: SgUntypedDeclarationList(Sg_File_Info* start) : SgUntypedNode(start) {}
+SgUntypedDeclarationList::~SgUntypedDeclarationList() {}
 
 const SgUntypedDeclarationStatementPtrList&  SgUntypedDeclarationList::get_decl_list() const {return p_decl_list;}
-SgUntypedDeclarationStatementPtrList& SgUntypedDeclarationList::get_decl_list()              {return p_decl_list;}
-
-SgUntypedDeclarationList::~SgUntypedDeclarationList() {}
-SgUntypedDeclarationList::SgUntypedDeclarationList(Sg_File_Info* start) : SgUntypedNode(start) {}
+      SgUntypedDeclarationStatementPtrList&  SgUntypedDeclarationList::get_decl_list()       {return p_decl_list;}
 
 
-SgUntypedDeclarationStatement::~SgUntypedDeclarationStatement() {}
+//========================================================================================
+// SgUntypedDeclarationStatement
+//----------------------------------------------------------------------------------------
 SgUntypedDeclarationStatement::SgUntypedDeclarationStatement(Sg_File_Info* start)
    : SgUntypedStatement(start)
    {
    }
+SgUntypedDeclarationStatement::~SgUntypedDeclarationStatement() {assert(0);}
 
+
+//========================================================================================
+// SgUntypedStatementList
+//----------------------------------------------------------------------------------------
+SgUntypedStatementList:: SgUntypedStatementList(Sg_File_Info* start) : SgUntypedNode(start) {}
+SgUntypedStatementList::~SgUntypedStatementList() {}  // allow deletion of lists
 
 const SgUntypedStatementPtrList&  SgUntypedStatementList::get_stmt_list() const {return p_stmt_list;}
-SgUntypedStatementPtrList& SgUntypedStatementList::get_stmt_list()              {return p_stmt_list;}
-
-SgUntypedStatementList::~SgUntypedStatementList() {}
-SgUntypedStatementList::SgUntypedStatementList(Sg_File_Info* start)
-   : SgUntypedNode(start)
-   {
-   }
+      SgUntypedStatementPtrList&  SgUntypedStatementList::get_stmt_list()       {return p_stmt_list;}
 
 
-std::string SgUntypedFunctionDeclaration::get_name() const     {return p_name;}
-void SgUntypedFunctionDeclaration::set_name(std::string name)  {p_name = name;}
-
-// SgUntypedInitializedNameList* SgUntypedFunctionDeclaration::get_parameters() const;
-// void SgUntypedFunctionDeclaration::set_parameters(SgUntypedInitializedNameList* parameters);
-
-// SgUntypedType* SgUntypedFunctionDeclaration::get_type() const;
-// void SgUntypedFunctionDeclaration::set_type(SgUntypedType* type);
-
-SgUntypedFunctionScope* SgUntypedFunctionDeclaration::get_scope() const  {return p_scope;}
-// void SgUntypedFunctionDeclaration::set_scope(SgUntypedFunctionScope* scope);
-
-SgUntypedNamedStatement* SgUntypedFunctionDeclaration::get_end_statement() const        {return p_end_statement;}
-void SgUntypedFunctionDeclaration::set_end_statement(SgUntypedNamedStatement* end_stmt) {p_end_statement = end_stmt;}
-
-SgUntypedFunctionDeclaration::~SgUntypedFunctionDeclaration() {}
+//========================================================================================
+// SgUntypedFunctionDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedFunctionDeclaration::SgUntypedFunctionDeclaration(Sg_File_Info* start, std::string name) 
    :  SgUntypedDeclarationStatement(start), p_name(name)
    {
    }
+SgUntypedFunctionDeclaration::~SgUntypedFunctionDeclaration() {}
+
+SgUntypedFunctionDeclaration* isSgUntypedFunctionDeclaration(SgNode* node)
+{
+   return dynamic_cast<SgUntypedFunctionDeclaration*>(node);   
+}
+
+std::string SgUntypedFunctionDeclaration::get_name() const     {return p_name;}
+void SgUntypedFunctionDeclaration::set_name(std::string name)  {p_name = name;}
+
+SgUntypedInitializedNameList* SgUntypedFunctionDeclaration::get_parameters() const          {return p_parameters;}
+void SgUntypedFunctionDeclaration::set_parameters(SgUntypedInitializedNameList* parameters) {p_parameters = parameters;}
+
+SgUntypedType* SgUntypedFunctionDeclaration::get_type() const     {return p_type;}
+void SgUntypedFunctionDeclaration::set_type(SgUntypedType* type)  {p_type = type;}
+
+SgUntypedFunctionScope* SgUntypedFunctionDeclaration::get_scope() const      {return p_scope;}
+void SgUntypedFunctionDeclaration::set_scope(SgUntypedFunctionScope* scope)  {p_scope = scope;}
+
+SgUntypedNamedStatement* SgUntypedFunctionDeclaration::get_end_statement() const         {return p_end_statement;}
+void SgUntypedFunctionDeclaration::set_end_statement(SgUntypedNamedStatement* end_stmt)  {p_end_statement = end_stmt;}
 
 
-SgUntypedProgramHeaderDeclaration::~SgUntypedProgramHeaderDeclaration() {}
+//========================================================================================
+// SgUntypedSubroutineDeclaration
+//----------------------------------------------------------------------------------------
+SgUntypedSubroutineDeclaration:: SgUntypedSubroutineDeclaration(Sg_File_Info* start, std::string name)
+   :  SgUntypedFunctionDeclaration(start, name)
+   {
+   }
+SgUntypedSubroutineDeclaration::~SgUntypedSubroutineDeclaration() {}
+
+VariantT SgUntypedSubroutineDeclaration::variantT() const {return V_SgUntypedSubroutineDeclaration;}
+
+
+//========================================================================================
+// SgUntypedProgramHeaderDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedProgramHeaderDeclaration:: SgUntypedProgramHeaderDeclaration(Sg_File_Info* start, std::string name)
    :  SgUntypedFunctionDeclaration(start, name)
    {
    }
+SgUntypedProgramHeaderDeclaration::~SgUntypedProgramHeaderDeclaration() {}
+
+VariantT SgUntypedProgramHeaderDeclaration::variantT() const {return V_SgUntypedProgramHeaderDeclaration;}
 
 
-SgUntypedImplicitDeclaration::~SgUntypedImplicitDeclaration() {}
+//========================================================================================
+// SgUntypedProgramImplicitDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedImplicitDeclaration::SgUntypedImplicitDeclaration(Sg_File_Info* start)
    :  SgUntypedDeclarationStatement(start)
    {
    }
+SgUntypedImplicitDeclaration::~SgUntypedImplicitDeclaration() {}
+
+VariantT SgUntypedImplicitDeclaration::variantT() const {return V_SgUntypedImplicitDeclaration;}
 
 
-SgUntypedType* SgUntypedInitializedName::get_type() const {return p_type;}
-// void SgUntypedInitializedName::set_type(SgUntypedType* type);
-
-std::string SgUntypedInitializedName::get_name() const  {return p_name;}
-// void SgUntypedInitializedName::set_name(std::string name);
-
-SgUntypedInitializedName::~SgUntypedInitializedName() {}
+//========================================================================================
+// SgUntypedProgramImplicitDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedInitializedName::SgUntypedInitializedName(Sg_File_Info* start, SgUntypedType* type, std::string name)
    :  SgUntypedNode(start), p_type(type), p_name(name)
    {
    }
+SgUntypedInitializedName::~SgUntypedInitializedName() {}
+
+SgUntypedType* SgUntypedInitializedName::get_type() const     {return p_type;}
+void SgUntypedInitializedName::set_type(SgUntypedType* type)  {p_type = type;}
+
+std::string SgUntypedInitializedName::get_name() const        {return p_name;}
+void SgUntypedInitializedName::set_name(std::string name)     {p_name = name;}
 
 
-// SgUntypedType* SgUntypedVariableDeclaration::get_type() const;
-// void SgUntypedVariableDeclaration::set_type(SgUntypedType* type);
-
-SgUntypedInitializedNameList* SgUntypedVariableDeclaration::get_parameters() const {return p_parameters;}
-// void SgUntypedVariableDeclaration::set_parameters(SgUntypedInitializedNameList* parameters);
-
-SgUntypedVariableDeclaration::~SgUntypedVariableDeclaration() {}
+//========================================================================================
+// SgUntypedVariableDeclaration
+//----------------------------------------------------------------------------------------
 SgUntypedVariableDeclaration::SgUntypedVariableDeclaration(Sg_File_Info* start, SgUntypedType* type) 
-   : SgUntypedDeclarationStatement(start), p_type(type)
+   : SgUntypedDeclarationStatement(start), p_type(type), p_parameters(NULL)
    {
    }
+SgUntypedVariableDeclaration::~SgUntypedVariableDeclaration() {assert(0);}
+
+VariantT SgUntypedVariableDeclaration::variantT() const {return V_SgUntypedVariableDeclaration;}
+
+SgUntypedType* SgUntypedVariableDeclaration::get_type() const     {return p_type;}
+void SgUntypedVariableDeclaration::set_type(SgUntypedType* type)  {p_type = type;}
+
+SgUntypedInitializedNameList* SgUntypedVariableDeclaration::get_parameters() const           {return p_parameters;}
+void SgUntypedVariableDeclaration::set_parameters(SgUntypedInitializedNameList* parameters)  {p_parameters = parameters;}
 
 
-const SgUntypedInitializedNamePtrList&  SgUntypedInitializedNameList::get_name_list() const {return p_name_list;}
-SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list()              {return p_name_list;}
-
-
-SgUntypedInitializedNameList::~SgUntypedInitializedNameList() {}
+//========================================================================================
+// SgUntypedInitializedNameList
+//----------------------------------------------------------------------------------------
 SgUntypedInitializedNameList::SgUntypedInitializedNameList(Sg_File_Info* start)
    : SgUntypedNode(start)
    {
    }
+SgUntypedInitializedNameList::~SgUntypedInitializedNameList() {assert(0);}
+
+const SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list() const {return p_name_list;}
+      SgUntypedInitializedNamePtrList& SgUntypedInitializedNameList::get_name_list()       {return p_name_list;}
 
 
-const SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list() const {return p_func_list;}
-SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list()             {return p_func_list;}
-
-SgUntypedFunctionDeclarationList::~SgUntypedFunctionDeclarationList() {}
+//========================================================================================
+// SgUntypedInitializedNameList
+//----------------------------------------------------------------------------------------
 SgUntypedFunctionDeclarationList::SgUntypedFunctionDeclarationList(Sg_File_Info* start)
    : SgUntypedNode(start)
    {
    }
+SgUntypedFunctionDeclarationList::~SgUntypedFunctionDeclarationList() {assert(0);}
+
+const SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list() const {return p_func_list;}
+      SgUntypedFunctionDeclarationPtrList& SgUntypedFunctionDeclarationList::get_func_list()       {return p_func_list;}
 
 
-// SgToken::ROSE_Fortran_Operators SgUntypedUnaryOperator::get_operator_enum() const;
-// void SgUntypedUnaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum);
-
-// std::string SgUntypedUnaryOperator::get_operator_name() const;
-// void SgUntypedUnaryOperator::set_operator_name(std::string operator_name);
-
-// SgUntypedExpression* SgUntypedUnaryOperator::get_operand() const;
-// void SgUntypedUnaryOperator::set_operand(SgUntypedExpression* operand);
-
-SgUntypedUnaryOperator::~SgUntypedUnaryOperator() {}
+//========================================================================================
+// SgUntypedUnaryOperator
+//----------------------------------------------------------------------------------------
 SgUntypedUnaryOperator::SgUntypedUnaryOperator(Sg_File_Info* start, SgToken::ROSE_Fortran_Keywords stmt_enum,
                        SgToken::ROSE_Fortran_Operators op_enum, std::string op_name, SgUntypedExpression* op)
    : SgUntypedExpression(start, stmt_enum), p_operator_enum(op_enum), p_operator_name(op_name), p_operand(op)
    {
    }
+SgUntypedUnaryOperator::~SgUntypedUnaryOperator() {}
+
+SgToken::ROSE_Fortran_Operators SgUntypedUnaryOperator::get_operator_enum() const             {return p_operator_enum;}
+void SgUntypedUnaryOperator::set_operator_enum(SgToken::ROSE_Fortran_Operators operator_enum) {p_operator_enum = operator_enum;}
+
+std::string SgUntypedUnaryOperator::get_operator_name() const             {return p_operator_name;}
+void SgUntypedUnaryOperator::set_operator_name(std::string operator_name) {p_operator_name = operator_name;}
+
+SgUntypedExpression* SgUntypedUnaryOperator::get_operand() const       {return p_operand;}
+void SgUntypedUnaryOperator::set_operand(SgUntypedExpression* operand) {p_operand = operand;}
+
+
+//========================================================================================
+// SgUntypedScope
+//----------------------------------------------------------------------------------------
+SgUntypedScope:: SgUntypedScope(Sg_File_Info* start) : SgUntypedStatement(start) {}
+SgUntypedScope::~SgUntypedScope() {assert(0);}
+
+SgUntypedDeclarationList* SgUntypedScope::get_declaration_list() const
+   {
+      return p_declaration_list;
+   }
+void SgUntypedScope::set_declaration_list(SgUntypedDeclarationList* decl_list)
+   {
+      assert(decl_list);
+      if (p_declaration_list) {
+         assert(p_declaration_list->get_decl_list().size() == 0);
+         delete p_declaration_list;
+      }
+      p_declaration_list = decl_list;
+   }
+
+SgUntypedStatementList* SgUntypedScope::get_statement_list() const
+   {
+      return p_statement_list;
+   }
+void SgUntypedScope::set_statement_list(SgUntypedStatementList* stmt_list)
+   {
+      assert(stmt_list);
+      if (p_statement_list) {
+         assert(p_statement_list->get_stmt_list().size() == 0);
+         delete p_statement_list;
+      }
+      p_statement_list = stmt_list;
+   }
+
+SgUntypedFunctionDeclarationList* SgUntypedScope::get_function_list() const
+   {
+      return p_function_list;
+   }
+void SgUntypedScope::set_function_list(SgUntypedFunctionDeclarationList* func_list)
+   {
+      assert(func_list);
+      if (p_function_list) {
+         assert(p_function_list->get_func_list().size() == 0);
+         delete p_function_list;
+      }
+      p_function_list = func_list;
+   }
+
+
+//========================================================================================
+// SgUntypedFunctionScope
+//----------------------------------------------------------------------------------------
+SgUntypedFunctionScope::~SgUntypedFunctionScope() {}
+SgUntypedFunctionScope::SgUntypedFunctionScope(Sg_File_Info* start) : SgUntypedScope(start) {}
+
+//========================================================================================
+// SgUntypedGlobalScope
+//----------------------------------------------------------------------------------------
+SgUntypedGlobalScope::SgUntypedGlobalScope(Sg_File_Info* start) : SgUntypedScope(start) {}
+SgUntypedGlobalScope::~SgUntypedGlobalScope() {}
+
+//========================================================================================
+// SgUntypedFile
+//----------------------------------------------------------------------------------------
+SgUntypedFile::SgUntypedFile(Sg_File_Info* start) : SgUntypedNode(start) {}
+SgUntypedFile::~SgUntypedFile() {}
+
+VariantT SgUntypedFile::variantT() const {return V_SgUntypedFile;}
+
+SgUntypedGlobalScope* SgUntypedFile::get_scope() const         {return p_scope;}
+void SgUntypedFile::set_scope(SgUntypedGlobalScope* scope)     {p_scope = scope;}
+
+SgUntypedFile* isSgUntypedFile(SgNode* node)
+{
+   return dynamic_cast<SgUntypedFile*>(node);   
+}

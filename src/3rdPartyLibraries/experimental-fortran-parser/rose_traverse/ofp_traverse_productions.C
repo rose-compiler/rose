@@ -15,8 +15,7 @@ void OFP::setASTBuilder(OFP::ASTBuilder * a) {ast = a;}
 OFP::Unparser * unparser = NULL;
 void OFP::setUnparser(OFP::Unparser * u) {unparser = u;}
 
-#undef DEBUG_OFP_CLIENT
-    
+
 /**                                                                                             
  * Section/Clause 2: Fortran concepts
  */
@@ -47,8 +46,11 @@ ATbool ofp_traverse_Program(ATerm term, OFP::Program* Program)
       ProgramUnit_tail = ATgetNext (ProgramUnit_tail);
       if (ofp_traverse_ProgramUnit(ProgramUnit.term, &ProgramUnit)) {
          // MATCHED ProgramUnit
+         Program->appendProgramUnit(ProgramUnit.newProgramUnit());
       } else return ATfalse;
    }
+
+   ast->build_Program(Program);
 
    return ATtrue;
  }
@@ -71,6 +73,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_BlockData(BlockData.term, &BlockData)) {
          // MATCHED BlockData
          ProgramUnit->setBlockData(BlockData.newBlockData());
+         ProgramUnit->inheritPayload(ProgramUnit->getBlockData());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_BD
@@ -85,6 +88,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_Submodule(Submodule.term, &Submodule)) {
          // MATCHED Submodule
          ProgramUnit->setSubmodule(Submodule.newSubmodule());
+         ProgramUnit->inheritPayload(ProgramUnit->getSubmodule());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_S
@@ -99,6 +103,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_Module(Module.term, &Module)) {
          // MATCHED Module
          ProgramUnit->setModule(Module.newModule());
+         ProgramUnit->inheritPayload(ProgramUnit->getModule());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_M
@@ -113,6 +118,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_ExternalSubprogram(ExternalSubprogram.term, &ExternalSubprogram)) {
          // MATCHED ExternalSubprogram
          ProgramUnit->setExternalSubprogram(ExternalSubprogram.newExternalSubprogram());
+         ProgramUnit->inheritPayload(ProgramUnit->getExternalSubprogram());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_ES
@@ -127,6 +133,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_MainProgram(MainProgram.term, &MainProgram)) {
          // MATCHED MainProgram
          ProgramUnit->setMainProgram(MainProgram.newMainProgram());
+         ProgramUnit->inheritPayload(ProgramUnit->getMainProgram());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_MP
@@ -152,9 +159,12 @@ ATbool ofp_traverse_ExternalSubprogram(ATerm term, OFP::ExternalSubprogram* Exte
 
       if (ofp_traverse_SubroutineSubprogram(SubroutineSubprogram.term, &SubroutineSubprogram)) {
          // MATCHED SubroutineSubprogram
+         ExternalSubprogram->setSubroutineSubprogram(SubroutineSubprogram.newSubroutineSubprogram());
+         ExternalSubprogram->inheritPayload(ExternalSubprogram->getSubroutineSubprogram());
       } else return ATfalse;
 
    // MATCHED ExternalSubprogram_SS
+   ExternalSubprogram->setOptionType(OFP::ExternalSubprogram::ExternalSubprogram_SS);
 
    return ATtrue;
  }
@@ -164,9 +174,12 @@ ATbool ofp_traverse_ExternalSubprogram(ATerm term, OFP::ExternalSubprogram* Exte
 
       if (ofp_traverse_FunctionSubprogram(FunctionSubprogram.term, &FunctionSubprogram)) {
          // MATCHED FunctionSubprogram
+         ExternalSubprogram->setFunctionSubprogram(FunctionSubprogram.newFunctionSubprogram());
+         ExternalSubprogram->inheritPayload(ExternalSubprogram->getFunctionSubprogram());
       } else return ATfalse;
 
    // MATCHED ExternalSubprogram_FS
+   ExternalSubprogram->setOptionType(OFP::ExternalSubprogram::ExternalSubprogram_FS);
 
    return ATtrue;
  }
@@ -648,21 +661,31 @@ ATbool ofp_traverse_InternalSubprogram(ATerm term, OFP::InternalSubprogram* Inte
 #endif
 
  OFP::SubroutineSubprogram SubroutineSubprogram;
- if (ATmatch(term, "InternalSubprogram(<term>)", &SubroutineSubprogram.term)) {
+ if (ATmatch(term, "InternalSubprogram_SS(<term>)", &SubroutineSubprogram.term)) {
 
       if (ofp_traverse_SubroutineSubprogram(SubroutineSubprogram.term, &SubroutineSubprogram)) {
          // MATCHED SubroutineSubprogram
+         InternalSubprogram->setSubroutineSubprogram(SubroutineSubprogram.newSubroutineSubprogram());
+         InternalSubprogram->inheritPayload(InternalSubprogram->getSubroutineSubprogram());
       } else return ATfalse;
+
+   // MATCHED InternalSubprogram_SS
+   InternalSubprogram->setOptionType(OFP::InternalSubprogram::InternalSubprogram_SS);
 
    return ATtrue;
  }
 
  OFP::FunctionSubprogram FunctionSubprogram;
- if (ATmatch(term, "InternalSubprogram(<term>)", &FunctionSubprogram.term)) {
+ if (ATmatch(term, "InternalSubprogram_FS(<term>)", &FunctionSubprogram.term)) {
 
       if (ofp_traverse_FunctionSubprogram(FunctionSubprogram.term, &FunctionSubprogram)) {
          // MATCHED FunctionSubprogram
+         InternalSubprogram->setFunctionSubprogram(FunctionSubprogram.newFunctionSubprogram());
+         InternalSubprogram->inheritPayload(InternalSubprogram->getFunctionSubprogram());
       } else return ATfalse;
+
+   // MATCHED InternalSubprogram_FS
+   InternalSubprogram->setOptionType(OFP::InternalSubprogram::InternalSubprogram_FS);
 
    return ATtrue;
  }
@@ -2274,14 +2297,6 @@ ATbool ofp_traverse_IntLiteralConstant(ATerm term, OFP::IntLiteralConstant* IntL
          // MATCHED DigitString
          IntLiteralConstant->setDigitString(DigitString.newDigitString());
          IntLiteralConstant->inheritPayload(IntLiteralConstant->getDigitString());
-#ifdef OFP_CLIENT
-         SgUntypedValueExpression* value = dynamic_cast<SgUntypedValueExpression*>(IntLiteralConstant->getPayload());
-         SgUntypedType * type = value->get_type();
-         type->set_is_literal(true);
-         type->set_is_constant(true);
-         //TODO-DQ-2014.3.7 ok for a type to have a keyword
-         //type->set_keyword(SgToken::FORTRAN_INTEGER);
-#endif
       } else return ATfalse;
 
    if (ATmatch(KindParam.term, "Some(<term>)", &KindParam.term)) {
@@ -2289,24 +2304,11 @@ ATbool ofp_traverse_IntLiteralConstant(ATerm term, OFP::IntLiteralConstant* IntL
       if (ofp_traverse_KindParam(KindParam.term, &KindParam)) {
          // MATCHED KindParam
          IntLiteralConstant->setKindParam(KindParam.newKindParam());
-#ifdef OFP_CLIENT
-         OFP::KindParam*           kindParam = IntLiteralConstant->getKindParam();
-         SgUntypedType*            kindType  = dynamic_cast<SgUntypedValueExpression*>(kindParam->getPayload())->get_type();
-         SgUntypedValueExpression*     expr  = dynamic_cast<SgUntypedValueExpression*>(IntLiteralConstant->getPayload());
-         expr->set_type(kindType);
-#endif
-#ifdef DEBUG_OFP_CLIENT
-         printf("ROSE IntLiteralConstant(kind): ...... ");
-         //unparser->unparseExpr(kindExpr);  printf("\n");
-#endif
       } else return ATfalse;
    }
    }
 
-#ifdef DEBUG_OFP_CLIENT
-   printf("ROSE IntLiteralConstant ............. ");
-   unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(IntLiteralConstant->getPayload()));  printf("\n");
-#endif
+   ast->build_IntLiteralConstant(IntLiteralConstant);
 
    return ATtrue;
  }
@@ -8462,11 +8464,6 @@ ATbool ofp_traverse_Variable(ATerm term, OFP::Variable* Variable)
          Variable->setDesignator(Designator.newDesignator());
          Variable->inheritPayload(Variable->getDesignator());
       } else return ATfalse;
-#ifdef OFP_CLIENT
-      SgUntypedReferenceExpression* refExpr = dynamic_cast<SgUntypedReferenceExpression*>(Variable->getPayload());
-      //TODO-CER-2014.3.7 FIXME by getting variable name
-      refExpr->set_name("FIXME");
-#endif
 
    return ATtrue;
  }
@@ -8736,14 +8733,7 @@ ATbool ofp_traverse_DataRef(ATerm term, OFP::DataRef* DataRef)
       } else return ATfalse;
    }
 
-#ifdef OFP_CLIENT
-   // TODO - handle PartRef list instead of just grabbing first element
-   DataRef->inheritPayload(DataRef->getPartRefList()->front());
-#ifdef DEBUG_OFP_CLIENT
-   printf("ROSE DataRef: ....................... ");
-   unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(DataRef->getPayload()));  printf("\n");
-#endif
-#endif
+   ast->build_DataRef(DataRef);
 
    return ATtrue;
  }
@@ -8768,10 +8758,6 @@ ATbool ofp_traverse_PartRef(ATerm term, OFP::PartRef* PartRef)
       if (ofp_traverse_PartName(PartName.term, &PartName)) {
          // MATCHED PartName
          PartRef->setPartName(PartName.newPartName());
-#ifdef OFP_CLIENT
-         SgUntypedReferenceExpression* expr = new SgUntypedReferenceExpression(NULL, SgToken::FORTRAN_UNKNOWN, PartRef->getPartName()->getIdent()->getValue().c_str());
-         PartRef->setPayload(expr);
-#endif
       } else return ATfalse;
 
    if (ATmatch(SectionSubscriptList.term, "Some(<term>)", &SectionSubscriptList.term)) {
@@ -8792,10 +8778,8 @@ ATbool ofp_traverse_PartRef(ATerm term, OFP::PartRef* PartRef)
       } else return ATfalse;
    }
 
-#ifdef DEBUG_OFP_CLIENT
-      printf("ROSE PartRef: ....................... ");
-      unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(PartRef->getPayload()));  printf("\n");
-#endif
+   printf("==============will call build_PartRef %p\n", PartRef);
+   ast->build_PartRef(PartRef);
 
    return ATtrue;
  }
@@ -10772,19 +10756,7 @@ ATbool ofp_traverse_AssignmentStmt(ATerm term, OFP::AssignmentStmt* AssignmentSt
          AssignmentStmt->setEOS(EOS.newEOS());
       } else return ATfalse;
 
-#ifdef OFP_CLIENT
-      SgUntypedExpression* lhs = dynamic_cast<SgUntypedExpression*>(AssignmentStmt->getVariable()->payload);
-      SgUntypedExpression* rhs = dynamic_cast<SgUntypedExpression*>(AssignmentStmt->getExpr()->payload);
-
-      //TODO-CER- fix label to cons
-      SgUntypedAssignmentStatement* stmt = new SgUntypedAssignmentStatement(NULL, lhs, rhs);
-      AssignmentStmt->setPayload(stmt);
-
-#ifdef DEBUG_OFP_CLIENT
-      printf("ROSE AssignmentStmt: ................ ");
-      unparser->unparseStmt(dynamic_cast<SgUntypedAssignmentStatement*>(AssignmentStmt->getPayload()));  printf("\n");
-#endif
-#endif
+   ast->build_AssignmentStmt(AssignmentStmt);
 
    return ATtrue;
  }
@@ -17799,10 +17771,6 @@ ATbool ofp_traverse_MainProgram(ATerm term, OFP::MainProgram* MainProgram)
 
    ast->build_MainProgram(MainProgram);
 
-   printf("\n\n----------------------------\n");
-//   unparser->unparseNode(MainProgram->getPayload());
-   printf("----------------------------\n\n");
-
    return ATtrue;
  }
 
@@ -20151,25 +20119,32 @@ ATbool ofp_traverse_SubroutineSubprogram(ATerm term, OFP::SubroutineSubprogram* 
 
       if (ofp_traverse_SubroutineStmt(SubroutineStmt.term, &SubroutineStmt)) {
          // MATCHED SubroutineStmt
+         SubroutineSubprogram->setSubroutineStmt(SubroutineStmt.newSubroutineStmt());
       } else return ATfalse;
 
       if (ofp_traverse_SpecificationPart(SpecificationPart.term, &SpecificationPart)) {
          // MATCHED SpecificationPart
+         SubroutineSubprogram->setSpecificationPart(SpecificationPart.newSpecificationPart());
       } else return ATfalse;
 
       if (ofp_traverse_ExecutionPart(ExecutionPart.term, &ExecutionPart)) {
          // MATCHED ExecutionPart
+         SubroutineSubprogram->setExecutionPart(ExecutionPart.newExecutionPart());
       } else return ATfalse;
 
    if (ATmatch(InternalSubprogramPart.term, "Some(<term>)", &InternalSubprogramPart.term)) {
       if (ofp_traverse_InternalSubprogramPart(InternalSubprogramPart.term, &InternalSubprogramPart)) {
          // MATCHED InternalSubprogramPart
+         SubroutineSubprogram->setInternalSubprogramPart(InternalSubprogramPart.newInternalSubprogramPart());
       } else return ATfalse;
    }
 
       if (ofp_traverse_EndSubroutineStmt(EndSubroutineStmt.term, &EndSubroutineStmt)) {
          // MATCHED EndSubroutineStmt
+         SubroutineSubprogram->setEndSubroutineStmt(EndSubroutineStmt.newEndSubroutineStmt());
       } else return ATfalse;
+
+   ast->build_SubroutineSubprogram(SubroutineSubprogram);
 
    return ATtrue;
  }
@@ -20190,27 +20165,36 @@ ATbool ofp_traverse_SubroutineStmt(ATerm term, OFP::SubroutineStmt* SubroutineSt
  OFP::Prefix Prefix;
  OFP::SubroutineName SubroutineName;
  OFP::EOS EOS;
- if (ATmatch(term, "SubroutineStmt(<term>,<term>,<term>,<term>)", &Label.term, &Prefix.term, &SubroutineName.term, &EOS.term)) {
+ if (ATmatch(term, "SubroutineStmt_0(<term>,<term>,<term>,<term>)", &Label.term, &Prefix.term, &SubroutineName.term, &EOS.term)) {
 
    if (ATmatch(Label.term, "Some(<term>)", &Label.term)) {
       if (ofp_traverse_Label(Label.term, &Label)) {
          // MATCHED Label
+         SubroutineStmt->setLabel(Label.newLabel());
       } else return ATfalse;
    }
 
    if (ATmatch(Prefix.term, "Some(<term>)", &Prefix.term)) {
       if (ofp_traverse_Prefix(Prefix.term, &Prefix)) {
          // MATCHED Prefix
+         SubroutineStmt->setPrefix(Prefix.newPrefix());
       } else return ATfalse;
    }
 
       if (ofp_traverse_SubroutineName(SubroutineName.term, &SubroutineName)) {
          // MATCHED SubroutineName
+         SubroutineStmt->setSubroutineName(SubroutineName.newSubroutineName());
       } else return ATfalse;
 
       if (ofp_traverse_EOS(EOS.term, &EOS)) {
          // MATCHED EOS
+         SubroutineStmt->setEOS(EOS.newEOS());
       } else return ATfalse;
+
+   // MATCHED SubroutineStmt_0
+   SubroutineStmt->setOptionType(OFP::SubroutineStmt::SubroutineStmt_0);
+
+   ast->build_SubroutineStmt(SubroutineStmt);
 
    return ATtrue;
  }
@@ -20221,41 +20205,50 @@ ATbool ofp_traverse_SubroutineStmt(ATerm term, OFP::SubroutineStmt* SubroutineSt
  OFP::DummyArgList DummyArgList;
  OFP::ProcLanguageBindingSpec ProcLanguageBindingSpec;
  OFP::EOS EOS1;
- if (ATmatch(term, "SubroutineStmt_DAL(<term>,<term>,<term>,<term>,<term>,<term>)", &Label1.term, &Prefix1.term, &SubroutineName1.term, &DummyArgList.term, &ProcLanguageBindingSpec.term, &EOS1.term)) {
+ if (ATmatch(term, "SubroutineStmt_DAL(<term>,<term>,<term>,<term>,<term>,<term>)", &Label.term, &Prefix.term, &SubroutineName.term, &DummyArgList.term, &ProcLanguageBindingSpec.term, &EOS.term)) {
 
-   if (ATmatch(Label1.term, "Some(<term>)", &Label1.term)) {
-      if (ofp_traverse_Label(Label1.term, &Label1)) {
+   if (ATmatch(Label.term, "Some(<term>)", &Label.term)) {
+      if (ofp_traverse_Label(Label.term, &Label)) {
          // MATCHED Label
+         SubroutineStmt->setLabel(Label.newLabel());
       } else return ATfalse;
    }
 
-   if (ATmatch(Prefix1.term, "Some(<term>)", &Prefix1.term)) {
-      if (ofp_traverse_Prefix(Prefix1.term, &Prefix1)) {
+   if (ATmatch(Prefix.term, "Some(<term>)", &Prefix.term)) {
+      if (ofp_traverse_Prefix(Prefix.term, &Prefix)) {
          // MATCHED Prefix
+         SubroutineStmt->setPrefix(Prefix.newPrefix());
       } else return ATfalse;
    }
 
-      if (ofp_traverse_SubroutineName(SubroutineName1.term, &SubroutineName1)) {
+      if (ofp_traverse_SubroutineName(SubroutineName.term, &SubroutineName)) {
          // MATCHED SubroutineName
+         SubroutineStmt->setSubroutineName(SubroutineName.newSubroutineName());
       } else return ATfalse;
 
    if (ATmatch(DummyArgList.term, "Some(<term>)", &DummyArgList.term)) {
       if (ofp_traverse_DummyArgList(DummyArgList.term, &DummyArgList)) {
          // MATCHED DummyArgList
+         SubroutineStmt->setDummyArgList(DummyArgList.newDummyArgList());
       } else return ATfalse;
    }
 
    if (ATmatch(ProcLanguageBindingSpec.term, "Some(<term>)", &ProcLanguageBindingSpec.term)) {
       if (ofp_traverse_ProcLanguageBindingSpec(ProcLanguageBindingSpec.term, &ProcLanguageBindingSpec)) {
          // MATCHED ProcLanguageBindingSpec
+         SubroutineStmt->setProcLanguageBindingSpec(ProcLanguageBindingSpec.newProcLanguageBindingSpec());
       } else return ATfalse;
    }
 
-      if (ofp_traverse_EOS(EOS1.term, &EOS1)) {
+      if (ofp_traverse_EOS(EOS.term, &EOS)) {
          // MATCHED EOS
+         SubroutineStmt->setEOS(EOS.newEOS());
       } else return ATfalse;
 
    // MATCHED SubroutineStmt_DAL
+   SubroutineStmt->setOptionType(OFP::SubroutineStmt::SubroutineStmt_DAL);
+
+   ast->build_SubroutineStmt(SubroutineStmt);
 
    return ATtrue;
  }
@@ -20330,11 +20323,12 @@ ATbool ofp_traverse_EndSubroutineStmt(ATerm term, OFP::EndSubroutineStmt* EndSub
  OFP::Label Label;
  OFP::SubroutineName SubroutineName;
  OFP::EOS EOS;
-if (ATmatch(term, "EndSubroutineStmt(<term>,<term>,<term>)", &Label.term, &SubroutineName.term, &EOS.term)) {
+ if (ATmatch(term, "EndSubroutineStmt(<term>,<term>,<term>)", &Label.term, &SubroutineName.term, &EOS.term)) {
 
    if (ATmatch(Label.term, "Some(<term>)", &Label.term)) {
       if (ofp_traverse_Label(Label.term, &Label)) {
          // MATCHED Label
+         EndSubroutineStmt->setLabel(Label.newLabel());
       } else return ATfalse;
    }
 
@@ -20342,13 +20336,17 @@ if (ATmatch(term, "EndSubroutineStmt(<term>,<term>,<term>)", &Label.term, &Subro
    if (ATmatch(SubroutineName.term, "(Some(<term>))", &SubroutineName.term)) {
       if (ofp_traverse_SubroutineName(SubroutineName.term, &SubroutineName)) {
          // MATCHED SubroutineName
+         EndSubroutineStmt->setSubroutineName(SubroutineName.newSubroutineName());
       } else return ATfalse;
    }
    }
 
       if (ofp_traverse_EOS(EOS.term, &EOS)) {
          // MATCHED EOS
+         EndSubroutineStmt->setEOS(EOS.newEOS());
       } else return ATfalse;
+
+   ast->build_EndSubroutineStmt(EndSubroutineStmt);
 
    return ATtrue;
  }
