@@ -4036,6 +4036,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                  frontEndCommandLine.push_back("-nowarn");
          }
 
+// TODO: Remove this !
+/*
      // This is to specify where ecj should output the .class it is temporarily generating.
      // Check if -decj has already been provided, if not default to a unique name consisting
      // of the prefix "ecj-classes" with the suffix "-" + source_file_name,  where source_file_name
@@ -4059,6 +4061,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // Note: it is important to append since we do not want to override any user provided paths
          frontEndCommandLine.push_back("-classpath");
          frontEndCommandLine.push_back((classpath.size() > 0 ? (classpath + ":") : "") + ecjDestDir);
+*/
+
+         frontEndCommandLine.push_back("-classpath");
+         frontEndCommandLine.push_back(classpath);
 
          if (sourcepath.size()) {
              frontEndCommandLine.push_back("-sourcepath");
