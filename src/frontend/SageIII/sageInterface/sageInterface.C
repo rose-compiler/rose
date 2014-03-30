@@ -2958,6 +2958,23 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+       // DQ (3/29/2014): Added support for SgJavaForEachStatement.
+          case V_SgJavaForEachStatement:
+             {
+               SgJavaForEachStatement* javaForEachStatement = isSgJavaForEachStatement(scope);
+               SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(javaForEachStatement->get_element());
+               if (variableDeclarationCondition != NULL)
+                  {
+                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+                 // printf ("There is a variable declaration in the while statement condition, it needs to be added to the symbol table \n");
+                 // ROSE_ASSERT(false);
+
+                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
+                  }
+               return;
+               break;
+             }
+
           default:
              {
                printf ("Default reached in SageInterface::rebuildSymbolTable() scope = %p = %s \n",scope,scope->class_name().c_str());

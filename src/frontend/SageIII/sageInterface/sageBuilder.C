@@ -12934,15 +12934,55 @@ SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* ta
                  // DQ (3/10/2014): This type is a view of a generic class with dynamic type checking (e.g. T).
                  // This acts more like a class with reference to the template instead of the template instantiation. 
                  // So reset the declaration.
-
+#if 0
                     printf ("In getTargetFileTypeSupport(): case V_SgJavaParameterizedType: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+#endif
 #if 1
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(snippet_declaration);
                     if (classDeclaration != NULL)
                        {
-                         SgTemplateParameterPtrList* templateParameterList              = NULL;
+#if 0
+                         printf ("Looking for classDeclaration = %s \n",classDeclaration->get_name().str());
+#endif
+                         SgJavaParameterizedType* javaParameterizedType = isSgJavaParameterizedType(namedType);
+                         ROSE_ASSERT(javaParameterizedType != NULL);
+#if 0
+                      // SgTemplateParameterPtrList* templateParameterList = javaParameterizedType->get_type_list();
+                         SgTemplateParameterList* templateParameterListNode = javaParameterizedType->get_type_list();
+                         ROSE_ASSERT(templateParameterListNode != NULL);
+                         SgTemplateParameterPtrList* templateParameterList = &templateParameterListNode->get_args();
+#else
+                         SgTemplateParameterPtrList* templateParameterList = NULL;
+#endif
                          SgTemplateArgumentPtrList*  templateSpecializationArgumentList = NULL;
-                         SgTemplateClassSymbol* templateClassSymbolInTargetAST = lookupTemplateClassSymbolInParentScopes(classDeclaration->get_name(),templateParameterList,templateSpecializationArgumentList,targetScope);
+#if 0
+                         printf ("Calling lookupTemplateClassSymbolInParentScopes() name = %s \n",classDeclaration->get_name().str());
+#endif
+                      // SgTemplateClassSymbol* templateClassSymbolInTargetAST = lookupTemplateClassSymbolInParentScopes(classDeclaration->get_name(),templateParameterList,templateSpecializationArgumentList,targetScope);
+                         SgClassSymbol* templateClassSymbolInTargetAST = lookupClassSymbolInParentScopes(classDeclaration->get_name(),targetScope);
+#if 0
+                         printf ("DONE: Calling lookupTemplateClassSymbolInParentScopes() \n");
+#endif
+#if 0
+                         printf ("targetScope->get_symbol_table()->size() = %d \n",targetScope->get_symbol_table()->size());
+                         if (templateClassSymbolInTargetAST == NULL)
+                            {
+                              targetScope->get_symbol_table()->print("ERROR: templateClassSymbolInTargetAST == NULL");
+                            }
+#endif
+                      // DQ (3/30/2014): Add this approach.
+                         if (templateClassSymbolInTargetAST == NULL)
+                            {
+#if 0
+                              printf ("Calling findAssociatedSymbolInTargetAST \n");
+#endif
+                              SgSymbol* symbol = findAssociatedSymbolInTargetAST(classDeclaration,targetScope);
+                              ROSE_ASSERT(symbol != NULL);
+
+                              templateClassSymbolInTargetAST = isSgClassSymbol(symbol);
+
+                              ROSE_ASSERT(templateClassSymbolInTargetAST != NULL);
+                            }
 
                       // Not clear if we have to handle a more general case here.
                          ROSE_ASSERT(templateClassSymbolInTargetAST != NULL);
@@ -12953,6 +12993,7 @@ SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* ta
                     SgJavaParameterizedType* javaParameterizedType = isSgJavaParameterizedType(namedType);
                     if (javaParameterizedType != NULL)
                        {
+#error "DEAD CODE!"
                       // Not clear how to lookup this type in the target AST.
                          returnType = javaParameterizedType;
 
@@ -12960,8 +13001,10 @@ SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* ta
                          ROSE_ASSERT(internal_type != NULL);
                        }
 #endif
+#if 0
                     printf ("SgJavaParameterizedType not yet tested! \n");
                     ROSE_ASSERT(false);
+#endif
                     break;
                   }
 
@@ -14168,6 +14211,39 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                             }
                            else
                             {
+                           // DQ (3/29/2014): Adding support for SgInitializedName IR nodes found in a SgJavaForEachStatement.
+                              SgJavaForEachStatement* javaForEachStatement = isSgJavaForEachStatement(enclosingStatement_copy->get_parent());
+                              if (javaForEachStatement != NULL)
+                                 {
+                                   SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(enclosingStatement_copy);
+                                   ROSE_ASSERT(variableDeclaration != NULL);
+
+                                   SgStatement* enclosingStatement_original = TransformationSupport::getStatement(initializedName_original);
+                                   ROSE_ASSERT(enclosingStatement_original != NULL);
+                                   SgJavaForEachStatement* javaForEachStatement_original = isSgJavaForEachStatement(enclosingStatement_original->get_parent());
+
+                                   SgSymbol* symbol = lookupVariableSymbolInParentScopes(initializedName_copy->get_name(),javaForEachStatement_original);
+                                   if (symbol == NULL)
+                                      {
+                                        printf ("ERROR: (symbol == NULL): initializedName_copy->get_name() = %s \n",initializedName_copy->get_name().str());
+                                     // initializedName_original->get_file_info()->display("ERROR: (symbol == NULL): debug");
+                                      }
+                                   ROSE_ASSERT(symbol != NULL);
+
+                                   initializedName_copy->set_scope(targetScope);
+
+                                   SgVariableSymbol* new_variableSymbol = new SgVariableSymbol(initializedName_copy);
+                                   ROSE_ASSERT(new_variableSymbol != NULL);
+
+                                // DQ (3/29/2014): I am not certain this is the correct location to insert this symbol.
+                                   targetScope->insert_symbol(initializedName_copy->get_name(),new_variableSymbol);
+#if 0
+                                   printf ("Need to handle case of SgJavaForEachStatement \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                                else
+                                 {
                            // Case of non-SgFunctionParameterList and non-SgEnumDeclaration use of SgInitializedName in AST.
                               SgSymbol* symbol = initializedName_copy->search_for_symbol_from_symbol_table();
                               if (symbol == NULL)
@@ -14177,6 +14253,14 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                    printf ("ERROR: enclosingStatement_copy->get_parent() = %p = %s \n",enclosingStatement_copy->get_parent(),enclosingStatement_copy->get_parent()->class_name().c_str());
                                    printf ("ERROR: (symbol == NULL): initializedName_copy->get_name() = %s \n",initializedName_copy->get_name().str());
                                    initializedName_original->get_file_info()->display("ERROR: (symbol == NULL): debug");
+
+                                // DQ (3/30/2014): Add this appraoch to find the symbol.
+                                   SgScopeStatement* initializedName_copy_scope = isSgScopeStatement(initializedName_copy->get_scope());
+                                   ROSE_ASSERT(initializedName_copy_scope != NULL);
+                                   SgVariableSymbol* variableSymbol = initializedName_copy_scope->lookup_variable_symbol(initializedName_copy->get_name());
+                                   ROSE_ASSERT(variableSymbol != NULL);
+
+                                   symbol = variableSymbol;
                                  }
                               ROSE_ASSERT(symbol != NULL);
 
@@ -14208,6 +14292,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                                    printf ("I think this should be an error! \n");
                                    ROSE_ASSERT(false);
+                                 }
                                  }
                             }
                        }
@@ -15016,6 +15101,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                break;
              }
 
+#define DEBUG_MEMBER_FUNCTION_REF_EXP 0
+
           case V_SgMemberFunctionRefExp:
              {
             // Need to handle the referenced symbol
@@ -15027,7 +15114,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                if (getEnclosingFileNode(memberFunctionSymbol_copy) != targetFile)
                   {
                  // Not implemented (initial work is focused on C, then Java, then C++.
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                     printf ("Warning: case V_SgMemberFunctionRefExp: memberFunctionSymbol_copy not in target file (find member function = %s) \n",memberFunctionSymbol_copy->get_name().str());
 #endif
                     SgMemberFunctionSymbol* memberFunctionSymbolInTargetAST = isSgMemberFunctionSymbol(lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),targetScope));
@@ -15037,7 +15124,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // This is a violation of the policy that the a variable with the same name will be found in the target AST.
                       // Note that if the variable could not be found then it should have been added as part of the snippet, or a 
                       // previously added snippet.
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                          printf ("Error: The associated memberFunction_copy = %s should have been found in a parent scope of the target AST \n",memberFunctionSymbol_copy->get_name().str());
 #endif
                       // DQ (3/10/2014): This is important for member functions in Java and C++.
@@ -15045,7 +15132,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // If could be that the symbol is in the local scope of the snippet AST.
                          SgStatement* enclosingStatement_original = TransformationSupport::getStatement(memberFunctionRefExp_original);
                          ROSE_ASSERT(enclosingStatement_original != NULL);
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                          printf ("case V_SgMemberFunctionRefExp: enclosingStatement_original = %p = %s \n",enclosingStatement_original,enclosingStatement_original->class_name().c_str());
 #endif
                          SgScopeStatement* otherPossibleScope_original = isSgScopeStatement(enclosingStatement_original->get_parent());
@@ -15053,7 +15140,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // SgFile* file = TransformationSupport::getFile(enclosingStatement_original);
                          SgFile* file = getEnclosingFileNode(enclosingStatement_original);
                          ROSE_ASSERT(file != NULL);
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                          printf ("enclosingStatement_original: associated file name = %s \n",file->get_sourceFileNameWithPath().c_str());
                       // printf ("   --- targetFile            = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
 
@@ -15063,14 +15150,14 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          memberFunctionSymbolInTargetAST = isSgMemberFunctionSymbol(lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),otherPossibleScope_original));
                          if (memberFunctionSymbolInTargetAST == NULL)
                             {
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                               printf ("Backup and look for the associated class and then look for the member function in the class (assume non-friend function or Java member function) \n");
 #endif
                            // Check for the case of a record reference (member function of class declaration).
                               SgExpression* parentExpression = isSgExpression(memberFunctionRefExp_copy->get_parent());
 
                               ROSE_ASSERT(parentExpression != NULL);
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                               printf ("parentExpression = %p = %s \n",parentExpression,parentExpression->class_name().c_str());
 #endif
                               bool handle_as_java = false;
@@ -15084,7 +15171,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                    SgExpression* parentOfFunctionCallExpression = isSgExpression(functionCallExp->get_parent());
 
                                    ROSE_ASSERT(parentOfFunctionCallExpression != NULL);
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                                    printf ("parentOfFunctionCallExpression = %p = %s \n",parentOfFunctionCallExpression,parentOfFunctionCallExpression->class_name().c_str());
 #endif
                                    parentExpression = parentOfFunctionCallExpression;
@@ -15093,7 +15180,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                               SgBinaryOp*   parentBinaryOp   = isSgBinaryOp(parentExpression);
                               SgDotExp*     parentDotExp     = isSgDotExp(parentExpression);
                               SgArrowExp*   parentArrowExp   = isSgArrowExp(parentExpression);
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                               printf ("parentBinaryOp = %p \n",parentBinaryOp);
                               printf ("parentDotExp   = %p \n",parentDotExp);
                               printf ("parentArrowExp = %p \n",parentArrowExp);
@@ -15115,7 +15202,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                      // This is what we expect to be true for C++.
                                         ROSE_ASSERT(parentBinaryOp->get_rhs_operand() == memberFunctionRefExp_copy);
                                       }
-#if 0
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                                    printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
 #endif
                                    SgVarRefExp* varRefExp = isSgVarRefExp(lhs);
@@ -15128,49 +15215,104 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                         ROSE_ASSERT(variableSymbol != NULL);
                                         SgInitializedName* initializedName = variableSymbol->get_declaration();
                                         ROSE_ASSERT(initializedName != NULL);
-#if 0
+
                                         SgType* initializedName_type = initializedName->get_type();
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
                                         printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                                         printf ("initializedName_type = %p \n",initializedName_type);
 #endif
+                                        SgClassType* classType = isSgClassType(initializedName_type);
+                                        if (classType != NULL)
+                                           {
+                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                                             ROSE_ASSERT(classDeclaration != NULL);
+                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+                                             ROSE_ASSERT(definingClassDeclaration != NULL);
+                                             printf ("definingClassDeclaration->get_name() = %s \n",definingClassDeclaration->get_name().str());
+
+                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                             ROSE_ASSERT(classDefinition != NULL);
+                                             SgType* memberFunctionType = memberFunctionSymbol_copy->get_type();
+                                             SgName memberFunctionName  = memberFunctionSymbol_copy->get_name();
+                                             ROSE_ASSERT(memberFunctionType != NULL);
+                                             SgFunctionSymbol *functionSymbol = classDefinition->lookup_function_symbol(memberFunctionName,memberFunctionType);
+                                             if (functionSymbol == NULL)
+                                                {
+                                                  printf ("Symbol not found: output symbol table: \n");
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
+                                                  classDefinition->get_symbol_table()->print("Symbol not found: output symbol table: SgClassDefinition");
+#endif
+                                               // DQ (3/30/2014): If functionSymbol is not found then I think it is because the class was not availalbe 
+                                               // in the target where the snippet is being copied.  This is an error in the constrains for how the target 
+                                               // must be prepared for the snippet to be copied into it.
+                                                  printf ("\n*************************************************************** \n");
+                                                  printf ("ERROR: target has not be properly setup to receive the snippet. \n");
+                                                  printf ("*************************************************************** \n");
+                                                }
+                                             ROSE_ASSERT(functionSymbol != NULL);
+                                             SgMemberFunctionSymbol *memberFunctionSymbol = isSgMemberFunctionSymbol(functionSymbol);
+                                             ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+                                             memberFunctionSymbolInTargetAST = memberFunctionSymbol;
+#if 0
+                                             printf ("Exiting as a test! \n");
+                                             ROSE_ASSERT(false);
+#endif
+                                           }
                                       }
 
-                                   SgType* type = lhs->get_type();
-                                   ROSE_ASSERT(type != NULL);
-#if 0
-                                   printf ("type = %p = %s \n",type,type->class_name().c_str());
-#endif
-                                   SgNamedType* namedType = isSgNamedType(type);
-                                   ROSE_ASSERT(namedType != NULL);
-                                   SgDeclarationStatement* declaration = namedType->get_declaration();
-                                   ROSE_ASSERT(declaration != NULL);
-                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
-                                   ROSE_ASSERT(classDeclaration != NULL);
-                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declaration->get_definingDeclaration());
-                                   ROSE_ASSERT(definingClassDeclaration != NULL);
-                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                   ROSE_ASSERT(classDefinition != NULL);
-#if 0
-                                   printf ("case V_SgClassDeclaration: classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
-#endif
-                                // I think we want the copy.
-                                   otherPossibleScope_original = classDefinition;
-#if 0
-                                   classDefinition->get_symbol_table()->print("Java classDefinition");
-#endif
-#if 0
-                                   SgClassDeclaration* associated_classDeclaration = classDefinition->get_declaration();
-                                   SgFunctionSymbol* functionSymbol = lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),otherPossibleScope_original);
-                                   printf ("associated_classDeclaration = %p name = %s \n",associated_classDeclaration,associated_classDeclaration->get_name().str());
-                                   printf ("functionSymbol = %p \n",functionSymbol);
-#endif
-                                   memberFunctionSymbolInTargetAST = isSgMemberFunctionSymbol(lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),otherPossibleScope_original));
+                                // DQ (3/30/2014): If this is a value expression then calling the member function uses a shared 
+                                // symbol from the global scope (or a type defined deep in the global scope, but common to the 
+                                // snippet AST and the target AST).
+                                   SgValueExp* valueExp = isSgValueExp(lhs);
+                                   if (valueExp != NULL)
+                                      {
+                                        memberFunctionSymbolInTargetAST = memberFunctionSymbol_copy;
+                                        ROSE_ASSERT(memberFunctionSymbolInTargetAST != NULL);
+                                      }
+
                                    if (memberFunctionSymbolInTargetAST == NULL)
                                       {
-                                     // Output debugging info (16 of the CWE injection test codes fail here: see test_results.txt file for details).
-                                        printf ("Error: (memberFunctionSymbolInTargetAST == NULL): memberFunctionSymbol_copy->get_name() = %s \n",memberFunctionSymbol_copy->get_name().str());
+#if 1
+                                        SgType* type = lhs->get_type();
+                                        ROSE_ASSERT(type != NULL);
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
+                                        printf ("type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                                        SgNamedType* namedType = isSgNamedType(type);
+                                        ROSE_ASSERT(namedType != NULL);
+                                        SgDeclarationStatement* declaration = namedType->get_declaration();
+                                        ROSE_ASSERT(declaration != NULL);
+                                        SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                        ROSE_ASSERT(classDeclaration != NULL);
+                                        SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declaration->get_definingDeclaration());
+                                        ROSE_ASSERT(definingClassDeclaration != NULL);
+                                        SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                        ROSE_ASSERT(classDefinition != NULL);
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
+                                        printf ("case V_SgClassDeclaration: classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
+#endif
+                                     // I think we want the copy.
+                                        otherPossibleScope_original = classDefinition;
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
+                                        classDefinition->get_symbol_table()->print("Java classDefinition");
+#endif
+#if DEBUG_MEMBER_FUNCTION_REF_EXP
+                                        SgClassDeclaration* associated_classDeclaration = classDefinition->get_declaration();
+                                        SgFunctionSymbol* functionSymbol = lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),otherPossibleScope_original);
+                                        printf ("associated_classDeclaration = %p name = %s \n",associated_classDeclaration,associated_classDeclaration->get_name().str());
+                                        printf ("functionSymbol = %p \n",functionSymbol);
+#endif
+                                        memberFunctionSymbolInTargetAST = isSgMemberFunctionSymbol(lookupFunctionSymbolInParentScopes(memberFunctionSymbol_copy->get_name(),otherPossibleScope_original));
+                                        if (memberFunctionSymbolInTargetAST == NULL)
+                                           {
+                                          // Output debugging info (16 of the CWE injection test codes fail here: see test_results.txt file for details).
+                                             printf ("Error: (memberFunctionSymbolInTargetAST == NULL): memberFunctionSymbol_copy->get_name() = %s \n",memberFunctionSymbol_copy->get_name().str());
+                                           }
+#endif
+                                        ROSE_ASSERT(memberFunctionSymbolInTargetAST != NULL);
                                       }
-                                   ROSE_ASSERT(memberFunctionSymbolInTargetAST != NULL);
+                                    ROSE_ASSERT(memberFunctionSymbolInTargetAST != NULL);
                                  }
                             }
 
@@ -15196,7 +15338,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
           case V_SgTryStmt:
              {
 #if 0
-               printf ("Exiting as a test! \n");
+               printf ("Exiting as a test! (SgTryStmt) \n");
                ROSE_ASSERT(false);
 #endif
                break;
@@ -15208,7 +15350,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // DQ (3/19/2014): Note sure that we need to handle this specific case.
 
 #if 0
-               printf ("Exiting as a test! \n");
+               printf ("Exiting as a test! (SgCatchStatementSeq) \n");
                ROSE_ASSERT(false);
 #endif
                break;
@@ -15225,7 +15367,17 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                printf ("Need to check the symbol table of the SgCatchOptionStmt (which is a SgScopeStatement) \n");
 
 #if 0
-               printf ("Exiting as a test! \n");
+               printf ("Exiting as a test! (SgCatchOptionStmt) \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // DQ (3/21/2014): I think we need this.
+          case V_SgJavaPackageStatement:
+             {
+#if 1
+               printf ("Exiting as a test! (SgJavaPackageStatement) \n");
                ROSE_ASSERT(false);
 #endif
                break;
@@ -15306,6 +15458,10 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      printf ("Inside of fixupCopyOfAstFromSeperateFileInNewTargetAst(): insertionPoint = %p = %s toInsert = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str(),toInsert,toInsert->class_name().c_str());
      printf ("   --- original_before_copy = %p = %s \n",original_before_copy,original_before_copy->class_name().c_str());
 #endif
+
+  // DQ (3/30/2014): Turn this on to support finding symbols in base classes (in Java).
+  // Will be turned off at the base of this function (since we only only want to use it for the AST fixup, currently).
+     SgSymbolTable::set_force_search_of_base_classes(true);
 
   // DQ (3/4/2014): Switch to using the SageInterface function.
   // SgFile* targetFile = TransformationSupport::getFile(insertionPoint);
@@ -15424,6 +15580,9 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
 #endif
         }
 #endif
+
+  // DQ (3/30/2014): Turn this off (since we only only want to use it for the AST fixup, currently).
+     SgSymbolTable::set_force_search_of_base_classes(false);
    }
 
 /**
