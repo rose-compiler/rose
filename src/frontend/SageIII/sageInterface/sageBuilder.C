@@ -13012,10 +13012,8 @@ SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* ta
                       // Not clear how to lookup this type in the target AST.
                          returnType = javaWildcardType;
 
-                         SgType* internal_type_1 = javaWildcardType->get_extends_type();
-                         ROSE_ASSERT(internal_type_1 != NULL);
-                         SgType* internal_type_2 = javaWildcardType->get_super_type();
-                         ROSE_ASSERT(internal_type_2 != NULL);
+                         SgType* internal_type_1 = javaWildcardType->get_bound_type();
+                         // ROSE_ASSERT(internal_type_1 != NULL); // PC: 03/15/2014 - Dan, this cannot be asserted as the bound_type CAN BE NULL.
                        }
 
                     printf ("SgJavaWildcardType not yet tested! \n");
