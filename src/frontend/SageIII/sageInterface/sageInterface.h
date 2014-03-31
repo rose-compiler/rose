@@ -2269,7 +2269,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgFile* processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string, std::string);
+      SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
       SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
