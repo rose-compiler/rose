@@ -94,7 +94,12 @@ SnippetFile::parse(const std::string &fileName)
     std::string outputName = "/SNIPPET_SHOULD_NOT_BE_UNPARSED/x";
 
     // Try to load the snippet by parsing its source file
-    SgFile *file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    SgFile *file = NULL;
+    if (SageInterface::is_Java_language()) {
+        file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
+    } else {
+        file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    }
     SgSourceFile *snippetAst = isSgSourceFile(file);
     assert(snippetAst!=NULL);
     attachPreprocessingInfo(snippetAst);
