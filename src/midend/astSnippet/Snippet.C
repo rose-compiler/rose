@@ -13,6 +13,41 @@
 
 namespace rose {
 
+std::ostream& operator<<(std::ostream &o, const SnippetInsertion &inserted) {
+    o <<"(inserted=(" <<inserted.inserted->class_name() <<"*)" <<inserted.inserted
+      <<", original=(" <<inserted.original->class_name() <<"*)" <<inserted.original
+      <<", insertedBefore=(" <<inserted.insertedBefore->class_name() <<"*)" <<inserted.insertedBefore
+      <<")";
+    return o;
+}
+
+/*******************************************************************************************************************************
+ *                                      Snippet AST Traversals
+ *******************************************************************************************************************************/
+
+void SnippetAstTraversal::traverse(SgNode *ast) {
+    struct T1: AstPrePostProcessing {
+        SnippetAstTraversal &self;
+        T1(SnippetAstTraversal &self): self(self) {}
+        virtual void preOrderVisit(SgNode *node) /*override*/ {
+            self(node, preorder);
+            if (SgExpression *expr = isSgExpression(node)) {
+                if (expr->attributeExists("body")) {
+                    AstSgNodeAttribute *attr = dynamic_cast<AstSgNodeAttribute*>(expr->getAttribute("body"));
+                    if (SgClassDeclaration *anonDecl = isSgClassDeclaration(attr ? attr->getNode() : NULL))
+                        T1(self).traverse(anonDecl);    // new copy avoids iterator problems in AstProcessing.h
+                }
+            }
+        }
+        virtual void postOrderVisit(SgNode *node) /*override*/ {
+            self(node, postorder);
+        }
+    };
+    T1(*this).traverse(ast);
+}
+
+    
+
 /*******************************************************************************************************************************
  *                                      SnippetFile
  *******************************************************************************************************************************/
@@ -71,16 +106,23 @@ SnippetFile::parse(const std::string &fileName)
 void
 SnippetFile::findSnippetFunctions()
 {
-    struct SnippetFinder: AstSimpleProcessing {
+    struct SnippetFinder: SnippetAstTraversal {
         FunctionDefinitionMap &functions;
         SnippetFinder(FunctionDefinitionMap &functions): functions(functions) {}
-
-        void visit(SgNode *node) {
-            if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node))
-                functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
+            if (preorder==when) {
+                if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node)) {
+                    SgFunctionDeclaration *fdecl = fdef->get_declaration();
+                    SgFunctionType *ftype = fdecl ? fdecl->get_type() : NULL;
+                    SgType *rettype = ftype ? ftype->get_return_type() : NULL;
+                    if (rettype==SageBuilder::buildVoidType() && // snippets must return void
+                        !boost::contains(fdecl->get_qualified_name().getString(), "<")) // and not have funky names
+                        functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);
+                }
+            }
         }
-    } snippetFinder(functions);
-    snippetFinder.traverse(ast, preorder);
+    };
+    SnippetFinder(functions).traverse(ast);
 }
 
 SnippetPtr
@@ -138,25 +180,27 @@ SnippetFile::expandSnippets(SgNode *ast)
     typedef Map<SgFunctionCallExp*, std::string/*snippetname*/> SnippetCalls;
 
     // Find statements that are calls to snippets, but don't do anything yet
-    struct FindSnippetCalls: AstSimpleProcessing {
+    struct FindSnippetCalls: SnippetAstTraversal {
         SnippetFile *self;
         SnippetCalls calls;
 
         FindSnippetCalls(SnippetFile *self): self(self) {}
 
-        void visit(SgNode *node) {
-            if (SgExprStatement *stmt = isSgExprStatement(node)) {
-                if (SgFunctionCallExp *fcall = isSgFunctionCallExp(stmt->get_expression())) {
-                    SgFunctionSymbol *fsym = fcall->getAssociatedFunctionSymbol();
-                    SgFunctionDeclaration *fdecl = fsym ? fsym->get_declaration() : NULL;
-                    std::string called_name = fdecl ? fdecl->get_qualified_name().getString() : std::string();
-                    if (self->functions.exists(called_name))
-                        calls.insert(std::make_pair(fcall, called_name));
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
+            if (preorder==when) {
+                if (SgExprStatement *stmt = isSgExprStatement(node)) {
+                    if (SgFunctionCallExp *fcall = isSgFunctionCallExp(stmt->get_expression())) {
+                        SgFunctionSymbol *fsym = fcall->getAssociatedFunctionSymbol();
+                        SgFunctionDeclaration *fdecl = fsym ? fsym->get_declaration() : NULL;
+                        std::string called_name = fdecl ? fdecl->get_qualified_name().getString() : std::string();
+                        if (self->functions.exists(called_name))
+                            calls.insert(std::make_pair(fcall, called_name));
+                    }
                 }
             }
         }
     } t1(this);
-    t1.traverse(ast, preorder);
+    t1.traverse(ast);
 
     // Replace each of the snippet calls by expanding the snippet. The expansion occurs right before the snippet call and then
     // the snippet call is removed.
@@ -404,51 +448,63 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     // must be the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file
     // and insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original
     // scope in the snippet file.
-    struct T1: AstSimpleProcessing {
-        Sg_File_Info *target, *snippet;
-        T1(Sg_File_Info *target, Sg_File_Info *snippet): target(target), snippet(snippet) {}
+    struct T1: SnippetAstTraversal {
+        Sg_File_Info *target;                           // new file info, the one to which nodes will be set
+        Sg_File_Info *snippet;                          // only change nodes that are from this file
+        T1(Sg_File_Info *target, Sg_File_Info *snippet) {
+            this->target = Sg_File_Info::generateDefaultFileInfo(); *this->target = *target;
+            this->snippet = Sg_File_Info::generateDefaultFileInfo(); *this->snippet = *snippet;
+        }
         void fixInfo(Sg_File_Info *info) {
+            // It is not sufficient to set only the file_id, we also need to set the physical_file_id.  It is also not
+            // sufficient to use setTransformation.  We need to be more complete, otherwise the Java unparser will not
+            // unparse anonymous classes because statementFromFile() returns false. [Robb P. Matzke 2014-03-21]
             if (info && info->get_file_id()==snippet->get_file_id()) {
-                info->set_file_id(target->get_file_id());
-                info->set_line(1);
+                *info = *target;
+            } else if (info && SageInterface::is_Java_language()) {
+                *info = *target;
             }
         }
-        void visit(SgNode *node) {
-            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                fixInfo(loc->get_file_info());
-                fixInfo(loc->get_startOfConstruct());
-                fixInfo(loc->get_endOfConstruct());
-            } else if (SgFile *loc = isSgFile(node)) {
-                // SgFile is not a subclass of SgLocatedNode, but it still has these Sg_File_Info methods
-                fixInfo(loc->get_file_info());
-                fixInfo(loc->get_startOfConstruct());
-                fixInfo(loc->get_endOfConstruct());
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
+            if (preorder==when) {
+                if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                    fixInfo(loc->get_file_info());
+                    fixInfo(loc->get_startOfConstruct());
+                    fixInfo(loc->get_endOfConstruct());
+                } else if (SgFile *loc = isSgFile(node)) {
+                    // SgFile is not a subclass of SgLocatedNode, but it still has these Sg_File_Info methods
+                    fixInfo(loc->get_file_info());
+                    fixInfo(loc->get_startOfConstruct());
+                    fixInfo(loc->get_endOfConstruct());
+                }
             }
         }
-    } t1(insertionPoint->get_file_info(), ast->get_body()->get_file_info());
-    if (!SageInterface::is_Java_language())
-        t1.traverse(file->getAst(), preorder);
+    } t1(targetFunction->get_file_info(), ast->get_body()->get_file_info());
+    t1.traverse(file->getAst());
 
-  // insertionPoint->get_file_info()->display("insertionPoint: test 1: debug");
+    // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
+    // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
+    // snippet, and others might completely unrelated but the user wants them copied anyway.
+    insertRelatedThings(insertionPoint);
 
     // Insert the snippet body after the insertion point
     SgTreeCopy deep;
     SgScopeStatement *toInsert = isSgScopeStatement(ast->get_body()->copy(deep));
     assert(toInsert!=NULL);
 
- // DQ (3/4/2014): This is a test of the structural equality of the original snippet and it's copy.
- // If they are different then we can't support fixing up the AST.  Transformations on the snippet 
- // should have been made after insertion into the AST.  The complexity of this test is a traversal 
- // of the copy of the snippet to be inserted (typically very small compared to the target application).
-// Note that we can enforce this test here, but not after calling the replaceArguments() function below.
+    // DQ (3/4/2014): This is a test of the structural equality of the original snippet and it's copy.
+    // If they are different then we can't support fixing up the AST.  Transformations on the snippet 
+    // should have been made after insertion into the AST.  The complexity of this test is a traversal 
+    // of the copy of the snippet to be inserted (typically very small compared to the target application).
+    // Note that we can enforce this test here, but not after calling the replaceArguments() function below.
     bool isStructurallyEquivalent = SageInterface::isStructurallyEquivalentAST(toInsert,ast->get_body());
     ROSE_ASSERT(isStructurallyEquivalent == true);
 
- // DQ (3/4/2014): I think this is untimately a fundamental problem later (e.g. for mangled name generation).
- // So we have to attached the current scope to the scope of the insertion point.  This will allow the 
- // SgStatement::get_scope() to work (which is a problem for some debugging code (at least).
- // Note that the semantics of the AST copy mechanism is that the parent of the copy is set to NULL 
- // (which is assumed to be fixed up when the copy is inserted into the AST).
+    // DQ (3/4/2014): I think this is untimately a fundamental problem later (e.g. for mangled name generation).
+    // So we have to attached the current scope to the scope of the insertion point.  This will allow the 
+    // SgStatement::get_scope() to work (which is a problem for some debugging code (at least).
+    // Note that the semantics of the AST copy mechanism is that the parent of the copy is set to NULL 
+    // (which is assumed to be fixed up when the copy is inserted into the AST).
     ROSE_ASSERT(toInsert->get_parent() == NULL);
     SgScopeStatement* new_scope = isSgScopeStatement(insertionPoint->get_parent());
     ROSE_ASSERT(new_scope != NULL);
@@ -456,12 +512,13 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     ROSE_ASSERT(toInsert->get_parent() != NULL);
 
     renameTemporaries(toInsert);
-    causeUnparsing(toInsert, insertionPoint->get_file_info());
+    causeUnparsing(toInsert, targetFunction->get_file_info());
 
     switch (insertMechanism) {
         case INSERT_BODY: {
             // Insert the body all at once. This is efficient but doesn't work well because it means that variables declared in
             // one snippet can't be used in a later snippet injected into the same function.
+            file->addInsertionRecord(SnippetInsertion(toInsert, ast->get_body(), insertionPoint));
             SageInterface::insertStatementBefore(insertionPoint, toInsert);
             break;
         }
@@ -470,24 +527,31 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
             // which means that snippet variables cannot always be inialized in their declarations because the initialization
             // expression might be something that's only well defined at the point of insertion.
             const SgStatementPtrList &stmts = toInsert->getStatementList();
+            const SgStatementPtrList &stmtsOrig = ast->get_body()->getStatementList();
+            assert(stmts.size()==stmtsOrig.size());
             for (size_t i=0; i<stmts.size(); ++i) {
                 if (isSgDeclarationStatement(stmts[i])) {
                     switch (locDeclsPosition) {
                         case LOCDECLS_AT_BEGINNING:
                             if (targetFirstDeclaration!=NULL) {
+                                file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFirstDeclaration));
                                 SageInterface::insertStatementBefore(targetFirstDeclaration, stmts[i]);
                             } else {
+                                file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFirstStatement));
                                 SageInterface::insertStatementBefore(targetFirstStatement, stmts[i]);
                             }
                             break;
                         case LOCDECLS_AT_END:
+                            file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFunctionScope));
                             SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
                             break;
                         case LOCDECLS_AT_CURSOR:
+                            file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
                             SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
                             break;
                     }
                 } else {
+                    file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
                     SageInterface::insertStatementBefore(insertionPoint, stmts[i]);
                 }
             }
@@ -521,11 +585,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         bindings[formalSymbol] = actuals[i];
     }
     replaceArguments(toInsert, bindings);
-
-    // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
-    // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
-    // snippet, and others might completely unrelated but the user wants them copied anyway.
-    insertRelatedThings(insertionPoint);
 
  // insertionPoint->get_file_info()->display("insertionPoint: test 4: debug");
 
@@ -666,19 +725,21 @@ Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
 {
     // Make sure that the specified AST is actually unparsed into the place it was inserted. This seems more complicated
     // than it should be.
-    struct T1: AstSimpleProcessing {
+    struct T1: SnippetAstTraversal {
         Sg_File_Info *target;
         T1(Sg_File_Info *target): target(target) {}
-        void visit(SgNode *node) {
-            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                loc->set_file_info(new Sg_File_Info(*target));
-                loc->set_startOfConstruct(new Sg_File_Info(*target));
-                loc->set_endOfConstruct(new Sg_File_Info(*target));
-                loc->get_file_info()->setOutputInCodeGeneration();
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
+            if (preorder==when) {
+                if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                    loc->set_file_info(new Sg_File_Info(*target));
+                    loc->set_startOfConstruct(new Sg_File_Info(*target));
+                    loc->set_endOfConstruct(new Sg_File_Info(*target));
+                    loc->get_file_info()->setOutputInCodeGeneration();
+                }
             }
         }
     } t1(target);
-    t1.traverse(ast, preorder);
+    t1.traverse(ast);
 }
 
 void
@@ -686,10 +747,10 @@ Snippet::renameTemporaries(SgNode *ast)
 {
     assert(this!=NULL);
 
-    struct: AstSimpleProcessing {
-        void visit(SgNode *node) {
+    struct: SnippetAstTraversal {
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (SgInitializedName *vdecl = isSgInitializedName(node)) {
-                if (0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
+                if (preorder==when && 0==vdecl->get_name().getString().substr(0, 3).compare("tmp")) {
                     std::string newName = SnippetFile::randomVariableName();
 
                  // DQ (3/2/2014): Need to unload the associated symbol from the symbol tabel and reinsert it using the new
@@ -705,7 +766,7 @@ Snippet::renameTemporaries(SgNode *ast)
             }
         }
     } t1;
-    t1.traverse(ast, preorder);
+    t1.traverse(ast);
 }
 
 void
@@ -731,44 +792,46 @@ Snippet::replaceVariable(SgVarRefExp *vref, SgExpression *replacement)
 void
 Snippet::replaceArguments(SgNode *toInsert, const ArgumentBindings &bindings)
 {
-    struct T1: AstSimpleProcessing {
+    struct T1: SnippetAstTraversal {
         const ArgumentBindings &bindings;
         T1(const ArgumentBindings &bindings): bindings(bindings) {}
 
-        void visit(SgNode *node) {
-            if (SgVarRefExp *vref = isSgVarRefExp(node)) {
-                SgSymbol *formal_sym = vref->get_symbol(); // snippet symbol to be replaced
-                if (SgNode *bound = bindings.get_value_or(formal_sym, NULL)) {
-                    if (SgInitializedName *replacement = isSgInitializedName(bound)) {
-                        // Replace one variable reference with another. Rather than creating a new variable reference, we can
-                        // just make the existing reference point to the replacement symbol.
-                        SgVariableSymbol *new_sym = isSgVariableSymbol(replacement->search_for_symbol_from_symbol_table());
-                        assert(new_sym!=NULL);
-                        vref->set_symbol(new_sym);
-                    } else if (SgExpression *replacement = isSgExpression(bound)) {
-                        // The variable reference needs to be replaced by a new expression.
-                        replaceVariable(vref, replacement);
-                    } else {
-                        assert(!"replacement is something weird");
-                    }
-                }
-            } else if (SgTypedefDeclaration *tdef = isSgTypedefDeclaration(node)) {
-                std::string tdef_name = tdef->get_name().getString();
-                for (ArgumentBindings::const_iterator bi=bindings.begin(); bi!=bindings.end(); ++bi) {
-                    if (0==tdef_name.compare("typeof_" + bi->first->get_name().getString())) {
-                        if (SgInitializedName *actual = isSgInitializedName(bi->second)) {
-                            tdef->set_base_type(actual->get_type());
-                        } else if (SgExpression *actual = isSgExpression(bi->second)) {
-                            tdef->set_base_type(actual->get_type());
+        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
+            if (postorder==when) {                      // post-order because we're modifying the AST as we retreat
+                if (SgVarRefExp *vref = isSgVarRefExp(node)) {
+                    SgSymbol *formal_sym = vref->get_symbol(); // snippet symbol to be replaced
+                    if (SgNode *bound = bindings.get_value_or(formal_sym, NULL)) {
+                        if (SgInitializedName *replacement = isSgInitializedName(bound)) {
+                            // Replace one variable reference with another. Rather than creating a new variable reference, we
+                            // can just make the existing reference point to the replacement symbol.
+                            SgVariableSymbol *new_sym = isSgVariableSymbol(replacement->search_for_symbol_from_symbol_table());
+                            assert(new_sym!=NULL);
+                            vref->set_symbol(new_sym);
+                        } else if (SgExpression *replacement = isSgExpression(bound)) {
+                            // The variable reference needs to be replaced by a new expression.
+                            replaceVariable(vref, replacement);
                         } else {
-                            assert(!"actual is something weird");
+                            assert(!"replacement is something weird");
+                        }
+                    }
+                } else if (SgTypedefDeclaration *tdef = isSgTypedefDeclaration(node)) {
+                    std::string tdef_name = tdef->get_name().getString();
+                    for (ArgumentBindings::const_iterator bi=bindings.begin(); bi!=bindings.end(); ++bi) {
+                        if (0==tdef_name.compare("typeof_" + bi->first->get_name().getString())) {
+                            if (SgInitializedName *actual = isSgInitializedName(bi->second)) {
+                                tdef->set_base_type(actual->get_type());
+                            } else if (SgExpression *actual = isSgExpression(bi->second)) {
+                                tdef->set_base_type(actual->get_type());
+                            } else {
+                                assert(!"actual is something weird");
+                            }
                         }
                     }
                 }
             }
         }
     } t1(bindings);
-    t1.traverse(toInsert, postorder); // post-order because we're modifying the AST as we retreat
+    t1.traverse(toInsert);
 }
 
 void
@@ -848,6 +911,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         SgTreeCopy deep;
         SgDeclarationStatement *declCopy = isSgDeclarationStatement(decl->copy(deep));
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
+        file->addInsertionRecord(SnippetInsertion(declCopy, decl, topInsertionPoint));
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
 
      // DQ (3/19/2014): Added fixup of AST for Java declarations copied into the AST.
@@ -878,6 +942,7 @@ Snippet::insertRelatedThingsForJava(SgStatement *insertionPoint)
         SgTreeCopy deep;
         SgJavaImportStatement *newImport = isSgJavaImportStatement(snippetImport->copy(deep));
         causeUnparsing(newImport, topInsertionPoint->get_file_info());
+        file->addInsertionRecord(SnippetInsertion(newImport, snippetImport, targetImports));
         targetImports->get_java_import_list().push_back(newImport);
         newImport->set_parent(targetImports);
     }
@@ -926,7 +991,6 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
             continue;
 
         // Insert whole function definitions (snippets) only if the user asked for this feature.
-     // if (SgFunctionDeclaration *fdecl = isSgMemberFunctionDeclaration(decl)) {
         if (SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(decl)) {
             if (fdecl->get_definition()!=NULL && !file->getCopyAllSnippetDefinitions())
                 continue;
@@ -938,7 +1002,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
         removeIncludeDirectives(declCopy);
         causeUnparsing(declCopy, topInsertionPoint->get_file_info());
 
-     // Error checking on the generated copy.
+        // Error checking on the generated copy.
         SgClassDeclaration* classDeclaration_copy     = isSgClassDeclaration(declCopy);
         SgClassDeclaration* classDeclaration_original = isSgClassDeclaration(decl);
         if (classDeclaration_original != NULL)
@@ -970,6 +1034,7 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
              ROSE_ASSERT(defining_classDeclaration_copy->get_type() == nondefining_classDeclaration_copy->get_type());
            }
 
+        file->addInsertionRecord(SnippetInsertion(declCopy, decl, topInsertionPoint));
         SageInterface::insertStatementBefore(topInsertionPoint, declCopy);
         if (!firstInserted)
             firstInserted = declCopy;
@@ -986,6 +1051,10 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
             SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(topInsertionPoint, insertionPointIsScope, toInsert,
                                                                       original_before_copy);
+#if 0
+            printf ("Exiting as a test! \n");
+            ROSE_ASSERT(false);
+#endif
         }
     }
 
@@ -993,6 +1062,11 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
     // and reattached to the first node we inserted.
     if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
+
+#if 0
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
+#endif
 }
 
 } // namespace

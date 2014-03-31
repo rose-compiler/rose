@@ -349,6 +349,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
           argument == "-MM" ||
+
+       // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
+       // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
+          argument == "-fp-model" ||
           false)
         {
           result = true;
@@ -2741,6 +2745,8 @@ SgFile::usage ( int status )
 "                             follow C89 standard, disable C++\n"
 "     -rose:C99_only, -rose:C99\n"
 "                             follow C99 standard, disable C++\n"
+"     -rose:C11_only, -rose:C11\n"
+"                             follow C11 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++89 standard\n"
 "     -rose:Cxx11_only, -rose:Cxx11\n"
@@ -3469,12 +3475,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      ROSE_ASSERT (get_C11_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C11|C11_only)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() >= 0 )
                printf ("C11 mode ON \n");
-
+#if 0
           printf ("Specification of C11 on command line not yet supported on the command line \n");
           ROSE_ASSERT(false);
-
+#endif
           set_C11_only(true);
 
        // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
@@ -5423,11 +5429,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_C11_only() == true)
         {
-       // Add option to indicate use of C11 code (not C++) to EDG frontend
-          inputCommandLine.push_back("--c11");
+       // DQ (3/12/2014): Note that C11 features in EDG appear to be supported under the 
+       // c99 mode so there is no specific c11 mode (I gather as extensions).  One has to 
+       // discover this by looking for ht e implementation of the C11 specific languagee 
+       // features that are present but made available via the c99 mode.
 
+       // Add option to indicate use of C11 code (not C++) to EDG frontend
+       // inputCommandLine.push_back("--c11");
+          inputCommandLine.push_back("--c99");
+#if 0
           printf ("Not clear yet what internal option to use in EDG for C11 command line support \n");
           ROSE_ASSERT(false);
+#endif
         }
 
   // DQ (7/2/2013): This should not be used any more.
