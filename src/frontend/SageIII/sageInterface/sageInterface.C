@@ -17660,7 +17660,7 @@ void SageInterface::destroyTempDirectory(string directory_name) {
 /**
  * Invoke JavaRose to translate a given file and put the resulting AST in the global space of the project.
  */
-void SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
+SgFile* SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
     //
     // Set up the new source file for processing "a la Rose".
     //
@@ -17687,6 +17687,7 @@ void SageInterface::processFile(SgProject *project, string filename, bool unpars
         project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
         ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
     }
+    return file;
 }
 
 
