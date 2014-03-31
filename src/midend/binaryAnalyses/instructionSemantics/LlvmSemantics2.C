@@ -197,13 +197,13 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        void operator()(const TreeNodePtr &node) {
+        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node)/*override*/ {
             if (!seen.insert(node->hash()).second)
-                return;                                 // already processed this same expression
+                return InsnSemanticsExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
             if (InternalNodePtr inode = node->isInternalNode()) {
                 if (InsnSemanticsExpr::OP_READ==inode->get_operator()) {
-                    assert(2==inode->size());
+                    assert(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
             } else if (LeafNodePtr leaf = node->isLeafNode()) {
@@ -215,23 +215,26 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                 }
             }
         }
+        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
+            return InsnSemanticsExpr::CONTINUE;
+        }
     } t1(this, o, regs, dictionary);
 
     // Prerequisites for the registers
     RegisterStatePtr regstate = RegisterState::promote(get_state()->get_register_state());
     for (size_t i=0; i<regs.size(); ++i) {
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
-        value->get_expression()->depth_first_visit(&t1);
+        value->get_expression()->depth_first_traversal(t1);
     }
 
     // Prerequisites for memory writes
     for (TreeNodes::const_iterator mwi=mem_writes.begin(); mwi!=mem_writes.end(); ++mwi) {
         const TreeNodePtr mem_write = *mwi;
-        mem_write->depth_first_visit(&t1);
+        mem_write->depth_first_traversal(t1);
     }
 
     // Prerequisites for the instruction pointer.
-    get_instruction_pointer()->get_expression()->depth_first_visit(&t1);
+    get_instruction_pointer()->get_expression()->depth_first_traversal(t1);
 }
 
 void
@@ -415,7 +418,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
         InternalNodePtr inode = mem_writes[i]->isInternalNode();
         assert(inode!=NULL);
         assert(inode->get_operator() == InsnSemanticsExpr::OP_WRITE);
-        assert(inode->size()==3);
+        assert(inode->nchildren()==3);
         TreeNodePtr addr = inode->child(1);
         TreeNodePtr value = inode->child(2);
         o <<prefix() <<"; store value=" <<*value <<" at address=" <<*addr <<"\n";
