@@ -58,6 +58,15 @@ test_addJavaSource: addJavaSource
 	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
 #---------------------------------------
+# test:   addJavaSource
+# author: Philippe Charles & Robb Matzke
+#---------------------------------------
+bin_PROGRAMS += addJavaSource2
+addJavaSource2_SOURCES = addJavaSource2.cpp
+test_addJavaSource2: addJavaSource2
+	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
+
+#---------------------------------------
 # test:   addJavaAssignmentStmt
 # author: Philippe Charles
 #---------------------------------------
