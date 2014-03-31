@@ -17745,7 +17745,7 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
  * Using the file_content string, create a file with the content in question; build its AST and
  * add it to the project.
  */
-void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content) {
+SgFile* SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content) {
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
@@ -17759,7 +17759,7 @@ void SageInterface::preprocessCompilationUnit(SgProject *project, string file_na
     string filename = (string) utf8;
     Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
 
-    processFile(project, filename, true /* unparse */); // translate the file and unparse it
+    return processFile(project, filename, true /* unparse */); // translate the file and unparse it
 }
 
 
