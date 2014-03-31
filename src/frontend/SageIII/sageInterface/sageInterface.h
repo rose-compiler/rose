@@ -2266,7 +2266,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 //--------------------------------Java interface functions ---------------------
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string, bool unparse = false);
+      SgFile* processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
       void preprocessCompilationUnit(SgProject *, std::string, std::string);
