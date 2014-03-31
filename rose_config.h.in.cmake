@@ -241,7 +241,7 @@
 
 /* Name of backend C++ compiler including path (may or may not explicit
    include path; used to call backend). */
-#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${BACKEND_CXX_COMPILER}"
+#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${CMAKE_CXX_COMPILER}"
 
 /* Name of backend C++ compiler excluding path (used to select code generation
    options). */
@@ -255,7 +255,7 @@
 
 /* Name of backend C compiler including path (may or may not explicit include
    path; used to call backend). */
-#define BACKEND_C_COMPILER_NAME_WITH_PATH "${BACKEND_C_COMPILER}"
+#define BACKEND_C_COMPILER_NAME_WITH_PATH "${CMAKE_C_COMPILER}"
 
 #define BACKEND_C_COMPILER_NAME_WITHOUT_PATH "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}"
 #define BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}
@@ -264,7 +264,7 @@
 /* Name of backend Fortran compiler including path (may or may not explicit
    include path; used to call backend). */
 
-#define BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH "${BACKEND_FORTRAN_COMPILER}"
+#define BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH "${CMAKE_Fortran_COMPILER}"
 #define BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH "${BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH}"
 /* Major version number of backend Fortran compiler. */
 #define BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER}
@@ -604,8 +604,7 @@
 #cmakedefine TM_IN_SYS_TIME 1
 
 /* Mark that GFORTRAN is available */
-//AS Don't know what to do with this
-#undef USE_GFORTRAN_IN_ROSE
+#cmakedefine USE_GFORTRAN_IN_ROSE 1
 
 /* Link-time support for Insure. */
 //AS Don't know what to do with this
@@ -782,6 +781,7 @@
 
 /* Build ROSE to support the Java langauge */
 #cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#cmakedefine USE_ROSE_INTERNAL_JAVA_SUPPORT
 
 /* Build ROSE to support the OpenCL langauge */
 #cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT

@@ -1,5 +1,7 @@
-
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+
+# DQ (6/8/2014): Added header files and source files below.
+install(FILES RoseAst.h matcherparser_decls.h AstMatching.h MatchOperation.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 #${CMAKE_SOURCE_DIR}/src/midend/astMatching/AstMatching.C
 #${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherlexer.ll
@@ -10,15 +12,4 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 #add_library( midend_processing  ${libastprocessing_SRC} )
 #add_dependencies( midend_processing ROSETTA )
-
-
-########### install files ###############
-
-if (WIN32)
-#tps commented out AstSharedMemoryParallelProcessing.h for Windows 
-install(FILES AstMatching.h matcherparser_decls.h MatchOperation.h DESTINATION ${INCLUDE_INSTALL_DIR})
-else (WIN32)
-install(FILES AstMatching.h matcherparser_decls.h MatchOperation.h DESTINATION ${INCLUDE_INSTALL_DIR})
-endif (WIN32)
-
 

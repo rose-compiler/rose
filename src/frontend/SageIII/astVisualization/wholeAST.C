@@ -511,7 +511,9 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
                     returnString = "color=\"green\" decorate";
                   }
              }
-     
+
+#error "DEAD CODE!"
+
           SgInitializedName* initializedName = isSgInitializedName(from);
           if (initializedName != NULL)
              {
@@ -538,17 +540,21 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
      SgType* type = isSgType(to);
      if (type != NULL)
         {
+       // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
        // returnString = "color=\"gold1\" decorate labelfontcolor=gold4";
-          returnString = "color=\"gold1\" decorate ";
+       // returnString = "color=\"gold1\" decorate ";
+          returnString = "color=\"gold1\" ";
         }
 
   // DQ (3/5/2007): color the parent edges blue
      if (from->get_parent() == to && label == "parent")
         {
+       // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
        // Note that labelfontcolor does not appear to work
        // returnString = "color=\"blue\" decorate labelfontcolor=blue4";
        // returnString = "color=\"blue\" decorate labelfontcolor=\"blue4\"";
-          returnString = "color=\"blue\" decorate ";
+       // returnString = "color=\"blue\" decorate ";
+          returnString = "color=\"blue\" ";
         }
 
   // DQ (3/5/2007): color the scope edges green (that are explicitly stored in the AST)
@@ -558,8 +564,10 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (statement->hasExplicitScope() == true && statement->get_scope() == to && label == "scope")
              {
+            // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
             // returnString = "color=\"green\" decorate labelfontcolor=green4";
-               returnString = "color=\"green\" decorate ";
+            // returnString = "color=\"green\" decorate ";
+               returnString = "color=\"green\" ";
              }
         }
      
@@ -568,8 +576,10 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (initializedName->get_scope() == to && label == "scope")
              {
+            // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
             // returnString = "color=\"green\" decorate labelfontcolor=green4";
-               returnString = "color=\"green\" decorate ";
+            // returnString = "color=\"green\" decorate ";
+               returnString = "color=\"green\" ";
              }
         }
 

@@ -68,7 +68,11 @@ int openFortranParser_main(int argc, char **argv)
   */
 
  /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
+    #ifdef USE_CMAKE
+    string new_value = findRoseSupportPathFromBuild("lib", "lib");
+    #else
     string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
+    #endif
 
  /* Save the old value */
     const char* old_value = getenv(ROSE_SHLIBPATH_VAR); // Might be null
@@ -91,7 +95,7 @@ int openFortranParser_main(int argc, char **argv)
     fortran_error_handler_begin();
 #endif
 
-    int status = jvm_ofp_processing(argc, argv);
+    int status = Rose::Frontend::Fortran::Ofp::jvm_ofp_processing(argc, argv);
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_end();
@@ -137,13 +141,14 @@ experimental_openFortranParser_main(int argc, char **argv)
   // This function does not need to call the JVM.
 
 #if 0
-     printf ("In experimental_openFortranParser_main(): Put the call the the new SDF Open Fortran Parser here... \n");
+     printf ("In experimental_openFortranParser_main(): Put the call the the new SDF Open Fortran Parser here... argc = %d \n",argc);
 #endif
 
      int i, err;
-     char parse_table[128];
+  // char parse_table[128];
+     string parse_table;
 
-     parse_table[0] = '\0';
+  // parse_table[0] = '\0';
 
      if (argc < 4) 
         {
@@ -152,6 +157,10 @@ experimental_openFortranParser_main(int argc, char **argv)
         }
 
      string commandString = "sglri ";
+
+#if 0
+     printf ("In experimental_openFortranParser_main(): before loop over args: commandString = %s \n",commandString.c_str());
+#endif
 
   // Parse each filename (args not associated with "--parseTable", "--" or "-I")
      for (i = 1; i < argc; i++)
@@ -164,13 +173,24 @@ experimental_openFortranParser_main(int argc, char **argv)
 #if 0
                printf ("In experimental_openFortranParser_main(): argv[i+1 = %d] = %s \n",i+1,argv[i+1]);
 #endif
+#if 0
+               printf ("In experimental_openFortranParser_main(): --parseTable: START: commandString = %s \n",commandString.c_str());
+#endif
                commandString += "-p ";
                commandString += argv[i+1];
                commandString += " ";
 
-               sprintf(parse_table, "%s", argv[i+1]);
+#if 0
+               printf ("In experimental_openFortranParser_main(): --parseTable: before sprintf: commandString = %s \n",commandString.c_str());
+#endif
+            // sprintf(parse_table, "%s", argv[i+1]);
+               parse_table = string(argv[i+1]);
                i += 1;
             // continue;
+#if 0
+               printf ("In experimental_openFortranParser_main(): --parseTable: END: parse_table   = %s \n",parse_table.c_str());
+               printf ("In experimental_openFortranParser_main(): --parseTable: END: commandString = %s \n",commandString.c_str());
+#endif
              }
             else
              {
@@ -195,14 +215,30 @@ experimental_openFortranParser_main(int argc, char **argv)
                        {
                       // All other options are ignored.
                       // commandString += argv[i];
+#if 0
+                         printf ("In experimental_openFortranParser_main(): ignoring -- argv[i = %d] = %s \n",i,argv[i]);
+#endif
                        }
                   }
              }
+#if 0
+          printf ("In experimental_openFortranParser_main(): end of loop over args: commandString = %s \n",commandString.c_str());
+#endif
         }
 
   // string filename = argv[argc-1];
      string filenameWithPath    = argv[argc-1];
+
+#if 0
+     printf ("In experimental_openFortranParser_main(): filenameWithPath = %s \n",filenameWithPath.c_str());
+#endif
+
      string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
+
+#if 0
+     printf ("In experimental_openFortranParser_main(): filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
+#endif
 
      commandString += " -i ";
      commandString += filenameWithPath;
@@ -216,7 +252,8 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
   // make sure there is a parse table
-     if (parse_table[0] == '\0')
+  // if (parse_table[0] == '\0')
+     if (parse_table.empty() == true)
         {
           fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
           return -1;
@@ -225,7 +262,7 @@ experimental_openFortranParser_main(int argc, char **argv)
   // parse the file
   // sprintf(cmd, "sglri -p %s -i %s -o %s.ptree", parse_table, argv[i], argv[i]);
 
-#if 0
+#if 1
      printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
 #endif
 
