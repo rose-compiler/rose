@@ -15,7 +15,7 @@ typedef std::set<std::string> NameSet;
 struct Switches {
     Switches()
         : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false),
-          save_coverage(false), save_callgraph(false), save_consumed_inputs(false) {
+          save_coverage(false), save_callgraph(false), save_consumed_inputs(false), nprocs(1) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -30,6 +30,7 @@ struct Switches {
     bool save_callgraph;
     bool save_consumed_inputs;
     PolicyParams params;
+    size_t nprocs;                              // number of parallel processes to fork
 };
 
 struct WorkItem {
@@ -42,6 +43,7 @@ struct WorkItem {
 
 typedef std::vector<WorkItem> Work;
 typedef std::vector<Work> MultiWork;
+typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
 
 extern Switches opt;
 extern std::string argv0;
@@ -65,9 +67,12 @@ OutputGroup fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, Inpu
 SqlDatabase::TransactionPtr checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer,
                                        InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
                                        Progress &progress, size_t ntests_ran, int64_t cmd_id);
-
-
-
+void runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDetectors &pointers, SgAsmFunction *func,
+                const FunctionIdMap &function_ids, InsnCoverage &insn_coverage /*in,out*/, DynamicCallGraph &dynamic_cg /*in,out*/,
+                Tracer &tracer /*in,out*/, ConsumedInputs &consumed_inputs /*in,out*/, SgAsmInterpretation *interp,
+                const Disassembler::AddressSet &whitelist_exports, int64_t cmd_id, InputGroup &igroup,
+                FuncAnalyses funcinfo, const InstructionProvidor &insns, MemoryMap *ro_map, const AddressIdMap &entry2id,
+                OutputGroups &ogroups /*in,out*/);
 
 } // namespace
 } // namespace

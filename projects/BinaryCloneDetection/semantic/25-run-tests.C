@@ -53,7 +53,6 @@ main(int argc, char *argv[])
     }
 
     // Process each item on the work list.
-    typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
     PointerDetectors pointers;
     FilesTable files(tx);
     WorkItem prev_work;
@@ -163,65 +162,10 @@ main(int argc, char *argv[])
                 interp->get_map()->dump(std::cerr, argv0+":   ");
             }
         }
-        
-        // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
-        // it here we only need to do it for functions that are actually tested.
-        PointerDetectors::iterator ip = pointers.find(func);
-        if (ip==pointers.end())
-            ip = pointers.insert(std::make_pair(func, detect_pointers(func, function_ids))).first;
-        assert(ip!=pointers.end());
 
         // Run the test
-        insn_coverage.current_test(workItem.func_id, workItem.igroup_id);
-        dynamic_cg.current_test(workItem.func_id, workItem.igroup_id);
-        tracer.current_test(workItem.func_id, workItem.igroup_id, opt.trace_events);
-        consumed_inputs.current_test(workItem.func_id, workItem.igroup_id);
-        timeval start_time, stop_time;
-        clock_t start_ticks = clock();
-        gettimeofday(&start_time, NULL);
-        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, entry2id,
-                                       whitelist_exports, funcinfo, insn_coverage, dynamic_cg, consumed_inputs);
-        gettimeofday(&stop_time, NULL);
-        clock_t stop_ticks = clock();
-        double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
-                              ((double)stop_time.tv_usec - start_time.tv_usec) * 1e-6;
-
-        // If clock_t is a 32-bit unsigned value then it will wrap around once every ~71.58 minutes. We expect clone
-        // detection to take longer than that, so we need to be careful.
-        double cpu_time = start_ticks <= stop_ticks ?
-                                  (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
-                                  (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
-
-        // Find a matching output group, or create a new one
-        int64_t ogroup_id = ogroups.find(ogroup);
-        if (ogroup_id<0)
-            ogroup_id = ogroups.insert(ogroup);
-
-        SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
-                                                       // 0        1          2                   3
-                                                       " (func_id, igroup_id, arguments_consumed, locals_consumed,"
-                                                       // 4               5                   6
-                                                       "globals_consumed, functions_consumed, pointers_consumed,"
-                                                       // 7                8                      9          10
-                                                       "integers_consumed, instructions_executed, ogroup_id, status,"
-                                                       // 11          12        13
-                                                       "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        stmt->bind(0, workItem.func_id);
-        stmt->bind(1, workItem.igroup_id);
-        stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
-        stmt->bind(3, igroup.nconsumed_virtual(IQ_LOCAL));
-        stmt->bind(4, igroup.nconsumed_virtual(IQ_GLOBAL));
-        stmt->bind(5, igroup.nconsumed_virtual(IQ_FUNCTION));
-        stmt->bind(6, igroup.nconsumed_virtual(IQ_POINTER));
-        stmt->bind(7, igroup.nconsumed_virtual(IQ_INTEGER));
-        stmt->bind(8, ogroup.get_ninsns());
-        stmt->bind(9, ogroup_id);
-        stmt->bind(10, ogroup.get_fault());
-        stmt->bind(11, elapsed_time);
-        stmt->bind(12, cpu_time);
-        stmt->bind(13, cmd_id);
-        stmt->execute();
+        runOneTest(tx, workItem, pointers, func, function_ids, insn_coverage, dynamic_cg, tracer, consumed_inputs,
+                   interp, whitelist_exports, cmd_id, igroup, funcinfo, insns, &ro_map, entry2id, ogroups);
         ++ntests_ran;
 
         // Check for user interrupts

@@ -70,12 +70,13 @@ usage(int exit_status)
               <<"            from the \"pointers\" input queue. This analysis slows down processing considerably and is\n"
               <<"            therefore disabled by default.\n"
               <<"    --[no-]progress\n"
-              <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not silent.\n"
+              <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not\n"
+              <<"            silent.\n"
               <<"    --trace[=EVENTS]\n"
               <<"    --no-trace\n"
               <<"            Sets the events that are traced by each test.  The EVENTS is a comma-separated list of event\n"
-              <<"            specifiers. Each event specifier is an optional '+' or '-' to indicate whether the event type will\n"
-              <<"            be added or subtracted from the set (default is added), followed by either an event name or\n"
+              <<"            specifiers. Each event specifier is an optional '+' or '-' to indicate whether the event type\n"
+              <<"            will be added or subtracted from the set (default is added), followed by either an event name or\n"
               <<"            integer bit vector.  The following event names are recognized:\n"
               <<"                reached: events indicating that a basic block has been reached\n"
               <<"                branched: events indicating that a branch has been taken, as opposed to falling through.\n"
@@ -84,6 +85,10 @@ usage(int exit_status)
               <<"                consumed: events indicating that input was consumed.\n"
               <<"                cfg: short-hand for \"reached,branched,returned\".\n"
               <<"                all: all event types.\n"
+              <<"    --nprocs=N\n"
+              <<"            Sets the maximum number of parallel processes to create per specimen.  This switch is only\n"
+              <<"            used by 25-run-tests-fork; control of parallelism for 25-run-tests occurs before 25-run-tests\n"
+              <<"            is ever started, but 25-run-tests-fork controls its own parallelism by forking children.\n"
               <<"    --verbose\n"
               <<"    --verbosity=(silent|laconic|effusive)\n"
               <<"            Determines how much diagnostic info to send to the standard error stream.  The --verbose\n"
@@ -198,6 +203,8 @@ int parse_commandline(int argc, char *argv[]) {
             opt.interactive = true;
         } else if (!strcmp(argv[argno], "--no-interactive")) {
             opt.interactive = false;
+        } else if (!strncmp(argv[argno], "--nprocs=", 9)) {
+            opt.nprocs = strtol(argv[argno]+9, NULL, 0);
         } else if (!strncmp(argv[argno], "--timeout=", 10)) {
             opt.params.timeout = strtoull(argv[argno]+10, NULL, 0);
         } else if (!strcmp(argv[argno], "--pointers")) {
@@ -1135,6 +1142,75 @@ checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer 
     std::cerr <<argv0 <<": " <<desc <<"\n";
     return conn->transaction();
 }
+
+void
+runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDetectors &pointers, SgAsmFunction *func,
+           const FunctionIdMap &function_ids, InsnCoverage &insn_coverage /*in,out*/, DynamicCallGraph &dynamic_cg /*in,out*/,
+           Tracer &tracer /*in,out*/, ConsumedInputs &consumed_inputs /*in,out*/, SgAsmInterpretation *interp,
+           const Disassembler::AddressSet &whitelist_exports, int64_t cmd_id, InputGroup &igroup,
+           FuncAnalyses funcinfo, const InstructionProvidor &insns, MemoryMap *ro_map, const AddressIdMap &entry2id,
+           OutputGroups &ogroups /*in,out*/)
+{
+    // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
+    // it here we only need to do it for functions that are actually tested.
+    PointerDetectors::iterator ip = pointers.find(func);
+    if (ip==pointers.end())
+        ip = pointers.insert(std::make_pair(func, detect_pointers(func, function_ids))).first;
+    assert(ip!=pointers.end());
+
+    // Run the test
+    insn_coverage.current_test(workItem.func_id, workItem.igroup_id);
+    dynamic_cg.current_test(workItem.func_id, workItem.igroup_id);
+    tracer.current_test(workItem.func_id, workItem.igroup_id, opt.trace_events);
+    consumed_inputs.current_test(workItem.func_id, workItem.igroup_id);
+    timeval start_time, stop_time;
+    clock_t start_ticks = clock();
+    gettimeofday(&start_time, NULL);
+    OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, ro_map, ip->second, entry2id,
+                                   whitelist_exports, funcinfo, insn_coverage, dynamic_cg, consumed_inputs);
+    gettimeofday(&stop_time, NULL);
+    clock_t stop_ticks = clock();
+    double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
+                          ((double)stop_time.tv_usec - start_time.tv_usec) * 1e-6;
+
+    // If clock_t is a 32-bit unsigned value then it will wrap around once every ~71.58 minutes. We expect clone
+    // detection to take longer than that, so we need to be careful.
+    double cpu_time = start_ticks <= stop_ticks ?
+                              (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
+                              (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
+
+    // Find a matching output group, or create a new one
+    int64_t ogroup_id = ogroups.find(ogroup);
+    if (ogroup_id<0)
+        ogroup_id = ogroups.insert(ogroup);
+
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
+                                                   // 0        1          2                   3
+                                                   " (func_id, igroup_id, arguments_consumed, locals_consumed,"
+                                                   // 4               5                   6
+                                                   "globals_consumed, functions_consumed, pointers_consumed,"
+                                                   // 7                8                      9          10
+                                                   "integers_consumed, instructions_executed, ogroup_id, status,"
+                                                   // 11          12        13
+                                                   "elapsed_time, cpu_time, cmd)"
+                                                   " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    stmt->bind(0, workItem.func_id);
+    stmt->bind(1, workItem.igroup_id);
+    stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
+    stmt->bind(3, igroup.nconsumed_virtual(IQ_LOCAL));
+    stmt->bind(4, igroup.nconsumed_virtual(IQ_GLOBAL));
+    stmt->bind(5, igroup.nconsumed_virtual(IQ_FUNCTION));
+    stmt->bind(6, igroup.nconsumed_virtual(IQ_POINTER));
+    stmt->bind(7, igroup.nconsumed_virtual(IQ_INTEGER));
+    stmt->bind(8, ogroup.get_ninsns());
+    stmt->bind(9, ogroup_id);
+    stmt->bind(10, ogroup.get_fault());
+    stmt->bind(11, elapsed_time);
+    stmt->bind(12, cpu_time);
+    stmt->bind(13, cmd_id);
+    stmt->execute();
+}
+
 
 } // namespace
 } // namespace
