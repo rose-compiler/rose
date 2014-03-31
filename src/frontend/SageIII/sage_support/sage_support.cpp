@@ -4063,6 +4063,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
          frontEndCommandLine.push_back((classpath.size() > 0 ? (classpath + ":") : "") + ecjDestDir);
 */
 
+         frontEndCommandLine.push_back("-d");
+         frontEndCommandLine.push_back("none");
          frontEndCommandLine.push_back("-classpath");
          frontEndCommandLine.push_back(classpath);
 
