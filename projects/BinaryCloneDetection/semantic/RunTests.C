@@ -313,10 +313,10 @@ sig_handler(int signo)
     interrupted = signo;
 }
 
-WorkList<WorkItem>
-load_worklist(const std::string &filename, FILE *f)
+Work
+load_work(const std::string &filename, FILE *f)
 {
-    WorkList<WorkItem> worklist;
+    Work work;
     char *line = NULL;
     size_t line_sz = 0, line_num = 0;
     while (rose_getline(&line, &line_sz, f)>0) {
@@ -356,9 +356,9 @@ load_worklist(const std::string &filename, FILE *f)
             exit(1);
         }
 
-        worklist.push(WorkItem(specimen_id, func_id, igroup_id));
+        work.push_back(WorkItem(specimen_id, func_id, igroup_id));
     }
-    return worklist;
+    return work;
 }
 
 // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a

@@ -40,6 +40,8 @@ struct WorkItem {
     bool operator==(const WorkItem&) const;
 };
 
+typedef std::vector<WorkItem> Work;
+typedef std::vector<Work> MultiWork;
 
 extern Switches opt;
 extern std::string argv0;
@@ -47,7 +49,7 @@ extern int interrupted;
 
 void usage(int exit_status);
 int parse_commandline(int argc, char *argv[]);
-WorkList<WorkItem> load_worklist(const std::string &filename, FILE*);
+Work load_work(const std::string &filename, FILE*);
 CloneDetection::PointerDetector* detect_pointers(SgAsmFunction*, const CloneDetection::FunctionIdMap&);
 void sig_handler(int signo);
 void add_builtin_functions(NameSet&);

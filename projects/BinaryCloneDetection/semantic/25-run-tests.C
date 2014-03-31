@@ -21,23 +21,23 @@ main(int argc, char *argv[])
     int64_t cmd_id = start_command(tx, argc, argv, "running tests");
 
     // Read list of tests from stdin
-    WorkList<WorkItem> worklist;
+    Work work;
     if (opt.input_file_name.empty()) {
         std::cerr <<argv0 <<": reading worklist from stdin...\n";
-        worklist = load_worklist("stdin", stdin);
+        work = load_work("stdin", stdin);
     } else {
         FILE *f = fopen(opt.input_file_name.c_str(), "r");
         if (NULL==f) {
             std::cerr <<argv0 <<": " <<strerror(errno) <<": " <<opt.input_file_name <<"\n";
             exit(1);
         }
-        worklist = load_worklist(opt.input_file_name, f);
+        work = load_work(opt.input_file_name, f);
         fclose(f);
     }
-    std::cerr <<argv0 <<": " <<worklist.size() <<(1==worklist.size()?" test needs":" tests need") <<" to be run\n";
-    if (worklist.empty())
+    std::cerr <<argv0 <<": " <<work.size() <<(1==work.size()?" test needs":" tests need") <<" to be run\n";
+    if (work.empty())
         return 0;
-    Progress progress(worklist.size());
+    Progress progress(work.size());
     progress.force_output(opt.progress);
     OutputGroups ogroups; // do not load from database (that might take a very long time)
     NameSet builtin_function_names;
@@ -72,19 +72,18 @@ main(int argc, char *argv[])
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0;
     FuncAnalyses funcinfo;
-    while (!worklist.empty()) {
-        ++progress;
-        WorkItem work = worklist.shift();
+    for (size_t work_idx=0; work_idx<work.size(); ++work_idx, ++progress) {
+        const WorkItem &workItem = work[work_idx];
 
         // If we're switching to a new specimen then we need to reinitialize the AST, throwing away the old information and
         // getting new information.  The new information comes from either a stored AST, or by extracting the binaries from
         // the database and reparsing them, or by reparsing existing binaries (in that order of preference).
-        if (work.specimen_id!=prev_work.specimen_id) {
+        if (workItem.specimen_id!=prev_work.specimen_id) {
             if (opt.verbosity>=LACONIC) {
                 progress.clear();
                 if (opt.verbosity>=EFFUSIVE)
                     std::cerr <<argv0 <<": " <<std::string(100, '#') <<"\n";
-                std::cerr <<argv0 <<": processing binary specimen \"" <<files.name(work.specimen_id) <<"\"\n";
+                std::cerr <<argv0 <<": processing binary specimen \"" <<files.name(workItem.specimen_id) <<"\"\n";
             }
 
             if (prev_work.specimen_id>=0) {
@@ -101,12 +100,12 @@ main(int argc, char *argv[])
             }
 
             progress.message("loading AST");
-            SgProject *project = files.load_ast(tx, work.specimen_id);
+            SgProject *project = files.load_ast(tx, workItem.specimen_id);
             progress.message("");
 
             if (!project) {
                 progress.message("parsing specimen");
-                project = open_specimen(tx, files, work.specimen_id, argv0);
+                project = open_specimen(tx, files, workItem.specimen_id, argv0);
                 progress.message("");
             }
             if (!project) {
@@ -128,16 +127,16 @@ main(int argc, char *argv[])
         }
 
         // Load the input group from the database if necessary.
-        if (work.igroup_id!=prev_work.igroup_id) {
-            if (!igroup.load(tx, work.igroup_id)) {
+        if (workItem.igroup_id!=prev_work.igroup_id) {
+            if (!igroup.load(tx, workItem.igroup_id)) {
                 progress.clear();
-                std::cerr <<argv0 <<": input group " <<work.igroup_id <<" is empty or does not exist\n";
+                std::cerr <<argv0 <<": input group " <<workItem.igroup_id <<" is empty or does not exist\n";
                 exit(1);
             }
         }
 
         // Find the function to test
-        IdFunctionMap::iterator func_found = functions.find(work.func_id);
+        IdFunctionMap::iterator func_found = functions.find(workItem.func_id);
         assert(func_found!=functions.end());
         SgAsmFunction *func = func_found->second;
         if (opt.verbosity>=LACONIC) {
@@ -173,10 +172,10 @@ main(int argc, char *argv[])
         assert(ip!=pointers.end());
 
         // Run the test
-        insn_coverage.current_test(work.func_id, work.igroup_id);
-        dynamic_cg.current_test(work.func_id, work.igroup_id);
-        tracer.current_test(work.func_id, work.igroup_id, opt.trace_events);
-        consumed_inputs.current_test(work.func_id, work.igroup_id);
+        insn_coverage.current_test(workItem.func_id, workItem.igroup_id);
+        dynamic_cg.current_test(workItem.func_id, workItem.igroup_id);
+        tracer.current_test(workItem.func_id, workItem.igroup_id, opt.trace_events);
+        consumed_inputs.current_test(workItem.func_id, workItem.igroup_id);
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
@@ -208,8 +207,8 @@ main(int argc, char *argv[])
                                                        // 11          12        13
                                                        "elapsed_time, cpu_time, cmd)"
                                                        " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        stmt->bind(0, work.func_id);
-        stmt->bind(1, work.igroup_id);
+        stmt->bind(0, workItem.func_id);
+        stmt->bind(1, workItem.igroup_id);
         stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
         stmt->bind(3, igroup.nconsumed_virtual(IQ_LOCAL));
         stmt->bind(4, igroup.nconsumed_virtual(IQ_GLOBAL));
@@ -271,7 +270,7 @@ main(int argc, char *argv[])
             break;
         }
         
-        prev_work = work;
+        prev_work = workItem;
     }
 
     // Store results for the analysis that tries to determine whether a function returns a value.
