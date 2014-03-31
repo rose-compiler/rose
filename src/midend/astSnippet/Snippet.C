@@ -3,6 +3,7 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
+#include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -84,6 +85,66 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
+// Parse java file based on addJavaSource.cpp test case
+static SgFile* parseJavaFile(const std::string &filename)
+{
+    // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
+    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(filename);
+    char *charBuf = new char[buffer->size()];
+    buffer->read(charBuf, 0, buffer->size());
+    std::string sourceCode(charBuf, buffer->size());
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::cerr <<"ROBB: source code is:\n" <<sourceCode <<"\n";
+#endif
+
+    // Figure out what part of the file name is the package.
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::string pkgDirectory = "Number_Handling/CWE_190";
+    std::string baseName = "CWE_190_0.java";
+    std::string pkgName = "Number_Handling.CWE_190";
+    std::string className = "CWE_190_0";
+    std::string qualifiedClassName = "Number_Handling.CWE_190.CWE_190_0";
+#else
+    std::string pkgDirectory;                           // directory containing the java file
+    std::string baseName = filename;                    // name of the java file without directory components
+    size_t slashIdx = filename.rfind('/');
+    if (slashIdx!=std::string::npos) {
+        pkgDirectory = filename.substr(0, slashIdx);
+        baseName = filename.substr(slashIdx+1);
+    }
+    assert(!baseName.empty());
+    std::string pkgName = pkgDirectory; std::replace(pkgName.begin(), pkgName.end(), '/', '.');
+    std::string className = boost::erase_last_copy(baseName, ".java");
+    std::string qualifiedClassName = pkgName.empty() ? className : pkgName + "." + className;
+#endif
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::cerr <<"ROBB: Java file name is \"" <<filename <<"\"\n"
+              <<"      Java package directory is \"" <<pkgDirectory <<"\"\n"
+              <<"      Java base name is \"" <<baseName <<"\"\n"
+              <<"      Package name is \"" <<pkgName <<"\"\n"
+              <<"      Non-qualified class name is \"" <<className <<"\"\n"
+              <<"      Qualified class name is \"" <<qualifiedClassName <<"\n";
+#endif
+
+    // Code similar to the addJavaSource.cpp unit test
+    SgProject *project = SageInterface::getProject();
+    assert(project!=NULL);
+    std::string tmpDirectory = SageInterface::getTempDirectory(project);
+
+    SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
+    assert(pkgDef!=NULL);
+    std::string package_directory_name = pkgDef->get_qualified_name().getString();
+    std::replace(package_directory_name.begin(), package_directory_name.end(), '.', '/');
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::cerr <<"ROBB: package_directory_name = \"" <<package_directory_name <<"\"\n";
+#endif
+    
+    SgFile *file = SageInterface::preprocessCompilationUnit(project, package_directory_name + "/" + className, sourceCode);
+    return file;
+}
+
+
 // Class method
 SgSourceFile *
 SnippetFile::parse(const std::string &fileName)
@@ -96,7 +157,11 @@ SnippetFile::parse(const std::string &fileName)
     // Try to load the snippet by parsing its source file
     SgFile *file = NULL;
     if (SageInterface::is_Java_language()) {
+#if 1 /* [Robb P. Matzke 2014-03-31] */
         file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
+#else
+        file = parseJavaFile(fileName);
+#endif
     } else {
         file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
     }
