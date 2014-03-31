@@ -251,6 +251,8 @@ class AstIntAttribute : public AstAttribute
           int getValue();
 
           AstIntAttribute(int value_);
+
+          virtual AstAttribute* copy() /*override*/;
    };
 
 class AstParameterizedTypeAttribute : public AstAttribute {
@@ -263,6 +265,8 @@ class AstParameterizedTypeAttribute : public AstAttribute {
 
         bool argumentsMatch(SgTemplateParameterList *type_arg_list, std::vector<SgTemplateParameter *> *new_args);
         SgJavaParameterizedType *findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args);
+
+        virtual AstAttribute* copy() /*override*/;
 };
 
 
