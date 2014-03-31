@@ -31,6 +31,9 @@
 
 #include <boost/algorithm/string.hpp>
 
+// DQ (3/19/2014): Used for BOOST_CHECK_EQUAL_COLLECTIONS
+// #include <boost/test/unit_test.hpp>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -320,7 +323,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
                                   file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
                                   file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
-
+#endif
+#if 0
      file->display("file: Unparser::unparseFile");
 #endif
 
@@ -639,8 +643,14 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
   // Note that these are the SgToken IR nodes and we have generated a token stream via the type: LexTokenStreamType.
   // ROSE_ASSERT(file->get_token_list().empty() == true);
-     ROSE_ASSERT(file->get_token_list().empty() == false);
 
+
+  // ROSE_ASSERT(file->get_token_list().empty() == false);
+     if (file->get_token_list().empty() == true)
+        {
+          printf ("Warning: unparseFileUsingTokenStream(): In no tokens found \n");
+          return;
+        }
 #if 0
      ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
      ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -2158,12 +2168,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // in the correct folder structure.
             SgSourceFile *sourcefile = isSgSourceFile(file);
             ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
+
+            SgProject *project = sourcefile -> get_project();
+            ROSE_ASSERT(project != NULL);
+
             SgJavaPackageStatement *package_statement = sourcefile -> get_package();
             string package_name = (package_statement ? package_statement -> get_name().getString() : "");
             //NOTE: Default package equals the empty string ""
             //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
             string outFolder = "";
-            SgProject *project = sourcefile -> get_project();
             string ds = project -> get_Java_source_destdir();
             if (ds != "") {
                 outFolder = ds;
@@ -2178,6 +2191,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             int status = system (mkdirCommand.c_str());
             ROSE_ASSERT(status == 0);
             outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
+#if 0
+            printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
+#endif
         }
         // Liao 12/29/2010, generate cuda source files
         else if (file->get_Cuda_only() == true)
@@ -2198,12 +2214,26 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
        // DQ (9/15/2013): Added assertion.
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
-#if 0
-          printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
-#endif
-          file->set_unparse_output_filename(outputFilename);
-          ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-       // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
+
+        // TOO1 (3/20/2014): Clobber the original input source file X_X
+        //
+        //            **CAUTION**RED*ALERT**CAUTION**
+        //
+        SgSourceFile* source_file = isSgSourceFile(file);
+        if (source_file != NULL)
+        {
+            if (project->get_unparser__clobber_input_file())
+            {
+                outputFilename = source_file->get_sourceFileNameWithPath();
+                std::cout
+                    << "[WARN] [Unparser] Clobbering the original input file: "
+                    << outputFilename
+                    << std::endl;
+            }
+        }
+
+        file->set_unparse_output_filename(outputFilename);
+        ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
      }
 
 #if 0
@@ -2221,9 +2251,52 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // Open the file where we will put the generated code
           string outputFilename = get_output_filename(*file);
 
-       // if ( SgProject::get_verbose() == true )
           if ( SgProject::get_verbose() > 0 )
                printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
+
+       // printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
+
+       // DQ (3/19/2014): Added support for noclobber option.
+          boost::filesystem::path output_file = outputFilename;
+
+          bool trigger_file_comparision = false;
+
+          string saved_filename       = outputFilename;
+          string alternative_filename = outputFilename + ".noclobber_compare";
+
+          if (boost::filesystem::exists(output_file))
+             {
+               if ( SgProject::get_verbose() > 0 )
+                    printf ("In unparseFile(SgFile*): (outputFilename) output file exists = %s \n",output_file.string().c_str());
+
+               SgProject* project = TransformationSupport::getProject(file);
+               ROSE_ASSERT(project != NULL);
+
+               if (project->get_noclobber_output_file() == true)
+                  {
+                 // If the file exists then it is an error if -rose:noclobber_output_file option was specified.
+                    printf ("\n\n****************************************************************************************************** \n");
+                    printf ("Error: the output file already exists, cannot overwrite (-rose:noclobber_output_file option specified) \n");
+                    printf ("   --- outputFilename = %s \n",outputFilename.c_str());
+                    printf ("****************************************************************************************************** \n\n\n");
+                 // ROSE_ASSERT(false);
+                    ROSE_ABORT();
+                  }
+                 else
+                  {
+                 // If the file exists then generate an alternative file so that we can compare the new file to the existing file (error if not identical).
+                    if (project->get_noclobber_if_different_output_file() == true)
+                       {
+                      // If the file exists and the generated file is not identical, then it is an error if -rose:noclobber_if_different_output_file option was specified.
+                         trigger_file_comparision = true;
+
+                         if ( SgProject::get_verbose() > 0 )
+                              printf ("Generate test output in alternative_filename = %s \n",alternative_filename.c_str());
+
+                         outputFilename = alternative_filename;
+                       }
+                  }
+             }
 
           fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
        // ROSE_OutputFile.open(s_file.c_str());
@@ -2243,7 +2316,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // The goal of this unparser is to provide formatting
        // similar to that of the original application code
 #if 0
-          if ( file.get_verbose() == true )
+          if ( file.get_verbose() > 0 )
                printf ("Calling the NEWER unparser mechanism: outputFilename = %s \n",outputFilename);
 #endif
 
@@ -2351,6 +2424,91 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
+
+       // DQ (3/19/2014): If -rose:noclobber_if_different_output, then test the generated file against the original file.
+          if (trigger_file_comparision == true)
+             {
+            // Test the generated file against the previously generated file of the same original name.
+            // if different, it is an error, if the same it is OK.
+
+               if ( SgProject::get_verbose() > 0 )
+                  {
+                    printf ("Testing saved_filename against alternative_filename (using boost::filesystem::equivalent()): \n");
+                    printf ("   --- saved_filename       = %s \n",saved_filename.c_str());
+                    printf ("   --- alternative_filename = %s \n",alternative_filename.c_str());
+                  }
+
+               boost::filesystem::path saved_output_file       = saved_filename;
+               boost::filesystem::path alternative_output_file = alternative_filename;
+
+               std::ifstream ifs1(saved_filename.c_str());
+               std::ifstream ifs2(alternative_filename.c_str());
+
+               std::istream_iterator<char> b1(ifs1);
+               std::istream_iterator<char> b2(ifs2);
+
+               bool files_are_identical = true;
+
+            // Check the sizes, if the same then we have to check the contents.
+               if (file_size(saved_output_file) == file_size(alternative_output_file))
+                  {
+                    size_t filesize = file_size(saved_output_file);
+
+                    if ( SgProject::get_verbose() > 0 )
+                       {
+                         printf ("   --- files are the same size = %zu (checking contents) \n",filesize);
+                       }
+
+                     size_t counter = 0;
+                     files_are_identical = true;
+                     while (files_are_identical == true && counter < filesize)
+                        {
+                       // check for inequality of file data (at least this is portable).
+                          if (*b1 != *b2)
+                             {
+                               if ( SgProject::get_verbose() > 0 )
+                                    printf ("...detected file content inequality... \n");
+
+                               files_are_identical = false;
+                             }
+
+                          b1++;
+                          b2++;
+                          counter++;
+                        }
+                  }
+                 else
+                  {
+                 // If not the same size then they are not the same files.
+                    if ( SgProject::get_verbose() > 0 )
+                       {
+                         size_t saved_filesize       = file_size(saved_output_file);
+                         size_t alternative_filesize = file_size(alternative_output_file);
+                         printf ("   --- files are not the same size saved_filesize = %zu alternative_filesize = %zu \n",saved_filesize,alternative_filesize);
+                       }
+
+                    files_are_identical = false;
+                  }
+
+               if ( SgProject::get_verbose() > 0 )
+                  {
+                    printf ("   --- files_are_identical = %s \n",files_are_identical ? "true" : "false");
+                  }
+
+               if (files_are_identical == false)
+                  {
+                    printf ("\n\n****************************************************************************************************** \n");
+                    printf ("Error: files are not equivalent: \n");
+                    printf ("   --- saved_filename       = %s \n",saved_filename.c_str());
+                    printf ("   --- alternative_filename = %s \n",alternative_filename.c_str());
+                    printf ("****************************************************************************************************** \n\n\n");
+
+                 // remove the generated file or leave in place to allow users to examine file differences.
+                 // boost::filesystem::remove(unparsed_file);
+
+                    ROSE_ABORT();
+                  }
+             }
         }
    }
 

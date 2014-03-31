@@ -28,7 +28,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage
+    buildJavaPackage createAbstractHandles
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -86,6 +86,7 @@ insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
+createAbstractHandles_SOURCES             = createAbstractHandles.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -148,7 +149,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  buildJavaPackage.passed
+  buildJavaPackage.passed 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -201,7 +202,8 @@ group1 =						\
 	rose_inputbuildAbstractHandle.C			\
 	rose_inputbuildTypedefDeclaration.C		\
 	rose_inputgetDependentDecls.C			\
-	rose_inputreplaceWithPattern.C
+	rose_inputreplaceWithPattern.C                  \
+	rose_inputcreateAbstractHandles.C
 
 $(group1): rose_input%.C: input%.C %
 	@$(RTH_RUN) \
@@ -499,7 +501,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)" \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)"  \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!
@@ -529,8 +531,9 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C					\
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f				\
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C \
-       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
+       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
+       inputbuildJavaPackage.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

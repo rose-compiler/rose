@@ -8,16 +8,25 @@
 
 #define xDEBUG(flag,code)  { if(flag) {code; fflush(stdout);}}
 
-extern jstring      jserver_getJavaString(const char*);
-extern jobject       jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
-extern jclass       jserver_FindClass(const char *name);
-extern jobjectArray jserver_getJavaStringArray(int argc, char **argv);
-extern void         jserver_callMethod(jclass, jmethodID, jobjectArray);
-extern int          jserver_callBooleanMethod(jobject, jmethodID);
-extern jmethodID    jserver_GetMethodID(int, jclass, const char*, const char*);
-extern void         jserver_handleException();
-extern void         jserver_init();
-extern void         jserver_finish();
-extern JNIEnv* getEnv();
+namespace Rose {
+namespace Frontend {
+namespace Fortran {
+namespace Ofp {
+  jstring      jserver_getJavaString(const char*);
+  jobject       jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
+  jclass       jserver_FindClass(const char *name);
+  jobjectArray jserver_getJavaStringArray(int argc, char **argv);
+  void         jserver_callMethod(jclass, jmethodID, jobjectArray);
+  int          jserver_callBooleanMethod(jobject, jmethodID);
+  jmethodID    jserver_GetMethodID(int, jclass, const char*, const char*);
+  void         jserver_handleException();
+  void         jserver_init();
+  void         jserver_finish();
+  JNIEnv* getEnv();
+}// ::Rose::Frontend::Fortran::Ofp
+}// ::Rose::Frontend::Fortran
+}// ::Rose::Frontend
+}// ::Rose
 
 #endif
+

@@ -255,7 +255,6 @@ ROSE__CXX_TESTS = \
 	test2005_39.C \
 	test2005_40.C \
 	test2005_41.C \
-	test2005_42.C \
 	test2005_43.C \
 	test2005_44.C \
 	test2005_45.C \
@@ -1141,7 +1140,6 @@ ROSE__CXX_TESTS = \
 	test2013_59.C \
 	test2013_60.C \
 	test2013_61.C \
-	test2013_63.C \
 	test2013_64.C \
 	test2013_65.C \
 	test2013_66.C \
@@ -1307,16 +1305,11 @@ ROSE__CXX_TESTS = \
 	test2013_230.C \
 	test2013_231.C \
 	test2013_232.C \
-	test2013_234.C \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \
-	test2013_240.C \
-	test2013_241.C \
-	test2013_242.C \
 	test2013_243.C \
 	test2013_244.C \
-	test2013_246.C \
 	test2013_250.C \
 	test2013_251.C \
 	test2013_252.C \
@@ -1359,5 +1352,24 @@ ROSE__CXX_TESTS = \
 
 ROSE__CXX_TESTS__BOOST = \
 	test2013_09.C \
-	test2013_235.C \
-	test2013_236.C
+   test2013_236.C
+
+# 	test2013_235.C
+
+# This is a point about the GNU version and not the EDG version.
+# if !ROSE_USE_EDG_VERSION_4_8
+if !ROSE_USING_GCC_VERSION_LATER_4_6
+ROSE__CXX_TESTS += \
+	test2005_42.C \
+	test2013_63.C \
+	test2013_234.C \
+	test2013_240.C \
+	test2013_241.C \
+	test2013_242.C \
+	test2013_246.C 
+
+#	test2012_90.C 
+
+ROSE__CXX_TESTS__BOOST += \
+	test2013_235.C 
+endif

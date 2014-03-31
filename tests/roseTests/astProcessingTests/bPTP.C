@@ -3,7 +3,9 @@
 #include <rose.h>
 //#include "interproceduralBinaryAnalysis::ControlFlow::Graph.h"
 #include <string>
+#ifndef _MSC_VER
 #include <err.h>
+#endif
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
 #include "BinaryLoader.h"

@@ -25,3 +25,4 @@ add_executable(testPruning
 )
 target_link_libraries(testPruning ${MacroRewrapper_libs})
 
+install(TARGETS testLinearization DESTINATION bin)

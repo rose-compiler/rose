@@ -10,7 +10,7 @@ kde4_add_executable(printLoopInfo ${printLoopInfo_SRCS})
 
 target_link_libraries(printLoopInfo ${KDE4_KDECORE_LIBS})
 
-install(TARGETS printLoopInfo ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS printLoopInfo DESTINATION bin)
 
 
 ########### install files ###############

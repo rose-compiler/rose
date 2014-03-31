@@ -48,7 +48,7 @@
 // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
 // variable so that all regression tests can be processed to mix the unparsing of 
 // the token stream with unparsing from the AST.
-extern bool ROSE_tokenUnparsingTestingMode;
+extern ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode;
 
 int
 main ( int argc, char* argv[] )
