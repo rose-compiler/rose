@@ -210,7 +210,7 @@ static SgFile* parseJavaFile(const std::string &fileName)
     std::string tempDirectory = SageInterface::getTempDirectory(project);
 #if 1 /*FIXME[Robb P. Matzke 2014-04-01]: working around a bug in the Java support*/
     // The current Java support is not able to create parent directories (i.e., like "mkdir -p foo/bar/baz") so we must
-    // do that explicitly to prevent getting a segmentation fault in the Java run time.
+    // do that explicitly to prevent getting a segmentation fault in the Java run time.  Don't create the leaf directory.
     {
         std::string dirName = tempDirectory;
         std::vector<std::string> components;
@@ -218,12 +218,16 @@ static SgFile* parseJavaFile(const std::string &fileName)
         BOOST_FOREACH (const std::string &component, components) {
             dirName += "/" + component;
             (void) mkdir(dirName.c_str(), 0777);
+            std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
         }
         struct stat sb;
         int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
         assert(0==status);
         assert(S_ISDIR(sb.st_mode));
-        std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
+        if (dirName!=tempDirectory) {
+            rmdir(dirName.c_str());                     // removing leaf directory so Java can create it
+            std::cerr <<"ROBB: removed directory \"" <<dirName <<"\"\n";
+        }
     }
 #endif
     SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
@@ -231,10 +235,14 @@ static SgFile* parseJavaFile(const std::string &fileName)
     SgFile *file = SageInterface::preprocessCompilationUnit(project, pkgDirectory + "/" + className, sourceCode);
 
 #if 0
-    /* FIXME[Robb P. Matzke 2014-04-01]: This directory is apparently needed by backend() (even though we don't unparse the
-     * snippet), but backend() is called by the user, not the snippet library. Therefore we need some way to keep track of all
-     * these temporary directories so the user can delete them after calling backend. */
+    /* FIXME[Robb P. Matzke 2014-04-01]: This directory is apparently needed after parsing and I'm not sure when its safe
+     * to clean it up. The addJavaSource unit test does the cleanup after calling backend(), but we have no control over
+     * that since it's done by the user sometime after snippet injections are finished (in fact, the snippet data structures
+     * might already be destroyed by then). */
     SageInterface::destroyTempDirectory(tempDirectory);
+#endif
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-01]*/
+    std::cerr <<"ROBB: Java snippet has been parsed; file = (" <<file->class_name() <<"*)" <<file <<"\n";
 #endif
 
     return file;
