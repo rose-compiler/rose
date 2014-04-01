@@ -108,9 +108,9 @@ vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
   vector<SgVarRefExp*> varVec;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	if(SgVarRefExp* v=isSgVarRefExp(node)) {
-	  varVec.push_back(v);
-	}
+    if(SgVarRefExp* v=isSgVarRefExp(node)) {
+      varVec.push_back(v);
+    }
   }
   return varVec;
 }
@@ -260,7 +260,7 @@ bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
   }
   // TODO: refine this to also check for name, paramters, etc.
   if(isSgConditionalExp(node))
-	return true;
+    return true;
   return false;
 }
 
@@ -1156,9 +1156,9 @@ SgNode* SgNodeHelper::getExprRootChild(SgNode* node) {
  */
 bool SgNodeHelper::isArrayElementAssignment(SgNode* node) {
   if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
-	SgNode* lhs=getLhs(node);
-	if(isSgPntrArrRefExp(lhs))
-	  return true;
+    SgNode* lhs=getLhs(node);
+    if(isSgPntrArrRefExp(lhs))
+      return true;
   }
   return false;
 }

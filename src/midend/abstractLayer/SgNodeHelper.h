@@ -272,8 +272,8 @@ namespace SgNodeHelper {
   list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
   /*!
-	checks whether the expression 'node' represents an assignment to an array's element
-	considers all assignment operators and arrays of any size
+    checks whether the expression 'node' represents an assignment to an array's element
+    considers all assignment operators and arrays of any size
   */
   bool isArrayElementAssignment(SgNode* node);
   bool isFloatingPointAssignment(SgNode* exp);
