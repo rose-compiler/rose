@@ -181,7 +181,6 @@ main(int argc, char *argv[])
 
     // Parse the source code into which the snippet will be inserted and find a place to insert.
     SgProject *project = frontend(frontend_args);
-
     assert(project!=NULL);
     if (ipoint_function_name.empty()) {
         std::cerr <<"use --test:ipoint-function=NAME to specify a fully qualified insertion point function\n"
