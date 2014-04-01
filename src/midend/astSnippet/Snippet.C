@@ -233,9 +233,20 @@ static SgFile* parseJavaFile(const std::string &fileName)
         }
     }
 #endif
-    SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
-    assert(pkgDef!=NULL);
-    SgFile *file = SageInterface::preprocessCompilationUnit(project, pkgDirectory + "/" + className, sourceCode);
+
+    // We need to make sure the package exists, but findOrInsertJavaPackage fails when the package name is the empty string.
+    // Hope that package "" exists already.
+    std::string classPath;
+    if (pkgName.empty()) {
+        classPath = className;
+    } else {
+        SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
+        assert(pkgDef!=NULL);
+        classPath = pkgDirectory + "/" + className;
+    }
+
+    // Parse the source code
+    SgFile *file = SageInterface::preprocessCompilationUnit(project, classPath, sourceCode);
 
 #if 0
     /* FIXME[Robb P. Matzke 2014-04-01]: This directory is apparently needed after parsing and I'm not sure when its safe
