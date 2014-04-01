@@ -5,6 +5,9 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -85,43 +88,117 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
+// Return the first non-empty statement from the specified source code, without the trailing semicolon.  This returns the
+// non-comment material from the beginning of the supplied string up to but not including the first semicolon that is not part
+// of a comment or string literal.  Comments are C++/Java style comments. Strings are delimited by single and double quotes
+// (any number of characters in either) and support backslash as an escape mechanism.  The source string is assumed to start
+// outside a comment or string.
+static std::string extractFirstStatement(const std::string &source)
+{
+    std::string firstStmt;
+    std::string inComment;                              // comment state: "", "/", "//", "/*", or "/**"
+    char inString;                                      // string state: '\0', '"' or '\''
+    bool escaped=false;                                 // true if previous character was a backslash not in a comment
+    BOOST_FOREACH (char ch, source) {
+        if (inComment=="" && !inString && '/'==ch) {
+            assert(!escaped);
+            inComment = "/";
+        } else if (inComment=="/") {
+            assert(!escaped);
+            assert(!inString);
+            if ('/'==ch || '*'==ch) {
+                inComment += ch;
+            } else {
+                firstStmt += inComment + ch;
+                inComment = "";
+                if ('\''==ch || '"'==ch)
+                    inString = ch;
+                escaped = '\\'==ch;
+            }
+        } else if (inComment=="//" && '\n'==ch) {
+            assert(!escaped);
+            assert(!inString);
+            inComment = "";
+        } else if (inComment=="/*" && '*'==ch) {
+            assert(!escaped);
+            assert(!inString);
+            inComment = "/**";
+        } else if (inComment=="/**") {
+            assert(!escaped);
+            assert(!inString);
+            if ('/'==ch) {
+                inComment = "";
+            } else {
+                inComment = "/*";
+            }
+        } else if (inComment=="//" || inComment=="/*") {
+            assert(!escaped);
+            assert(!inString);
+        } else if (inString) {
+            assert(inComment=="");
+            firstStmt += ch;
+            if (!escaped && ch==inString)
+                inString = '\0';
+            escaped = '\\'==ch;
+        } else if (';'==ch) {
+            boost::trim(firstStmt);
+            if (!firstStmt.empty())
+                break;
+        } else {
+            firstStmt += ch;
+        }
+    }
+    return boost::trim_copy(firstStmt);
+}
+
+// Look at source code (before it's parsed) to try to figure out what package it belongs to.  The "package" statement must be
+// the first statement in the file and there can be only one, so it's fairly easy to find.
+static std::string getJavaPackageFromSourceCode(const std::string &source)
+{
+    std::string firstStmt = extractFirstStatement(source);
+    if (boost::starts_with(firstStmt, "package")) {
+        std::string pkgName = boost::trim_copy(firstStmt.substr(7));
+        return pkgName;
+    }
+
+    return "";
+}
+
+// Return the class name from a file name.  If the file is "a/b/c.java" then the class is "c"
+static std::string getJavaClassNameFromFileName(const std::string fileName)
+{
+    std::string notDir;                                 // part of the name after the final slash
+    size_t slashIdx = fileName.rfind('/');
+    if (slashIdx != std::string::npos) {
+        notDir = fileName.substr(slashIdx+1);
+    } else {
+        notDir = fileName;
+    }
+
+    return boost::erase_last_copy(notDir, ".java");
+}
+
 // Parse java file based on addJavaSource.cpp test case
-static SgFile* parseJavaFile(const std::string &filename)
+static SgFile* parseJavaFile(const std::string &fileName)
 {
     // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
-    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(filename);
-    char *charBuf = new char[buffer->size()];
-    buffer->read(charBuf, 0, buffer->size());
-    std::string sourceCode(charBuf, buffer->size());
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
-    std::cerr <<"ROBB: source code is:\n" <<sourceCode <<"\n";
-#endif
-
-    // Figure out what part of the file name is the package.
-#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
-    std::string pkgDirectory = "Number_Handling/CWE_190";
-    std::string baseName = "CWE_190_0.java";
-    std::string pkgName = "Number_Handling.CWE_190";
-    std::string className = "CWE_190_0";
-    std::string qualifiedClassName = "Number_Handling.CWE_190.CWE_190_0";
-#else
-    std::string pkgDirectory;                           // directory containing the java file
-    std::string baseName = filename;                    // name of the java file without directory components
-    size_t slashIdx = filename.rfind('/');
-    if (slashIdx!=std::string::npos) {
-        pkgDirectory = filename.substr(0, slashIdx);
-        baseName = filename.substr(slashIdx+1);
+    std::string sourceCode;
+    {
+        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(fileName);
+        char *charBuf = new char[buffer->size()];
+        buffer->read(charBuf, 0, buffer->size());
+        sourceCode = std::string(charBuf, buffer->size());
     }
-    assert(!baseName.empty());
-    std::string pkgName = pkgDirectory; std::replace(pkgName.begin(), pkgName.end(), '/', '.');
-    std::string className = boost::erase_last_copy(baseName, ".java");
-    std::string qualifiedClassName = pkgName.empty() ? className : pkgName + "." + className;
-#endif
 
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
-    std::cerr <<"ROBB: Java file name is \"" <<filename <<"\"\n"
+    // Get the package name etc. from the file contents.  We must know these before we can parse the file.
+    std::string pkgName = getJavaPackageFromSourceCode(sourceCode);
+    std::string pkgDirectory = boost::replace_all_copy(pkgName, ".", "/");
+    std::string className = getJavaClassNameFromFileName(fileName);
+    std::string qualifiedClassName = pkgName.empty() ? className : pkgName + "." + className;
+
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::cerr <<"ROBB: Java file name is \"" <<fileName <<"\"\n"
               <<"      Java package directory is \"" <<pkgDirectory <<"\"\n"
-              <<"      Java base name is \"" <<baseName <<"\"\n"
               <<"      Package name is \"" <<pkgName <<"\"\n"
               <<"      Non-qualified class name is \"" <<className <<"\"\n"
               <<"      Qualified class name is \"" <<qualifiedClassName <<"\n";
@@ -130,17 +207,36 @@ static SgFile* parseJavaFile(const std::string &filename)
     // Code similar to the addJavaSource.cpp unit test
     SgProject *project = SageInterface::getProject();
     assert(project!=NULL);
-    std::string tmpDirectory = SageInterface::getTempDirectory(project);
-
+    std::string tempDirectory = SageInterface::getTempDirectory(project);
+#if 1 /*FIXME[Robb P. Matzke 2014-04-01]: working around a bug in the Java support*/
+    // The current Java support is not able to create parent directories (i.e., like "mkdir -p foo/bar/baz") so we must
+    // do that explicitly to prevent getting a segmentation fault in the Java run time.
+    {
+        std::string dirName = tempDirectory;
+        std::vector<std::string> components;
+        boost::split(components, pkgDirectory, boost::is_any_of("/"), boost::token_compress_on);
+        BOOST_FOREACH (const std::string &component, components) {
+            dirName += "/" + component;
+            (void) mkdir(dirName.c_str(), 0777);
+        }
+        struct stat sb;
+        int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
+        assert(0==status);
+        assert(S_ISDIR(sb.st_mode));
+        std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
+    }
+#endif
     SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
     assert(pkgDef!=NULL);
-    std::string package_directory_name = pkgDef->get_qualified_name().getString();
-    std::replace(package_directory_name.begin(), package_directory_name.end(), '.', '/');
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
-    std::cerr <<"ROBB: package_directory_name = \"" <<package_directory_name <<"\"\n";
+    SgFile *file = SageInterface::preprocessCompilationUnit(project, pkgDirectory + "/" + className, sourceCode);
+
+#if 0
+    /* FIXME[Robb P. Matzke 2014-04-01]: This directory is apparently needed by backend() (even though we don't unparse the
+     * snippet), but backend() is called by the user, not the snippet library. Therefore we need some way to keep track of all
+     * these temporary directories so the user can delete them after calling backend. */
+    SageInterface::destroyTempDirectory(tempDirectory);
 #endif
-    
-    SgFile *file = SageInterface::preprocessCompilationUnit(project, package_directory_name + "/" + className, sourceCode);
+
     return file;
 }
 
@@ -157,9 +253,11 @@ SnippetFile::parse(const std::string &fileName)
     // Try to load the snippet by parsing its source file
     SgFile *file = NULL;
     if (SageInterface::is_Java_language()) {
-#if 1 /* [Robb P. Matzke 2014-03-31] */
+#if 0 /* [Robb P. Matzke 2014-03-31] */
+        // This appears not to work any better than SageBuilder::buildFile and Philippe Charles concurs that it might not.
         file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
 #else
+        // This is the better way (but much more complicated) to parse a Java file.
         file = parseJavaFile(fileName);
 #endif
     } else {
