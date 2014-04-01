@@ -210,15 +210,18 @@ static SgFile* parseJavaFile(const std::string &fileName)
     std::string tempDirectory = SageInterface::getTempDirectory(project);
 #if 1 /*FIXME[Robb P. Matzke 2014-04-01]: working around a bug in the Java support*/
     // The current Java support is not able to create parent directories (i.e., like "mkdir -p foo/bar/baz") so we must
-    // do that explicitly to prevent getting a segmentation fault in the Java run time.  Don't create the leaf directory.
+    // do that explicitly to prevent getting a segmentation fault in the Java run time. But we cannot create "baz" because
+    // we must allow Java to be able to do that part.
     {
         std::string dirName = tempDirectory;
         std::vector<std::string> components;
         boost::split(components, pkgDirectory, boost::is_any_of("/"), boost::token_compress_on);
         BOOST_FOREACH (const std::string &component, components) {
-            dirName += "/" + component;
-            (void) mkdir(dirName.c_str(), 0777);
-            std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
+            if (!component.empty()) {
+                dirName += "/" + component;
+                (void) mkdir(dirName.c_str(), 0777);
+                std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
+            }
         }
         struct stat sb;
         int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
