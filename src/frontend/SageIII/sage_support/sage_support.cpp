@@ -2382,7 +2382,7 @@ SgFile::callFrontEnd()
   // be repeated as required to instantiate all function templates.
      std::string translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(argv,false,true);
   // printf ("translatorCommandLineString = %s \n",translatorCommandLineString.c_str());
-     set_savedEdgCommandLine(translatorCommandLineString);
+     set_savedFrontendCommandLine(translatorCommandLineString);
 
   // display("At TOP of SgFile::callFrontEnd()");
 
