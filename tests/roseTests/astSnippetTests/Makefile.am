@@ -506,7 +506,22 @@ testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJ
 		COPY_DEFINITIONS=yes				\
 		$(JAVA_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# testJava8*.passed are for injections with packages
+TEST_TARGETS += testJava8a.passed
+EXTRA_DIST += SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java
 
+testJava8a.passed: \
+injectSnippet SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)									\
+		TITLE="packages [$@]"							\
+		SNIPPET=SnippetPackage/Snippet3.java,SnippetPackage.Snippet3.snippet	\
+		SPECIMEN=SmallSpecimensJava/Specimen3/Specimen3.java			\
+		IPOINT=Specimen3.Specimen3.ipoint1					\
+		INSERT_MECHANISM=stmts							\
+		RECURSIVE_INSERTION=no							\
+		COPY_DEFINITIONS=yes							\
+		$(JAVA_INJECTION_TEST) $@
 
 ###############################################################################################################################
 # quicksort tests
