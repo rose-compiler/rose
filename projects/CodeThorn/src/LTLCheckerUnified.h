@@ -44,11 +44,11 @@ namespace UnifiedLTL {
     LTLState(const EState* s, size_t stacksize) 
       : estate(s), valstack(stacksize,
 #ifdef INIT_TO_NEUTRAL_ELEMENT
-			    Bot()
+                Bot()
 #else
-			    Top()
+                Top()
 #endif
-			    ) {}
+                ) {}
     
     inline BoolLattice top()  const { return valstack.back(); }
     inline BoolLattice over() const { return valstack[valstack.size()-2]; }
@@ -69,7 +69,7 @@ namespace UnifiedLTL {
     bool operator<(const LTLState& other) const {
       if (estate  < other.estate) return true;
       if (estate == other.estate)
-	return (valstack  < other.valstack);
+    return (valstack  < other.valstack);
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);

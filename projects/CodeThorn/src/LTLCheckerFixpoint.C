@@ -461,8 +461,8 @@ public:
     ListOfAValue l = constraints.getEqVarConst(v);
     for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
       if (lval->isConstInt()) {
-	// A=1, B=2
-	return c != rersChar(lval->getIntValue());
+    // A=1, B=2
+    return c != rersChar(lval->getIntValue());
       }
     }
     // var != c

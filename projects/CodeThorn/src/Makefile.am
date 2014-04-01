@@ -116,7 +116,27 @@ faketarget:
 	WorkListOMP.C
 	WorkListSeq.C
 	DFAnalyzer.C
-#      matcherparser_decls.h
+        DeadCodeEliminationOperators.C 
+        spotconnection/ltlverifier.C 
+        spotconnection/stg2.c 
+        spotconnection/stg2_cpp.C 
+        tests/Problem28.c 
+        tests/artificialsum1.C 
+        tests/artificialsum1.c 
+        tests/artificialsum2.C 
+        tests/artificialsum3.C 
+        tests/artificialsum4.C 
+        tests/artificialsum_pointers1.C 
+        tests/jacobi.c 
+        tests/jacobi_normalized.c 
+        tests/jacobi_seq.c 
+        tests/logictest1.C 
+        tests/rdtest1.C 
+        tests/rdtest2.C 
+        tests/rdtest3.C 
+        tests/rdtest4.C 
+        tests/rers13_mini1.C 
+#      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
 

@@ -1052,8 +1052,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             // since nothing can change (because of being ignored) state remains the same
             EState estate=(*i).estate;
             PState oldPState=*estate.pstate();
-            ConstraintSet oldcset=*estate.constraints();			
-            estateList.push_back(createEState(edge.target,oldPState,oldcset));			
+            ConstraintSet oldcset=*estate.constraints();            
+            estateList.push_back(createEState(edge.target,oldPState,oldcset));            
           } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
@@ -1447,11 +1447,11 @@ void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
   ss<<",\""; // dquote reqired for condition
   // generate transition condition
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
-	if(!myIOVal.isConstInt()) {
-	  //assert(myIOVal.isConstInt());
-	  cerr<<"Error: IOVal is NOT const.\n"<<"EState: "<<myTarget->toString()<<endl;
-	  exit(1);
-	}
+    if(!myIOVal.isConstInt()) {
+      //assert(myIOVal.isConstInt());
+      cerr<<"Error: IOVal is NOT const.\n"<<"EState: "<<myTarget->toString()<<endl;
+      exit(1);
+    }
   }
   // myIOVal.isTop(): this only means that any value *may* be read/written. This cannot be modeled here.
   // if it represents "any of A..F" or any of "U..Z" it could be handled.
@@ -1574,29 +1574,29 @@ int Analyzer::semanticFusionOfInInTransitions() {
        ((*i).source!=(*i).target)
        ) {
       // found in-in edge; fuse source and target state into target state (VERY different to reduction!)
-	  // 1) all in edges of source become in-edges of target
+      // 1) all in edges of source become in-edges of target
       // 2) all out edges of source become out-edges of target
       // 3) eliminate source
-	  set<Transition> newTransitions;
-	  const EState* remapped=(*i).target;
-	  TransitionPtrSet in=transitionGraph.inEdges((*i).source);
-	  for(TransitionPtrSet::iterator j=in.begin();j!=in.end();++j) {
-		newTransitions.insert(Transition((*j)->source,
-										 Edge((*j)->source->label(),EDGE_PATH,remapped->label()),
-										 remapped));
-	  }
-	  TransitionPtrSet out=transitionGraph.outEdges((*i).source);
-	  for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-		newTransitions.insert(Transition(remapped,
-										 Edge(remapped->label(),EDGE_PATH,(*j)->target->label()),
-										 (*j)->target));
-	  }
-	  for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
-		transitionGraph.add(*k);
-		//assert(find(*k)!=end());
-	  }
-	  transitionGraph.eliminateEState((*i).source);
-	  return 1;
+      set<Transition> newTransitions;
+      const EState* remapped=(*i).target;
+      TransitionPtrSet in=transitionGraph.inEdges((*i).source);
+      for(TransitionPtrSet::iterator j=in.begin();j!=in.end();++j) {
+        newTransitions.insert(Transition((*j)->source,
+                                         Edge((*j)->source->label(),EDGE_PATH,remapped->label()),
+                                         remapped));
+      }
+      TransitionPtrSet out=transitionGraph.outEdges((*i).source);
+      for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+        newTransitions.insert(Transition(remapped,
+                                         Edge(remapped->label(),EDGE_PATH,(*j)->target->label()),
+                                         (*j)->target));
+      }
+      for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
+        transitionGraph.add(*k);
+        //assert(find(*k)!=end());
+      }
+      transitionGraph.eliminateEState((*i).source);
+      return 1;
     }
   }
   //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
@@ -1864,9 +1864,9 @@ void Analyzer::runSolver3() {
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   string name=labelNameOfAssertLabel(currentEStatePtr->label());
   if(name.size()==0)
-	return -1;
+    return -1;
   if(name=="globalError")
-	name="error_60";
+    name="error_60";
   name=name.substr(6,name.size()-6);
   std::istringstream ss(name);
   int num;
@@ -1995,7 +1995,7 @@ void Analyzer::runSolver4() {
     if(isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
       if(boolOptions["semantic-fold"]) {
-		semanticFoldingOfTransitionGraph();
+        semanticFoldingOfTransitionGraph();
       }  
       // we report some information and finish the algorithm with an incomplete STG
       cout << "-------------------------------------------------"<<endl;

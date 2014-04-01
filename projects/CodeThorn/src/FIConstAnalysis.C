@@ -167,11 +167,11 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
   _max=value;
   if(value.isTop()) {
     _width=ConstIntLattice(Top());
-	return;
+    return;
   }
   if(value.isBot()) {
     _width=ConstIntLattice(Bot());
-	return;
+    return;
   }
   _width=1;
 }
@@ -184,7 +184,7 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
   AType::ConstIntLattice maxVal;
   // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
   if(cppCapsuleSet.size()==0)
-	return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
+    return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
   for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
     AType::ConstIntLattice aint=(*i).getValue();
     if(aint.isTop()) {
@@ -240,7 +240,7 @@ size_t VariableConstInfo::width(VariableId varId) {
   if(!width.isConstInt())
     return ((size_t)INT_MAX)-INT_MIN;
   else
-	return width.getIntValue();
+    return width.getIntValue();
 }
 int VariableConstInfo::minConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
@@ -301,10 +301,10 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   // traverse the AST now and collect information
 
   if(mainFunctionRoot!=0) {
-	determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
+    determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
   } else {
-	// compute value-sets for entire program (need to cover all functions without inlining)
-	determineVarConstValueSet(project,variableIdMapping,varConstIntMap);
+    // compute value-sets for entire program (need to cover all functions without inlining)
+    determineVarConstValueSet(project,variableIdMapping,varConstIntMap);
   }
   return varConstIntMap;
 }
@@ -320,12 +320,12 @@ EvalValueType FIConstAnalysis::evalSgBoolValExp(SgExpression* node) {
   assert(boolValExp);
   int boolVal= boolValExp->get_value();
   if(boolVal==0) {
-	res=false;
-	return res;
+    res=false;
+    return res;
   }
   if(boolVal==1) {
-	res=true;
-	return res;
+    res=true;
+    return res;
   }
   cerr<<"Error: boolean value different to 0 and 1.";
   assert(0);
@@ -354,9 +354,9 @@ EvalValueType FIConstAnalysis::evalSgVarRefExp(SgExpression* node) {
   assert(isVar);
   // varId is now VariableId of VarRefExp
   if(global_variableConstInfo->isUniqueConst(varId)) {
-	return ConstIntLattice(global_variableConstInfo->uniqueConst(varId));
+    return ConstIntLattice(global_variableConstInfo->uniqueConst(varId));
   } else {
-	return ConstIntLattice(AType::Top());
+    return ConstIntLattice(AType::Top());
   }
 }
 
@@ -368,7 +368,7 @@ bool FIConstAnalysis::isRelationalOperator(SgExpression* node) {
   case V_SgGreaterThanOp:
   case V_SgLessThanOp:
   case V_SgLessOrEqualOp:
-	return true;
+    return true;
   default: return false;
   }
 }
@@ -377,9 +377,9 @@ EvalValueType FIConstAnalysis::evalSgAndOp(EvalValueType lhsResult,EvalValueType
   EvalValueType res;
   // short-circuit CPP-AND semantics
   if(lhsResult.isFalse()) {
-	res=lhsResult;
+    res=lhsResult;
   } else {
-	res=(lhsResult&&rhsResult);
+    res=(lhsResult&&rhsResult);
   }
   return res;
 }
@@ -388,9 +388,9 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
   EvalValueType res;
   // short-circuit CPP-OR semantics
   if(lhsResult.isTrue()) {
-	res=lhsResult;
+    res=lhsResult;
   } else {
-	res=(lhsResult||rhsResult);
+    res=(lhsResult||rhsResult);
   }
   return res;
 }
@@ -413,50 +413,50 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, 
   if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
   bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
   if(myIsMultiConst) {
-	bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
-	int myMinConst=global_variableConstInfo->minConst(varId);
-	int myMaxConst=global_variableConstInfo->maxConst(varId);
-	if(detailedOutput) {
-	  cout<<" isMC:"<<myIsMultiConst;
-	  cout<<" isInConstSet:"<<myIsInConstSet;
-	  cout<<" min:"<<myMinConst;
-	  cout<<" max:"<<myMaxConst;
-	}
-	//cout<<endl;
-	
-	// it holds here: val *is* a multi const
-	// handle all cases with 3-valued logic
-	switch(op->variantT()) {
-	case V_SgEqualityOp:
-	  if(!myIsInConstSet) res=EvalValueType(false);
-	  else res=AType::Top();
-	  break;
-	case V_SgNotEqualOp: 
-	  if(!myIsInConstSet) res=EvalValueType(true);
-	  else res=AType::Top();
-	  break;
-	case V_SgGreaterOrEqualOp:
-	  if(myMaxConst>=constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgGreaterThanOp:
-	  if(myMaxConst>constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgLessThanOp:
-	  if(myMinConst<constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	case V_SgLessOrEqualOp:
-	  if(myMinConst<=constVal) res=EvalValueType(true);
-	  else res=EvalValueType(false);
-	  break;
-	default:
-	  cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
-	  assert(0);
-	}
+    bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
+    int myMinConst=global_variableConstInfo->minConst(varId);
+    int myMaxConst=global_variableConstInfo->maxConst(varId);
+    if(detailedOutput) {
+      cout<<" isMC:"<<myIsMultiConst;
+      cout<<" isInConstSet:"<<myIsInConstSet;
+      cout<<" min:"<<myMinConst;
+      cout<<" max:"<<myMaxConst;
+    }
+    //cout<<endl;
+    
+    // it holds here: val *is* a multi const
+    // handle all cases with 3-valued logic
+    switch(op->variantT()) {
+    case V_SgEqualityOp:
+      if(!myIsInConstSet) res=EvalValueType(false);
+      else res=AType::Top();
+      break;
+    case V_SgNotEqualOp: 
+      if(!myIsInConstSet) res=EvalValueType(true);
+      else res=AType::Top();
+      break;
+    case V_SgGreaterOrEqualOp:
+      if(myMaxConst>=constVal) res=EvalValueType(true);
+      else res=EvalValueType(false);
+      break;
+    case V_SgGreaterThanOp:
+      if(myMaxConst>constVal) res=EvalValueType(true);
+      else res=EvalValueType(false);
+      break;
+    case V_SgLessThanOp:
+      if(myMinConst<constVal) res=EvalValueType(true);
+      else res=EvalValueType(false);
+      break;
+    case V_SgLessOrEqualOp:
+      if(myMinConst<=constVal) res=EvalValueType(true);
+      else res=EvalValueType(false);
+      break;
+    default:
+      cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
+      assert(0);
+    }
   } else {
-	if(detailedOutput) cout<<" not MC.";
+    if(detailedOutput) cout<<" not MC.";
   }
 
   if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
@@ -477,21 +477,21 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(node));
     assert(rhs);
 
-	if(option_multiconstanalysis) {
-	  // refinement for special cases handled by multi-const analysis
-	  if(isRelationalOperator(node)) {
-		EvalValueType res2;
-		if(isSgVarRefExp(lhs) && isConstVal(rhs))
-		  res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
-		if(isConstVal(lhs) && isSgVarRefExp(rhs))
-		  res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
-		if(!res2.isTop()) {
-		  // found a more precise result with multi-const analysis results
-		  return res2;
-		}
-	  }
-	  // otherwise we continue with all other cases
-	}
+    if(option_multiconstanalysis) {
+      // refinement for special cases handled by multi-const analysis
+      if(isRelationalOperator(node)) {
+        EvalValueType res2;
+        if(isSgVarRefExp(lhs) && isConstVal(rhs))
+          res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
+        if(isConstVal(lhs) && isSgVarRefExp(rhs))
+          res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
+        if(!res2.isTop()) {
+          // found a more precise result with multi-const analysis results
+          return res2;
+        }
+      }
+      // otherwise we continue with all other cases
+    }
     EvalValueType lhsResult=eval(lhs);
     EvalValueType rhsResult=eval(rhs);
     switch(node->variantT()) {
@@ -606,7 +606,7 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
       myfile<<"CA_INT";
     else
       myfile<<"CA_UNKNOWN";
-    myfile<<",";	
+    myfile<<",";    
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;

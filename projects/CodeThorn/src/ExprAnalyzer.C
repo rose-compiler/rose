@@ -75,41 +75,41 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     cout << "INFO: incdec-op found!"<<endl;
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
-	list<SingleEvalResultConstInt> resultList;
-	SgExpression* cond=condExp->get_conditional_exp();
-	list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
-	if(condResultList.size()==0) {
-	  cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
-	  exit(1);
-	}
-	if(condResultList.size()>1) {
-	  cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
-	  exit(1);
-	}
-	SingleEvalResultConstInt singleResult=*condResultList.begin();
-	if(singleResult.result.isTop()) {
-	  SgExpression* trueBranch=condExp->get_true_exp();
-	  list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
-	  SgExpression* falseBranch=condExp->get_false_exp();
-	  list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
-	  // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
-	  trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
-	  return trueBranchResultList;
-	}
-	if(singleResult.result.isTrue()) {
-	  SgExpression* trueBranch=condExp->get_true_exp();
-	  list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
-	  return trueBranchResultList;
-	}
-	if(singleResult.result.isFalse()) {
-	  SgExpression* falseBranch=condExp->get_false_exp();
-	  list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
-	  return falseBranchResultList;
-	}
-	// dummy return value to avoid compiler warning
-	cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
-	exit(1);
-	return resultList;
+    list<SingleEvalResultConstInt> resultList;
+    SgExpression* cond=condExp->get_conditional_exp();
+    list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
+    if(condResultList.size()==0) {
+      cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
+      exit(1);
+    }
+    if(condResultList.size()>1) {
+      cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt singleResult=*condResultList.begin();
+    if(singleResult.result.isTop()) {
+      SgExpression* trueBranch=condExp->get_true_exp();
+      list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+      SgExpression* falseBranch=condExp->get_false_exp();
+      list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+      // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
+      trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
+      return trueBranchResultList;
+    }
+    if(singleResult.result.isTrue()) {
+      SgExpression* trueBranch=condExp->get_true_exp();
+      list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+      return trueBranchResultList;
+    }
+    if(singleResult.result.isFalse()) {
+      SgExpression* falseBranch=condExp->get_false_exp();
+      list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+      return falseBranchResultList;
+    }
+    // dummy return value to avoid compiler warning
+    cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
+    exit(1);
+    return resultList;
   }
   if(dynamic_cast<SgBinaryOp*>(node)) {
     //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
@@ -331,15 +331,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
-		case V_SgPntrArrRefExp: {
-		  // assume top for array elements (array elements are not stored in state)
-		  res.result=AType::Top();
+        case V_SgPntrArrRefExp: {
+          // assume top for array elements (array elements are not stored in state)
+          res.result=AType::Top();
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           resultList.push_back(res);
-		  break;
-		}
+          break;
+        }
         default:
-			cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+            cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw "Error: evalConstInt::unkown binary operation.";
         }
       }
@@ -407,8 +407,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   }
   case V_SgDoubleVal: {
     //SgDoubleVal* doubleValNode=isSgDoubleVal(node);
-	// floating point values are currently not computed
-	res.result=AType::Top();
+    // floating point values are currently not computed
+    res.result=AType::Top();
     return listify(res);
   }
   case V_SgIntVal: {

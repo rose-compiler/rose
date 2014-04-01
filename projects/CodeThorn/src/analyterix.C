@@ -57,7 +57,7 @@ int countSubTreeNodes(SgNode* root) {
   int num=0;
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	num++;
+    num++;
   }
   return num;
 }
@@ -67,7 +67,7 @@ vector<VariantT> variantVector;
 void storeTreeStructure(SgNode* root) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	variantVector.push_back((*i)->variantT());
+    variantVector.push_back((*i)->variantT());
   }
 }
 
@@ -76,85 +76,85 @@ int checkTreeStructure(SgNode* root) {
   RoseAst ast(root);
   vector<VariantT>::iterator vecIter=variantVector.begin();
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	//cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
-	if((*i)->variantT()!=(*vecIter)) {
-	  cout<<"Error: AST structure changed!"<<endl;
-	  cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
-	  exit(1);
-	}
+    //cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
+    if((*i)->variantT()!=(*vecIter)) {
+      cout<<"Error: AST structure changed!"<<endl;
+      cout<<"SubTree:"<<(*i)->unparseToString()<<endl;
+      exit(1);
+    }
   }
   return num;
 }
 
 void myRewrite(SgExpression* oldExp, SgExpression* newExp,bool keepOld) {
   if (oldExp==newExp)
-	return;
+    return;
   SgNode* parent=oldExp->get_parent();
   if(!parent) {
-	cout<<"Rewrite: parent pointer is null: @"<<oldExp->class_name()<<endl;
-	return;
+    cout<<"Rewrite: parent pointer is null: @"<<oldExp->class_name()<<endl;
+    return;
   }
   ROSE_ASSERT(parent!=oldExp);
   cout<<"REWRITE: parent: "<<parent->unparseToString()<<"["<<parent->class_name()<<"]"<<" : @node:"<<oldExp->class_name()<<endl;
 
   // not supported yet
   if(isSgInitializedName(parent)) {
-	cerr<<"Rewrite: SgInitializedName: not supported yet."<<endl;
-	return;
+    cerr<<"Rewrite: SgInitializedName: not supported yet."<<endl;
+    return;
   }
   if(isSgExprListExp(parent)) {
-	cerr<<"Rewrite: isSgExprListExp: not supported yet."<<endl;
-	return;	
+    cerr<<"Rewrite: isSgExprListExp: not supported yet."<<endl;
+    return;    
   }
   if(isSgConditionalExp(parent)) {
-	cerr<<"Rewrite: isSgConditionalExp: not supported yet."<<endl;
-	return;
+    cerr<<"Rewrite: isSgConditionalExp: not supported yet."<<endl;
+    return;
   }
   if(isSgAssignInitializer(parent)) {
-	cerr<<"Rewrite: isSgAssignInitializer: not supported yet."<<endl;
-	return;
+    cerr<<"Rewrite: isSgAssignInitializer: not supported yet."<<endl;
+    return;
   }
 
   // supported
   if(SgExprStatement* p=isSgExprStatement(parent)) {
-	newExp->set_parent(parent);
+    newExp->set_parent(parent);
     p->set_expression(newExp);
-	return;
+    return;
   } 
   if(SgReturnStmt* p=isSgReturnStmt(parent)) {
-	newExp->set_parent(parent);
+    newExp->set_parent(parent);
     p->set_expression(newExp);
-	return;
+    return;
   }
   //  if(SgBinaryOp* p=isSgBinaryOp(parent)) {
   if(SgBinaryOp* p=dynamic_cast<SgBinaryOp*>(parent)) {
-	if(SgExpression* lhs=p->get_lhs_operand()) {
-	  if(oldExp==lhs) {
-		newExp->set_parent(parent);
-		p->set_lhs_operand(newExp);
-		return;
-	  }
-	}
-	if(SgExpression* rhs=p->get_rhs_operand()) {
-	  if(oldExp==rhs) {
-		newExp->set_parent(parent);
-		p->set_rhs_operand(newExp);
-		return;
-	  }
-	}
-	cout<<"Error: child of binary op is lost."<<endl;
+    if(SgExpression* lhs=p->get_lhs_operand()) {
+      if(oldExp==lhs) {
+        newExp->set_parent(parent);
+        p->set_lhs_operand(newExp);
+        return;
+      }
+    }
+    if(SgExpression* rhs=p->get_rhs_operand()) {
+      if(oldExp==rhs) {
+        newExp->set_parent(parent);
+        p->set_rhs_operand(newExp);
+        return;
+      }
+    }
+    cout<<"Error: child of binary op is lost."<<endl;
   }
   return;
 
   if(SgUnaryOp* p=isSgUnaryOp(parent)) {
-	if (oldExp==p->get_operand_i()) {
-	  newExp->set_parent(parent);
-	  p->set_operand_i(newExp);
-	  return;
-	} else {
-	  cerr<<"Error: unary operand does not match with child."<<endl;
-	  exit(1);
-	}
+    if (oldExp==p->get_operand_i()) {
+      newExp->set_parent(parent);
+      p->set_operand_i(newExp);
+      return;
+    } else {
+      cerr<<"Error: unary operand does not match with child."<<endl;
+      exit(1);
+    }
   }
   cerr<<"Error: rewrite unsupported. parent: "<<parent->class_name()<<" node: "<<oldExp->class_name()<<endl;
   cerr<<"parent isBinaryOp:"<<(isSgBinaryOp(parent))<<endl;
@@ -184,9 +184,9 @@ bool checkAstExpressionRewrite(SgNode* root) {
           if(!isSgAssignInitializer(node) && (!isSgEnumVal(node)))
             //  if(!dynamic_cast<SgAssignInitializer*>(node) && !dynamic_cast<SgEnumVal*>(node)) {
             //if(isSgExpression(*j)) 
-			if(node->get_parent()==0) {
-			  cout<<"Error: parent==0: "<<node->class_name()<<endl;
-			}
+            if(node->get_parent()==0) {
+              cout<<"Error: parent==0: "<<node->class_name()<<endl;
+            }
             subExprList.push_back(isSgExpression(node));
         } else {
           cout<<"ERROR: Non-expression inside an expression!?."<<endl;
@@ -218,15 +218,15 @@ bool checkAstExpressionRewrite(SgNode* root) {
         cout<<"Rewriting now.."<<endl;
         //SageInterface::replaceExpression(*j,exprCopy1,false);
         //SageInterface::replaceExpression(exprCopy1,exprCopy2,false);
-		myRewrite(*j,exprCopy1,false);
-		myRewrite(exprCopy1,exprCopy2,false);
+        myRewrite(*j,exprCopy1,false);
+        myRewrite(exprCopy1,exprCopy2,false);
         AstTests::runAllTests(isSgProject(root));
-		int numRewritten=countSubTreeNodes(root);
-		if(numOrig!=numRewritten) {
-		  cout<<"ERROR: Ast size has changed - orig: "<<numOrig<<" now:"<<"numRewritten"<<endl;
-		  exit(1);
-		}
-		//checkTreeStructure(origAst);
+        int numRewritten=countSubTreeNodes(root);
+        if(numOrig!=numRewritten) {
+          cout<<"ERROR: Ast size has changed - orig: "<<numOrig<<" now:"<<"numRewritten"<<endl;
+          exit(1);
+        }
+        //checkTreeStructure(origAst);
         cout<<"STATUS: AST is consistent."<<endl;
       }
     }
@@ -350,23 +350,23 @@ void generateRoseRDDotFile(VariableRenaming* varRen,string filename) {
   VariableRenaming::DefUseTable& defTable=varRen->getPropDefTable();
     BOOST_FOREACH(VariableRenaming::DefUseTable::value_type& node, defTable)
     {
-	  SgNode* astNode=node.first;
-	  std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
-	  myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
+      SgNode* astNode=node.first;
+      std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
+      myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
         BOOST_FOREACH(VariableRenaming::TableEntry::value_type& entry, defTable[astNode])
         {
             std::cout << "    Defs for [" << varRen->keyToString(entry.first) << "]:" << std::endl;
             BOOST_FOREACH(VariableRenaming::NodeVec::value_type& iter, entry.second)
             {
                 std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-				std::vector<SgInitializedName*> defNameVec=entry.first;
-				ROSE_ASSERT(defNameVec.size()==1);
-				myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
+                std::vector<SgInitializedName*> defNameVec=entry.first;
+                ROSE_ASSERT(defNameVec.size()==1);
+                myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
             }
         }
     }
-	myfile<<"}"<<endl;
-	myfile.close();
+    myfile<<"}"<<endl;
+    myfile.close();
 }
 
 /*
@@ -386,22 +386,22 @@ NodeVec getAllUsesForDef(const VarName& var, int num);
 
 SgNode* normalizeAstPointer(SgNode* node) {
   if(isSgExprStatement(node))
-	node=SgNodeHelper::getExprStmtChild(node);
+    node=SgNodeHelper::getExprStmtChild(node);
   if(SgInitializedName* initName=isSgInitializedName(node))
-	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(initName->get_parent()))
-	  node=varDecl;
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(initName->get_parent()))
+      node=varDecl;
   return node;
 }
 SgNode* normalizeAstPointer2(SgNode* node) {
   SgNode* node0=node;
   while(1) {
-	node=normalizeAstPointer(node);
-	if(isSgReturnStmt(node)||isSgCastExp(node))
-	  node=SgNodeHelper::getFirstChild(node);
-	if(node0==node)
-	  break;
-	else
-	  node0=node;
+    node=normalizeAstPointer(node);
+    if(isSgReturnStmt(node)||isSgCastExp(node))
+      node=SgNodeHelper::getFirstChild(node);
+    if(node0==node)
+      break;
+    else
+      node0=node;
   }
   return node;
 }
@@ -416,49 +416,49 @@ void generateRoseRDDotFile2(Labeler* labeler, VariableRenaming* varRen,string fi
   myfile<<"digraph RD1 {"<<endl;
 
   for(Labeler::iterator i=labeler->begin();i!=labeler->end();++i) {
-	SgNode* node=labeler->getNode(*i);
-	node=normalizeAstPointer2(node);
-	if(!isSgFunctionDeclaration(node)&&!isSgFunctionDefinition(node)&&!isSgBasicBlock(node)&&!isSgWhileStmt(node)&&!isSgForStatement(node)) {
-	  myfile<<"// ---------------------------------------------------------"<<endl;
-	  myfile<<"N"<<node<<"[label=\""<<node->class_name()<<"::"<<node->unparseToString()<<"\"];"<<endl;
-	  VariableRenaming::NumNodeRenameTable useTable=varRen->getUsesAtNode(node);
-	  for(VariableRenaming::NumNodeRenameTable::iterator j=useTable.begin();j!=useTable.end();++j) {
-		VariableRenaming::VarName varName=(*j).first;
-		VariableRenaming::NumNodeRenameEntry numNodeRenameEntry=(*j).second;
-		for(VariableRenaming::NumNodeRenameEntry::iterator k=numNodeRenameEntry.begin();k!=numNodeRenameEntry.end();++k) {
-		  int renNum=(*k).first;
-		  SgNode* renNode=(*k).second;
-		  renNode=normalizeAstPointer2(renNode); // required to get the variable declaration instead of only the initialized name
-		  myfile<<"N"<<node<<" -> "<<"N"<<renNode<<"[label=\""<<varRen->keyToString(varName)<<"-"<<renNum <<"\"];"<<endl;
-		  // the following name label is only required when a non-labeled node is referenced by the RD analysis
-		  myfile<<"N"<<renNode<<"[label=\""<<renNode->class_name()<<"::"<<renNode->unparseToString()<<"\"];"<<endl;
-		}
-	  }
-	}
+    SgNode* node=labeler->getNode(*i);
+    node=normalizeAstPointer2(node);
+    if(!isSgFunctionDeclaration(node)&&!isSgFunctionDefinition(node)&&!isSgBasicBlock(node)&&!isSgWhileStmt(node)&&!isSgForStatement(node)) {
+      myfile<<"// ---------------------------------------------------------"<<endl;
+      myfile<<"N"<<node<<"[label=\""<<node->class_name()<<"::"<<node->unparseToString()<<"\"];"<<endl;
+      VariableRenaming::NumNodeRenameTable useTable=varRen->getUsesAtNode(node);
+      for(VariableRenaming::NumNodeRenameTable::iterator j=useTable.begin();j!=useTable.end();++j) {
+        VariableRenaming::VarName varName=(*j).first;
+        VariableRenaming::NumNodeRenameEntry numNodeRenameEntry=(*j).second;
+        for(VariableRenaming::NumNodeRenameEntry::iterator k=numNodeRenameEntry.begin();k!=numNodeRenameEntry.end();++k) {
+          int renNum=(*k).first;
+          SgNode* renNode=(*k).second;
+          renNode=normalizeAstPointer2(renNode); // required to get the variable declaration instead of only the initialized name
+          myfile<<"N"<<node<<" -> "<<"N"<<renNode<<"[label=\""<<varRen->keyToString(varName)<<"-"<<renNum <<"\"];"<<endl;
+          // the following name label is only required when a non-labeled node is referenced by the RD analysis
+          myfile<<"N"<<renNode<<"[label=\""<<renNode->class_name()<<"::"<<renNode->unparseToString()<<"\"];"<<endl;
+        }
+      }
+    }
   }
 #if 0
   std::cout << "Propagated Def Table:" << endl;
   VariableRenaming::DefUseTable& defTable=varRen->getPropDefTable();
     BOOST_FOREACH(VariableRenaming::DefUseTable::value_type& node, defTable)
     {
-	  SgNode* astNode=node.first;
-	  std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
-	  myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
+      SgNode* astNode=node.first;
+      std::cout << "  Def Table for [" << node.first->class_name() << ":" << astNode << "]:"<< astNode->unparseToString() << std::endl;
+      myfile<<"N"<<astNode<<"[label=\""<<astNode->unparseToString()<<"\"];"<<endl;
         BOOST_FOREACH(VariableRenaming::TableEntry::value_type& entry, defTable[astNode])
         {
             std::cout << "    Defs for [" << varRen->keyToString(entry.first) << "]:" << std::endl;
             BOOST_FOREACH(VariableRenaming::NodeVec::value_type& iter, entry.second)
             {
                 std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-				std::vector<SgInitializedName*> defNameVec=entry.first;
-				ROSE_ASSERT(defNameVec.size()==1);
-				myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
+                std::vector<SgInitializedName*> defNameVec=entry.first;
+                ROSE_ASSERT(defNameVec.size()==1);
+                myfile<<"N"<<astNode<<"->"<<"N"<<iter<<"[label=\""<<varRen->keyToString(entry.first)<<"\"];"<<endl;
             }
         }
     }
 #endif
-	myfile<<"}"<<endl;
-	myfile.close();
+    myfile<<"}"<<endl;
+    myfile.close();
 }
 
 void printCodeStatistics(SgNode* root) {
@@ -610,9 +610,9 @@ int main(int argc, char* argv[]) {
       VariableRenaming varRen(root);
       varRen.run();
       varRen.toFilteredDOT("rose-rd1.dot");
-	  //      varRen.printOriginalDefTable();
+      //      varRen.printOriginalDefTable();
       //varRen.printRenameTable();
-	  generateRoseRDDotFile2(labeler,&varRen,"rose-rd2.dot");
+      generateRoseRDDotFile2(labeler,&varRen,"rose-rd2.dot");
   }
   if (args.count("check-ast-expr-rewrite")) {
     bool result=checkAstExpressionRewrite(root);

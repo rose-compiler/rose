@@ -578,14 +578,14 @@ public:
       //assert(stg.vertex.size()==old+1);
 
       if (out_degree(v, stg.g) == 0) {
-	//cerr<<"registered endpoint "<<stg.g[v]<<endl;
-	endpoints.insert(v);
+    //cerr<<"registered endpoint "<<stg.g[v]<<endl;
+    endpoints.insert(v);
       }
 
       // scan the entire STG for input vars
       if (degree(v, stg.g) != 0) {
-	assert(state.estate);
-	updateInputVar(state.estate, input_vars);
+    assert(state.estate);
+    updateInputVar(state.estate, input_vars);
       }
 
     } END_FOR;
@@ -595,8 +595,8 @@ public:
       } END_FOR;
     } else {
       for (unordered_set<LTLVertex>::iterator i = endpoints.begin();
-	   i!= endpoints.end(); ++i) 
-	worklist.push(*i);
+       i!= endpoints.end(); ++i) 
+    worklist.push(*i);
     }
 
     //cerr<<stg.vertex.size()<<endl;
@@ -615,27 +615,27 @@ public:
 
       // Endpoint handling
       if (is_leaf(succ, stg.g)) {
-	if (endpoints.count(succ) == 0) {
-	  //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
-	  // Orphan: did it become an orphan because it was replaced by a new node?
+    if (endpoints.count(succ) == 0) {
+      //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
+      // Orphan: did it become an orphan because it was replaced by a new node?
           // (technically, this is the inverse of an orphan: A parent without kids. A DINK?)
-	  FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
-	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
-	      worklist.push(s);
-	    END_FOR;
-	    worklist.push(pred);
-	  } END_FOR;
-	  // Cut it off.
-	  clear_vertex(succ, stg.g);
-	} else {
-	  //cerr<<"hit a real endpoint: "<<succ<<endl;
-	  // Real endpoint (ie. exit/assert)
-	  // Endpoints always receive a strong update, because there is no ambiguity
-	  LTLState old_state = stg.g[succ];
-	  LTLState new_state = transfer(old_state, end_state, verbose, true);
-	  stg.g[succ] = new_state;
-	  stg.vertex[new_state] = succ;
-	}
+      FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
+        FOR_EACH_SUCCESSOR(s, pred, stg.g)
+          worklist.push(s);
+        END_FOR;
+        worklist.push(pred);
+      } END_FOR;
+      // Cut it off.
+      clear_vertex(succ, stg.g);
+    } else {
+      //cerr<<"hit a real endpoint: "<<succ<<endl;
+      // Real endpoint (ie. exit/assert)
+      // Endpoints always receive a strong update, because there is no ambiguity
+      LTLState old_state = stg.g[succ];
+      LTLState new_state = transfer(old_state, end_state, verbose, true);
+      stg.g[succ] = new_state;
+      stg.vertex[new_state] = succ;
+    }
       }
 
       // Store all successors in the temporary list vs because our
@@ -720,7 +720,7 @@ public:
           worklist.push(v_succ);
         END_FOR;
         // Add v to the worklist so it can be removed if it has no other successors any more.
-	worklist.push(v);
+    worklist.push(v);
 
 #ifdef ANIM_OUTPUT
         if (anim_i++ > ANIM_START) {
@@ -1247,7 +1247,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
  * Creates reduced_eStateSet
  */
 void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
-					 BoostTransitionGraph& reduced) const {
+                     BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
   bool isTree = boolOptions["eliminate-stg-back-edges"];

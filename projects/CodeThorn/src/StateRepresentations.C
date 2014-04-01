@@ -420,8 +420,8 @@ EStateId EStateSet::estateId(const EState estate) const {
 const EState* TransitionGraph::getStartEState() {
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
     if((*i).source->label()==getStartLabel()) {
-	  return (*i).source;
-	}
+      return (*i).source;
+    }
   }
   return 0;
 }
@@ -880,12 +880,12 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     set<Transition> newTransitions;
     for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
       for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-		if((*i)->source!=estate && (*j)->target!=estate) {
-		  Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
-		  Transition t((*i)->source,newEdge,(*j)->target);
-		  newTransitions.insert(t);
+        if((*i)->source!=estate && (*j)->target!=estate) {
+          Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
+          Transition t((*i)->source,newEdge,(*j)->target);
+          newTransitions.insert(t);
         //assert(newTransitions.find(t)!=newTransitions.end());
-		}
+        }
       }
     }
     //cout << "DEBUG: number of new transitions: "<<newTransitions.size()<<endl;
@@ -904,7 +904,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
       this->add(*k);
       //assert(find(*k)!=end());
     }
-	eliminateEState(estate);
+    eliminateEState(estate);
     assert(newTransitions.size()<=in.size()*out.size());
   } else {
     // need to eliminate node instead
@@ -1065,20 +1065,20 @@ int TransitionGraph::eliminateBackEdges() {
   TransitionPtrSet backEdges; // default empty
   determineBackEdges(startState, visited, backEdges);
   for(TransitionPtrSet::iterator i=backEdges.begin();i!=backEdges.end();++i) {
-	
+    
   }
   return backEdges.size();
 }
 void TransitionGraph::determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet) {
   TransitionPtrSet succPtrs=outEdges(state);
   for(TransitionPtrSet::iterator i=succPtrs.begin();i!=succPtrs.end();++i) {
-	if(visited.find((*i)->target)!=visited.end()) {
-	  // target node exists in visited-set
-	  tpSet.insert(*i);
-	  return;
-	}
-	visited.insert((*i)->target);
-	determineBackEdges((*i)->target,visited,tpSet);
+    if(visited.find((*i)->target)!=visited.end()) {
+      // target node exists in visited-set
+      tpSet.insert(*i);
+      return;
+    }
+    visited.insert((*i)->target);
+    determineBackEdges((*i)->target,visited,tpSet);
   }
   return;
 }

@@ -126,7 +126,7 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
   size_t num=0;
   for(list<SgFunctionCallExp*>::iterator i=funCallList.begin();i!=funCallList.end();i++) {
     SgFunctionCallExp* funCall=*i;
-	if(detailedOutput) cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
+    if(detailedOutput) cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
     bool success=trivialInline(funCall);
     if(success) {
       if(detailedOutput) cout<<"inlined."<<endl;
@@ -143,8 +143,8 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
 
 // returns the number of eliminated expressions
 int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
-					   VariableIdMapping* variableIdMapping,
-					   VariableConstInfo& vci) {
+                       VariableIdMapping* variableIdMapping,
+                       VariableConstInfo& vci) {
   RoseAst ast1(root);
 
   // eliminate variables with one value only
@@ -242,12 +242,12 @@ int isIfWithLabeledAssert(SgNode* node) {
         RoseAst::iterator next=i;
         next++;
         if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
-          //		  cout<<"ASSERT FOUND with Label found:"<<endl;
+          //          cout<<"ASSERT FOUND with Label found:"<<endl;
           SgLabelStatement* labStmt=isSgLabelStatement(*i);
           assert(labStmt);
           string name=SgNodeHelper::getLabelName(labStmt);
           if(name=="globalError")
-			name="error_60";
+            name="error_60";
           name=name.substr(6,name.size()-6);
           std::istringstream ss(name);
           int num;
@@ -326,18 +326,18 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
 #if 1
     cout<<"Range:"<<VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
     cout<<" width: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
-	cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
-	cout<<endl;
+    cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
+    cout<<endl;
 #endif
-	cout<<" isAny:"<<vci.isAny(varId)
-		<<" isUniqueConst:"<<vci.isUniqueConst(varId)
-		<<" isMultiConst:"<<vci.isMultiConst(varId);
-	if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
-	  cout<<" width:"<<vci.width(varId);
-	} else {
-	  cout<<" width:unknown";
-	}
-	cout<<" Test34:"<<vci.isInConstSet(varId,34);
+    cout<<" isAny:"<<vci.isAny(varId)
+        <<" isUniqueConst:"<<vci.isUniqueConst(varId)
+        <<" isMultiConst:"<<vci.isMultiConst(varId);
+    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
+      cout<<" width:"<<vci.width(varId);
+    } else {
+      cout<<" width:unknown";
+    }
+    cout<<" Test34:"<<vci.isInConstSet(varId,34);
     cout<<endl;
   }
   cout<<"---------------------"<<endl;
@@ -363,19 +363,19 @@ void printCodeStatistics(SgNode* root) {
 
 int main(int argc, char* argv[]) {
   try {
-	if(argc==1) {
-	  cout << "Error: wrong command line options."<<endl;
-	  exit(1);
-	}
+    if(argc==1) {
+      cout << "Error: wrong command line options."<<endl;
+      exit(1);
+    }
 #if 0
-	if(argc==3) {
-	  csvAssertFileName=argv[2];
-	  argc=2; // don't confuse ROSE command line
-	  cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
-	}
+    if(argc==3) {
+      csvAssertFileName=argv[2];
+      argc=2; // don't confuse ROSE command line
+      cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
+    }
 #endif
   // Command line option handling.
-	namespace po = boost::program_options;
+    namespace po = boost::program_options;
   po::options_description desc
     ("Woodpecker V0.1\n"
      "Written by Markus Schordan\n"
@@ -393,17 +393,17 @@ int main(int argc, char* argv[]) {
     ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
     ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
-	("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
-	;
+    ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
+    ;
   //    ("int-option",po::value< int >(),"option info")
 
 
   po::store(po::command_line_parser(argc, argv).
-			options(desc).allow_unregistered().run(), args);
+            options(desc).allow_unregistered().run(), args);
   po::notify(args);
 
   if (args.count("help")) {
-	cout << "woodpecker <filename> [OPTIONS]"<<endl;
+    cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
     return 0;
   }
@@ -417,10 +417,10 @@ int main(int argc, char* argv[]) {
     return 0;
   }
   if (args.count("csv-assert")) {
-	csvAssertFileName=args["csv-assert"].as<string>().c_str();
+    csvAssertFileName=args["csv-assert"].as<string>().c_str();
   }
   if (args.count("csv-const-result")) {
-	csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
+    csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
   
   
@@ -439,7 +439,7 @@ int main(int argc, char* argv[]) {
   boolOptions.processOptions();
 
   if(boolOptions["verbose"])
-	detailedOutput=1;
+    detailedOutput=1;
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -456,9 +456,9 @@ int main(int argc, char* argv[]) {
   global_option_multiconstanalysis=boolOptions["enable-multi-const-analysis"];
 #if 0
   if(global_option_multiconstanalysis) {
-	cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
+    cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
   } else {
-	cout<<"INFO: Using flow-insensitive unique-const-analysis."<<endl;
+    cout<<"INFO: Using flow-insensitive unique-const-analysis."<<endl;
   }
 #endif
 
@@ -558,8 +558,8 @@ int main(int argc, char* argv[]) {
 #endif
   cout << "INFO: Remaining functions in program: "<<numberOfFunctions(root)<<endl;
   if(boolOptions["generate-transformed-code"]) {
-	cout << "STATUS: generating transformed source code."<<endl;
-	root->unparse(0,0);
+    cout << "STATUS: generating transformed source code."<<endl;
+    root->unparse(0,0);
   }
 
   cout<< "STATUS: finished."<<endl;

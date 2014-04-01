@@ -165,5 +165,5 @@ CodeThorn::Parse::integerSet(string setstring) {
     else
       throw "Error: parse integer-values: wrong input format (at end).";
 #endif
-	return intSet;
+    return intSet;
 }
