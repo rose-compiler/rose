@@ -413,7 +413,7 @@ class JavaTraversal implements Callable<Boolean> {
             try {
                 if (units.size() > 0) {
                     if (javaParserSupport == null) { // JavaParserSupport not yet allocated?
-                    	javaParserSupport = new JavaParserSupport(units.get(0));
+                        javaParserSupport = new JavaParserSupport(units.get(0));
                     }
                     javaParserSupport.translate(units, (units.size() == 1 && tempUnnamedFiles.contains(new String(units.get(0).getFileName()))));
                 }
@@ -512,7 +512,17 @@ class JavaTraversal implements Callable<Boolean> {
      */
     public static void createTempNamedDirectory(String package_name) {
         assert (temp_directory != null);
-        String directory_name = getTempDirectory() + File.separator + package_name.replace('.', File.separatorChar);
+        String directory_name = getTempDirectory() + File.separator;
+        String suffix = package_name.replace('.', File.separatorChar);
+        for (int dot_index = suffix.indexOf(File.separatorChar); dot_index != -1; dot_index = suffix.indexOf(File.separatorChar, dot_index + 1)) {
+        	directory_name += suffix.substring(0, dot_index);
+            File named_directory = new File(directory_name);
+            if (! named_directory.mkdir()) {
+                throw new IllegalStateException("Unable to create the directory: " + directory_name);
+            }
+        	suffix = suffix.substring(dot_index);
+        }
+    	directory_name += suffix;
         File named_directory = new File(directory_name);
         if (! named_directory.mkdir()) {
             throw new IllegalStateException("Unable to create the directory: " + directory_name);
