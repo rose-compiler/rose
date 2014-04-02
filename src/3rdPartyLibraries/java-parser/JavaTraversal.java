@@ -230,6 +230,10 @@ class JavaTraversal implements Callable<Boolean> {
      * @param args
      */
     static Main generateAst(String args[]) {
+        if (verboseLevel > 0) {
+            System.out.println("[INFO] ECJ::generateAst arguments=" + Arrays.toString(args));
+        }
+
         Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/, null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
@@ -364,6 +368,9 @@ class JavaTraversal implements Callable<Boolean> {
 
                 String filename = new String(unit.getFileName());
                 if (! processedFiles.contains(filename) && JavaParser.cactionIsSpecifiedSourceFile(filename)) {
+                    // Set the ::currentSourceFile via JNI [TOO1, 2014-04-02]
+                    JavaParser.cactionSetupSourceFilename(filename);
+
                     processedFiles.add(filename);
                     batchCompiler.process(unit, i);
                     if (unit.compilationResult.hasMandatoryErrors()) {
@@ -402,6 +409,9 @@ class JavaTraversal implements Callable<Boolean> {
                         JavaParser.cactionEcjFatalCompilationErrors(filename);                        
                     }
                     else units.add(unit);
+
+                    // Reset the ::currentSourceFile via JNI [TOO1, 2014-04-02]
+                    JavaParser.cactionClearSourceFilename();
                 }
             }
 
