@@ -1670,10 +1670,10 @@ int main( int argc, char * argv[] ) {
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
     }
     if(args.count("dump-sorted")) {
-	  timer.start();
+      timer.start();
       string filename=args["dump-sorted"].as<string>();
       writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
-	  sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
+      sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
     }
     if(boolOptions["dump1"]) {
       //string filename="arrayupdates.txt";
