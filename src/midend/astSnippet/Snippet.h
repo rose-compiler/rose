@@ -17,6 +17,21 @@ typedef boost::shared_ptr<class SnippetFile> SnippetFilePtr;
 /** Smart pointer to a Snippet object. Snippet objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class Snippet> SnippetPtr;
 
+/** Information about something that was inserted.
+ *
+ *  A record of what was inserted, where it came from, and where it was inserted. */
+struct SnippetInsertion {
+    SgNode *inserted;                                   /**< What was inserted */
+    SgNode *original;                                   /**< Copied from this node of the snippet file */
+    SgNode *insertedBefore;                             /**< Inserted before this node in the target file */
+    SnippetInsertion()
+        : inserted(NULL), original(NULL), insertedBefore(NULL) {}
+    SnippetInsertion(SgNode *inserted, SgNode *original, SgNode *insertedBefore)
+        : inserted(inserted), original(original), insertedBefore(insertedBefore) {}
+};
+
+std::ostream& operator<<(std::ostream&, const SnippetInsertion&);
+
 /** Represents a source file containing related snippets.
  *
  *  See Snippet class for top-level documentation.
@@ -33,27 +48,31 @@ typedef boost::shared_ptr<class Snippet> SnippetPtr;
  *  creating a new one.  The lookup is performed according to the source file name supplied to the instance() constructor (no
  *  attempt is made to determine when unequal names resolve to the same source file). */
 class SnippetFile: public boost::enable_shared_from_this<SnippetFile> {
+    friend class Snippet;
 private:
-    std::string fileName;                       // non-canonical source file name
-    SgSourceFile *ast;                          // AST corresponding to the file; null after parse errors
+    std::string fileName;                               // non-canonical source file name
+    SgSourceFile *ast;                                  // AST corresponding to the file; null after parse errors
 
-    typedef Map<std::string/*functionName*/, SgFunctionDefinition*> FunctionDefinitionMap;
-    FunctionDefinitionMap functions;            // cache the functions so we don't have to do a traversal every lookup
+    typedef Map<std::string/*functionName*/, std::vector<SgFunctionDefinition*> > FunctionDefinitionMap;
+    FunctionDefinitionMap functions;                    // cache the functions so we don't have to do a traversal every lookup
 
-    std::set<SgGlobal*> globals;                // global scopes where this snippet has been inserted
+    std::set<SgGlobal*> globals;                        // global scopes where this snippet has been inserted
     std::map<std::string/*filename*/, std::set<SgGlobal*>/*insertion points*/> headersIncluded;
 
     typedef Map<std::string/*fileName*/, SnippetFilePtr> Registry;
     static Registry registry;
 
-    static std::vector<std::string> varNameList; // list of variable names to use when renaming things
-    bool copyAllSnippetDefinitions;              // should all snippet definitions be copied to global scope?
-    bool copyRelatedThings;                      // whether to copy other declarations from the snippet file
+    static std::vector<std::string> varNameList;        // list of variable names to use when renaming things
+    bool copyAllSnippetDefinitions;                     // should all snippet definitions be copied to global scope?
+
+    Map<std::string, SgTypePtrList> blackListedDeclarations; // things we don't want to copy to the target AST
+
+    std::vector<SnippetInsertion> insertions;           // list of everything we've inserted related to this snippet file
 
 protected:
     /** Use instance() instead. */
     explicit SnippetFile(const std::string &fileName, SgSourceFile *ast=NULL)
-        : fileName(fileName), ast(ast), copyAllSnippetDefinitions(false), copyRelatedThings(true) {}
+        : fileName(fileName), ast(ast), copyAllSnippetDefinitions(false) {}
 
 public:
     /** Constructor. Returns an existing SnippetFile if one has previosly been created for this file name, or creates a new
@@ -72,8 +91,13 @@ public:
     std::vector<std::string> getSnippetNames() const;
 
     /** Return a Snippet having the specified name.  The name must be fully a fully qualified function name. Returns null if
-     *  the snippet cannot be found in this SnippetFile. */
+     *  the snippet cannot be found in this SnippetFile. If there is more than one snippet with this name then only one is
+     *  returned (the first one). */
     SnippetPtr findSnippet(const std::string &snippetName);
+
+    /** Returns all snippets having the specified name.  All snippets in this snippet file that have the specified name are
+     *  returned in the order they are defined in the file. */
+    std::vector<SnippetPtr> findSnippets(const std::string &snippetName);
 
     /** Insert snippets in marked code. The specified AST is traversed and function calls to snippets which are defined in this
      *  SnippetFile are recursively expanded. */
@@ -110,14 +134,16 @@ public:
     void clearCopyAllSnippetDefinitions() { copyAllSnippetDefinitions = false; }
     /** @} */
 
-    /** Accessor for the property that controls copying of related declarations.  When this is true (the default) then certain
-     *  global declarations are copied from the snippet file to the target file when a snippet is inserted. See the the "Global
-     *  Declarations" section of the Snippet class documentation for details.
-     * @{ */
-    bool getCopyRelatedThings() const { return copyRelatedThings; }
-    void setCopyRelatedThings(bool b=true) { copyRelatedThings = b; }
-    void clearCopyRelatedThings() { copyRelatedThings = false; }
-    /** @} */
+    /** Black list.  This is a list of declarations that should not be copied from the snippet file to the target
+     *  file. Declarations are specified with a qualified name and an optional type. If the type is omitted then only names are
+     *  compared. */
+    void doNotInsert(const std::string &name, SgType *type=NULL);
+
+    /** Return true if the declaration is black listed. */
+    bool isBlackListed(SgDeclarationStatement*);
+
+    /** Information about things that have been inserted. */
+    const std::vector<SnippetInsertion>& getInsertedItems() const { return insertions; }
 
 protected:
     /** Parse the snippet file. Snippet files are normally parsed when the SnippetFile object is constructed via instance()
@@ -126,6 +152,9 @@ protected:
 
     /** Find all snippet functions (they are the top-level function definitions) and add them to this SnippetFile. */
     void findSnippetFunctions();
+
+    /** Add an insertion record. */
+    void addInsertionRecord(const SnippetInsertion &inserted) { insertions.push_back(inserted); }
 };
 
 
@@ -210,22 +239,13 @@ protected:
  * @section S4 Global declarations
  *
  *  Snippets often require additional support in the form of global variables, data types, and function declarations. Whenever
- *  a snippet is inserted, certain things in the snippet's global scope are copied into the global scope of the insertion
- *  point.  This copying happens at most once per snippet + insertion file pair and can be turned off with
- *  <code>SnippetFile.setCopyRelatedThings(false)</code>.  The things copied are:
+ *  a snippet is inserted into a target, other declarations and definitions at the same level as the snippet (global scope for
+ *  C, or class scope for Java) are also copied into the target AST.  This also includes all "import" statements for Java.
+ *  However, function definitions (and their enclosing declaration) are not copied unless the copyAllSnippetDefinitions
+ *  property of the associated SnippetFile is set.  Copying these things occurs at most once per (snippet-file, target-file)
+ *  pair so that multiple definitions are not inserted when more than one snippet is inserted into a single target.
  *
- *  @li Function declarations.
- *  @li Function definitions if desired (see SnippetFile::setCopyAllSnippetDefinitions), including the defintion of the snippet
- *      that's being inserted (because it might be needed by other snippets).
- *  @li Global variables, but not extern declarations.
- *  @li Include directives, conditionally (see below).
- *
- *  A declaration/definition is not copied if it (or anything below it in the AST) contains a comment whose text has a
- *  substring matching "DO_NOT_INSERT".
- *
- *  Include directives in a snippet file may be followed by a comment whose first word is the name of a function or
- *  typedef. The include directive is inserted only if no typedef or function declaration exists with that name.  If the
- *  include directive isn't followed by a comment, then it is inserted unconditionally.
+ *  A declaration in the snippet file can be black-listed for copying by calling SnippetFile::doNotInsert.
  *
  * @section S5 Recursive insertion
  *
@@ -258,9 +278,6 @@ protected:
  *  }
  * @endcode
  *
- *  If recursive expansion is disabled then the definitions of the referenced snippets are copied into the global scope of the
- *  insertion point.
- *
  * @section S5 Variable renaming
  *
  *  In order to avoid conflicts between the names of local variables in the snippet code and variables that are visible at the
@@ -286,18 +303,9 @@ protected:
  *
  * @section S6 Limitations
  *
- *  Since snippet ASTs are simply copied from the snippet file's AST and planted into the application AST they still point to
- *  symbols that are part of the snippet file, not part of the application.  Therefore, one should not expect any kind of
- *  complex analysis to be able to be performed on the result.  All you should expect is to be able to unparse the AST to
- *  generate source code.  Also, if the copied snippet AST refers to entities that were not copied into the application AST
- *  then the unparsed code probably won't compile.  In fact, even when one would expect things to work, the backend unparser
- *  may still get confused by some of the nodes point across from the application to the snippet file.
- *
- *  Some problems may occur when a snippet's definition in the snippet file is adjacent to C preprocessor directives.
- *  Preprocessor directives are always attached to nearby AST nodes, so copying such a node from a snippet AST to an
- *  application AST will copy the preprocessor directives also.  As a special case, if the top node of a copied AST has an
- *  attached include directive, the include directive is removed.
- * 
+ *  Any header-file declarations referenced by any code copied from a snippet file's AST to the target AST (snippets themselves
+ *  or those copied things described in the "Global declarations" section above) must also already be present in the target
+ *  AST.  Practically speaking, this means any #include directives in snippet files must also exist in the target file.
  */
 class Snippet {
     friend class SnippetFile;                           // for protected constructor
@@ -313,11 +321,14 @@ public:
     };
 
     /** Determines where local declarations are injected when using INSERT_STMTS.  New declarations can be injected starting at
-     * the beginning of the injection site's function scope, or after the last leading declaration statement in that scope. In
-     * either case, the snippet's declarations will appear in the injected code in the same order as in the snippet. */
+     * the beginning of the injection site's function scope, after the last leading declaration statement in that scope, or
+     * in the same place that the non-declaration statements are being inserted.  The last case is only useful in languages
+     * like C++ and Java that don't require declarations to be at the beginning of a scope. In any case, the snippet's
+     * declarations will appear in the injected code in the same order as in the snippet. */
     enum LocalDeclarationPosition {
         LOCDECLS_AT_BEGINNING,                          /**< Local declarations inserted at beginning of function. */
         LOCDECLS_AT_END,                                /**< Local declarations inserted at end of leading declarations. */
+        LOCDECLS_AT_CURSOR                              /**< Local declarations are not moved to a declarations area. */
     };
 
 private:
@@ -328,12 +339,13 @@ private:
     InsertMechanism insertMechanism;                    // how snippet is inserted
     LocalDeclarationPosition locDeclsPosition;          // position for local declarations for INSERT_STMTS mode
     bool insertRecursively;                             // is the insert() operation recursive?
+    bool fixupAst;                                      // whether to fix up the target AST after inserting things
 
 protected:
     // Use one of the "instance" methods instead.
     Snippet(const std::string &name, const SnippetFilePtr &file, SgFunctionDefinition *ast)
         : name(name), file(file), ast(ast), insertMechanism(INSERT_STMTS), locDeclsPosition(LOCDECLS_AT_END),
-          insertRecursively(true) {
+          insertRecursively(true), fixupAst(true) {
         assert(!name.empty());
         assert(file!=NULL);
         assert(ast!=NULL);
@@ -352,6 +364,9 @@ public:
 
     /** Return the file where this snippet is defined. */
     SnippetFilePtr getFile() const { return file; }
+
+    /** Return the function definition for this snippet. */
+    SgFunctionDefinition* getDefinition() const { return ast; }
 
     /** Returns the number of formal arguments for the snippet. */
     size_t numberOfArguments() const;
@@ -389,6 +404,17 @@ public:
     void insert(SgStatement *insertionPoint, const std::vector<SgNode*> &args);
     /** @} */
 
+    /** Determines whether the target AST should be fixed up after insertion.  Fixing up the target AST makes it so that the
+     *  things inserted from the snippet file point only to things in the target part of the AST--the snippet file part of the
+     *  AST can be deleted without consequence, and analysis will work propertly on the target AST after the insertion and
+     *  fixup.  Fixing up the AST is the default, and turning this feature off is probably only useful for debugging the
+     *  insertion mechanism itself while bypassing the AST fixups.
+     * @{ */
+    bool getFixupAst() const { return fixupAst; }
+    void setFixupAst(bool b=true) { fixupAst = b; }
+    void clearFixupAst() { fixupAst = false; }
+    /** @} */
+
 protected:
     /** Mark nodes so they're unparsed when the insertion point is unparsed. */
     static void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
@@ -402,10 +428,6 @@ protected:
     /** Remove C preprocessor #include directives from the specified node. */
     static void removeIncludeDirectives(SgNode*);
 
-    /** Returns true if the comment is found.  Traverses the AST and looks for any comment that has a substring that matches
-     *  @p toMatch. */
-    bool hasCommentMatching(SgNode *ast, const std::string &toMatch);
-
     /** Insert other things from the snippet file into the target file. These are things like variables and functions that are
      *  above the snippet function in the snippet files's AST and must be inserted above the snippet insertion point in the
      *  target file. */
@@ -417,17 +439,25 @@ protected:
     /** C-specific things that need to be copied from the snippet file to the target file. */
     void insertRelatedThingsForC(SgStatement *snippetInsertionPoint);
 
-    /** Insert an #include directive from a snippet's file to the insertion point.. */
-    void insertIncludeDirective(SgStatement *insertionPoint, PreprocessingInfo *includeDirective);
-
     /** Rename snippet local variables so they don't interfere with names visible at the insertion point. Only local variables
      * whose names begin with "tmp" are renamed. */
     void renameTemporaries(SgNode *ast);
 
     // DQ (2/26/2014): Added functionality to address requirement to make snippet AST conform to expectations for any new transforamtion.
-    /** Fixup the AST fragement being inserted into the target AST to reset all possible references to the original snippet file. */
+    /* Fixup the AST fragement being inserted into the target AST to reset all possible references to the original snippet file. */
     // void fixupSnippetInNewTargetAST(SgStatement *insertionPoint, SgStatement *toInsert);
 
+};
+
+/** Java-aware AST traversal. This is a pre/post depth-first traversal that is aware of certain Java attributes and follows
+ *  them even when AstSimpleProcessing would not follow them.  The functor should take two arguments: SgNode*, and
+ *  AstSimpleProcessing::Order (the constant preorder or postorder depending on whether the call is before or after the
+ *  children are traversed).  Attributes are considered to be the first children of a node. */
+class SnippetAstTraversal {
+public:
+    virtual ~SnippetAstTraversal() {}
+    void traverse(SgNode *ast);
+    virtual void operator()(SgNode*, AstSimpleProcessing::Order) = 0;
 };
 
 } // namespace

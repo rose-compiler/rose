@@ -23,6 +23,10 @@ add_subdirectory(sideEffectAnalysis)
 add_subdirectory(distributedMemoryAnalysis)
 add_subdirectory(graphAnalysis)
 add_subdirectory(variableRenaming)
+add_subdirectory(genericDataflow)
+add_subdirectory(dataflowAnalysis)
+add_subdirectory(ssaUnfilteredCfg)
+add_subdirectory(systemDependenceGraph)
 
 
 

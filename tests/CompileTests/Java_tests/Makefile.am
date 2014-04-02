@@ -128,7 +128,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_while1.java \
      cave3_while2.java \
      cave3_while3.java \
-     cave3_while4.java
+     cave3_while4.java \
+     testQualifiedType.java
 
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 

@@ -1,9 +1,7 @@
 #ifndef UNTYPED_NODES_H
 #define UNTYPED_NODES_H
 
-#define COMPILED_WITH_ROSE
-#ifndef COMPILED_WITH_ROSE
-
+#include "assert.h"
 #include <vector>
 #include <string>
 
@@ -43,8 +41,8 @@ class Sg_File_Info
 class SgNode
   {
      public: 
-         virtual ~SgNode() {}
-         SgNode() {}
+         SgNode()          {}
+         virtual ~SgNode() {}  // need to allow deletion of lists
   };
 
 class SgLocatedNode : public SgNode
@@ -243,9 +241,7 @@ enum ROSE_Fortran_Operators
 
 #endif // COMPILED_WITH_ROSE
 
-// #include "Cxx_Grammar.h"
-#include "sage3basic.h"
-// #include "rose_config.h"
+#include "Cxx_Grammar.h"
 //------------------------------------------------------------------------------------------------------
 // from Cxx_Gramman.h
 //
@@ -268,26 +264,6 @@ class SgUntypedDeclarationStatement;
 typedef Rose_STL_Container<SgUntypedDeclarationStatement*> SgUntypedDeclarationStatementPtrList;
 
  
-#ifdef OBSOLETE_2014_3_7
-// Class Definition for SgUntypedNode
-class SgUntypedNode : public SgLocatedNodeSupport
-   {
-     public: 
-
-      virtual VariantT variantT() const {return V_SgUntypedNode;}
-
-      virtual ~SgUntypedNode() {}
-
-      SgUntypedNode(Sg_File_Info* startOfConstruct) : start(startOfConstruct) {}
-      SgUntypedNode() : start(NULL) {}
-
-      Sg_File_Info* get_startOfConstruct()                    {return start;}
-
-    protected:
-      Sg_File_Info* start;
-   };
-#endif
-
 #ifdef OBSOLETE_2014_3_7
 
 // 2014.3.6
@@ -1236,7 +1212,5 @@ class SgUntypedSubroutineDeclaration : public SgUntypedDeclarationStatement
 #endif // OBSOLETE_2014_3_7
 
 //------------------------------------------------------------------------------------------------------
-
-#endif // COMPILED_WITH_ROSE
 
 #endif // UNTYPED_NODES_H

@@ -1,4 +1,5 @@
 #include "snippetTests.h"
+#include <boost/foreach.hpp>
 
 using namespace rose;
 
@@ -7,14 +8,27 @@ namespace SnippetTests {
 std::string
 findSnippetFile(const std::string &fileName)
 {
-    assert(!fileName.empty());
-    if (-1 != access(fileName.c_str(), R_OK))
+    if (fileName.empty())
+        throw std::runtime_error("empty file name");
+
+    if ('/'==fileName[0]) {
+        if (0 != access(fileName.c_str(), R_OK))
+            throw std::runtime_error("snippet file does not exist or is not readable: " + fileName);
         return fileName;
-    std::string fullName = ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/" + fileName;
-    if (-1 != access(fullName.c_str(), R_OK))
-        return fullName;
-    std::cerr <<"snippet file does not exist or is not readable: " <<fullName <<"\n";
-    return "";
+    }
+
+    std::vector<std::string> directories;
+    directories.push_back(".");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensC");
+    directories.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/tests/roseTests/astSnippetTests/SmallSpecimensJava");
+    BOOST_FOREACH (const std::string &directory, directories) {
+        std::string fullName = directory + "/" + fileName;
+        if (0 == access(fullName.c_str(), R_OK))
+            return fullName;
+    }
+
+    throw std::runtime_error("snippet file does not exist or is not readable: " + fileName);
 }
 
 SnippetPtr
@@ -51,6 +65,26 @@ findFunctionDefinition(SgNode *ast, std::string function_name)
         return def;
     }
     return NULL;
+}
+
+std::vector<SgFunctionDefinition*>
+findFunctionDefinitions(SgNode *ast, std::string function_name)
+{
+    assert(ast!=NULL);
+    struct FindFunctionDef: AstSimpleProcessing {
+        const std::string &name;
+        std::vector<SgFunctionDefinition*> found;
+        FindFunctionDef(const std::string &name): name(name) {}
+
+        void visit(SgNode *node) {
+            if (SgFunctionDefinition *fdef = isSgFunctionDefinition(node)) {
+                if (fdef->get_declaration()->get_qualified_name() == name)
+                    found.push_back(fdef);
+            }
+        }
+    } t1(function_name);
+    t1.traverse(ast, preorder);
+    return t1.found;
 }
 
 SgStatement *
@@ -119,6 +153,14 @@ findVariableDeclaration(SgNode *ast, const std::string &var_name)
         return iname;
     }
     return NULL;
+}
+
+SgInitializedName *
+findArgumentDeclaration(SgNode *ast, const std::string &varName)
+{
+    SgFunctionDeclaration *fdecl = SageInterface::getEnclosingNode<SgFunctionDeclaration>(ast);
+    ROSE_ASSERT(fdecl || !"cannot find enclosing function declaration");
+    return findVariableDeclaration(fdecl->get_parameterList(), varName);
 }
 
 std::vector<SgInitializedName*>

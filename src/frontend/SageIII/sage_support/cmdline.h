@@ -67,6 +67,26 @@ namespace Cmdline {
   void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
+  namespace Unparser {
+    static const std::string option_prefix = "-rose:unparser:";
+
+    /** @returns true if the Unparser option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
+
+    /** Process all Unparser-specific commandline options, i.e. -rose:unparser.
+     */
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv);
+  } // namespace ::Rose::Cmdline::Unparser
+
   namespace Fortran {
     static const std::string option_prefix = "-rose:fortran:";
 
@@ -273,6 +293,18 @@ namespace Cmdline {
 
     void
     ProcessVerbose (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessDeprecation (SgProject* project, std::vector<std::string>& argv);
+
+   /** -bootclasspath bootclasspath
+    *     Cross-compile against the specified set of boot classes. As with the
+    *     user class path, boot class path entries are separated by colons (:)
+    *     and can be directories, JAR archives, or ZIP archives.
+    *     [http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html]
+    */
+    void
+    ProcessBootclasspath (SgProject* project, std::vector<std::string>& argv);
 
     // @filename used by Java
     std::vector<std::string>

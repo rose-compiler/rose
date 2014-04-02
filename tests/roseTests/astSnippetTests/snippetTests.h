@@ -16,6 +16,7 @@ rose::SnippetPtr findSnippetInAst(SgProject*, const std::string &snippetFileName
 
 /** Find a function definition having the specified name. */
 SgFunctionDefinition *findFunctionDefinition(SgNode *ast, std::string fullyQualifiedFunctionName);
+std::vector<SgFunctionDefinition*> findFunctionDefinitions(SgNode *ast, std::string function_name);
 
 /** Find the last statement in a function definition after which we can reasonably insert another statement. */
 SgStatement *findLastAppendableStatement(SgFunctionDefinition*);
@@ -28,6 +29,9 @@ SgStatement *findInsertHere(SgFunctionDefinition*);
 
 /** Find a variable declaration. */
 SgInitializedName *findVariableDeclaration(SgNode *ast, const std::string &varName);
+
+/** Find a formal argument for the function enclosing @p ast. */
+SgInitializedName *findArgumentDeclaration(SgNode *ast, const std::string &varName);
 
 /** Find all variable declarations in a function definition, including formal arguments. */
 std::vector<SgInitializedName*> findFunctionVariables(SgFunctionDefinition*);

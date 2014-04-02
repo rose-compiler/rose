@@ -39,6 +39,8 @@ class Unparser
    virtual void unparseOpEnum(SgToken::ROSE_Fortran_Operators e) = 0;
    virtual void unparseStmt(SgUntypedStatement  * stmt) = 0;
 
+   virtual void unparseSgUntypedNamedStatement(SgUntypedNamedStatement  * stmt) = 0;
+
  protected:
    std::ostream & oss;
 
@@ -60,6 +62,8 @@ class FortranTextUnparser : public Unparser
    void unparseName(std::string name, std::string pre, std::string post);
    void unparseStmt(SgUntypedStatement  * stmt);
    void unparseOpEnum(SgToken::ROSE_Fortran_Operators e);
+
+   void unparseSgUntypedNamedStatement(SgUntypedNamedStatement  * stmt);
 
  private:
    

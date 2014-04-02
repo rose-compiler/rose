@@ -19,7 +19,7 @@ using namespace std;
 // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
 // variable so that all regression tests can be processed to mix the unparsing of 
 // the token stream with unparsing from the AST.
-bool ROSE_tokenUnparsingTestingMode = false;
+ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode = false;
 
 FrontierDetectionForTokenStreamMapping_InheritedAttribute::
 FrontierDetectionForTokenStreamMapping_InheritedAttribute()
