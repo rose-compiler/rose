@@ -393,7 +393,7 @@ else
 #-------------compile only --------------------------------	
 check-local: roseomp \
 		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
-		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files
+		$(PASSING_CXX_TEST_Objects) $(CXX_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
