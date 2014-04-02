@@ -17,6 +17,7 @@
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
 int Rose::Cmdline::verbose = 0;
+bool Rose::Cmdline::Java::Ecj::batch_mode = false;
 std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
 std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
 
@@ -1882,6 +1883,8 @@ StripRoseOptions (std::vector<std::string>& argv)
   // (2) Options WITH an argument
   //
 
+  Cmdline::Java::Ecj::StripRoseOptions(argv);
+
   // Remove Java options with ROSE-Java prefix; option arguments removed
   // by generateOptionWithNameParameterList.
   //
@@ -1910,8 +1913,6 @@ StripRoseOptions (std::vector<std::string>& argv)
       else
           argv.push_back(java_option);
   }
-
-  Cmdline::Java::Ecj::StripRoseOptions(argv);
 }// Cmdline::Java::StripRoseOptions
 
 void
@@ -2530,6 +2531,13 @@ StripRoseOptions (std::vector<std::string>& argv)
           << std::endl;
   }
 
+  // (1) Options WITHOUT an argument
+  sla(argv, "-rose:java:ecj:", "($)", "batch_mode", 1);
+
+  //
+  // (2) Options WITH an argument
+  //
+
   // Remove ECJ options with ROSE-ECJ prefix; option arguments removed
   // by generateOptionWithNameParameterList.
   std::vector<std::string> ecj_options =
@@ -2590,11 +2598,34 @@ GetRoseClasspath ()
 
 void
 Rose::Cmdline::Java::Ecj::
+ProcessBatchMode (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -rose:java:ecj:batch_mode " << std::endl;
+
+  bool has_batch_mode =
+      // -rose:java:ecj:batch_mode
+      CommandlineProcessing::isOption(
+          argv,
+          Java::option_prefix,
+          "ecj:batch_mode",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] -rose:java:ecj:batch_mode=" << has_batch_mode << std::endl;
+
+  Rose::Cmdline::Java::Ecj::batch_mode = has_batch_mode;
+  project->set_Java_batch_mode(has_batch_mode);
+}// ::Rose::Cmdline::Java::Ecj::ProcessBatchMode
+
+void
+Rose::Cmdline::Java::Ecj::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
   if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing Java's ECJ frontend commandline options" << std::endl;
 
+  ProcessBatchMode(project, argv);
   ProcessJvmOptions(project, argv);
   ProcessEnableRemoteDebugging(project, argv);
 }

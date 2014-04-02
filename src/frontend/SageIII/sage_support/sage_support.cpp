@@ -1788,78 +1788,7 @@ SgProject::RunFrontend()
 
   int status_of_function = 0;
 
-  //---------------------------------------------------------------------------
-  // Pass each File to the Frontend
-  //---------------------------------------------------------------------------
-  std::vector<SgFile*> all_files = get_fileList();
-  {
-      int status_of_file = 0;
-      BOOST_FOREACH(SgFile* file, all_files)
-      {
-          ROSE_ASSERT(file != NULL);
-          if (KEEP_GOING_CAUGHT_FRONTEND_SIGNAL)
-          {
-              std::cout
-                  << "[WARN] "
-                  << "Configured to keep going after catching a "
-                  << "signal in SgFile::RunFrontend()"
-                  << std::endl;
-
-              if (file != NULL)
-              {
-                  file->set_frontendErrorCode(100);
-                  status_of_function =
-                      std::max(100, status_of_function);
-              }
-              else
-              {
-                  std::cout
-                      << "[FATAL] "
-                      << "Unable to keep going due to an unrecoverable internal error"
-                      << std::endl;
-                  exit(1);
-              }
-          }
-          else
-          {
-              try
-              {
-                  //-----------------------------------------------------------
-                  // Pass File to Frontend
-                  //-----------------------------------------------------------
-                  file->runFrontend(status_of_file);
-                  {
-                      status_of_function =
-                          max(status_of_file, status_of_function);
-                  }
-              }
-              catch(...)
-              {
-                  if (file != NULL)
-                  {
-                     file->set_frontendErrorCode(100);
-                  }
-                  else
-                  {
-                      std::cout
-                          << "[FATAL] "
-                          << "Unable to keep going due to an unrecoverable internal error"
-                          << std::endl;
-                      exit(1);
-                  }
-
-                  if (ROSE::KeepGoing::g_keep_going)
-                  {
-                      raise(SIGABRT);// catch with signal handling above
-                  }
-                  else
-                  {
-                      throw;
-                  }
-              }
-          }
-      }//BOOST_FOREACH
-  }//all_files->callFrontEnd
+  status_of_function = Rose::Frontend::Run(this);
 
   this->set_frontendErrorCode(status_of_function);
   return status_of_function;
@@ -3823,20 +3752,283 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
    }
 
 //-----------------------------------------------------------------------------
+// Rose::Frontend
+//-----------------------------------------------------------------------------
+
+int
+Rose::Frontend::Run(SgProject* project)
+{
+  ROSE_ASSERT(project != NULL);
+
+  int status = 0;
+  {
+      if (project->get_Java_only())
+      {
+          status = Rose::Frontend::Java::Run(project);
+      }
+      else
+      {
+          status = Rose::Frontend::RunSerial(project);
+      }
+
+      project->set_frontendErrorCode(status);
+  }
+
+  return status;
+} // Rose::Frontend::Run
+
+int
+Rose::Frontend::RunSerial(SgProject* project)
+{
+  std::cout << "[INFO] [Frontend] Running in serial mode" << std::endl;
+
+  int status_of_function = 0;
+
+  std::vector<SgFile*> all_files = project->get_fileList();
+  {
+      int status_of_file = 0;
+      BOOST_FOREACH(SgFile* file, all_files)
+      {
+          ROSE_ASSERT(file != NULL);
+          if (KEEP_GOING_CAUGHT_FRONTEND_SIGNAL)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Configured to keep going after catching a "
+                  << "signal in SgFile::RunFrontend()"
+                  << std::endl;
+
+              if (file != NULL)
+              {
+                  file->set_frontendErrorCode(100);
+                  status_of_function =
+                      std::max(100, status_of_function);
+              }
+              else
+              {
+                  std::cout
+                      << "[FATAL] "
+                      << "Unable to keep going due to an unrecoverable internal error"
+                      << std::endl;
+                  exit(1);
+              }
+          }
+          else
+          {
+              try
+              {
+                  //-----------------------------------------------------------
+                  // Pass File to Frontend
+                  //-----------------------------------------------------------
+                  file->runFrontend(status_of_file);
+                  {
+                      status_of_function =
+                          max(status_of_file, status_of_function);
+                  }
+              }
+              catch(...)
+              {
+                  if (file != NULL)
+                  {
+                     file->set_frontendErrorCode(100);
+                  }
+                  else
+                  {
+                      std::cout
+                          << "[FATAL] "
+                          << "Unable to keep going due to an unrecoverable internal error"
+                          << std::endl;
+                      exit(1);
+                  }
+
+                  if (ROSE::KeepGoing::g_keep_going)
+                  {
+                      raise(SIGABRT);// catch with signal handling above
+                  }
+                  else
+                  {
+                      throw;
+                  }
+              }
+          }
+      }//BOOST_FOREACH
+  }//all_files->callFrontEnd
+
+  project->set_frontendErrorCode(status_of_function);
+
+  return status_of_function;
+} // Rose::Frontend::RunSerial
+
+//-----------------------------------------------------------------------------
 // Rose::Frontend::Java
 //-----------------------------------------------------------------------------
 
-void
+int
 Rose::Frontend::Java::Run(SgProject* project)
 {
-  Rose::Frontend::Java::Ecj::Run(project);
+  ROSE_ASSERT(project != NULL);
+
+  int status = 0;
+  {
+      if (Rose::Cmdline::Java::Ecj::batch_mode == true)
+      {
+          status = Rose::Frontend::Java::Ecj::RunBatchMode(project);
+      }
+      else
+      {
+          // Default to generic serial frontend
+          status = Rose::Frontend::RunSerial(project);
+      }
+
+      project->set_frontendErrorCode(status);
+  }
+
+  return status;
 } // Rose::Frontend::Java::Run
 
-void
-Rose::Frontend::Java::Ecj::Run(SgProject* project)
+int
+Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
 {
-  std::vector<SgFile*> files = project->get_files();
+  ROSE_ASSERT(project != NULL);
+
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] [Frontend] [Java] Running in batch mode" << std::endl;
+
+  int status = 0;
+
+  namespace ecj = Rose::Frontend::Java::Ecj;
+  {
+      // Setup global pointer to this project to be
+      // accessed via JNI C++ code;
+      //
+      // ECJ AST will be attached to this project's shared
+      // global scope
+      {
+          ecj::Ecj_globalProjectPointer = project;
+          ROSE_ASSERT(ecj::Ecj_globalProjectPointer != NULL);
+      }
+
+      // Call ECJ
+      int argc = 0;
+      char** argv = NULL;
+      {
+          // Process command line options specific to ROSE to
+          // set SgFile attributes.
+          //
+          // This leaves all filenames and non-rose specific option in the
+          // argv list.
+          //
+          // Note: Function has historically been defined as member of SgFile.
+          BOOST_FOREACH(SgFile* file, project->get_files())
+          {
+              ROSE_ASSERT(file != NULL);
+              // argv is modified so we need to use a copy
+              std::vector<std::string> argv_copy =
+                  project->get_originalCommandLineArgumentList();
+              {
+                  file->processRoseCommandLineOptions(argv_copy);
+              }
+          }
+
+          std::vector<std::string> argv_copy =
+              project->get_originalCommandLineArgumentList();
+          std::vector<std::string> cmdline =
+              ecj::GetCommandline(argv_copy, project, argc, &argv);
+
+          if (SgProject::get_verbose() > 1)
+          {
+              std::string cmdline_string = boost::algorithm::join(cmdline, " ");
+              std::cout
+                  << "[INFO] [Frontend] [Java] ECJ commandline: "
+                  << cmdline_string
+                  << std::endl;
+          }
+
+          status = openJavaParser_main(argc, argv);
+          {
+              project->set_ecjErrorCode(status);
+          }
+      }
+  }
+
+  return status;
 } // Rose::Frontend::Java::Ecj::Run
+
+std::vector<std::string>
+Rose::Frontend::Java::Ecj::GetCommandline(
+    std::vector<std::string> argv,
+    const SgProject* project,
+    int& o_argc,
+    char*** o_argv)
+{
+  ROSE_ASSERT(argv.size() > 0);
+
+  std::vector<std::string> commandline;
+  {
+      namespace ecj = Rose::Frontend::Java::Ecj;
+
+      std::string executable     = argv[0];
+      std::string classpath      = ecj::GetClasspath(project);
+      std::string sourcepath     = ecj::GetSourcepath(project);
+      std::string source_version = ecj::GetSourceVersion(project);
+      std::string target_version = ecj::GetTargetVersion(project);
+      std::string verbose        = ecj::GetVerbosity(project);
+
+      commandline.push_back(executable);
+
+      if (classpath.size() > 0) {
+          commandline.push_back("-classpath");
+          commandline.push_back(classpath);
+      }
+
+      if (sourcepath.size() > 0) {
+          commandline.push_back("-sourcepath");
+          commandline.push_back(sourcepath);
+      }
+
+      if (source_version.size() > 0) {
+          commandline.push_back("-source");
+          commandline.push_back(source_version);
+      }
+
+      if (target_version.size() > 0) {
+          commandline.push_back("-target");
+          commandline.push_back(target_version);
+      }
+
+      // FIXME:
+      //    [ERROR] Caught a JNI exception in the ECJ_ROSE_Connection.
+      //    Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: -1
+      //      at java.lang.String.substring(String.java:1911)
+      //      at JavaTraversal.filterCommandline(JavaTraversal.java:92)
+      //      at JavaTraversal.main(JavaTraversal.java:330)
+      //    terminate called after throwing an instance of 'std::runtime_error'
+      //      what():  [ECJ_ROSE_Connection] JNI Exception
+      //commandline.push_back("-rose:verbose");
+      //commandline.push_back(verbose);
+
+      commandline.push_back("-d");
+      commandline.push_back("none");
+
+      // TODO: Add to SgProject [TOO1, 2014-04-02]
+      //if (file->get_output_warnings() == false)
+      //    commandline.push_back("-nowarn");
+
+      // Add filenames
+      BOOST_FOREACH(SgFile* file, project->get_files())
+      {
+          std::string filename = file->get_sourceFileNameWithPath();
+          commandline.push_back(filename);
+      }
+
+      // Set output variables
+      CommandlineProcessing::generateArgcArgvFromList(
+          commandline,
+          o_argc,
+          *o_argv);
+  }
+  return commandline;
+} // Rose::Frontend::Java::Ecj::GetCommandline
 
 std::string
 Rose::Frontend::Java::Ecj::GetClasspath(const SgProject* project)
@@ -3872,18 +4064,14 @@ Rose::Frontend::Java::Ecj::GetTargetVersion(const SgProject* project)
   return project->get_Java_source();
 } // Rose::Frontend::Java::Ecj::GetTargetVersion
 
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-namespace Rose {
-namespace Frontend {
-namespace Java {
-namespace Ecj {
-  // TOO1 (2/13/2014): Declared in src/frontend/ECJ_ROSE_Connection/openJavaParser_main.C.
-  extern SgProject* Ecj_globalProjectPointer;
-}// ::Rose::Frontend::Java::Ecj
-}// ::Rose::Frontend::Java
-}// ::Rose::Frontend
-}// ::Rose
-#endif
+std::string
+Rose::Frontend::Java::Ecj::GetVerbosity(const SgProject* project)
+{
+  int verbosity = SgProject::get_verbose();
+  std::string verbose =
+      StringUtility::numberToString(verbosity);
+  return verbose;
+} // Rose::Frontend::Java::Ecj::GetVerbose
 
 //-----------------------------------------------------------------------------
 // ^ Rose::Frontend::Java
@@ -3902,7 +4090,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   SgProject* project = this->get_project();
 
- // If the classpath was specified, add it to the list of options here.
    std::string classpath      = Rose::Frontend::Java::Ecj::GetClasspath(project);
    std::string sourcepath     = Rose::Frontend::Java::Ecj::GetSourcepath(project);
    std::string source_version = Rose::Frontend::Java::Ecj::GetSourceVersion(project);
