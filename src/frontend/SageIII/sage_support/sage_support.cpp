@@ -3827,7 +3827,7 @@ namespace Frontend {
 namespace Java {
 namespace Ecj {
   // TOO1 (2/13/2014): Declared in src/frontend/ECJ_ROSE_Connection/openJavaParser_main.C.
-  extern SgSourceFile* Ecj_globalFilePointer;
+  extern SgProject* Ecj_globalProjectPointer;
 }// ::Rose::Frontend::Java::Ecj
 }// ::Rose::Frontend::Java
 }// ::Rose::Frontend
@@ -4086,14 +4086,9 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      char** ecjArgv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,ecjArgc,ecjArgv);
 
-  // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser
-  // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it
-  // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
-     Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
-
-     if ( get_verbose() > 0 )
-          printf ("Calling ecj_main(): Ecj_globalFilePointer = %p \n", Rose::Frontend::Java::Ecj::Ecj_globalFilePointer);
+  // ECJ AST will attach to this project's shared global scope [TOO1, 2014-04-02]
+     Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = this->get_project();
+     ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer != NULL);
 
 #if USE_ROSE_SSL_SUPPORT
   // The use of the JVM required to support Java is a problem when linking to the SSL library (either -lssl or -lcrypto)
@@ -4112,7 +4107,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
 
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
-     Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = NULL;
+     Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = NULL;
 
      return frontendErrorLevel;
 #else
