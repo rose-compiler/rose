@@ -5469,6 +5469,7 @@ HEADER_APPLICATION_PROJECT_START
       //! Intended for use with the -rose:keep_going commandline option.
       //! \returns A list of files that encountered an error within either
       //!          the frontend, unparser, or backend compilation.
+          SgFilePtrList get_files() const;
           SgFilePtrList get_files_with_errors() const;
           SgFilePtrList get_files_without_errors() const;
 
@@ -15039,6 +15040,12 @@ SgProject::set_file ( SgFile & file )
 
      assert (numberOfFiles() > 0);
    }
+
+SgFilePtrList
+SgProject::get_files() const
+{
+  return p_fileList_ptr->get_listOfFiles();
+}
 
 SgFilePtrList
 SgProject::get_files_with_errors() const
