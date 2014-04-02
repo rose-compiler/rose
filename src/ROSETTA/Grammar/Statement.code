@@ -1868,11 +1868,13 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
       /*! A declaration can be of either class, struct, or union */
           enum class_types
              {
-               e_class,             /*!< class declaration (default) */
-               e_struct,            /*!< struct declaration */
-               e_union,             /*!< union declaration */
+               e_class,              /*!< class declaration (default) */
+               e_struct,             /*!< struct declaration */
+               e_union,              /*!< union declaration */
                e_template_parameter, /*!< type parameter in a template declaration */
-               e_java_parameter      /*!< A Java parameter type */
+               e_java_interface,     /*!< A Java interface type declaration */
+               e_java_enum,          /*!< A Java enum type declaration */
+               e_java_parameter      /*!< A Java parameter type declaration */
              };
 
           virtual SgName get_qualified_name() const;
@@ -9048,6 +9050,10 @@ SgDeclarationStatement::get_type() const
   // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
   // call this function and it is not a virtual function that will cause derived class versions to be called
   // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+
+  // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
+     printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
+
      return NULL;
    }
 

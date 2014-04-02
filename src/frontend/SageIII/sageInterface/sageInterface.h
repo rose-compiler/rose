@@ -216,7 +216,7 @@ struct hash_nodeptr
     */
    // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
    // to this location where it can be a part of the interface for the Sage III AST.
-   int set_name (SgInitializedName * initializedNameNode, SgName new_name);
+   ROSE_DLL_API int set_name (SgInitializedName * initializedNameNode, SgName new_name);
 
    /*! \brief Output function type symbols in global function type symbol table.
     */
@@ -387,7 +387,7 @@ struct hash_nodeptr
    std::string extractPragmaKeyword(const SgPragmaDeclaration *);
 
    //! Check if a node is SgOmp*Statement
-   bool isOmpStatement(SgNode* );
+   ROSE_DLL_API bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
     */
    // DQ (8/27/2005):
@@ -479,7 +479,7 @@ struct hash_nodeptr
 
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
-    std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
+    ROSE_DLL_API std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
 
   //! Deep copy an arbitrary subtree
    ROSE_DLL_API SgNode* deepCopyNode (const SgNode* subtree);
@@ -540,6 +540,9 @@ class StatementGenerator {
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
 
+//! Build an abstract handle from an AST node, reuse previously built handle when possible
+ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
+
 //! Obtain a matching SgNode from an abstract handle string
 ROSE_DLL_API SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
 
@@ -561,7 +564,7 @@ bool isPrefixOperatorName( const SgName & functionName );
 //! Is an overloaded operator a postfix operator. (e.g. ).
 bool isPostfixOperator( SgExpression* exp );
 
-//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+//! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
 bool isIndexOperator( SgExpression* exp );
 
 //@}
@@ -1396,8 +1399,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #endif
    }
 
-//! Get the closest scope from astNode. Return astNode if it is already a scope.
-ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+  //! Find enclosing source file node 
+  ROSE_DLL_API SgSourceFile* getEnclosingSourceFile(SgNode* n, const bool includingSelf=false);
+
+  //! Get the closest scope from astNode. Return astNode if it is already a scope.
+  ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+
+  //! Get the enclosing scope from a node n 
+  ROSE_DLL_API SgScopeStatement* getEnclosingScope(SgNode* n, const bool includingSelf=false);
 
   //! Traverse back through a node's parents to find the enclosing global scope
   ROSE_DLL_API SgGlobal* getGlobalScope( const SgNode* astNode);
@@ -2257,13 +2266,17 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 //--------------------------------Java interface functions ---------------------
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string, bool unparse = false);
+      SgFile *processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
-      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
 
 }// end of namespace
 
