@@ -42,7 +42,7 @@ else
   echo "SKIP (does not exist)"
   # generate empty stats file
   echo "Sizes, -, -, -, -">${fullbenchname}.stats
-  echo "Runtime(readable), -, -, -, -, -">>${fullbenchname}.stats
+  echo "Runtime(readable), -, -, -, -, -, -, -, -, -">>${fullbenchname}.stats
   echo "rewrite-stats, -, -, -, -, -,-,-">>${fullbenchname}.stats
 fi
 }
@@ -73,10 +73,12 @@ function check_benchmark {
 }
 
 function runallgeneralbenchmarks_param {
+  date > overallruntime.stats
   selectedbenchmarks="$1"
   for mybench in ${selectedbenchmarks}; do
     check_benchmark ${MYBENCHPATH} ${mybench}
   done
+  date >> overallruntime.stats
 }
 
 function runallgeneralbenchmarks {
@@ -118,6 +120,9 @@ fi
            ;;
        --check)
            runallgeneralbenchmarks_param "$2"
+		   ;;
+	   --checkall)
+		   runallgeneralbenchmarks_param "$all_benchmarks $all_longbenchmarks"
 		   ;;
 	   --list)
            echo $all_benchmarks $all_longbenchmarks
