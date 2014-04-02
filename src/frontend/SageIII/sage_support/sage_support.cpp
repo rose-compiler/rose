@@ -24,6 +24,7 @@
 // DQ (2/10/2014): We now want to avoid specifying this explicitly if possible.
 // #define BOOST_FILESYSTEM_VERSION 2
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
@@ -3821,6 +3822,56 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
    }
 
+//-----------------------------------------------------------------------------
+// Rose::Frontend::Java
+//-----------------------------------------------------------------------------
+
+void
+Rose::Frontend::Java::Run(SgProject* project)
+{
+  Rose::Frontend::Java::Ecj::Run(project);
+} // Rose::Frontend::Java::Run
+
+void
+Rose::Frontend::Java::Ecj::Run(SgProject* project)
+{
+  std::vector<SgFile*> files = project->get_files();
+} // Rose::Frontend::Java::Ecj::Run
+
+std::string
+Rose::Frontend::Java::Ecj::GetClasspath(const SgProject* project)
+{
+  std::string classpath("");
+  {
+      std::list<std::string> classpath_list = project->get_Java_classpath();
+      boost::algorithm::join(classpath_list, ":");
+  }
+  return classpath;
+} // Rose::Frontend::Java::Ecj::GetClasspath
+
+std::string
+Rose::Frontend::Java::Ecj::GetSourcepath(const SgProject* project)
+{
+  std::string sourcepath("");
+  {
+      std::list<std::string> sourcepath_list = project->get_Java_sourcepath();
+      boost::algorithm::join(sourcepath_list, ":");
+  }
+  return sourcepath;
+} // Rose::Frontend::Java::Ecj::GetSourcepath
+
+std::string
+Rose::Frontend::Java::Ecj::GetSourceVersion(const SgProject* project)
+{
+  return project->get_Java_source();
+} // Rose::Frontend::Java::Ecj::GetSourceVersion
+
+std::string
+Rose::Frontend::Java::Ecj::GetTargetVersion(const SgProject* project)
+{
+  return project->get_Java_source();
+} // Rose::Frontend::Java::Ecj::GetTargetVersion
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 namespace Rose {
 namespace Frontend {
@@ -3834,6 +3885,11 @@ namespace Ecj {
 }// ::Rose
 #endif
 
+//-----------------------------------------------------------------------------
+// ^ Rose::Frontend::Java
+//-----------------------------------------------------------------------------
+
+
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -3844,48 +3900,13 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
+  SgProject* project = this->get_project();
+
  // If the classpath was specified, add it to the list of options here.
-   string classpath = "";
-   list<string> classpath_list = get_project()->get_Java_classpath();
-   if (classpath_list.size()) {
-       list<string>::iterator i = classpath_list.begin();
-       classpath = (*i);
-       for (i++; i != classpath_list.end(); i++) {
-           classpath += ":";
-           classpath += (*i);
-       }
-   }
-
-   string sourcepath = "";
-   list<string> sourcepath_list = get_project()->get_Java_sourcepath();
-   if (sourcepath_list.size()) {
-       list<string>::iterator i = sourcepath_list.begin();
-       sourcepath = (*i);
-       for (i++; i != sourcepath_list.end(); i++) {
-           sourcepath += ":";
-           sourcepath += (*i);
-       }
-   }
-
-   // Extract java's rose arguments
-   //TODO better handling of -rose:java variants
-   Rose_STL_Container<string> javaRoseOptionList =
-               CommandlineProcessing::generateOptionListWithDeclaredParameters(argv,"-rose:java:");
-
-   string sourceString;
-   if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "source", sourceString, false)) {
-       sourceString = "1.6";
-   }
-
-   string targetString;
-   if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "target", targetString, false)) {
-       targetString = "1.6";
-   }
-
-#if 0
-     printf ("Exiting as a test: SgSourceFile::build_Java_AST() \n");
-     ROSE_ASSERT(false);
-#endif
+   std::string classpath      = Rose::Frontend::Java::Ecj::GetClasspath(project);
+   std::string sourcepath     = Rose::Frontend::Java::Ecj::GetSourcepath(project);
+   std::string source_version = Rose::Frontend::Java::Ecj::GetSourceVersion(project);
+   std::string target_version = Rose::Frontend::Java::Ecj::GetTargetVersion(project);
 
    // *******************************************************
    // Build syntax checking command line call
@@ -3919,7 +3940,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
        // Always push the source information
           javaCommandLine.push_back("-source");
-          javaCommandLine.push_back(sourceString);
+          javaCommandLine.push_back(source_version);
 
        // We invoke javac to check the syntax of the input program
        // Since it doesn generates classes, we create a separate folder
@@ -4027,10 +4048,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // !! Warning !! ECJ does not accept '--' prefixed options.
   // *******************************************************************
      frontEndCommandLine.push_back("-source");
-     frontEndCommandLine.push_back(sourceString);
+     frontEndCommandLine.push_back(source_version);
 
      frontEndCommandLine.push_back("-target");
-     frontEndCommandLine.push_back(targetString);
+     frontEndCommandLine.push_back(target_version);
 
          if (!get_output_warnings()) {
                  frontEndCommandLine.push_back("-nowarn");

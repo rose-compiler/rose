@@ -599,6 +599,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("option -help found \n");
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
+  // Default
           cout << version_message() << endl;
        // ROSE::usage(0);
           SgFile::usage(0);
@@ -2238,6 +2239,9 @@ void
 Rose::Cmdline::Java::
 ProcessSource (SgProject* project, std::vector<std::string>& argv)
 {
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -source " << std::endl;
+
   std::string source = "";
 
   bool has_java_source =
@@ -2249,19 +2253,22 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
-  if (has_java_source)
+  // Default
+  if (has_java_source == false)
   {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Processing Java -source " << source << std::endl;
+      source = "1.6";
+  }
 
-      project->set_Java_source(source);
-  }// has_java_source
+  project->set_Java_source(source);
 }// Cmdline::Java::ProcessSource
 
 void
 Rose::Cmdline::Java::
 ProcessTarget (SgProject* project, std::vector<std::string>& argv)
 {
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -target " << std::endl;
+
   std::string target = "";
 
   bool has_java_target =
@@ -2273,13 +2280,13 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
           target,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
-  if (has_java_target)
+  // Default
+  if (has_java_target == false)
   {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Processing Java -target " << target << std::endl;
+      target = "1.6";
+  }
 
-      project->set_Java_target(target);
-  }// has_java_target
+  project->set_Java_target(target);
 }// Cmdline::Java::Processtarget
 
 void
@@ -2762,9 +2769,9 @@ SgFile::usage ( int status )
 "     -rose:java:ds\n"
 "                             Specifies translated sources destination dir\n"
 "     -rose:java:source\n"
-"                             Specifies java sources version\n"
+"                             Specifies java sources version (default=1.6)\n"
 "     -rose:java:target\n"
-"                             Specifies java classes target version\n"
+"                             Specifies java classes target version (default=1.6)\n"
 "     -rose:java:encoding\n"
 "                             Specifies the character encoding\n"
 "     -rose:java:ecj:jvm_options\n"

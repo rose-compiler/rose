@@ -82,5 +82,22 @@
    #include "transformationSupport.h"
 #endif
 
+namespace Rose {
+namespace Frontend {
+namespace Java {
+  void Run(SgProject* project);
+namespace Ecj {
+  void Run(SgProject* project);
+  std::string GetCommandline(const SgProject* project);
+  std::string GetClasspath(const SgProject* project);
+  std::string GetClasspath(const SgProject* project);
+  std::string GetSourcepath(const SgProject* project);
+  std::string GetSourceVersion(const SgProject* project);
+  std::string GetTargetVersion(const SgProject* project);
+}// ::Rose::Frontend::Java::Ecj
+}// ::Rose::Frontend::Java
+}// ::Rose::Frontend
+}// ::Rose
+
 #endif // ROSE_SAGESUPPORT_H
 
