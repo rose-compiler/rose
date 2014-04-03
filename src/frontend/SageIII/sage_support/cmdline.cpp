@@ -2252,6 +2252,13 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           "-source",
           "",
           source,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:source
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "source",
+          source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
   // Default
@@ -2279,6 +2286,13 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
           "-target",
           "",
           target,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:target
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "target",
+          target,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
   // Default
@@ -2302,6 +2316,13 @@ ProcessEncoding (SgProject* project, std::vector<std::string>& argv)
           argv,
           "-encoding",
           "",
+          encoding,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:encoding
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "encoding",
           encoding,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 

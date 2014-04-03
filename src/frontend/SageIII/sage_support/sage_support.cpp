@@ -1787,10 +1787,11 @@ SgProject::RunFrontend()
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
 
   int status_of_function = 0;
+  {
+      status_of_function = Rose::Frontend::Run(this);
+      this->set_frontendErrorCode(status_of_function);
+  }
 
-  status_of_function = Rose::Frontend::Run(this);
-
-  this->set_frontendErrorCode(status_of_function);
   return status_of_function;
 }//SgProject::RunFrontend
 
