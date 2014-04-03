@@ -4037,7 +4037,7 @@ Rose::Frontend::Java::Ecj::GetClasspath(const SgProject* project)
   std::string classpath("");
   {
       std::list<std::string> classpath_list = project->get_Java_classpath();
-      boost::algorithm::join(classpath_list, ":");
+      classpath = boost::algorithm::join(classpath_list, ":");
   }
   return classpath;
 } // Rose::Frontend::Java::Ecj::GetClasspath
@@ -4048,7 +4048,7 @@ Rose::Frontend::Java::Ecj::GetSourcepath(const SgProject* project)
   std::string sourcepath("");
   {
       std::list<std::string> sourcepath_list = project->get_Java_sourcepath();
-      boost::algorithm::join(sourcepath_list, ":");
+      sourcepath = boost::algorithm::join(sourcepath_list, ":");
   }
   return sourcepath;
 } // Rose::Frontend::Java::Ecj::GetSourcepath
@@ -4062,7 +4062,7 @@ Rose::Frontend::Java::Ecj::GetSourceVersion(const SgProject* project)
 std::string
 Rose::Frontend::Java::Ecj::GetTargetVersion(const SgProject* project)
 {
-  return project->get_Java_source();
+  return project->get_Java_target();
 } // Rose::Frontend::Java::Ecj::GetTargetVersion
 
 std::string
