@@ -4091,6 +4091,16 @@ HEADER_SYMBOL_TABLE_START
           bool isCaseInsensitive() const;
           void setCaseInsensitive(bool b);
 
+       // DQ (3/30/2014): This is a mode introduced to match the C++ handling of symbols of base classes with that of Java.
+       // This might be temporary, but is at least a part of how we are sorting out the differences between C++ and Java
+       // for symbols data members in base classes.  In C++ these are represented as SgAliasSymbols in the derived classes
+       // (permitting access issues to be addressed).  In Java this is less sophisticated and one has to seach the base
+       // classes explicitly.  This mode permits the semantics of searching for symbols to be handled from the derived class
+       // directly.  It might be a better design to have the Java symbol handling be a bit more like that of C++, but this
+       // must be discussed in some detail before we go that far.
+          static bool get_force_search_of_base_classes();
+          static void set_force_search_of_base_classes( bool value );
+
      protected:
 
 #if 0
@@ -9092,6 +9102,72 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
              }
         }
 
+#if 1
+     if (this->get_force_search_of_base_classes() == true)
+        {
+       // DQ (3/28/2014): If we reach this point, then in the case of Java, we have to search the 
+       // base class definitions (since the representation of Java base class does not presently 
+       // inject the base class symbols into the derived class symbol table.  There are pros and 
+       // const to this design.  But this function wil at least make the API semantics that same.
+          SgNode* parentNode = this->get_parent();
+          ROSE_ASSERT(parentNode != NULL);
+          SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
+          if (classDefinition != NULL)
+             {
+#if 0
+               printf ("Found SgClassDefinition as parent of SgSymbolTable \n");
+#endif
+               SgBaseClassPtrList & base_classes = classDefinition->get_inheritances();
+
+               SgBaseClassPtrList::iterator i = base_classes.begin();
+               while (i != base_classes.end())
+                  {
+                    SgBaseClass* baseClass = *i;
+                    ROSE_ASSERT(baseClass != NULL);
+                    SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
+                    ROSE_ASSERT(baseClassDeclaration != NULL);
+#if 0
+                    printf ("   --- baseClassDeclaration = %p = %s = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
+#endif
+                    SgClassDeclaration* baseClassDeclaration_defining = isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
+
+                 // DQ: Note that we have to implement conditional lookup based on base class permissions, plus the access permissions of base class members.
+                    if (baseClassDeclaration_defining != NULL)
+                       {
+                         SgClassDefinition* baseClassDefinition = baseClassDeclaration_defining->get_definition();
+                         ROSE_ASSERT(baseClassDefinition != NULL);
+
+                         ROSE_ASSERT(baseClassDefinition->get_symbol_table() != NULL);
+
+                      // Make a recursive call on the symbol table associated with the base class.
+                         ReturnType* symbol = baseClassDefinition->get_symbol_table()->find_symbol_with_type_support<ReturnType>(nm,type,templateParameterList,templateArgumentList);
+#if 0
+                         printf ("   --- baseClassDefinition = %p symbol = %p \n",baseClassDefinition,symbol);
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                         if (symbol != NULL)
+                            {
+                              return symbol;
+                            }
+                       }
+
+                    i++;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+#endif
+
      return NULL;
    }
 
@@ -10080,7 +10156,20 @@ SgSymbolTable::maxCollisions()
      return maxColl;
    }
 
+// DQ (3/30/2014): Declaration of space for static data member.
+bool SgSymbolTable::p_force_search_of_base_classes = false;
 
+bool
+SgSymbolTable::get_force_search_of_base_classes()
+   {
+     return p_force_search_of_base_classes;
+   }
+
+void
+SgSymbolTable::set_force_search_of_base_classes( bool value )
+   {
+     p_force_search_of_base_classes = value;
+   }
 
 SOURCE_SYMBOL_TABLE_END
 
