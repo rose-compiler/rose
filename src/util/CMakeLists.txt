@@ -5,6 +5,7 @@ add_subdirectory(stringSupport)
 add_subdirectory(commandlineProcessing)
 add_subdirectory(support)
 add_subdirectory(graphs)
+add_subdirectory(sawyer)
 
 #############################################################################
 #Generating "rose_paths.C"
