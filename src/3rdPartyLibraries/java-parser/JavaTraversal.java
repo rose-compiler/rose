@@ -320,6 +320,7 @@ class JavaTraversal implements Callable<Boolean> {
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
+        System.out.println("[INFO] ECJ::main arguments=" + Arrays.toString(args));
         /* tps : set up and configure ---------------------------------------------- */
 
         startJava();
@@ -359,6 +360,7 @@ class JavaTraversal implements Callable<Boolean> {
             // maxUnits. To iterate over all units, including the ones that are pulled
             // in by closure, iterate up to batchCompiler.totalUnits.
             //
+            System.out.println("[INFO] ECJ::batchCompiler.totalUnits=" + batchCompiler.totalUnits);
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert (unit != null);
