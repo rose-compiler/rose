@@ -8,6 +8,7 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+#include "transformationTracking.h"
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -951,7 +952,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
   // print number of max successors (= container size)
      AstSuccessorsSelectors::SuccessorsContainer c;
      AstSuccessorsSelectors::selectDefaultSuccessors(node,c);
-     ss << c.size() << "\\n";
+     ss <<"child_count:"<< c.size() << "\\n";
 
   // add memory location of node to dot output
      ss << node << "\\n";
@@ -981,7 +982,8 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
           ss << "\\n";
           ss << "\\n";
         }
-
+     // Liao, 4/3/2014  display Unique ID for located node
+     ss <<"ID:"<<TransformationTracking::getId(node)<<"\\n";
      return ss.str();
    }
 

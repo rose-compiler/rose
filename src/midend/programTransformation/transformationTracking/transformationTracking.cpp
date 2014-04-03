@@ -6,7 +6,7 @@ namespace TransformationTracking {
   // the following data structures are for internal use only
   std::map <SgNode*, unsigned int > AstToIdTable;
   // reverse lookup 
-  std::vector <SgNode*> IdToAstTable; 
+  std::map <unsigned int, SgNode*> IdToAstTable; 
   static int nextId = 1; 
 
   AST_NODE_ID getId (SgNode* n)
