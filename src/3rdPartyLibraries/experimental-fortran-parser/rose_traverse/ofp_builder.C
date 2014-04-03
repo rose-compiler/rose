@@ -711,7 +711,7 @@ ATbool ofp_build_traversal_class_def(FILE * fp, ATerm name, ATermList cons, ATer
 
    ofp_build_class_cons(fp, name, vars);
 
-   fprintf(fp, "   ~%s();\n\n", nameStr);
+   fprintf(fp, "   virtual ~%s();\n\n", nameStr);
 
    ofp_build_class_enum(fp, cons);
    ofp_build_class_new(fp, name, vars);

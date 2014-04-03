@@ -2266,13 +2266,17 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 //--------------------------------Java interface functions ---------------------
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string, bool unparse = false);
+      SgFile *processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string, std::string);
+      void preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
-      SgClassDeclaration *findOrInsertJavaClass(SgScopeStatement *, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
 
 }// end of namespace
 
