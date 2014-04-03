@@ -4013,7 +4013,7 @@ Rose::Frontend::Java::Ecj::GetCommandline(
 
       // TODO: Add to SgProject [TOO1, 2014-04-02]
       //if (file->get_output_warnings() == false)
-      //    commandline.push_back("-nowarn");
+          commandline.push_back("-nowarn");
 
       // Add filenames
       BOOST_FOREACH(SgFile* file, project->get_files())
