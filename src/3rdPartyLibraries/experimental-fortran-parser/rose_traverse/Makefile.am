@@ -9,7 +9,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # libmstlSources = PDFGeneration.C DOTGraphInterface.C
 
-noinst_LTLIBRARIES = libofp.la
+# noinst_LTLIBRARIES = libofp.la
+lib_LTLIBRARIES = libofp.la
 libofp_la_SOURCES = OFPNodes.C OFPExpr.C OFPUnparser.cpp UntypedASTBuilder.cpp traversal.cpp ofp_traverse_productions.C
 
 SDF_GRAMMAR_DIR = $(srcdir)/../syntax

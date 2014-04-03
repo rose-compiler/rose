@@ -32,18 +32,11 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
     //
     // Check if this expression requires parentheses.  If so, process the opening parentheses now.
     //
-    AstRegExAttribute *parenthesis_attribute = (AstRegExAttribute *) expr->getAttribute("java-parenthesis-info");
+    AstIntAttribute *parenthesis_attribute = (AstIntAttribute *) expr->getAttribute("java-parentheses-count");
     if (parenthesis_attribute) { // Output the left paren
-        curprint (parenthesis_attribute -> expression.c_str());
-    }
-
-    //
-    // An expression may contain a Type prefix stored in the "prefix" attribute.
-    //
-    if (expr -> attributeExists("prefix")) {
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("prefix");
-        curprint(attribute -> expression);
-        curprint(".");
+        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
+            curprint("(");
+        }
     }
 
     switch (expr->variant()) {
@@ -164,10 +157,9 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
     //
     // If this expression requires closing parentheses, emit them now.
     //
-    if (parenthesis_attribute) { // Output the right paren
-        string open_parentheses = parenthesis_attribute -> expression;
-        for (int i = 0; i < open_parentheses.size(); i++) {
-            curprint (")");
+    if (parenthesis_attribute) { // Output the right parentheses
+        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
+            curprint(")");
         }
     }
 }
@@ -1168,6 +1160,8 @@ Unparse_Java::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_Java::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_Java::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 
+// TODO: Remove this ... PC -03/16/2014
+/*
 // Liao 11/3/2010
 // Sometimes initializers can from an included file
 //  SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
@@ -1222,15 +1216,14 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
   /* code inserted from specification */
-
+/*
      SgUnparse_Info newinfo(info);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "{");
-
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
 
-     for (size_t index =0; index < list.size(); index ++)
+     for (size_t index = 0; index < list.size(); index ++)
      {
        //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
        bool skipUnparsing = isFromAnotherFile(list[index]);
@@ -1245,6 +1238,23 @@ Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      if (aggr_init->get_need_explicit_braces())
       curprint ( "}");
    }
+*/
+
+void
+Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info) {
+    SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
+    ROSE_ASSERT(aggr_init != NULL);
+
+    SgUnparse_Info newinfo(info);
+    curprint ("{");
+    SgExpressionPtrList& list = aggr_init -> get_initializers() -> get_expressions();
+    for (size_t index = 0; index < list.size(); index ++) {
+        if (index > 0)
+             curprint ( ", ");
+        unparseExpression(list[index], newinfo);
+    }
+    curprint ("}");
+}
 
 void
 Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
@@ -1257,11 +1267,6 @@ Unparse_Java::unparseConInit(SgExpression *expr, SgUnparse_Info& info)
         if (i + 1 < args.size())
             curprint(", ");
     }
-
-#if 0
-  printf ("In Unparse_Java::unparseConInit expr = %p \n",expr);
-  printf ("WARNING: This is redundent with the Unparse_Java::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
-#endif
 }
 
 void

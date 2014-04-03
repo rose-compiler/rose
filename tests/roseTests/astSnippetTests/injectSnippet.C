@@ -152,6 +152,11 @@ main(int argc, char *argv[])
     }
     if (snippet_name.empty())
         usage(argv0);
+
+    // One of the SS_JAVA_CWES tests uses an upper-case name for the snippet function rather than the usual lower-case name.
+    if (snippet_name == "Injection.CWE_564.CWE_564_3.cwe_564_3")
+        snippet_name =  "Injection.CWE_564.CWE_564_3.CWE_564_3";
+
     std::cout <<"Configuration:\n"
               <<"    snippet file base name:   " <<snippet_file_name <<"\n"
               <<"    snippet name:             " <<snippet_name <<"\n"
@@ -190,20 +195,10 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    SnippetPtr snippet;
-    bool haveBug = false;
-#if 0 /* [Robb P. Matzke 2014-03-03] No longer needed--bug has been fixed; do not include snipet file on command-line */
-    haveBug = SageInterface::is_Java_language();
-#endif
-    if (haveBug) {
-        // ROSE's java support doesn't currently let us parse another java file after we've called frontend().  Therefore, the
-        // snippet file must have been passed as one of ROSE's command-line arguments so that it's been processed by frontend()
-        // already. We just have to find it and create a Snippet object that points to that part of the AST.
-        snippet = SnippetTests::findSnippetInAst(project, snippet_file_name, snippet_name);
-    } else {
-        // Load the snippet from its file.  This actually loads all the snippets in the file.
-        snippet = Snippet::instanceFromFile(snippet_name, SnippetTests::findSnippetFile(snippet_file_name));
-    }
+    // Load the snippet from its file.  This actually loads all the snippets in the file.
+    SnippetPtr snippet = Snippet::instanceFromFile(snippet_name, SnippetTests::findSnippetFile(snippet_file_name));
+
+
     assert(snippet!=NULL);
     SnippetFilePtr snippetFile = snippet->getFile();
     snippetFile->setCopyAllSnippetDefinitions(copy_definitions);
@@ -331,9 +326,11 @@ main(int argc, char *argv[])
 #endif
 
     // Unparse the modified source code
-#if 0 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
+#if 1 /* [Robb P. Matzke 2014-03-03]: does not yet work for Java -- fails an assertion deep in rose  */
     generateDOT(*project);
-#elif 0
+#endif
+// #elif 0
+#if 0
     // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
     printf ("Generate the Whole AST graph! \n");
     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
