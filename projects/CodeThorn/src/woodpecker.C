@@ -22,6 +22,7 @@
 #include "AType.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
+#include "TrivialInlining.h"
 
 #include <vector>
 #include <set>
@@ -38,78 +39,15 @@ using namespace AType;
 
 #include "ReachabilityResults.h"
 
-static VariableIdSet variablesOfInterest;
+static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 ReachabilityResults reachabilityResults;
 bool global_option_multiconstanalysis=false;
 
-
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
-}
-
-bool trivialInline(SgFunctionCallExp* funCall) {
-  /*
-    0) check if it is a trivial function call (no return value, no params)
-    1) find function to inline
-    2) determine body of function to inline
-    3) delete function call
-    4) clone body of function to inline
-    5) insert cloned body as block
-  */
-  string fname=SgNodeHelper::getFunctionName(funCall);
-  SgFunctionDefinition* functionDef=isSgFunctionDefinition(SgNodeHelper::determineFunctionDefinition(funCall));
-  if(!functionDef)
-    return false;
-  SgBasicBlock* functionBody=isSgBasicBlock(functionDef->get_body());
-  if(!functionBody)
-    return false;
-  SgTreeCopy tc;
-  SgBasicBlock* functionBodyClone=isSgBasicBlock(functionBody->copy(tc));
-  // set current basic block as parent of body
-  if(!functionBodyClone)
-    return false;
-  SgExprStatement* functionCallExprStmt=isSgExprStatement(funCall->get_parent());
-  if(!functionCallExprStmt)
-    return false;
-  SgBasicBlock* functionCallBlock=isSgBasicBlock(functionCallExprStmt->get_parent());
-  if(!functionCallBlock)
-    return false;
-  if(functionCallBlock->get_statements().size()>0) {
-    SgStatement* oldStmt=functionCallExprStmt;
-    SgStatement* newStmt=functionBodyClone;
-    SageInterface::replaceStatement(oldStmt, newStmt,false);
-    return true;
-  }
-  return false;
-}
-
-SgFunctionCallExp* isTrivialFunctionCall(SgNode* node) {
-  if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-    SgExpressionPtrList& args=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-    if(args.size()==0) {
-      if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall)) {
-        SgType* returnType=SgNodeHelper::getFunctionReturnType(funDef);
-        if(isSgTypeVoid(returnType)) {
-          return funCall;
-        }                
-      }
-    }
-  }
-  return 0;
-}
-
-list<SgFunctionCallExp*> trivialFunctionCalls(SgNode* node) {
-  RoseAst ast(node);
-  list<SgFunctionCallExp*> funCallList;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
-    if(SgFunctionCallExp* funCall=isTrivialFunctionCall(*i)) {
-      funCallList.push_back(funCall);
-    }
-  }
-  return funCallList;
 }
 
 size_t numberOfFunctions(SgNode* node) {
@@ -118,22 +56,6 @@ size_t numberOfFunctions(SgNode* node) {
   for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
     if(isSgFunctionDefinition(*i))
       num++;
-  }
-  return num;
-}
-
-size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
-  size_t num=0;
-  for(list<SgFunctionCallExp*>::iterator i=funCallList.begin();i!=funCallList.end();i++) {
-    SgFunctionCallExp* funCall=*i;
-    if(detailedOutput) cout<< "function call:"<<SgNodeHelper::nodeToString(*i)<<": ";
-    bool success=trivialInline(funCall);
-    if(success) {
-      if(detailedOutput) cout<<"inlined."<<endl;
-      num++;
-    }
-    else
-      cout<<"not inlined."<<endl;
   }
   return num;
 }
@@ -474,6 +396,7 @@ int main(int argc, char* argv[]) {
 
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
+#if 0
     std::string funtofind="main";
     RoseAst completeast(root);
     mainFunctionRoot=completeast.findFunctionByName(funtofind);
@@ -483,21 +406,15 @@ int main(int argc, char* argv[]) {
     } else {
       cout << "STATUS: Found main function."<<endl;
     }
-    list<SgFunctionCallExp*> funCallList=trivialFunctionCalls(root);
-    cout<<"STATUS: Inlining: Number of trivial function calls (with existing function bodies): "<<funCallList.size()<<endl;
-    list<SgFunctionCallExp*> remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
-    while(remainingFunCalls.size()>0) {
-      size_t numFunCall=remainingFunCalls.size();
-      cout<<"INFO: Remaining function calls in main function: "<<numFunCall<<endl;
-      if(numFunCall>0)
-        inlineFunctionCalls(remainingFunCalls);
-      remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
-    }
-    cout<<"INFO: Remaining function calls in main function: 0"<<endl;
+#endif
+    TrivialInlining tin;
+    tin.setDetailedOutput(true);
+    tin.inlineFunctions(root);
   } else {
     cout<<"INFO: Inlining: turned off."<<endl;
   }
   //TODO: create ICFG and compute non reachable functions (from main function)
+  // this is dead code elimination
   if(boolOptions["inline"]) {
     cout<<"STATUS: deleting inlined functions."<<endl;
     list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
