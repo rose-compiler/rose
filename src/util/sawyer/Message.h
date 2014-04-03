@@ -11,6 +11,7 @@
 #include <ctime>
 #include <list>
 #include <map>
+#include <ostream>
 #include <set>
 #include <streambuf>
 #include <string>
