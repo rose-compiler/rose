@@ -45,6 +45,12 @@ bool TrivialInlining::trivialInline(SgFunctionCallExp* funCall) {
   return false;
 }
 
+bool TrivialInlining::isTrivialFunctionDefinition(SgFunctionDefinition* funDef) {
+  SgType* returnType=SgNodeHelper::getFunctionReturnType(funDef);
+  SgInitializedNamePtrList& paramList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+  return isSgTypeVoid(returnType) && paramList.size()==0;
+}
+
 SgFunctionCallExp* TrivialInlining::isTrivialFunctionCall(SgNode* node) {
   if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
     SgExpressionPtrList& args=SgNodeHelper::getFunctionCallActualParameterList(funCall);

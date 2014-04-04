@@ -416,7 +416,7 @@ int main(int argc, char* argv[]) {
   //TODO: create ICFG and compute non reachable functions (from main function)
   // this is dead code elimination
   if(boolOptions["inline"]) {
-    cout<<"STATUS: deleting inlined functions."<<endl;
+#if 0
     list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
     for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
       string funName=SgNodeHelper::getFunctionName(*i);
@@ -428,6 +428,10 @@ int main(int argc, char* argv[]) {
         //SageInterface::deleteAST(funDef);
       }
     }
+#else
+    int numEliminatedFunctions=eliminateNonCalledTrivialFunctions(root);
+    cout<<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
+#endif
   }
   
   if(boolOptions["eliminate-empty-if"]) {

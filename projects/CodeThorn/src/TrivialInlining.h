@@ -12,11 +12,12 @@ class TrivialInlining {
   // returns true if at least one trivial function was inlined, otherwise false.
   bool inlineFunctions(SgNode* root);
   void setDetailedOutput(bool val);
+  static std::list<SgFunctionCallExp*> trivialFunctionCalls(SgNode* node);
+  static bool isTrivialFunctionDefinition(SgFunctionDefinition* funDef);
+  static SgFunctionCallExp* isTrivialFunctionCall(SgNode* node);
  private:
   bool detailedOutput;
-  SgFunctionCallExp* isTrivialFunctionCall(SgNode* node);
   bool trivialInline(SgFunctionCallExp* funCall);
-  std::list<SgFunctionCallExp*> trivialFunctionCalls(SgNode* node);
   size_t inlineFunctionCalls(std::list<SgFunctionCallExp*>& funCallList);
 };
 
