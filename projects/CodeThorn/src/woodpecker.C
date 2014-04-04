@@ -200,8 +200,6 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
     // determine expressions of blocks/ifstatements
     SgExpression* exp=0;
-    // we exclude ?-operator because this would eliminate all assert(0) expressions
-    // NOTE: assert needs to be handled with exit(int) to allow such operations
     if(isSgIfStmt(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)) {
       SgNode* node=SgNodeHelper::getCond(*i);
       if(isSgExprStatement(node)) {
@@ -396,42 +394,18 @@ int main(int argc, char* argv[]) {
 
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
-#if 0
-    std::string funtofind="main";
-    RoseAst completeast(root);
-    mainFunctionRoot=completeast.findFunctionByName(funtofind);
-    if(!mainFunctionRoot) {
-      cerr<<"Error: No main function available. "<<endl;
-      exit(1);
-    } else {
-      cout << "STATUS: Found main function."<<endl;
-    }
-#endif
+    // inline functions
     TrivialInlining tin;
     tin.setDetailedOutput(true);
     tin.inlineFunctions(root);
+    // eliminate non called functions
+    int numEliminatedFunctions=eliminateNonCalledTrivialFunctions(root);
+    cout<<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
   } else {
     cout<<"INFO: Inlining: turned off."<<endl;
   }
-  //TODO: create ICFG and compute non reachable functions (from main function)
-  // this is dead code elimination
+
   if(boolOptions["inline"]) {
-#if 0
-    list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
-    for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
-      string funName=SgNodeHelper::getFunctionName(*i);
-      SgFunctionDeclaration* funDecl=(*i)->get_declaration();
-      if(funName!="main") {
-        if(detailedOutput) cout<<"Deleting function: "<<funName<<endl;
-        SgStatement* stmt=funDecl;
-        SageInterface::removeStatement (stmt, false);
-        //SageInterface::deleteAST(funDef);
-      }
-    }
-#else
-    int numEliminatedFunctions=eliminateNonCalledTrivialFunctions(root);
-    cout<<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
-#endif
   }
   
   if(boolOptions["eliminate-empty-if"]) {
