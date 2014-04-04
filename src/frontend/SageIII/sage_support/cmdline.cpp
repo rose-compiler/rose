@@ -2262,10 +2262,10 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
   // Default
-  if (has_java_source == false)
-  {
-      source = "1.6";
-  }
+  //if (has_java_source == false)
+  //{
+  //    source = "1.6";
+  //}
 
   project->set_Java_source(source);
 }// Cmdline::Java::ProcessSource
@@ -2296,10 +2296,10 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
   // Default
-  if (has_java_target == false)
-  {
-      target = "1.6";
-  }
+  //if (has_java_target == false)
+  //{
+  //    target = "1.6";
+  //}
 
   project->set_Java_target(target);
 }// Cmdline::Java::Processtarget

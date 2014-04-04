@@ -4126,9 +4126,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           if ( get_verbose() > 2 )
                javaCommandLine.push_back("-verbose");
 
-       // Always push the source information
-          javaCommandLine.push_back("-source");
-          javaCommandLine.push_back(source_version);
+        // Always push the source information
+        javaCommandLine.push_back("-source");
+        {
+            if (source_version.size() > 0) {
+                javaCommandLine.push_back(source_version);
+            } else /* default */ {
+                javaCommandLine.push_back("1.6");
+            }
+        }
 
        // We invoke javac to check the syntax of the input program
        // Since it doesn generates classes, we create a separate folder
@@ -4235,11 +4241,17 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Handle java rose options we need to transmit to ecj
   // !! Warning !! ECJ does not accept '--' prefixed options.
   // *******************************************************************
-     frontEndCommandLine.push_back("-source");
-     frontEndCommandLine.push_back(source_version);
+    frontEndCommandLine.push_back("-source");
+    if (source_version.size() > 0) {
+        frontEndCommandLine.push_back(source_version);
+    } else /* default */ {
+        frontEndCommandLine.push_back("1.6");
+    }
 
-     frontEndCommandLine.push_back("-target");
-     frontEndCommandLine.push_back(target_version);
+    if (target_version.size() > 0) {
+        frontEndCommandLine.push_back("-target");
+        frontEndCommandLine.push_back(target_version);
+    }
 
          if (!get_output_warnings()) {
                  frontEndCommandLine.push_back("-nowarn");
