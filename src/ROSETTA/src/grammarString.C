@@ -34,19 +34,30 @@ GrammarString::getDefaultInitializerString() const
 
 std::string
 GrammarString::infoFieldsToString() const {
-  //functionNameString
   //  typeNameString    
   //   variableNameString
-  //   defaultInitializerString
+  //  toBeTraversed
   stringstream ss;
-#if 0
-  ss<<   key;
-  ss<<","<<pureVirtualFunction;
-  ss<<","<<   automaticGenerationOfDataAccessFunctions;
-  ss<<","<<   isInConstructorParameterList;
-  ss<<","<<   toBeTraversed;
-  ss<<","<<   toBeCopied;
-  ss<<","<<   toBeDeleted;
+#if 1
+  //ss<<   key;
+  //ss<<","<<functionNameString;
+  //ss<<","<<pureVirtualFunction;
+  ss<<"access=";
+#if 1
+  switch(automaticGenerationOfDataAccessFunctions.getValue()) {
+  case TAG_NO_ACCESS_FUNCTIONS: ss<<"no";break;
+  case TAG_BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
+  case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
+  case TAG_BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
+  default:
+	cerr<<"Error: unknown data access function type."<<endl;
+	ROSE_ASSERT(0);
+  }
+#endif
+  ss<<","<<"constr="<<   isInConstructorParameterList.getValue();
+  ss<<","<<"init="<<"\""<<defaultInitializerString<<"\"";
+  ss<<","<<"copy="<<toBeCopied.getValue();
+  ss<<","<<"del="<<   toBeDeleted.getValue();
 #endif
     return ss.str();
 }
