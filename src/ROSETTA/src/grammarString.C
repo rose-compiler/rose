@@ -6,6 +6,7 @@
 #include "terminal.h"
 #include "string_functions.h"
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -30,6 +31,26 @@ GrammarString::getDefaultInitializerString() const
    {
      return defaultInitializerString;
    }
+
+std::string
+GrammarString::infoFieldsToString() const {
+  //functionNameString
+  //  typeNameString    
+  //   variableNameString
+  //   defaultInitializerString
+  stringstream ss;
+#if 0
+  ss<<   key;
+  ss<<","<<pureVirtualFunction;
+  ss<<","<<   automaticGenerationOfDataAccessFunctions;
+  ss<<","<<   isInConstructorParameterList;
+  ss<<","<<   toBeTraversed;
+  ss<<","<<   toBeCopied;
+  ss<<","<<   toBeDeleted;
+#endif
+    return ss.str();
+}
+
 
 ConstructParamEnum
 GrammarString::getIsInConstructorParameterList() const

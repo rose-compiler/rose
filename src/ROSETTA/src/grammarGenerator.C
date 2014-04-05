@@ -140,10 +140,12 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* gramma
 }
 
 
-// MS: 2002,2003
+
+
+// MS: 2002, 2003, 2014
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
-                  vector<GrammarSynthesizedAttribute> v) {
+                                         vector<GrammarSynthesizedAttribute> v) {
   //cout << "Creating grammar latex string:" << endl;
   GrammarSynthesizedAttribute saLatex;
   string s;
@@ -158,54 +160,58 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   string grammarSymEndRule="    ;\n\n";
   string grammarSymListOpPrefix="";
   string grammarSymListOpPostfix="*";
-
-    if(grammarnode->isLeafNode()) {
-      string rhsTerminalSuccessors;
-      /*
-    bool containermembers=0; // (non-pointer)
-    bool singledatamembers=0;      // (pointer or non-pointer)
+  
+  if(grammarnode->isLeafNode()) {
+    string rhsTerminalSuccessors;
+    /*
+      bool containermembers=0; // (non-pointer)
+      bool singledatamembers=0;      // (pointer or non-pointer)
     */
-      vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-      for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
+    vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+    for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
+        stringListIterator != includeList.end(); // ", " only between the elements of the list
+        stringListIterator++) {
+      if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+        if(rhsTerminalSuccessors!="") {
+          // before each element but not the first one
+          rhsTerminalSuccessors+=GrammarSymTreeElSep;
+        }
+        /*
+          char* type =new char[300];type[0]='\0';
+          (void) strcat( type, (*stringListIterator)->getTypeNameString());
+          type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
+          type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
+          //type=GrammarString::copyEdit (type,"*","");
+          */
+        string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
+        string varName=(*stringListIterator)->getVariableNameString();
+        string infoFields=(*stringListIterator)->infoFieldsToString();
+        rhsTerminalSuccessors+=varName+":"+type;
+        
+        // based on the type*name* used it is infered whether it is a
+        // a container or a single data member (single pointer or single obj)
+        // this is just a "heuristic" test. Changing the typenames invalidates
+        // it
+        //string stype=string(type);
+        /*
+          if( (stype.find("*") == string::npos) // not found, not a pointer
+          && (stype.find("List") == stype.size()-4) ) // postfix
+          containermembers++;
+          else 
+          singledatamembers++;
+        */
+      }
+    }
+    // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
+    /*
+      for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
       stringListIterator != includeList.end(); // ", " only between the elements of the list
       stringListIterator++) {
-    if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
-      if(rhsTerminalSuccessors!="") // before each element but not the first one
-        rhsTerminalSuccessors+=GrammarSymTreeElSep;
-      /*
-        char* type =new char[300];type[0]='\0';
-        (void) strcat( type, (*stringListIterator)->getTypeNameString());
-        type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-        type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-        //type=GrammarString::copyEdit (type,"*","");
-        */
-      string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
-      rhsTerminalSuccessors+=type+string(" "); // MS: NO VARNAME: +string((*stringListIterator)->getVariableNameString());
-      
-      // based on the type*name* used it is infered whether it is a
-      // a container or a single data member (single pointer or single obj)
-      // this is just a "heuristic" test. Changing the typenames invalidates
-      // it
-      //string stype=string(type);
-      /*
-        if( (stype.find("*") == string::npos) // not found, not a pointer
-        && (stype.find("List") == stype.size()-4) ) // postfix
-        containermembers++;
-        else 
-        singledatamembers++;
-      */
-    }
-      }
-      // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
-      /*
-    for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
-    stringListIterator != includeList.end(); // ", " only between the elements of the list
-    stringListIterator++) {
-    if ( !(*stringListIterator)->getToBeTraversed()) {
-    if(s3!="") // before each element but not the first one
-    s3+=",\n";
-    char* type =new char[300];type[0]='\0';
-    (void) strcat( type, (*stringListIterator)->getTypeNameString());
+      if ( !(*stringListIterator)->getToBeTraversed()) {
+      if(s3!="") // before each element but not the first one
+      s3+=",\n";
+      char* type =new char[300];type[0]='\0';
+      (void) strcat( type, (*stringListIterator)->getTypeNameString());
     type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
     type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
     type=GrammarString::copyEdit (type,"*","");
@@ -220,34 +226,34 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     }
     else {
       */
-      if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
-    saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
-      else {
-    saLatex.nodetext="";
-      }
-    } // end of terminal handling
+    if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
+      saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
     else {
-      if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
-    saLatex.nodetext=grammarnode->getName();
-      else
-    saLatex.nodetext="";
+      saLatex.nodetext="";
     }
+  } // end of terminal handling
+  else {
+    if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
+      saLatex.nodetext=grammarnode->getName();
+    else
+      saLatex.nodetext="";
+  }
   // create grammar rule for current grammar node and its successors
   string grammarRule;
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
     if((*viter).nodetext!="" && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
       if(first) {
-    grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
-    first=false;
+        grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
+        first=false;
       } else {
-    grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
+        grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
       }
     }
   }
   if(v.size()>0 && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
     grammarRule+=grammarSymEndRule;
-
+  
   // union data of subtree nodes
   saLatex.grammarnode=grammarnode;
   saLatex.text=grammarRule;
@@ -259,7 +265,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
   if(gInfo.numSingleDataMembers>0 && gInfo.numContainerMembers>0) 
     saLatex.problematicnodes+=string(grammarnode->getName())+"\n";
-
+  
   // ------------------------------------------------------------
   // create terminal and nonterminal (and problematic node) lists 
   // ------------------------------------------------------------
