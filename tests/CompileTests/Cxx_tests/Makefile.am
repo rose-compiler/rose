@@ -22,8 +22,6 @@ include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(ROSE__CXX_TESTS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   lulesh.C \
-   luleshTALC.C \
    test2013_253.C \
    test2013_255.C \
    test2013_256.C \
@@ -63,7 +61,45 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_03.C \
    test2014_04.C \
    test2014_05.C \
-   test2014_06.C
+   test2014_06.C \
+   test2014_07.C \
+   test2014_08.C \
+   test2014_09.C \
+   test2014_10.C \
+   test2014_11.C \
+   test2014_12.C \
+   test2014_13.C \
+   test2014_16.C \
+   test2014_17.C \
+   test2014_18.C \
+   test2014_19.C \
+   test2014_20.C \
+   test2014_21.C \
+   test2014_24.C \
+   test2014_26.C \
+   test2014_30.C \
+   test2014_31.C \
+   test2014_32.C \
+   test2014_33.C \
+   test2014_34.C \
+   test2014_35.C \
+   test2014_36.C \
+   test2014_37.C \
+   test2014_38.C \
+   lulesh.C \
+   luleshTALC.C
+
+# DQ (4/6/2014): Failing tests
+#   test2014_14.C 
+#   test2014_15.C 
+#   test2014_22.C 
+#   test2014_23.C 
+#   test2014_25.C 
+
+# DQ (4/3/2014): Failing tests in the name qualification (subject or current work).
+#   test2014_27.C 
+#   test2014_28.C 
+#   test2014_29.C
 
 # Note that these will not compile with the GNU 4.7 header files.
 # It might be a boost issue.  The error is always the same.
