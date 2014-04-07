@@ -57,6 +57,11 @@ noinst_PROGRAMS += 25-run-tests
 25_run_tests_CPPFLAGS = $(ROSE_INCLUDES)
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 25-run-tests-fork
+25_run_tests_fork_SOURCES = 25-run-tests-fork.C RunTests.C
+25_run_tests_fork_CPPFLAGS = $(ROSE_INCLUDES)
+25_run_tests_fork_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 noinst_PROGRAMS += 27-update-aggprops
 27_update_aggprops_SOURCES = 27-update-aggprops.C
 27_update_aggprops_CPPFLAGS = $(ROSE_INCLUDES)
