@@ -206,7 +206,7 @@ main(int argc, char *argv[])
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
             if (!opt.dry_run)
-                tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, progress, ntests_ran, cmd_id);
+                tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, &progress, ntests_ran, cmd_id);
             last_checkpoint = time(NULL);
         }
         if (do_exit) {
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 
     // Cleanup
     if (!tx->is_terminated() && !opt.dry_run)
-        tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, progress, ntests_ran, cmd_id);
+        tx = checkpoint(tx, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs, &progress, ntests_ran, cmd_id);
     progress.clear();
 
     return 0;

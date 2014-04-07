@@ -66,7 +66,7 @@ OutputGroup fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, Inpu
                       InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs);
 SqlDatabase::TransactionPtr checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer,
                                        InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
-                                       Progress &progress, size_t ntests_ran, int64_t cmd_id);
+                                       Progress *progress, size_t ntests_ran, int64_t cmd_id);
 void runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDetectors &pointers, SgAsmFunction *func,
                 const FunctionIdMap &function_ids, InsnCoverage &insn_coverage /*in,out*/, DynamicCallGraph &dynamic_cg /*in,out*/,
                 Tracer &tracer /*in,out*/, ConsumedInputs &consumed_inputs /*in,out*/, SgAsmInterpretation *interp,

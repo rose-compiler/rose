@@ -1100,45 +1100,53 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 SqlDatabase::TransactionPtr
 checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer,
            InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
-           Progress &progress, size_t ntests_ran, int64_t cmd_id)
+           Progress *progress, size_t ntests_ran, int64_t cmd_id)
 {
     SqlDatabase::ConnectionPtr conn = tx->connection();
 
-    progress.message("checkpoint: saving output groups");
+    if (progress)
+        progress->message("checkpoint: saving output groups");
     ogroups.save(tx);
 
-    progress.message("checkpoint: saving trace events");
+    if (progress)
+        progress->message("checkpoint: saving trace events");
     tracer.flush(tx);
 
     if (opt.save_coverage && !opt.dry_run) {
-        progress.message("checkpoint: saving instruction coverage");
+        if (progress)
+            progress->message("checkpoint: saving instruction coverage");
         insn_coverage.flush(tx);
     } else {
         insn_coverage.clear();
     }
 
     if (opt.save_callgraph && !opt.dry_run) {
-        progress.message("checkpoint: saving dynamic call graph");
+        if (progress)
+            progress->message("checkpoint: saving dynamic call graph");
         dynamic_cg.flush(tx);
     } else {
         dynamic_cg.clear();
     }
 
     if (opt.save_consumed_inputs && !opt.dry_run) {
-        progress.message("checkpoint: saving consumed inputs");
+        if (progress)
+            progress->message("checkpoint: saving consumed inputs");
         consumed_inputs.flush(tx);
     } else {
         consumed_inputs.clear();
     }
-    
-    progress.message("checkpoint: committing");
+
+    if (progress)
+        progress->message("checkpoint: committing");
     std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
     if (ntests_ran>0)
         finish_command(tx, cmd_id, desc);
     tx->commit();
 
-    progress.message("");
-    progress.clear();
+    if (progress) {
+        progress->message("");
+        progress->clear();
+    }
     std::cerr <<argv0 <<": " <<desc <<"\n";
     return conn->transaction();
 }
