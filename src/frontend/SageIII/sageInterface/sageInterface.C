@@ -102,6 +102,274 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 using namespace std;
 using namespace SageBuilder;
 
+
+
+
+void
+SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
+   {
+  // DQ (4/3/2014): This function either builds a new set or inserts declarations into an
+  // existing set based on if a set defined by the key (firstNondefiningDeclaration) is present.
+     ROSE_ASSERT(decl != NULL);
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+
+     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
+#if 0
+     printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+
+     if (decl == firstNondefiningDeclaration)
+        {
+          if (declarationMap.find(firstNondefiningDeclaration) == declarationMap.end())
+             {
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+            // Add a new set.
+               declarationMap[decl] = new set<SgDeclarationStatement*>();
+
+               ROSE_ASSERT (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+               ROSE_ASSERT(declarationMap[decl] != NULL);
+
+            // Add a declaration to an existing set.
+               declarationMap[firstNondefiningDeclaration]->insert(decl);
+             }
+            else
+             {
+               if (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end())
+                  {
+#if 0
+                    printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+                 // Add a declaration to an existing set.
+                    declarationMap[firstNondefiningDeclaration]->insert(decl);
+                  }
+                 else
+                  {
+                    printf ("ERROR: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+
+                 // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
+                 // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
+                    bool ignore_error = (isSgFunctionParameterList(decl) != NULL);
+
+                    if (ignore_error == true)
+                       {
+                         printf ("Ignoring the error for a SgFunctionParameterList \n");
+                       }
+                      else
+                       {
+                         printf ("declarationMap[firstNondefiningDeclaration]->size() = %zu \n",declarationMap[firstNondefiningDeclaration]->size());
+
+                         printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
+                         printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
+
+                         SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
+                         if (namespaceDefinitionStatement != NULL)
+                            {
+                              namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
+                            }
+
+                         if (isSgCtorInitializerList(decl) != NULL)
+                            {
+                              firstNondefiningDeclaration->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration->get_parent(): debug");
+                              decl->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl->get_parent(): debug");
+                            }
+
+                         firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
+                         decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
+
+                         printf ("Can not ignore this error \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+        }
+       else
+        {
+       // Add the declaration (make sure there is a set that exists).
+          if (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end())
+             {
+            // Make sure it does not already exist in the set.
+               ROSE_ASSERT (declarationMap[firstNondefiningDeclaration] != NULL);
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a declaration to an existing set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+            // Add a declaration to an existing set.
+            // ROSE_ASSERT (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end());
+            // declarationMap[firstNondefiningDeclaration]->insert(decl);
+               if (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end())
+                  {
+                 // Add a declaration to an existing set.
+                    declarationMap[firstNondefiningDeclaration]->insert(decl);
+                  }
+                 else
+                  {
+                    printf ("This declaration is already in the set (skip adding it twice): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                  }
+             }
+            else
+             {
+            // In this case the defining declaration might be the only declaration to be traversed and
+            // so a set has not been built yet.
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Adding set and declaration for the firstNondefiningDeclaration = %p = %s = %s \n",
+                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),get_name(firstNondefiningDeclaration).c_str());
+#endif
+
+            // DQ (4/5/2014): Just build the set and don't insert the firstNondefiningDeclaration.
+            // If we were to do so then it would be an error to use the insert it later.
+            // Note recursive call.
+            // addDeclaration(firstNondefiningDeclaration);
+               declarationMap[firstNondefiningDeclaration] = new set<SgDeclarationStatement*>();
+
+               ROSE_ASSERT (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+
+            // DQ (4/5/2014): We have to insert this since it is different from the firstNondefiningDeclaration.
+            // Add the declaration to the existing set.
+               declarationMap[firstNondefiningDeclaration]->insert(decl);
+
+            // DQ (4/5/2014): Added assertion.
+               ROSE_ASSERT(declarationMap[firstNondefiningDeclaration]->find(decl) != declarationMap[firstNondefiningDeclaration]->end());
+#if 0
+               printf ("SageInterface::DeclarationSets::addDeclaration(): No set exists for the firstNondefiningDeclaration = %p = %s = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),get_name(firstNondefiningDeclaration).c_str());
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+#if 0
+     printf ("Leaving SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+   }
+
+const std::set<SgDeclarationStatement*>* 
+SageInterface::DeclarationSets::getDeclarations(SgDeclarationStatement* decl)
+   {
+  // DQ (4/3/2014): This function returns the associated set of declarations.
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+
+     ROSE_ASSERT(declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+
+     const set<SgDeclarationStatement*>* declarationSet = declarationMap[firstNondefiningDeclaration];
+
+  // return this->declarationMap[firstNondefiningDeclaration];
+     return declarationSet;
+   }
+
+std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > &
+SageInterface::DeclarationSets::getDeclarationMap()
+   {
+     return declarationMap;
+   }
+
+bool
+SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement* decl)
+   {
+  // The existence of a declaration in a named scope (if a friend function) will cause
+  // subsequent declarations to be qualified where name qualification is required.
+  // A couple of issues:
+  //    We likely need to keep track of the order of the declarations in the more
+  //    complex cases because name qualification will be required after the declaration
+  //    that appears in the named scope; but will not be required before the declaration in
+  //    the named scope.
+
+#define DEBUG_LOCATED_IN_DEFINING_SCOPE 0
+
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
+     set<SgDeclarationStatement*>* declarationSet = declarationMap[firstNondefiningDeclaration];
+     ROSE_ASSERT(declarationSet != NULL);
+
+     set<SgDeclarationStatement*>::iterator i = declarationSet->begin();
+
+     bool isDefinedInNamedScope = false;
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     printf ("In DeclarationSets::isLocatedInDefiningScope(): decl = %p = %s \n",decl,decl->class_name().c_str());
+     printf ("   --- declarationSet->size()                        = %zu \n",declarationSet->size());
+#endif
+
+     SgDeclarationStatement* associatedDeclaration = NULL;
+
+     while (isDefinedInNamedScope == false && i != declarationSet->end())
+        {
+          ROSE_ASSERT(*i != NULL);
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+          SgScopeStatement* scope = (*i)->get_scope();
+          ROSE_ASSERT(scope != NULL);
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("   --- scope->isNamedScope() = %s \n",scope->isNamedScope() ? "true" : "false");
+#endif
+       // if (scope->isNamedScope() == true)
+          SgGlobal* globalScope = isSgGlobal(scope);
+          if (globalScope != NULL || scope->isNamedScope() == true)
+             {
+            // Check if the function is output in the unparing, else it would not be defined.
+               bool willBeOutput = ((*i)->get_file_info()->isCompilerGenerated() == false ||
+                                      ((*i)->get_file_info()->isCompilerGenerated() &&
+                                       (*i)->get_file_info()->isOutputInCodeGeneration()) );
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+               printf ("   --- willBeOutput = %s \n",willBeOutput ? "true" : "false");
+#endif
+               associatedDeclaration = *i;
+
+            // isDefinedInNamedScope = true;
+               isDefinedInNamedScope = willBeOutput;
+             }
+
+          i++;
+        }
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     if (associatedDeclaration != NULL)
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+        }
+       else
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p \n",associatedDeclaration);
+        }
+#endif
+
+     return isDefinedInNamedScope;
+   }
+
+SageInterface::DeclarationSets*
+SageInterface::buildDeclarationSets(SgNode* n)
+   {
+     DeclarationSets* declarationSet = new DeclarationSets();
+
+     class DeclarationSetTraversal : public AstSimpleProcessing
+        {
+          private:
+               DeclarationSets* declarationSet;
+
+          public:
+               DeclarationSetTraversal(DeclarationSets* ds) : declarationSet(ds) {}
+               void visit (SgNode* node)
+                  {
+                    SgDeclarationStatement* decl = isSgDeclarationStatement(node);
+                    if (decl != NULL)
+                       {
+                         declarationSet->addDeclaration(decl);
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     DeclarationSetTraversal traversal(declarationSet);
+     traversal.traverse(n, preorder);
+
+     return declarationSet;
+   }
+
+
 int SageInterface::gensym_counter = 0;
 // DQ: 09/23/03
 // We require a global function for getting the string associated
