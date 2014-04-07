@@ -30,6 +30,11 @@ noinst_PROGRAMS += 10-generate-inputs
 10_generate_inputs_CPPFLAGS = $(ROSE_INCLUDES)
 10_generate_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 10-copy-inputs
+10_copy_inputs_SOURCES = 10-copy-inputs.C
+10_copy_inputs_CPPFLAGS = $(ROSE_INCLUDES)
+10_copy_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 noinst_PROGRAMS += 11-add-functions
 11_add_functions_SOURCES = 11-add-functions.C
 11_add_functions_CPPFLAGS = $(ROSE_INCLUDES)
