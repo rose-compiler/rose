@@ -170,7 +170,7 @@ SPECIMENS_failing_statistically =		\
 	test2007_62.C				\
 	math.C 
 
-# DQ (5/17/2012): These are new tests which I deamed up and which fail.  they likely failed in the older version of EDG
+# DQ (5/17/2012): These are new tests which I dreamed up and which fail.  they likely failed in the older version of EDG
 # support, but were not tested there.  Since the current focus is on the previous level of robustness. These are considered to
 # be NEW failing tests to work on later (when the previously passing tests are fixed in the newer EDG support).
 SPECIMENS_failing_newly =			\
@@ -201,7 +201,7 @@ SPECIMENS_failing_miscellaneous =		\
 
 
 # The master list of all specimens which cause tests in this makefile to fail.  Do not comment things out here, use the
-# individual "SPECIMENS_failing_*" lists above instead in order to keep this makefile from becomming a mess again.
+# individual "SPECIMENS_failing_*" lists above instead in order to keep this makefile from becoming a mess again.
 # The names of this list must be unique otherwise make will complain about duplicate rules when we use this list of file
 # names to create makefile targets.
 SPECIMENS_failing = $(shell echo				\
@@ -230,7 +230,9 @@ SPECIMENS_failing = $(shell echo				\
 # The original makefile confusingly started with a list of all specimens, then removed specimens that were marked as being
 # problematic, and then added tests again in a long list.
 #
-# DONT ADD MORE STUFF HERE!!! Only delete stuff from the SEPCIMEN_failing_* lists above.
+# DON'T ADD MORE STUFF HERE!!! Only delete stuff from the SPECIMEN_failing_* lists above or add the passing tests to
+# the ROSE__CXX_TESTS variable in $(top_srcdir)/tests/input_codes/cxx/Makefile_variables above.  This list should eventually
+# entirely disappear.
 #
 SPECIMENS_required_to_pass =			\
 	lulesh.C				\
