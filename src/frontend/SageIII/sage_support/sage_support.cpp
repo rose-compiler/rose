@@ -3890,15 +3890,14 @@ Rose::Frontend::Java::Run(SgProject* project)
 int
 Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
 {
-  ROSE_ASSERT(project != NULL);
-
-  if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] [Frontend] [Java] Running in batch mode" << std::endl;
-
   int status = 0;
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   namespace ecj = Rose::Frontend::Java::Ecj;
   {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] [Frontend] [Java] Running in batch mode" << std::endl;
+
       // Setup global pointer to this project to be
       // accessed via JNI C++ code;
       //
@@ -3951,6 +3950,11 @@ Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
           }
       }
   }
+#else // ! ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  ROSE_ASSERT (!
+      "[FATAL] [ROSE] [frontend] [Java] "
+      "ROSE was not configured to support the Java frontend, see ROSE/configure --help.");
+#endif
 
   return status;
 } // Rose::Frontend::Java::Ecj::Run
