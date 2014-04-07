@@ -42,7 +42,7 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
      ROSE_ASSERT(t.declarationSet != NULL);
 
 #if 0
-     printf ("DONE: Calling SageInterface::buildDeclarationSets(node = %p = %s) \n",node,node->class_name().c_str());
+     printf ("DONE: Calling SageInterface::buildDeclarationSets(node = %p = %s) t.declarationSet = %p \n",node,node->class_name().c_str(),t.declarationSet);
 #endif
 
   // Call the traversal.
@@ -61,10 +61,15 @@ NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* no
 
      t.explictlySpecifiedCurrentScope = input_currentScope;
 
+  // DQ (4/7/2014): Set this explicitly using the one already built.
+     ROSE_ASSERT(declarationSet != NULL);
+     t.declarationSet = declarationSet;
+     ROSE_ASSERT(t.declarationSet != NULL);
+
      NameQualificationInheritedAttribute ih;
 
   // DQ (4/3/2014): Added assertion.
-  // ROSE_ASSERT(declarationSet != NULL);
+     ROSE_ASSERT(declarationSet != NULL);
 
   // This fails for test2001_02.C.
   // ROSE_ASSERT(declarationSet == NULL);
@@ -5153,7 +5158,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
   // (e.g. removning all functions including all associated non-defining declarations).
 
   // DQ (4/6/2014): Adding support for new analysis results. Fails for test2013_242.C.
-  // ROSE_ASSERT(declarationSet != NULL);
+     ROSE_ASSERT(declarationSet != NULL);
   // ROSE_ASSERT(declarationSet->getDeclarationMap().size() != 0);
 
   // DQ (4/1/2014): It might be that we need a still better test (such as if it a friend function).
@@ -5170,7 +5175,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
                bool declarationIsLocatedInDefiningScope = declarationSet->isLocatedInDefiningScope(firstNondefiningDeclaration);
 
             // This is required to allow test2013_115.C to pass.
-               declarationIsLocatedInDefiningScope = false;
+            // declarationIsLocatedInDefiningScope = false;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("declarationIsLocatedInDefiningScope = %s \n",declarationIsLocatedInDefiningScope ? "true" : "false");
