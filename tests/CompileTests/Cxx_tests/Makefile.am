@@ -62,10 +62,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_02.C \
    test2014_03.C \
    test2014_04.C \
-   test2014_05.C 
-
-# DQ (3/23/2014): This is a bug that is fixed in more recent work, need to merge with master).
-#  test2014_06.C
+   test2014_05.C \
+   test2014_06.C
 
 # Note that these will not compile with the GNU 4.7 header files.
 # It might be a boost issue.  The error is always the same.
