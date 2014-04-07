@@ -274,6 +274,8 @@ SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement*
   //    that appears in the named scope; but will not be required before the declaration in
   //    the named scope.
 
+#define DEBUG_LOCATED_IN_DEFINING_SCOPE 0
+
      SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
      ROSE_ASSERT(firstNondefiningDeclaration != NULL);
 
@@ -284,18 +286,58 @@ SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement*
 
      bool isDefinedInNamedScope = false;
 
-     while (i != declarationSet->begin())
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     printf ("In DeclarationSets::isLocatedInDefiningScope(): decl = %p = %s \n",decl,decl->class_name().c_str());
+     printf ("   --- declarationSet->size()                        = %zu \n",declarationSet->size());
+#endif
+
+     SgDeclarationStatement* associatedDeclaration = NULL;
+
+     while (isDefinedInNamedScope == false && i != declarationSet->end())
         {
+          ROSE_ASSERT(*i != NULL);
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
           SgScopeStatement* scope = (*i)->get_scope();
           ROSE_ASSERT(scope != NULL);
-          if (scope->isNamedScope() == true)
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("   --- scope->isNamedScope() = %s \n",scope->isNamedScope() ? "true" : "false");
+#endif
+       // if (scope->isNamedScope() == true)
+          SgGlobal* globalScope = isSgGlobal(scope);
+          if (globalScope != NULL || scope->isNamedScope() == true)
              {
-               isDefinedInNamedScope = true;
+            // Check if the function is output in the unparing, else it would not be defined.
+               bool willBeOutput = ((*i)->get_file_info()->isCompilerGenerated() == false ||
+                                      ((*i)->get_file_info()->isCompilerGenerated() &&
+                                       (*i)->get_file_info()->isOutputInCodeGeneration()) );
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+               printf ("   --- willBeOutput = %s \n",willBeOutput ? "true" : "false");
+#endif
+               associatedDeclaration = *i;
+
+            // isDefinedInNamedScope = true;
+               isDefinedInNamedScope = willBeOutput;
              }
 
           i++;
         }
-     return true;
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     if (associatedDeclaration != NULL)
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+        }
+       else
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p \n",associatedDeclaration);
+        }
+#endif
+
+     return isDefinedInNamedScope;
    }
 
 SageInterface::DeclarationSets*

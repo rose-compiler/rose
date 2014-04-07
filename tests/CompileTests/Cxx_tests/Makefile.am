@@ -77,6 +77,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_21.C \
    test2014_24.C \
    test2014_26.C \
+   test2014_27.C \
+   test2014_28.C \
+   test2014_29.C \
    test2014_30.C \
    test2014_31.C \
    test2014_32.C \
