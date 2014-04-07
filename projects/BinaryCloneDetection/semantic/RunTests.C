@@ -59,6 +59,8 @@ usage(int exit_status)
               <<"            With the \"--interactive\" switch, pressing control-C (or otherwise sending SIGINT to the\n"
               <<"            process) will cause the process to finish executing the current test and then prompt the user\n"
               <<"            on the tty whether it should checkpoint and/or terminate. The default is --no-interactive.\n"
+              <<"            Note that interrupts are not supported for the 25-run-test-fork version of the command since\n"
+              <<"            there's no easy way to control which process can read terminal input.\n"
               <<"    --timeout=NINSNS\n"
               <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
               <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
@@ -294,6 +296,11 @@ bool WorkItem::operator<(const WorkItem &other) const {
 
 bool WorkItem::operator==(const WorkItem &other) const {
     return specimen_id==other.specimen_id && func_id==other.func_id && igroup_id==other.igroup_id;
+}
+
+std::ostream& operator<<(std::ostream &o, const WorkItem &workItem) {
+    o <<"{specimen=" <<workItem.specimen_id <<", function=" <<workItem.func_id <<", igroup=" <<workItem.igroup_id <<"}";
+    return o;
 }
 
 int interrupted = -1;
@@ -1138,16 +1145,18 @@ checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer 
 
     if (progress)
         progress->message("checkpoint: committing");
-    std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
-    if (ntests_ran>0)
+    std::string desc = "ran " + StringUtility::plural(ntests_ran, "tests");
+    if (ntests_ran>0) {
         finish_command(tx, cmd_id, desc);
+    }
     tx->commit();
 
     if (progress) {
         progress->message("");
         progress->clear();
     }
-    std::cerr <<argv0 <<": " <<desc <<"\n";
+    if (ntests_ran>0)
+        std::cerr <<argv0 <<": " <<desc <<"\n";
     return conn->transaction();
 }
 

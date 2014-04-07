@@ -41,6 +41,8 @@ struct WorkItem {
     bool operator==(const WorkItem&) const;
 };
 
+std::ostream& operator<<(std::ostream&, const WorkItem&);
+
 typedef std::vector<WorkItem> Work;
 typedef std::vector<Work> MultiWork;
 typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
