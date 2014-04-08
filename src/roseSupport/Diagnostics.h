@@ -2,8 +2,8 @@
 #ifndef ROSE_Diagnostics_H
 #define ROSE_Diagnostics_H
 
-#include "Assert.h"                                     // Sawyer::Assert
-#include "Message.h"                                    // Sawyer::Message
+#include "sawyer/Assert.h"
+#include "sawyer/Message.h"
 
 namespace rose {
 
@@ -11,9 +11,9 @@ namespace rose {
  *
  *  ROSE uses the free [Sawyer](http://github.com/matzke1/sawyer) library to emit diagnostic messages for events such as
  *  debugging, program tracing, informational messages, warning and error messages, progress reports, and runtime logic
- *  assertions. The Sawyer message support can be found in the Sawyer::Message name space in "Message.h", and the run-time
- *  logic assertions can be found in the Sawyer::Assert name space in "Assert.h" (which also defines a number of C preprocessor
- *  macros whose names begin with "ASSERT_".
+ *  assertions. The Sawyer message support can be found in the Sawyer::Message name space in "sawyer/Message.h", and the
+ *  run-time logic assertions can be found in the Sawyer::Assert name space in "assert/Assert.h" (which also defines a number
+ *  of C preprocessor macros whose names begin with "ASSERT_".
  *
  *  Sawyer supports multiple instances of messaging facilities (Sawyer::Message::Facility) each of which defines a std::ostream
  *  object for each of a number of message importance levels.  ROSE defines one global library-wide facility,

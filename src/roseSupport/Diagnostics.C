@@ -1,6 +1,6 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
-#include "Assert.h"                                     // Sawyer::Assert
+#include "sawyer/Assert.h"
 #include "AsmUnparser.h"                                // rose::AsmUnparser
 #include "BinaryLoader.h"                               // rose::BinaryLoader
 #include "Diagnostics.h"                                // rose::Diagnostics

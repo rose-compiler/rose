@@ -1,7 +1,7 @@
 #ifndef ROSE_BINARYLOADER_H
 #define ROSE_BINARYLOADER_H
 
-#include "Message.h"                                    // Sawyer::Message
+#include "sawyer/Message.h"
 
 /** Base class for loading a static or dynamic object.
  *
