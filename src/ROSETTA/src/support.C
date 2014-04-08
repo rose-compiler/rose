@@ -314,6 +314,11 @@ Grammar::setUpSupport ()
      TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
+  // DQ (3/29/2014): data member to force search of base classes (for Java).
+     SymbolTable.setDataPrototype("static bool","force_search_of_base_classes","= false",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
+
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 
 #if 0
