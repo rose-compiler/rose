@@ -85,7 +85,7 @@ class FIConstAnalysis {
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
   VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
   void runAnalysis(SgProject* root);
-  void runAnalysis(SgProject* root,SgFunctionDefinition* mainFunctionRoot);
+  void runAnalysis(SgProject* root, SgFunctionDefinition* mainFunction);
   VariableConstInfo* getVariableConstInfo();
   void attachAstAttributes(Labeler* labeler, string attributeName);
 
@@ -102,13 +102,15 @@ class FIConstAnalysis {
   void setVariableConstInfo(VariableConstInfo* varConstInfo);
   void setOptionMultiConstAnalysis(bool);
   void writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename);
-  set<VariableId> variablesOfInterest; // temporary (refactoring artefact, will be removed)
+  VariableIdMapping::VariableIdSet determinedConstantVariables();
  private:
   VariableIdMapping* global_variableIdMapping;
   VarConstSetMap _varConstSetMap;
   VariableConstInfo* global_variableConstInfo;
   bool option_multiconstanalysis;
   bool detailedOutput;
+  set<VariableId> variablesOfInterest;
+
 };
 
 #endif

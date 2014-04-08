@@ -10,7 +10,8 @@ FIConstAnalysis::FIConstAnalysis(VariableIdMapping* variableIdMapping):
   global_variableIdMapping(variableIdMapping),
   global_variableConstInfo(0),
   option_multiconstanalysis(false),
-  detailedOutput(false) {
+  detailedOutput(false)
+ {
 }
 
 void FIConstAnalysis::runAnalysis(SgProject* root) {
@@ -25,6 +26,11 @@ void FIConstAnalysis::runAnalysis(SgProject* root, SgFunctionDefinition* mainFun
 }
 VariableConstInfo* FIConstAnalysis::getVariableConstInfo() {
   return global_variableConstInfo;
+}
+
+VariableIdMapping::VariableIdSet
+FIConstAnalysis::determinedConstantVariables() {
+  return variablesOfInterest;
 }
 
 ConstIntLattice FIConstAnalysis::analyzeAssignRhs(SgNode* rhs) {
@@ -262,14 +268,12 @@ int VariableConstInfo::uniqueConst(VariableId varId) {
   return vri.minIntValue();
 }
 
-// intra-procedural; ignores function calls
 VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping) {
   VarConstSetMap varConstIntMap;  
 
   VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
 
   // initialize map such that it is resized to number of variables of interest
-
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
     set<CppCapsuleConstIntLattice> emptySet;
     varConstIntMap[*i]=emptySet;
@@ -503,9 +507,8 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
     case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
     case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
-
     case V_SgPntrArrRefExp: res=AType::Top();break;
-    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<" using top as default."<<endl; res=AType::Top();break;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));

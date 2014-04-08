@@ -208,6 +208,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   ReachabilityResults.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
+  DeadCodeElimination.C                \
+  DeadCodeElimination.h                \
   woodpecker.C
 
 

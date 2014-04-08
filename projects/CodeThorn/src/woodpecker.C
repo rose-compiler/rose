@@ -38,17 +38,20 @@ using namespace CodeThorn;
 using namespace AType;
 
 #include "ReachabilityResults.h"
+#include "DeadCodeElimination.h"
 
-static  VariableIdSet variablesOfInterest;
+//static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 ReachabilityResults reachabilityResults;
 bool global_option_multiconstanalysis=false;
 
+#if 0
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
 }
+#endif
 
 size_t numberOfFunctions(SgNode* node) {
   RoseAst ast(node);
@@ -61,94 +64,8 @@ size_t numberOfFunctions(SgNode* node) {
 }
 
 //#include "FIConstAnalysis.C"
-#include "DeadCodeEliminationOperators.C"
+//#include "DeadCodeEliminationOperators.C"
 
-// returns the number of eliminated expressions
-int eliminateDeadCodePhase1(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
-                       VariableIdMapping* variableIdMapping,
-                       VariableConstInfo& vci) {
-  RoseAst ast1(root);
-
-  // eliminate variables with one value only
-  // 1) eliminate declaration of variable
-  // 2) eliminate assignment to variable
-  // 3) replace use of variable
-  cout<<"STATUS: Dead code elimination phase 1: Eliminating variables."<<endl;
-  cout<<"STATUS: Collecting variables, assignments, and expressions."<<endl;
-  list<SgVariableDeclaration*> toDeleteVarDecls;
-  list<SgAssignOp*> toDeleteAssignments;
-  list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
-  for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      VariableId declVarId=variableIdMapping->variableId(varDecl);
-      if(isVariableOfInterest(declVarId) && vci.isUniqueConst(declVarId)) {
-        toDeleteVarDecls.push_back(varDecl);
-      }
-    }
-    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-      VariableValuePair varValPair;
-      bool found=FIConstAnalysis::analyzeAssignment(assignOp,*variableIdMapping, &varValPair);
-      if(found) {
-        VariableId varId=varValPair.varId;
-        if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
-          toDeleteAssignments.push_back(assignOp);
-        }
-      }
-    }
-    if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-      VariableId varId;
-      bool found=FIConstAnalysis::determineVariable(varRef, varId, *variableIdMapping);
-      if(found) {
-        if(isVariableOfInterest(varId) && vci.isUniqueConst(varId)) {
-          SgIntVal* newSgIntValExpr=SageBuilder::buildIntVal(vci.uniqueConst(varId));
-          toReplaceExpressions.push_back(make_pair(varRef,newSgIntValExpr));
-        }
-      }
-    }
-  }
-  
-  cout<<"STATUS: eliminating declarations."<<endl;
-  int elimVar=0;
-  for(list<SgVariableDeclaration*>::iterator i=toDeleteVarDecls.begin();
-      i!=toDeleteVarDecls.end();
-      ++i) {
-    elimVar++;
-    if(detailedOutput) cout<<"Eliminating dead variable's declaration: "<<(*i)->unparseToString()<<endl;
-    SageInterface::removeStatement(*i, false);
-  }
-  cout<<"STATUS: eliminating assignments."<<endl;
-  int elimAssignment=0;
-  for(list<SgAssignOp*>::iterator i=toDeleteAssignments.begin();
-      i!=toDeleteAssignments.end();
-      ++i) {
-    SgExprStatement* exprStatAssign=isSgExprStatement(SgNodeHelper::getParent(*i));
-    if(!exprStatAssign) {
-      cerr<<"Error: assignments inside expressions are not supported yet.";
-      cerr<<"Problematic assignment: "<<(*i)->unparseToString()<<endl;
-      exit(1);
-    }
-    elimAssignment++;
-    if(detailedOutput) cout<<"Eliminating dead variable assignment: "<<(*i)->unparseToString()<<endl;
-    SageInterface::removeStatement(exprStatAssign, false);
-  }
-  
-  cout<<"STATUS: eliminating expressions."<<endl;
-  int elimVarUses=0;
-  for(list<pair<SgExpression*,SgExpression*> >::iterator i=toReplaceExpressions.begin();
-      i!=toReplaceExpressions.end();
-      ++i) {
-    elimVarUses++;
-    if(detailedOutput) cout<<"Replacing use of variable with constant: "<<(*i).first->unparseToString()<<" replaced by "<<(*i).second->unparseToString()<<endl;
-    SageInterface::replaceExpression((*i).first, (*i).second);
-  }
-  
-  cout<<"STATUS: Eliminated "<<elimVar<<" variable declarations."<<endl;
-  cout<<"STATUS: Eliminated "<<elimAssignment<<" variable assignments."<<endl;
-  cout<<"STATUS: Replaced "<<elimVarUses<<" uses of variables with constant."<<endl;
-  cout<<"STATUS: Eliminated "<<elimVar<<" dead variables."<<endl;
-  cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
-  return elimVar+elimAssignment+elimVarUses;
-}
 
 // returns the error_XX label number or -1
 //  error_0 is a valid label number (therefore -1 is returned if no label is found)
@@ -269,9 +186,10 @@ void printCodeStatistics(SgNode* root) {
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
   VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  DeadCodeElimination dce;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"Statistics:"<<endl;
-  cout<<"Number of empty if-statements: "<<listOfEmptyIfStmts(root).size()<<endl;
+  cout<<"Number of empty if-statements: "<<dce.listOfEmptyIfStmts(root).size()<<endl;
   cout<<"Number of functions          : "<<SgNodeHelper::listOfFunctionDefinitions(project).size()<<endl;
   cout<<"Number of global variables   : "<<SgNodeHelper::listOfGlobalVars(project).size()<<endl;
   cout<<"Number of used variables     : "<<setOfUsedVars.size()<<endl;
@@ -398,8 +316,9 @@ int main(int argc, char* argv[]) {
     TrivialInlining tin;
     tin.setDetailedOutput(true);
     tin.inlineFunctions(root);
+    DeadCodeElimination dce;
     // eliminate non called functions
-    int numEliminatedFunctions=eliminateNonCalledTrivialFunctions(root);
+    int numEliminatedFunctions=dce.eliminateNonCalledTrivialFunctions(root);
     cout<<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
   } else {
     cout<<"INFO: Inlining: turned off."<<endl;
@@ -409,11 +328,12 @@ int main(int argc, char* argv[]) {
   }
   
   if(boolOptions["eliminate-empty-if"]) {
-     cout<<"STATUS: Eliminating empty if-statements."<<endl;
+    DeadCodeElimination dce;
+    cout<<"STATUS: Eliminating empty if-statements."<<endl;
     size_t num=0;
     size_t numTotal=num;
     do {
-      num=eliminateEmptyIfStmts(root);
+      num=dce.eliminateEmptyIfStmts(root);
       cout<<"INFO: Number of if-statements eliminated: "<<num<<endl;
       numTotal+=num;
     } while(num>0);
@@ -425,9 +345,10 @@ int main(int argc, char* argv[]) {
   variableIdMapping.computeVariableSymbolMapping(root);
 
   VarConstSetMap varConstSetMap;
+  VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
-
+  variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
   if(detailedOutput)
     printResult(variableIdMapping,varConstSetMap);
 
@@ -436,10 +357,19 @@ int main(int argc, char* argv[]) {
   }
 
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
+  DeadCodeElimination dce;
   if(boolOptions["eliminate-dead-code"]) {
     cout<<"STATUS: performing dead code elimination."<<endl;
-    eliminateDeadCodePhase1(root,mainFunctionRoot,&variableIdMapping,vci);
+    dce.setDetailedOutput(false);
+    dce.setVariablesOfInterest(variablesOfInterest);
+    dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
     eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
+    cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
+    cout<<"STATUS: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
+    cout<<"STATUS: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
+    cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
+    cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
+
   } else {
     cout<<"STATUS: Dead code elimination: turned off."<<endl;
   }
