@@ -1,4 +1,4 @@
-#include "Message.h"
+#include <sawyer/Message.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>

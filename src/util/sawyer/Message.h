@@ -1,7 +1,7 @@
 #ifndef Sawyer_Message_H
 #define Sawyer_Message_H
 
-#include "Sawyer.h"
+#include <sawyer/Sawyer.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/logic/tribool.hpp>

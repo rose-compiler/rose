@@ -1,4 +1,4 @@
-#include "Message.h"
+#include <sawyer/Message.h>
 
 namespace Sawyer {
 

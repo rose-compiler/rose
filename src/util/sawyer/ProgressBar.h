@@ -1,7 +1,8 @@
 #ifndef Sawyer_ProgressBar_H
 #define Sawyer_ProgressBar_H
 
-#include "Message.h"
+#include <sawyer/Message.h>
+
 #include <cmath>
 #include <sstream>
 
