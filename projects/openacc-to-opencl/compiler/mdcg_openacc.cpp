@@ -172,13 +172,18 @@ SgExpression * KernelDesc::createFieldInitializer(
                versions.begin(),
                versions.end(),
                file_id,
-               "versions",
-               "version"
+               std::string("versions") + names_suffix.str(),
+               std::string("version") + names_suffix.str()
              );
     }
     case 10:
     {
       /// \todo acc_loop_splitter_t * splitted_loop;
+      return SageBuilder::buildIntVal(0);
+    }
+    case 11:
+    {
+      /// \todo size_t * version_by_devices; 
       return SageBuilder::buildIntVal(0);
     }
     default:
@@ -320,6 +325,96 @@ SgExpression * CompilerData::createFieldInitializer(
     default:
       assert(false);
   }
+}
+
+void LoopDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, unsigned version_id, unsigned loop_id, const input_t & input) {
+  char * err_msg;
+  char * query = (char *)malloc(200 * sizeof(char));
+  sprintf(query, "INSERT INTO Loops VALUES ( '%u', '%u', '%u' , '%u' , '%lu' , '%lu' , '%lu' , '%lu' , '%lu' , '%lu' , '%lu' , '%d' , '%d' , '%d' , '%d' );",
+                 region_id, kernel_id, version_id, loop_id,
+                 input.tile_0, input.gang, input.tile_1, input.worker, input.tile_2, input.vector, input.tile_3,
+                 input.unroll_tile_0, input.unroll_tile_1, input.unroll_tile_2, input.unroll_tile_3
+         );
+  int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+}
+
+void KernelVersion::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, unsigned version_id, const input_t & input) {
+  std::vector< ::KLT::Runtime::OpenACC::a_loop>::const_iterator it;
+  unsigned cnt_loop = 0;
+  for (it = input->loops.begin(); it != input->loops.end(); it++)
+    LoopDesc::storeToDB(db_file, region_id, kernel_id, version_id, cnt_loop++, *it);
+
+  char * err_msg;
+  char * query = (char *)malloc(140 * sizeof(char));
+  sprintf(query, "INSERT INTO Versions VALUES ( '%u', '%u', '%u' , '%s' );", region_id, kernel_id, version_id, input->kernel_name.c_str());
+  int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+}
+
+void KernelDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, const input_t & input) {
+  const std::vector<Kernel::a_kernel *> & versions = input->getKernels();
+  std::vector<Kernel::a_kernel *>::const_iterator it;
+  unsigned cnt_version = 0;
+  for (it = versions.begin(); it != versions.end(); it++)
+    KernelVersion::storeToDB(db_file, region_id, kernel_id, cnt_version++, *it);
+
+  unsigned num_loops = 0; /// \todo
+
+  char * err_msg;
+  char * query = (char *)malloc(140 * sizeof(char));
+  sprintf(query, "INSERT INTO Kernels VALUES ( '%u', '%u', '%s' , '%u' , '%u' );", region_id, kernel_id, "", cnt_version, num_loops);
+  int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+}
+
+void RegionDesc::storeToDB(sqlite3 * db_file, const input_t & input) {
+  assert(input.kernel_lists.size() == 1);
+  const std::list<Kernel *> & kernels = *(input.kernel_lists.begin());
+
+  std::list<Kernel *>::const_iterator it;
+  unsigned cnt_kernel = 0;
+  for (it = kernels.begin(); it != kernels.end(); it++)
+    KernelDesc::storeToDB(db_file, input.id, cnt_kernel++, *it);
+
+  char * err_msg;
+  char * query = (char *)malloc(120 * sizeof(char));
+  sprintf(query, "INSERT INTO Regions VALUES ( '%u', '%s' , '%u' );", input.id, input.file.c_str(), cnt_kernel);
+  int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+}
+
+void CompilerData::storeToDB(const std::string & db_file_name, const input_t & input) {
+  assert(!boost::filesystem::exists(boost::filesystem::path(db_file_name)));
+
+  sqlite3 * db_file;
+  int status = sqlite3_open(db_file_name.c_str(), &db_file);
+  assert(status == SQLITE_OK);
+
+  char * err_msg;
+  char * query;
+
+  query = "CREATE TABLE Regions ( region_id INT , opencl_file CHAR(50) , num_kernels INT );";
+  status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+
+  query = "CREATE TABLE Kernels ( region_id INT , kernel_id INT , name CHAR(30) , num_versions INT , num_loops INT );";
+  status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+
+  query = "CREATE TABLE Versions ( region_id INT , kernel_id INT , version_id INT , suffix CHAR(30) );";
+  status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+
+  query = "CREATE TABLE Loops ( region_id INT , kernel_id INT , version_id INT , loop_id INT , tile_0 INT , gang INT , tile_1 INT , worker INT , tile_2 INT , vector INT , tile_3 INT , unroll_tile_0 INT , unroll_tile_1 INT , unroll_tile_2 INT , unroll_tile_3 INT);";
+  status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+  assert (status == SQLITE_OK);
+
+  std::vector<RegionDesc::input_t>::const_iterator it;
+  for (it = input.regions.begin(); it != input.regions.end(); it++)
+    RegionDesc::storeToDB(db_file, *it);
+
+  /// \todo close DB
 }
 
 }

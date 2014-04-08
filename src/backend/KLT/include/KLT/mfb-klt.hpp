@@ -111,13 +111,26 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     object.shapes
   );
 
-  unsigned loop_id = 0;
+  unsigned loop_cnt = 0;
   const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & kernel_roots = object.kernel->getRoots();
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
-  for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++)
+  for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++) {
+    std::map<
+        typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::loop_t *,
+        typename KLT<Object>::Runtime::a_loop
+    > loop_descriptors_map;
     ::KLT::generateKernelBody<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(
-      *it_root, loop_id, result->loops, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
+      *it_root, loop_cnt, loop_descriptors_map, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
     );
+    assert(result->loops.empty());
+    result->loops.resize(loop_descriptors_map.size());
+    typename std::map<
+        typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::loop_t *,
+        typename KLT<Object>::Runtime::a_loop
+    >::const_iterator it_loop_desc;
+    for (it_loop_desc = loop_descriptors_map.begin(); it_loop_desc != loop_descriptors_map.end(); it_loop_desc++)
+      result->loops[it_loop_desc->second.id] = it_loop_desc->second;
+  }
 
   return result;
 }

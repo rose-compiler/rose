@@ -1,5 +1,10 @@
 
+#ifndef __OPENACC_MDCG_OPENACC_HPP_
+#define __OPENACC_MDCG_OPENACC_HPP_
+
 #include "openacc_spec.hpp"
+
+#include "sqlite3.h"
 
 namespace MDCG {
 
@@ -15,6 +20,8 @@ struct LoopDesc {
     const input_t & input,
     unsigned file_id
   );
+
+  static void storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, unsigned version_id, unsigned loop_id, const input_t & input);
 };
 
 struct KernelVersion {
@@ -27,6 +34,8 @@ struct KernelVersion {
     const input_t & input,
     unsigned file_id
   );
+
+  static void storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, unsigned version_id, const input_t & input);
 };
 
 SgExpression * createArrayOfTypeSize(
@@ -46,6 +55,8 @@ struct KernelDesc {
     const input_t & input,
     unsigned file_id
   );
+
+  static void storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, const input_t & input);
 };
 
 struct RegionDesc {
@@ -62,6 +73,8 @@ struct RegionDesc {
     const input_t & input,
     unsigned file_id
   );
+
+  static void storeToDB(sqlite3 * db_file, const input_t & input);
 };
 
 struct CompilerData {
@@ -79,8 +92,13 @@ struct CompilerData {
     const input_t & input,
     unsigned file_id
   );
+
+  static void storeToDB(const std::string & db_file, const input_t & input);
 };
 
 }
 
 }
+
+#endif /* __OPENACC_MDCG_OPENACC_HPP_ */
+

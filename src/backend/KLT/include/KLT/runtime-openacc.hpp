@@ -16,7 +16,7 @@ namespace Runtime {
 class OpenACC {
   public:
     struct loop_shape_t {
-      loop_shape_t(long, long, long, long, long, long, long);
+      loop_shape_t(long, long, long, long, long, long, long, bool, bool, bool, bool);
 
       long tile_0;
       long gang;
@@ -26,10 +26,17 @@ class OpenACC {
       long vector;
       long tile_3;
 
+      bool unroll_tile_0;
+      bool unroll_tile_1;
+      bool unroll_tile_2;
+      bool unroll_tile_3;
+
       SgVariableSymbol * iterators[7];
     };
 
     struct a_loop {
+      unsigned id;
+
       SgExpression * lb;
       SgExpression * ub;
 
@@ -40,6 +47,11 @@ class OpenACC {
       long tile_2;
       long vector;
       long tile_3;
+
+      bool unroll_tile_0;
+      bool unroll_tile_1;
+      bool unroll_tile_2;
+      bool unroll_tile_3;
     };
 
     enum exec_mode_e {

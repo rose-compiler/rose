@@ -35,3 +35,4 @@ typedef ::KLT::LoopTrees<Annotation> LoopTrees;
 typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
 
 #endif /* __OPENACC_SPEC_HPP__ */
+

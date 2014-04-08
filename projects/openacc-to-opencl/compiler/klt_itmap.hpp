@@ -1,4 +1,7 @@
 
+#ifndef __OPENACC_KLT_ITMAP_HPP__
+#define __OPENACC_KLT_ITMAP_HPP__
+
 #include "openacc_spec.hpp"
 
 namespace KLT {
@@ -22,4 +25,22 @@ class SingleVersionItMapper : public IterationMapper<Annotation, Language::OpenC
     ) const;
 };
 
+class IterationMapperOpenACC : public IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC> {
+  private:
+    std::vector<unsigned> tiling_sizes;
+
+  public:
+    IterationMapperOpenACC();
+    IterationMapperOpenACC(const std::vector<unsigned> & tiling_sizes_);
+
+  private:
+    void computeValidShapes(
+      LoopTrees<Annotation>::loop_t * loop,
+      std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
+    ) const;
+};
+
 }
+
+#endif /* __OPENACC_KLT_ITMAP_HPP__ */
+

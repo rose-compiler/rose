@@ -64,6 +64,11 @@ class Generator {
     );
 };
 
+template <class Annotation>
+bool cmpDataName(const Data<Annotation> * data_lhs, const Data<Annotation> * data_rhs) {
+  return data_lhs->getVariableSymbol()->get_name().getString() < data_rhs->getVariableSymbol()->get_name().getString();
+}
+
 template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
   const LoopTrees<Annotation> & loop_trees,
@@ -94,14 +99,18 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
     if (used) kernel->getArguments().scalars.push_back(scalar);
   }
 
+  std::vector<Data<Annotation> *> sorted_data;
   for (it_data = kernel->getDataflow().datas.begin(); it_data != kernel->getDataflow().datas.end(); it_data++) {
     Data<Annotation> * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol(); // FIXME Whole data approx (same symbol same data)
 
     bool used = sym_var_refs.find(data_sym) != sym_var_refs.end();
 
-    if (used) kernel->getArguments().datas.push_back(data); // If it is referenced (SgVarRefExp) then it is needed
+    if (used) sorted_data.push_back(data); // If it is referenced (SgVarRefExp) then it is needed
   }
+
+  std::sort(sorted_data.begin(), sorted_data.end(), &cmpDataName<Annotation>);
+  kernel->getArguments().datas.insert(kernel->getArguments().datas.end(), sorted_data.begin(), sorted_data.end());
 
   // FIXME with partial data we might end up referencing multiple time the same variable..
 }
@@ -151,6 +160,56 @@ void buildAllShapeConfigs(
   }
 }
 
+template <class Annotation, class Language, class Runtime>
+unsigned getUnrollingFactor(
+  typename LoopTrees<Annotation>::loop_t * loop,
+  const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & shaping
+) {
+  unsigned child_unrolling_factor = 1;
+  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_child;
+  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++) {
+    typename LoopTrees<Annotation>::loop_t * child_loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_child);
+    if (child_loop != NULL) {
+      unsigned tmp_unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(child_loop, shaping);
+      child_unrolling_factor = child_unrolling_factor > tmp_unrolling_factor ? child_unrolling_factor : tmp_unrolling_factor;
+    }
+  }
+
+  unsigned unrolling_factor = 1;
+  typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shaping.find(loop);
+  assert(it_shape != shaping.end());
+  if (it_shape->second != NULL) {
+    if (it_shape->second->unroll_tile_0)
+      unrolling_factor = unrolling_factor > it_shape->second->tile_0 ? unrolling_factor : it_shape->second->tile_0;
+    if (it_shape->second->unroll_tile_1)
+      unrolling_factor = unrolling_factor > it_shape->second->tile_1 ? unrolling_factor : it_shape->second->tile_1;
+    if (it_shape->second->unroll_tile_2)
+      unrolling_factor = unrolling_factor > it_shape->second->tile_2 ? unrolling_factor : it_shape->second->tile_2;
+    if (it_shape->second->unroll_tile_3)
+      unrolling_factor = unrolling_factor > it_shape->second->tile_3 ? unrolling_factor : it_shape->second->tile_3;
+  }
+
+  return child_unrolling_factor * unrolling_factor;
+}
+
+template <class Annotation, class Language, class Runtime>
+unsigned getUnrollingFactor(
+  Kernel<Annotation, Language, Runtime> * kernel,
+  const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & shaping
+) {
+  unsigned unrolling_factor = 1;
+  const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
+  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
+  for (it_root = roots.begin(); it_root != roots.end(); it_root++) {
+    typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_root);
+    if (loop != NULL) {
+      unsigned tmp_unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(loop, shaping);
+      unrolling_factor = unrolling_factor > tmp_unrolling_factor ? unrolling_factor : tmp_unrolling_factor;
+    }
+  }
+  return unrolling_factor;
+}
+
 template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::generate(
   const LoopTrees<Annotation> & loop_trees,
@@ -183,6 +242,9 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       //     The "shape" of a loop is how this loop is adapted to the execution model.
 
       std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > shape_map;
+      typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_loop_shape;
+      typename std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> >::const_iterator it_shape_vect;
+      typename std::vector<typename Runtime::loop_shape_t *>::const_iterator it_shape;
 
       cg_config.getIterationMapper().determineLoopShapes(*it_kernel, shape_map);
 
@@ -197,14 +259,40 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       // 5 - Code Generation
 
       unsigned cnt = 0;
-      typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> >::iterator it_loop_shape;
-      for (it_loop_shape = loop_shape_set.begin(); it_loop_shape != loop_shape_set.end(); it_loop_shape++) {
+      typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> >::iterator it_loop_shape_map;
+      for (it_loop_shape_map = loop_shape_set.begin(); it_loop_shape_map != loop_shape_set.end(); it_loop_shape_map++) {
+
+        unsigned unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(*it_kernel, *it_loop_shape_map);
+
+        std::cerr << "Generate kernel version " << cnt << "/" << loop_shape_set.size() << std::endl;
+        for (it_loop_shape = it_loop_shape_map->begin(); it_loop_shape != it_loop_shape_map->end(); it_loop_shape++) {
+          std::cerr << "  Loop: " << it_loop_shape->first->iterator->get_name().getString() << std::endl;
+          if (it_loop_shape->second != NULL) {
+            std::cerr << "      Tile 0: " << it_loop_shape->second->tile_0 << " " << it_loop_shape->second->unroll_tile_0 << std::endl;
+            std::cerr << "      Tile 1: " << it_loop_shape->second->tile_1 << " " << it_loop_shape->second->unroll_tile_1 << std::endl;
+            std::cerr << "      Tile 2: " << it_loop_shape->second->tile_2 << " " << it_loop_shape->second->unroll_tile_2 << std::endl;
+            std::cerr << "      Tile 3: " << it_loop_shape->second->tile_3 << " " << it_loop_shape->second->unroll_tile_3 << std::endl;
+          }
+          else
+            std::cerr << "      No shape information." << std::endl;
+        }
+        std::cerr << "    Unrolling Factor = " << unrolling_factor << std::endl;
+
+        if (unrolling_factor > 128) {
+          std::cerr << "  Skip this shape configuration because of a Unrolling factor too large." << std::endl;
+          continue;
+        }
+
         typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
 
-        kernel_desc.shapes.insert(it_loop_shape->begin(), it_loop_shape->end());
+        kernel_desc.shapes.insert(it_loop_shape_map->begin(), it_loop_shape_map->end());
 
         (*it_kernel)->addKernel(p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc));
       }
+
+      for (it_shape_vect = shape_map.begin(); it_shape_vect != shape_map.end(); it_shape_vect++)
+        for (it_shape = it_shape_vect->second.begin(); it_shape != it_shape_vect->second.end(); it_shape++)
+          delete *it_shape;
       
     }
 }

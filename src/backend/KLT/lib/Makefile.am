@@ -7,9 +7,12 @@ libKLT_la_SOURCES= \
   mfb-klt.cpp \
   dlx-openacc.cpp \
   runtime-openacc.cpp \
+  mfb-openacc.cpp \
+  klt-openacc.cpp \
+  iteration-mapper-openacc.cpp \
+  code-generation.cpp \
   utils.cpp
-libKLT_la_CXXFLAGS= \
-  -g \
+libKLT_la_CXXFLAGS= -g -O2 \
   -I$(top_srcdir)/src/frontend/DLX/include \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(top_srcdir)/src/midend/MFB/include \

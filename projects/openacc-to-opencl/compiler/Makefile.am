@@ -1,21 +1,22 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS=openacc-to-opencl
+bin_PROGRAMS=looptree-to-opencl
 
-openacc_to_opencl_SOURCES= \
-  openacc-to-opencl.cpp \
+looptree_to_opencl_SOURCES= \
+  looptree-to-opencl.cpp \
   mdcg_openacc.cpp \
   klt_itmap.cpp
-openacc_to_opencl_CXXFLAGS= \
-  -g \
+looptree_to_opencl_CXXFLAGS= -g -O2 \
   -I$(top_srcdir)/src/frontend/DLX/include \
   -I$(top_srcdir)/src/midend/MFB/include \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(top_srcdir)/src/midend/MDCG/include \
-  -g \
+  $(SQLITE3_CFLAGS) \
   $(ROSE_INCLUDES)
-openacc_to_opencl_LDADD = \
+looptree_to_opencl_LDFLAGS= \
+  $(SQLITE3_LDFLAGS)
+looptree_to_opencl_LDADD= \
   $(top_builddir)/src/frontend/DLX/lib/core/libDLX-core.la \
   $(top_builddir)/src/frontend/DLX/lib/openacc/libDLX-openacc.la \
   $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la \
@@ -23,13 +24,4 @@ openacc_to_opencl_LDADD = \
   $(top_builddir)/src/backend/KLT/lib/libKLT.la \
   $(LIBS_WITH_RPATH) \
   $(ROSE_LIBS)
-
-if ROSE_HAVE_OPENCL_INC
-check-local: openacc-to-opencl
-	rm -f host-data.c kernels.cl
-	./openacc-to-opencl $(top_srcdir)/../tests/101/101-klt.lt $(top_srcdir)/../libopenacc/include $(OPENCL_INC_DIR)
-endif
-
-clean-local:
-	rm -f host-data.c kernels.cl
 

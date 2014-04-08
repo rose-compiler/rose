@@ -18,46 +18,25 @@ unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string 
   model_builder.add(openacc_model, "kernel",       libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "loop",         libopenacc_dir + "/OpenACC/internal", "h");
   model_builder.add(openacc_model, "api",          libopenacc_dir + "/OpenACC/device",   "cl");
-/*
-  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "init",         libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "mem-manager",  libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "opencl-debug", libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "opencl-init",  libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "data-env",     libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "debug",        libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "init",         libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "loop",         libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "region",       libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "runtime",      libopenacc_dir + "/OpenACC/private",  "h");
-  model_builder.add(openacc_model, "openacc",      libopenacc_dir + "/OpenACC/",         "h");
-*/
+
   return openacc_model;
 }
 
 int main(int argc, char ** argv) {
 
   // Arguments
-  assert(argc == 7 || argc == 10);
-
-  std::string libopenacc_dir(argv[2]);
-
-  std::string opencl_dir(argv[3]);
-
-  long t_0_0 = atol(argv[4]);
-  long t_0_1 = atol(argv[5]);
-  long t_0_2 = atol(argv[6]);
-  
-  long t_1_0 = 0;
-  long t_1_1 = 0;
-  long t_1_2 = 0;
-  if (argc == 10) {
-    t_1_0 = atol(argv[7]);
-    t_1_1 = atol(argv[8]);
-    t_1_2 = atol(argv[9]);
+  if (argc < 4) {
+    std::cerr << "Usage: " << argv[0] << " LIBOPENACC_DIR OPENCL_DIR versions.db [looptree.lt [...] ]" << std::endl;
+    exit(-1);
   }
+
+  // argv[1]: LoopTrees file
+
+  std::string libopenacc_dir(argv[1]);
+
+  std::string opencl_dir(argv[2]);
+
+  std::string db_file(argv[3]);
 
   // Build a default ROSE project
   SgProject * project = new SgProject::SgProject();
@@ -84,10 +63,6 @@ int main(int argc, char ** argv) {
   // Initialize KLT's Generator
   KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, "kernels.cl");
 
-  // Read input LoopTrees
-  LoopTrees loop_trees;
-  loop_trees.read(argv[1]);
-
   // Read OpenACC Model
   unsigned model = readOpenaccModel(model_builder, libopenacc_dir);
 
@@ -97,18 +72,52 @@ int main(int argc, char ** argv) {
   // Load OpenACC API for KLT
   KLT::Runtime::OpenACC::loadAPI(driver, libopenacc_dir);
 
+  std::vector<unsigned> tiling_sizes;
+    tiling_sizes.push_back(2);/*
+    tiling_sizes.push_back(4);
+    tiling_sizes.push_back(8);
+    tiling_sizes.push_back(16);
+    tiling_sizes.push_back(32);
+    tiling_sizes.push_back(64);*/
+    tiling_sizes.push_back(128);
+
   // Create a Code Generation Configuration
   KLT::CG_Config<Annotation, Language, Runtime> cg_config(
       new KLT::LoopMapper<Annotation, Language, Runtime>(),
-      new KLT::SingleVersionItMapper(t_0_0, t_0_1, t_0_2, t_1_0, t_1_1, t_1_2),
+      new KLT::IterationMapperOpenACC(tiling_sizes),
       new KLT::DataFlow<Annotation, Language, Runtime>()
   );
 
-  // Call the generator
+  // Call the generator for each input file and merge the results (Assume that only one kernel is produced)
+  Kernel * kernel = NULL;
+  for (size_t arg_idx = 4; arg_idx < argc; arg_idx++) {
+    // Read input LoopTrees
+    LoopTrees loop_trees;
+    loop_trees.read(argv[arg_idx]);
+
+    // Generate kernels
+    std::set<std::list<Kernel *> > kernel_lists;
+    generator.generate(loop_trees, kernel_lists, cg_config);
+
+    // Merge results
+    assert(kernel_lists.size() == 1);
+    const std::list<Kernel *> & tmp_kernel_list = *(kernel_lists.begin());
+    assert(tmp_kernel_list.size() == 1);
+    if (kernel == NULL)
+      kernel = tmp_kernel_list.front();
+    else {
+      const std::vector<Kernel::a_kernel *> & versions = tmp_kernel_list.front()->getKernels();
+      std::vector<Kernel::a_kernel *>::const_iterator it;
+      for (it = versions.begin(); it != versions.end(); it++)
+        kernel->addKernel(*it);
+    }
+  }
+
+  // Build input for static data generation
   MDCG::OpenACC::RegionDesc::input_t input_region;
     input_region.id = 0;
     input_region.file = std::string("kernels.cl");
-    generator.generate(loop_trees, input_region.kernel_lists, cg_config);
+    input_region.kernel_lists.insert(std::list<Kernel *>(1, kernel));
 
   MDCG::OpenACC::CompilerData::input_t input;
     input.runtime_dir = SageBuilder::buildVarRefExp("LIBOPENACC_DIR");
@@ -118,13 +127,15 @@ int main(int argc, char ** argv) {
 
   // Get model element for Region Descriptor
   std::set<MDCG::Model::class_t> classes;
-//model_builder.get(model).lookup<MDCG::Model::class_t>("acc_region_desc_t_", classes);
   model_builder.get(model).lookup<MDCG::Model::class_t>("acc_compiler_data_t_", classes);
   assert(classes.size() == 1);
   MDCG::Model::class_t region_desc_class = *(classes.begin());
 
-//codegen.addDeclaration<MDCG::OpenACC::RegionDesc>(region_desc_class, input, host_data_file_id, "regions");
+  // Generate static data
   codegen.addDeclaration<MDCG::OpenACC::CompilerData>(region_desc_class, input, host_data_file_id, "compiler_data");
+
+  // Store static data in data-base
+  MDCG::OpenACC::CompilerData::storeToDB(db_file, input);
 
   project->unparse(); // Cannot call the backend directly because of OpenCL files. There is a warning when trying, just have to trace it.
 
