@@ -1423,12 +1423,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               typeElaborationIsRequired = true;
 
                            // Reset the symbol to one that will match the declaration.
-                              symbol = SageInterface::lookupVariableSymbolInParentScopes(name,currentScope);
-                              if (symbol != NULL)
+                           // symbol = SageInterface::lookupVariableSymbolInParentScopes(name,currentScope);
+                              variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name,currentScope);
+                           // if (symbol != NULL)
+                              if (variableSymbol != NULL)
                                  {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                // printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",variableSymbol,variableSymbol->class_name().c_str());
 #endif
+                                   symbol = variableSymbol;
                                  }
                                 else
                                  {
@@ -1446,8 +1450,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    ROSE_ASSERT(variableDeclaration->get_file_info() != NULL);
                                    variableDeclaration->get_file_info()->display("variableDeclaration: debug");
 #endif
-#if 0
-                                   printf ("WARNING: In NameQualificationTraversal::nameQualificationDepth(): variableSymbol == NULL: reusing the originally saved symbol = %p \n",originalSymbol);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("WARNING: In NameQualificationTraversal::nameQualificationDepth(): variableSymbol == NULL: searching for the associated symbol using the declaration \n");
 #endif
                                 // DQ (8/14/2013): Use an alternative mechanism to get the correct symbol more directly 
                                 // (might be more expensive, or perhaps this mechanism should be used more generally in 
@@ -1455,10 +1459,22 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    SgInitializedName* currentVariableDeclarationInitializedName = SageInterface::getFirstInitializedName(variableDeclaration); 
                                    ROSE_ASSERT(currentVariableDeclarationInitializedName != NULL);
 
+#if 0
+                                // DQ (4/7/2014): We should not be resolving a symbol if we didn't find the correct symbol (see test2014_39.C).
                                    symbol = currentVariableDeclarationInitializedName->search_for_symbol_from_symbol_table();
                                    ROSE_ASSERT(symbol != NULL);
-#if 0
-                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): variableSymbol == NULL: variableDeclaration = %p symbol = %p = %s \n",variableDeclaration,symbol,symbol->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): variableSymbol != NULL: variableDeclaration = %p symbol = %p = %s \n",variableDeclaration,symbol,symbol->class_name().c_str());
+#endif
+#else
+                                // DQ (4/7/2014): Reset the symbol to NULL (snce we didn't find an associated SgVariableSymbol).
+                                // In the switch statement (below) we will use the declaration to obtain the correct
+                                // symbol and then compare if we have found the correct one using the name lookup through
+                                // parent scopes.  Then we will beable to know if name qualification is required. If we
+                                // use the declaration to find the symbol here, then we will detect that no name
+                                // qualification is required (where it might be).  Testcode test2014_39.C demonstrates
+                                // this issue.
+                                   symbol = NULL;
 #endif
 #if 0
                                 // DQ (8/13/2013): I think this case should not come up if everything else works.  Since there are no templated variables I'm not sure what to do here.
@@ -1604,6 +1620,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
                        }
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("AT SWITCH: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
                     switch (symbol->variantT())
                        {
                       // DQ (12/27/2011): Added support for template class symbols.
@@ -1703,7 +1722,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // if (associatedInitializedName->get_firstNondefiningDeclaration() == variableDeclaration->get_firstNondefiningDeclaration())
                               if (associatedInitializedName == SageInterface::getFirstInitializedName(variableDeclaration))
                                  {
-                                // This class is visible from where it is referenced.
+                                // This variable is visible from where it is referenced.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This variable IS visible from where it is referenced \n");
 #endif
@@ -1762,7 +1781,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()); 
 
                               SgDeclarationStatement* declarationFromSymbol = functionDeclaration->get_declaration_associated_with_symbol();
-#if 0
+#if 1
                            // DQ (11/18/2013): Try to reset this...
                               if (declarationFromSymbol == NULL)
                                  {
@@ -3919,7 +3938,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
         }
 
-  // DQ (4/3/2014): Added new case to address no longer traversion this IR node's member.
+  // DQ (4/3/2014): Added new case to address no longer traversing this IR node's member.
   // See test2005_73.C.
      SgTemplateInstantiationDirectiveStatement* templateInstantiationDirectiveStatement = isSgTemplateInstantiationDirectiveStatement(n);
      if (templateInstantiationDirectiveStatement != NULL)
