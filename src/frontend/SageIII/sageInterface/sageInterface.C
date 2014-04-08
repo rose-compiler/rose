@@ -2632,7 +2632,10 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
              }
             else
              {
-               printf ("WARNING: Scopes do NOT match! variable = %p = %s (could this be a static variable, or has the symbol table been setup before the scopes have been set?) \n",variable,variable->get_name().str());
+               if (SgProject::get_verbose() > 0)
+                  {
+                    printf ("WARNING: Scopes do NOT match! variable = %p = %s (could this be a static variable, or has the symbol table been setup before the scopes have been set?) \n",variable,variable->get_name().str());
+                  }
              }
 
           SgSymbol* symbol = new SgVariableSymbol(variable);
@@ -2843,6 +2846,18 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                  // DQ (10/8/2007): It turns out that this is always NULL, because the parent of the functionDeclaration has not yet been set in the copy mechanism!
                     if (functionDeclaration != NULL)
                        {
+                      // DQ (3/28/2014): After a call with Philippe, this Java specific issues is fixed and we don't seem to see this problem any more.
+                         if (functionDeclaration->isForward() == true)
+                            {
+                              printf ("ERROR: functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                              printf ("   --- functionDeclaration (get_name())   = %s \n",get_name(functionDeclaration).c_str());
+                              printf ("   --- functionDeclaration (mangled name) = %s \n",functionDeclaration->get_mangled_name().str());
+                              SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+                              if (memberFunctionDeclaration != NULL)
+                                 {
+                                   printf ("memberFunctionDeclaration != NULL \n");
+                                 }
+                            }
                          ROSE_ASSERT(functionDeclaration->isForward() == false);
                          SgInitializedNamePtrList & argumentList = functionDeclaration->get_args();
                          supportForVariableLists(scope,symbolTable,argumentList);
@@ -2940,6 +2955,23 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
           case V_SgFortranDo: // Liao 12/19/2008, My understanding is that Fortran do loop header does not introduce new symbols like  a C/C++ for loop does
              {
             // printf ("Used the list of statements/declarations that are held deirectly by this scope \n");
+               break;
+             }
+
+       // DQ (3/29/2014): Added support for SgJavaForEachStatement.
+          case V_SgJavaForEachStatement:
+             {
+               SgJavaForEachStatement* javaForEachStatement = isSgJavaForEachStatement(scope);
+               SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(javaForEachStatement->get_element());
+               if (variableDeclarationCondition != NULL)
+                  {
+                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+                 // printf ("There is a variable declaration in the while statement condition, it needs to be added to the symbol table \n");
+                 // ROSE_ASSERT(false);
+
+                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
+                  }
+               return;
                break;
              }
 
@@ -17628,7 +17660,7 @@ void SageInterface::destroyTempDirectory(string directory_name) {
 /**
  * Invoke JavaRose to translate a given file and put the resulting AST in the global space of the project.
  */
-void SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
+SgFile *SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
     //
     // Set up the new source file for processing "a la Rose".
     //
@@ -17655,6 +17687,8 @@ void SageInterface::processFile(SgProject *project, string filename, bool unpars
         project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
         ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
     }
+
+    return file;
 }
 
 
@@ -17712,7 +17746,7 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
  * Using the file_content string, create a file with the content in question; build its AST and
  * add it to the project.
  */
-void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content) {
+void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content, bool unparse /* true */) {
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
@@ -17726,7 +17760,7 @@ void SageInterface::preprocessCompilationUnit(SgProject *project, string file_na
     string filename = (string) utf8;
     Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
 
-    processFile(project, filename, true /* unparse */); // translate the file and unparse it
+    processFile(project, filename, unparse); // translate the file and unparse it, if requested (unparse=true is the default).
 }
 
 
