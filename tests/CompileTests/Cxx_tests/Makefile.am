@@ -89,6 +89,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_36.C \
    test2014_37.C \
    test2014_38.C \
+   test2014_39.C \
+   test2014_40.C \
+   test2014_41.C \
    lulesh.C \
    luleshTALC.C
 

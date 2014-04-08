@@ -266,6 +266,8 @@ SageInterface::DeclarationSets::getDeclarationMap()
 bool
 SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement* decl)
    {
+  // DQ (4/7/2014): This function assumes that the input is a friend declaration.
+
   // The existence of a declaration in a named scope (if a friend function) will cause
   // subsequent declarations to be qualified where name qualification is required.
   // A couple of issues:
@@ -299,23 +301,41 @@ SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement*
 #if DEBUG_LOCATED_IN_DEFINING_SCOPE
           printf ("   --- *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
-          SgScopeStatement* scope = (*i)->get_scope();
+       // We want to know the structural position, not the semantic scope.
+          SgScopeStatement* semantic_scope   = (*i)->get_scope();
+          SgScopeStatement* structural_scope = isSgScopeStatement((*i)->get_parent());
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- semantic_scope = %p = %s \n",semantic_scope,semantic_scope->class_name().c_str());
+          printf ("   --- structural_scope = %p = %s \n",structural_scope,structural_scope->class_name().c_str());
+#endif
+       // DQ (4/7/2014): If it is a member of a class then we don't consider the structural scope, else it makes a difference,
+          SgScopeStatement* scope = isSgClassDefinition(semantic_scope) != NULL ? semantic_scope : structural_scope;
           ROSE_ASSERT(scope != NULL);
+
 #if DEBUG_LOCATED_IN_DEFINING_SCOPE
           printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
           printf ("   --- scope->isNamedScope() = %s \n",scope->isNamedScope() ? "true" : "false");
 #endif
        // if (scope->isNamedScope() == true)
           SgGlobal* globalScope = isSgGlobal(scope);
-          if (globalScope != NULL || scope->isNamedScope() == true)
+
+       // Friend functions declared in the class definition are not meaningful for determining name qualification.
+       // if (globalScope != NULL || scope->isNamedScope() == true)
+          if (globalScope != NULL || (scope->isNamedScope() == true && isSgClassDefinition(structural_scope) == NULL) )
              {
             // Check if the function is output in the unparing, else it would not be defined.
                bool willBeOutput = ((*i)->get_file_info()->isCompilerGenerated() == false ||
                                       ((*i)->get_file_info()->isCompilerGenerated() &&
                                        (*i)->get_file_info()->isOutputInCodeGeneration()) );
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+               printf ("   --- before: willBeOutput = %s \n",willBeOutput ? "true" : "false");
+#endif
+            // Being output only count when it is output where it is located structurally.
+               willBeOutput = willBeOutput && scope == structural_scope;
 
 #if DEBUG_LOCATED_IN_DEFINING_SCOPE
-               printf ("   --- willBeOutput = %s \n",willBeOutput ? "true" : "false");
+               printf ("   --- after: willBeOutput = %s \n",willBeOutput ? "true" : "false");
 #endif
                associatedDeclaration = *i;
 
