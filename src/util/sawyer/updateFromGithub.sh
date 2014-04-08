@@ -19,5 +19,5 @@ fi
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now!
 for f in Assert Message ProgressBar Sawyer; do
-    cp "$SAWYER_ROOT/src/$f.h" "$SAWYER_ROOT/src/$f.C" .
+    cp "$SAWYER_ROOT/sawyer/$f.h" "$SAWYER_ROOT/sawyer/$f.C" .
 done
