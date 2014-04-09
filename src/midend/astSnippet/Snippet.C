@@ -733,7 +733,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                             break;
                         case LOCDECLS_AT_END:
                             file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFunctionScope));
-                            SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+                            SageInterface::insertStatementBeforeFirstNonDeclaration(stmts[i], targetFunctionScope);
                             break;
                         case LOCDECLS_AT_CURSOR:
                             file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
