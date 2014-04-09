@@ -93,6 +93,8 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     SgFunctionDeclaration * defn_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_definingDeclaration());
     assert(defn_kernel_decl != NULL);
     defn_kernel_decl->get_functionModifier().setOpenclKernel();
+
+    SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
   }
 
   // * Local Declarations *

@@ -287,7 +287,9 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
 
         kernel_desc.shapes.insert(it_loop_shape_map->begin(), it_loop_shape_map->end());
 
-        (*it_kernel)->addKernel(p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc));
+        typename Kernel<Annotation, Language, Runtime>::a_kernel * kernel = p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc);
+
+        (*it_kernel)->addKernel(kernel);
       }
 
       for (it_shape_vect = shape_map.begin(); it_shape_vect != shape_map.end(); it_shape_vect++)

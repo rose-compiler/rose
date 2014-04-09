@@ -337,6 +337,7 @@ void LoopDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_
          );
   int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
   assert (status == SQLITE_OK);
+  free(query);
 }
 
 void KernelVersion::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, unsigned version_id, const input_t & input) {
@@ -350,6 +351,7 @@ void KernelVersion::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned ke
   sprintf(query, "INSERT INTO Versions VALUES ( '%u', '%u', '%u' , '%s' );", region_id, kernel_id, version_id, input->kernel_name.c_str());
   int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
   assert (status == SQLITE_OK);
+  free(query);
 }
 
 void KernelDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, const input_t & input) {
@@ -366,6 +368,7 @@ void KernelDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kerne
   sprintf(query, "INSERT INTO Kernels VALUES ( '%u', '%u', '%s' , '%u' , '%u' );", region_id, kernel_id, "", cnt_version, num_loops);
   int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
   assert (status == SQLITE_OK);
+  free(query);
 }
 
 void RegionDesc::storeToDB(sqlite3 * db_file, const input_t & input) {
@@ -382,6 +385,7 @@ void RegionDesc::storeToDB(sqlite3 * db_file, const input_t & input) {
   sprintf(query, "INSERT INTO Regions VALUES ( '%u', '%s' , '%u' );", input.id, input.file.c_str(), cnt_kernel);
   int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
   assert (status == SQLITE_OK);
+  free(query);
 }
 
 void CompilerData::storeToDB(const std::string & db_file_name, const input_t & input) {

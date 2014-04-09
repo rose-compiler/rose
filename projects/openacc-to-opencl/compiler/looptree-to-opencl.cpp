@@ -72,13 +72,13 @@ int main(int argc, char ** argv) {
   // Load OpenACC API for KLT
   KLT::Runtime::OpenACC::loadAPI(driver, libopenacc_dir);
 
-  std::vector<unsigned> tiling_sizes;
-    tiling_sizes.push_back(2);/*
+  std::vector<unsigned> tiling_sizes;/*
+    tiling_sizes.push_back(2);
     tiling_sizes.push_back(4);
-    tiling_sizes.push_back(8);
+    tiling_sizes.push_back(8);*/
     tiling_sizes.push_back(16);
     tiling_sizes.push_back(32);
-    tiling_sizes.push_back(64);*/
+    tiling_sizes.push_back(64);
     tiling_sizes.push_back(128);
 
   // Create a Code Generation Configuration

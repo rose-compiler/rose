@@ -35,6 +35,8 @@ struct model_t {
   model_t();
   model_t(const model_t & model);
 
+  ~model_t();
+
   // Variables
 
   std::vector<variable_t> variables;

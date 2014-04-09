@@ -6,6 +6,7 @@ lib_LTLIBRARIES=libMDCG.la
 libMDCG_la_SOURCES= \
   model.cpp \
   model-builder.cpp \
+  model-element.cpp \
   code-generator.cpp
 libMDCG_la_CXXFLAGS= \
   -g \

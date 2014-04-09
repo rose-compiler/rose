@@ -526,6 +526,7 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops<
 
     if (shape->tile_1 != 1) {
       std::vector<SgScopeStatement *> scopes;
+      scopes.reserve(result.second.size());
       for (it_scopes = result.second.begin(); it_scopes != result.second.end(); it_scopes++) {
         std::pair<SgStatement *, std::vector<SgScopeStatement *> > tile = makeTile(
           shape->iterators[2], SageInterface::copyExpression(base), 2, SageInterface::copyExpression(runtime_loop_desc), shape->tile_1, shape->unroll_tile_1, local_symbol_maps
@@ -572,6 +573,7 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops<
 
     if (shape->tile_2 != 1) {
       std::vector<SgScopeStatement *> scopes;
+      scopes.reserve(result.second.size());
       for (it_scopes = result.second.begin(); it_scopes != result.second.end(); it_scopes++) {
         std::pair<SgStatement *, std::vector<SgScopeStatement *> > tile = makeTile(
           shape->iterators[4], SageInterface::copyExpression(base), 4, SageInterface::copyExpression(runtime_loop_desc), shape->tile_2, shape->unroll_tile_2, local_symbol_maps
@@ -602,6 +604,7 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops<
 
     if (shape->tile_3 != 1) {
       std::vector<SgScopeStatement *> scopes;
+      scopes.reserve(result.second.size());
       for (it_scopes = result.second.begin(); it_scopes != result.second.end(); it_scopes++) {
         std::pair<SgStatement *, std::vector<SgScopeStatement *> > tile = makeTile(
           shape->iterators[6], SageInterface::copyExpression(base), 6, SageInterface::copyExpression(runtime_loop_desc), shape->tile_3, shape->unroll_tile_3, local_symbol_maps

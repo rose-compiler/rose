@@ -55,6 +55,11 @@ struct element_t {
 
   node_t<kind_>  * node;  ///< Node  part of the element: store the symbol and some extra-information
   scope_t<kind_> * scope; ///< Scope part of the element: Information on the scoping of the elements
+
+  virtual ~element_t() {
+    if (node != NULL) delete node;
+    if (scope != NULL) delete scope;
+  }
 };
 
 template <model_elements_e kind>
@@ -63,6 +68,28 @@ element_t<kind> * build() {
   element->node = new node_t<kind>();
   element->scope = new scope_t<kind>();
   return element;
+}
+
+template <model_elements_e kind>
+node_t<kind> * copy(node_t<kind> * orig, std::map<void*, void*> & copies_map);
+
+template <model_elements_e kind>
+scope_t<kind> * copy(scope_t<kind> * orig, std::map<void*, void*> & copies_map);
+
+template <model_elements_e kind>
+element_t<kind> * copy(element_t<kind> * orig, std::map<void*, void*> & copies_map) {
+  std::map<void*, void*>::iterator it = copies_map.find(orig);
+  if (it == copies_map.end()) {
+    element_t<kind> * element = new element_t<kind>();
+
+    copies_map.insert(std::pair<void*, void*>(orig, element));
+
+    element->node = copy(orig->node, copies_map);
+    element->scope = copy(orig->scope, copies_map);
+
+    return element;
+  }
+  else return (element_t<kind> *)it->second;
 }
 
 /// A variable: part of a namespace. interact_with(type)

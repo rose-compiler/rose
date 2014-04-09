@@ -47,7 +47,65 @@ model_t::model_t(const model_t & model) :
   methods(),
   namespaces()
 {
-  /// \todo copy
+  std::map<void*, void*> copies_map;
+
+  std::vector<variable_t>::const_iterator it_var;
+  for (it_var = model.variables.begin(); it_var != model.variables.end(); it_var++)
+    variables.push_back(copy(*it_var, copies_map));
+
+  std::vector<function_t>::const_iterator it_func;
+  for (it_func = model.functions.begin(); it_func != model.functions.end(); it_func++)
+    functions.push_back(copy(*it_func, copies_map));
+
+  std::vector<type_t>::const_iterator it_type;
+  for (it_type = model.types.begin(); it_type != model.types.end(); it_type++)
+    types.push_back(copy(*it_type, copies_map));
+
+  std::vector<class_t>::const_iterator it_class;
+  for (it_class = model.classes.begin(); it_class != model.classes.end(); it_class++)
+    classes.push_back(copy(*it_class, copies_map));
+
+  std::vector<field_t>::const_iterator it_field;
+  for (it_field = model.fields.begin(); it_field != model.fields.end(); it_field++)
+    fields.push_back(copy(*it_field, copies_map));
+
+  std::vector<method_t>::const_iterator it_method;
+  for (it_method = model.methods.begin(); it_method != model.methods.end(); it_method++)
+    methods.push_back(copy(*it_method, copies_map));
+
+  std::vector<namespace_t>::const_iterator it_nspc;
+  for (it_nspc = model.namespaces.begin(); it_nspc != model.namespaces.end(); it_nspc++)
+    namespaces.push_back(copy(*it_nspc, copies_map));
+}
+
+model_t::~model_t() {
+  std::vector<variable_t>::const_iterator it_var;
+  for (it_var = variables.begin(); it_var != variables.end(); it_var++)
+    delete *it_var;
+
+  std::vector<function_t>::const_iterator it_func;
+  for (it_func = functions.begin(); it_func != functions.end(); it_func++)
+    delete *it_func;
+
+  std::vector<type_t>::const_iterator it_type;
+  for (it_type = types.begin(); it_type != types.end(); it_type++)
+    delete *it_type;
+
+  std::vector<class_t>::const_iterator it_class;
+  for (it_class = classes.begin(); it_class != classes.end(); it_class++)
+    delete *it_class;
+
+  std::vector<field_t>::const_iterator it_field;
+  for (it_field = fields.begin(); it_field != fields.end(); it_field++)
+    delete *it_field;
+
+  std::vector<method_t>::const_iterator it_method;
+  for (it_method = methods.begin(); it_method != methods.end(); it_method++)
+    delete *it_method;
+
+  std::vector<namespace_t>::const_iterator it_nspc;
+  for (it_nspc = namespaces.begin(); it_nspc != namespaces.end(); it_nspc++)
+    delete *it_nspc;
 }
 
 variable_t model_t::lookup_variable(SgVariableSymbol * symbol) const {

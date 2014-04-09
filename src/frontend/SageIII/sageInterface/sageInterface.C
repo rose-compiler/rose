@@ -11456,6 +11456,24 @@ PreprocessingInfo* SageInterface::attachComment(
      return result;
    }
 
+void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
+  PreprocessingInfo * if_macro = new PreprocessingInfo(
+    PreprocessingInfo::CpreprocessorIfDeclaration,
+    "#if " + guard,
+    "transformation-generated", 0, 0, 0,
+    PreprocessingInfo::before
+  );
+  target->addToAttachedPreprocessingInfo(if_macro);
+
+  PreprocessingInfo * endif_macro = new PreprocessingInfo(
+    PreprocessingInfo::CpreprocessorEndifDeclaration,
+    "#endif",
+    "transformation-generated", 0, 0, 0,
+    PreprocessingInfo::after
+  );
+  target->addToAttachedPreprocessingInfo(endif_macro);
+}
+
 PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) {
   assert(source_file != NULL);
   assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
