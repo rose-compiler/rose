@@ -1679,7 +1679,6 @@ src/util/stringSupport/Makefile
 src/util/commandlineProcessing/Makefile
 src/util/support/Makefile
 src/util/graphs/Makefile
-src/util/sawyer/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
