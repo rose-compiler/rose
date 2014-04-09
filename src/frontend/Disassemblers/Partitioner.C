@@ -1574,10 +1574,17 @@ Partitioner::mark_func_patterns()
                     size_t nbytes = std::min(args.range.last()+1-va, (rose_addr_t)sizeof buf);
                     size_t nread = args.restrict_map->read(buf, va, nbytes);
                     for (size_t i=0; i<nread; ++i) {
-                        // "55 8b ec" is x86 "push ebp; mov ebp, esp"
-                        if (i+3<nread && 0x55==buf[i+0] && 0x8b==buf[i+1] && 0xec==buf[i+2]) {
+                        if (i+5<nread &&                                // x86:
+                            0x8b==buf[i+0] && 0xff==buf[i+1] &&         //   mov edi, edi
+                            0x55==buf[i+2] &&                           //   push ebp
+                            0x8b==buf[i+4] && 0xec==buf[i+5]) {         //   mov ebp, esp
                             p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
-                            i+=2;
+                            i += 4;
+                        } else if (i+3<nread &&                         // x86:
+                                   0x55==buf[i+0] &&                    //   push ebp
+                                   0x8b==buf[i+1] && 0xec==buf[i+2]) {  //   mov ebp, esp
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i += 2;
                         }
                     }
                     va += nread;
