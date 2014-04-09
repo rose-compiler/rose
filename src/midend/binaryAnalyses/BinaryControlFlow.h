@@ -4,6 +4,7 @@
 #include "Map.h"
 #include "WorkLists.h"
 
+#include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
 
@@ -449,7 +450,7 @@ namespace BinaryAnalysis {
             ControlFlow *analyzer;
             ControlFlowGraph &cfg;
             typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+            typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
             BlockVertexMap &bv_map;
             VertexInserter(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
                 : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
@@ -609,8 +610,7 @@ template<class ControlFlowGraph>
 void
 BinaryAnalysis::ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add_vertex(SgAsmBlock *block)
 {
-    if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) &&
-        bv_map.find(block)==bv_map.end()) {
+    if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && !bv_map.exists(block)) {
         Vertex vertex = add_vertex(cfg);
         bv_map[block] = vertex;
         put_ast_node(cfg, vertex, block);
@@ -623,23 +623,29 @@ void
 BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-    typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+    Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
+    typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
     BlockVertexMap bv_map;
 
+    // Add the vertices
     cfg.clear();
     VertexInserter<ControlFlowGraph>(this, cfg, bv_map).traverse(root, preorder);
 
-    /* Add the edges. */
-    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
-        SgAsmBlock *source = get_ast_node(cfg, *vi);
-        const SgAsmIntegerValuePtrList &succs = source->get_successors();
-        for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-            SgAsmBlock *target = isSgAsmBlock((*si)->get_base_node()); // might be null
-            if (target && !is_edge_filtered(source, target)) {
-                typename BlockVertexMap::iterator bvmi=bv_map.find(target);
-                if (bvmi!=bv_map.end())
-                    add_edge(*vi, bvmi->second, cfg);
+    // Mapping from block entry address to CFG vertex
+    Map<rose_addr_t, Vertex> addrToVertex;
+    for (typename BlockVertexMap::iterator bvi=bv_map.begin(); bvi!=bv_map.end(); ++bvi)
+        addrToVertex[bvi->first->get_address()] = bvi->second;
+
+    // Add the edges
+    BOOST_FOREACH (Vertex sourceVertex, vertices(cfg)) {
+        SgAsmBlock *sourceBlock = get_ast_node(cfg, sourceVertex);
+        BOOST_FOREACH (SgAsmIntegerValueExpression *integerValue, sourceBlock->get_successors()) {
+            Vertex targetVertex = addrToVertex.get_value_or(integerValue->get_absolute_value(), NO_VERTEX);
+            if (targetVertex!=NO_VERTEX) {
+                SgAsmBlock *targetBlock = get_ast_node(cfg, targetVertex);
+                assert(targetBlock!=NULL); // since we have a vertex, there must be an SgAsmBlock!
+                if (!is_edge_filtered(sourceBlock, targetBlock))
+                    add_edge(sourceVertex, targetVertex, cfg);
             }
         }
     }
