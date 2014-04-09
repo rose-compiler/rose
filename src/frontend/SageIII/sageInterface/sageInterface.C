@@ -10238,6 +10238,33 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     }
   }
 
+void SageInterface::insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
+                                                             bool movePreprocessingInfo)
+{
+    ROSE_ASSERT(newStmt!=NULL);
+    ROSE_ASSERT(scope!=NULL);
+    BOOST_FOREACH (SgStatement *targetStmt, scope->generateStatementList()) {
+        if (!isSgDeclarationStatement(targetStmt)) {
+            insertStatementBefore(targetStmt, newStmt, movePreprocessingInfo);
+            return;
+        }
+    }
+    appendStatement(newStmt, scope);
+}
+
+void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
+                                                                 SgScopeStatement *scope)
+{
+    ROSE_ASSERT(scope!=NULL);
+    BOOST_FOREACH (SgStatement *targetStmt, scope->generateStatementList()) {
+        if (!isSgDeclarationStatement(targetStmt)) {
+            insertStatementListBefore(targetStmt, newStmts);
+            return;
+        }
+    }
+    appendStatementList(newStmts, scope);
+}
+
   void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
   {
     insertStatement(targetStmt,newStmt,true, autoMovePreprocessingInfo);
