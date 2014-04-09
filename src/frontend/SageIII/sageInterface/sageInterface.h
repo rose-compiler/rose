@@ -695,6 +695,12 @@ PreprocessingInfo* attachComment(
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.
   ROSE_DLL_API void addTextForUnparser ( SgNode* astNode, std::string s, AstUnparseAttribute::RelativePositionType inputlocation );
 
+/**
+ * Add preproccessor guard around a given node.
+ * It surrounds the node with "#if guard" and "#endif"
+ */
+void guardNode(SgLocatedNode * target, std::string guard);
+
 //@}
 
 
