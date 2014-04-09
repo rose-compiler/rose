@@ -149,7 +149,7 @@ test2b.passed: injectSnippet SmallSpecimensC/snippets2.c SmallSpecimensC/specime
 
 #----------------------------------------------------------------------------------------------------
 # test3*.passed are for injection snippets3.c into specimen1.c in various ways.
-TEST_TARGETS += test3a.passed
+TEST_TARGETS += test3a.passed test3b.passed
 EXTRA_DIST += SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c
 test3a.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
 	@$(RTH_RUN)					\
@@ -157,6 +157,19 @@ test3a.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specime
 		SNIPPET=snippets3.c,::print		\
 		SPECIMEN=SmallSpecimensC/specimen1.c	\
 		IPOINT=::ipoint2			\
+		INSERT_MECHANISM=stmts			\
+		LOCDECLS_POSITION=end			\
+		RECURSIVE_INSERTION=yes			\
+		COPY_DEFINITIONS=yes			\
+		$(C_INJECTION_TEST) $@
+
+# Do all the work, but don't actually insert anything (insertion point is "none")
+test3b.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)					\
+		TITLE="no insertion [$@]"		\
+		SNIPPET=snippets3.c,::print		\
+		SPECIMEN=SmallSpecimensC/specimen1.c	\
+		IPOINT=none				\
 		INSERT_MECHANISM=stmts			\
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
