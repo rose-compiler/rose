@@ -332,6 +332,10 @@ AstIntAttribute::AstIntAttribute(int value_)
 
 int AstIntAttribute::getValue() { return value; }
 
+AstAttribute *AstIntAttribute::copy() {
+    return new AstIntAttribute(value);
+}
+
 // ********************************************
 //              AstParameterizedTypeAttribute
 // ********************************************
@@ -386,5 +390,13 @@ SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterize
     parameterizedTypes.push_front(parameterized_type);
 
     return parameterized_type;
+}
+
+AstAttribute *AstParameterizedTypeAttribute::copy() {
+    AstParameterizedTypeAttribute *attribute = new AstParameterizedTypeAttribute(genericType);
+    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+        attribute -> parameterizedTypes.push_back(*type_it);
+    }
+    return attribute;
 }
 
