@@ -197,31 +197,7 @@ Grammar::setUpBinaryInstructions()
 
 
 
-    // Integer Constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])
-    NEW_TERMINAL_MACRO(AsmByteValueExpression, "AsmByteValueExpression", "AsmByteValueExpressionTag");
-    AsmByteValueExpression.setFunctionPrototype("HEADER_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmByteValueExpression.setFunctionSource("SOURCE_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmByteValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member.
-
-    NEW_TERMINAL_MACRO(AsmWordValueExpression, "AsmWordValueExpression", "AsmWordValueExpressionTag");
-    AsmWordValueExpression.setFunctionPrototype("HEADER_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmWordValueExpression.setFunctionSource("SOURCE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member.
-
-    NEW_TERMINAL_MACRO(AsmDoubleWordValueExpression, "AsmDoubleWordValueExpression", "AsmDoubleWordValueExpressionTag");
-    AsmDoubleWordValueExpression.setFunctionPrototype("HEADER_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmDoubleWordValueExpression.setFunctionSource("SOURCE_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmDoubleWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
-
-    NEW_TERMINAL_MACRO(AsmQuadWordValueExpression, "AsmQuadWordValueExpression", "AsmQuadWordValueExpressionTag");
-    AsmQuadWordValueExpression.setFunctionPrototype("HEADER_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmQuadWordValueExpression.setFunctionSource("SOURCE_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmQuadWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
-
-    NEW_NONTERMINAL_MACRO(AsmIntegerValueExpression,
-                          AsmByteValueExpression | AsmWordValueExpression | AsmDoubleWordValueExpression |
-                          AsmQuadWordValueExpression,
-                          "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag", false);
+    NEW_TERMINAL_MACRO(AsmIntegerValueExpression, "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag");
     AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "=NULL",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

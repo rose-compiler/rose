@@ -49,20 +49,19 @@
 class Assembler {
 public:
     /** %Exception thrown by the assemblers. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : mesg(reason), insn(insn)
+            : std::runtime_error(reason), insn(insn)
             {}
         /** An exception not bound to a particular instruction. */
         Exception(const std::string &reason)
-            : mesg(reason), insn(NULL)
+            : std::runtime_error(reason), insn(NULL)
             {}
         void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
 
-        std::string mesg;               /**< Reason that disassembly failed. */
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
