@@ -315,6 +315,23 @@ test7b.passed: storeLoad SmallSpecimensC/snippets4.c SmallSpecimensC/specimen2.c
 		SPECIMEN=SmallSpecimensC/specimen2.c	\
 		$(STORELOAD_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# test8*.passed are for injecting snippets7 into specimen3
+TEST_TARGETS += test8a.passed
+EXTRA_DIST += SmallSpecimensC/snippets7.c SmallSpecimensC/specimen3.c
+
+test8a.passed: injectSnippet SmallSpecimensC/snippets7.c SmallSpecimensC/specimen3.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="missing preprocessor information [$@]"	\
+		SNIPPET=snippets7.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen3.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(C_INJECTION_TEST) $@
+
 ###############################################################################################################################
 # Small Java Tests
 ###############################################################################################################################
