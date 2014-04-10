@@ -299,8 +299,6 @@ main(int argc, char *argv[])
                 tmp_snippetSourceFile->getFileName().c_str());
 #endif
 
-        // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is
-        // not a problem, but is interesting).
         snippet->insert(ipoint, args);
 
 #if 0 // DEBUGGING [2014-03-07]
