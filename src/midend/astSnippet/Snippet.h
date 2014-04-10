@@ -417,7 +417,7 @@ public:
 
 protected:
     /** Mark nodes so they're unparsed when the insertion point is unparsed. */
-    static void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
+    void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
 
     /** Replace formal argument occurrances with actual values. */
     static void replaceArguments(SgNode *ast, const ArgumentBindings&);
