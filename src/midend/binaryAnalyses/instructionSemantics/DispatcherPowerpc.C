@@ -276,7 +276,7 @@ struct IP_bc: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -311,7 +311,7 @@ struct IP_bca: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -346,7 +346,7 @@ struct IP_bcctr: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue != NULL);
         uint8_t boConstant = byteValue->get_value();
         bool bo_1 = boConstant & 0x8;
@@ -370,7 +370,7 @@ struct IP_bclr: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -672,10 +672,10 @@ struct IP_rlwimi: P {
         BaseSemantics::SValuePtr rs = d->read(args[0], 32);
         BaseSemantics::SValuePtr ra = d->read(args[1], 32);
         BaseSemantics::SValuePtr sh = ops->extract(d->read(args[2], 32), 0, 5);
-        SgAsmByteValueExpression *mb = isSgAsmByteValueExpression(args[3]);
+        SgAsmIntegerValueExpression *mb = isSgAsmIntegerValueExpression(args[3]);
         assert(mb);
         int mb_value = mb->get_value();
-        SgAsmByteValueExpression *me = isSgAsmByteValueExpression(args[4]);
+        SgAsmIntegerValueExpression *me = isSgAsmIntegerValueExpression(args[4]);
         assert(me);
         int me_value = me->get_value();
         uint32_t mask = build_mask(mb_value, me_value);
@@ -694,10 +694,10 @@ struct IP_rlwinm: P {
         assert_args(insn, args, 5);
         BaseSemantics::SValuePtr rs = d->read(args[1], 32);
         BaseSemantics::SValuePtr sh = ops->extract(d->read(args[2], 32), 0, 5);
-        SgAsmByteValueExpression *mb = isSgAsmByteValueExpression(args[3]);
+        SgAsmIntegerValueExpression *mb = isSgAsmIntegerValueExpression(args[3]);
         assert(mb);
         int mb_value = mb->get_value();
-        SgAsmByteValueExpression *me = isSgAsmByteValueExpression(args[4]);
+        SgAsmIntegerValueExpression *me = isSgAsmIntegerValueExpression(args[4]);
         assert(me);
         int me_value = me->get_value();
         uint32_t mask = build_mask(mb_value, me_value);
@@ -714,7 +714,7 @@ struct IP_rlwinm: P {
 struct IP_sc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SgAsmByteValueExpression *bv = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
         assert(bv);
         ops->interrupt(0, bv->get_value());
     }

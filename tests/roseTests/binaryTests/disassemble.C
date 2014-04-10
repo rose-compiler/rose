@@ -53,14 +53,13 @@ Description:\n\
     Convenience switch that turns on (or off) the --debug-disassembler,\n\
     --debug-loader, and --debug-partitioner switches.\n\
 \n\
-  --disassemble\n\
-    Call the disassembler explicitly, using the instruction search flags\n\
-    specified with the -rose:disassembler_search switch.  Without this\n\
-    --disassemble switch, the disassembler is called by the instruction\n\
-    partitioner whenever the partitioner needs an instruction. When the\n\
-    partitioner drives the disassembly we might spend substantially less time\n\
-    disassembling, but fail to discover functions that are never statically\n\
-    called.\n\
+  --disassemble=HOW\n\
+    Determines the interrelationship between the disassembler and the paritioner.\n\
+    The HOW should be one of the following: \"pd\" runs the partitioner as the\n\
+    master driving the disassembler; \"dp\" runs the disassembler first and then\n\
+    hands the results to the partitioner; \"d\" runs only the disassembler and\n\
+    places all instructions in a single function; \"none\" skips both the disassembly\n\
+    and partitioner and is useful if all you want to do is parse the container.\n\
 \n\
   --dos\n\
   --no-dos\n\
@@ -79,6 +78,11 @@ Description:\n\
     Generate an IPD file from the disassembly results.  The IPD file can be\n\
     modified by hand and then fed back into another disassembly with the\n\
     \"-rose:partitioner_config FILENAME\" switch.\n\
+\n\
+  --isa=NAME\n\
+    Specify an instruction set architecture in order to choose a disassembler.\n\
+    If an ISA is specified then it overrides the disassembler that would have\n\
+    been chosen based on the file format.\n\
 \n\
   --linear\n\
     Organized the output by address rather than hierarchically.  The output\n\
@@ -117,10 +121,15 @@ Description:\n\
   --raw=ENTRIES\n\
     Indicates that the specified file(s) contains raw machine instructions\n\
     rather than a binary container such as ELF or PE.  The ENTRIES argument\n\
-    is a comma-separated list of one or more virtual addresses that will be\n\
-    used to seed the recursive disassembler and instruction partitioner. The\n\
-    non-switch, positional arguments are either the name of an index file that\n\
-    was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
+    specifies virtual addresses where disassembly will be attempted. It is a\n\
+    comma-separated list of addresses or address ranges. An address range is\n\
+    a low and high address separated by a hyphen and the range includes both\n\
+    endpoints.  However, if the range is followed by a slash and an increment\n\
+    then assembly will be tried only at the low address and positive offsets\n\
+    from the low address in multiples of the increment.\n\
+\n\
+    The non-switch, positional arguments are either the name of an index file\n\
+    that was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
     for details about the file format), or pairs of file names and virtual\n\
     addresses where the file contents are to be mapped.  The virtual addresses\n\
     can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
@@ -169,9 +178,6 @@ Description:\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
 \n\
-  --skip-disassemble\n\
-    Skip the entire disassembly process; only parse the binary container (if any).\n\
-\n\
   --syscalls=linux32\n\
   --syscalls=none\n\
     Specifies how system calls are to be named in the disassembly output.\n\
@@ -207,11 +213,35 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
+#include "DisassemblerArm.h"
+#include "DisassemblerPowerpc.h"
+#include "DisassemblerMips.h"
+#include "DisassemblerX86.h"
+
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 using namespace BinaryAnalysis::InstructionSemantics;
+
+/* Return a suitable disassembler by name. */
+static Disassembler *
+get_disassembler(const std::string &name)
+{
+    if (0==name.compare("arm")) {
+        return new DisassemblerArm();
+    } else if (0==name.compare("ppc")) {
+        return new DisassemblerPowerpc();
+    } else if (0==name.compare("mips")) {
+        return new DisassemblerMips();
+    } else if (0==name.compare("i386")) {
+        return new DisassemblerX86(4);
+    } else if (0==name.compare("amd64")) {
+        return new DisassemblerX86(8);
+    } else {
+        return NULL;
+    }
+}
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -386,8 +416,8 @@ private:
             if (enabled && insn && block && insn->get_kind()==x86_int) {
                 const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
                 SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
-                if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
-                    0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+                if (expr && expr->variantT()==V_SgAsmIntegerValueExpression &&
+                    0x80==isSgAsmIntegerValueExpression(expr)->get_value()) {
 
                     const SgAsmStatementPtrList &stmts = block->get_statementList();
                     size_t int_n;
@@ -797,6 +827,55 @@ static struct LargeAnonymousRegion: public MemoryMap::Visitor {
     }
 } large_anonymous_region_p;
 
+// A simple partitioner that creates a single function having all instructions.
+class SimplePartitioner: public Partitioner {
+protected:
+    rose_addr_t entry_va;
+    Function *function;
+
+public:
+    SimplePartitioner(rose_addr_t entry_va): entry_va(entry_va), function(NULL) {}
+
+    virtual void pre_cfg(SgAsmInterpretation *interp) /*override*/ {
+        function = add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
+    }
+
+    virtual void post_cfg(SgAsmInterpretation *interp) /*override*/ {}
+
+    // Organize instructions into basic blocks
+    virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
+        assert(function!=NULL);
+        bool changed = true;
+        for (size_t pass=0; changed; ++pass) {
+            changed = false;
+            for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                rose_addr_t va = ii->first;
+                Instruction *insn = ii->second;
+                if (!insn->bblock) {
+                    BasicBlock *bb = find_bb_starting(va);
+                    assert(bb!=NULL);
+                    append(function, bb, SgAsmBlock::BLK_USERDEF);
+                    changed = true;
+                }
+            }
+            if (pass>=100) {
+                std::cerr <<"too many passes through simple partitioner\n";
+                abort();
+            }
+        }
+    }
+};
+
+static SgAsmBlock *
+simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, MemoryMap *mmap=NULL)
+{
+    if (insns.empty())
+        return NULL;
+    rose_addr_t entry_va = insns.begin()->first;
+    SimplePartitioner sp(entry_va);
+    return sp.partition(interp, insns, mmap);
+}
+
 int
 main(int argc, char *argv[]) 
 {
@@ -811,19 +890,18 @@ main(int argc, char *argv[])
     bool do_show_coverage = false;
     bool do_show_functions = false;
     bool do_rose_help = false;
-    bool do_call_disassembler = false;
+    char do_master='p', do_slave='d';           /* p=partitioner; d=disassembler; '\0'=none */
     bool do_show_hashes = false;
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
-    bool do_skip_disassemble = false;
     bool do_link = false;
     std::string do_generate_ipd;
     std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
     rose_addr_t rebase_va = 0;                  /* alternative base virtual address */
     bool do_rebase = false;
     ExtentMap reserved;                         /* addresses to be reserved */
-    
+    std::string isa;                            /* instruction set architecture */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -842,7 +920,10 @@ main(int argc, char *argv[])
     new_argv[new_argc++] = argv[0];
     new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
     for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
+        if (!strcmp(argv[i], "--")) {
+            ++i;
+            break;
+        } else if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
             exit(1);
         } else if (!strcmp(argv[i], "--link")) {
@@ -874,9 +955,18 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--no-cfg-dot")) {
             do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
-            do_call_disassembler = true;
-        } else if (!strcmp(argv[i], "--skip-disassemble")) {
-            do_skip_disassemble = true;
+            do_master='d';
+            do_slave='p';
+        } else if (!strncmp(argv[i], "--disassemble=", 14)) {
+            if (!strcmp(argv[i]+14, "dp") || !strcmp(argv[i]+14, "pd") || !strcmp(argv[i]+14, "d")) {
+                do_master = argv[i][14];
+                do_slave = argv[i][15];
+            } else if (!strcmp(argv[i]+14, "none")) {
+                do_master = do_slave = '\0';
+            } else {
+                fprintf(stderr, "%s: --disassemble switch must be one of: dp, pd, d, or none\n", arg0);
+                exit(1);
+            }
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -953,24 +1043,43 @@ main(int argc, char *argv[])
             do_reassemble = true;
         } else if (!strcmp(argv[i], "--no-reassemble")) {
             do_reassemble = false;
-        } else if (!strcmp(argv[i], "--raw") || !strncmp(argv[i], "--raw=", 6)) {
-            char *s = !strncmp(argv[i], "--raw=", 6) ? argv[i]+6 : (i+1<argc ? argv[++i] : NULL);
-            if (!s || !*s) {
-                fprintf(stderr, "%s: raw entry address(es) expceted for --raw switch\n", arg0);
-                exit(1);
-            }
-            while (*s) {
+        } else if (!strncmp(argv[i], "--raw=", 6)) {
+            std::vector<std::string> parts = StringUtility::split(',', argv[i]+6, (size_t)(-1), true);
+            for (size_t i=0; i<parts.size(); ++i) {
+                // each part is: LO[-HI[/INC]]
                 char *rest;
+                const char *s = parts[i].c_str();
                 errno = 0;
-                rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
-                if (rest==s || errno!=0) {
-                    fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
+                rose_addr_t lo = strtoull(s, &rest, 0);
+                if (errno || rest==s) {
+                    fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
                     exit(1);
                 }
-                raw_entries.insert(raw_entry_va);
-                if (','==*rest) rest++;
-                while (isspace(*rest)) rest++;
-                s = rest;
+                rose_addr_t hi = lo, inc = 1;
+                if ('-'==*rest) {
+                    s = rest+1;
+                    errno = 0;
+                    hi = strtoull(s, &rest, 0);
+                    if (errno || rest==s || hi<lo) {
+                        fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                        exit(1);
+                    }
+                    if ('/'==*rest) {
+                        s = rest+1;
+                        errno = 0;
+                        inc = strtoull(s, &rest, 0);
+                        if (errno || rest==s || 0==inc) {
+                            fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                            exit(1);
+                        }
+                    }
+                }
+                if (*rest) {
+                    fprintf(stderr, "%s: malformed --raw specification: %s\n", arg0, parts[i].c_str());
+                    exit(1);
+                }
+                for (rose_addr_t va=lo; va<=hi; va+=inc)
+                    raw_entries.insert(va);
             }
         } else if (!strncmp(argv[i], "--reserve=", 10)) {
             char *rest;
@@ -998,6 +1107,8 @@ main(int argc, char *argv[])
                 exit(1);
             }
             reserved.insert(Extent(va, size));
+        } else if (!strncmp(argv[i], "--isa=", 6)) {
+            isa = argv[i]+6;
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_loader = true;
@@ -1084,10 +1195,10 @@ main(int argc, char *argv[])
                     exit(1);
                 }
             } else {
-                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-                 * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
-                 * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
-                 * is 'rx'. */
+                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine
+                 * instructions and the virtual address where those instructions are mapped.  The virtual address can be
+                 * suffixed with any combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when
+                 * no suffix is present is 'rx'. */
                 if (++i>=argc) {
                     fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
                     exit(1);
@@ -1108,11 +1219,10 @@ main(int argc, char *argv[])
                         default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
                     }
                 }
+                std::string base_name = StringUtility::stripPathFromFileName(raw_filename);
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
-
-                MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(raw_filename);
-                raw_map.insert(Extent(start_va, buffer->size()),
-                               MemoryMap::Segment(buffer, 0, perm, raw_filename));
+                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va, false, true, base_name);
+                raw_map.mprotect(Extent(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
             }
         } else {
             nposargs++;
@@ -1197,12 +1307,25 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
 
     Disassembler *disassembler = NULL;
-    if (!raw_entries.empty() && !do_rose_help) {
+    if (!isa.empty()) {
+        disassembler = get_disassembler(isa);
+        if (!disassembler) {
+            std::cerr <<arg0 <<": invalid isa specified on command line: " <<isa <<"\n";
+            exit(1);
+        }
+    } else if (!raw_entries.empty() && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
-        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
+        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+        assert(disassembler!=NULL);
     } else {
-        disassembler = Disassembler::lookup(interp)->clone();
+        disassembler = Disassembler::lookup(interp);
+        if (!disassembler) {
+            std::cerr <<arg0 <<": no suitable disassembler found for interpretation\n";
+            exit(1);
+        }
     }
+    assert(disassembler!=NULL);
+    disassembler = disassembler->clone();
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Configure the disassembler and its partitioner.
@@ -1314,20 +1437,22 @@ main(int argc, char *argv[])
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns;
 
-    if (!do_skip_disassemble) {
-        try {
-            if (do_call_disassembler) {
-                insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+    try {
+        if ('p'==do_master) {
+            block = partitioner->partition(interp, disassembler, &map);
+            insns = partitioner->get_instructions();
+            bad = partitioner->get_disassembler_errors();
+        } else if ('d'==do_master) {
+            insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+            if ('p'==do_slave) {
                 block = partitioner->partition(interp, insns, &map);
             } else {
-                block = partitioner->partition(interp, disassembler, &map);
-                insns = partitioner->get_instructions();
-                bad = partitioner->get_disassembler_errors();
+                block = simple_partitioner(interp, insns, &map);
             }
-        } catch (const Partitioner::Exception &e) {
-            std::cerr <<"partitioner exception: " <<e <<"\n";
-            exit(1);
         }
+    } catch (const Partitioner::Exception &e) {
+        std::cerr <<"partitioner exception: " <<e <<"\n";
+        exit(1);
     }
 
     /* Link instructions into AST if possible */
@@ -1422,7 +1547,7 @@ main(int argc, char *argv[])
         if (show_bad) {
             printf(":\n");
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.what());
         } else {
             printf(" (use --show-bad to see errors)\n");
         }
@@ -1437,6 +1562,7 @@ main(int argc, char *argv[])
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
         CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
+        unparser.set_registers(disassembler->get_registers());
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
@@ -1549,7 +1675,7 @@ main(int argc, char *argv[])
             } catch(const Assembler::Exception &e) {
                 assembly_failures++;
                 if (show_bad) {
-                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
+                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.what());
                     FILE *old_debug = asmb->get_debug();
                     asmb->set_debug(stderr);
                     try {

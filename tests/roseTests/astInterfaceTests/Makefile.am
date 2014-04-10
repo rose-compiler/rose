@@ -501,7 +501,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)"  \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!

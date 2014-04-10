@@ -39,6 +39,12 @@ SMTSolver::reset_class_stats()
     } RTS_MUTEX_END;
 }
 
+InsnSemanticsExpr::TreeNodePtr
+SMTSolver::evidence_for_address(uint64_t addr)
+{
+    return evidence_for_name(StringUtility::addrToString(addr));
+}
+
 SMTSolver::Satisfiable
 SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs_)
 {
@@ -174,5 +180,13 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
 {
     std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
     exprs.push_back(tn);
+    return satisfiable(exprs);
+}
+
+SMTSolver::Satisfiable
+SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const InsnSemanticsExpr::TreeNodePtr &expr)
+{
+    if (expr!=NULL)
+        exprs.push_back(expr);
     return satisfiable(exprs);
 }
