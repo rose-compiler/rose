@@ -633,45 +633,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
     SgStatement *targetFirstStatement = targetStatements.empty() ? NULL : targetStatements.front();
 
-    // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
-    // avoid unparsing problems for C where the unparser asserts things such as "the file for a function declaration's scope
-    // must be the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file
-    // and insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original
-    // scope in the snippet file.
-    struct T1: SnippetAstTraversal {
-        Sg_File_Info *target;                           // new file info, the one to which nodes will be set
-        Sg_File_Info *snippet;                          // only change nodes that are from this file
-        T1(Sg_File_Info *target, Sg_File_Info *snippet) {
-            this->target = Sg_File_Info::generateDefaultFileInfo(); *this->target = *target;
-            this->snippet = Sg_File_Info::generateDefaultFileInfo(); *this->snippet = *snippet;
-        }
-        void fixInfo(Sg_File_Info *info) {
-            // It is not sufficient to set only the file_id, we also need to set the physical_file_id.  It is also not
-            // sufficient to use setTransformation.  We need to be more complete, otherwise the Java unparser will not
-            // unparse anonymous classes because statementFromFile() returns false. [Robb P. Matzke 2014-03-21]
-            if (info && info->get_file_id()==snippet->get_file_id()) {
-                *info = *target;
-            } else if (info && SageInterface::is_Java_language()) {
-                *info = *target;
-            }
-        }
-        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
-            if (preorder==when) {
-                if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                    fixInfo(loc->get_file_info());
-                    fixInfo(loc->get_startOfConstruct());
-                    fixInfo(loc->get_endOfConstruct());
-                } else if (SgFile *loc = isSgFile(node)) {
-                    // SgFile is not a subclass of SgLocatedNode, but it still has these Sg_File_Info methods
-                    fixInfo(loc->get_file_info());
-                    fixInfo(loc->get_startOfConstruct());
-                    fixInfo(loc->get_endOfConstruct());
-                }
-            }
-        }
-    } t1(targetFunction->get_file_info(), ast->get_body()->get_file_info());
-    t1.traverse(file->getAst());
-
     // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
     // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
     // snippet, and others might completely unrelated but the user wants them copied anyway.
