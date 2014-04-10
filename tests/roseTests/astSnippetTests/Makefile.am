@@ -353,6 +353,40 @@ test8a.passed: injectSnippet SmallSpecimensC/snippets7.c SmallSpecimensC/specime
 		CHECK_STRING="output_value(argc)"		\
 		$(C_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# test9*.passed are for injecting snippets8 into specimen8
+TEST_TARGETS += test9a.passed test9b.passed
+EXTRA_DIST += SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c
+
+test9a.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="references to ctype macros [$@]"		\
+		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING"	\
+		SNIPPET=snippets8.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen8.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		CHECK_STRING="handleFiles(hello)"		\
+		$(C_INJECTION_TEST) $@
+
+# without copying related things
+test9b.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="references to ctype macros [$@]"		\
+		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING"	\
+		SNIPPET=snippets8.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen8.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="handleFiles(hello)"		\
+		$(C_INJECTION_TEST) $@
+
 ###############################################################################################################################
 # Small Java Tests
 ###############################################################################################################################
