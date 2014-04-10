@@ -1039,6 +1039,11 @@ Snippet::removeIncludeDirectives(SgNode *node)
                     ++iter;
                 }
             }
+            // Remove the AttachedPreprocessingInfoType node from the AST if it is empty, otherwise an assertion in
+            // SageInterface::insertStatement will fail: it checks that either the preprocessing list node is null or
+            // non-empty.
+            if (cpp->empty())
+                locnode->set_attachedPreprocessingInfoPtr(NULL);
         }
     }
 }
@@ -1250,8 +1255,17 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
     // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
     // and reattached to the first node we inserted.
-    if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
+    if (firstInserted!=NULL && lastDeclWithIncludes!=NULL) {
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
+
+        // Since we moved the preprocessing info out of lastDeclWithIncludes, we need to also make sure that
+        // lastDeclWithIncludes does not point to an AttachedPreprocessingInfoType node since
+        // SageInterface::insertStatement requires that any AttachedPreprocessingInfoType is non-empty.
+        if (lastDeclWithIncludes->getAttachedPreprocessingInfo()) {
+            assert(lastDeclWithIncludes->get_attachedPreprocessingInfoPtr()->empty());
+            lastDeclWithIncludes->set_attachedPreprocessingInfoPtr(NULL);
+        }
+    }
 
 #if 0
     printf ("Exiting as a test! \n");
