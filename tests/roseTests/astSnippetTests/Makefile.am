@@ -593,10 +593,28 @@ testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJ
 
 #----------------------------------------------------------------------------------------------------
 # testJava8*.passed are for injections with packages
-TEST_TARGETS += testJava8a.passed
+TEST_TARGETS += testJava8a-parse.passed testJava8a-snippet.passed testJava8a.passed
 EXTRA_DIST += SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java
 
-testJava8a.passed: \
+# frontend() only, for testing that we can compile the java snippet files as Java source
+noinst_PROGRAMS += testParser
+testParser_SOURCES = testParser.C
+testParser_LDADD = $(ROSE_LIBS)
+
+# We're having problems parsing SnippetPackage.Snippet3 as a snippet, so make sure we can at least parse it normally
+testJava8a-parse.passed: SmallSpecimensJava/SnippetPackage/Snippet3.java testParser
+	@$(RTH_RUN)						\
+		TITLE="parse a java file with package [$@]"	\
+		CMD="$(builddir)/testParser $(abspath $<)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+testJava8a-snippet.passed: SmallSpecimensJava/SnippetPackage/Snippet3.java listSnippets testJava8a-parse.passed
+	@$(RTH_RUN)						\
+		TITLE="list snippets [$@]"			\
+		CMD="$(builddir)/listSnippets $(abspath $<)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+testJava8a.passed: testJava8a-snippet.passed \
 injectSnippet SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java $(JAVA_INJECTION_TEST)
 	@$(RTH_RUN)									\
 		TITLE="packages [$@]"							\
