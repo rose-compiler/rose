@@ -625,3 +625,17 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
   }
   myfile.close();
 }
+
+void FIConstAnalysis::performConditionConstAnalysis() {
+
+}
+
+std::list<SgExpression*> FIConstAnalysis::getTrueConditions() {
+  return trueConditions;
+}
+std::list<SgExpression*> FIConstAnalysis::getFalseConditions() {
+  return falseConditions;
+}
+std::list<SgExpression*> FIConstAnalysis::getNonConstConditions() {
+  return nonConstConditions;
+}

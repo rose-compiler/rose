@@ -78,32 +78,44 @@ typedef ConstIntLattice EvalValueType;
 class FIConstAnalysis {
  public:
   FIConstAnalysis(VariableIdMapping*);
-  static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
-  static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
-  static bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
-  VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
-  void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
-  VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
+
   void runAnalysis(SgProject* root);
   void runAnalysis(SgProject* root, SgFunctionDefinition* mainFunction);
   VariableConstInfo* getVariableConstInfo();
   void attachAstAttributes(Labeler* labeler, string attributeName);
 
-  // Expression evaluation functions
-  EvalValueType evalSgBoolValExp(SgExpression* node);
-  EvalValueType evalSgIntVal(SgExpression* node);
-  EvalValueType evalSgVarRefExp(SgExpression* node);
-  bool isRelationalOperator(SgExpression* node);
-  EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult);
-  EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult);
-  EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val);
-  bool isConstVal(SgExpression* node);
-  EvalValueType eval(SgExpression* node);
-  void setVariableConstInfo(VariableConstInfo* varConstInfo);
   void setOptionMultiConstAnalysis(bool);
   void writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename);
+
   VariableIdMapping::VariableIdSet determinedConstantVariables();
+
+  static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
+  static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
+  static bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
+  VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
+
+  void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
+  VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
+
+  void performConditionConstAnalysis();
+  std::list<SgExpression*> getTrueConditions();
+  std::list<SgExpression*> getFalseConditions();
+  std::list<SgExpression*> getNonConstConditions();
+
  private:
+  // Expression evaluation functions
+  EvalValueType eval(SgExpression* node);
+  EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val);
+  EvalValueType evalSgBoolValExp(SgExpression* node);
+  EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult);
+  EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult);
+  EvalValueType evalSgVarRefExp(SgExpression* node);
+  EvalValueType evalSgIntVal(SgExpression* node);
+  void setVariableConstInfo(VariableConstInfo* varConstInfo);
+  bool isConstVal(SgExpression* node);
+  bool isRelationalOperator(SgExpression* node);
+
+private:
   VariableIdMapping* global_variableIdMapping;
   VarConstSetMap _varConstSetMap;
   VariableConstInfo* global_variableConstInfo;
@@ -111,6 +123,9 @@ class FIConstAnalysis {
   bool detailedOutput;
   set<VariableId> variablesOfInterest;
 
+  std::list<SgExpression*> trueConditions;
+  std::list<SgExpression*> falseConditions;
+  std::list<SgExpression*> nonConstConditions;
 };
 
 #endif
