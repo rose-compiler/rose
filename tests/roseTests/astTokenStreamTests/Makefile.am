@@ -230,7 +230,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_170.c \
      test2012_171.c \
      test2012_172.c \
-     test2012_173.c \
      test2012_174.c \
      test2012_175.c \
      test2013_01.c \
@@ -334,6 +333,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_14.c \
      constants.c
 
+# DQ (3/25/2014): This is a RH5 specific tests (we don't need this test).
+# test2012_173.c
 
 # test2012_17.c and test2012_163.c fail because the recursive macro handling for "#define sa_handler union_in_X.sa_handler"
 # need to be tunred off when we are able to unparse the original token stream.

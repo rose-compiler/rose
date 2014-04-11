@@ -15,8 +15,7 @@ void OFP::setASTBuilder(OFP::ASTBuilder * a) {ast = a;}
 OFP::Unparser * unparser = NULL;
 void OFP::setUnparser(OFP::Unparser * u) {unparser = u;}
 
-#undef DEBUG_OFP_CLIENT
-    
+
 /**                                                                                             
  * Section/Clause 2: Fortran concepts
  */
@@ -47,8 +46,11 @@ ATbool ofp_traverse_Program(ATerm term, OFP::Program* Program)
       ProgramUnit_tail = ATgetNext (ProgramUnit_tail);
       if (ofp_traverse_ProgramUnit(ProgramUnit.term, &ProgramUnit)) {
          // MATCHED ProgramUnit
+         Program->appendProgramUnit(ProgramUnit.newProgramUnit());
       } else return ATfalse;
    }
+
+   ast->build_Program(Program);
 
    return ATtrue;
  }
@@ -71,6 +73,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_BlockData(BlockData.term, &BlockData)) {
          // MATCHED BlockData
          ProgramUnit->setBlockData(BlockData.newBlockData());
+         ProgramUnit->inheritPayload(ProgramUnit->getBlockData());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_BD
@@ -85,6 +88,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_Submodule(Submodule.term, &Submodule)) {
          // MATCHED Submodule
          ProgramUnit->setSubmodule(Submodule.newSubmodule());
+         ProgramUnit->inheritPayload(ProgramUnit->getSubmodule());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_S
@@ -99,6 +103,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_Module(Module.term, &Module)) {
          // MATCHED Module
          ProgramUnit->setModule(Module.newModule());
+         ProgramUnit->inheritPayload(ProgramUnit->getModule());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_M
@@ -113,6 +118,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_ExternalSubprogram(ExternalSubprogram.term, &ExternalSubprogram)) {
          // MATCHED ExternalSubprogram
          ProgramUnit->setExternalSubprogram(ExternalSubprogram.newExternalSubprogram());
+         ProgramUnit->inheritPayload(ProgramUnit->getExternalSubprogram());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_ES
@@ -127,6 +133,7 @@ ATbool ofp_traverse_ProgramUnit(ATerm term, OFP::ProgramUnit* ProgramUnit)
       if (ofp_traverse_MainProgram(MainProgram.term, &MainProgram)) {
          // MATCHED MainProgram
          ProgramUnit->setMainProgram(MainProgram.newMainProgram());
+         ProgramUnit->inheritPayload(ProgramUnit->getMainProgram());
       } else return ATfalse;
 
    // MATCHED ProgramUnit_MP
@@ -152,9 +159,12 @@ ATbool ofp_traverse_ExternalSubprogram(ATerm term, OFP::ExternalSubprogram* Exte
 
       if (ofp_traverse_SubroutineSubprogram(SubroutineSubprogram.term, &SubroutineSubprogram)) {
          // MATCHED SubroutineSubprogram
+         ExternalSubprogram->setSubroutineSubprogram(SubroutineSubprogram.newSubroutineSubprogram());
+         ExternalSubprogram->inheritPayload(ExternalSubprogram->getSubroutineSubprogram());
       } else return ATfalse;
 
    // MATCHED ExternalSubprogram_SS
+   ExternalSubprogram->setOptionType(OFP::ExternalSubprogram::ExternalSubprogram_SS);
 
    return ATtrue;
  }
@@ -164,9 +174,12 @@ ATbool ofp_traverse_ExternalSubprogram(ATerm term, OFP::ExternalSubprogram* Exte
 
       if (ofp_traverse_FunctionSubprogram(FunctionSubprogram.term, &FunctionSubprogram)) {
          // MATCHED FunctionSubprogram
+         ExternalSubprogram->setFunctionSubprogram(FunctionSubprogram.newFunctionSubprogram());
+         ExternalSubprogram->inheritPayload(ExternalSubprogram->getFunctionSubprogram());
       } else return ATfalse;
 
    // MATCHED ExternalSubprogram_FS
+   ExternalSubprogram->setOptionType(OFP::ExternalSubprogram::ExternalSubprogram_FS);
 
    return ATtrue;
  }
@@ -2274,14 +2287,6 @@ ATbool ofp_traverse_IntLiteralConstant(ATerm term, OFP::IntLiteralConstant* IntL
          // MATCHED DigitString
          IntLiteralConstant->setDigitString(DigitString.newDigitString());
          IntLiteralConstant->inheritPayload(IntLiteralConstant->getDigitString());
-#ifdef OFP_CLIENT
-         SgUntypedValueExpression* value = dynamic_cast<SgUntypedValueExpression*>(IntLiteralConstant->getPayload());
-         SgUntypedType * type = value->get_type();
-         type->set_is_literal(true);
-         type->set_is_constant(true);
-         //TODO-DQ-2014.3.7 ok for a type to have a keyword
-         //type->set_keyword(SgToken::FORTRAN_INTEGER);
-#endif
       } else return ATfalse;
 
    if (ATmatch(KindParam.term, "Some(<term>)", &KindParam.term)) {
@@ -2289,24 +2294,11 @@ ATbool ofp_traverse_IntLiteralConstant(ATerm term, OFP::IntLiteralConstant* IntL
       if (ofp_traverse_KindParam(KindParam.term, &KindParam)) {
          // MATCHED KindParam
          IntLiteralConstant->setKindParam(KindParam.newKindParam());
-#ifdef OFP_CLIENT
-         OFP::KindParam*           kindParam = IntLiteralConstant->getKindParam();
-         SgUntypedType*            kindType  = dynamic_cast<SgUntypedValueExpression*>(kindParam->getPayload())->get_type();
-         SgUntypedValueExpression*     expr  = dynamic_cast<SgUntypedValueExpression*>(IntLiteralConstant->getPayload());
-         expr->set_type(kindType);
-#endif
-#ifdef DEBUG_OFP_CLIENT
-         printf("ROSE IntLiteralConstant(kind): ...... ");
-         //unparser->unparseExpr(kindExpr);  printf("\n");
-#endif
       } else return ATfalse;
    }
    }
 
-#ifdef DEBUG_OFP_CLIENT
-   printf("ROSE IntLiteralConstant ............. ");
-   unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(IntLiteralConstant->getPayload()));  printf("\n");
-#endif
+   ast->build_IntLiteralConstant(IntLiteralConstant);
 
    return ATtrue;
  }
@@ -8462,11 +8454,6 @@ ATbool ofp_traverse_Variable(ATerm term, OFP::Variable* Variable)
          Variable->setDesignator(Designator.newDesignator());
          Variable->inheritPayload(Variable->getDesignator());
       } else return ATfalse;
-#ifdef OFP_CLIENT
-      SgUntypedReferenceExpression* refExpr = dynamic_cast<SgUntypedReferenceExpression*>(Variable->getPayload());
-      //TODO-CER-2014.3.7 FIXME by getting variable name
-      refExpr->set_name("FIXME");
-#endif
 
    return ATtrue;
  }
@@ -17798,10 +17785,6 @@ ATbool ofp_traverse_MainProgram(ATerm term, OFP::MainProgram* MainProgram)
       } else return ATfalse;
 
    ast->build_MainProgram(MainProgram);
-
-   printf("\n\n----------------------------\n");
-//   unparser->unparseNode(MainProgram->getPayload());
-   printf("----------------------------\n\n");
 
    return ATtrue;
  }

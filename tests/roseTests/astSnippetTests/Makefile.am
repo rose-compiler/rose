@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
 EXTRA_DIST =
 TEST_TARGETS =
+MOSTLYCLEANFILES =
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -17,6 +18,10 @@ injectSnippet_LDADD = $(ROSE_LIBS)
 noinst_PROGRAMS += storeLoad
 storeLoad_SOURCES = storeLoad.C snippetTests.C
 storeLoad_LDADD = $(ROSE_LIBS)
+
+noinst_PROGRAMS += listSnippets
+listSnippets_SOURCES = listSnippets.C
+listSnippets_LDADD = $(ROSE_LIBS)
 
 
 ###############################################################################################################################
@@ -458,6 +463,51 @@ testJava5c.passed: injectSnippet SmallSpecimensJava/Snippets6.java SmallSpecimen
 		COPY_DEFINITIONS=yes				\
 		$(JAVA_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# testJava6*.passed are for injection Snippets7.java into Specimen2.java in various ways.
+TEST_TARGETS += testJava6a.passed
+EXTRA_DIST += SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java
+testJava6a.passed: injectSnippet SmallSpecimensJava/Snippets7.java SmallSpecimensJava/Specimen2.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Sasha's java test [$@]"			\
+		SNIPPET=Snippets7.java,Snippets7.function0	\
+		SPECIMEN=SmallSpecimensJava/Specimen2.java	\
+		IPOINT=Specimen2.woah				\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+#----------------------------------------------------------------------------------------------------
+# testJava7*.passed are for injection Exotic*.java into Specimen1.java in various ways.
+TEST_TARGETS += testJava7a.passed testJava7b.passed
+EXTRA_DIST += SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Exotic2.java SmallSpecimensJava/Specimen1.java
+
+testJava7a.passed: injectSnippet SmallSpecimensJava/Exotic1.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Exotitc types [$@]"			\
+		DISABLED="Requires Java SE 7"			\
+		SNIPPET=Exotic1.java,Exotic1.snippet		\
+		SPECIMEN=SmallSpecimensJava/Specimen1.java	\
+		IPOINT=Specimen1.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJava/Specimen1.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="Exotitc types [$@]"			\
+		SNIPPET=Exotic2.java,Exotic2.snippet		\
+		SPECIMEN=SmallSpecimensJava/Specimen1.java	\
+		IPOINT=Specimen1.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(JAVA_INJECTION_TEST) $@
+
+
+
 ###############################################################################################################################
 # quicksort tests
 ###############################################################################################################################
@@ -513,21 +563,32 @@ reverseC.passed: injectSnippet QuickSortC/quicksort.c QuickSortC/reverse.c
 ###############################################################################################################################
 
 # Top level directory containing the Java CWE packages
-SS_JAVA_CWE_DIR = SS_JAVA_CWES/src
+SS_JAVA_CWE_ROOT = $(abspath SS_JAVA_CWES)
+SS_JAVA_CWE_SRCDIR = $(SS_JAVA_CWE_ROOT)/src
+SS_JAVA_CWE_LIBDIR = $(SS_JAVA_CWE_ROOT)/lib
 
 # Those subdirectories of $(SS_JAVA_CWD_DIR) that contain CWE implementations
 SS_JAVA_CWE_CATEGORIES = Error_Handling Injection Number_Handling Tainted_Data
 
 # All the CWE_*.java files under those package directories.
 SS_JAVA_CWES := $(foreach category, $(SS_JAVA_CWE_CATEGORIES), \
-	$(shell find $(SS_JAVA_CWE_DIR)/$(category) -name 'CWE_*.java' -printf '$(category)/%P\n' 2>/dev/null))
+	$(shell find $(SS_JAVA_CWE_SRCDIR)/$(category) -name 'CWE_*.java' -printf '$(category)/%P\n' 2>/dev/null))
 
 # Make one test target for each CWE file.  The name of the test target will be the package+class name with dots instead
-# of slashes.  For instance, if the SS_JAVA_CWE full name is $(SS_JAVA_CWE_DIR)/Error_Handling/CWE_209/CWE_209_0.java then
+# of slashes.  For instance, if the SS_JAVA_CWE full name is $(SS_JAVA_CWE_SRCDIR)/Error_Handling/CWE_209/CWE_209_0.java then
 # the target will be named "Error_Handling.CWE_209.CWE_209_0.passed"
 SS_JAVA_TEST_TARGETS = $(addsuffix .passed, $(subst /,.,$(basename $(SS_JAVA_CWES))))
 
-EXTRA_DIST += ss_java_cwes.conf
+# Some of the CWEs depend on a few support classes that need to be built. Fortunately, the SS_JAVA_CWES.tar file provides
+# a makefile.
+MOSTLYCLEANFILES += ss_java_support_built
+ss_java_support_built:
+	@echo "  MAKE   building SS_JAVA_CWE support jars [$@]"
+	$(MAKE) -C $(SS_JAVA_CWE_ROOT)
+	touch $@
+
+# Class paths (use "-classpath PATH1:PATH2:..." not "-classpath PATH1 -classpath PATH2 ...")
+SS_JAVA_CLASSPATH = -classpath $$(perl -e 'print join ":", @ARGV' $(wildcard $(SS_JAVA_CWE_LIBDIR)/*.jar))
 
 # Some help if no SS_JAVA_CWES are present
 .PHONY: check-ss-java-cwes-help
@@ -543,20 +604,77 @@ check-ss-java-cwes-help:
 	fi
 
 # Run each test
+EXTRA_DIST += ss_java_cwes.conf
 .PHONY: check-ss-java-cwes
 check-ss-java-cwes: check-ss-java-cwes-help $(SS_JAVA_TEST_TARGETS)
-$(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf
-	@$(RTH_RUN) \
-		TITLE="Java CWE injection [$@]" \
-		USE_SUBDIR=yes \
-		SNIPPET_FILE="$(abspath $(SS_JAVA_CWE_DIR)/$(subst .,/,$*).java)" \
-		SNIPPET_CLASS_NAME="$*" \
-		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')" \
+$(SS_JAVA_TEST_TARGETS): %.passed: injectSnippet ss_java_cwes.conf ss_java_support_built
+	@$(RTH_RUN)										\
+		TITLE="Java CWE injection [$@]"							\
+		USE_SUBDIR=yes									\
+		SNIPPET_FILE="$(SS_JAVA_CWE_SRCDIR)/$(subst .,/,$*).java"			\
+		SNIPPET_CLASS_NAME="$*"								\
+		SNIPPET_FUNCTION_NAME="$$(echo $* |perl -pe 'chomp; $$_=lc((split /\./)[-1])')"	\
+		SS_JAVA_CLASSPATH="$(SS_JAVA_CLASSPATH)"					\
 		$(srcdir)/ss_java_cwes.conf $@
 
-# DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
-# TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
 
+# DQ (3/19/2014): We are not ready to test these in the "make check" rule (not distributed with ROSE, so can't be run by Jenkins).
+# RPM (3/20/2014): To reenable these tests, enable the first line (TEST_TARGETS) and delete the second (MOSTLYCLEANFILES).
+# TEST_TARGETS += $(SS_JAVA_TEST_TARGETS)
+MOSTLYCLEANFILES += $(SS_JAVA_TEST_TARGETS) $(SS_JAVA_TEST_TARGETS:.passed=.failed)
+
+###############################################################################################################################
+# Extra, optional snippet tests.  Any .c or .java file that's found in $(srcdir)/ExtraSnippets will treated as a snippet file,
+# and all void functions or methods that take no arguments will be treated as snippets.  The snippets will each be inserted
+# in turn into its own target specimen.
+###############################################################################################################################
+
+INJECT_ALL_TEST = $(srcdir)/injectAllSnippets.conf
+EXTRA_DIST += $(INJECT_ALL_TEST)
+
+EXTRAS_SNIPPET_DIR = $(srcdir)/ExtraSnippets
+EXTRA_DIST += $(EXTRAS_SNIPPET_DIR)/0_README $(INJECT_ALL_TEST)
+
+EXTRAS_SNIPPET_FILES_C = $(notdir $(wildcard $(EXTRAS_SNIPPET_DIR)/*.c))
+EXTRAS_TARGETS_C = $(addprefix extras_, $(addsuffix .passed, $(EXTRAS_SNIPPET_FILES_C)))
+EXTRAS_SPECIMEN_C = $(srcdir)/SmallSpecimensC/specimen1.c
+TEST_TARGETS += $(EXTRAS_TARGETS_C)
+
+$(EXTRAS_TARGETS_C): extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPET_DIR)/% $(EXTRAS_SPECIMEN_C) $(INJECT_ALL_TEST)
+	@$(RTH_RUN)						\
+		TITLE="extra snippet $* [$@]"			\
+		SNIPPET_FILE="$(EXTRAS_SNIPPET_DIR)/$*"		\
+		SPECIMEN="$(EXTRAS_SPECIMEN_C)"			\
+		IPOINT="::ipoint1"				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		COMPILER_FLAGS="-I$(EXTRAS_SNIPPET_DIR)"	\
+		$(INJECT_ALL_TEST) $@
+
+# funky name because *_JAVA is apparently reserved by automake
+EXTRAS_SNIPPET_FILES_J = $(notdir $(wildcard $(EXTRAS_SNIPPET_DIR)/*.java))
+EXTRAS_TARGETS_J = $(addprefix extras_, $(addsuffix .passed, $(EXTRAS_SNIPPET_FILES_J)))
+EXTRAS_SPECIMEN_J = $(srcdir)/SmallSpecimensJava/Specimen1.java
+TEST_TARGETS += $(EXTRAS_TARGETS_J)
+
+$(EXTRAS_TARGETS_J): \
+extras_%.passed: injectSnippet listSnippets $(EXTRAS_SNIPPET_DIR)/% $(EXTRAS_SPECIMEN_J) $(INJECT_ALL_TEST)
+	@$(RTH_RUN)						\
+		TITLE="extra snippet $* [$@]"			\
+		SNIPPET_FILE="$(EXTRAS_SNIPPET_DIR)/$*"		\
+		SPECIMEN="$(EXTRAS_SPECIMEN_J)"			\
+		IPOINT="Specimen1.ipoint1"			\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		$(INJECT_ALL_TEST) $@
+
+
+.phony: check-extras
+check-extra-snippets: $(EXTRAS_TARGETS_C) $(EXTRAS_TARGETS_J)
 
 
 ###############################################################################################################################
@@ -746,6 +864,21 @@ test_12.passed: injectSnippet
 
 test_java_1.passed:
 	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
+
+
+# TEST_TARGETS += testJava2014_01.passed 
+# EXTRA_DIST += SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java
+testJava2014_01.passed: injectSnippet SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=Snippet2014_01.java,Snippet2014_01.basic		\
+		SPECIMEN=SmallSpecimensJava/Specimen2014_01.java	\
+		IPOINT=Specimen2014_01.ipoint1			\
+		INSERT_MECHANISM=stmts				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		$(JAVA_INJECTION_TEST) $@
+
 
 
 # DQ: Tests that I can use to vizualize the whole AST (for debugging).

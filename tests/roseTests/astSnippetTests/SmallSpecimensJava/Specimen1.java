@@ -2,11 +2,11 @@ public class Specimen1 {
     static private int INSERT_HERE;
 
     public int ipoint1() {
-        int x = 1;
-        int y = 2;
-        int z = 3;
+        int x___FOO = 1;
+        int y___FOO = 2;
+        int z___FOO = 3;
         INSERT_HERE=0;
-        return x;
+        return x___FOO;
     }
 
     protected double ipoint3() {

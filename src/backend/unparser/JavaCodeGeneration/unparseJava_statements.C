@@ -796,8 +796,15 @@ cout.flush();
     if (attribute) {
         curprint(attribute -> expression);
     }
+    else if (init_name -> attributeExists("var_args")) {
+        SgArrayType *array_type = isSgArrayType(init_name -> get_type());
+        ROSE_ASSERT(array_type);
+        SgType *element_type = array_type -> get_base_type();
+        unparseType(element_type ,info);
+        curprint("...");
+    }
     else {
-      unparseType(init_name -> get_type() ,info);
+        unparseType(init_name -> get_type() ,info);
     }
     curprint(" ");
 
@@ -993,7 +1000,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 // charles4 :  2/29/2012   I don't think this is needed!
 /*
      //TODO should there be forward declarations or nondefining declarations?
-     if (mfuncdecl_stmt->isForward()) {
+     if (mfuncdecl_stmt-> isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
          //   << mfuncdecl_stmt->get_qualified_name().getString()
          //   << endl;
@@ -1076,7 +1083,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
-     if (mfuncdecl_stmt -> isForward()) {
+     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
          curprint(")");
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
 
@@ -1185,16 +1192,13 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
+     ROSE_ASSERT(! classdecl_stmt -> get_explicit_anonymous());
 // TODO: Remove this!
 /*
 cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name().str()
 << endl;
 cout.flush();
 */
-
-     if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
-         return;
-     }
 
      AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
      if (annotations_attribute) {
