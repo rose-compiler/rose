@@ -60,7 +60,7 @@ bool FIConstAnalysis::determineVariable(SgNode* node, VariableId& varId, Variabl
     //assert(_variableIdMapping);
 #if 1
     SgSymbol* sym=varref->get_symbol();
-    assert(sym);
+    ROSE_ASSERT(sym);
     varId=_variableIdMapping.variableId(sym);
 #else
     // MS: to investigate: even with the new var-sym-only case this does not work
@@ -285,6 +285,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   cout << globalVars.size()<<endl;
   VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+#if 0
   int filteredVars=0;
   set<CppCapsuleConstIntLattice> emptySet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -301,9 +302,8 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
     }
   }
   cout << "STATUS: Number of filtered variables for initial state: "<<filteredVars<<endl;
-
-  // traverse the AST now and collect information
-
+#endif
+  variablesOfInterest=setOfUsedVars;
   if(mainFunctionRoot!=0) {
     determineVarConstValueSet(mainFunctionRoot,variableIdMapping,varConstIntMap);
   } else {
@@ -351,8 +351,8 @@ EvalValueType FIConstAnalysis::evalSgIntVal(SgExpression* node) {
 //VariableConstInfo* global_variableConstInfo=0;
 //bool global_option_multiconstanalysis=false;
 EvalValueType FIConstAnalysis::evalSgVarRefExp(SgExpression* node) {
-  assert(global_variableIdMapping);
-  assert(global_variableConstInfo);
+  ROSE_ASSERT(global_variableIdMapping);
+  ROSE_ASSERT(global_variableConstInfo);
   VariableId varId;
   bool isVar=FIConstAnalysis::determineVariable(node, varId, *global_variableIdMapping);
   assert(isVar);
@@ -400,11 +400,11 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
 }
 
 EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val) {
-  assert(op);
-  assert(var);
+  ROSE_ASSERT(op);
+  ROSE_ASSERT(var);
 
-  assert(global_variableIdMapping);
-  assert(global_variableConstInfo);
+  ROSE_ASSERT(global_variableIdMapping);
+  ROSE_ASSERT(global_variableConstInfo);
 
   assert(!(val.isTop()||val.isBot()));
 
@@ -626,16 +626,52 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
   myfile.close();
 }
 
-void FIConstAnalysis::performConditionConstAnalysis() {
+int FIConstAnalysis::performConditionConstAnalysis(Labeler* labeler) {
+  // temporary global var
+  //global_variableIdMappingPtr=variableIdMapping;
+  //global_variableConstInfo=&vci;
+  //FIConstAnalysis fiConstAnalysis(variableIdMapping);
+  //fiConstAnalysis.setVariableConstInfo(&vci);
+  //RoseAst ast1(root);
 
+  //cout<<"STATUS: Dead code elimination phase 2: Eliminating sub expressions."<<endl;
+  //list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
+  //  for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
+  for(Labeler::iterator i=labeler->begin();i!=labeler->end();++i) {
+    if(labeler->isConditionLabel(*i)) {
+      SgNode* origNode=labeler->getNode(*i);
+      SgNode* node=origNode;
+      if(isSgExprStatement(node)) {
+        node=SgNodeHelper::getExprStmtChild(node);
+      }
+      //cout<<node->class_name()<<";";
+      SgExpression* exp=isSgExpression(node);
+      if(exp) {
+        ConstIntLattice res=eval(exp);
+        if(res.isTrue()) {
+          trueConditions.insert(labeler->getLabel(origNode));
+        }
+        if(res.isFalse()) {
+          falseConditions.insert(labeler->getLabel(origNode));
+        }
+        if(res.isTop()) {
+          nonConstConditions.insert(labeler->getLabel(origNode));
+        }
+      } else {
+        // report all other cases of conditions as non-const (conservative)
+        nonConstConditions.insert(labeler->getLabel(origNode));
+      }
+    }
+  }
+  return 0;
 }
 
-std::list<SgExpression*> FIConstAnalysis::getTrueConditions() {
+LabelSet FIConstAnalysis::getTrueConditions() {
   return trueConditions;
 }
-std::list<SgExpression*> FIConstAnalysis::getFalseConditions() {
+LabelSet FIConstAnalysis::getFalseConditions() {
   return falseConditions;
 }
-std::list<SgExpression*> FIConstAnalysis::getNonConstConditions() {
+LabelSet FIConstAnalysis::getNonConstConditions() {
   return nonConstConditions;
 }

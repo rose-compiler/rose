@@ -97,10 +97,10 @@ class FIConstAnalysis {
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
   VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
 
-  void performConditionConstAnalysis();
-  std::list<SgExpression*> getTrueConditions();
-  std::list<SgExpression*> getFalseConditions();
-  std::list<SgExpression*> getNonConstConditions();
+  int performConditionConstAnalysis(Labeler* labeler);
+  LabelSet getTrueConditions();
+  LabelSet getFalseConditions();
+  LabelSet getNonConstConditions();
 
  private:
   // Expression evaluation functions
@@ -123,9 +123,9 @@ private:
   bool detailedOutput;
   set<VariableId> variablesOfInterest;
 
-  std::list<SgExpression*> trueConditions;
-  std::list<SgExpression*> falseConditions;
-  std::list<SgExpression*> nonConstConditions;
+  LabelSet trueConditions;
+  LabelSet falseConditions;
+  LabelSet nonConstConditions;
 };
 
 #endif

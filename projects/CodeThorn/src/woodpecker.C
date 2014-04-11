@@ -99,7 +99,7 @@ int isIfWithLabeledAssert(SgNode* node) {
   return -1;
 }
 
-
+#if 0
 int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
                             VariableIdMapping* variableIdMapping,
                             VariableConstInfo& vci) {
@@ -142,6 +142,7 @@ int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
   cout<<"STATUS: Dead code elimination phase 2: finished."<<endl;
   return 0;
 }
+#endif
 
 void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"Result:"<<endl;
@@ -347,8 +348,10 @@ int main(int argc, char* argv[]) {
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+  fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
   variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
+  cout<<"INFO: variables of interest: "<<variablesOfInterest.size()<<endl;
   if(detailedOutput)
     printResult(variableIdMapping,varConstSetMap);
 
@@ -363,13 +366,17 @@ int main(int argc, char* argv[]) {
     dce.setDetailedOutput(false);
     dce.setVariablesOfInterest(variablesOfInterest);
     dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
-    eliminateDeadCodePhase2(root,mainFunctionRoot,&variableIdMapping,vci);
     cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
     cout<<"STATUS: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
     cout<<"STATUS: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
     cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
     cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
-
+    cout<<"STATUS: Performing condition const analysis."<<endl;
+    Labeler labeler(root);
+    fiConstAnalysis.performConditionConstAnalysis(&labeler);
+    cout<<"INFO: Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
+    cout<<"INFO: Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
+    cout<<"INFO: Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
   } else {
     cout<<"STATUS: Dead code elimination: turned off."<<endl;
   }
