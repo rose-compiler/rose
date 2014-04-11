@@ -1849,9 +1849,26 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This function or member function is NOT visible from where it is referenced (declaration with same name does not match) \n");
 #endif
-                                // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
-                                   qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+#if 0
+                                // DQ (4/8/2014): Added test on function types.
+                                   SgFunctionType* associatedfunctionTypeFromSymbol = associatedFunctionDeclarationFromSymbol->get_type();
+                                   SgFunctionType* functionTypeFromSymbol           = functionDeclarationFromSymbol->get_type();
 
+                                   bool functionInSameScope = (associatedFunctionDeclarationFromSymbol->get_scope() == functionDeclarationFromSymbol->get_scope());
+                                   bool functionTypesMatch  = (associatedfunctionTypeFromSymbol == functionTypeFromSymbol);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("   --- functionTypesMatch = %s \n",functionTypesMatch ? "true" : "false");
+#endif
+                                // int increment = functionTypesMatch ? 1 : 0;
+                                   int increment = functionInSameScope && functionTypesMatch ? 1 : 0;
+#else
+                                   int increment = 1;
+#endif
+                                // DQ (4/8/2014): If the type match then use an increment of 1, else don't increment the qualificationDepth.
+                                // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
+                                // qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+                                   qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + increment;
 #if 0
                                    printf ("Exiting for unimplemented case (function) \n");
                                    ROSE_ASSERT(false);
