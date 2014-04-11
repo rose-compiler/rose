@@ -21,6 +21,13 @@
 #include <map>
 #include <string>
 
+#ifndef OPENACC_MULTIDEV
+# define OPENACC_MULTIDEV 1
+#endif
+#ifdef OPENACC_DATA_ACCESS
+# define OPENACC_DATA_ACCESS 1
+#endif
+
 class SgScopeStatement;
 class SgForStatement;
 class SgExpression;
@@ -83,6 +90,14 @@ struct language_t {
     e_acc_clause_independent,        //!< 
     e_acc_clause_host,               //!< 
     e_acc_clause_device,             //!<
+#if OPENACC_MULTIDEV
+    e_acc_clause_split,
+    e_acc_clause_devices,
+#endif
+#if OPENACC_DATA_ACCESS
+    e_acc_clause_read,
+    e_acc_clause_write,
+#endif
     e_clause_last
   };
   typedef std::map<clause_kinds_e, label_set_t> clause_labels_map_t;
@@ -317,6 +332,46 @@ template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_device> {
   // empty
 };
+
+#if OPENACC_MULTIDEV
+
+template <>
+template <>
+struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_split> {
+  enum {
+    e_acc_split_contiguous,
+    e_acc_split_chunk,
+    e_acc_split_unknown
+  } kind;
+  std::vector<SgExpression *> portions;
+};
+
+template <>
+template <>
+struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_devices> {
+  std::vector<std::pair<SgExpression *, SgExpression *> > device_list;
+};
+
+#endif
+
+#if OPENACC_DATA_ACCESS
+
+struct access_pattern_t {};
+
+template <>
+template <>
+struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_read> {
+  std::vector<Frontend::data_sections_t> data_sections;
+};
+
+template <>
+template <>
+struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_write> {
+  std::vector<Frontend::data_sections_t> data_sections;
+};
+
+#endif
+
  /** @} */
 }
 

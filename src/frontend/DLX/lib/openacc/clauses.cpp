@@ -12,6 +12,13 @@
 
 #include <cassert>
 
+#ifndef OPENACC_MULTIDEV
+# define OPENACC_MULTIDEV 1
+#endif
+#ifdef OPENACC_DATA_ACCESS
+# define OPENACC_DATA_ACCESS 1
+#endif
+
 class SgLocatedNode;
 
 namespace DLX {
@@ -82,6 +89,18 @@ generic_clause_t<OpenACC::language_t> * buildClause<OpenACC::language_t>(OpenACC
       return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_host>();
     case OpenACC::language_t::e_acc_clause_device:
       return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_device>();
+#if OPENACC_MULTIDEV
+    case OpenACC::language_t::e_acc_clause_split:
+      return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_split>();
+    case OpenACC::language_t::e_acc_clause_devices:
+      return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_devices>();
+#endif
+#if OPENACC_DATA_ACCESS
+    case OpenACC::language_t::e_acc_clause_read:
+      return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_read>();
+    case OpenACC::language_t::e_acc_clause_write:
+      return new clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_write>();
+#endif
     case OpenACC::language_t::e_clause_last:
       assert(false);
     default:
@@ -208,6 +227,26 @@ bool parseClauseParameters<OpenACC::language_t>(
       return Frontend::Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_device>(
         directive_str, directive_node, (clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_device> *)clause
       );
+#if OPENACC_MULTIDEV
+    case OpenACC::language_t::e_acc_clause_split:
+      return Frontend::Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_split>(
+        directive_str, directive_node, (clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_split> *)clause
+      );
+    case OpenACC::language_t::e_acc_clause_devices:
+      return Frontend::Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_devices>(
+        directive_str, directive_node, (clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_devices> *)clause
+      );
+#endif
+#if OPENACC_DATA_ACCESS
+    case OpenACC::language_t::e_acc_clause_read:
+      return Frontend::Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_read>(
+        directive_str, directive_node, (clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_read> *)clause
+      );
+    case OpenACC::language_t::e_acc_clause_write:
+      return Frontend::Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_write>(
+        directive_str, directive_node, (clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_write> *)clause
+      );
+#endif
     case OpenACC::language_t::e_clause_last:
       assert(false);
     default:

@@ -13,6 +13,13 @@
 
 #include <cassert>
 
+#ifndef OPENACC_MULTIDEV
+# define OPENACC_MULTIDEV 1
+#endif
+#ifdef OPENACC_DATA_ACCESS
+# define OPENACC_DATA_ACCESS 1
+#endif
+
 namespace DLX {
 
 namespace OpenACC {
@@ -106,6 +113,15 @@ void language_t::init() {
   Directives::addClauseLabel<language_t>(e_acc_clause_host, "host");
 
   Directives::addClauseLabel<language_t>(e_acc_clause_device, "device");
+
+#if OPENACC_MULTIDEV
+  Directives::addClauseLabel<language_t>(e_acc_clause_split, "split");
+  Directives::addClauseLabel<language_t>(e_acc_clause_devices, "devices");
+#endif
+#if OPENACC_DATA_ACCESS
+  Directives::addClauseLabel<language_t>(e_acc_clause_read, "read");
+  Directives::addClauseLabel<language_t>(e_acc_clause_write, "write");
+#endif
 
 }
 

@@ -18,6 +18,13 @@
 
 #include "rose.h"
 
+#ifndef OPENACC_MULTIDEV
+# define OPENACC_MULTIDEV 1
+#endif
+#ifdef OPENACC_DATA_ACCESS
+# define OPENACC_DATA_ACCESS 1
+#endif
+
 namespace DLX {
 
 namespace Frontend {
@@ -475,6 +482,62 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
 ) {
   return false;
 }
+
+#if OPENACC_MULTIDEV
+
+template <>
+template <>
+bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_split>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_split> * clause
+) {
+  /// \todo
+  assert(false);
+  return false;
+}
+
+template <>
+template <>
+bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_devices>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_devices> * clause
+) {
+  /// \todo
+  assert(false);
+  return false;
+}
+
+#endif
+
+#if OPENACC_DATA_ACCESS
+
+template <>
+template <>
+bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_read>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_read> * clause
+) {
+  /// \todo
+  assert(false);
+  return false;
+}
+
+template <>
+template <>
+bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_write>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_write> * clause
+) {
+  /// \todo
+  assert(false);
+  return false;
+}
+
+#endif
 
 template <>
 bool Frontend<OpenACC::language_t>::build_graph() {
