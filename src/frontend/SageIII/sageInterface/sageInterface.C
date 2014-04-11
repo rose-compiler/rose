@@ -111,13 +111,20 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
   // DQ (4/3/2014): This function either builds a new set or inserts declarations into an
   // existing set based on if a set defined by the key (firstNondefiningDeclaration) is present.
      ROSE_ASSERT(decl != NULL);
-     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
-
-     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
 
 #if 0
      printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
+
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+
+     if (firstNondefiningDeclaration == NULL)
+        {
+       // It appears that some loop transformations (pass3.C) don't set the firstNondefiningDeclaration.
+          printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): firstNondefiningDeclaration == NULL: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+          return;
+        }
+     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
 
      if (decl == firstNondefiningDeclaration)
         {
