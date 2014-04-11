@@ -8,6 +8,7 @@
 
 #include "DLX/Core/constructs.hpp"
 #include "DLX/Core/frontend.hpp"
+#include "DLX/Core/directives.hpp"
 #include "DLX/OpenACC/language.hpp"
 
 #include <cassert>
@@ -52,43 +53,47 @@ generic_construct_t<OpenACC::language_t> * buildConstruct<OpenACC::language_t>(O
 }
 
 template <>
-bool findAssociatedNodes<OpenACC::language_t>(SgLocatedNode * directive_node, generic_construct_t<OpenACC::language_t> * construct) {
+bool findAssociatedNodes<OpenACC::language_t>(
+  SgLocatedNode * directive_node,
+  generic_construct_t<OpenACC::language_t> * construct,
+  const std::map<SgLocatedNode *, directive_t<OpenACC::language_t> *> & translation_map
+) {
   switch (construct->kind) {
     case OpenACC::language_t::e_acc_construct_data:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_data>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_parallel:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_parallel>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_kernel:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_kernel>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_loop:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_loop>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_host_data:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_host_data>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_host_data> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_host_data> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_declare:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_declare>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_declare> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_declare> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_cache:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_cache>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_cache> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_cache> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_update:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_update>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_update> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_update> *)construct, translation_map
      );
     case OpenACC::language_t::e_acc_construct_blank:
      return Frontend::Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_blank>(
-       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_blank> *)construct
+       directive_node, (construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_blank> *)construct, translation_map
      );
     case OpenACC::language_t::e_construct_last:
      assert(false);

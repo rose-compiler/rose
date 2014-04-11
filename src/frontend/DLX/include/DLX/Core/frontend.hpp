@@ -54,10 +54,18 @@ class Frontend {
  */
 
     template <typename language_t::construct_kinds_e kind>
-    static bool findAssociatedNodes(SgLocatedNode * directive_node, Directives::construct_t<language_t, kind> * construct);
+    static bool findAssociatedNodes(
+      SgLocatedNode * directive_node,
+      Directives::construct_t<language_t, kind> * construct,
+      const std::map<SgLocatedNode *, directive_t *> & translation_map
+    );
 
     template <typename language_t::clause_kinds_e kind>
-    static bool parseClauseParameters(std::string & directive_str, SgLocatedNode * directive_node, Directives::clause_t<language_t, kind> * clause);
+    static bool parseClauseParameters(
+      std::string & directive_str,
+      SgLocatedNode * directive_node,
+      Directives::clause_t<language_t, kind> * clause
+    );
 
     bool build_graph();
 
@@ -66,7 +74,7 @@ class Frontend {
   public:
     bool parseDirectives(SgNode *);
 
-  friend bool Directives::findAssociatedNodes<language_t>(SgLocatedNode *, Directives::generic_construct_t<language_t> *); 
+  friend bool Directives::findAssociatedNodes<language_t>(SgLocatedNode *, Directives::generic_construct_t<language_t> *, const std::map<SgLocatedNode *, directive_t *> & translation_map); 
   friend bool Directives::parseClauseParameters<language_t>(std::string &, SgLocatedNode *, Directives::generic_clause_t<language_t> *); 
 };
 
@@ -112,19 +120,15 @@ typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::parse(std
   directive->construct = parseConstruct(directive_str);
   assert(directive->construct != NULL);
 
-  std::cout << "(2)     directive_str = " << directive_str << std::endl;
-
-  assert(Directives::findAssociatedNodes(directive_node, directive->construct));
-
   generic_clause_t * clause = NULL;
   while ((clause = parseClause(directive_str)) != NULL) {
-    std::cout << "(3) (a) directive_str = " << directive_str << std::endl;
+    std::cout << "(2) (a) directive_str = " << directive_str << std::endl;
     assert(Directives::parseClauseParameters(directive_str, directive_node, clause));
-    std::cout << "(3) (b) directive_str = " << directive_str << std::endl;
+    std::cout << "(2) (b) directive_str = " << directive_str << std::endl;
     directive->clause_list.push_back(clause);
   }
 
-  std::cout << "(4)     directive_str = " << directive_str << std::endl;
+  std::cout << "(3)     directive_str = " << directive_str << std::endl;
 
   return directive;
 }
@@ -132,15 +136,24 @@ typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::parse(std
 template <class language_tpl>
 bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
   // FIXME C/C++ only
+
+  std::map<SgLocatedNode *, directive_t *> translation_map;
+
   std::vector<SgPragmaDeclaration *> pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(node);
   std::vector<SgPragmaDeclaration *>::iterator it_pragma_decl;
   for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
     SgPragmaDeclaration * pragma_decl = *it_pragma_decl;
     assert(pragma_decl != NULL);
-    std::string directive_string = pragma_decl->get_pragma()->get_pragma(); 
-    directives.push_back(parse(directive_string, pragma_decl));
+    std::string directive_string = pragma_decl->get_pragma()->get_pragma();
+    translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, parse(directive_string, pragma_decl)));
   }
- 
+
+  typename std::map<SgLocatedNode *, directive_t *>::const_iterator it;
+  for (it = translation_map.begin(); it != translation_map.end(); it++) {
+    assert(Directives::findAssociatedNodes(it->first, it->second->construct, translation_map));
+    directives.push_back(it->second);
+  }
+
   assert(build_graph());
  
   return true;

@@ -31,7 +31,8 @@ template <>
 template <>
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_data>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   SgPragmaDeclaration * pragma_decl = isSgPragmaDeclaration(directive_node);
   assert(pragma_decl != NULL);
@@ -48,15 +49,24 @@ template <>
 template <>
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_parallel>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   SgPragmaDeclaration * pragma_decl = isSgPragmaDeclaration(directive_node);
   assert(pragma_decl != NULL);
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.parallel_scope = isSgScopeStatement(SageInterface::getNextStatement(pragma_decl));
-  assert(construct->assoc_nodes.parallel_scope != NULL);
+
+  SgStatement * stmt = SageInterface::getNextStatement(pragma_decl);
+  construct->assoc_nodes.parallel_scope = isSgScopeStatement(stmt);
+  if (construct->assoc_nodes.parallel_scope != NULL)
+    construct->assoc_nodes.scoped_directive = NULL;
+  else {
+    std::map<SgLocatedNode *, directive_t *>::const_iterator it = translation_map.find(stmt);
+    assert(it != translation_map.end());
+    construct->assoc_nodes.scoped_directive = it->second;
+  }
 
   return true;
 }
@@ -65,7 +75,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_kernel>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   SgPragmaDeclaration * pragma_decl = isSgPragmaDeclaration(directive_node);
   assert(pragma_decl != NULL);
@@ -82,7 +93,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_loop>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   SgPragmaDeclaration * pragma_decl = isSgPragmaDeclaration(directive_node);
   assert(pragma_decl != NULL);
@@ -99,7 +111,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_host_data>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_host_data> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_host_data> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   return false;
 }
@@ -108,7 +121,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_declare>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_declare> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_declare> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   return false;
 }
@@ -117,7 +131,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_cache>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_cache> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_cache> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   return false;
 }
@@ -126,7 +141,8 @@ template <>
 template <> 
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_update>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_update> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_update> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   return false;
 }
@@ -135,7 +151,8 @@ template <>
 template <>
 bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_acc_construct_blank>(
   SgLocatedNode * directive_node,
-  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_blank> * construct
+  Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_blank> * construct,
+  const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
   return false;
 }
@@ -216,11 +233,9 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_copy> * clause
 ) {
-  std::cout << "copy    start: " << directive_str << std::endl;
   DLX::Frontend::Parser parser(directive_str, directive_node);
   bool res = parser.parse_list(clause->parameters.data_sections, '(', ')', ',');
   if (res) directive_str = parser.getDirectiveString();
-  std::cout << "copy    stop : " << directive_str << std::endl;
   return res;
 }
 
@@ -231,11 +246,9 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_copyin> * clause
 ) {
-  std::cout << "copyin  start: " << directive_str << std::endl;
   DLX::Frontend::Parser parser(directive_str, directive_node);
   bool res = parser.parse_list(clause->parameters.data_sections, '(', ')', ',');
   if (res) directive_str = parser.getDirectiveString();
-  std::cout << "copyin  stop : " << directive_str << std::endl;
   return res;
 }
 
@@ -246,11 +259,9 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_copyout> * clause
 ) {
-  std::cout << "copyout start: " << directive_str << std::endl;
   DLX::Frontend::Parser parser(directive_str, directive_node);
   bool res = parser.parse_list(clause->parameters.data_sections, '(', ')', ',');
   if (res) directive_str = parser.getDirectiveString();
-  std::cout << "copyout stop : " << directive_str << std::endl;
   return res;
 }
 

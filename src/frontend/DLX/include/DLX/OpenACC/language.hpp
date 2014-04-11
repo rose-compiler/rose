@@ -124,6 +124,7 @@ template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_data> {
   SgScopeStatement * parent_scope;
   SgScopeStatement * data_scope;
+  Directives::directive_t<language_t> * scoped_directive;
 };
 
 template <>
@@ -131,6 +132,7 @@ template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_parallel> {
   SgScopeStatement * parent_scope;
   SgScopeStatement * parallel_scope;
+  Directives::directive_t<language_t> * scoped_directive;
 };
 
 template <>
@@ -138,6 +140,7 @@ template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_kernel> {
   SgScopeStatement * parent_scope;
   SgScopeStatement * kernel_scope;
+  Directives::directive_t<language_t> * scoped_directive;
 };
 
 template <>

@@ -10,6 +10,7 @@
 #define __DLX_DIRECTIVES_CONSTRUCT_HPP__
 
 #include <string>
+#include <map>
 
 class SgLocatedNode;
 
@@ -21,6 +22,9 @@ namespace Directives {
  * \addtogroup grp_dlx_core_directives
  * @{
  */
+
+template <class language_tpl>
+struct directive_t;
 
 template <class language_tpl>
 struct generic_construct_t {
@@ -52,7 +56,11 @@ template <class language_tpl>
 generic_construct_t<language_tpl> * buildConstruct(typename language_tpl::construct_kinds_e kind);
 
 template <class language_tpl>
-bool findAssociatedNodes(SgLocatedNode * directive_node, generic_construct_t<language_tpl> * construct);
+bool findAssociatedNodes(
+  SgLocatedNode * directive_node,
+  generic_construct_t<language_tpl> * construct,
+  const std::map<SgLocatedNode *, Directives::directive_t<language_tpl> *> & translation_map
+);
 
 
 
