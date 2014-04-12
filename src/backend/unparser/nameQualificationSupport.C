@@ -801,6 +801,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // size_t numberOfSymbols = 0;
        // bool forceMoreNameQualification = false;
 
+       // DQ (4/12/2014): we need to record that there was another function identified in the parent scopes that we will want to have force name qualification.
+          bool foundAnOverloadedFunctionWithSameName = false;
+          bool foundAnOverloadedFunctionInSameScope  = false;
+
           if (symbol != NULL)
              {
             // printf ("Lookup symbol based on name only: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
@@ -963,6 +967,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          ROSE_ASSERT(functionDeclaration != NULL);
 
                          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("case function declaration: functionSymbol = %p \n",functionSymbol);
+#endif
+                         SgFunctionType* functionType = functionDeclaration->get_type();
+                         ROSE_ASSERT(functionType != NULL);
+
                       // ROSE_ASSERT(classSymbol != NULL);
                          if (functionSymbol == NULL)
                             {
@@ -975,7 +985,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               printf ("WARNING: Present implementation of symbol table will not find alias sysmbols of SgFunctionSymbol \n");
 #endif
                            // Reset the symbol to one that will match the declaration.
-                              symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
+                           // DQ (4/12/2014): I think we need to use the version of the function that matches the function type.
+                           // See test2014_42.C for an example of this.
+                           // symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("NOTE: we are now using the function type in the initial function symbol lookup? \n");
+#endif
+                              symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,currentScope);
 
                            // ROSE_ASSERT(symbol != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -987,6 +1003,50 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                  {
                                    printf ("In NameQualificationTraversal::nameQualificationDepth(): functionSymbol == NULL \n");
                                  }
+#endif
+                            }
+                           else
+                            {
+                           // DQ (4/12/2014): But is this the correct symbol for a function of the same type.
+                           // See test2014_42.C for an example where this is an overloaded function declaration and the WRONG one.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("case function declaration: functionSymbol = %p: but is it associated with the correct type \n",functionSymbol);
+#endif
+                              SgFunctionType* functionTypeAssociatedWithSymbol = isSgFunctionType(functionSymbol->get_type());
+                              ROSE_ASSERT(functionTypeAssociatedWithSymbol != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("case function declaration: functionType = %p \n",functionType);
+                              printf ("case function declaration: functionTypeAssociatedWithSymbol = %p \n",functionTypeAssociatedWithSymbol);
+#endif
+                              if (functionType != functionTypeAssociatedWithSymbol)
+                                 {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("NOTE: we are now using the function type in the initial function symbol lookup? \n");
+#endif
+                                // DQ (4/12/2014): we need to record that there was another function identified in the parent scopes that we will want to have force name qualification.
+                                   foundAnOverloadedFunctionWithSameName = true;
+
+                                // DQ (4/12/2014): Check if the scopes are the same.  If the same then we don't need name qualification.
+                                   SgScopeStatement* scopeAssociatedWithSymbol = functionSymbol->get_declaration()->get_scope();
+                                   ROSE_ASSERT(scopeAssociatedWithSymbol != NULL);
+                                   SgScopeStatement* scopeOfDeclaration = declaration->get_scope();
+                                   ROSE_ASSERT(scopeOfDeclaration != NULL);
+
+                                   if (scopeAssociatedWithSymbol == scopeOfDeclaration)
+                                      {
+                                        foundAnOverloadedFunctionInSameScope = true;
+                                      }
+
+                                   symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,currentScope);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("After using the function type: symbol = %p \n",symbol);
+#endif
+                                 }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
 #endif
                             }
 #if 0
@@ -1149,6 +1209,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               printf ("calling lookupFunctionSymbolInParentScopes(): name = %s currentScope = %p = %s \n",name.str(),currentScope,currentScope->class_name().c_str());
 #endif
                            // Reset the symbol to one that will match the declaration.
+                           // DQ (4/12/2014): I think we need to use the function type here!
+#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 0)
+                              printf ("Should we be using the function type in the initial SgTemplateInstantiationFunctionDecl symbol lookup? \n");
+#endif
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
 
                            // DQ (6/23/2013): Fixing test2013_223.C (function hiding template function instantiation).
@@ -1527,6 +1591,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
             // DQ (5/6/2011): Now we have fixed derived class symbol tables to inject there base classes symbols into the derived class.
                SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+#endif
+
                if (forceMoreNameQualification == true)
                   {
                  // If there is more than one symbol with the same name then name qualification is required to distinguish between them.
@@ -1797,6 +1865,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               ROSE_ASSERT(functionDeclarationFromSymbol != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("associatedFunctionDeclarationFromSymbol = %p = %s \n",associatedFunctionDeclarationFromSymbol,associatedFunctionDeclarationFromSymbol->class_name().c_str());
+                              printf ("functionDeclarationFromSymbol           = %p = %s \n",functionDeclarationFromSymbol,functionDeclarationFromSymbol->class_name().c_str());
+
                               printf ("associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration() = %p \n",associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration());
                               printf ("functionDeclarationFromSymbol->get_firstNondefiningDeclaration()           = %p \n",functionDeclarationFromSymbol->get_firstNondefiningDeclaration());
                               if (associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration() == NULL)
@@ -1809,6 +1880,34 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // if (associatedFunctionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration())
                               if (associatedFunctionDeclarationFromSymbol == functionDeclarationFromSymbol)
                                  {
+                                // DQ (4/12/2014): Now we know that it can be found, but we still need to check if there would 
+                                // be another function that could be used and for which we need name qualification to avoid.
+
+                                // DQ (4/12/2014): We need to use the recorded value foundAnOverloadedFunctionWithSameName because we may want to have force name qualification.
+                                   if (foundAnOverloadedFunctionWithSameName == true)
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("There was another function identified in the process of resolving that this function could be found. thus we will require some name qualification \n");
+#endif
+                                        if (foundAnOverloadedFunctionInSameScope == false)
+                                           {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 0)
+                                             printf ("In name qualification support: case V_SgFunctionSymbol: We need to compute the CORRECT name qualification depth: using 1 for now! \n");
+#endif
+                                             qualificationDepth = 1;
+                                           }
+#if 0
+                                          else
+                                           {
+                                             qualificationDepth = 0;
+                                           }
+#endif
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+
                                 // DQ (6/20/2011): But we don't check for if there was another declaration that might be a problem (overloaded functions don't count!)...
                                 // This function is visible from where it is referenced. 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -1850,6 +1949,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    printf ("This function or member function is NOT visible from where it is referenced (declaration with same name does not match) \n");
 #endif
 #if 0
+                                // DQ (4/12/2014): Since we have searched using the function type, we don't need to compare the function types here.
                                 // DQ (4/8/2014): Added test on function types.
                                    SgFunctionType* associatedfunctionTypeFromSymbol = associatedFunctionDeclarationFromSymbol->get_type();
                                    SgFunctionType* functionTypeFromSymbol           = functionDeclarationFromSymbol->get_type();
