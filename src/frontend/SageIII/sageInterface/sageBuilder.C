@@ -14992,7 +14992,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // if (TransformationSupport::getFile(functionSymbol) != targetFile)
                if (getEnclosingFileNode(functionSymbol_copy) != targetFile)
                   {
-#if 1
+#if 0
                     printf ("Warning: case V_SgFunctionRefExp: functionSymbol_copy not in target file (find function = %s) \n",functionSymbol_copy->get_name().str());
 #endif
                  // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
