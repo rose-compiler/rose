@@ -622,7 +622,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
                 assert(index>=0 && index <=60);
                 binaryBindingAssert[index]=true;
 				reachabilityResults.reachable(index);
-				cout<<"DEBUG: found assert Error "<<index<<endl;
+				//cout<<"DEBUG: found assert Error "<<index<<endl;
               }
               return elistify();
             }
