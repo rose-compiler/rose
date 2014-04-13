@@ -361,7 +361,7 @@ EXTRA_DIST += SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c
 test9a.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
 	@$(RTH_RUN)						\
 		TITLE="references to ctype macros [$@]"		\
-		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING"	\
+		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING" \
 		SNIPPET=snippets8.c,::weakness			\
 		SPECIMEN=SmallSpecimensC/specimen8.c		\
 		IPOINT=::main					\
@@ -376,7 +376,7 @@ test9a.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specime
 test9b.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
 	@$(RTH_RUN)						\
 		TITLE="references to ctype macros [$@]"		\
-		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING"	\
+		DISABLED="FIXME: THIS TEST IS CURRENTLY FAILING" \
 		SNIPPET=snippets8.c,::weakness			\
 		SPECIMEN=SmallSpecimensC/specimen8.c		\
 		IPOINT=::main					\
@@ -386,6 +386,7 @@ test9b.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specime
 		COPY_DEFINITIONS=no				\
 		CHECK_STRING="handleFiles(hello)"		\
 		$(C_INJECTION_TEST) $@
+
 
 ###############################################################################################################################
 # Small Java Tests
