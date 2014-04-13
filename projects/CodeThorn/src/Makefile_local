@@ -13,38 +13,32 @@ CXX                   = g++-4.4
 BISON                 = bison
 FLEX                  = flex
 
-# Location of include directory after "make install" (set as environment variable)
-#ROSE_INCLUDE_DIR = 
-
-# Location of Boost include directory (set as environment variable)
-#BOOST_CPPFLAGS = 
-
 # Location of library directory after "make install" (set as environment variable)
-#ROSE_LIB_DIR = 
 ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
 
 # Location of ROSE's libtool (it's only in the compilation path)
-
 #KNOBS = -DPSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
 #KNOBS = -DPSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
 #KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
 KNOBS = 
 
-CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp 
+CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp -I.
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
-CXXFLAGS              = -Wno-deprecated -Wall
+CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLCheckerFixpoint.o LTLCheckerUnified.o CommandLineOptions.o InternalChecks.o Miscellaneous.o MatchOperation.o AstMatching.o matcherparser.o matcherlexer.o RDLattice.o
+OBJECT_FILES=AType.o Analyzer.C AstTerm.o CFAnalyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LTLCheckerFixpoint.o LTLCheckerUnified.o LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o Timer.cpp Visualizer.o RDLattice.o  AnalysisAbstractionLayer.o RDAstAttribute.o Flow.o ReachabilityResults.o  addressTakenAnalysis/defUseQuery.C addressTakenAnalysis/VariableIdUtils.C addressTakenAnalysis/addressTakenAnalysis.C 
 
 REGRESSION_DATA_DIR=regressiondata
 
 OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
 # Default make rule to use
-all: $(TOOLNAME3) $(TOOLNAME2) matcher_demo
-	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
+all: RERS_BINARY
+
+#all: $(TOOLNAME3) $(TOOLNAME2) matcher_demo
+#	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
 
 
 .PHONY: check dist viz clean distclean bsps docs
@@ -77,7 +71,7 @@ MatchOperation.o : matcherparser_decls.h MatchOperation.h MatchOperation.C match
 
 AstMatching.o : matcherparser_decls.h MatchOperation.h RoseAst.h AstMatching.h AstMatching.C
 
-Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h RoseAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
+#Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h CFAnalyzer.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
 
 codethorn.o: codethorn.C codethorn.h LTL.h
 LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
@@ -89,34 +83,34 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3) RERS_empty_specialization.o
 
 $(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o -I.
 
 $(TOOLNAME3)_rers2: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem2_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers2 RERS_Problem2_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers2 RERS_Problem2_specialization.o -I.
 
 $(TOOLNAME3)_rers3: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem3_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers3 RERS_Problem3_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers3 RERS_Problem3_specialization.o -I.
 
 $(TOOLNAME3)_rers4: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem4_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers4 RERS_Problem4_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers4 RERS_Problem4_specialization.o -I.
 
 $(TOOLNAME3)_rers5: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem5_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers5 RERS_Problem5_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers5 RERS_Problem5_specialization.o -I.
 
 $(TOOLNAME3)_rers6: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem6_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers6 RERS_Problem6_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers6 RERS_Problem6_specialization.o -I.
 
 $(TOOLNAME3)_rers7: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem7_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers7 RERS_Problem7_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers7 RERS_Problem7_specialization.o -I.
 
 $(TOOLNAME3)_rers8: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem8_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers8 RERS_Problem8_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers8 RERS_Problem8_specialization.o -I.
 
 $(TOOLNAME3)_rers9: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem9_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers9 RERS_Problem9_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers9 RERS_Problem9_specialization.o -I.
 
 $(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem10_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers10 RERS_Problem10_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers10 RERS_Problem10_specialization.o -I.
 
 $(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES) RERS_empty_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C RERS_empty_specialization.o -o$(TOOLNAME2) 

@@ -587,11 +587,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   if(edge.isType(EDGE_LOCAL)) {
 #ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
+	  //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_output") {
+		  //cout<<"DEBUG: BINARY-transfer: calculate output found."<<endl;
           SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
           SgExpressionPtrList::iterator j=actualParameters.begin();
           SgExpression* actualParameterExpr=*j;
@@ -614,10 +616,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               // = rers_result*(-1)-100 : rers error-number
               if(rers_result==-1000) {
                 binaryBindingAssert[61]=true;
+				reachabilityResults.reachable(61);
               } else {
                 int index=((rers_result+100)*(-1));
                 assert(index>=0 && index <=60);
                 binaryBindingAssert[index]=true;
+				reachabilityResults.reachable(index);
+				cout<<"DEBUG: found assert Error "<<index<<endl;
               }
               return elistify();
             }

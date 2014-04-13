@@ -124,6 +124,7 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   if(boolOptions["rers-binary"]) {
+	cout<<"DEBUG: generating assert results for binary analysis."<<endl;
     int assertStart=-1;
     int assertEnd=-1;
     switch(resultsFormat) {
@@ -1358,6 +1359,11 @@ int main( int argc, char * argv[] ) {
   }
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
+  // check threads == 1
+  if(args.count("rers-binary") && numberOfThreadsToUse>1) {
+	cerr<<"Error: binary mode is only supported for 1 thread."<<endl;
+	exit(1);
+  }
   if(args.count("semantic-fold-threshold")) {
     int semanticFoldThreshold=args["semantic-fold-threshold"].as<int>();
     analyzer.setSemanticFoldThreshold(semanticFoldThreshold);

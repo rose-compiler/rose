@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "AType.h"
 #include "StateRepresentations.h"
 #include "Analyzer.h"
