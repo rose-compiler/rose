@@ -1210,7 +1210,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                            // Reset the symbol to one that will match the declaration.
                            // DQ (4/12/2014): I think we need to use the function type here!
-#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 0)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 1)
                               printf ("Should we be using the function type in the initial SgTemplateInstantiationFunctionDecl symbol lookup? \n");
 #endif
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
@@ -1891,7 +1891,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                                         if (foundAnOverloadedFunctionInSameScope == false)
                                            {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 0)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL >= 1)
                                              printf ("In name qualification support: case V_SgFunctionSymbol: We need to compute the CORRECT name qualification depth: using 1 for now! \n");
 #endif
                                              qualificationDepth = 1;
