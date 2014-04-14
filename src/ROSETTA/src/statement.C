@@ -1813,13 +1813,24 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added support for explicit template instantiation to IR (required to address template linking issues)
      TemplateInstantiationDirectiveStatement.setFunctionPrototype  ( "HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
 
+  // DQ (4/8/2014): Restored the original behavior (traversing the associated child declaration).
+  // Upon investigation, it is not a shared IR node and traversing it is important to the 
+  // support for the AST Copy mechanims (else we fail test2006_08.C and test2008_37.C).
+  // DQ (4/7/2014): Added support for the AST copy mechanism which fails for test2006_08.C
+  // and test2008_37.C.
   // DQ (4/3/2014): This will refer to an existing template instantiation so when we traverse 
   // it we will be sharing the template instantiation.  For this reason we should supress the 
   // traversal of the declaration in this SgTemplateInstantiationDirectiveStatement IR node.
   // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      TemplateInstantiationDecl.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // This might have to be made to be type == "int" but it makes more sense as a template_type_enum
