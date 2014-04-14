@@ -920,3 +920,9 @@ For snippets work with Robb:
     git pull origin matzke/snippets-rc
 
 
+Make a backup using git:
+   git branch backup
+
+Delete the backup:
+   git branch -D backup
+

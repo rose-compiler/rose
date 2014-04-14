@@ -12761,22 +12761,41 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                ROSE_ASSERT(snippet_enumDeclaration != NULL);
 
                SgName snippet_enumName = snippet_enumDeclaration->get_name();
-#if 0
+#if 1
                printf ("snippet snippet declaration's enum name = %s \n",snippet_enumName.str());
 #endif
-               SgEnumSymbol* target_symbol = target_AST_scope->lookup_enum_symbol(snippet_enumName);
-               ROSE_ASSERT(target_symbol != NULL);
-               returnSymbol = target_symbol;
+            // DQ (4/13/2014): check if this is an un-named enum beclaration.
+               bool isUnNamed = snippet_enumDeclaration->get_isUnNamed();
+               if (isUnNamed == false)
+                  {
+                 // SgEnumSymbol* target_symbol = target_AST_scope->lookup_enum_symbol(snippet_enumName);
+                    SgEnumSymbol* target_symbol = lookupEnumSymbolInParentScopes(snippet_enumName,target_AST_scope);
+                    if (target_symbol == NULL)
+                       {
+                      // Debug this case.
+                         SgScopeStatement* scope = snippet_enumDeclaration->get_scope();
+                         printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+                         scope->get_file_info()->display("case V_SgEnumDeclaration: target_symbol == NULL: scope: debug");
+                       }
+                    ROSE_ASSERT(target_symbol != NULL);
+                    returnSymbol = target_symbol;
 
-               SgEnumSymbol* enumSymbolInTargetAST = isSgEnumSymbol(returnSymbol);
-               ROSE_ASSERT(enumSymbolInTargetAST != NULL);
-               SgEnumDeclaration* target_enumDeclaration = isSgEnumDeclaration(enumSymbolInTargetAST->get_declaration());
-               ROSE_ASSERT(target_enumDeclaration != NULL);
+                    SgEnumSymbol* enumSymbolInTargetAST = isSgEnumSymbol(returnSymbol);
+                    ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+                    SgEnumDeclaration* target_enumDeclaration = isSgEnumDeclaration(enumSymbolInTargetAST->get_declaration());
+                    ROSE_ASSERT(target_enumDeclaration != NULL);
 #if 0
-               printf ("snippet: enumDeclaration = %p = %s \n",snippet_enumDeclaration,snippet_enumDeclaration->get_name().str());
-               printf ("target: enumDeclaration  = %p = %s \n",target_enumDeclaration,target_enumDeclaration->get_name().str());
+                    printf ("snippet: enumDeclaration = %p = %s \n",snippet_enumDeclaration,snippet_enumDeclaration->get_name().str());
+                    printf ("target: enumDeclaration  = %p = %s \n",target_enumDeclaration,target_enumDeclaration->get_name().str());
 #endif
-               ROSE_ASSERT(snippet_enumDeclaration->get_name() == target_enumDeclaration->get_name());
+                    ROSE_ASSERT(snippet_enumDeclaration->get_name() == target_enumDeclaration->get_name());
+                  }
+                 else
+                  {
+                 // DQ (4/13/2014): I think we all agreed these would not have to be handled.
+                    printf ("Warning: can't handle unnamed enum declarations \n");
+                    ROSE_ASSERT(returnSymbol == NULL);
+                  }
                break;
              }
 
@@ -14973,7 +14992,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
             // if (TransformationSupport::getFile(functionSymbol) != targetFile)
                if (getEnclosingFileNode(functionSymbol_copy) != targetFile)
                   {
-#if 1
+#if 0
                     printf ("Warning: case V_SgFunctionRefExp: functionSymbol_copy not in target file (find function = %s) \n",functionSymbol_copy->get_name().str());
 #endif
                  // SgNode* insertionPointScope = (insertionPointIsScope == true) ? insertionPoint : insertionPoint->get_parent();
@@ -15238,7 +15257,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                                              SgFunctionSymbol *functionSymbol = classDefinition->lookup_function_symbol(memberFunctionName,memberFunctionType);
                                              if (functionSymbol == NULL)
                                                 {
-                                                  printf ("Symbol not found: output symbol table: \n");
+                                                  printf ("Symbol not found: output symbol table (size = %d): \n",classDefinition->get_symbol_table()->size());
 #if DEBUG_MEMBER_FUNCTION_REF_EXP
                                                   classDefinition->get_symbol_table()->print("Symbol not found: output symbol table: SgClassDefinition");
 #endif
@@ -15391,33 +15410,52 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #endif
                SgEnumVal* enumVal_copy     = isSgEnumVal(node_copy);
                SgEnumVal* enumVal_original = isSgEnumVal(node_original);
-
+#if 0
+               printf ("   --- enumVal_original = %p = %d name = %s \n",enumVal_original,enumVal_original->get_value(),enumVal_original->get_name().str());
+#endif
                SgEnumDeclaration* associatedEnumDeclaration_copy     = isSgEnumDeclaration(enumVal_copy->get_declaration());
                SgEnumDeclaration* associatedEnumDeclaration_original = isSgEnumDeclaration(enumVal_original->get_declaration());
 
-               if (associatedEnumDeclaration_copy == associatedEnumDeclaration_original)
+            // DQ (4/13/2014): check if this is an un-named enum beclaration.
+               bool isUnNamed = associatedEnumDeclaration_original->get_isUnNamed();
+               if (isUnNamed == false)
                   {
+                    if (associatedEnumDeclaration_copy == associatedEnumDeclaration_original)
+                       {
 #if 0
-                    printf ("The stored reference to the enum declaration in the SgEnumVal must be reset \n");
+                         printf ("   --- The stored reference to the enum declaration in the SgEnumVal must be reset \n");
 #endif
-                 // SgSymbol* SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
-                    SgSymbol* symbol = findAssociatedSymbolInTargetAST(associatedEnumDeclaration_original,targetScope);
-                    ROSE_ASSERT(symbol != NULL);
-                    SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
-                    ROSE_ASSERT(enumSymbol != NULL);
-                    SgEnumDeclaration* new_associatedEnumDeclaration_copy = enumSymbol->get_declaration();
-                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != NULL);
+                      // SgSymbol* SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
+                         SgSymbol* symbol = findAssociatedSymbolInTargetAST(associatedEnumDeclaration_original,targetScope);
+                         if (symbol == NULL)
+                            {
+                           // debug this case.
+                              enumVal_original->get_file_info()->display("case V_SgEnumVal: symbol == NULL: debug");
+                            }
+                         ROSE_ASSERT(symbol != NULL);
+                         SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
+                         ROSE_ASSERT(enumSymbol != NULL);
+                         SgEnumDeclaration* new_associatedEnumDeclaration_copy = enumSymbol->get_declaration();
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != NULL);
 
-                 // If this is false then in means that we should have built a new SgEnumSymbol instead of reusing the existing one from the snippet.
-                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);
-                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
-                    ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_definingDeclaration());
+                      // If this is false then in means that we should have built a new SgEnumSymbol instead of reusing the existing one from the snippet.
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_definingDeclaration());
 
-                    enumVal_copy->set_declaration(new_associatedEnumDeclaration_copy);
+                         enumVal_copy->set_declaration(new_associatedEnumDeclaration_copy);
 #if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
 #endif
+                       }
+                  }
+                 else
+                  {
+                 // DQ (4/13/2014): I think we all agreed these would not have to be handled, so issue a warning.
+                 // It still is likely that I can allow this, but permit this intermediate fix.
+                    printf ("Warning: can't handle enum values from unnamed enum declarations \n");
+                    printf ("   --- enumVal_original = %p = %d name = %s \n",enumVal_original,enumVal_original->get_value(),enumVal_original->get_name().str());
                   }
 
                break;
@@ -15485,9 +15523,9 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      ROSE_ASSERT(snippetFile_of_original != targetFile);
 
 #if 0
-     printf ("targetFile              = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
-     printf ("snippetFile_of_copy     = %p = %s \n",snippetFile_of_copy,snippetFile_of_copy->get_sourceFileNameWithPath().c_str());
-     printf ("snippetFile_of_original = %p = %s \n",snippetFile_of_original,snippetFile_of_original->get_sourceFileNameWithPath().c_str());
+     printf ("   --- targetFile              = %p = %s \n",targetFile,targetFile->get_sourceFileNameWithPath().c_str());
+     printf ("   --- snippetFile_of_copy     = %p = %s \n",snippetFile_of_copy,snippetFile_of_copy->get_sourceFileNameWithPath().c_str());
+     printf ("   --- snippetFile_of_original = %p = %s \n",snippetFile_of_original,snippetFile_of_original->get_sourceFileNameWithPath().c_str());
 #endif
 
   // Any node that has entries not referenced in the target file needs to be fixed up.
