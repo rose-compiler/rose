@@ -9,5 +9,6 @@ void handleFiles(char * otherFileName) {
 }
 
 void weakness(char * taintedValue) {
-    int inSnippet = isupper(*taintedValue);
+    int inSnippet;
+    inSnippet = isupper(*taintedValue);
 }
