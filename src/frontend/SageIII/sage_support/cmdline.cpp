@@ -5219,6 +5219,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 //#endif
 #endif
 
+#if 0
+  // DQ (4/14/2014): Experiment with placing this in another location below (after "-I" options).  
+  // This is part of the fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )
           printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
 
@@ -5233,6 +5236,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
+#endif
 #endif
 
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
@@ -5661,6 +5665,25 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("-I" + *i);
         }
+
+#if 1
+  // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
+  // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
+     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
+        {
+       // Build the preinclude directory list
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(*i);
+        }
+#endif
 
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--XXXXX");

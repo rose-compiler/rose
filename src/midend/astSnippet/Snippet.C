@@ -879,9 +879,11 @@ Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
             if (preorder==when) {
                 if (SgLocatedNode *loc = isSgLocatedNode(node)) {
 #if 1
+                 // DQ (4/14/2014): This appears to work just fine, but I would have expected the longer version (below) would have been required.
                     loc->get_file_info()->setTransformation();
                     loc->setOutputInCodeGeneration();
 #else
+                 // DQ (4/14/2014): This should be a more complete version to set all of the Sg_File_Info objects on a SgLocatedNode.
                     ROSE_ASSERT(loc->get_startOfConstruct() != NULL);
                     loc->get_startOfConstruct()->setTransformation();
                     loc->get_startOfConstruct()->setOutputInCodeGeneration();
