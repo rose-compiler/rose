@@ -873,14 +873,31 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 void
 Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
 {
-#if 0 /* [Robb P. Matzke 2014-04-10]: this method of marking is not sufficient to cause unparsing of inserted snippets */
+#if 1 /* [Robb P. Matzke 2014-04-10]: this method of marking is not sufficient to cause unparsing of inserted snippets */
     // Mark the things we insert as being transformations so they get inserted into the output by backend()
     struct T1: SnippetAstTraversal {
         void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (preorder==when) {
                 if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+#if 1
                     loc->get_file_info()->setTransformation();
                     loc->setOutputInCodeGeneration();
+#else
+                    ROSE_ASSERT(loc->get_startOfConstruct() != NULL);
+                    loc->get_startOfConstruct()->setTransformation();
+                    loc->get_startOfConstruct()->setOutputInCodeGeneration();
+
+                    ROSE_ASSERT(loc->get_endOfConstruct() != NULL);
+                    loc->get_endOfConstruct()->setTransformation();
+                    loc->get_endOfConstruct()->setOutputInCodeGeneration();
+
+                    if (SgExpression* exp = isSgExpression(loc))
+                       {
+                         ROSE_ASSERT(exp->get_operatorPosition() != NULL);
+                         exp->get_operatorPosition()->setTransformation();
+                         exp->get_operatorPosition()->setOutputInCodeGeneration();
+                       }
+#endif
                 }
             }
         }
