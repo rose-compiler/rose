@@ -257,7 +257,7 @@ test5a.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
-		CHECK_STRING="random() % ((long )3"	\
+		CHECK_STRING="= (random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test5b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -270,7 +270,7 @@ test5b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
-		CHECK_STRING="random() % ((long )3"	\
+		CHECK_STRING="= (random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test5c.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -283,7 +283,7 @@ test5c.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=yes			\
-		CHECK_STRING="random() % ((long )3"	\
+		CHECK_STRING="randomOffByOne(x)"	\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -300,7 +300,7 @@ test6a.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
-		CHECK_STRING="random() % ((long )2"	\
+		CHECK_STRING="= ((random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test6b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -313,7 +313,7 @@ test6b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=yes			\
-		CHECK_STRING="random() % ((long )3"	\
+		CHECK_STRING="= ((random() %"		\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -914,7 +914,7 @@ test_7.passed:
 		LOCDECLS_POSITION=end				\
 		RECURSIVE_INSERTION=yes				\
 		COPY_DEFINITIONS=no				\
-		CHECK_STRING="fputs(x,((FILE *)stderr))"	\
+		CHECK_STRING="fputs(x,"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_8.passed
@@ -984,7 +984,7 @@ test_12.passed: injectSnippet
 		LOCDECLS_POSITION=end				\
 		RECURSIVE_INSERTION=yes				\
 		COPY_DEFINITIONS=no				\
-		CHECK_STRING="int value = (int )zero;"		\
+		CHECK_STRING="int value = "			\
 		$(C_INJECTION_TEST) $@
 
 test_java_1.passed:
