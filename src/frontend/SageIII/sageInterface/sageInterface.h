@@ -1606,6 +1606,16 @@ ROSE_DLL_API void insertStatementAfterLastDeclaration(SgStatement* stmt, SgScope
 //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
 ROSE_DLL_API void insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope);
 
+//! Insert a statement before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//  then the statement is inserted at the end of the scope.
+ROSE_DLL_API void insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
+                                                           bool movePreprocessingInfo=true);
+
+//! Insert statements before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//then the new statements are inserted at the end of the scope.
+ROSE_DLL_API void insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
+                                                               SgScopeStatement *scope);
+
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 ROSE_DLL_API void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
 
@@ -2296,10 +2306,10 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 //--------------------------------Java interface functions ---------------------
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
-      void processFile(SgProject *, std::string, bool unparse = false);
+      SgFile *processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string, std::string);
+      SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
       SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);

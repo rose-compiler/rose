@@ -36,6 +36,7 @@ ipoint3()
 
     INSERT_HERE;
     return f3;
+#pragma message "this is a pragma, which is a kind of SgDeclarationStatement"
 }
 
 double

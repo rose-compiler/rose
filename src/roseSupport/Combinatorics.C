@@ -10,6 +10,13 @@
 
 namespace Combinatorics {
 
+bool
+flip_coin()
+{
+    static LinearCongruentialGenerator rng;
+    return 0 == (rng() & 1);
+}
+
 std::vector<uint8_t>
 sha1_digest(const std::vector<uint8_t> &data)
 {

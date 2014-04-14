@@ -2,7 +2,7 @@
 #include "errorSnippets.h"
 
 /* Reads environment variable QUICKSORT_ERROR and sets qs_error if the environment variable is "yes" */
-void readEnvironment() {
+void readEnvironment(void) {
     const char *tmp_env;
     int qs_error;
     tmp_env = getenv("QUICKSORT_ERROR");
@@ -50,7 +50,7 @@ void saveInteger(int whatToSave) {
 }
 
 /* Restore a value that was previously squirreled away. */
-void restoreInteger() {
+void restoreInteger(void) {
     int *tmp_addr, tmp_encoded, tmp_decoded, restoredValue;
     allocateSavedInteger(tmp_addr);
     tmp_decoded = *tmp_addr;

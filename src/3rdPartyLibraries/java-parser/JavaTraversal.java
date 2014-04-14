@@ -30,10 +30,9 @@ class JavaTraversal implements Callable<Boolean> {
         ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
     }
 
-    static int verboseLevel = 0;
-
+    public static int verboseLevel = 0;
     static HashSet<String> processedFiles = new HashSet<String>();
-    static JavaParserSupport java_parser_support = null;
+    static JavaParserSupport javaParserSupport = null;
 
     // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
     // private static boolean hasErrorOccurred = false;
@@ -276,14 +275,13 @@ class JavaTraversal implements Callable<Boolean> {
         int maxUnits = sourceUnits.length;
         main.batchCompiler.totalUnits = 0;
         main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-
         internalBeginToCompile(main.batchCompiler, sourceUnits, maxUnits);
 
         return main;
     }
 
-    // TODO: Remove this !
-    static int totalUnits = 0;
+    static int totalCompilationUnitsProcessed = 0;
+
     static Runtime runtime = Runtime.getRuntime();
     static long r1, r2, f1, f2;
 
@@ -303,17 +301,15 @@ class JavaTraversal implements Callable<Boolean> {
             System.out.println();
             System.out.println("**** In this iteration, the following " + (size == 1 ? "unit was" : (size + " units were")) + " processed:");
             System.out.println();
-        }
 
-        for (CompilationUnitDeclaration unit : units) {
-            System.out.println("   " + new String(unit.getFileName()));
-        }
+            for (CompilationUnitDeclaration unit : units) {
+                System.out.println("   " + new String(unit.getFileName()));
+            }
 
-        if (verboseLevel > 0) {
             System.out.println();
             System.out.println("**** Initial Max Memory:          \t " + r1 + ", used: " + (r1 - f1));
             System.out.println("**** After Compilation Max Memory:\t " + r2 + ", used: " + (r2 - f2));
-            System.out.println("**** Total Number of Units Processed: " + totalUnits);
+            System.out.println("**** Total Number of Units Processed: " + totalCompilationUnitsProcessed);
             System.out.println();
         }
     }
@@ -409,14 +405,18 @@ class JavaTraversal implements Callable<Boolean> {
                 }
             }
 
-            totalUnits += units.size();
+            totalCompilationUnitsProcessed += units.size();
 
             //
             //
             //
             try {
-                java_parser_support = new JavaParserSupport(verboseLevel, (units.size() == 1 && tempUnnamedFiles.contains(new String(units.get(0).getFileName()))));
-                java_parser_support.translate(units, languageLevel(main.compilerOptions.sourceLevel));
+                if (units.size() > 0) {
+                    if (javaParserSupport == null) { // JavaParserSupport not yet allocated?
+                        javaParserSupport = new JavaParserSupport(units.get(0));
+                    }
+                    javaParserSupport.translate(units, (units.size() == 1 && tempUnnamedFiles.contains(new String(units.get(0).getFileName()))));
+                }
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -471,7 +471,7 @@ class JavaTraversal implements Callable<Boolean> {
     }
 
     public static boolean hasConflicts(String file_name, String package_name, String class_name) {
-        return java_parser_support.hasConflicts(file_name, package_name, class_name);
+        return javaParserSupport.hasConflicts(file_name, package_name, class_name);
     }
 
     private static HashSet<String> tempUnnamedFiles = new HashSet<String>();
@@ -512,7 +512,17 @@ class JavaTraversal implements Callable<Boolean> {
      */
     public static void createTempNamedDirectory(String package_name) {
         assert (temp_directory != null);
-        String directory_name = getTempDirectory() + File.separator + package_name.replace('.', File.separatorChar);
+        String directory_name = getTempDirectory() + File.separator;
+        String suffix = package_name.replace('.', File.separatorChar);
+        for (int dot_index = suffix.indexOf(File.separatorChar); dot_index != -1; dot_index = suffix.indexOf(File.separatorChar, dot_index + 1)) {
+        	directory_name += suffix.substring(0, dot_index);
+            File named_directory = new File(directory_name);
+            if (! named_directory.mkdir()) {
+                throw new IllegalStateException("Unable to create the directory: " + directory_name);
+            }
+        	suffix = suffix.substring(dot_index);
+        }
+    	directory_name += suffix;
         File named_directory = new File(directory_name);
         if (! named_directory.mkdir()) {
             throw new IllegalStateException("Unable to create the directory: " + directory_name);

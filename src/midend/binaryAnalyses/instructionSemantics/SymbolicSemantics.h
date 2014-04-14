@@ -48,10 +48,11 @@ namespace BinaryAnalysis {              // documented elsewhere
             /** Formatter for symbolic values. */
             class Formatter: public BaseSemantics::Formatter {
             public:
-                Formatter() {
+                Formatter(): show_defs(true) {
                     expr_formatter.use_hexadecimal = false;             // preserve the old behavior in API1
                 }
                 InsnSemanticsExpr::Formatter expr_formatter;
+                bool show_defs;
             };
 
             /******************************************************************************************************************
@@ -190,7 +191,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** Print the value.
                  * @{ */
                 virtual void print(std::ostream &o) const {
-                    BaseSemantics::Formatter fmt;
+                    Formatter fmt;
                     print(o, fmt);
                 }
                 virtual void print(std::ostream &o, BaseSemantics::Formatter &fmt_) const {
@@ -198,14 +199,16 @@ namespace BinaryAnalysis {              // documented elsewhere
                     Formatter *fmt_ptr = dynamic_cast<Formatter*>(&fmt_);
                     if (!fmt_ptr)
                         fmt_ptr = &fmt_dflt;
-                    o <<"defs={";
-                    size_t ndefs=0;
-                    for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
-                        SgAsmInstruction *insn = *di;
-                        if (insn!=NULL)
-                            o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
+                    if (fmt_ptr->show_defs) {
+                        o <<"defs={";
+                        size_t ndefs=0;
+                        for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
+                            SgAsmInstruction *insn = *di;
+                            if (insn!=NULL)
+                                o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
+                        }
+                        o <<"} expr=";
                     }
-                    o <<"} expr=";
                     expr->print(o, fmt_ptr->expr_formatter);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {

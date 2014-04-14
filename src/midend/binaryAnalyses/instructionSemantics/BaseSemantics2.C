@@ -1031,14 +1031,8 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->unsignedMultiply(lhs, rhs);
-    } else if (SgAsmByteValueExpression *val = isSgAsmByteValueExpression(e)) {
-        retval = operators->number_(8, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmWordValueExpression *val = isSgAsmWordValueExpression(e)) {
-        retval = operators->number_(16, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmDoubleWordValueExpression *val = isSgAsmDoubleWordValueExpression(e)) {
-        retval = operators->number_(32, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmQuadWordValueExpression *val = isSgAsmQuadWordValueExpression(e)) {
-        retval = operators->number_(64, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
+        retval = operators->number_(ival->get_significant_bits(), ival->get_value());
     }
 
     assert(retval!=NULL);

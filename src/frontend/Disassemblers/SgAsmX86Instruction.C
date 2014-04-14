@@ -22,7 +22,7 @@ bool
 SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     static const size_t EXECUTION_LIMIT = 25; // max size of basic blocks for expensive analyses
-    if (insns.size()==0)
+    if (insns.empty())
         return false;
     SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
     if (!last)
