@@ -15020,12 +15020,13 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                       // an error since this is the case where a declaration should have been visible from having already been 
                       // inserted into the target AST and this visible from this injection point in the target AST.
 
-                         printf ("Error: The associated function = %s should have been found in a parent scope of the target AST \n",name.str());
+                         fprintf (stderr, "Error: The associated function = \"%s\" should have been found in a parent scope"
+                                  " of the target AST\n", name.str());
 
-                         printf ("targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
+                         fprintf (stderr, "  targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
                          SgGlobal* globalScope = TransformationSupport::getGlobalScope(targetScope);
                          ROSE_ASSERT(globalScope != NULL);
-                         printf ("globalScope = %p = %s \n",globalScope,globalScope->class_name().c_str());
+                         fprintf (stderr, "  globalScope = %p = %s \n",globalScope,globalScope->class_name().c_str());
 #if 1
                          targetScope->get_file_info()->display("case V_SgFunctionRefExp: targetScope: debug");
                          node_original->get_file_info()->display("case V_SgFunctionRefExp: node_original: debug");
