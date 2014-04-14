@@ -1000,7 +1000,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 // charles4 :  2/29/2012   I don't think this is needed!
 /*
      //TODO should there be forward declarations or nondefining declarations?
-     if (mfuncdecl_stmt->isForward()) {
+     if (mfuncdecl_stmt-> isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
          //   << mfuncdecl_stmt->get_qualified_name().getString()
          //   << endl;
@@ -1083,7 +1083,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
-     if (mfuncdecl_stmt -> isForward()) {
+     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
          curprint(")");
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
 
