@@ -368,7 +368,7 @@ test9a.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=beginning			\
 		RECURSIVE_INSERTION=no				\
 		COPY_DEFINITIONS=yes				\
-		CHECK_STRING="handleFiles(hello)"		\
+		CHECK_STRING="__ctype_b_loc"			\
 		$(C_INJECTION_TEST) $@
 
 # without copying related things
@@ -382,7 +382,7 @@ test9b.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=beginning			\
 		RECURSIVE_INSERTION=no				\
 		COPY_DEFINITIONS=no				\
-		CHECK_STRING="handleFiles(hello)"		\
+		CHECK_STRING="__ctype_b_loc"			\
 		$(C_INJECTION_TEST) $@
 
 
