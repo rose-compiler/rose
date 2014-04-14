@@ -5100,6 +5100,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
 #if 0
+  // DQ (4/11/2014): This can be accomplished by using --edg:dump_configuration on the ROSE command line.
      commandLine.push_back("--dump_configuration");
 #endif
 

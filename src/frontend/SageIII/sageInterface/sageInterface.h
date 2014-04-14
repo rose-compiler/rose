@@ -195,8 +195,7 @@ struct hash_nodeptr
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
-                                                         SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName, SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
    //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL

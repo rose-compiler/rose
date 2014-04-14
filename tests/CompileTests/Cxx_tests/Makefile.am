@@ -89,6 +89,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_36.C \
    test2014_37.C \
    test2014_38.C \
+   test2014_39.C \
+   test2014_40.C \
+   test2014_41.C \
+   test2014_43.C \
+   test2014_45.C \
+   test2014_47.C \
+   test2014_48.C \
+   test2014_49.C \
    lulesh.C \
    luleshTALC.C
 
@@ -98,6 +106,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 #   test2014_22.C 
 #   test2014_23.C 
 #   test2014_25.C 
+#   test2014_42.C 
+#   test2014_44.C 
+#   test2014_46.C 
 
 # DQ (4/3/2014): Failing tests in the name qualification (subject or current work).
 #   test2014_27.C 

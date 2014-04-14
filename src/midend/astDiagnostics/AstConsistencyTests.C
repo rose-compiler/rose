@@ -2490,11 +2490,17 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
 #if 0
+       // DQ (4/8/2014): This now only fails for Boost examples, so I this is the good news,
+       // however, it means that I still can't enforce this everywhere. These tests:
+       // test2013_234.C
+       // test2013_240.C
+       // test2013_242.C
+       // test2013_246.C
+       // test2013_241.C
+
        // DQ (10/16/2013): Now that we have the token stream support computed correctly, 
        // we have to disable this check to support the C++ tests (e.g. test2004_77.C).
-
        // DQ (10/14/2013): Turn this on as part of testing the token stream mapping!
-
        // DQ (10/19/2012): This fails for a collection of C++ codes only:
        // test2011_121.C
        // test2011_141.C
@@ -2523,7 +2529,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
           ROSE_ASSERT(false);
 #else
        // DQ (4/26/2012): debugging... (test2012_67.C)
-          printf ("In TestAstForUniqueNodesInAST::visit (): Commented out this error to view the dot file \n");
+          printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples) \n");
 #endif
         }
 #if 0
