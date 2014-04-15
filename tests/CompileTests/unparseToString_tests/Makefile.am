@@ -11,6 +11,11 @@ unparseToString_SOURCES = unparseToString.C
 unparseToString_CPPFLAGS = $(ROSE_INCLUDES)
 unparseToString_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+noinst_PROGRAMS += unparseProject
+unparseProject_SOURCES = unparseProject.C
+unparseProject_CPPFLAGS = $(ROSE_INCLUDES)
+unparseProject_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 ########################################################################################################################
 # Tests.  We currently have two tests (which are both the same executable but invoked with different switches) that
 # operate over a big list of specimens (*.C files all from a common directory).
@@ -39,6 +44,9 @@ $(unparseAll_TEST_TARGETS): ua_%.passed: $(SPECIMEN_DIR)/% $(TEST_CONFIG) unpars
 	@$(RTH_RUN) CMD="./unparseToString --all --edg:no_warnings -w --edg:restrict $(TEST_INCLUDES) -c $<" $(TEST_CONFIG) $@
 $(unparseType_TEST_TARGETS): ut_%.passed: $(SPECIMEN_DIR)/% $(TEST_CONFIG) unparseToString
 	@$(RTH_RUN) CMD="./unparseToString       --edg:no_warnings -w --edg:restrict $(TEST_INCLUDES) -c $<" $(TEST_CONFIG) $@
+
+test_unparseProject: unparseProject
+	./unparseProject $(srcdir)/test2014_26.C
 
 ########################################################################################################################
 # Additional automake rules

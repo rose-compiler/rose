@@ -173,7 +173,7 @@ main ( int argc, char* argv[] )
      generatePDF ( *project );
 #endif
 
-#if 1
+#if 0
      if (project->get_verbose() > 0)
           printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
@@ -299,6 +299,10 @@ main ( int argc, char* argv[] )
           printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
   // printf ("DONE: Generate the dot output of the SAGE III AST \n");
+#endif
+#if 0
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 5000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
      if (project->get_verbose() > 0)
