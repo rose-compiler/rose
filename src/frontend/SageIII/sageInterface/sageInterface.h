@@ -82,7 +82,38 @@ Some other utility functions not related AST can be found in
          - Other stuff ...
  */
 namespace SageInterface
-{
+   {
+  // DQ (4/3/2014): Added general AST support seperate from the AST.
+
+  // Container and API for analysis information that is outside of the AST and as a result
+  // prevents frequent modification of the IR.
+     class DeclarationSets
+        {
+       // DQ (4/3/2014): This stores all associated declarations as a map of sets.
+       // the key to the map is the first nondefining declaration and the elements of the set are
+       // all of the associated declarations (including the defining declaration).
+
+          private:
+           //! Map of first-nondefining declaration to all other associated declarations.
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > declarationMap;
+
+          public:
+               void addDeclaration(SgDeclarationStatement* decl);
+               const std::set<SgDeclarationStatement*>* getDeclarations(SgDeclarationStatement* decl);
+
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > & getDeclarationMap();
+
+               bool isLocatedInDefiningScope(SgDeclarationStatement* decl);
+
+        };
+
+  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
+  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifing the IR.
+     DeclarationSets* buildDeclarationSets(SgNode*);
+
+
+
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
@@ -164,8 +195,7 @@ struct hash_nodeptr
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
-                                                         SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName, SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
    //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
