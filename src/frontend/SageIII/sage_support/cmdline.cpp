@@ -5668,6 +5668,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
 #if 1
+  // PL (4/15/2014): In GCC's document about system headers (http://gcc.gnu.org/onlinedocs/cpp/System-Headers.html):
+  // All directories named by -isystem are searched after all directories named by -I, no matter what their order was on the command line.
   // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
   // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )
