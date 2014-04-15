@@ -1611,7 +1611,7 @@ SgProject::parse(const vector<string>& argv)
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
                     Rose::Frontend::Fortran::Ofp::jserver_init();
 #endif
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
 #endif
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
