@@ -287,7 +287,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             o <<prefix() <<"call void " <<funcname <<"()\n";
             rose_addr_t ret_addr = fallthrough_va;
             SgAsmFunction *ret_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
-            if (ret_func!=dst_func) {
+            if (ret_func!=func) {
                 // The fall through address might be invalid or in a different function if the call never returns.
                 o <<prefix() <<"unreachable\n";
             } else {
