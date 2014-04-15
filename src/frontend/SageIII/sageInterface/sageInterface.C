@@ -17820,10 +17820,6 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 
     return package_definition;
 }
-//------------------------------------------------------------------------------
-#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-//------------------------------------------------------------------------------
-
 
 /**
  * If the class_name already exists in the scope, return it. Otherwise, import it.
@@ -17904,3 +17900,8 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassType *class_type
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     return findJavaMain(class_definition);
 }
+
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+

@@ -15585,6 +15585,10 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      SgSymbolTable::set_force_search_of_base_classes(false);
    }
 
+//-----------------------------------------------------------------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
+
 /**
  *
  */
@@ -15919,4 +15923,7 @@ SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardSuper(SgType *type) {
 
     return isSgJavaWildcardType(attribute -> getNode());
 }
+//-----------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
 
