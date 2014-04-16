@@ -1653,19 +1653,17 @@ src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg44Rose/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg48Rose/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
 # End macro ROSE_SUPPORT_ROSE_PART_5.
