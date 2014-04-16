@@ -29,7 +29,6 @@ SgAsmBinarySubtract
 SgAsmBinarySubtractPostupdate
 SgAsmBinarySubtractPreupdate
 SgAsmBlock
-SgAsmByteValueExpression
 SgAsmCoffStrtab
 SgAsmCoffSymbol
 SgAsmCoffSymbolList
@@ -41,7 +40,6 @@ SgAsmDOSFileHeader
 SgAsmSynthesizedDataStructureDeclaration
 SgAsmSynthesizedDeclaration
 SgAsmDoubleFloatValueExpression
-SgAsmDoubleWordValueExpression
 SgAsmDwarfAccessDeclaration
 SgAsmDwarfArrayType
 SgAsmDwarfBaseType
@@ -225,7 +223,6 @@ SgAsmPowerpcInstruction
 SgAsmPowerpcRegisterReferenceExpression
 SgAsmProgramHeader
 SgAsmProgramHeaderList
-SgAsmQuadWordValueExpression
 SgAsmRegisterReferenceExpression
 SgAsmSectionHeader
 SgAsmSectionHeaderList
@@ -252,7 +249,6 @@ SgAsmUnaryMinus
 SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
-SgAsmWordValueExpression
 SgAsmx86Instruction
 SgAsmx86RegisterReferenceExpression
 SgAsmBinaryAddressSymbol

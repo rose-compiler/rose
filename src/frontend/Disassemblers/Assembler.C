@@ -14,7 +14,7 @@ operator<<(std::ostream &o, const Assembler::Exception &e)
 void
 Assembler::Exception::print(std::ostream &o) const
 {
-    o <<mesg;
+    o <<what();
     if (insn)
         o <<" while assembling [" <<unparseInstruction(insn) <<"]";
 }

@@ -50,12 +50,9 @@ private:
 /** Instruction semantics policy verifies ROSE's instruction semantics against a running program. */
 class Verifier {
 public:
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &s): mesg(s) {}
-        std::string mesg;
-    private:
-        Exception() {}
+        Exception(const std::string &s): std::runtime_error(s) {}
     };
 
     Verifier(Debugger *dbg)
@@ -1007,7 +1004,7 @@ int main(int argc, char *argv[]) {
         } catch (const Verifier::Exception &e) {
             nerrors++;
             fprintf(stderr, "Error at 0x%016"PRIx64" (#%"PRIu64"): %s\n%s\n",
-                    insn->get_address(), nprocessed, unparseInstruction(insn).c_str(), e.mesg.c_str());
+                    insn->get_address(), nprocessed, unparseInstruction(insn).c_str(), e.what());
             fputs(trace.str().c_str(), stderr);
             fprintf(stderr, "Actual register set when error was detected:\n");
             dump_registers(stderr, dbg.registers());
@@ -1027,7 +1024,7 @@ int main(int argc, char *argv[]) {
         } catch (const Verifier::Exception &e) {
             nerrors++;
             fprintf(stderr, "Error at 0x%016"PRIx64" (#%"PRIu64"): %s\nstate mismatch:\n%s\n",
-                    insn->get_address(), nprocessed, unparseInstruction(insn).c_str(), e.mesg.c_str());
+                    insn->get_address(), nprocessed, unparseInstruction(insn).c_str(), e.what());
             fputs(trace.str().c_str(), stderr);
             fprintf(stderr, "Actual register set when error was detected:\n");
             dump_registers(stderr, dbg.registers());

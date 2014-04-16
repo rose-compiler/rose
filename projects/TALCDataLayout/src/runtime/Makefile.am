@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES) \
          -I$(top_srcdir)/projects/TALCDataLayout/src/meta \
 	 -I$(top_srcdir)/projects/TALCDataLayout/src/utilities
 
-META_PATH=$(top_builddir)/projects/TALCDataLayout/src/meta
+META_PATH=../meta
 
 noinst_LIBRARIES = libtalcruntime.a
 libtalcruntime_a_SOURCES = TALC_Runtime.cpp \

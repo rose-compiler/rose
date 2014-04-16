@@ -4265,7 +4265,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              heuristics = Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
          } catch(const Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
 #else
@@ -5201,6 +5201,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
 
+#if 0
+  // DQ (4/13/2014): I would like to remove this since it causes paths to be specified for both "--sys_include" and "-I" options.
+  // The result is warnings such as:
+  //      Warning: "/home/dquinlan/ROSE/git-matzke-snippit-support-rc/tests/roseTests/astSnippetTests/SmallSpecimensC" 
+  //      was specified as both a system and non-system include directory -- the non-system entry will be ignored
+
   // PL (09/25/2013) This is still required for the EDG 4.X
 //#ifndef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
@@ -5212,7 +5218,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back(*i);
         }
 //#endif
+#endif
 
+#if 0
+  // DQ (4/14/2014): Experiment with placing this in another location below (after "-I" options).  
+  // This is part of the fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )
           printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
 
@@ -5227,6 +5237,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
+#endif
 #endif
 
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
@@ -5642,9 +5653,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Add all input include paths so that the EDG front end will know where to find headers
 
 #if 0
-     for (int i=0; i < includePathCounter; i++)
+     printf ("Include paths specified: \n");
+     int counter = 0;
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
-          printf ("     includePaths[%d] = %s \n",i,includePaths[i]);
+          printf ("     includePaths[%d] = %s \n",counter++,(*i).c_str());
         }
 #endif
 
@@ -5653,6 +5666,25 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("-I" + *i);
         }
+
+#if 1
+  // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
+  // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
+     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
+        {
+       // Build the preinclude directory list
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(*i);
+        }
+#endif
 
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--XXXXX");
@@ -6021,22 +6053,24 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if 0
   // display("SgFile::buildCompilerCommandLineOptions()");
-     printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
-     printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-     printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
-     printf ("Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
-     printf ("Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
-     printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
-     printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
-     printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
-     printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-     printf ("get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
-     printf ("get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
-     printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
-     printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-     printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
-     printf ("get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
-     printf ("get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
+
+     printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+     printf ("   --- C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+     printf ("   --- C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
+     printf ("   --- get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
+     printf ("   --- get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+     printf ("   --- get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+     printf ("   --- get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
+     printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
+     printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
+     printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
+     printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
+     printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with
@@ -6260,6 +6294,9 @@ if (get_C_only() ||
      argcArgvList.erase(argcArgvList.begin());
 
 #if 0
+     printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+#if 0
   // DQ (1/24/2010): Moved this inside of the true branch below.
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT (project != NULL);
@@ -6422,6 +6459,12 @@ if (get_C_only() ||
              }
         }
 
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %zu \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
+
   // Add any options specified by the user (and add space at the end)
      compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
@@ -6437,6 +6480,24 @@ if (get_C_only() ||
      printf ("oldFileName         = %s \n",oldFileName.c_str());
 #endif
 
+  // DQ (4/13/2014): Added support to avoid output of a specified include path twice.
+     bool oldFileNamePathOnlyAlreadySpecifiedAsIncludePath = false;
+     for (vector<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
+          string s = std::string("-I") + oldFileNamePathOnly;
+          if (s == *i)
+             {
+#if 0
+               printf ("Identified oldFileNamePathOnly as already specified as include path (avoid redundant specification of -I paths) \n");
+#endif
+               oldFileNamePathOnlyAlreadySpecifiedAsIncludePath = true;
+             }
+        }
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 3: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+
   // DQ (4/2/2011): Java does not have -I as an accepted option.
      if (get_C_only() || get_Cxx_only())
         {
@@ -6450,7 +6511,8 @@ if (get_C_only() ||
        // Only add the path if it is a valid name (not an empty name, in which case skip it since the oldFile
        // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
        // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
-          if (oldFileNamePathOnly.empty() == false)
+       // if (oldFileNamePathOnly.empty() == false)
+          if (oldFileNamePathOnly.empty() == false && oldFileNamePathOnlyAlreadySpecifiedAsIncludePath == false)
              {
                vector<string>::iterator iter;
             // find the very first -Ixxx option's position
@@ -6501,6 +6563,10 @@ if (get_C_only() ||
                   }
              }
         }
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 4: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
 
     // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
     // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 

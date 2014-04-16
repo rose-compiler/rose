@@ -32,22 +32,12 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
     //
     // Check if this expression requires parentheses.  If so, process the opening parentheses now.
     //
-    AstRegExAttribute *parenthesis_attribute = (AstRegExAttribute *) expr->getAttribute("java-parenthesis-info");
+    AstIntAttribute *parenthesis_attribute = (AstIntAttribute *) expr->getAttribute("java-parentheses-count");
     if (parenthesis_attribute) { // Output the left paren
-        curprint (parenthesis_attribute -> expression.c_str());
+        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
+            curprint("(");
+        }
     }
-
-// TODO: Remove this
-/*
-    //
-    // An expression may contain a Type prefix stored in the "prefix" attribute.
-    //
-    if (expr -> attributeExists("prefix")) {
-        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("prefix");
-        curprint(attribute -> expression);
-        curprint(".");
-    }
-*/
 
     switch (expr->variant()) {
         case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
@@ -167,10 +157,9 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
     //
     // If this expression requires closing parentheses, emit them now.
     //
-    if (parenthesis_attribute) { // Output the right paren
-        string open_parentheses = parenthesis_attribute -> expression;
-        for (int i = 0; i < open_parentheses.size(); i++) {
-            curprint (")");
+    if (parenthesis_attribute) { // Output the right parentheses
+        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
+            curprint(")");
         }
     }
 }
