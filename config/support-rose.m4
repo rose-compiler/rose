@@ -2287,6 +2287,16 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 ]])
 
 
+# Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
+AC_CONFIG_COMMANDS([absoluteNames],
+[[
+	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+	find . -name Makefile | xargs sed -i~ \
+	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+]])
+
+
+
 # End macro ROSE_SUPPORT_ROSE_PART_7.
 ]
 )
