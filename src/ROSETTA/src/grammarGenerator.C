@@ -186,8 +186,8 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
         string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
         string varName=(*stringListIterator)->getVariableNameString();
         rhsTerminalSuccessors+=varName+":"+type;
-		string infoFields=(*stringListIterator)->infoFieldsToString();
-		rhsTerminalSuccessors+=" ["+infoFields+"]";
+                string infoFields=(*stringListIterator)->infoFieldsToString();
+                rhsTerminalSuccessors+=" ["+infoFields+"]";
         // based on the type*name* used it is infered whether it is a
         // a container or a single data member (single pointer or single obj)
         // this is just a "heuristic" test. Changing the typenames invalidates
@@ -202,7 +202,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
         */
       }
     }
-	
+        
     // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
     /*
       for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
