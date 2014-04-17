@@ -24,6 +24,11 @@
 #include "FIConstAnalysis.h"
 #include <boost/foreach.hpp>
 
+#include "addressTakenAnalysis.h"
+#include "defUseQuery.h"
+#include "Timer.h"
+#include "AnalysisAbstractionLayer.h"
+
 #include <vector>
 #include <set>
 #include <list>
@@ -40,6 +45,7 @@ using namespace std;
 using namespace CodeThorn;
 using namespace AType;
 using namespace DFAstAttributeConversion;
+using namespace AnalysisAbstractionLayer;
 
 #include "ReachabilityResults.h"
 
@@ -164,7 +170,6 @@ void myRewrite(SgExpression* oldExp, SgExpression* newExp,bool keepOld) {
 bool checkAstExpressionRewrite(SgNode* root) {
   // 1 determine all root nodes of expressions in given AST
   int numOrig=countSubTreeNodes(root);
-  SgNode* origAst=root;
   storeTreeStructure(root);
   AstTests::runAllTests(isSgProject(root));
   cout<<"STATUS: AST is consistent."<<endl;
@@ -576,8 +581,10 @@ int main(int argc, char* argv[]) {
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
   //cout<<"Labelling:\n"<<labeler->toString()<<endl;
+#if 0
   IOLabeler* iolabeler=new IOLabeler(root,&variableIdMapping);
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
+#endif
 
   if (args.count("varidmapping")) {
     variableIdMapping.toStream(cout);

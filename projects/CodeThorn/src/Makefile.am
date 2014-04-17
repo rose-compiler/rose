@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = addressTakenAnalysis
+#SUBDIRS = addressTakenAnalysis
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
@@ -13,6 +13,8 @@ bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
 CLEANFILES = 
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+
+noinst_PROGRAMS = addressTakenAnalysis 
 
 MYDATE = $(shell date +%Y_%m_%d)
 
@@ -79,14 +81,28 @@ codethorn_SOURCES = \
   Flow.C \
   ReachabilityResults.h \
   ReachabilityResults.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h
 
-#  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h
+addressTakenAnalysis_SOURCES = \
+  Timer.cpp \
+  AstTerm.C \
+  AnalysisAbstractionLayer.C \
+  Miscellaneous.C \
+  CommandLineOptions.C \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysisDriver.C
+
+addressTakenAnalysis_LDADD = -lrose
 
 # used only in specialized analyzer
 faketarget:
@@ -171,12 +187,12 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyz
   Flow.h \
   Flow.C \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -198,12 +214,12 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   Flow.h \
   Flow.C \
   FIConstAnalysis.h FIConstAnalysis.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
   ReachabilityResults.h \
   ReachabilityResults.C \
   TrivialInlining.C                \
@@ -247,12 +263,12 @@ analyterix_SOURCES = \
   ProgramStats.C \
   Flow.h \
   Flow.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
   ReachabilityResults.h \
   ReachabilityResults.C \
   analyterix.C
