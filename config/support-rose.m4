@@ -1663,6 +1663,11 @@ src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
