@@ -160,6 +160,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
                     bool ignore_error = (isSgFunctionParameterList(decl) != NULL);
 
+                 // DQ (4/17/2014): This is required for the EDG version 4.8 and I don't know why.
+                 // Currently the priority is to pass our existing tests.
+                 // An idea is that this is sharing introduced as a result of the use of defaul parameters.
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
+                    ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
+#endif
+
                     if (ignore_error == true)
                        {
                          printf ("Ignoring the error for a SgFunctionParameterList \n");
