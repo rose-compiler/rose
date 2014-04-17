@@ -50,8 +50,8 @@ GrammarString::infoFieldsToString() const {
   case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
   case TAG_BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
   default:
-	cerr<<"Error: unknown data access function type."<<endl;
-	ROSE_ASSERT(0);
+        cerr<<"Error: unknown data access function type."<<endl;
+        ROSE_ASSERT(0);
   }
 #endif
   ss<<","<<"constr="<<   isInConstructorParameterList.getValue();
