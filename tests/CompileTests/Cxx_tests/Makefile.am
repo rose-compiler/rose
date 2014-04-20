@@ -739,7 +739,7 @@ test2005_56.o: $(TEST_TRANSLATOR)
 
 test2010_01.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_02.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
