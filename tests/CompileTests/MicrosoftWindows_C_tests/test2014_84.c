@@ -10,5 +10,7 @@
 
 #define MY_SIGRETURN(name)  _MY_SIGRETURN(name)
 
+#if 0
+/* MSVC mode does not handle asm statements */
 asm( MY_SIGRETURN(__NR_rt_sigreturn) );
-
+#endif

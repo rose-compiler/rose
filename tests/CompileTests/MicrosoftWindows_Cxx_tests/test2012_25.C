@@ -6,7 +6,8 @@ namespace std
         {
           public:
 #if DEFINE_AS_FRIEND_FUNCTION
-               template <typename T> friend bool operator== (X,int);
+            // MSVC has different friend function symbol injection than GNU.
+            // template <typename T> friend bool operator== (X,int);
 #else
                template <typename T> bool operator== (int);
 #endif

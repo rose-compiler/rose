@@ -4,7 +4,7 @@ void addMembersToIndex(T *def)
      int *cd;
 
   // This call to the template causes the template using "int" to be instantiated.
-     addMembersToIndex(cd);
+//     addMembersToIndex(cd);
    }
 
 void writeDirTreeNode()

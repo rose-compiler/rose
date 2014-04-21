@@ -3,7 +3,8 @@ typedef unsigned char  uint8_t;
 typedef unsigned int   uint32_t;
 typedef unsigned short uint16_t;
 
-#define PACKED __attribute__ ((__packed__))
+/* #define PACKED __attribute__ ((__packed__)) */
+#define PACKED
 
 struct msdos_dir_entry {
 	char     name[11];       /* 000 name and extension */
@@ -74,9 +75,12 @@ struct fat32_fsinfo {
 
 struct bug_check 
    {
+  /* MSVC does not handle size of structs similarly to GNU
      char BUG1[sizeof(struct msdos_dir_entry  ) == 0x20 ? 1 : -1];
      char BUG2[sizeof(struct msdos_volume_info) == 0x1a ? 1 : -1];
      char BUG3[sizeof(struct msdos_boot_sector) == 0x200 ? 1 : -1];
      char BUG4[sizeof(struct fat32_fsinfo     ) == 0x200 ? 1 : -1];
+  */
+     int x;
 };
 

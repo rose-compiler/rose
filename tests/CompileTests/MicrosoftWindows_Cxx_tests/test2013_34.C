@@ -12,12 +12,14 @@ class BaseFab
           void maskLT (BaseFab<int>& mask ) const;
    };
 
+#if 0
 template <class T>
 void
 BaseFab<T>::maskLT (BaseFab<int>& mask) const
    {
      mask.setVal(0);
    }
+#endif
 
 BaseFab< std::vector<int> > hash;
 
