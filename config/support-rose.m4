@@ -269,6 +269,7 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
 if test "x$enable_microsoft_extensions" = "xyes"; then
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
 else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi

@@ -3496,8 +3496,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
   // C14 only option (turns on EDG c11 options (there is not specific c14 EDG options, but C14 is enabled using c11).
   //
-     set_C11_only(false);
-     ROSE_ASSERT (get_C11_only() == false);
+     set_C14_only(false);
+     ROSE_ASSERT (get_C14_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C14|C14_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 0 )
@@ -3534,7 +3534,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // C++14 only option (turns on EDG --c++14 option currently).
   //
      set_Cxx14_only(false);
-     set_Cxx11_only(false);
+  // set_Cxx11_only(false);
      set_Cxx0x_only(false);
      ROSE_ASSERT (get_Cxx14_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx14|Cxx14_only)",true) == true )
@@ -5117,6 +5117,27 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifdef ROSE_USE_MICROSOFT_EXTENSIONS
+  // DQ (4/21/2014): Add Microsoft specific options:
+  //    --microsoft
+  //    --microsoft_16
+  //    --microsoft_version version-number
+  //    --microsoft_build_number build-number
+  // Not all of these are required, the simplest usage is to use "--microsoft".
+  // DQ (4/21/2014): Use the simple option to turn on microsoft mode.
+     commandLine.push_back("--microsoft");
+
+#if 0
+  // EDG 4.9 permits emulation modes for specific MSVC versions.  Not clear what version of MSVC we should be emulating.
+  // This is the version number for MSVC 5.0, but we need to get a later version.
+     int emulate_msvc_version_number = 1100;
+  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+     commandLine.push_back("--microsoft_version");
+     commandLine.push_back(StringUtility::numberToString(emulate_msvc_version_number));
+#endif
+#endif
+
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
 #ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
@@ -5125,6 +5146,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 #endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
@@ -5145,36 +5167,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/11/2014): This can be accomplished by using --edg:dump_configuration on the ROSE command line.
      commandLine.push_back("--dump_configuration");
 #endif
-
-  // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-/* TV (02/26/2014): We do not need to specify EDG_BASE anymore as dependency to predefined_macros.txt is switch off
-  // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
-    //--------------------------------------------------------------------------
-    // TOO (11/12/2012) - Refactor to use generic EDG version.
-    // DQ  (11/1/2011)  - Fix to use EDG 4.3
-    //
-    // Note that the new EDG/Sage interface does not require a generated set of
-    // header files specific to ROSE.
-    //
-    commandLine.push_back("--edg_base_dir");
-    {
-        // Examples: 3.10, 4.3, 4.4
-        std::stringstream sstream;
-        sstream
-            << ROSE_EDG_MAJOR_VERSION_NUMBER
-            << "."
-            << ROSE_EDG_MINOR_VERSION_NUMBER;
-
-        std::string edg_version(sstream.str());
-
-     // DQ (7/11/2013): Had to put this back after adding the more macros from rose_host_envir.h to defined.h.rose.
-     // DQ (7/10/2013): base lib was configured to be the "src/frontend/CxxFrontend/EDG/EDG_" + edg_version 
-     // (maybe it should be "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib").
-     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
-     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
-        commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
-    }
-*/
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
@@ -5216,73 +5208,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
              }
         }
 
-#if 0
-  // This functionality has been moved to before source name extraction since the
-  // -isystem dir will be extracted as a file name and treated as a source file name
-  // and the -isystem will not have an option.
-
-  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory
-  // to the start of the system include path).  This maps to the "--sys_include" in EDG.
-     string isystem_string_target = "-isystem";
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // AS (070306) Handle g++ --include directives
-          std::string stack_arg(argv[i]);
-       // std::cout << "stack arg is: " << stack_arg << std::endl;
-          if( stack_arg.find(isystem_string_target) <= 2){
-              i++;
-              ROSE_ASSERT(i<argv.size());
-              std::string currentArgument(argv[i]);
-              // std::cout << "Current argument " << currentArgument << std::endl;
-
-              currentArgument = StringUtility::getAbsolutePathFromRelativePath(currentArgument);
-              commandLine.push_back("--sys_include");
-              commandLine.push_back(currentArgument);
-          }
-     }
-#else
-  // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
-
-#if 0
-  // DQ (4/13/2014): I would like to remove this since it causes paths to be specified for both "--sys_include" and "-I" options.
-  // The result is warnings such as:
-  //      Warning: "/home/dquinlan/ROSE/git-matzke-snippit-support-rc/tests/roseTests/astSnippetTests/SmallSpecimensC" 
-  //      was specified as both a system and non-system include directory -- the non-system entry will be ignored
-
-  // PL (09/25/2013) This is still required for the EDG 4.X
-//#ifndef ROSE_USE_NEW_EDG_INTERFACE
-  // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
-  // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
-  // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
-     for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
-        {
-          commandLine.push_back("--sys_include");
-          commandLine.push_back(*i);
-        }
-//#endif
-#endif
-
-#if 0
-  // DQ (4/14/2014): Experiment with placing this in another location below (after "-I" options).  
-  // This is part of the fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
-
-  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
-  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
-     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
-        {
-       // Build the preinclude directory list
-          if ( SgProject::get_verbose() >= 1 )
-               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
-
-          commandLine.push_back("--sys_include");
-          commandLine.push_back(*i);
-        }
-#endif
-#endif
-
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+#else
+  // DQ (4/21/2014): The preinclude file we generate for ROSE is specific to the backend and for Windows code might be too specific to Linux.
+     printf ("Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+#endif
 
   // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
   // George Vulov (12/8/2010) Include the file rose_edg_required_macros_and_functions.h first, then the other preincludes
@@ -5515,10 +5446,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // Add option to indicate use of C++0x code to EDG frontend
           inputCommandLine.push_back("--c++0x");
 
-          printf ("This Cxx0x option should not be used any more. \n");
+          printf ("This Cxx0x option should not be used any more (use Cxx11_only only option). \n");
           ROSE_ASSERT(false);
         }
 
+#if 0
+     printf ("In build_EDG_CommandLine(): get_Cxx11_only() = %s \n",get_Cxx11_only() ? "true" : "false");
+#endif
      if (get_Cxx11_only() == true)
         {
        // Add option to indicate use of C++11 code to EDG frontend
