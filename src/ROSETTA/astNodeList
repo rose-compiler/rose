@@ -260,6 +260,7 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
+SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement

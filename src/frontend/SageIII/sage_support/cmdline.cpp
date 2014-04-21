@@ -2747,10 +2747,14 @@ SgFile::usage ( int status )
 "                             follow C99 standard, disable C++\n"
 "     -rose:C11_only, -rose:C11\n"
 "                             follow C11 standard, disable C++\n"
+"     -rose:C14_only, -rose:C14\n"
+"                             follow C14 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++89 standard\n"
 "     -rose:Cxx11_only, -rose:Cxx11\n"
 "                             follow C++11 standard\n"
+"     -rose:Cxx14_only, -rose:Cxx14\n"
+"                             follow C++14 standard\n"
 "     -rose:java\n"
 "                             compile Java code (work in progress)\n"
 "     -rose:java:cp, -rose:java:classpath, -cp, -classpath\n"
@@ -3469,7 +3473,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
-  // C11 only option (turns on EDG c11 options (whatever they will be).
+  // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
      set_C11_only(false);
      ROSE_ASSERT (get_C11_only() == false);
@@ -3486,6 +3490,28 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
           set_C89_only(false);
           set_C99_only(false);
+          set_C14_only(false);
+        }
+
+  //
+  // C14 only option (turns on EDG c11 options (there is not specific c14 EDG options, but C14 is enabled using c11).
+  //
+     set_C11_only(false);
+     ROSE_ASSERT (get_C11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C14|C14_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("C14 mode ON \n");
+#if 0
+          printf ("Specification of C14 on command line not yet supported on the command line \n");
+          ROSE_ASSERT(false);
+#endif
+          set_C14_only(true);
+          set_C11_only(false);
+
+       // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
+          set_C89_only(false);
+          set_C99_only(false);
         }
 
   //
@@ -3498,13 +3524,27 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Cxx11 mode ON \n");
-#if 1
+
        // DQ (7/2/2013): Turn on the C++11 version of the option now that we have moved to EDG 4.7.
        // set_C11_only(true);
           set_Cxx11_only(true);
-#else
-          set_Cxx0x_only(true);
-#endif
+        }
+
+  //
+  // C++14 only option (turns on EDG --c++14 option currently).
+  //
+     set_Cxx14_only(false);
+     set_Cxx11_only(false);
+     set_Cxx0x_only(false);
+     ROSE_ASSERT (get_Cxx14_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx14|Cxx14_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Cxx14 mode ON \n");
+
+       // DQ (7/2/2013): Turn on the C++14 version of the option now that we have moved to EDG 4.9.
+       // set_C11_only(true);
+          set_Cxx14_only(true);
         }
 
   //
@@ -4608,8 +4648,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C14|C14_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx14|Cxx14_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(FailSafe|failsafe)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_warnings)",1);
@@ -5335,7 +5377,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      else {
        // if (get_C_only() == true || get_C99_only() == true)
        // if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
-          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
+       // if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C14_only() == true)
              {
             // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
             // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
@@ -5441,16 +5484,27 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_C11_only() == true)
         {
-       // DQ (3/12/2014): Note that C11 features in EDG appear to be supported under the 
-       // c99 mode so there is no specific c11 mode (I gather as extensions).  One has to 
-       // discover this by looking for ht e implementation of the C11 specific languagee 
-       // features that are present but made available via the c99 mode.
-
+       // DQ (4/20/2014): With EDG 4.9 we now have support for the --c11 option.
        // Add option to indicate use of C11 code (not C++) to EDG frontend
-       // inputCommandLine.push_back("--c11");
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+          inputCommandLine.push_back("--c11");
+#else
           inputCommandLine.push_back("--c99");
+#endif
+        }
+
+     if (get_C14_only() == true)
+        {
+       // DQ (4/20/2014): With EDG 4.9 we now have support for the --c11 option.
+       // Add option to indicate use of C11 code (not C++) to EDG frontend
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+          inputCommandLine.push_back("--c11");
+#else
+          printf ("Error: C14 support is not available using older version of EDG internally (before EDG version 4.9 \n");
+          ROSE_ASSERT(false);
+#endif
 #if 0
-          printf ("Not clear yet what internal option to use in EDG for C11 command line support \n");
+          printf ("Not clear yet what internal option to use in EDG for C14 command line support \n");
           ROSE_ASSERT(false);
 #endif
         }
@@ -5474,6 +5528,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
           inputCommandLine.push_back("--c++11");
        // inputCommandLine.push_back("--c++0x");
+        }
+
+     if (get_Cxx14_only() == true)
+        {
+       // Add option to indicate use of C++14 code to EDG frontend
+
+          inputCommandLine.push_back("--c++14");
         }
 
      if (get_strict_language_handling() == true)
