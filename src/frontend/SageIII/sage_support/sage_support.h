@@ -115,6 +115,15 @@ namespace Ecj {
 }// ::Rose::Frontend::Java::Ecj
 }// ::Rose::Frontend::Java
 }// ::Rose::Frontend
+
+namespace Backend {
+namespace Java {
+  int CompileBatch(SgProject* project, std::vector<std::string> argv);
+  std::string CreateDestdir(SgProject* project);
+}// ::Rose::Backend::Java
+}// ::Rose::Backend
+
+
 }// ::Rose
 
 #endif // ROSE_SAGESUPPORT_H
