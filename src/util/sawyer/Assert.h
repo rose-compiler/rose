@@ -13,7 +13,7 @@
 
 namespace Sawyer {                                      // documented elsewhere
 
-/** Logic assertions.
+/** Run-time logic assertions.
  *
  *  This library defines a collection of logic assertion macros (mostly) beginning with "ASSERT_". Many of the macros come in
  *  two flavors: with or without an <code>std::string</code> argument to describe what is being asserted.  Since there is not
@@ -29,8 +29,7 @@ namespace Sawyer {                                      // documented elsewhere
  *  @li <code>forbid(<em>expr</em>, [<em>note</em>])</code>: Asserts that <em>expr</em> evaluates to false, or fails
  *      with the message "assertion failed: prohibitted" with details about the failure.
  *  @li <code>not_null(<em>expr</em>, [<em>note</em>])</code>: Asserts that <em>expr</em> evaluate to non-null, or
- *      fails with the message "null pointer" with details about the failure.  This macro is different than the others
- *      in that it also returns its expression.
+ *      fails with the message "null pointer" with details about the failure.
  *  @li <code>this()</code>: Asserts that the containing function is an object method invoked on a non-null object. If
  *      the function is not an object method then the compiler will emit an error. If the object is null at the time of
  *      invocation then the program fails with the message "'this' cannot be null in an object method".
@@ -83,15 +82,6 @@ namespace Assert {
 void fail(const char *mesg, const char *expr, const std::string &note,
           const char *filename, unsigned linenum, const char *funcname) __attribute__((noreturn));
 
-/** Check that the pointer is not null and then return it. */
-template<typename Pointer>
-inline Pointer not_null(Pointer pointer, const char *expr, const std::string &note,
-                        const char *filename, unsigned linenum, const char *funcname) {
-    if (!pointer)
-        fail("null pointer", expr, note, filename, linenum, funcname);
-    return pointer;
-}
-
 /** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
  *  initialized at the first call to @ref fail if it is a null pointer. Users can assign a different stream to it any time
  *  before then:
@@ -127,7 +117,10 @@ extern Message::SProxy assertionStream;
 
 #define ASSERT_always_not_null(expr) ASSERT_always_not_null2(expr, "")
 #define ASSERT_always_not_null2(expr, note)                                                                                    \
-    Sawyer::Assert::not_null(expr, __STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__)
+    ((expr)!=NULL ?                                                                                                            \
+        static_cast<void>(0) :                                                                                                 \
+        Sawyer::Assert::fail("null pointer",                                                                                   \
+                             __STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__))
 
 #define ASSERT_always_not_reachable(note)                                                                                      \
     Sawyer::Assert::fail("reached impossible state", NULL, (note),                                                             \
@@ -140,9 +133,9 @@ extern Message::SProxy assertionStream;
 #define ASSERT_always_this()                                                                                                   \
     (this ?                                                                                                                    \
         static_cast<void>(0) :                                                                                                 \
-        Sawyer::asert::fail("assertionfailed",                                                                                 \
-                            "required: this!=NULL", "'this' cannot be null in an object method",                               \
-                            __FILE__, __LINE__, __PRETTY_FUNCTION__))
+        Sawyer::Assert::fail("assertion failed",                                                                               \
+                             "required: this!=NULL", "'this' cannot be null in an object method",                              \
+                             __FILE__, __LINE__, __PRETTY_FUNCTION__))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The non-"always" macros might change behavior based on whether SAWYER_NDEBUG is defined.
@@ -154,8 +147,8 @@ extern Message::SProxy assertionStream;
 #define ASSERT_require2(expr, note)     /*void*/
 #define ASSERT_forbid(expr)             /*void*/
 #define ASSERT_forbid2(expr, note)      /*void*/
-#define ASSERT_not_null(expr)           (expr)
-#define ASSERT_not_null2(expr, note)    (expr)
+#define ASSERT_not_null(expr)           /*void*/
+#define ASSERT_not_null2(expr, note)    /*void*/
 #define ASSERT_not_reachable(note)      ASSERT_always_not_reachable(note)
 #define ASSERT_not_implemented(note)    ASSERT_always_not_implemented(note)
 #define ASSERT_this()                   /*void*/

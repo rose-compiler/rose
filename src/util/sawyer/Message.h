@@ -1,6 +1,7 @@
 #ifndef Sawyer_Message_H
 #define Sawyer_Message_H
 
+#include <sawyer/Map.h>
 #include <sawyer/Sawyer.h>
 
 #include <boost/enable_shared_from_this.hpp>
@@ -10,7 +11,6 @@
 #include <cstring>
 #include <ctime>
 #include <list>
-#include <map>
 #include <ostream>
 #include <set>
 #include <streambuf>
@@ -20,7 +20,7 @@
 
 namespace Sawyer {
 
-/** Diagnostic messages.
+/** Formatted diagnostic messages emitted to various backends.
  *
  *  This namespace provides functionality to conditionally emit diagnostic messages based on software component and message
  *  importance.  Although the library has extensive capabilities for controlling the message format and where to send the
@@ -811,7 +811,7 @@ public:
  *  writing to stdout and another writing to stderr--they need to coordinate with each other if they're both going to the
  *  terminal.  A gang just keeps track of what message was most recently emitted. */
 class Gang: public HighWater {
-    typedef std::map<int, GangPtr> GangMap;
+    typedef Container::Map<int, GangPtr> GangMap;
     static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
 protected:
@@ -1363,7 +1363,7 @@ class Facilities {
 public:
     typedef std::set<Importance> ImportanceSet;         /**< A set of importance levels. */
 private:
-    typedef std::map<std::string, Facility*> FacilityMap;
+    typedef Container::Map<std::string, Facility*> FacilityMap;
     FacilityMap facilities_;
     ImportanceSet impset_;
     bool impsetInitialized_;

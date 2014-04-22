@@ -2,7 +2,7 @@
 # Update ROSE with the latest Sawyer source code
 set -e
 
-SAWYER_REPO=github.com:matzke1/sawyer
+SAWYER_REPO=${1-github.com:matzke1/sawyer}
 
 # Download the latest version of the source code
 SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
@@ -16,8 +16,11 @@ else
     git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 fi
 	
-# Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overriting ROSE-local changes--they
-# should have been contributed back to the Sawyer project by now!
-for f in Assert Message ProgressBar Sawyer; do
-    cp "$SAWYER_ROOT/sawyer/$f.h" "$SAWYER_ROOT/sawyer/$f.C" .
+# Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
+# should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
+for f in Assert CommandLine Graph GraphBoost IndexedList Map Markup MarkupRoff Message ProgressBar Sawyer; do
+    srcbase="$SAWYER_ROOT/sawyer/$f";
+    cp "$srcbase.h" .
+    [ -f "$srcbase.C" ] && cp "$srcbase.C" .
 done
+

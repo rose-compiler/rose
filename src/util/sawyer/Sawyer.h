@@ -21,6 +21,14 @@
  *      dd. Additionally, documentation can be provided in the C++ source code for each switch and Unix man pages can be
  *      produced. See Sawyer::CommandLine for details.
  *
+ *  @li Container classes: <code>Graph</code> storing vertex and edge connectivity information along with user-defined values
+ *      attached to each vertex and node, sequential ID numbers, and constant time complexity for most operations;
+ *      <code>IndexedList</code>, a combination list and vector having constant time insertion and erasure and constant time
+ *      lookup-by-ID; <code>IntervalSet</code> and <code>IntervalMap</code> similar to STL's <code>std::set</code> and
+ *      <code>std::map</code> containers but optimized for cases when very large numbers of keys are adjacent;
+ *      <code>Map</code>, similar to STL's <code>std::map</code> but with an API that's consistent with other containers in
+ *      this library.  These can be found in the Sawyer::Container namespace.
+ *
  *  Design goals for this library can be found in the [Design goals](group__design__goals.html) page.
  *
  *  Other things on the way but not yet ready:

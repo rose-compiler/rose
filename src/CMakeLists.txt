@@ -135,6 +135,9 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupRoff.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
