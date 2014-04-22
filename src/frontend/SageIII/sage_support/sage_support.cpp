@@ -3781,7 +3781,8 @@ Rose::Frontend::Run(SgProject* project)
 int
 Rose::Frontend::RunSerial(SgProject* project)
 {
-  std::cout << "[INFO] [Frontend] Running in serial mode" << std::endl;
+  if (SgProject::get_verbose() > 0)
+      std::cout << "[INFO] [Frontend] Running in serial mode" << std::endl;
 
   int status_of_function = 0;
 
@@ -3842,7 +3843,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                       exit(1);
                   }
 
-                  if (ROSE::KeepGoing::g_keep_going)
+                  if (Rose::KeepGoing::g_keep_going)
                   {
                       raise(SIGABRT);// catch with signal handling above
                   }
@@ -4996,22 +4997,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // object file.
   // printf ("In SgFile::compileOutput(): get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
 
-  // TOO1 (05/14/2013): Handling for -rose:keep_going
-  //
-  // Compile the original source code file if:
-  //
-  // 1. Unparsing was skipped
-  // 2. The frontend encountered any errors, and the user specified to
-  //    "keep going" with -rose:keep_going.
-  //
-  //    Warning: Apparently, a frontend error code <= 3 indicates an EDG
-  //    frontend warning; however, existing logic says nothing about the
-  //    other language frontends' exit statuses.
-     bool use_original_input_file = false;
-     use_original_input_file = ( get_unparse_output_filename().empty() == true) || 
-                               ( ( this->get_frontendErrorCode() != 0 || this->get_project()->get_midendErrorCode() != 0 || 
-                                   this->get_unparserErrorCode() != 0 || this->get_backendCompilerErrorCode() != 0 ) && 
-                                 ( get_project()->get_keep_going() ) );
+    bool use_original_input_file =
+        Rose::KeepGoing::Backend::UseOriginalInputFile(this);
 
   // TOO1 (05/14/2013): Handling for -rose:keep_going
   // Replace the unparsed file with the original input file.
@@ -5154,24 +5141,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
 
-          if (get_Java_only() == true) 
-             {
-            // If the user specified a class destination folder through -rose:java:d
-            // we try to create it now, if operation fail because it exists already, proceed.
-               vector<string>::iterator itInput = find(compilerCmdLine.begin(), compilerCmdLine.end(), "-d");
-               if (itInput != compilerCmdLine.end()) 
-                  {
-                    itInput++;
-                    string destDirName = *itInput;
-                    if(!boost::filesystem::create_directory(destDirName.c_str()))
-                       {
-                         if(errno != EEXIST) 
-                            {
-                              printf ("Can't create javac destination folder\n");
-                              ROSE_ASSERT(false);
-                            }
-                       }
-                  }
+          if (get_Java_only() == true)
+          {
+              Rose::Backend::Java::CreateDestdir(this->get_project());
 
             // Insert warning flags to command line
             // if (BACKEND_JAVA_COMPILER_NAME_WITH_PATH == "javac")
@@ -5353,6 +5325,97 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      return finalCompiledExitStatus;
    }
 
+int Rose::Backend::Java::CompileBatch(SgProject* project, std::vector<std::string> argv)
+{
+  ROSE_ASSERT (project->get_Java_only() == true);
+
+  std::cout << "[INFO] Backend::Java::CompileBatch" << std::endl;
+
+  int errorCode = 0;
+  {
+      std::vector<std::string> cmdline = argv;
+      {
+          // Remove ROSE translator executable from commandline
+          cmdline.erase(cmdline.begin());
+
+          // Add backend compiler executable
+          cmdline.insert(cmdline.begin(), BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
+
+          // Add user 
+          //compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
+
+          std::vector<std::string> source_filenames =
+              project->get_sourceFileNameList();
+          std::map<std::string, std::string> source_filenames_map;
+          {
+              BOOST_FOREACH(std::string filename, source_filenames)
+              {
+                  source_filenames_map[filename] = filename;
+              }
+
+              std::vector<std::string> new_cmdline;
+              BOOST_FOREACH(std::string arg, cmdline)
+              {
+                  // Add all non-source filename arguments
+                  if (source_filenames_map.find(arg) == source_filenames_map.end())
+                      new_cmdline.push_back(arg);
+              }
+              cmdline = new_cmdline;
+          }
+
+          // Add file names
+          for (int i = 0; i < project->numberOfFiles(); ++i)
+          {
+              SgFile& file = project->get_file(i);
+              std::string filename = file.get_unparse_output_filename();
+              ROSE_ASSERT(filename.empty() == false);
+
+              cmdline.push_back(filename);
+          }
+      }
+
+      // Create .class file output destination folder
+      Rose::Backend::Java::CreateDestdir(project);
+
+      std::string cmdline_string = boost::algorithm::join(cmdline, " ");
+      {
+          std::cout
+              << "[INFO] Java backend commandline: "
+              << cmdline_string
+              << std::endl;
+      }
+
+      errorCode = systemFromVector (cmdline);
+
+      // TODO: remove "keep going"
+      errorCode=0;
+      project -> set_javacErrorCode(0);           // keep going !!!
+      project -> set_ecjErrorCode(0);             // keep going !!!
+      project -> set_frontendErrorCode(0);        // keep going !!!
+
+      // TODO: Add error handling
+  }
+  return errorCode;
+}
+
+// If the user specified a class destination folder through -rose:java:d
+// we try to create it now, if operation fail because it exists already, proceed.
+std::string
+Rose::Backend::Java::CreateDestdir(SgProject* project)
+{
+  std::string destdir = project->get_Java_destdir();
+  if (!boost::filesystem::create_directory(destdir.c_str()))
+  {
+      if (errno != EEXIST)
+      {
+          std::cout
+              << "[FATAL] Can't create javac destination folder"
+              << std::endl;
+          ROSE_ASSERT(false);
+      }
+  }
+  return destdir;
+}
 
 //! project level compilation and linking
 // three cases: 1. preprocessing only
@@ -5509,6 +5572,21 @@ SgProject::compileOutput()
 
 // case 2: compilation  for each file
        // Typical case
+if (get_Java_only() == true)
+{
+    // DQ (10/16/2005): Handle special case (issue a single compile command for all files)
+      vector<string> argv = get_originalCommandLineArgumentList();
+
+    // strip out any rose options before passing the command line.
+      SgFile::stripRoseCommandLineOptions( argv );
+
+    // strip out edg specific options that would cause an error in the backend linker (compiler).
+      SgFile::stripEdgCommandLineOptions( argv );
+
+    errorCode = Rose::Backend::Java::CompileBatch(this, argv);
+}
+else
+{
           for (i=0; i < numberOfFiles(); i++)
           {
               int localErrorCode = 0;
@@ -5538,6 +5616,7 @@ SgProject::compileOutput()
                   errorCode = localErrorCode;
               }
           }
+}
 
        // case 3: linking at the project level
           if (! (get_Java_only()   ||

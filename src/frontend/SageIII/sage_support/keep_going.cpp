@@ -3,12 +3,14 @@
  * \author  Justin Too <too1@llnl.gov>
  * \date    November 16, 2013
  */
+#include "sage3basic.h"
+
 #include <iostream>
 
 #include "keep_going.h"
 #include "processSupport.h" // ROSE_ASSERT in ROSE/src/util
 
-namespace ROSE {
+namespace Rose {
 namespace KeepGoing {
 bool g_keep_going = false;
 
@@ -72,7 +74,7 @@ namespace Frontend {
             ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
         #endif //_MSC_VER
     }
-  }// ::ROSE::KeepGoing::Frontend::Commandline
+  }// ::Rose::KeepGoing::Frontend::Commandline
 
   namespace SecondaryPass {
     #ifndef _MSC_VER
@@ -93,8 +95,8 @@ namespace Frontend {
             ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
         #endif //_MSC_VER
     }
-  }// ::ROSE::KeepGoing::Frontend::SecondaryPass
-}// ::ROSE::KeepGoing::Frontend
+  }// ::Rose::KeepGoing::Frontend::SecondaryPass
+}// ::Rose::KeepGoing::Frontend
 
 namespace Midend {
   #ifndef _MSC_VER
@@ -115,7 +117,7 @@ namespace Midend {
           ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
       #endif //_MSC_VER
   }
-}// ::ROSE::KeepGoing::Midend
+}// ::Rose::KeepGoing::Midend
 
 namespace Backend {
 namespace Unparser {
@@ -137,7 +139,7 @@ namespace Unparser {
           ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
       #endif //_MSC_VER
   }
-}// ::ROSE::KeepGoing::Backend::Unparser
+}// ::Rose::KeepGoing::Backend::Unparser
 
 namespace Compiler {
   #ifndef _MSC_VER
@@ -158,8 +160,40 @@ namespace Compiler {
           ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
       #endif //_MSC_VER
   }
-}// ::ROSE::KeepGoing::Backend::Compiler
-}// ::ROSE::KeepGoing::Backend
-}// ::ROSE::KeepGoing
-}// ::ROSE
+}// ::Rose::KeepGoing::Backend::Compiler
+}// ::Rose::KeepGoing::Backend
+}// ::Rose::KeepGoing
+}// Rose
+
+// TOO1 (05/14/2013): Handling for -rose:keep_going
+//
+// Compile the original source code file if:
+//
+// 1. Unparsing was skipped
+// 2. The frontend encountered any errors, and the user specified to
+//    "keep going" with -rose:keep_going.
+//
+//    Warning: Apparently, a frontend error code <= 3 indicates an EDG
+//    frontend warning; however, existing logic says nothing about the
+//    other language frontends' exit statuses.
+bool
+Rose::KeepGoing::Backend::UseOriginalInputFile(SgFile* file)
+{
+  ROSE_ASSERT(file != NULL);
+
+  return
+    // (1) An ROSE unparsed file was not generated
+    file->get_unparse_output_filename().empty() == true ||
+    // (2) File has an error and user specified to "keep going"
+    (
+        (
+            file->get_frontendErrorCode() != 0 ||
+            file->get_project()->get_midendErrorCode() != 0 ||
+            file->get_unparserErrorCode() != 0 ||
+            file->get_backendCompilerErrorCode() != 0) &&
+        (
+            file->get_project()->get_keep_going()
+        )
+    );
+}// ::Rose::KeepGoing::Backend::UseOriginalInputFile
 
