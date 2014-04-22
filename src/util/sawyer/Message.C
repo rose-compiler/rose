@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/foreach.hpp>
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
@@ -372,10 +373,7 @@ void HighWater::emitted(const Mesg &mesg, const MesgProps &props) {
 Gang::GangMap Gang::gangs_;
 
 GangPtr Gang::instanceForId(int id) {
-    GangMap::iterator found = gangs_.find(id);
-    if (found==gangs_.end())
-        found = gangs_.insert(std::make_pair(id, Gang::instance())).first;
-    return found->second;
+    return gangs_.insertMaybe(id, Gang::instance());
 }
 
 void Gang::removeInstance(int id) {
@@ -851,12 +849,12 @@ Facilities& Facilities::insert(Facility &facility, std::string name) {
     const char *s = name.c_str();
     if (0!=name.compare(parseFacilityName(s)))
         throw std::logic_error("name '"+name+"' is not valid for the Facilities::control language");
-    FacilityMap::iterator found = facilities_.find(name);
-    if (found!=facilities_.end()) {
-        if (found->second != &facility)
+    FacilityMap::NodeIterator found = facilities_.find(name);
+    if (found!=facilities_.nodes().end()) {
+        if (found->value()!= &facility)
             throw std::logic_error("message facility '"+name+"' is used more than once");
     } else {
-        facilities_.insert(std::make_pair(name, &facility));
+        facilities_.insert(name, &facility);
     }
 
     if (!impsetInitialized_) {
@@ -886,30 +884,30 @@ Facilities& Facilities::insertAndAdjust(Facility &facility, std::string name) {
 
 Facilities& Facilities::erase(Facility &facility) {
     FacilityMap map = facilities_;;
-    for (FacilityMap::iterator fi=map.begin(); fi!=map.end(); ++fi) {
-        if (fi->second == &facility)
-            facilities_.erase(fi->first);
+    BOOST_FOREACH (const FacilityMap::Node &node, map.nodes()) {
+        if (node.value() == &facility)
+            facilities_.erase(node.key());
     }
     return *this;
 }
 
 Facilities& Facilities::reenable() {
-    for (FacilityMap::iterator fi=facilities_.begin(); fi!=facilities_.end(); ++fi) {
+    BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes()) {
         for (int i=0; i<N_IMPORTANCE; ++i) {
             Importance imp = (Importance)i;
-            fi->second->get(imp).enable(impset_.find(imp)!=impset_.end());
+            node.value()->get(imp).enable(impset_.find(imp)!=impset_.end());
         }
     }
     return *this;
 }
 
 Facilities& Facilities::reenableFrom(const Facilities &other) {
-    for (FacilityMap::const_iterator fi_src=other.facilities_.begin(); fi_src!=other.facilities_.end(); ++fi_src) {
-        FacilityMap::iterator fi_dst = facilities_.find(fi_src->first);
-        if (fi_dst!=facilities_.end()) {
+    BOOST_FOREACH (const FacilityMap::Node &src, other.facilities_.nodes()) {
+        FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
+        if (fi_dst!=facilities_.nodes().end()) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
                 Importance imp = (Importance)i;
-                fi_dst->second->get(imp).enable(fi_src->second->get(imp).enabled());
+                fi_dst->value()->get(imp).enable(src.value()->get(imp).enabled());
             }
         }
     }
@@ -917,16 +915,16 @@ Facilities& Facilities::reenableFrom(const Facilities &other) {
 }
 
 Facilities& Facilities::enable(const std::string &switch_name, bool b) {
-    FacilityMap::iterator found = facilities_.find(switch_name);
-    if (found != facilities_.end()) {
+    FacilityMap::NodeIterator found = facilities_.find(switch_name);
+    if (found != facilities_.nodes().end()) {
         if (b) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
                 Importance imp = (Importance)i;
-                found->second->get(imp).enable(impset_.find(imp)!=impset_.end());
+                found->value()->get(imp).enable(impset_.find(imp)!=impset_.end());
             }
         } else {
             for (int i=0; i<N_IMPORTANCE; ++i)
-                found->second->get((Importance)i).disable();
+                found->value()->get((Importance)i).disable();
         }
     }
     return *this;
@@ -938,14 +936,13 @@ Facilities& Facilities::enable(Importance imp, bool b) {
     } else {
         impset_.erase(imp);
     }
-    for (FacilityMap::iterator fi=facilities_.begin(); fi!=facilities_.end(); ++fi)
-        fi->second->get(imp).enable(b);
+    BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes())
+        node.value()->get(imp).enable(b);
     return *this;
 }
 
 Facilities& Facilities::enable(bool b) {
-    for (FacilityMap::iterator fi=facilities_.begin(); fi!=facilities_.end(); ++fi) {
-        Facility *facility = fi->second;
+    BOOST_FOREACH (Facility *facility, facilities_.values()) {
         if (b) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
                 Importance imp = (Importance)i;
@@ -1148,7 +1145,7 @@ std::string Facilities::control(const std::string &ss) {
                 std::string facilityName = parseFacilityName(s);
                 if (facilityName.empty())
                     break;
-                if (facilities_.find(facilityName)==facilities_.end())
+                if (!facilities_.exists(facilityName))
                     throw ControlError("no such message facility '"+facilityName+"'", facilityNameStart);
 
                 // stream control list in parentheses
@@ -1196,10 +1193,10 @@ std::string Facilities::control(const std::string &ss) {
             for (Importance imp=term.lo; imp<=term.hi; imp=(Importance)(imp+1))
                 enable(imp, term.enable);
         } else {
-            FacilityMap::iterator found = facilities_.find(term.facilityName);
-            assert(found!=facilities_.end() && found->second!=NULL);
+            FacilityMap::NodeIterator found = facilities_.find(term.facilityName);
+            assert(found!=facilities_.nodes().end() && found->value()!=NULL);
             for (Importance imp=term.lo; imp<=term.hi; imp=(Importance)(imp+1))
-                found->second->get(imp).enable(term.enable);
+                found->value()->get(imp).enable(term.enable);
         }
     }
 
@@ -1213,11 +1210,11 @@ void Facilities::print(std::ostream &log) const {
     }
     log <<" default enabled levels\n";
 
-    if (facilities_.empty()) {
+    if (facilities_.isEmpty()) {
         log <<"no message facilities registered\n";
     } else {
-        for (FacilityMap::const_iterator fi=facilities_.begin(); fi!=facilities_.end(); ++fi) {
-            Facility *facility = fi->second;
+        BOOST_FOREACH (const FacilityMap::Node &fnode, facilities_.nodes()) {
+            Facility *facility = fnode.value();
 
             // A short easy to read format. Letters indicate the importances that are enabled; dashes keep them aligned.
             // Sort of like the format 'ls -l' uses to show permissions.
@@ -1225,7 +1222,7 @@ void Facilities::print(std::ostream &log) const {
                 Importance mi = (Importance)i;
                 log <<(facility->get(mi) ? stringifyImportance(mi)[0] : '-');
             }
-            log <<" " <<fi->first <<"\n";
+            log <<" " <<fnode.key() <<"\n";
         }
     }
 }
