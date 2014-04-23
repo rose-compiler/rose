@@ -5581,6 +5581,10 @@ HEADER_APPLICATION_PROJECT_START
           bool get_Cxx0x_only (void) const;
           bool get_Cxx11_only (void) const;
 
+       // DQ (4/20/2014): Adding C14 and C++14 support.
+          bool get_C14_only (void) const;
+          bool get_Cxx14_only (void) const;
+
        // DQ (8/11/2007): Added Fortran support
           bool get_Fortran_only (void) const;
           bool get_F77_only     (void) const;
@@ -13588,6 +13592,10 @@ SgFile::initialization()
      p_Cxx0x_only              = false;
      p_Cxx11_only              = false;
 
+  // DQ (4/20/2014): Adding C14 and C++14 support.
+     p_C14_only                = false;
+     p_Cxx14_only              = false;
+
   // DQ (8/11/2007): Added support for Fortran
      p_Fortran_only            = false;
      p_F77_only                = false;
@@ -13941,11 +13949,12 @@ SgFile::compileOutput ( int fileNameIndex )
   // would cause an error in the backend compiler.
   // stripEdgCommandLineOptions( argv );
 
+  // DQ (4/20/2014): Added C14 and C++14 support.
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
   // DQ (7/21/2012): Adding C++11 support from the command line.
   // if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true)
   // if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true || get_C11_only() == true || get_Cxx0x_only() == true || get_Cxx11_only() == true)
-     if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_Cxx_only() == true || get_C11_only() == true || get_Cxx0x_only() == true || get_Cxx11_only() == true)
+     if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_Cxx_only() == true || get_C11_only() == true || get_C14_only() == true || get_Cxx0x_only() == true || get_Cxx11_only() == true || get_Cxx14_only() == true)
         {
           stripEdgCommandLineOptions( argv );     
         }
@@ -14297,6 +14306,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_C11_only()                           = %s \n",(p_C11_only == true) ? "true" : "false");
      printf ("     p_Cxx0x_only()                         = %s \n",(p_Cxx0x_only == true) ? "true" : "false");
      printf ("     p_Cxx11_only()                         = %s \n",(p_Cxx11_only == true) ? "true" : "false");
+     printf ("     p_C14_only()                           = %s \n",(p_C14_only == true) ? "true" : "false");
+     printf ("     p_Cxx14_only()                         = %s \n",(p_Cxx14_only == true) ? "true" : "false");
      printf ("     p_Java_only()                          = %s \n",(p_Java_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                       = %s \n",(p_Fortran_only == true) ? "true" : "false");
      printf ("     p_F77_only()                           = %s \n",(p_F77_only == true) ? "true" : "false");
@@ -15467,6 +15478,19 @@ SgProject::get_C11_only (void) const
    }
 
 bool
+SgProject::get_C14_only (void) const
+   {
+  // look at how the files are set (C14 only)
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C14_only();
+        }
+     return result;
+   }
+
+bool
 SgProject::get_Cxx0x_only (void) const
    {
   // look at how the files are set (C++0x only)
@@ -15490,6 +15514,20 @@ SgProject::get_Cxx11_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_Cxx11_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx14_only (void) const
+   {
+  // look at how the files are set (C++11 only)
+  // bool result = false;
+     bool result = p_Cxx14_only;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx14_only();
         }
      return result;
    }

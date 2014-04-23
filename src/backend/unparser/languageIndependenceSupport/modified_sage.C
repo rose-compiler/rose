@@ -1308,12 +1308,17 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
                if (templateClassInstatiationDefn != NULL)
                   {
+                 // DQ (4/6/2014): This happens when a member function template in embedded in a class
+                 // template and thus there is not an associated template for the member function separate
+                 // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
+#if 0
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
 
                  // DQ (8/8/2012): This is a valid branch, commented out assert(false).
                  // DQ (8/2/2012): This branch should not be possible so assert false as a test (note that test2005_139.C will demonstrate this branch).
                     printf ("Warning: Rare case: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
                  // ROSE_ASSERT(false);
+#endif
                   }
                  else
                   {
