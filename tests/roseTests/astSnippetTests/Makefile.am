@@ -45,6 +45,7 @@ test1a.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="int c = 1"		\
 		$(C_INJECTION_TEST) $@
 
 test1b.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -57,6 +58,7 @@ test1b.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="--x"			\
 		$(C_INJECTION_TEST) $@
 
 test1c.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -69,6 +71,7 @@ test1c.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="x = y"			\
 		$(C_INJECTION_TEST) $@
 
 test1d.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -81,6 +84,7 @@ test1d.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="int c = 1"		\
 		$(C_INJECTION_TEST) $@
 
 test1e.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -93,6 +97,7 @@ test1e.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=beginning		\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="int c = 1"		\
 		$(C_INJECTION_TEST) $@
 
 test1f.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -105,6 +110,7 @@ test1f.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=beginning		\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="int c = 1"		\
 		$(C_INJECTION_TEST) $@
 
 test1g.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -117,6 +123,7 @@ test1g.passed: injectSnippet SmallSpecimensC/snippets1.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="int c = 1"		\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -133,6 +140,7 @@ test2a.passed: injectSnippet SmallSpecimensC/snippets2.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="++snippet_usage_counter"	\
 		$(C_INJECTION_TEST) $@
 
 test2b.passed: injectSnippet SmallSpecimensC/snippets2.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -145,11 +153,12 @@ test2b.passed: injectSnippet SmallSpecimensC/snippets2.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="++snippet_usage_counter"	\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
 # test3*.passed are for injection snippets3.c into specimen1.c in various ways.
-TEST_TARGETS += test3a.passed
+TEST_TARGETS += test3a.passed test3b.passed
 EXTRA_DIST += SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c
 test3a.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
 	@$(RTH_RUN)					\
@@ -161,6 +170,21 @@ test3a.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=yes			\
+		CHECK_STRING="stupid example"		\
+		$(C_INJECTION_TEST) $@
+
+# Do all the work, but don't actually insert anything (insertion point is "none")
+test3b.passed: injectSnippet SmallSpecimensC/snippets3.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)					\
+		TITLE="no insertion [$@]"		\
+		SNIPPET=snippets3.c,::print		\
+		SPECIMEN=SmallSpecimensC/specimen1.c	\
+		IPOINT=none				\
+		INSERT_MECHANISM=stmts			\
+		LOCDECLS_POSITION=end			\
+		RECURSIVE_INSERTION=yes			\
+		COPY_DEFINITIONS=yes			\
+		CHECK_STRING="INSERT_HERE"		\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -177,6 +201,7 @@ test4a.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="s1 = s2"			\
 		$(C_INJECTION_TEST) $@
 
 test4b.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -189,6 +214,7 @@ test4b.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="f1 = f2"			\
 		$(C_INJECTION_TEST) $@
 
 test4c.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -201,6 +227,7 @@ test4c.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="s1 = s2"			\
 		$(C_INJECTION_TEST) $@
 
 test4d.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -213,6 +240,7 @@ test4d.passed: injectSnippet SmallSpecimensC/snippets5.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=beginning		\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="s1 = s2"			\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -229,6 +257,7 @@ test5a.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="= (random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test5b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -241,6 +270,7 @@ test5b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="= (random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test5c.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -253,6 +283,7 @@ test5c.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=yes			\
+		CHECK_STRING="randomOffByOne(x)"	\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -269,6 +300,7 @@ test6a.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=yes			\
 		COPY_DEFINITIONS=no			\
+		CHECK_STRING="= ((random() %"		\
 		$(C_INJECTION_TEST) $@
 
 test6b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specimen1.c $(C_INJECTION_TEST)
@@ -281,6 +313,7 @@ test6b.passed: injectSnippet SmallSpecimensC/snippets6.c SmallSpecimensC/specime
 		LOCDECLS_POSITION=end			\
 		RECURSIVE_INSERTION=no			\
 		COPY_DEFINITIONS=yes			\
+		CHECK_STRING="= ((random() %"		\
 		$(C_INJECTION_TEST) $@
 
 #----------------------------------------------------------------------------------------------------
@@ -301,6 +334,57 @@ test7b.passed: storeLoad SmallSpecimensC/snippets4.c SmallSpecimensC/specimen2.c
 		METHOD=StructString			\
 		SPECIMEN=SmallSpecimensC/specimen2.c	\
 		$(STORELOAD_TEST) $@
+
+#----------------------------------------------------------------------------------------------------
+# test8*.passed are for injecting snippets7 into specimen3
+TEST_TARGETS += test8a.passed
+EXTRA_DIST += SmallSpecimensC/snippets7.c SmallSpecimensC/specimen3.c
+
+test8a.passed: injectSnippet SmallSpecimensC/snippets7.c SmallSpecimensC/specimen3.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="missing preprocessor information [$@]"	\
+		SNIPPET=snippets7.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen3.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		CHECK_STRING="output_value(argc)"		\
+		$(C_INJECTION_TEST) $@
+
+#----------------------------------------------------------------------------------------------------
+# test9*.passed are for injecting snippets8 into specimen8
+TEST_TARGETS += test9a.passed test9b.passed
+EXTRA_DIST += SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c
+
+test9a.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="references to ctype macros [$@]"		\
+		SNIPPET=snippets8.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen8.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=yes				\
+		CHECK_STRING="__ctype_b_loc"			\
+		$(C_INJECTION_TEST) $@
+
+# without copying related things
+test9b.passed: injectSnippet SmallSpecimensC/snippets8.c SmallSpecimensC/specimen8.c $(C_INJECTION_TEST)
+	@$(RTH_RUN)						\
+		TITLE="references to ctype macros [$@]"		\
+		SNIPPET=snippets8.c,::weakness			\
+		SPECIMEN=SmallSpecimensC/specimen8.c		\
+		IPOINT=::main					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=beginning			\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="__ctype_b_loc"			\
+		$(C_INJECTION_TEST) $@
+
 
 ###############################################################################################################################
 # Small Java Tests
@@ -506,7 +590,47 @@ testJava7b.passed: injectSnippet SmallSpecimensJava/Exotic2.java SmallSpecimensJ
 		COPY_DEFINITIONS=yes				\
 		$(JAVA_INJECTION_TEST) $@
 
+#----------------------------------------------------------------------------------------------------
+# testJava8*.passed are for injections with packages
+TEST_TARGETS += testJava8a-parse.passed testJava8a-snippet.passed testJava8a.passed
+EXTRA_DIST += SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java
 
+# frontend() only, for testing that we can compile the java snippet files as Java source
+noinst_PROGRAMS += testParser
+testParser_SOURCES = testParser.C
+testParser_LDADD = $(ROSE_LIBS)
+
+# We're having problems parsing SnippetPackage.Snippet3 as a snippet, so make sure we can at least parse it normally. The
+# failure is "/tmp/dir-13971683045770/tmp-1319461204681189217.java:3: error: class Snippet3 is public, should be declared
+# in a file named Snippet3.java", but the code *is* in Snippet3.java. [RPM 2014-04-11]
+
+# This appears to be okay
+testJava8a-parse.passed: SmallSpecimensJava/SnippetPackage/Snippet3.java testParser
+	@$(RTH_RUN)						\
+		TITLE="parse a java file with package [$@]"	\
+		CMD="$(builddir)/testParser $(abspath $<)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+# This fails, so it's a problem with how the Snippet class parses the snippet file. [RPM 2014-04-11]
+testJava8a-snippet.passed: SmallSpecimensJava/SnippetPackage/Snippet3.java listSnippets testJava8a-parse.passed
+	@$(RTH_RUN)							\
+		TITLE="list snippets [$@]"				\
+		DISABLED="fails sometimes in Jenkins (RPM 2014-04-11)"	\
+		CMD="$(builddir)/listSnippets $(abspath $<)"		\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+testJava8a.passed: testJava8a-snippet.passed \
+injectSnippet SmallSpecimensJava/SnippetPackage/Snippet3.java SmallSpecimensJava/Specimen3/Specimen3.java $(JAVA_INJECTION_TEST)
+	@$(RTH_RUN)									\
+		TITLE="packages [$@]"							\
+		DISABLED="fails sometimes in Jenkins (RPM 2014-04-11)"			\
+		SNIPPET=SnippetPackage/Snippet3.java,SnippetPackage.Snippet3.snippet	\
+		SPECIMEN=SmallSpecimensJava/Specimen3/Specimen3.java			\
+		IPOINT=Specimen3.Specimen3.ipoint1					\
+		INSERT_MECHANISM=stmts							\
+		RECURSIVE_INSERTION=no							\
+		COPY_DEFINITIONS=yes							\
+		$(JAVA_INJECTION_TEST) $@
 
 ###############################################################################################################################
 # quicksort tests
@@ -555,6 +679,7 @@ reverseC.passed: injectSnippet QuickSortC/quicksort.c QuickSortC/reverse.c
 		INSERT_MECHANISM=stmts						\
 		RECURSIVE_INSERTION=no						\
 		COPY_DEFINITIONS=yes						\
+		CHECK_STRING="insertSort"					\
 		$(C_INJECTION_TEST) $@
 
 ###############################################################################################################################
@@ -696,187 +821,190 @@ check-extra-snippets: $(EXTRAS_TARGETS_C) $(EXTRAS_TARGETS_J)
 
 TEST_TARGETS += test_1.passed
 test_1.passed:
-#	./injectSnippet --test:snippet=snippet2014_01.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_01.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_01.c,::foo		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_01.c,::foo			\
 		SPECIMEN=SmallSpecimensC/specimen2014_01.c	\
-		IPOINT=::foobar			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=no			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::foobar					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="y = x"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_2.passed
 test_2.passed:
-#	./injectSnippet --test:snippet=snippet2014_02.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_02.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_02.c,::foo		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_02.c,::foo			\
 		SPECIMEN=SmallSpecimensC/specimen2014_02.c	\
-		IPOINT=::foobar			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=no			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::foobar					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="foo2()"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_3.passed
 test_3.passed:
-#	./injectSnippet --test:snippet=snippet2014_03.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_03.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_03.c,::foo		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_03.c,::foo			\
 		SPECIMEN=SmallSpecimensC/specimen2014_03.c	\
-		IPOINT=::foobar			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=no			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::foobar					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="y = x"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_4.passed
 test_4.passed:
-#	./injectSnippet --test:snippet=snippet2014_04.c,::swap --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_04.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_04.c,::swap		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_04.c,::swap			\
 		SPECIMEN=SmallSpecimensC/specimen2014_04.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="x = y"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_5.passed
 test_5.passed:
-#	./injectSnippet --test:snippet=snippet2014_05.c,::count --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_05.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
 		SNIPPET=snippet2014_05.c,::count		\
 		SPECIMEN=SmallSpecimensC/specimen2014_05.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="++snippet_usage_counter"		\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_6.passed
 test_6.passed:
-#	./injectSnippet --test:snippet=snippet2014_06.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_06.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
 		SNIPPET=snippet2014_06.c,::print		\
 		SPECIMEN=SmallSpecimensC/specimen2014_06.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="fputs(x,stderr);"			\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_7.passed
 test_7.passed:
-#	./injectSnippet --test:snippet=snippet2014_07.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_07.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
 		SNIPPET=snippet2014_07.c,::print		\
 		SPECIMEN=SmallSpecimensC/specimen2014_07.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="fputs(x,"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_8.passed
 test_8.passed:
-#	./injectSnippet --test:snippet=snippet2014_08.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_08.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
 		SNIPPET=snippet2014_08.c,::print		\
 		SPECIMEN=SmallSpecimensC/specimen2014_08.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="struct __FILE ;"			\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_9.passed
 test_9.passed:
-#	./injectSnippet --test:snippet=snippet2014_09.c,::allocate_string --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_09.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_09.c,::allocate_string		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_09.c,::allocate_string	\
 		SPECIMEN=SmallSpecimensC/specimen2014_09.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="heap_storage"			\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_10.passed
 test_10.passed:
-#	./injectSnippet --test:snippet=snippet2014_10.c,::storeStructString --test:copy-related-things=no --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_10.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_10.c,::storeStructString		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_10.c,::storeStructString	\
 		SPECIMEN=SmallSpecimensC/specimen2014_10.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="storage . const_string_member"	\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_11.passed
 test_11.passed:
-#	./injectSnippet --test:snippet=snippet2014_11.c,::foo --test:ipoint-function=::foobar --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_11.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
-		SNIPPET=snippet2014_11.c,::foo		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
+		SNIPPET=snippet2014_11.c,::foo			\
 		SPECIMEN=SmallSpecimensC/specimen2014_11.c	\
-		IPOINT=::foobar			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=no			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::foobar					\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=no				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="y = x"				\
 		$(C_INJECTION_TEST) $@
 
 TEST_TARGETS += test_12.passed
 test_12.passed: injectSnippet
-#	./injectSnippet --test:snippet=snippet2014_07.c,::print --test:ipoint-function=::ipoint1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=yes --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/SmallSpecimensC/specimen2014_07.c
-	@$(RTH_RUN)					\
-		TITLE="basic insertion [$@]"		\
+	@$(RTH_RUN)						\
+		TITLE="basic insertion [$@]"			\
 		SNIPPET=snippet2014_12.c,::print		\
 		SPECIMEN=SmallSpecimensC/specimen2014_12.c	\
-		IPOINT=::ipoint1			\
-		INSERT_MECHANISM=stmts			\
-		LOCDECLS_POSITION=end			\
-		RECURSIVE_INSERTION=yes			\
-		COPY_DEFINITIONS=no			\
+		IPOINT=::ipoint1				\
+		INSERT_MECHANISM=stmts				\
+		LOCDECLS_POSITION=end				\
+		RECURSIVE_INSERTION=yes				\
+		COPY_DEFINITIONS=no				\
+		CHECK_STRING="int value = "			\
 		$(C_INJECTION_TEST) $@
 
 test_java_1.passed:
-	./injectSnippet --test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 --test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end --test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
+	./injectSnippet \
+		--test:snippet=$(srcdir)/SnippetGroup1.java,SnippetGroup1.snippet1 \
+		--test:ipoint-function=HelloWorld.target1 --test:insert-mechanism=stmts --test:locdecls-position=end \
+		--test:recursive=no --test:copy-definitions=no -rose:skipfinalCompileStep $(srcdir)/HelloWorld.java
 
 
 # TEST_TARGETS += testJava2014_01.passed 
 # EXTRA_DIST += SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java
 testJava2014_01.passed: injectSnippet SmallSpecimensJava/Snippet2014_01.java SmallSpecimensJava/Specimen2014_01.java $(JAVA_INJECTION_TEST)
-	@$(RTH_RUN)						\
-		TITLE="basic insertion [$@]"			\
-		SNIPPET=Snippet2014_01.java,Snippet2014_01.basic		\
+	@$(RTH_RUN)							\
+		TITLE="basic insertion [$@]"				\
+		SNIPPET=Snippet2014_01.java,Snippet2014_01.basic	\
 		SPECIMEN=SmallSpecimensJava/Specimen2014_01.java	\
-		IPOINT=Specimen2014_01.ipoint1			\
-		INSERT_MECHANISM=stmts				\
-		RECURSIVE_INSERTION=no				\
-		COPY_DEFINITIONS=no				\
+		IPOINT=Specimen2014_01.ipoint1				\
+		INSERT_MECHANISM=stmts					\
+		RECURSIVE_INSERTION=no					\
+		COPY_DEFINITIONS=no					\
 		$(JAVA_INJECTION_TEST) $@
 
 

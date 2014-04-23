@@ -60,6 +60,7 @@ same as Lenny.
 	# aptitude install libsqlite3-dev 
 	# aptitude install libssl-dev libxml2-dev libgcrypt11-dev
 	# aptitude install dot2tex swig default-jdk gfortran
+	# aptitude install libpqxx3-dev postgresql
 
 4. Install libboost1.40-dev and related development libraries. These
    probably aren't all needed, but we might as well install them all

@@ -4,6 +4,7 @@
 #include "OFPNodes.h"
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 namespace OFP {
@@ -28,6 +29,7 @@ class Unparser
 {
  public:
    Unparser() : oss(std::cout) {}
+   Unparser(std::ostream & os) : oss(os) {}
    Unparser(UnparseInfo & infoObj) : oss(std::cout) {info = infoObj;}
    virtual ~Unparser() {}
 
@@ -51,9 +53,10 @@ class Unparser
 class FortranTextUnparser : public Unparser
 {
  public:
-   FortranTextUnparser()                      {}
-   FortranTextUnparser(UnparseInfo & infoObj) {}
-  ~FortranTextUnparser()                      {}
+   FortranTextUnparser()                                  {}
+   FortranTextUnparser(std::ostream & os) : Unparser(os)  {}
+   FortranTextUnparser(UnparseInfo & infoObj)             {}
+  ~FortranTextUnparser()                                  {}
 
    void unparseNode(SgUntypedNode * node);
    void unparseDecl(SgUntypedDeclarationStatement * decl);

@@ -11,19 +11,27 @@ ATbool ofp_traverse_init();
 int main(int argc, char * argv[])
 {
    OFP::Program Program;
-   OFP::UntypedASTBuilder   ast;
-   OFP::FortranTextUnparser unparser;
+   OFP::UntypedASTBuilder ast;
+   OFP::FortranTextUnparser * unparser = NULL;
+   std::ofstream * ofs = NULL;
+   FILE * file = stdin;
    
-   if (argc < 2) {
-      fprintf(stderr, "usage: traverse filename\n");
-      exit(-1);
+   for (int i = 1; i < argc; i++) {
+      std::string arg = argv[i];
+      if (arg == "-i") {
+         file = fopen(argv[++i], "r");
+         if (file == NULL) {
+            fprintf(stderr, "Failed to open file\n");
+            exit(-1);
+         }
+      }
+      else if (arg == "-o") {
+         ofs = new std::ofstream(argv[++i], std::ios_base::out);
+      }
    }
 
-   FILE * file = fopen(argv[1], "r");
-   if (file == NULL) {
-      fprintf(stderr, "Failed to open file\n");
-      exit(-1);
-   }
+   if (ofs) unparser = new OFP::FortranTextUnparser(*ofs);
+   else     unparser = new OFP::FortranTextUnparser();
 
    ATinitialize(argc, argv); 
 
@@ -34,15 +42,18 @@ int main(int argc, char * argv[])
    printf("\n%s\n\n", ATwriteToString(Program.term));
 
    OFP::setASTBuilder(&ast);
-   OFP::setUnparser(&unparser);
+   OFP::setUnparser(unparser);
 
    if (ofp_traverse_Program(Program.term, &Program)) {
       printf("\nWoot!\n");
    } else return 1;
 
-   printf("\n\n----------------------------\n");
-   unparser.unparseNode(Program.getPayload());
-   printf("----------------------------\n\n");
+   if (ofs == NULL) printf("\n\n----------------------------\n");
+   unparser->unparseNode(Program.getPayload());
+   if (ofs == NULL) printf("----------------------------\n\n");
+
+   delete unparser;
+   if (ofs) delete ofs;
 
    return 0;
 }

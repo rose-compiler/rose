@@ -195,8 +195,7 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
         if( isSgAsmMemoryReferenceExpression(operand) )
         {
           SgAsmMemoryReferenceExpression* memRefExp = new SgAsmMemoryReferenceExpression;
-          SgAsmWordValueExpression* wordVal = new SgAsmWordValueExpression;
-          wordVal->set_value(0);
+          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::makeWordValue(0);
 
           memRefExp->set_segment(wordVal);
           memRefExp->set_address(wordVal);
@@ -208,8 +207,7 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
           newOperand = regRef;
 
         }else{
-          SgAsmWordValueExpression* wordVal = new SgAsmWordValueExpression;
-          wordVal->set_value(0);
+          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::makeWordValue(0);
           newOperand = wordVal;
           
         }

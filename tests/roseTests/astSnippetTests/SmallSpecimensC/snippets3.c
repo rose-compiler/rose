@@ -1,6 +1,6 @@
 /* Snippets with #include directives */
 
-#include <stdio.h>                                      // fputs
+#include <stdio.h>
 
 int copy_me_too()
 {

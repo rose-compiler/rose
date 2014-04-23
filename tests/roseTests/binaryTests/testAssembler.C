@@ -46,7 +46,7 @@ assemble_all(SgAsmInterpretation *interp)
             ++nassembled;
         } catch (const Assembler::Exception &e) {
             std::cerr <<"assembly failed at " <<StringUtility::addrToString(e.insn->get_address())
-                      <<": " <<e.mesg <<std::endl;
+                      <<": " <<e.what() <<std::endl;
             if (!assembler->get_debug()) {
                 assembler->set_debug(stderr);
                 try {
