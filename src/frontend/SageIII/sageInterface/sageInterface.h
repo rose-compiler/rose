@@ -2304,21 +2304,21 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
-//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-      std::string getTempDirectory(SgProject *project);
-      void destroyTempDirectory(std::string);
-      SgFile *processFile(SgProject *, std::string, bool unparse = false);
-      std::string preprocessPackage(SgProject *, std::string);
-      std::string preprocessImport(SgProject *, std::string);
-      SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
-      SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
-      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
-      SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
-      SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
-//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+      ROSE_DLL_API std::string getTempDirectory(SgProject *project);
+      ROSE_DLL_API void destroyTempDirectory(std::string);
+      ROSE_DLL_API SgFile *processFile(SgProject *, std::string, bool unparse = false);
+      ROSE_DLL_API std::string preprocessPackage(SgProject *, std::string);
+      ROSE_DLL_API std::string preprocessImport(SgProject *, std::string);
+      ROSE_DLL_API SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
+      ROSE_DLL_API SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
+      ROSE_DLL_API SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 }// end of namespace
 

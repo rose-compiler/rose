@@ -3,6 +3,9 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
+/* Needed for __attribute__ definition on Visual Studio */
+#include "threadSupport.h"
+
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -178,6 +181,7 @@ static std::string getJavaClassNameFromFileName(const std::string fileName)
     return boost::erase_last_copy(notDir, ".java");
 }
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // Parse java file based on addJavaSource.cpp test case
 static SgFile* parseJavaFile(const std::string &fileName)
 {
@@ -219,16 +223,16 @@ static SgFile* parseJavaFile(const std::string &fileName)
         BOOST_FOREACH (const std::string &component, components) {
             if (!component.empty()) {
                 dirName += "/" + component;
-                (void) mkdir(dirName.c_str(), 0777);
+                boost::filesystem::create_directory(dirName);
                 std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
             }
         }
         struct stat sb;
         int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
         assert(0==status);
-        assert(S_ISDIR(sb.st_mode));
+        assert(boost::filesystem::is_directory(dirName));
         if (dirName!=tempDirectory) {
-            rmdir(dirName.c_str());                     // removing leaf directory so Java can create it
+            boost::filesystem::remove_all(dirName); // removing leaf directory so Java can create it
             std::cerr <<"ROBB: removed directory \"" <<dirName <<"\"\n";
         }
     }
@@ -261,7 +265,7 @@ static SgFile* parseJavaFile(const std::string &fileName)
 
     return file;
 }
-
+#endif
 
 // Class method
 SgSourceFile *
@@ -278,7 +282,7 @@ SnippetFile::parse(const std::string &fileName)
 #if 0 /* [Robb P. Matzke 2014-03-31] */
         // This appears not to work any better than SageBuilder::buildFile and Philippe Charles concurs that it might not.
         file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
-#else
+#elif ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
         // This is the better way (but much more complicated) to parse a Java file.
         file = parseJavaFile(fileName);
 #endif
