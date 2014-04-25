@@ -160,6 +160,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
                     bool ignore_error = (isSgFunctionParameterList(decl) != NULL);
 
+                 // DQ (4/17/2014): This is required for the EDG version 4.8 and I don't know why.
+                 // Currently the priority is to pass our existing tests.
+                 // An idea is that this is sharing introduced as a result of the use of defaul parameters.
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
+                    ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
+#endif
+
                     if (ignore_error == true)
                        {
                          printf ("Ignoring the error for a SgFunctionParameterList \n");
@@ -18142,10 +18149,6 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 
     return package_definition;
 }
-//------------------------------------------------------------------------------
-#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-//------------------------------------------------------------------------------
-
 
 /**
  * If the class_name already exists in the scope, return it. Otherwise, import it.
@@ -18226,3 +18229,8 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassType *class_type
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     return findJavaMain(class_definition);
 }
+
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+

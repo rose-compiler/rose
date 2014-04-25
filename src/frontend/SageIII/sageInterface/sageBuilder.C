@@ -7543,6 +7543,42 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
      ROSE_ASSERT(result->get_loop_body()     != NULL);
    }
 
+void
+SageBuilder::buildDoWhileStatement_nfi(SgDoWhileStmt* result, SgStatement * body, SgStatement * condition)
+   {
+  // DQ (3/22/2014): This function has been built to support reusing an existing SgDoWhileStatement 
+  // that may have been built and pushed onto the stack as part of a top-down construction of the AST.  
+  // It is required in the EDG 4.8 useage because of a change from EDG 4.7 to 4.8 in how blocks are 
+  // handled (end-of-construct entries).
+
+     ROSE_ASSERT(result    != NULL);
+     ROSE_ASSERT(body      != NULL);
+     ROSE_ASSERT(condition != NULL);
+
+     ROSE_ASSERT(result->get_body()      == NULL);
+     ROSE_ASSERT(result->get_condition() == NULL);
+
+     result->set_body(body);
+     result->set_condition(condition);
+
+     body->set_parent(result);
+     condition->set_parent(result);
+
+     setOneSourcePositionNull(result);
+
+     ROSE_ASSERT(result->get_body()      != NULL);
+     ROSE_ASSERT(result->get_condition() != NULL);
+
+     ROSE_ASSERT(result->get_body()->get_parent()      == result);
+     ROSE_ASSERT(result->get_condition()->get_parent() == result);
+
+#if 0
+     printf ("Exiting at the base of SageBuilder::buildDoWhileStatement_nfi() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
@@ -8706,52 +8742,69 @@ SgTypeUnsignedLongLong * SageBuilder::buildUnsignedLongLongType()
 
 SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType() 
 { 
-  SgTypeUnsignedLong * result =SgTypeUnsignedLong::createType(); 
+  SgTypeUnsignedLong * result = SgTypeUnsignedLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType() 
 { 
-  SgTypeUnsignedInt * result =SgTypeUnsignedInt::createType(); 
+  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedShort * SageBuilder::buildSignedShortType() 
 { 
-  SgTypeSignedShort * result =SgTypeSignedShort::createType(); 
+  SgTypeSignedShort * result = SgTypeSignedShort::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedInt * SageBuilder::buildSignedIntType() 
 { 
-  SgTypeSignedInt * result =SgTypeSignedInt::createType(); 
+  SgTypeSignedInt * result = SgTypeSignedInt::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeUnsignedChar * SageBuilder::buildUnsignedCharType() 
 { 
-  SgTypeUnsignedChar * result =SgTypeUnsignedChar::createType(); 
+  SgTypeUnsignedChar * result = SgTypeUnsignedChar::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedLong * SageBuilder::buildSignedLongType() 
 { 
-  SgTypeSignedLong * result =SgTypeSignedLong::createType(); 
+  SgTypeSignedLong * result = SgTypeSignedLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
 
 SgTypeSignedLongLong * SageBuilder::buildSignedLongLongType() 
 { 
-  SgTypeSignedLongLong * result =SgTypeSignedLongLong::createType(); 
+  SgTypeSignedLongLong * result = SgTypeSignedLongLong::createType(); 
   ROSE_ASSERT(result); 
   return result;
 }
+
+#if 1
+SgTypeSigned128bitInteger* SageBuilder::buildSigned128bitIntegerType()
+{
+  SgTypeSigned128bitInteger* result = SgTypeSigned128bitInteger::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
+
+SgTypeUnsigned128bitInteger* SageBuilder::buildUnsigned128bitIntegerType()
+{
+  SgTypeUnsigned128bitInteger* result = SgTypeUnsigned128bitInteger::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
+#endif
+
 
 SgTypeWchar * SageBuilder::buildWcharType() 
 { 
@@ -15624,6 +15677,10 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      SgSymbolTable::set_force_search_of_base_classes(false);
    }
 
+//-----------------------------------------------------------------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
+
 /**
  *
  */
@@ -15958,4 +16015,7 @@ SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardSuper(SgType *type) {
 
     return isSgJavaWildcardType(attribute -> getNode());
 }
+//-----------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
 

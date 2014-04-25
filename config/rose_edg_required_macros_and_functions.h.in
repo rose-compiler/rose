@@ -520,6 +520,11 @@ __builtin_frame_address (IA-32 only)
 __builtin_return_address (IA-32 only)
 */
 
+/* EDG 4.8 when used with GNU 4.8.1 appears to require some additional builtin functions */
+int __builtin_abs (int __builtin__x);
+
+
+
 /* DQ (6/19/2007): For handling of offsetof macro we can't build a function 
 prototype so EDG provides a mechanism to support this (from the basics.h 
 header file). However, we can use the one defined in the GNU header files is 

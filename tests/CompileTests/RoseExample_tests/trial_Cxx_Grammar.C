@@ -8476,19 +8476,19 @@ SgFile::set_compileOnly ( bool compileOnly )
 // *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
 
 std::string 
-SgFile::get_savedEdgCommandLine () const
+SgFile::get_savedFrontendCommandLine () const
    {
      assert (this != NULL);
-     return p_savedEdgCommandLine;
+     return p_savedFrontendCommandLine;
    }
 
 void
-SgFile::set_savedEdgCommandLine ( std::string savedEdgCommandLine )
+SgFile::set_savedFrontendCommandLine ( std::string savedFrontendCommandLine )
    {
      assert (this != NULL);
      set_isModified(true);
      
-     p_savedEdgCommandLine = savedEdgCommandLine;
+     p_savedFrontendCommandLine = savedFrontendCommandLine;
    }
 
 // *** DATA ACCESS FUNCTION SECTION ENDS HERE ***
@@ -9712,7 +9712,7 @@ X         char* p_unparse_output_filename;
 X         bool p_travTraceToDOT;
 X         bool p_useBackendOnly;
 X         bool p_compileOnly;
-          string p_savedEdgCommandLine;
+          string p_savedFrontendCommandLine;
 X         ROSEAttributesListContainerPtr p_preprocessorDirectivesAndCommentsList;
      END: List of variables that need to be initialized!
 */
@@ -10140,7 +10140,7 @@ SgFile::callFrontEnd ()
   // be repeated as required to instantiate all function templates.
      std::string translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(argv,false,true);
   // printf ("translatorCommandLineString = %s \n",translatorCommandLineString.c_str());
-     set_savedEdgCommandLine(translatorCommandLineString);
+     set_savedFrontendCommandLine(translatorCommandLineString);
 
   // display("At TOP of SgFile::callFrontEnd()");
 
@@ -13102,8 +13102,8 @@ SgFile::~SgFile ()
      p_useBackendOnly = false; // non list case 
   // case: not a listType for compileOnly
      p_compileOnly = false; // non list case 
-  // case: not a listType for savedEdgCommandLine
-     p_savedEdgCommandLine = ""; // non list case 
+  // case: not a listType for savedFrontendCommandLine
+     p_savedFrontendCommandLine = ""; // non list case 
   // case: not a listType for no_implicit_templates
      p_no_implicit_templates = false; // non list case 
   // case: not a listType for no_implicit_inline_templates

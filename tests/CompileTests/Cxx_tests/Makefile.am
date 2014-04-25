@@ -153,9 +153,12 @@ test2011_06.C \
 test2004_35.C 
 
 if !ROSE_USE_EDG_VERSION_4_7
+if !ROSE_USE_EDG_VERSION_4_8
+# DQ (3/23/2014): This also fails for EDG 4.8 (maybe we should have reported the problem to EDG before: need to check using GNU g++ 4.8.1 compiler).
 # DQ (6/12/2013): This fails to compile with EDG 4.7 (EDG complains: line 13: error: constructor or destructor may not have its address taken)
 # Skip this test code while we report the problem to EDG (and investigate more in internally).
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2012_68.C
+endif
 endif
 
 # DQ (5/26/2013): Currently faling tests:
@@ -736,7 +739,7 @@ test2005_56.o: $(TEST_TRANSLATOR)
 
 test2010_01.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_02.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
