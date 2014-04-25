@@ -2304,6 +2304,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
+//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
       SgFile *processFile(SgProject *, std::string, bool unparse = false);
@@ -2317,6 +2318,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
       SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
       SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
+//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 }// end of namespace
 

@@ -390,6 +390,11 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedInt:
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
+
+       // DQ (3/24/2014): Added support for 128-bit integers.
+          case V_SgTypeSigned128bitInteger:
+          case V_SgTypeUnsigned128bitInteger:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
@@ -4068,9 +4073,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // Note that test2005_63.C presents an example that triggers this case and so might be a relevant.
        // This is also the reason why test2005_73.C is failing!!!  Fix it tomorrow!!! (SgTemplateInstantiationDirectiveStatement)
        // SgDeclarationStatement* currentStatement = isSgDeclarationStatement(memberFunctionDeclaration->get_parent());
-           SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(templateInstantiationDirectiveStatement->get_declaration());
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(templateInstantiationDirectiveStatement->get_declaration());
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* currentStatement = isSgDeclarationStatement(declarationStatement->get_parent());
+          if (currentStatement == NULL)
+             {
+               printf ("In name qualification: case SgTemplateInstantiationDirectiveStatement: Using backup mechanism to generate current statement (because EDG 4.8 shared template instantiations) \n");
+               currentStatement = templateInstantiationDirectiveStatement;
+             }
           ROSE_ASSERT(currentStatement != NULL);
 
           printf ("declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
