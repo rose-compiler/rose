@@ -102,6 +102,7 @@ void f2cTraversal::visit(SgNode* n)
 {
   Sg_File_Info* fileInfo = n->get_file_info();
   fileInfo->set_isPartOfTransformation(true);
+
 //  fileInfo->set_physical_filename(fileInfo->get_filenameString());
 //  cout << n << " sets physical filename to " << fileInfo->get_filenameString() << endl;
   /*
@@ -214,6 +215,30 @@ int main( int argc, char * argv[] )
   SgProject* project = frontend(newArgc,newArgv);
   AstTests::runAllTests(project);   
 
+// process comment
+  vector<SgLocatedNode*> LocatedNodeList = SageInterface::querySubTree<SgLocatedNode> (project,V_SgLocatedNode);
+  for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
+  {
+    AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
+    AttachedPreprocessingInfoType newComment;
+          if (comments != NULL)
+             {
+               AttachedPreprocessingInfoType::iterator j;
+               for (j = comments->begin(); j != comments->end(); j++)
+                  {
+                    if((*j)->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
+                    {
+                        PreprocessingInfo* cmt = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,"/* "+(*j)->getString()+" */", "transformation-generated", 0, 0, 0, (*j)->getRelativePosition());
+                        newComment.push_back(cmt);
+                    }
+                  }
+               comments->clear();
+               for (j = newComment.begin(); j != newComment.end(); j++)
+                  {
+     		    (*i)->addToAttachedPreprocessingInfo(*j);
+                  }
+             }
+  }
   // Traversal with Memory Pool to search for variableDeclaration
   variableDeclTraversal translateVariableDeclaration;
   traverseMemoryPoolVisitorPattern(translateVariableDeclaration);
@@ -225,7 +250,10 @@ int main( int argc, char * argv[] )
     */
     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*dec);
     ROSE_ASSERT(variableDeclaration);
-    if((variableDeclaration->get_variables()).size() != 1)
+    SgFunctionDeclaration* funcDecl = getEnclosingFunctionDeclaration(variableDeclaration,false);
+    ROSE_ASSERT(funcDecl);
+    SgFunctionParameterList* funcParamList = funcDecl->get_parameterList();
+    if((variableDeclaration->get_variables()).size() != 1 && isFuncArg(funcParamList, variableDeclaration) == false)
     {
       updateVariableDeclarationList(variableDeclaration);
       statementList.push_back(variableDeclaration);

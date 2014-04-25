@@ -93,8 +93,10 @@ void Fortran_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* pro
   functionDefinition->set_parent(cFunctionDeclaration);
   cFunctionDeclaration->set_definition(functionDefinition);
   programHeaderStatement->set_definition(NULL);
-  
-  translateFunctionParameterList(functionParameterList,programHeaderStatement->get_parameterList(),functionDefinition);
+ 
+  vector<SgInitializedName*> scalarList; 
+  translateFunctionParameterList(functionParameterList,programHeaderStatement->get_parameterList(),functionDefinition, scalarList);
+  replaceScalarArgs(scalarList,cFunctionDeclaration); 
 
   // Replace the SgProgramHeaderStatement with SgFunctionDeclaration.
   replaceStatement(programHeaderStatement,cFunctionDeclaration,true);
@@ -172,7 +174,8 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
   cFunctionDeclaration->set_definition(functionDefinition);
   procedureHeaderStatement->set_definition(NULL);
 
-  translateFunctionParameterList(functionParameterList,procedureHeaderStatement->get_parameterList(),functionDefinition);
+  vector<SgInitializedName*> scalarList; 
+  translateFunctionParameterList(functionParameterList,procedureHeaderStatement->get_parameterList(),functionDefinition, scalarList);
   
   // If it is a Fortran function, add a return statement at the end.
   if(procedureHeaderStatement->isFunction())
@@ -198,6 +201,7 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
       deepDelete(fortranReturnVar);
     }
   }
+  replaceScalarArgs(scalarList,cFunctionDeclaration); 
 
   // Replace the SgProcedureHeaderStatement with SgFunctionDeclaration.
   replaceStatement(procedureHeaderStatement,cFunctionDeclaration,true);
@@ -245,7 +249,7 @@ void Fortran_to_C::updateVariableDeclarationList(SgVariableDeclaration* variable
   Convert to a new functionParameterList
 */
 /******************************************************************************************************************************/
-void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newList, SgFunctionParameterList* oldList, SgFunctionDefinition* funcDef)
+void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newList, SgFunctionParameterList* oldList, SgFunctionDefinition* funcDef, vector<SgInitializedName*> &scalarList)
 {
   SgInitializedNamePtrList argList = oldList->get_args();
   for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
@@ -265,20 +269,45 @@ void Fortran_to_C::translateFunctionParameterList(SgFunctionParameterList* newLi
        We have performed the arrayType translation in the earlier process, 
        therefore, the arrayType AST is alreay in C-style.
     */
-    if(isSgArrayType(newType))
+    if (isScalarType(newType))
+    {
+      newType = buildPointerType(newType);
+      SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
+      newName->set_scope(funcDef);
+      symbol->set_declaration(newName);
+      newList->append_arg(newName);
+      scalarList.push_back(newName);
+    }
+    else if(isSgArrayType(newType))
     {
       SgArrayType* rootType = isSgArrayType(newType);
       SgType* baseType = rootType->get_base_type();
       newType = buildPointerType(baseType);
       rootType->set_base_type(NULL);
       removeList.push_back(rootType);
+      SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
+      newName->set_scope(funcDef);
+      symbol->set_declaration(newName);
+      newList->append_arg(newName);
     }
-    SgInitializedName* newName = buildInitializedName((*i)->get_name(), newType);
-    newName->set_scope(funcDef);
-    symbol->set_declaration(newName);
-    newList->append_arg(newName);
   }
-  
+  argList = newList->get_args(); 
+  for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
+  {
+    SgPointerType* newType = isSgPointerType((*i)->get_type());
+    if(newType && (isSgArrayType(newType->get_base_type())))
+    {
+      SgArrayType* arrayType = isSgArrayType(newType->get_base_type());
+      SgArrayType* tmp = arrayType;
+      replaceScalarArgs(scalarList,tmp->get_index());
+      while(isSgArrayType(tmp->get_base_type()))
+      {
+        tmp = isSgArrayType(tmp->get_base_type());
+        replaceScalarArgs(scalarList,tmp->get_index());
+      }
+    }
+  }
+ 
 }
 
 /******************************************************************************************************************************/
@@ -1179,3 +1208,40 @@ void Fortran_to_C::removeFortranMaxMinFunction(SgGlobal* global)
   }
 }
 
+
+bool Fortran_to_C::isFuncArg(SgFunctionParameterList* list, SgVariableDeclaration* varDecl)
+{
+  SgInitializedNamePtrList argList = list->get_args();
+  for(SgInitializedNamePtrList::iterator i=argList.begin(); i != argList.end(); ++i)
+  {
+    if(isSgVariableDeclaration((*i)->get_parent()) != NULL)
+    {
+      SgVariableDeclaration* oldDecl = isSgVariableDeclaration((*i)->get_parent());
+      if(varDecl == oldDecl) 
+        return true; 
+    }
+  }
+  return false;
+}
+
+void Fortran_to_C::replaceScalarArgs(vector<SgInitializedName*> & list, SgNode* root)
+{
+  std::vector<SgVarRefExp*> varRefList = SageInterface::querySubTree<SgVarRefExp>(root,V_SgVarRefExp);
+  for(vector<SgInitializedName*>::iterator i=list.begin(); i != list.end(); ++i)
+  {
+    for (std::vector<SgVarRefExp*>::iterator j = varRefList.begin(); j != varRefList.end(); j++)
+    {
+      if(((*i) == (*j)->get_symbol()->get_declaration()) && (isSgPointerDerefExp((*j)->get_parent()) == NULL))
+      {
+        SgPointerDerefExp* pntrDerRef = buildPointerDerefExp(buildVarRefExp((*i)));
+//        if(isSgArrayType((*j)->get_parent()))
+//        {
+//          SgArrayType* parentType = isSgArrayType((*j)->get_parent());
+//          parentType->set_index(pntrDerRef); 
+//        }
+        replaceExpression(*j, pntrDerRef, true);
+        removeList.push_back(*j); 
+      }
+    }
+  }
+}
