@@ -2276,27 +2276,27 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
                if (block_size == 0) // block size empty
-               {
-                 curprint ("shared[] ") ;
-               }
+                  {
+                    curprint ("shared[] ") ;
+                  }
                else if (block_size == -1) // block size omitted
-               {
-                 curprint ("shared ") ;
-               }
+                  {
+                    curprint ("shared ") ;
+                  }
                else if (block_size == -2) // block size is *
-               {
-                 curprint ("shared[*] ") ;
-               }
+                  {
+                    curprint ("shared[*] ") ;
+                  }
                else
-               {
-                 ROSE_ASSERT(block_size > 0);
+                  {
+                    ROSE_ASSERT(block_size > 0);
 
-                 stringstream ss;
+                    stringstream ss;
 
-                 ss<<block_size;
+                    ss << block_size;
 
-                 curprint ("shared["+ss.str()+"] ") ;
-               }
+                    curprint ("shared[" + ss.str() + "] ");
+                  }
              }
 
        // Print the base type unless it has been printed up front

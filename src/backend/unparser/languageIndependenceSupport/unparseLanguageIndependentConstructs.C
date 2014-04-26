@@ -4314,7 +4314,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
         break;
       }
     case SgOmpClause::e_omp_default_shared:
-      {   
+      {
         curprint(string("shared"));
         break;
       }   
