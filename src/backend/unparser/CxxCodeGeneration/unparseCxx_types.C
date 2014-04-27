@@ -640,9 +640,17 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
              // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
              // SgJavaWildcardType
-                case T_JAVA_WILD:
+               case T_JAVA_WILD:
                   {
                     printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
+                    break;
+                  }
+
+            // DQ (4/27/2014): After some fixes to ROSE to permit the new shared memory DSL, we now get this 
+            // IR node appearing in test2007_168.f90 (I don't yet understand why).
+               case T_LABLE:
+                  {
+                    printf ("ERROR: Unparse_Type::unparseType(): SgTypeLabel is appearing in test2007_168.f90 (where it had not appeared before) (allow this for now) \n");
                     break;
                   }
 
