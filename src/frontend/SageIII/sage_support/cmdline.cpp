@@ -17,6 +17,7 @@
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
 int Rose::Cmdline::verbose = 0;
+bool Rose::Cmdline::Java::Ecj::batch_mode = false;
 std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
 std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
 
@@ -599,6 +600,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("option -help found \n");
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
+  // Default
           cout << version_message() << endl;
        // ROSE::usage(0);
           SgFile::usage(0);
@@ -1506,7 +1508,7 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
       project->set_keep_going(true);
-      ROSE::KeepGoing::g_keep_going = true;
+      Rose::KeepGoing::g_keep_going = true;
   }
 }
 
@@ -1881,6 +1883,8 @@ StripRoseOptions (std::vector<std::string>& argv)
   // (2) Options WITH an argument
   //
 
+  Cmdline::Java::Ecj::StripRoseOptions(argv);
+
   // Remove Java options with ROSE-Java prefix; option arguments removed
   // by generateOptionWithNameParameterList.
   //
@@ -1909,8 +1913,6 @@ StripRoseOptions (std::vector<std::string>& argv)
       else
           argv.push_back(java_option);
   }
-
-  Cmdline::Java::Ecj::StripRoseOptions(argv);
 }// Cmdline::Java::StripRoseOptions
 
 void
@@ -2238,6 +2240,9 @@ void
 Rose::Cmdline::Java::
 ProcessSource (SgProject* project, std::vector<std::string>& argv)
 {
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -source " << std::endl;
+
   std::string source = "";
 
   bool has_java_source =
@@ -2247,21 +2252,31 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           "-source",
           "",
           source,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:source
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "source",
+          source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
-  if (has_java_source)
-  {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Processing Java -source " << source << std::endl;
+  // Default
+  //if (has_java_source == false)
+  //{
+  //    source = "1.6";
+  //}
 
-      project->set_Java_source(source);
-  }// has_java_source
+  project->set_Java_source(source);
 }// Cmdline::Java::ProcessSource
 
 void
 Rose::Cmdline::Java::
 ProcessTarget (SgProject* project, std::vector<std::string>& argv)
 {
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -target " << std::endl;
+
   std::string target = "";
 
   bool has_java_target =
@@ -2271,15 +2286,22 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
           "-target",
           "",
           target,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:target
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "target",
+          target,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
-  if (has_java_target)
-  {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Processing Java -target " << target << std::endl;
+  // Default
+  //if (has_java_target == false)
+  //{
+  //    target = "1.6";
+  //}
 
-      project->set_Java_target(target);
-  }// has_java_target
+  project->set_Java_target(target);
 }// Cmdline::Java::Processtarget
 
 void
@@ -2294,6 +2316,13 @@ ProcessEncoding (SgProject* project, std::vector<std::string>& argv)
           argv,
           "-encoding",
           "",
+          encoding,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:encoding
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "encoding",
           encoding,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
@@ -2523,6 +2552,13 @@ StripRoseOptions (std::vector<std::string>& argv)
           << std::endl;
   }
 
+  // (1) Options WITHOUT an argument
+  sla(argv, "-rose:java:ecj:", "($)", "batch_mode", 1);
+
+  //
+  // (2) Options WITH an argument
+  //
+
   // Remove ECJ options with ROSE-ECJ prefix; option arguments removed
   // by generateOptionWithNameParameterList.
   std::vector<std::string> ecj_options =
@@ -2583,11 +2619,34 @@ GetRoseClasspath ()
 
 void
 Rose::Cmdline::Java::Ecj::
+ProcessBatchMode (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -rose:java:ecj:batch_mode " << std::endl;
+
+  bool has_batch_mode =
+      // -rose:java:ecj:batch_mode
+      CommandlineProcessing::isOption(
+          argv,
+          Java::option_prefix,
+          "ecj:batch_mode",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] -rose:java:ecj:batch_mode=" << has_batch_mode << std::endl;
+
+  Rose::Cmdline::Java::Ecj::batch_mode = has_batch_mode;
+  project->set_Java_batch_mode(has_batch_mode);
+}// ::Rose::Cmdline::Java::Ecj::ProcessBatchMode
+
+void
+Rose::Cmdline::Java::Ecj::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
   if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing Java's ECJ frontend commandline options" << std::endl;
 
+  ProcessBatchMode(project, argv);
   ProcessJvmOptions(project, argv);
   ProcessEnableRemoteDebugging(project, argv);
 }
@@ -2766,9 +2825,9 @@ SgFile::usage ( int status )
 "     -rose:java:ds\n"
 "                             Specifies translated sources destination dir\n"
 "     -rose:java:source\n"
-"                             Specifies java sources version\n"
+"                             Specifies java sources version (default=1.6)\n"
 "     -rose:java:target\n"
-"                             Specifies java classes target version\n"
+"                             Specifies java classes target version (default=1.6)\n"
 "     -rose:java:encoding\n"
 "                             Specifies the character encoding\n"
 "     -rose:java:ecj:jvm_options\n"
@@ -5667,6 +5726,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
 #if 1
+  // PL (4/15/2014): In GCC's document about system headers (http://gcc.gnu.org/onlinedocs/cpp/System-Headers.html):
+  // All directories named by -isystem are searched after all directories named by -I, no matter what their order was on the command line.
   // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
   // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )

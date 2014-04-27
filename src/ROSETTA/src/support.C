@@ -1019,7 +1019,7 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/13/2004): Added to support to save Edg command line
-     File.setDataPrototype("std::string","savedEdgCommandLine", "= \"\"",
+     File.setDataPrototype("std::string","savedFrontendCommandLine", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/21/2005): Backend specific template option.  This might at a later date be abstracted out as a
@@ -1791,6 +1791,9 @@ Grammar::setUpSupport ()
 
      Project.setDataPrototype ("std::list<std::string>", "Java_ecj_jvm_options", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype ("bool", "Java_batch_mode", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

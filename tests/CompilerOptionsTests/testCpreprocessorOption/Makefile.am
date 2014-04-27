@@ -30,7 +30,15 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
+# PL (4/15/2014) include syntax uses system header file
+# this test has fail because -I has incorrect header file assigned.
+# ! at the beginning will negate the FAILED condition.
+testSysIncludeOptionOrder: testSysIncludeOptionOrder.c
+	! $(CC) -isystem $(srcdir)/doChooseMe -I$(srcdir)/doNotChooseMe -c $(srcdir)/testSysIncludeOptionOrder.c > testSysIncludeOptionOrder.out  
+	! $(TEST_TRANSLATOR) -isystem $(srcdir)/doChooseMe -I$(srcdir)/doNotChooseMe -c $(srcdir)/testSysIncludeOptionOrder.c > testSysIncludeOptionOrder.out
 
+# PL (4/14/2014) include syntax uses user header file
+# this test has to pass.
 testIncludeOptionOrder: testIncludeOptionOrder.c
 	$(CC) -isystem $(srcdir)/doNotChooseMe -I$(srcdir)/doChooseMe -c $(srcdir)/testIncludeOptionOrder.c > testIncludeOptionOrder.out
 	$(TEST_TRANSLATOR) -isystem $(srcdir)/doNotChooseMe -I$(srcdir)/doChooseMe -c $(srcdir)/testIncludeOptionOrder.c > testIncludeOptionOrder.out
@@ -43,6 +51,7 @@ check-local:
 	@echo "     a standard compiler option which runs the \"C\" preprocessor (cpp) and pipes output to stdout"
 	@echo "##############################"
 	@$(MAKE) $(TEST_Objects)
+	@$(MAKE) testSysIncludeOptionOrder
 	@$(MAKE) testIncludeOptionOrder
 	@echo "********************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testCpreprocessorOption: make check rule complete (terminated normally) ******"
@@ -61,12 +70,12 @@ EXTRA_DIST = \
    inline_support.h lazy_statement.h machine.h partitioning.h A++_templates.h constants.h \
    descriptor_templates.h index.h lazy_aggregate.h lazy_task.h max_array_dim.h where.h \
    expression_templates.h inline_expression_templates.h $(TESTCODES) doNotChooseMe doChooseMe \
-   doNotChooseMe/dummyHeader.h doChooseMe/dummyHeader.h testIncludeOptionOrder.c
+   doNotChooseMe/dummyHeader.h doChooseMe/dummyHeader.h testSysIncludeOptionOrder.c testIncludeOptionOrder.c
 
 clean-local:
 	rm -f *.o rose_*.C *.sage.C test2001_??.C.show outputFile *.out.C \
-              *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core testIncludeOptionOrder.out \
-              rose_testIncludeOptionOrder.c
+              *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core testSysIncludeOptionOrder.out \
+              testIncludeOptionOrder.out rose_testSysIncludeOptionOrder.c rose_testIncludeOptionOrder.c
 	rm -rf ti_files
 
 

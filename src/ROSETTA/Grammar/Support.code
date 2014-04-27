@@ -5479,6 +5479,7 @@ HEADER_APPLICATION_PROJECT_START
       //! Intended for use with the -rose:keep_going commandline option.
       //! \returns A list of files that encountered an error within either
       //!          the frontend, unparser, or backend compilation.
+          SgFilePtrList get_files() const;
           SgFilePtrList get_files_with_errors() const;
           SgFilePtrList get_files_without_errors() const;
 
@@ -13719,7 +13720,7 @@ STRING  sourceFileNameWithoutPath
 STRING  unparse_output_filename
 X useBackendOnly
 X compileOnly
-STRING  savedEdgCommandLine
+STRING  savedFrontendCommandLine
 X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
@@ -14429,7 +14430,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_useBackendOnly                       = %s \n",(p_useBackendOnly == true) ? "true" : "false");
      printf ("     p_compileOnly                          = %s \n",(p_compileOnly  == true) ? "true" : "false");
 
-     printf ("     p_savedEdgCommandLine                  = %s \n",p_savedEdgCommandLine.c_str());
+     printf ("     p_savedFrontendCommandLine                  = %s \n",p_savedFrontendCommandLine.c_str());
 
      printf ("     p_no_implicit_templates                = %s \n",(p_no_implicit_templates == true) ? "true" : "false");
      printf ("     p_no_implicit_inline_templates         = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
@@ -14525,7 +14526,7 @@ STRING  sourceFileNameWithoutPath
 STRING  unparse_output_filename
 X useBackendOnly
 X compileOnly
-STRING  savedEdgCommandLine
+STRING  savedFrontendCommandLine
 X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
@@ -15139,6 +15140,12 @@ SgProject::set_file ( SgFile & file )
 
      assert (numberOfFiles() > 0);
    }
+
+SgFilePtrList
+SgProject::get_files() const
+{
+  return p_fileList_ptr->get_listOfFiles();
+}
 
 SgFilePtrList
 SgProject::get_files_with_errors() const

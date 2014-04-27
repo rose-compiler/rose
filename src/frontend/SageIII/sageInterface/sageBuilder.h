@@ -1290,6 +1290,16 @@ ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeState
 ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
 ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 
+//! Error checking the inserted snippet AST.
+ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
+
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
+
+//-----------------------------------------------------------------------------
+//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
 ROSE_DLL_API SgVarRefExp *buildJavaArrayLengthVarRefExp();
 ROSE_DLL_API SgScopeStatement *buildScopeStatement(SgClassDefinition * = NULL);
 ROSE_DLL_API SgJavaTypeExpression *buildJavaTypeExpression(SgType *);
@@ -1299,13 +1309,6 @@ ROSE_DLL_API SgJavaSingleMemberAnnotation *buildJavaSingleMemberAnnotation(SgTyp
 ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *);
 ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *, std::list<SgJavaMemberValuePair *>&);
 ROSE_DLL_API SgInitializedName *buildJavaFormalParameter(SgType *, const SgName &, bool is_var_args = false, bool is_final = false);
-
-//! Error checking the inserted snippet AST.
-ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
-
-//! Function to reset scopes in SgDeclarationStatement IR nodes.
-// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
-template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
 
 ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
 ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);
@@ -1335,5 +1338,8 @@ namespace Rose {
         }// ::rose::frontend::java
     }// ::rose::frontend
 }// ::rose
+//-----------------------------------------------------------------------------
+//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
 
 #endif //ROSE_SAGE_BUILDER_INTERFACE

@@ -2292,14 +2292,16 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 	make rosePublicConfig.h
 ]])
 
-
+# [TOO1, 2014-04-22]
+# TODO: Re-enable once we phase out support for older version of Autotools.
+#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
 # Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
-AC_CONFIG_COMMANDS([absoluteNames],
-[[
-	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
-	find . -name Makefile | xargs sed -i~ \
-	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
-]])
+#AC_CONFIG_COMMANDS([absoluteNames],
+#[[
+#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#	find . -name Makefile | xargs sed -i~ \
+#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#]])
 
 
 
