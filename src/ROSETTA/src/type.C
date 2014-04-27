@@ -753,11 +753,8 @@ Grammar::setUpTypes ()
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
-
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      ArrayType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
-#endif
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

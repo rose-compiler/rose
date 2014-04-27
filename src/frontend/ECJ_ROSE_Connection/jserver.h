@@ -13,7 +13,7 @@ class SgClassType;
 class SgClassType;
 class SgClassType;
 class SgVariableSymbol;
-class SgSourceFile;
+class SgProject;
 
 namespace Rose {
     namespace Frontend {
@@ -27,7 +27,7 @@ namespace Rose {
 
             namespace Ecj {
 
-                extern SgSourceFile* Ecj_globalFilePointer;
+                extern SgProject* Ecj_globalProjectPointer;
                 jstring      jserver_getJavaString(const char*);
                 jobject      jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
                 jclass       jserver_FindClass(const char *name);
