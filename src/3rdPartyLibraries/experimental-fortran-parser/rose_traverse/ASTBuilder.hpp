@@ -27,6 +27,12 @@ class ASTBuilder
    virtual void build_TypeDeclarationStmt(TypeDeclarationStmt * typeDeclarationStmt) = 0;
    virtual void build_EntityDecl(EntityDecl* entityDecl) = 0;
    virtual void build_ImplicitStmt(ImplicitStmt * implicitStmt) = 0;
+   virtual void build_DataRef(DataRef * dataRef) = 0;
+   virtual void build_PartRef(PartRef * partRef) = 0;
+   virtual void build_AssignmentStmt(AssignmentStmt * assignmentStmt) = 0;
+   virtual void build_SubroutineSubprogram(SubroutineSubprogram * subroutineSubprogram) = 0;
+   virtual void build_SubroutineStmt(SubroutineStmt * subroutineStmt) = 0;
+   virtual void build_EndSubroutineStmt(EndSubroutineStmt * endSubroutineStmt) = 0;
 
    // Expressions
    //

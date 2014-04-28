@@ -323,6 +323,7 @@ namespace Cmdline {
     /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
     namespace Ecj {
+      extern bool batch_mode;
       extern std::list<std::string> jvm_options;
 
       void
@@ -333,6 +334,11 @@ namespace Cmdline {
 
       void
       Process (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:java:ecj:batch_mode
+       */
+      void
+      ProcessBatchMode (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:jvm_options
        */

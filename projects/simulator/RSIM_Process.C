@@ -394,7 +394,7 @@ RSIM_Process::load(const char *name)
     /* Find a disassembler. */
     if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
-        disassembler->set_progress_reporting(-1); /* turn off progress reporting */
+        disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
     }
 
 #if 0

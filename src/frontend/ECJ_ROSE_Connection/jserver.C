@@ -31,7 +31,7 @@ namespace Rose {
             namespace Ecj {
                 using namespace std;
 
-                SgSourceFile* Ecj_globalFilePointer = 0;
+                SgProject* Ecj_globalProjectPointer = 0;
 
                 typedef struct {
                    JavaVM * jvm;

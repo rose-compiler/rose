@@ -1,6 +1,9 @@
 // package Number_Handling.CWE_190;
 // package NumberFormatException;
 
+import java.lang.RuntimeException;
+import java.lang.NumberFormatException;
+
 public class Specimen1_test1 {
     static private int INSERT_HERE;
 
@@ -8,8 +11,8 @@ public class Specimen1_test1 {
  // file needs to reference it, is this a reasonable constrant for 
  // the snippet mechanism.
     NumberFormatException a;
-    Throwable b;
-    java.lang.RuntimeException c;
+ // Throwable b;
+ // java.lang.RuntimeException c;
    
     public int ipoint1() {
         int x___FOO = 1;
@@ -26,8 +29,8 @@ public class Specimen1_test1 {
         INSERT_HERE=0;
 
         a.printStackTrace(System.err);
-        b.printStackTrace(System.err);
-        c.printStackTrace(System.err);
+     // b.printStackTrace(System.err);
+     // c.printStackTrace(System.err);
 
         return f3;
     }
