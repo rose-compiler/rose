@@ -47,12 +47,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParenthesizedExpression(JNIEnv *en
     SgExpression *expression = isSgExpression(astJavaComponentStack.top());
     ROSE_ASSERT(expression);
 
-    string open_parentheses = "";
-    for (int i = 0; i < parentheses_count; i++) {
-        open_parentheses += "(";
-    }
-
-    expression -> setAttribute("java-parenthesis-info", new AstRegExAttribute(open_parentheses));
+    expression -> setAttribute("java-parentheses-count", new AstIntAttribute(parentheses_count));
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Java_JavaParser_cactionParenthesizedExpression\n");
@@ -1386,11 +1381,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env,
     }
     if (is_abstract) {
         method_declaration -> get_declarationModifier().setJavaAbstract();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
     if (is_native) {
         method_declaration -> get_functionModifier().setJavaNative();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     if (number_of_type_parameters > 0) {
@@ -1906,20 +1899,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
 
-    // This is already setup by ROSE as part of basic file initialization before calling ECJ.
-    ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
-    if (SgProject::get_verbose() > 0)
-        printf ("Rose::Frontend::Java::Ecj::Ecj_globalFilePointer = %s \n", Rose::Frontend::Java::Ecj::Ecj_globalFilePointer -> class_name().c_str());
     // TODO: We need the next line for EDG4 [DONE]
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
-    SgSourceFile *sourcefile = isSgSourceFile(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer);
-    ROSE_ASSERT(sourcefile != NULL);
-    ::project = sourcefile -> get_project();
-    ROSE_ASSERT(::project);
+    // This is already setup by ROSE as part of basic file initialization before calling ECJ.
+    if (SgProject::get_verbose() > 0) {
+        printf(
+            "Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = %s \n",
+            Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer -> class_name().c_str());
+    }
 
-    if (SgProject::get_verbose() > 0)
-        printf ("sourcefile -> getFileName() = %s \n", sourcefile -> getFileName().c_str());
+    ::project = Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer;
+    ROSE_ASSERT(::project != NULL);
 
     // Get the pointer to the global scope and push it onto the astJavaScopeStack.
     ::globalScope = ::project -> get_globalScopeAcrossFiles(); // */ sourcefile -> get_globalScope(); // TODO: Do this right!!!
@@ -2128,7 +2119,7 @@ cout.flush();
     env -> ReleaseStringUTFChars(java_filename, absolutePathFilename);
 
     // This is already setup by ROSE as part of basic file initialization before calling ECJ.
-    ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalFilePointer != NULL);
+    ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer != NULL);
 
 // TODO: Remove this! 12/09/13
 //    astJavaComponentStack.push(astJavaScopeStack.top()); // To mark the end of the list of components in this Compilation unit.
@@ -2356,7 +2347,6 @@ cout.flush();
     }
 
     class_declaration -> setAttribute("sourcefile", new AstSgNodeAttribute(::currentSourceFile));
-    class_declaration -> setAttribute("user-defined-type", new AstRegExAttribute(type_name));
     class_declaration -> set_explicit_annotation_interface(is_annotation_interface);      // Identify whether or not this is an annotation interface.
     class_declaration -> set_explicit_interface(is_annotation_interface || is_interface); // Identify whether or not this is an interface.
     class_declaration -> set_explicit_enum(is_enum);                                      // Identify whether or not this is an enum.
@@ -3028,13 +3018,11 @@ cout.flush();
     // Set the Java specific modifiers
     if (isAbstract) {
         method_declaration -> get_declarationModifier().setJavaAbstract();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     // Set the Java specific modifiers
     if (isNative) {
         method_declaration -> get_functionModifier().setJavaNative();
-        method_declaration -> setForward(); // indicate that this function does not contain a body.
     }
 
     // Set the specific modifier, this modifier is common to C/C++.

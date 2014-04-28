@@ -217,7 +217,10 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
         }
        else
         {
-          fprintf (stderr, "Skipping resetting the scope for initializedName_copy = %p = %s \n",initializedName_copy,initializedName_copy->get_name().str());
+#if DEBUG_FIXUP_COPY
+       // fprintf (stderr, "Skipping resetting the scope for initializedName_copy = %p = %s \n",initializedName_copy,initializedName_copy->get_name().str());
+          printf ("Skipping resetting the scope for initializedName_copy = %p = %s \n",initializedName_copy,initializedName_copy->get_name().str());
+#endif
         }
 
 
@@ -935,7 +938,7 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                printf ("   --- functionDeclaration_copy->get_firstNondefiningDeclaration() = %p \n",functionDeclaration_copy->get_firstNondefiningDeclaration());
                printf ("   --- functionDeclaration_copy->get_definingDeclaration()         = %p \n",functionDeclaration_copy->get_definingDeclaration());
 
-               functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
+            // functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
 
             // Reset this!
                functionDeclaration_copy->unsetForward();
@@ -1340,13 +1343,17 @@ SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      if (classDeclaration_copy_firstNondefining->get_type() != classType)
         {
+#if DEBUG_FIXUP_COPY
           printf ("   --- Reset the type on the classDeclaration_copy->get_firstNondefiningDeclaration() (to match the type in the copy) \n");
+#endif
           classDeclaration_copy_firstNondefining->set_type(classType);
         }
 
      if (classDeclaration_copy_defining != NULL && classDeclaration_copy_defining->get_type() != classType)
         {
+#if DEBUG_FIXUP_COPY
           printf ("   --- Reset the type on the classDeclaration_copy->get_definingDeclaration() \n");
+#endif
           classDeclaration_copy_defining->set_type(classType);
         }
 

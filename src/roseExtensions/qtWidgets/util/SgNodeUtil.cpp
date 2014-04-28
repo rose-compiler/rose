@@ -127,7 +127,7 @@ bool findNextInstruction(SgNode * node, rose_addr_t & out)
     if (expList.size() != 1)
         return false;
 
-    SgAsmQuadWordValueExpression * val = isSgAsmQuadWordValueExpression(expList.front());
+    SgAsmIntegerValueExpression * val = isSgAsmIntegerValueExpression(expList.front());
     if(!val)
         return false;
 
