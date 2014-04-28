@@ -353,7 +353,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n name = ") + name;
         }
 
-#if 1
+#if 0
+  // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
   // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
   // I need this for debugging, but I think we might not want this to be used all of the time.
      SgExpression* expression = isSgExpression(node);

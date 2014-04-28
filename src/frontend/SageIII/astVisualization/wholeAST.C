@@ -1711,7 +1711,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           labelWithSourceCode += string("\\n   ");
 #endif
 
-#if 1
+#if 0
        // DQ (4/24/2014): Added string name to unparsed IR node label  (this might not always be wanted).
           string unparsedType = type->unparseToString();
           labelWithSourceCode += unparsedType + string("\\n   ");
