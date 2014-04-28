@@ -82,7 +82,38 @@ Some other utility functions not related AST can be found in
          - Other stuff ...
  */
 namespace SageInterface
-{
+   {
+  // DQ (4/3/2014): Added general AST support seperate from the AST.
+
+  // Container and API for analysis information that is outside of the AST and as a result
+  // prevents frequent modification of the IR.
+     class DeclarationSets
+        {
+       // DQ (4/3/2014): This stores all associated declarations as a map of sets.
+       // the key to the map is the first nondefining declaration and the elements of the set are
+       // all of the associated declarations (including the defining declaration).
+
+          private:
+           //! Map of first-nondefining declaration to all other associated declarations.
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > declarationMap;
+
+          public:
+               void addDeclaration(SgDeclarationStatement* decl);
+               const std::set<SgDeclarationStatement*>* getDeclarations(SgDeclarationStatement* decl);
+
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > & getDeclarationMap();
+
+               bool isLocatedInDefiningScope(SgDeclarationStatement* decl);
+
+        };
+
+  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
+  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifing the IR.
+     DeclarationSets* buildDeclarationSets(SgNode*);
+
+
+
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
@@ -164,8 +195,7 @@ struct hash_nodeptr
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
-                                                         SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName, SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
    //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
@@ -1576,6 +1606,16 @@ ROSE_DLL_API void insertStatementAfterLastDeclaration(SgStatement* stmt, SgScope
 //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
 ROSE_DLL_API void insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope);
 
+//! Insert a statement before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//  then the statement is inserted at the end of the scope.
+ROSE_DLL_API void insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
+                                                           bool movePreprocessingInfo=true);
+
+//! Insert statements before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//then the new statements are inserted at the end of the scope.
+ROSE_DLL_API void insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
+                                                               SgScopeStatement *scope);
+
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 ROSE_DLL_API void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
 
@@ -2264,12 +2304,13 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
+//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
       std::string getTempDirectory(SgProject *project);
       void destroyTempDirectory(std::string);
       SgFile *processFile(SgProject *, std::string, bool unparse = false);
       std::string preprocessPackage(SgProject *, std::string);
       std::string preprocessImport(SgProject *, std::string);
-      void preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
+      SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
       SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
       SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
       SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
@@ -2277,6 +2318,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
       SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
       SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
+//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 }// end of namespace
 

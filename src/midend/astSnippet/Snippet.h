@@ -81,7 +81,7 @@ public:
     static SnippetFilePtr instance(const std::string &fileName, SgSourceFile *snippetAst=NULL);
 
     /** Look up the SnippetFile for this file name. Returns the SnippetFile for this file if it exists, otherwise returns
-     *  null. No attempt is made to determine whether unequal names resolve to teh same file. */
+     *  null. No attempt is made to determine whether unequal names resolve to the same file. */
     static SnippetFilePtr lookup(const std::string &fileName);
 
     /** Returns the name of the file. This is the same name given to the instance() constructor. */
@@ -417,7 +417,7 @@ public:
 
 protected:
     /** Mark nodes so they're unparsed when the insertion point is unparsed. */
-    static void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
+    void causeUnparsing(SgNode *ast, Sg_File_Info *targetLocation);
 
     /** Replace formal argument occurrances with actual values. */
     static void replaceArguments(SgNode *ast, const ArgumentBindings&);

@@ -128,8 +128,8 @@ buildTemplateInstantiationSupportFile( SgProject* project )
                  // newTemplateData  = newTemplateDataComment;
 
                  // Add "-rose:prelink" option to command line so that we avoid recursive calls to the prelink mechanism
-                 // string edgCommandLine   = project->get_file(fileCounter).get_savedEdgCommandLine() + "-rose:prelink";
-                    string edgCommandLine   = project->get_file(fileCounter).get_savedEdgCommandLine();
+                 // string edgCommandLine   = project->get_file(fileCounter).get_savedFrontendCommandLine() + "-rose:prelink";
+                    string edgCommandLine   = project->get_file(fileCounter).get_savedFrontendCommandLine();
 
                  // DQ (5/19/2005): Only add the "-rose:prelink" option if we are not already in the prelink phase
                     if (project->get_prelink() == false)

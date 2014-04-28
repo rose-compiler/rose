@@ -1795,7 +1795,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                        }
                       else
                        {
-#if 1
+#if 0
                          printf ("Declaration does NOT appear in the current source file. \n");
 #endif
                       // curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): skip output of template function declaration */ \n ";
@@ -1915,7 +1915,12 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
 
           if (templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL)
              {
+            // DQ (4/6/2014): This happens when a member function template in embedded in a class
+            // template and thus there is not an associated template for the member function separate
+            // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
+#if 0
                printf (" I think that this can happen (see test2005_139.C) \n");
+#endif
              }
 #if 0
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() != NULL);
