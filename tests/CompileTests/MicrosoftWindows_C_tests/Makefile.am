@@ -79,10 +79,14 @@ PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
 if !ROSE_USE_EDG_VERSION_4_4
 if !ROSE_USE_EDG_VERSION_4_7
+if !ROSE_USE_EDG_VERSION_4_8
+if !ROSE_USE_EDG_VERSION_4_9
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
+endif
+endif
 endif
 endif
 

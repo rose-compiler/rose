@@ -269,6 +269,7 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
 if test "x$enable_microsoft_extensions" = "xyes"; then
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
 else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
@@ -1644,17 +1645,32 @@ echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # This list should be the same as in build (search for Makefile.in)
+
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
-
 
 # End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
@@ -2275,6 +2291,18 @@ AC_CONFIG_COMMANDS([rose_paths.C], [[
 AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 	make rosePublicConfig.h
 ]])
+
+# [TOO1, 2014-04-22]
+# TODO: Re-enable once we phase out support for older version of Autotools.
+#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
+# Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
+#AC_CONFIG_COMMANDS([absoluteNames],
+#[[
+#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#	find . -name Makefile | xargs sed -i~ \
+#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#]])
+
 
 
 # End macro ROSE_SUPPORT_ROSE_PART_7.

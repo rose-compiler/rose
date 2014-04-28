@@ -954,7 +954,7 @@ protected:
      *  call 0x08042000<init>
      * @endcode
      *
-     * If the SgAsmDoubleWordValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
+     * If the SgAsmIntegerValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
      * "init" function, then the same output is generated when the LabelMap is not populated.  In fact, the new method can also
      * generate code like this, where the integer is an offset from the entry point:
      *

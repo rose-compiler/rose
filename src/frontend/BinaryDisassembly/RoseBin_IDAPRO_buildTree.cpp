@@ -228,8 +228,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     else {
       cerr << "ERROR:: FIXME:: symbol not resolved " << expt->symbol << endl;
       // temp solution for arm. tps (09/17/07)
-      binNode = new SgAsmByteValueExpression();
-      isSgAsmByteValueExpression(binNode)->set_value('5'); // ascii for 5
+      binNode = new SgAsmIntegerValueExpression('5', 8); // ascii for 5
 
       //      exit(0);
     }
@@ -244,35 +243,29 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     if (typeOfOperand=="WORD") typeOfOperand="DWORD";
 
     if (typeOfOperand=="BYTE") {
-      binNode = new SgAsmByteValueExpression();
-      isSgAsmByteValueExpression(binNode)->set_value(expt->immediate);
+        binNode = SageBuilderAsm::makeByteValue(expt->immediate);
     } else 
       if (typeOfOperand=="WORD") {
-        binNode = new SgAsmWordValueExpression();
-        isSgAsmWordValueExpression(binNode)->set_value(expt->immediate);
+        binNode = SageBuilderAsm::makeWordValue(expt->immediate);
       } else 
         if (typeOfOperand=="DWORD") {
-          binNode = new SgAsmDoubleWordValueExpression();
-          isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
+          binNode = SageBuilderAsm::makeDWordValue(expt->immediate);
         } else
           if (typeOfOperand=="QWORD") {
-            binNode = new SgAsmQuadWordValueExpression();
-            isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+            binNode = SageBuilderAsm::makeQWordValue(expt->immediate);
           } else 
             if (typeOfOperand=="SFLOAT") {
               binNode = new SgAsmSingleFloatValueExpression();
-              isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+              isSgAsmSingleFloatValueExpression(binNode)->set_value(expt->immediate);
             } else 
               if (typeOfOperand=="DFLOAT") {
-                binNode = new SgAsmDoubleFloatValueExpression();
-                isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::makeQWordValue(expt->immediate);
               } else {
                 cerr << "ERROR :: unhandled type of value: " << typeOfOperand << " val: " << 
                   RoseBin_support::ToString(expt->immediate) << endl;
                 //              exit(0);
                 // creating defualt for now
-                binNode = new SgAsmDoubleWordValueExpression();
-                isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::makeDWordValue(expt->immediate);
               }
     
     if (RoseBin_support::DEBUG_MODE())

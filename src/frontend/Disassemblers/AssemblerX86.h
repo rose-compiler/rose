@@ -37,8 +37,8 @@ public:
     virtual SgUnsignedCharList assembleOne(SgAsmInstruction*);
     
     /** Causes the assembler to honor (if true) or disregard (if false) the data types of operands when assembling. For
-     *  instance, when honoring operand data types, if an operand is of type SgAsmWordValueExpression then the assembler will
-     *  attempt to encode it as four bytes even if its value could be encoded as a single byte. This is turned on
+     *  instance, when honoring operand data types, if an operand is a 32-bit SgAsmIntegerValueExpression then the assembler
+     *  will attempt to encode it as four bytes even if its value could be encoded as a single byte. This is turned on
      *  automatically if the Assembler::set_encoding_type() is set to Assembler::ET_MATCHES, but can also be turned on
      *  independently. */
     void set_honor_operand_types(bool b) {

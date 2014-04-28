@@ -39,7 +39,7 @@ $(TEST_F90_Objects): ../../../testTranslator
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
 	sglri -i $(srcdir)/$(@:.o=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o $(@:.o=.f90.aterm)
-	./traverse $(@:.o=.f90.aterm)
+	./traverse -i $(@:.o=.f90.aterm)
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl
@@ -52,7 +52,7 @@ junk : $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-for
 test_ofp: traverse
 #	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/FortranFixed.tbl -o main_program_2008_01.f90.aterm
 	sglri -i $(srcdir)/main_program_2008_01.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o main_program_2008_01.f90.aterm
-	./traverse main_program_2008_01.f90.aterm
+	./traverse -i main_program_2008_01.f90.aterm
 
 clean-local:
 	rm -f rose_*.* *.aterm *.o

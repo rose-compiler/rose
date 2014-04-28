@@ -1,5 +1,5 @@
-;;; nasm -f elf fcalls.s
-;;; gcc -m32 -nostdlib -o fcalls fcalls.o
+;;; nasm -f elf i386-fcalls.s
+;;; gcc -m32 -nostdlib -o i386-fcalls i386-fcalls.o
 
 _start:
 	call T1
@@ -44,6 +44,7 @@ T4:	push eax
 T5:	call T5_1
 	call T5_2
 	call T5_3
+	ret
 	
 T5_1:	jmp callee
 T5_2:	jmp T5_1
