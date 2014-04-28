@@ -13,4 +13,7 @@
 #if 0
 /* MSVC mode does not handle asm statements */
 asm( MY_SIGRETURN(__NR_rt_sigreturn) );
+#else
+/* Some versions of C do not allow an empty file (need to check on MSVC). */
+int x;
 #endif
