@@ -47,6 +47,7 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
   SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(funcCallExp->get_function());
   ROSE_ASSERT(functionRefExp); 
   SgExprListExp* exprListExp = funcCallExp->get_args();
+  SgExpressionPtrList operandList = exprListExp->get_expressions();
   SgName functionName = functionRefExp->get_symbol()->get_name();
 
   SgFunctionCallExp* newFunctionCallExp = NULL;
@@ -61,7 +62,6 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
   }
   else if(isMaxMinFunctionName(functionName, funcCallExp->get_type()))
   {
-    SgExpressionPtrList operandList = exprListExp->get_expressions();
     ROSE_ASSERT(operandList.size() == 2);
     SgExpression* operand1 = operandList[0];
     SgExpression* operand2 = operandList[1];
@@ -71,6 +71,39 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
     else
       conditionalExp = buildConditionalExp(buildLessThanOp(deepCopy(operand1), deepCopy(operand2)),deepCopy(operand1), deepCopy(operand2));
     replaceExpression(funcCallExp, conditionalExp,false);
+  }
+  else
+  {
+    for(SgExpressionPtrList::iterator i=operandList.begin(); i != operandList.end(); ++i)
+    {
+      // Argument is scalar, or base address of array
+      if(isSgVarRefExp(*i) != NULL)
+      {
+        SgVarRefExp* varRefExp = isSgVarRefExp(*i);
+        if (isScalarType(varRefExp->get_symbol()->get_type()))
+        {
+          //cout << " this is a scalar type" << endl;
+          // Passing the address of scalar variable
+          SgAddressOfOp* addrOrExp = buildAddressOfOp(deepCopy(varRefExp));
+          replaceExpression(varRefExp, addrOrExp, false);
+          
+        }
+        else if (isSgArrayType(varRefExp->get_symbol()->get_type()))
+        {
+          // cout << " this is a array type" << endl;
+          // doing nothing for base address of array 
+        }
+      }
+      // Argument is an array element
+      else if(isSgPntrArrRefExp(*i) != NULL)
+      {
+          // cout << " this is a array element" << endl;
+          // Passing the address of array element
+          SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
+          SgAddressOfOp* addrOrExp = buildAddressOfOp(deepCopy(pntrArrRefExp));
+          replaceExpression(pntrArrRefExp, addrOrExp, false);
+      }
+    }
   }
 }
 
