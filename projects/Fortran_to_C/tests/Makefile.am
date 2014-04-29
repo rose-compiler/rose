@@ -43,7 +43,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   type.F \
 							   doubleValue.F \
 							   function1.F \
-							   functionCall1.F
+							   functionCall1.F \
+							   functionCall2.F
 
 
 ALL_TESTCODES = \

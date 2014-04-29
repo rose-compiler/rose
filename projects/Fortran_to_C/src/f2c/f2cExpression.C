@@ -7,6 +7,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace Fortran_to_C;
 
+extern stack<SgStatement*> insertList;
 
 void Fortran_to_C::translateDoubleVal(SgFloatVal* floatVal)
 {
@@ -102,6 +103,21 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
           SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
           SgAddressOfOp* addrOrExp = buildAddressOfOp(deepCopy(pntrArrRefExp));
           replaceExpression(pntrArrRefExp, addrOrExp, false);
+      }
+      else if(isSgValueExp(*i) != NULL)
+      {
+          // Passing the constant arugment
+          // A temp variable is required to store the constant value.
+           SgValueExp* valExp = isSgValueExp(*i);
+           SgScopeStatement* scope = getScope(valExp);
+           string tmpName = generateUniqueVariableName(scope);
+           SgType* type = (*i)->get_type();
+           SgAssignInitializer* initializer = buildAssignInitializer(deepCopy(valExp),(valExp)->get_type());
+           SgInitializedName* initializedName = buildInitializedName(tmpName, type, initializer);
+           SgVariableDeclaration* declaration = buildVariableDeclaration(tmpName,type, initializer,getScope(valExp));
+           insertList.push(declaration);
+           fixVariableDeclaration(declaration,scope);
+           replaceExpression(valExp, buildAddressOfOp(buildVarRefExp(tmpName)), false);           
       }
     }
   }

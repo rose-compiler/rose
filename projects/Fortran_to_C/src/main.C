@@ -30,6 +30,7 @@ vector<SgEquivalenceStatement*> equivalenceList;
 map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
 vector<SgStatement*> statementList;
 vector<SgNode*> removeList;
+stack<SgStatement*> insertList;
 
 // memory pool traversal for variable declaration
 class variableDeclTraversal : public ROSE_VisitorPattern
@@ -192,6 +193,17 @@ void f2cTraversal::visit(SgNode* n)
                                                               0, 0, 0, PreprocessingInfo::before);
         defMinInfo->set_file_info(global->get_file_info());
         global->addToAttachedPreprocessingInfo(defMinInfo,PreprocessingInfo::before);
+        break;
+      }
+    case V_SgExprStatement:
+      {
+        SgExprStatement* exprStmt = isSgExprStatement(n);
+        SgFunctionCallExp* funcCallExp = isSgFunctionCallExp(exprStmt->get_expression());
+        while(insertList.size() > 0 && funcCallExp)
+        {
+           insertStatement(exprStmt,deepCopy(insertList.top()),true);
+           insertList.pop();
+        }
         break;
       }
     default:
