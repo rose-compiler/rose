@@ -3491,6 +3491,178 @@ Partitioner::name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/)
     }
 }
 
+Partitioner::Function *
+Partitioner::find_function_containing_code(rose_addr_t va)
+{
+    if (Instruction *insn = find_instruction(va, false  /* do not create */)) {
+        if (insn->bblock)
+            return insn->bblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing_data(rose_addr_t va)
+{
+    DataRangeMap dblock_ranges;
+    datablock_extent(&dblock_ranges /*out*/); // FIXME[Robb P. Matzke 2014-04-11]: this is not particularly fast
+    DataRangeMap::iterator found = dblock_ranges.find(va);
+    if (found!=dblock_ranges.end()) {
+        DataBlock *dblock = found->second.get();
+        return dblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing(rose_addr_t va)
+{
+    if (Function *func = find_function_containing_code(va))
+        return func;
+    return find_function_containing_data(va);
+}
+
+ExtentMap
+Partitioner::unused_addresses()
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.invert<ExtentMap>();
+}
+
+bool
+Partitioner::is_used_address(rose_addr_t va)
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.find(va) != used_addresses.end();
+}
+
+boost::optional<rose_addr_t>
+Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
+{
+    static const boost::optional<rose_addr_t> NOT_FOUND;
+    ExtentMap unused = unused_addresses();              // all unused addresses regardless of whether they're mapped
+
+    while (1) {
+        // get the next unused virtual address, but it might not be mapped
+        ExtentMap::iterator ui = unused.lower_bound(start_va);
+        if (ui==unused.end())
+            return NOT_FOUND;
+        rose_addr_t unused_va = std::max(start_va, ui->first.first());
+
+        // get the next mapped address, but it might not be unused
+        boost::optional<rose_addr_t> mapped_unused_va = map.next(unused_va);
+        if (!mapped_unused_va)
+            return NOT_FOUND;                           // no higher mapped addresses
+        if (unused.contains(Extent(*mapped_unused_va)))
+            return mapped_unused_va;                    // found
+
+        // try again at a higher address
+        start_va = *mapped_unused_va + 1;
+        if (start_va==0)
+            return NOT_FOUND;                           // overflow
+    }
+}
+
+void
+Partitioner::discover_post_padding_functions(const MemoryMap &map)
+{
+    if (map.empty())
+        return;
+
+    std::vector<uint8_t> padding_bytes;
+    padding_bytes.push_back(0x90);                      // x86 NOP
+    padding_bytes.push_back(0xcc);                      // x86 INT3
+    padding_bytes.push_back(0);                         // zero padding
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+    std::cerr <<"ROBB: discover_post_padding_functions()\n";
+#endif
+
+    rose_addr_t next_va = map.hull().first;             // first address in the map
+    while (1) {
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+        std::cerr <<"ROBB:   current position is " <<StringUtility::addrToString(next_va) <<"\n";
+#endif
+
+        // Find an address that is mapped but not part of any function.
+        boost::optional<rose_addr_t> unused_va = next_unused_address(map, next_va);
+        if (!unused_va)
+            break;
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+        std::cerr <<"ROBB:   next unused address is " <<StringUtility::addrToString(*unused_va) <<"\n";
+#endif
+
+        // Find the next occurrence of padding bytes.
+        Extent search_limits = Extent::inin(*unused_va, map.hull().second);
+        boost::optional<rose_addr_t> padding_va = map.find_any(search_limits, padding_bytes);
+        if (!padding_va)
+            break;
+
+        // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
+        rose_addr_t candidate_va = *padding_va;
+        while (1) {
+            uint8_t byte;
+            if (1!=map.read1(&byte, candidate_va, 1) ||
+                std::find(padding_bytes.begin(), padding_bytes.end(), byte)==padding_bytes.end())
+                break;
+            ++candidate_va;
+        }
+        rose_addr_t npadding = candidate_va - *padding_va;
+        next_va = candidate_va + 1;                     // for next time through this loop
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+        std::cerr <<"ROBB:   address after padding is " <<StringUtility::addrToString(candidate_va) <<"\n";
+        std::cerr <<"ROBB:   number of padding bytes is " <<npadding <<"\n";
+#endif
+
+        // Only consider this to be padding if we found some minimum number of padding bytes.
+        if (npadding < 5)                               // arbitrary
+            continue;
+
+        // Make sure we found padding and that the address after the padding is not already part of some function
+        if (candidate_va<=padding_va || is_used_address(candidate_va))
+            continue;
+
+        // Look at the next few bytes and do some simple tests to see if this looks like code or data.
+        if (NULL==find_instruction(candidate_va))
+            continue;                                   // can't be a function if there's no instruction
+        uint8_t buf[64];                                // arbitrary
+        size_t nread = map.read(buf, candidate_va, sizeof buf);
+        if (nread < 5)                                  // arbitrary
+            continue;                                   // too small to be a function
+        size_t nzeros = 0, nprint = 0;
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]==0)
+                ++nzeros;
+            if (isprint(buf[i]))
+                ++nprint;
+        }
+        if ((double)nzeros / nread > 0.5)               // arbitrary
+            continue;                                   // probably data since there are so many zero bytes
+        if ((double)nprint / nread > 0.8)               // arbitrary
+            continue;                                   // looks like ASCII data
+            
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+        std::cerr <<"ROBB:   discovering function at " <<StringUtility::addrToString(candidate_va) <<"\n"
+                  <<"        nread=" <<nread <<", nzeros=" <<nzeros <<", nprint=" <<nprint <<"\n";
+#endif
+
+        // Mark the candidate address as a function entry point and discover the basic blocks for this function.
+        if (debug)
+            fprintf(debug, "Partitioner::discover_post_padding_functions: candidate function at F%08"PRIx64"\n", candidate_va);
+        add_function(candidate_va, SgAsmFunction::FUNC_INTERPADFUNC);
+        analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+    }
+
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
+    std::cerr <<"ROBB:   discover_post_padding_functions analysis has completed\n";
+#endif
+}
+    
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
@@ -3519,6 +3691,14 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         fff.threshold = 0; // treat all intra-function regions as code
         scan_unassigned_bytes(&fff, &exe_map);
     }
+
+#if 0 // [Robb P. Matzke 2014-04-29]: experimental, slow, heuristic, and a bit too greedy, but perhaps more accurate
+    // Try to discover a function at each inter-function padding pattern, but interleave the discovery with the search. Each
+    // time we find padding we will discover that function (by following its control flow graph) before we search for another
+    // inter-function padding pattern.
+    if (func_heuristics & SgAsmFunction::FUNC_PADDING)
+        discover_post_padding_functions(exe_map);
+#endif
 
     /* Detect inter-function padding */
     if (func_heuristics & SgAsmFunction::FUNC_PADDING) {
