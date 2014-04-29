@@ -758,7 +758,8 @@ main(int argc, char *argv[])
                               ->with("pd", DDRIVE_PD)
                               ->with("dp", DDRIVE_DP)
                               ->with("d", DDRIVE_D)
-                              ->with("none", DDRIVE_NONE))
+                              ->with("none", DDRIVE_NONE),
+                              "dp")
                     .doc("Determines the interrelationship between the disassembler and the paritioner. The @v{how} should "
                          "be one of the following: \"pd\" runs the partitioner as the master driving the disassembler; "
                          "\"dp\" runs the disassembler first and then hands the results to the partitioner; \"d\" runs only "
@@ -1123,6 +1124,7 @@ main(int argc, char *argv[])
     std::vector<std::string> args = cmdline.unreachedArgs();
     std::vector<std::string> frontend_args;
     frontend_args.push_back(argv[0]);
+    frontend_args.push_back("-rose:binary");
     frontend_args.push_back("-rose:read_executable_file_format_only");
     if (!disassembler_search_str.empty()) {
         frontend_args.push_back("-rose:disassembler_search");
