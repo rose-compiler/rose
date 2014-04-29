@@ -2,6 +2,7 @@
 #define ROSE_MemoryMap_H
 
 #include "ByteOrder.h"
+#include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
@@ -513,6 +514,9 @@ public:
     /** Number of bytes mapped. */
     size_t size() const;
 
+    /** Minimum and maximum addresses that are mapped.  This should only be called if @ref empty returns false. */
+    std::pair<rose_addr_t, rose_addr_t> hull() const;
+
     /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
      *  The default byte order is little-endian.
      * @{ */
@@ -543,6 +547,13 @@ public:
     bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(Extent(va), required_perms); }
     bool exists(Extent range, unsigned required_perms=0) const;
     /** @} */
+
+    /** Returns the next valid address.
+     *
+     *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions.  If no
+     *  permissions are specified then the address need only be mapped.  Returns none if there is no valid address greater than or
+     *  equal to @p va. */
+    boost::optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
      *  necessarily need to correspond to a similar add() call; for instance, it's possible to add a large address space and
@@ -640,6 +651,28 @@ public:
     size_t write(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
     size_t write1(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
     /** @} */
+
+    /** Searches for a prefix.
+     *
+     *  Reads bytes from the specified address and matches them against a search vector, returning the number of bytes that
+     *  matched. */
+    size_t match_bytes(rose_addr_t start_va, const std::vector<uint8_t> &bytesToFind, unsigned req_perms=MM_PROT_READ) const;
+
+    /** Search for a byte sequence.
+     *
+     *  Searches for the first occurrence of the specified bytes anywhere completely contained within the specified limits.
+     *  The bytes must appear in the order they are specified.  Returns the address of the start of the sequence if found, or
+     *  none if not found. */
+    boost::optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                               unsigned req_perms=MM_PROT_READ) const;
+
+    /** Search for any byte.
+     *
+     *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
+     *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
+     *  method returns none. */
+    boost::optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                          unsigned req_perms=MM_PROT_READ) const;
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
