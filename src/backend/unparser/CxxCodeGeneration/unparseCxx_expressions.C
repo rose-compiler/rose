@@ -176,6 +176,15 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (9/4/2013): Added support for compund literals.
           case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
 
+       // DQ (4/27/2014): This case appears in a snippet test code (testJava3a) as a result 
+       // of something added to support the new shared memory DSL.  Not clear what this is,
+       // I will ignore it for the moment as part of debugging this larger issue.
+          case JAVA_TYPE_EXPRESSION: 
+             {
+               printf ("Warning: unparseLanguageSpecificExpression(): case SgJavaTypeExpression ignored \n");
+               break;
+             }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
