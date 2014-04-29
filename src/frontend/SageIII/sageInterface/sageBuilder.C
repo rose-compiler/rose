@@ -3229,10 +3229,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
-     SgFile* enclosingFile = getEnclosingFileNode(scope);
-
   // Liao 12/2/2010, special handling for Fortran functions and subroutines
-     if ((SageInterface::is_Fortran_language() == true) && (enclosingFile->get_outputLanguage() == SgFile::e_Fortran_output_language))
+     if ((SageInterface::is_Fortran_language() == true) && (getEnclosingFileNode(scope)->get_outputLanguage() == SgFile::e_Fortran_output_language))
         {
           SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
           ROSE_ASSERT (f_func != NULL);
@@ -3358,9 +3356,8 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
    {
-     SgFile* enclosingFile = getEnclosingFileNode(scope);
      SgFunctionDeclaration * result = NULL;
-     if ((SageInterface::is_Fortran_language() == true) && (enclosingFile->get_outputLanguage() == SgFile::e_Fortran_output_language))
+     if ((SageInterface::is_Fortran_language() == true) && (getEnclosingFileNode(scope)->get_outputLanguage() == SgFile::e_Fortran_output_language))
         {
        // result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList,0);
           result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, NULL, NULL);
