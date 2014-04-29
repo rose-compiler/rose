@@ -25,7 +25,7 @@ struct TagFileParser
      void startMember()
         {
        // m_stateStack_alt.push(0L);
-          m_stateStack_alt.push();
+       // m_stateStack_alt.push();
         }
 
   // Since types are shared and the template argument's name qualification is stored in
