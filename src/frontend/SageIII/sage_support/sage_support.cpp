@@ -1032,7 +1032,10 @@ cout.flush();
                               file->set_outputLanguage(SgFile::e_C_output_language);
 
                               file->set_C_only(true);
-
+#if 0
+                              printf ("Checking for UPC file extension: CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) = %s \n",CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) ? "true" : "false");
+                              printf ("   --- sourceFile->get_UPC_only() = %s \n",sourceFile->get_UPC_only() ? "true" : "false");
+#endif
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {

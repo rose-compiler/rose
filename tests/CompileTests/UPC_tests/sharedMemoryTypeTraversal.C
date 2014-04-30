@@ -41,9 +41,12 @@ TypeTraversal::transformType(SgType* type)
                printf ("TypeTraversal::transformType(): Removing shared base_type from pointerType = %p replacing with modifier_base_type = %p = %s \n",pointerType,modifier_base_type,modifier_base_type->class_name().c_str());
 #endif
                pointerType->set_base_type(modifier_base_type);
-
+#if 1
             // DQ (4/26/2014): Also mark this as not shared, since the cast expressions will refer directly to this SgModifierType type.
                mod_type->get_typeModifier().get_upcModifier().set_isShared(false);
+#else
+               printf ("In TypeTraversal::transformType(): Skipping reset of upc modifier in SgModifierType: mod_type = %p \n",mod_type);
+#endif
              }
         }
    }

@@ -82,15 +82,10 @@ Traversal::transformType(SgType* type)
 
   // Define the traversal
      TypeTraversal sharedMemoryDSL_Traversal;
-#if 0
-     printf ("Start of the type traversal \n");
-#endif
+
   // Call the traversal starting at the project (root) node of the AST
   // SynthesizedAttribute result = sharedMemoryDSL_Traversal.traverseWithinFile(project,inheritedAttribute);
      TypeTraversalSynthesizedAttribute result = sharedMemoryDSL_Traversal.traverse(type,inheritedAttribute);
-#if 0
-     printf ("End of the type traversal \n");
-#endif
    }
 
 
@@ -195,6 +190,32 @@ Traversal::evaluateInheritedAttribute (
              }
         }
 
+  // DQ (4/28/2014): Adding support for function return types (function parameters are handled via the SgInitializedName support).
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(astNode);
+     if (functionDeclaration != NULL)
+        {
+          ROSE_ASSERT(functionDeclaration->get_type() != NULL);
+          SgType* type = functionDeclaration->get_type()->get_return_type();
+          if (isSharedType(type) == true)
+             {
+            // Save the reference to the initializedName so that it can have it's type fixed up later.
+               nodeListWithTypesToModify.push_back(astNode);
+             }
+        }
+
+  // DQ (4/28/2014): Adding support for typedef base types.
+     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(astNode);
+     if (typedefDeclaration != NULL)
+        {
+          ROSE_ASSERT(typedefDeclaration->get_type() != NULL);
+          SgType* type = typedefDeclaration->get_base_type();
+          if (isSharedType(type) == true)
+             {
+            // Save the reference to the initializedName so that it can have it's type fixed up later.
+               nodeListWithTypesToModify.push_back(astNode);
+             }
+        }
+
   // Also need to investigate anything hiding types but which would NOT be traversed as part of the AST.
   // typedefs (base types), function parameters (handled in SgInitializedName case), function return types, 
   // template details (for C++), etc.
@@ -226,14 +247,20 @@ Traversal::evaluateSynthesizedAttribute (
           printf ("SgPointerDerefExp: pointerDerefExp->get_operand() = %p = %s \n",pointerDerefExp->get_operand(),pointerDerefExp->get_operand()->class_name().c_str());
 #endif
 
-          SgVarRefExp* varRefExp = isSgVarRefExp(pointerDerefExp->get_operand());
-          SgDotExp*    dotExp    = isSgDotExp(pointerDerefExp->get_operand());
-          SgArrowExp*  arrowExp  = isSgArrowExp(pointerDerefExp->get_operand());
+          SgVarRefExp*       varRefExp = isSgVarRefExp(pointerDerefExp->get_operand());
+          SgDotExp*          dotExp    = isSgDotExp(pointerDerefExp->get_operand());
+          SgArrowExp*        arrowExp  = isSgArrowExp(pointerDerefExp->get_operand());
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(pointerDerefExp->get_operand());
+
        // if (varRefExp != NULL)
-          if (varRefExp != NULL || dotExp != NULL || arrowExp != NULL)
+       // if (varRefExp != NULL || dotExp != NULL || arrowExp != NULL)
+          if (varRefExp != NULL || dotExp != NULL || arrowExp != NULL || functionCallExp != NULL)
              {
             // SgType* type = varRefExp->get_type();
                SgType* type = pointerDerefExp->get_operand()->get_type();
+#if 0
+               printf ("SgPointerDerefExp: (SgVarRefExp|SgDotExp|SgArrowExp|SgFunctionCallExp): pointerDerefExp->get_operand()->get_type(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
                if (isSharedType(type) == true)
                   {
                  // Found a reference to a variable that will we want to transform (post order traversal).
@@ -317,6 +344,33 @@ Traversal::evaluateSynthesizedAttribute (
              }
         }
 
+#if 0
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+     if (functionCallExp != NULL)
+        {
+          SgType* type = functionCallExp->get_type();
+          printf ("SgFunctionCallExp: type = %p = %s \n",type,type->class_name().c_str());
+        }
+#endif
+
+  // DQ (4/29/2014): Kinds of IR nodes that can have references to typedefs to shared pointers.
+     SgVarRefExp*       varRefExp = isSgVarRefExp(astNode);
+     SgDotExp*          dotExp    = isSgDotExp(astNode);
+     SgArrowExp*        arrowExp  = isSgArrowExp(astNode);
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+
+     if (varRefExp != NULL)
+        {
+          SgType* type = varRefExp->get_type();
+       // printf ("SgVarRefExp: type = %p = %s \n",type,type->class_name().c_str());
+          SgTypedefType* typedefType = isSgTypedefType(type);
+          if (typedefType != NULL)
+             {
+            // Found a typedef type, we have to check if this can be unwrapped to identify a shared pointer type.
+               printf ("SgVarRefExp: Identified a SgTypedefType: need to implement investigation of internal shared type within typedef type \n");
+             }
+        }
+
   // Need to look at other kinds of expression that can hold shared types: e.g. SgArrayRefExp
 
      return localResult;
@@ -339,6 +393,9 @@ fixupNodesWithTypes(SgProject* project,Traversal & traversal)
   // Iterate over the IR nodes and transform the associated types.
      while (i != nodeListWithTypesToModify.end())
         {
+#if 0
+          printf ("In fixupNodesWithTypes(): in loop over IR nodes using types: i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
           SgInitializedName* initializedName = isSgInitializedName(*i);
           if (initializedName != NULL)
              {
@@ -352,16 +409,47 @@ fixupNodesWithTypes(SgProject* project,Traversal & traversal)
                traversal.transformType(type);
              }
 
+       // DQ (4/28/2014): Adding support for function return types (function parameters are handled via the SgInitializedName support).
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
+          if (functionDeclaration != NULL)
+             {
+               ROSE_ASSERT(functionDeclaration->get_type() != NULL);
+               SgType* type = functionDeclaration->get_type()->get_return_type();
+
+            // Note that this type might have been previously transformed, this is fine since it was shared.
+               traversal.transformType(type);
+             }
+
+       // DQ (4/28/2014): Adding support for typedef base types.
+          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(*i);
+          if (typedefDeclaration != NULL)
+             {
+               ROSE_ASSERT(typedefDeclaration->get_type() != NULL);
+               SgType* type = typedefDeclaration->get_base_type();
+
+            // Note that this type might have been previously transformed, this is fine since it was shared.
+               traversal.transformType(type);
+             }
+
           i++;
         }
    }
 
 
-
 int main( int argc, char * argv[] )
    {
+  // Form the command line so that we can add some ROSE specific options to turn on UPC mode and skip the final compilation.
+     Rose_STL_Container<std::string> argList = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+
+  // Add UPC option so that ROSE will process the file as a UPC file.
+  // We can add the option anywhere on the command line.
+     argList.push_back("-rose:UPC");
+
+  // This tool will only unparse the file and not compile it.
+     argList.push_back("-rose:skipfinalCompileStep");
+
   // Generate the ROSE AST.
-     SgProject* project = frontend(argc,argv);
+     SgProject* project = frontend(argList);
      ROSE_ASSERT(project != NULL);
 
 #if 0
@@ -384,6 +472,8 @@ int main( int argc, char * argv[] )
   // SynthesizedAttribute result = sharedMemoryDSL_Traversal.traverseWithinFile(project,inheritedAttribute);
      SynthesizedAttribute result = sharedMemoryDSL_Traversal.traverse(project,inheritedAttribute);
 
+  // This is the compiler pass that will do the transformations on declarations of shared 
+  // pointers and there associated expressions.
      fixupNodesWithTypes(project,sharedMemoryDSL_Traversal);
 
   // AST consistency tests (optional for users, but this enforces more of our tests)
@@ -400,12 +490,7 @@ int main( int argc, char * argv[] )
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 #endif
 
-  // Note that we will need to change the mode of the generated file from UPC to a C code so that 
-  // it will be compiled as a C application file.  Currently the generated file will not be compiled
-  // since there is not UPC compiler available (a warning is issued).
-     printf ("Missing remaining step to mark SgSourceFile as a C application file instead of a UPC file \n");
-
-  // regenerate the source code and call the vendor compiler, only backend error code is reported.
+  // Regenerate the source code but skip the call the to the vendor compiler.
      return backend(project);
    }
 
