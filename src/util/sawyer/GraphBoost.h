@@ -7,6 +7,25 @@
 #include <boost/graph/properties.hpp>
 
 namespace Sawyer {
+
+/** Boost Graph Library API for Sawyer::Container::Boost.
+ *
+ *  Including this header into a program will allow a Sawyer::Container::Graph to be accessed via the Boost Graph Library (BGL)
+ *  API. %Sawyer non-const graphs implement the following BGL concepts: MutablePropertyGraph, MutableGraph, PropertyMapGraph,
+ *  BidirectionalGraph, IncidenceGraph, EdgeListGraph, VertexListGraph, and Graph.  Const graphs implement the same concepts
+ *  except MutablePropertyGraph and MutableGraph.
+ *
+ *  Vertex and edge iterators in the BGL domain map to VertexOuterIterator and EdgeOuterIterator types, which are defined in
+ *  this namespace and have implicit conversions from Sawyer::Container::Graph::VertexNodeIterator and
+ *  Sawyer::Container::Graph::EdgeNodeIterator. There are also const versions.  These outer iterators produce BGL
+ *  vertex_descriptor or edge_descriptor when they're dereferenced, and these descriptors are simply the %Sawyer vertex and
+ *  edge ID numbers.
+ *
+ *  The BGL API allows graphs to store any number of vertex and edge properties internally, but %Sawyer graphs take a more
+ *  STL-like approach allowing the user to specify arbitrary types for the vertices and edges. This namespace declares
+ *  vertex_value_t and edge_value_t tags to access the user-supplied vertex and edge values.  The vertex_id_t and edge_id_t
+ *  tags can be used to access the ID properties that %Sawyer automatically maintains for vertices and edges.  BGL external
+ *  properties have no such restrictions and can be used exactly as advertised in the BGL documentation. */
 namespace Boost {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
