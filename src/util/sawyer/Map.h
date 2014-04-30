@@ -206,7 +206,7 @@ public:
      *
      *  This is like the default constructor, but a comparer and allocator can be specified. */
     explicit Map(const Comparator &comparator, const Allocator &allocator = Allocator())
-        : StlMap(comparator, allocator) {}
+        : map_(comparator, allocator) {}
 
     /** Copy constructor. */
     Map(const Map& other) {
