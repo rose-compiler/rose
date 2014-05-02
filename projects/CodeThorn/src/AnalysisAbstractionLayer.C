@@ -3,8 +3,8 @@
 #include "sage3basic.h"
 #include "AnalysisAbstractionLayer.h"
 
-#include "addressTakenAnalysis/addressTakenAnalysis.h"
-#include "addressTakenAnalysis/defUseQuery.h"
+#include "addressTakenAnalysis.h"
+#include "defUseQuery.h"
 
 VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {

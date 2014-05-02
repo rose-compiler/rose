@@ -24,7 +24,7 @@ CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=AType.o Analyzer.C AstTerm.o CFAnalyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LTLCheckerFixpoint.o LTLCheckerUnified.o LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o Timer.cpp Visualizer.o RDLattice.o  AnalysisAbstractionLayer.o RDAstAttribute.o Flow.o ReachabilityResults.o  addressTakenAnalysis/defUseQuery.C addressTakenAnalysis/VariableIdUtils.C addressTakenAnalysis/addressTakenAnalysis.C 
+OBJECT_FILES=AType.o Analyzer.C AstTerm.o CFAnalyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LTLCheckerFixpoint.o LTLCheckerUnified.o LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o Timer.cpp Visualizer.o RDLattice.o  AnalysisAbstractionLayer.o RDAstAttribute.o Flow.o ReachabilityResults.o  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C 
 
 REGRESSION_DATA_DIR=regressiondata
 
