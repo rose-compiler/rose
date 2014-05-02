@@ -11,6 +11,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -282,7 +283,7 @@ SnippetFile::parse(const std::string &fileName)
 #if 0 /* [Robb P. Matzke 2014-03-31] */
         // This appears not to work any better than SageBuilder::buildFile and Philippe Charles concurs that it might not.
         file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
-#elif ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#elif defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
         // This is the better way (but much more complicated) to parse a Java file.
         file = parseJavaFile(fileName);
 #endif
