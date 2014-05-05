@@ -27,7 +27,8 @@
  *      lookup-by-ID; <code>IntervalSet</code> and <code>IntervalMap</code> similar to STL's <code>std::set</code> and
  *      <code>std::map</code> containers but optimized for cases when very large numbers of keys are adjacent;
  *      <code>Map</code>, similar to STL's <code>std::map</code> but with an API that's consistent with other containers in
- *      this library.  These can be found in the Sawyer::Container namespace.
+ *      this library; <code>BitVector</code> bit vectors with operations defined across index intervals.  These can be found in
+ *      the Sawyer::Container namespace.
  *
  *  Design goals for this library can be found in the [Design goals](group__design__goals.html) page.
  *
