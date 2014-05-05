@@ -1,5 +1,5 @@
+#include "sage3basic.h"  // must be the first to be included
 #include "transformationTracking.h"
-#include "sage3basic.h" 
 
 namespace TransformationTracking {
 
