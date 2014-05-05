@@ -73,10 +73,13 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/Sawyer.C
 nobase_include_HEADERS   =			\
 	sawyer/Assert.h				\
+	sawyer/BitVector.h			\
+	sawyer/BitVectorSupport.h		\
 	sawyer/CommandLine.h			\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
 	sawyer/IndexedList.h			\
+	sawyer/Interval.h			\
 	sawyer/Map.h				\
 	sawyer/Markup.h				\
 	sawyer/MarkupRoff.h			\
