@@ -43,6 +43,10 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     NEW_TERMINAL_MACRO ( TypeUnsigned128bitInteger, "TypeUnsigned128bitInteger",  "T_UNSIGNED_128BIT_INTEGER" );
+     NEW_TERMINAL_MACRO ( TypeSigned128bitInteger  , "TypeSigned128bitInteger"  ,  "T_SIGNED_128BIT_INTEGER" );
+
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABLE" );
 
@@ -157,7 +161,7 @@ Grammar::setUpTypes ()
           TypeSignedInt    | TypeUnsignedInt   | TypeLong          | TypeSignedLong       | 
           TypeUnsignedLong | TypeVoid          | TypeGlobalVoid    | TypeWchar            |
           TypeFloat        | TypeDouble        | TypeLongLong      | TypeSignedLongLong   |
-          TypeUnsignedLongLong | 
+          TypeUnsignedLongLong  |  TypeSigned128bitInteger  |  TypeUnsigned128bitInteger  |
           TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
@@ -201,19 +205,31 @@ Grammar::setUpTypes ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // MK: Type.excludeDataPrototype ("int","substitutedForTemplateParam","= 0");
 
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to reference type
+  // Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to pointer type
+  // Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to modifier nodes (I forget the purpose of this)
+  // Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Reference to typedef type \attention{(need to check that these are fully resolved within mapping from EDG)}
 #if 1
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
+  // Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
      Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
   // #else
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
@@ -359,6 +375,10 @@ Grammar::setUpTypes ()
      TypeLongLong.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeSignedLongLong.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsignedLongLong.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     TypeSigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeUnsigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeCAFTeam.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -511,8 +531,15 @@ Grammar::setUpTypes ()
   // These classes have data fields
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -619,8 +646,14 @@ Grammar::setUpTypes ()
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string
      ModifierType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      ModifierType.setFunctionPrototype ("HEADER_MODIFIER_TYPE", "../Grammar/Type.code" );
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
+  //                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // DQ (4/22/2004): Old way of handling modifiers
   // ModifierType.setDataPrototype     ("unsigned int","bitfield","= 0",
   //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -720,11 +753,8 @@ Grammar::setUpTypes ()
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
-
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      ArrayType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
-#endif
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -870,6 +900,10 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );
+     TypeUnsigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "UL128" );
 
      TypeCAFTeam.editSubstitute( "MANGLED_ID_STRING", "s" );
 

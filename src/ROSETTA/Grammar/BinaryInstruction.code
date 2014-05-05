@@ -146,114 +146,14 @@ HEADER_INTEGER_VALUE_EXPRESSION_START
                 void make_relative_to(SgNode *base_node);
                 uint64_t get_base_address() const;
                 uint64_t get_absolute_value(size_t nbits=0) const;
-                int64_t get_absolute_signed_value() const;
+                int64_t get_signed_value() const;
                 void set_absolute_value(uint64_t);
+		uint64_t get_value() const { return get_absolute_value(); }
 HEADER_INTEGER_VALUE_EXPRESSION_END
 
 
 
 
-HEADER_BYTE_VALUE_EXPRESSION_START
-        public:
-                SgAsmByteValueExpression() { ctor(); }
-                explicit SgAsmByteValueExpression(uint8_t n) { ctor(n); }
-                void set_value(uint8_t);
-                uint8_t get_value() const;
-        protected:
-                void ctor();
-                void ctor(uint8_t);
-HEADER_BYTE_VALUE_EXPRESSION_END
-SOURCE_BYTE_VALUE_EXPRESSION_START
-                void SgAsmByteValueExpression::ctor() {
-                        set_significant_bits(8);
-                        set_value(0);
-                        set_type(SgAsmTypeByte::createType());
-                }
-                void SgAsmByteValueExpression::ctor(uint8_t n) {
-                        set_significant_bits(8);
-                        set_value(n);
-                        set_type(SgAsmTypeByte::createType());
-                }
-SOURCE_BYTE_VALUE_EXPRESSION_END
-
-
-
-
-
-HEADER_WORD_VALUE_EXPRESSION_START
-        public:
-                SgAsmWordValueExpression() { ctor(); }
-                explicit SgAsmWordValueExpression(uint16_t n) { ctor(n); }
-                void set_value(uint16_t);
-                uint16_t get_value() const;
-        protected:
-                void ctor();
-                void ctor(uint16_t);
-HEADER_WORD_VALUE_EXPRESSION_END
-SOURCE_WORD_VALUE_EXPRESSION_START
-                void SgAsmWordValueExpression::ctor() {
-                        set_significant_bits(16);
-                        set_value(0);
-                        set_type(SgAsmTypeWord::createType());
-                }
-                void SgAsmWordValueExpression::ctor(uint16_t n) {
-                        set_significant_bits(16);
-                        set_value(n);
-                        set_type(SgAsmTypeWord::createType());
-                }
-SOURCE_WORD_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_DOUBLE_WORD_VALUE_EXPRESSION_START
-        public:
-                SgAsmDoubleWordValueExpression() { ctor(); }
-                explicit SgAsmDoubleWordValueExpression(uint32_t n) { ctor(n); }
-                void set_value(uint32_t);
-                uint32_t get_value() const;
-        protected:
-                void ctor();
-                void ctor(uint32_t);
-HEADER_DOUBLE_WORD_VALUE_EXPRESSION_END
-SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_START
-                void SgAsmDoubleWordValueExpression::ctor() {
-                        set_significant_bits(32);
-                        set_value(0);
-                        set_type(SgAsmTypeDoubleWord::createType());
-                }
-                void SgAsmDoubleWordValueExpression::ctor(uint32_t n) {
-                        set_significant_bits(32);
-                        set_value(n);
-                        set_type(SgAsmTypeDoubleWord::createType());
-                }
-SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_QUAD_WORD_VALUE_EXPRESSION_START
-        public:
-                SgAsmQuadWordValueExpression() { ctor(); }
-                explicit SgAsmQuadWordValueExpression(uint64_t n) { ctor(n); }
-                void set_value(uint64_t);
-                uint64_t get_value() const;
-        protected:
-                void ctor();
-                void ctor(uint64_t);
-HEADER_QUAD_WORD_VALUE_EXPRESSION_END
-SOURCE_QUAD_WORD_VALUE_EXPRESSION_START
-                void SgAsmQuadWordValueExpression::ctor() {
-                        set_significant_bits(64);
-                        set_value(0);
-                        set_type(SgAsmTypeQuadWord::createType());
-                }
-                void SgAsmQuadWordValueExpression::ctor(uint64_t n) {
-                        set_significant_bits(64);
-                        set_value(n);
-                        set_type(SgAsmTypeQuadWord::createType());
-                }
-SOURCE_QUAD_WORD_VALUE_EXPRESSION_END
 
 
 

@@ -230,6 +230,10 @@ class JavaTraversal implements Callable<Boolean> {
      * @param args
      */
     static Main generateAst(String args[]) {
+        if (verboseLevel > 0) {
+            System.out.println("[INFO] ECJ::generateAst arguments=" + Arrays.toString(args));
+        }
+
         Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.out), true/*systemExit*/, null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
@@ -316,6 +320,7 @@ class JavaTraversal implements Callable<Boolean> {
 
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
+        System.out.println("[INFO] ECJ::main arguments=" + Arrays.toString(args));
         /* tps : set up and configure ---------------------------------------------- */
 
         startJava();
@@ -355,6 +360,7 @@ class JavaTraversal implements Callable<Boolean> {
             // maxUnits. To iterate over all units, including the ones that are pulled
             // in by closure, iterate up to batchCompiler.totalUnits.
             //
+            System.out.println("[INFO] ECJ::batchCompiler.totalUnits=" + batchCompiler.totalUnits);
             for (int i = 0; i < /* maxUnits */ batchCompiler.totalUnits; i++) {
                 CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 assert (unit != null);
@@ -364,6 +370,9 @@ class JavaTraversal implements Callable<Boolean> {
 
                 String filename = new String(unit.getFileName());
                 if (! processedFiles.contains(filename) && JavaParser.cactionIsSpecifiedSourceFile(filename)) {
+                    // Set the ::currentSourceFile via JNI [TOO1, 2014-04-02]
+                    JavaParser.cactionSetupSourceFilename(filename);
+
                     processedFiles.add(filename);
                     batchCompiler.process(unit, i);
                     if (unit.compilationResult.hasMandatoryErrors()) {
@@ -402,6 +411,9 @@ class JavaTraversal implements Callable<Boolean> {
                         JavaParser.cactionEcjFatalCompilationErrors(filename);                        
                     }
                     else units.add(unit);
+
+                    // Reset the ::currentSourceFile via JNI [TOO1, 2014-04-02]
+                    JavaParser.cactionClearSourceFilename();
                 }
             }
 

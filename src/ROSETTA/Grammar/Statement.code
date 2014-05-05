@@ -11596,6 +11596,12 @@ SgVariableDeclaration::post_construction_initialization()
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In SgVariableDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
+
+  // DQ (4/21/2014): Try to set this so that we can avoid a possible valgrind waring about this being sometimes unitialized.
+  // ==2562== 113 errors in context 34 of 34:
+  // ==2562== Conditional jump or move depends on uninitialised value(s)
+  // ==2562==    at 0x69758FB: Unparse_ExprStmt::unparseVarDeclStmt(SgStatement*, SgUnparse_Info&) (unparseCxx_statements.C:4421)
+     p_isAssociatedWithDeclarationList = false; // non list case
    }
 
 

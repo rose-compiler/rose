@@ -4,7 +4,7 @@ struct process
      int status;
    };
 
-extern int kill (int __pid, int __sig) __attribute__ ((__nothrow__));
+extern int kill (int __pid, int __sig);
 
 static int
 handle_sub(int job, int fg)

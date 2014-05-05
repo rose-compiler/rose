@@ -112,7 +112,7 @@ DisassemblerPowerpc::fld() const {
 #define MAKE_INSN5(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4(Mne, Op1, Op2, Op3, Op4), (Op5)))
 #define MAKE_INSN5_RC(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Op1, Op2, Op3, Op4), (Op5)))
 
-SgAsmQuadWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerPowerpc::makeBranchTarget ( uint64_t targetAddr ) const
 {
     return SageBuilderAsm::makeQWordValue(targetAddr);
@@ -425,7 +425,7 @@ DisassemblerPowerpc::decode_I_formInstruction()
                     targetBranchAddress += ip;
                   }
 
-               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
 
                if (AA() == 0)
                   {
@@ -491,7 +491,7 @@ DisassemblerPowerpc::decode_B_formInstruction()
                     targetBranchAddress += ip;
                   }
 
-               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
 
                if (LK() == 0)
                   {

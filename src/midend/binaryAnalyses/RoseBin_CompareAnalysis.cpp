@@ -203,8 +203,9 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
 string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
   string valStr="";
   if (rhs) {
-    if ( isSgAsmByteValueExpression(rhs)) {
-      short val = isSgAsmByteValueExpression(rhs)->get_value();
+      SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(rhs);
+    if ( ival && (8==ival->get_significant_bits() || 32==ival->get_significant_bits())) {
+      short val = isSgAsmIntegerValueExpression(rhs)->get_value();
       //cerr << " checking local short variable at bp " << RoseBin_support::ToString(val) << endl;
       valStr = RoseBin_support::ToString(val);
     } else
@@ -212,15 +213,10 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
         double val = isSgAsmDoubleFloatValueExpression(rhs)->get_value();
         //cerr << " checking local float variable at bp " << RoseBin_support::ToString(val) << endl;
         valStr = RoseBin_support::ToString(val);
-      } else
-        if (isSgAsmDoubleWordValueExpression(rhs)) {
-          int val = isSgAsmDoubleWordValueExpression(rhs)->get_value();
-          //cerr << " checking local int variable at bp " << RoseBin_support::ToString(val) << endl;
-          valStr = RoseBin_support::ToString(val);
-        } else {
+      } else {
           cerr << " the type of value is currently not handled - CompareAnalysis " << endl;
           exit(0);
-        }
+      }
   } else {
     cerr << " >> cannot check for variable location 3. " << endl;
     exit(0);
@@ -522,7 +518,8 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
         SgAssignInitializer* assInit = isSgAssignInitializer(init);
         ROSE_ASSERT(assInit);
         SgExpression* op = assInit->get_operand();
-        if (isSgIntVal(op) && isSgAsmDoubleWordValueExpression(valExp)) {
+        if (isSgIntVal(op) && isSgAsmIntegerValueExpression(valExp) &&
+            32==isSgAsmIntegerValueExpression(valExp)->get_significant_bits()) {
           // we got a integer && DoubleWord match
           nodes_matched++;
           isvar=true;
@@ -531,7 +528,7 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
           mov->set_comment("mov SS:[" + name +"] , "+value);
           //local_last_variable = roh_val;
           isSgIntVal(op)->setAttribute(attributeName,createAttribute(2));
-          isSgAsmDoubleWordValueExpression(valExp)->setAttribute(attributeName,createAttribute(2));
+          isSgAsmIntegerValueExpression(valExp)->setAttribute(attributeName,createAttribute(2));
           isSgAsmx86RegisterReferenceExpression(refExp_Left)->setAttribute(attributeName,createAttribute(2));
         }
       }
