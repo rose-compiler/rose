@@ -752,6 +752,15 @@ struct IP_mov: P {
     }
 };
 
+// Move aligned double quadword
+struct IP_movdqa: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        d->write(args[0], d->read(args[1], nbits));
+    }
+};
+
 // Move data from string to string
 struct IP_movestring: P {
     const X86RepeatPrefix repeat;
@@ -1319,6 +1328,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
     iproc_set(x86_mov,          new X86::IP_mov);
+    iproc_set(x86_movdqa,       new X86::IP_movdqa);
     iproc_set(x86_movsb,        new X86::IP_movestring(x86_repeat_none, 8));
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
