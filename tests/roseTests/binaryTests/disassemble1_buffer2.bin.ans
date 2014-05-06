@@ -17,7 +17,6 @@ using this memory map for disassembly:
     va 0x08049598 + 0x00000024 = 0x080495bc rw-- at buffer aby   + 0x00000598 buffer2.bin(.data+.got+.got.plt)
     va 0x080495bc + 0x00000004 = 0x080495c0 rw-p at anon aca     + 0x00000000 buffer2.bin(.bss)
     va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at anon aaj     + 0x00000004 buffer2.bin(LOAD#3)
-disassembled 3352 instructions and 22 failures (use --show-bad to see errors)
 
 
 0x08048278: ================================== Function (function call, symbol) <_init>
@@ -2104,4 +2103,3 @@ disassembled 3352 instructions and 22 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

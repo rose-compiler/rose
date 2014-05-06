@@ -2,6 +2,11 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
+using namespace rose;                                   // temporary until this API lives inside the "rose" name space
+using namespace rose::Diagnostics;
+
+Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
+
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
  *  result in a meaningful basic block.  For instance, consider the following block:
@@ -58,6 +63,16 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     }
     
     return retval;
+}
+
+// class method
+void AsmUnparser::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
+    }
 }
 
 void
@@ -274,6 +289,37 @@ AsmUnparser::line_prefix() const
     if (nprint<0 || (size_t)nprint >= sizeof buf)
         strcpy(buf, "<OVERFLOW> ");
     return buf;
+}
+
+std::string
+AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *regdict)
+{
+    using namespace StringUtility;
+    Stream warn(mlog[WARN]);
+
+    std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
+                         numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
+    if (insn) {
+        warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
+    } else {
+        warn <<"invalid register reference " <<regstr <<"\n";
+    }
+
+    static bool wasDescribed = false;
+    if (!wasDescribed) {
+        warn <<"  This warning is caused by instructions using registers that don't have names in the\n"
+             <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
+             <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
+             <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
+             <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
+             <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
+             <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
+             <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
+             <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
+             <<"  register, and \"d\" is the number of significant bits.\n";
+            wasDescribed = true;
+    }
+    return "BAD_REGISTER(" + regstr + ")";
 }
 
 

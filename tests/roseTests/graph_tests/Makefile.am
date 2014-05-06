@@ -28,26 +28,19 @@ hash_multimap.passed: hash_multimap
 noinst_PROGRAMS += graph_test_1
 graph_test_1_SOURCES = graph_test_1.C
 
-graph_test_1_specimens = inputCode_main.C
-graph_test_1_test_targets = $(addprefix graph_test_1_, $(addsuffix .passed, $(graph_test_1_specimens)))
-graph_test_1_flags = $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(abspath $(top_builddir)) $(ROSE_INCLUDES) -I$(srcdir)
-EXTRA_DIST += $(graph_test_1_specimens)
-
-TEST_TARGETS += $(graph_test_1_test_targets)
-$(graph_test_1_test_targets): graph_test_1_%.passed: % graph_test_1
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_1 $(graph_test_1_flags) -c $(abspath $<)" \
+graph_test_1_sage.passed: graph_test_1
+	@$(RTH_RUN)				\
+		USE_SUBDIR=yes			\
+		CMD="$(abspath $<) sage"	\
 		$(TEST_EXIT_STATUS) $@
 
-TEST_TARGETS += graph_test_1.passed
-graph_test_1.passed: graph_test_1
-	@$(RTH_RUN) \
-		DISABLED="not automatically tested by original makefile" \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/graph_test_1" \
+graph_test_1_sawyer.passed: graph_test_1
+	@$(RTH_RUN)				\
+		USE_SUBDIR=yes			\
+		CMD="$(abspath $<) sawyer"	\
 		$(TEST_EXIT_STATUS) $@
 
+TEST_TARGETS += graph_test_1_sage.passed graph_test_1_sawyer.passed
 
 #------------------------------------------------------------------------------------------------------------------------
 # graph_test_2

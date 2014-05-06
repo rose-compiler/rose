@@ -24,7 +24,6 @@ using this memory map for disassembly:
     va 0x00500af3 + 0x00000005 = 0x00500af8 rw-p at buffer aal   + 0x00000af3 x86-64-nologin(LOAD#3)
     va 0x00500af8 + 0x00000168 = 0x00500c60 r--- at buffer acf   + 0x00000af8 x86-64-nologin(.gnu.conflict)
     va 0x00500c60 + 0x000003a0 = 0x00501000 rw-p at buffer aal   + 0x00000c60 x86-64-nologin(LOAD#3)
-disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 
 
 0x00400498: ================================== Function (function call) unknown name
@@ -570,4 +569,3 @@ disassembled 2826 instructions and 182 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

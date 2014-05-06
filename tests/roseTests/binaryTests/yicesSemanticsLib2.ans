@@ -185,7 +185,7 @@ registers:
   eip    [writer=0x08048340] = {defs={0x08048340}, expr=0x08048342<134513474>[32]}
   pf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
-  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   af     [writer=0x08048340] = v3911[1]
   cf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
@@ -199,7 +199,7 @@ registers:
   eip    [writer=0x08048342] = {defs={0x08048342}, expr=0x08048343<134513475>[32]}
   pf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
-  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   af     [writer=0x08048340] = v3911[1]
   cf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
@@ -218,7 +218,7 @@ registers:
   eip    [writer=0x08048343] = {defs={0x08048343}, expr=0x08048345<134513477>[32]}
   pf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
-  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   af     [writer=0x08048340] = v3911[1]
   cf     [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
@@ -1306,7 +1306,7 @@ registers:
   eip    [writer=0x080483e4] = {defs={0x080483e4}, expr=0x080483e6<134513638>[32]}
   pf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
-  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
+  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
   of     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
   af     [writer=0x080483e4] = v4558[1]
   cf     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
@@ -1318,7 +1318,7 @@ registers:
   eip    [writer=0x080483e6] = {defs={0x080483df,0x080483e4,0x080483e6}, expr=0x08048400<134513664>[32]}
   pf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
-  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
+  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
   of     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
   af     [writer=0x080483e4] = v4558[1]
   cf     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
@@ -1331,7 +1331,7 @@ registers:
   eip    [writer=0x08048400] = {defs={0x08048400}, expr=0x08048402<134513666>[32]}
   pf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
-  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
+  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
   of     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
   af     [writer=0x080483e4] = v4558[1]
   cf     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
@@ -1345,7 +1345,7 @@ registers:
   eip    [writer=0x08048402] = {defs={0x08048402}, expr=0x08048403<134513667>[32]}
   pf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
-  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
+  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
   of     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
   af     [writer=0x080483e4] = v4558[1]
   cf     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
@@ -1363,7 +1363,7 @@ registers:
   eip    [writer=0x08048403] = v4565[32]
   pf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
-  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
+  zf     [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
   of     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
   af     [writer=0x080483e4] = v4558[1]
   cf     [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
@@ -1582,7 +1582,7 @@ registers:
   eip    [writer=0x08048430] = {defs={0x08048430}, expr=0x08048432<134513714>[32]}
   pf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
-  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   af     [writer=0x08048430] = v4749[1]
   cf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
@@ -1596,7 +1596,7 @@ registers:
   eip    [writer=0x08048432] = {defs={0x08048432}, expr=0x08048433<134513715>[32]}
   pf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
-  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   af     [writer=0x08048430] = v4749[1]
   cf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
@@ -1614,7 +1614,7 @@ registers:
   eip    [writer=0x08048433] = v4755[32]
   pf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
-  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   af     [writer=0x08048430] = v4749[1]
   cf     [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
@@ -2852,7 +2852,7 @@ registers:
   eip    [writer=0x08048552] = {defs={0x08048552}, expr=0x08048554<134514004>[32]}
   pf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
-  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   af     [writer=0x08048552] = v5383[1]
   cf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
@@ -2865,7 +2865,7 @@ registers:
   eip    [writer=0x08048554] = {defs={0x08048554}, expr=0x0804855a<134514010>[32]}
   pf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
-  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   af     [writer=0x08048552] = v5383[1]
   cf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
@@ -2878,7 +2878,7 @@ registers:
   eip    [writer=0x0804855a] = {defs={0x0804855a}, expr=0x08048560<134514016>[32]}
   pf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
-  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   af     [writer=0x08048552] = v5383[1]
   cf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
@@ -2892,7 +2892,7 @@ registers:
   eip    [writer=0x08048560] = {defs={0x08048560}, expr=(concat[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m5393[8] (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000003[32]) (extract[8] 0x00000018[32] 0x00000020[32] v5385[32])) (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32]) 0x62[8]) (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32]) 0x85<-123>[8]) (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32]) 0x04[8]) (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32]) 0x08[8]) (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000003[32])) (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m5391[8] (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000002[32]) (extract[8] 0x00000010[32] 0x00000018[32] v5385[32])) (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32]) 0x62[8]) (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32]) 0x85<-123>[8]) (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32]) 0x04[8]) (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32]) 0x08[8]) (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000002[32])) (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m5389[8] (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000001[32]) (extract[8] 0x00000008[32] 0x00000010[32] v5385[32])) (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32]) 0x62[8]) (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32]) 0x85<-123>[8]) (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32]) 0x04[8]) (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32]) 0x08[8]) (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000001[32])) (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m5387[8] (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32]) (extract[8] 0x00000000[32] 0x00000008[32] v5385[32])) (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32]) 0x62[8]) (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32]) 0x85<-123>[8]) (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32]) 0x04[8]) (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32]) 0x08[8]) (add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32])))}
   pf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
-  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
+  zf     [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
   of     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   af     [writer=0x08048552] = v5383[1]
   cf     [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}

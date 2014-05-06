@@ -24,7 +24,6 @@ using this memory map for disassembly:
     va 0x0804ae58 + 0x000001aa = 0x0804b002 r--- at buffer acg   + 0x00001e58 i386-poweroff(.dynstr)
     va 0x0804b002 + 0x00000ac2 = 0x0804bac4 rw-p at buffer aak   + 0x00001002 i386-poweroff(LOAD#3)
     va 0x0804bac4 + 0x0000053c = 0x0804c000 rw-p at anon aaj     + 0x00000000 i386-poweroff(LOAD#3)
-disassembled 4467 instructions and 301 failures (use --show-bad to see errors)
 
 
 0x08048954: ================================== Function (function call) unknown name
@@ -3367,4 +3366,3 @@ disassembled 4467 instructions and 301 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

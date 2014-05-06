@@ -333,7 +333,11 @@ YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            if (ln->get_nbits() <= 64) {
+                o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            } else {
+                o <<"0b" <<ln->get_bits().toBinary();
+            }
         } else if (ln->is_memory()) {
             o <<"m" <<ln->get_name();
         } else {
@@ -685,7 +689,14 @@ YicesSolver::ctx_expr(const TreeNodePtr &tn)
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            if (ln->get_nbits() <= 64) {
+                retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            } else {
+                int tmp[ln->get_nbits()];
+                for (size_t i=0; i<ln->get_nbits(); ++i)
+                    tmp[i] = ln->get_bits().get(i) ? 1 : 0;
+                retval = yices_mk_bv_constant_from_array(context, ln->get_nbits(), tmp);
+            }
         } else {
             assert(ln->is_memory() || ln->is_variable());
             char name[64];

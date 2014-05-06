@@ -260,6 +260,7 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
+SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement
@@ -652,6 +653,7 @@ SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
 SgTypeShort
+SgTypeSigned128bitInteger
 SgTypeSignedChar
 SgTypeSignedInt
 SgTypeSignedLong
@@ -659,6 +661,7 @@ SgTypeSignedLongLong
 SgTypeSignedShort
 SgTypeString
 SgTypeUnknown
+SgTypeUnsigned128bitInteger
 SgTypeUnsignedChar
 SgTypeUnsignedInt
 SgTypeUnsignedLong

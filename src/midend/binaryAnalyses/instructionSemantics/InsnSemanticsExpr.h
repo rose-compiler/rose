@@ -11,6 +11,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <cassert>
 #include <inttypes.h>
+#include <sawyer/BitVector.h>
 #include <set>
 #include <vector>
 
@@ -521,13 +522,11 @@ class LeafNode: public TreeNode {
 private:
     enum LeafType { CONSTANT, BITVECTOR, MEMORY };
     LeafType leaf_type;
-    union {
-        uint64_t ival;                  /**< Integer (unsigned) value when 'known' is true; unused msb are zero */
-        uint64_t name;                  /**< Variable ID number when 'known' is false. */
-    };
+    Sawyer::Container::BitVector bits; /**< Value when 'known' is true */
+    uint64_t name;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), ival(0) {}
+    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
@@ -538,6 +537,9 @@ public:
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
     static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
+
+    /** Construct a new known value with the specified bits. */
+    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="");
 
     /** Create a new Boolean, a single-bit integer. */
     static LeafNodePtr create_boolean(bool b, std::string comment="") {
@@ -550,6 +552,7 @@ public:
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
+    virtual const Sawyer::Container::BitVector& get_bits() const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;

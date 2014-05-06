@@ -62,29 +62,34 @@ string get_type_name(SgType* t)
 //#else
      switch (t->variant())
         {
-          case T_UNKNOWN:            return "UNKNOWN";
-          case T_CHAR:               return "char";
-          case T_SIGNED_CHAR:        return "signed char";
-          case T_UNSIGNED_CHAR:      return "unsigned char";
-          case T_SHORT:              return "short";
-          case T_SIGNED_SHORT:       return "signed short";
-          case T_UNSIGNED_SHORT:     return "unsigned short";
-          case T_INT:                return "int";
-          case T_SIGNED_INT:         return "signed int";
-          case T_UNSIGNED_INT:       return "unsigned int";
-          case T_LONG:               return "long";
-          case T_SIGNED_LONG:        return "signed long";
-          case T_UNSIGNED_LONG:      return "unsigned long";
-          case T_VOID:               return "void";
-          case T_GLOBAL_VOID:        return "global void";
-          case T_WCHAR:              return "wchar_t";
-          case T_FLOAT:              return "float";
-          case T_DOUBLE:             return "double";
-          case T_LONG_LONG:          return "long long";
-          case T_SIGNED_LONG_LONG:   return "signed long long";
-          case T_UNSIGNED_LONG_LONG: return "unsigned long long";
-          case T_LONG_DOUBLE:        return "long double";
-          case T_STRING:             return "char*";
+          case T_UNKNOWN:                 return "UNKNOWN";
+          case T_CHAR:                    return "char";
+          case T_SIGNED_CHAR:             return "signed char";
+          case T_UNSIGNED_CHAR:           return "unsigned char";
+          case T_SHORT:                   return "short";
+          case T_SIGNED_SHORT:            return "signed short";
+          case T_UNSIGNED_SHORT:          return "unsigned short";
+          case T_INT:                     return "int";
+          case T_SIGNED_INT:              return "signed int";
+          case T_UNSIGNED_INT:            return "unsigned int";
+          case T_LONG:                    return "long";
+          case T_SIGNED_LONG:             return "signed long";
+          case T_UNSIGNED_LONG:           return "unsigned long";
+          case T_VOID:                    return "void";
+          case T_GLOBAL_VOID:             return "global void";
+          case T_WCHAR:                   return "wchar_t";
+          case T_FLOAT:                   return "float";
+          case T_DOUBLE:                  return "double";
+          case T_LONG_LONG:               return "long long";
+          case T_SIGNED_LONG_LONG:        return "signed long long";
+          case T_UNSIGNED_LONG_LONG:      return "unsigned long long";
+
+       // DQ (3/24/2014): Added support for 128-bit integers.
+          case T_SIGNED_128BIT_INTEGER:   return "__int128";
+          case T_UNSIGNED_128BIT_INTEGER: return "unsigned __int128";
+
+          case T_LONG_DOUBLE:             return "long double";
+          case T_STRING:                  return "char*";
 
           case T_BOOL:
              {
@@ -506,6 +511,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_LONG_LONG:
                case T_UNSIGNED_LONG_LONG:
                case T_SIGNED_LONG_LONG:
+
+            // DQ (3/24/2014): Added support for 128-bit integers.
+               case T_SIGNED_128BIT_INTEGER:
+               case T_UNSIGNED_128BIT_INTEGER:
+
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:
