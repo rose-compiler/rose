@@ -3538,6 +3538,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 void
 Partitioner::discover_post_padding_functions(const MemoryMap &map)
 {
+    Stream debug = mlog[DEBUG];
     if (map.empty())
         return;
 
@@ -3546,25 +3547,17 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
     padding_bytes.push_back(0xcc);                      // x86 INT3
     padding_bytes.push_back(0);                         // zero padding
 
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-    std::cerr <<"ROBB: discover_post_padding_functions()\n";
-#endif
+    debug <<"discover_post_padding_functions()\n";
 
     rose_addr_t next_va = map.hull().first;             // first address in the map
     while (1) {
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-        std::cerr <<"ROBB:   current position is " <<StringUtility::addrToString(next_va) <<"\n";
-#endif
+        debug <<"  current position is " <<addrToString(next_va) <<"\n";
 
         // Find an address that is mapped but not part of any function.
         boost::optional<rose_addr_t> unused_va = next_unused_address(map, next_va);
         if (!unused_va)
             break;
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-        std::cerr <<"ROBB:   next unused address is " <<StringUtility::addrToString(*unused_va) <<"\n";
-#endif
+        debug <<"  next unused address is " <<addrToString(*unused_va) <<"\n";
 
         // Find the next occurrence of padding bytes.
         Extent search_limits = Extent::inin(*unused_va, map.hull().second);
@@ -3583,11 +3576,8 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
         }
         rose_addr_t npadding = candidate_va - *padding_va;
         next_va = candidate_va + 1;                     // for next time through this loop
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-        std::cerr <<"ROBB:   address after padding is " <<StringUtility::addrToString(candidate_va) <<"\n";
-        std::cerr <<"ROBB:   number of padding bytes is " <<npadding <<"\n";
-#endif
+        debug <<"  address after padding is " <<addrToString(candidate_va) <<"\n"
+              <<"  number of padding bytes is " <<npadding <<"\n";
 
         // Only consider this to be padding if we found some minimum number of padding bytes.
         if (npadding < 5)                               // arbitrary
@@ -3615,22 +3605,16 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
             continue;                                   // probably data since there are so many zero bytes
         if ((double)nprint / nread > 0.8)               // arbitrary
             continue;                                   // looks like ASCII data
-            
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-        std::cerr <<"ROBB:   discovering function at " <<StringUtility::addrToString(candidate_va) <<"\n"
-                  <<"        nread=" <<nread <<", nzeros=" <<nzeros <<", nprint=" <<nprint <<"\n";
-#endif
+        debug <<"  discovering function at " <<addrToString(candidate_va) <<"\n"
+              <<"    nread=" <<nread <<", nzeros=" <<nzeros <<", nprint=" <<nprint <<"\n";
 
         // Mark the candidate address as a function entry point and discover the basic blocks for this function.
-        if (debug)
-            fprintf(debug, "Partitioner::discover_post_padding_functions: candidate function at F%08"PRIx64"\n", candidate_va);
+        mlog[TRACE] <<"Partitioner::discover_post_padding_functions: candidate function at "
+                    <<addrToString(candidate_va) <<"\n";
         add_function(candidate_va, SgAsmFunction::FUNC_INTERPADFUNC);
         analyze_cfg(SgAsmBlock::BLK_GRAPH2);
     }
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-16]*/
-    std::cerr <<"ROBB:   discover_post_padding_functions analysis has completed\n";
-#endif
+    debug <<"  discover_post_padding_functions analysis has completed\n";
 }
     
 void
