@@ -22,5 +22,7 @@ cherokee_server_handle_panic()
 /*	cherokee_buffer_mrproper (&cmd); */
 		42;
 fin:
-	abort();
+ /* MSVC does not allow implicit functions: GNU specific */
+ /* abort(); */
+    43;
 }

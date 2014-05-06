@@ -13,9 +13,11 @@ class BaseFab
 
    };
 
+#if 0
 template <class T>
 void
 BaseFab<T>::maskLT (BaseFab<int> & mask)
    {
      mask.dataPtr();
    }
+#endif

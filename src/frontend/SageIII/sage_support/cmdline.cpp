@@ -5334,7 +5334,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
 #else
   // DQ (4/21/2014): The preinclude file we generate for ROSE is specific to the backend and for Windows code might be too specific to Linux.
-     printf ("Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+  // But we certainly don't want the -D options: e.g "-D__GNUG__=4 -D__GNUC__=4 -D__GNUC_MINOR__=4 -D__GNUC_PATCHLEVEL__=7"
+     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+  // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+     commandLine.push_back("--preinclude");
+     commandLine.push_back("rose_edg_required_macros_and_functions.h");
 #endif
 
   // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used

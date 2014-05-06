@@ -9,7 +9,8 @@ int main()
   int k;
 
   {
-    k = omp_get_num_threads();
+ /* MSVC does not allow implicit functions: GNU specific */
+ /* k = omp_get_num_threads(); */
   }
   return 0;
 }

@@ -22,7 +22,7 @@ namespace A
   // struct X { T t; };
 
 #if DEFINE_AS_TEMPLATE
-     template<typename T> void foobar(T t) {};
+//     template<typename T> void foobar(T t) {};
 #else
      void foobar(int t) {};
 #endif
@@ -30,7 +30,9 @@ namespace A
 
 // X<long> x;
 
+#if 0
 void foo()
    {
      A::foobar(1);
    }
+#endif

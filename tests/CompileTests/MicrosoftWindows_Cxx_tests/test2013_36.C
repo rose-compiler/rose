@@ -11,6 +11,7 @@ class BaseFab
           void maskLT (BaseFab<int>& mask ) const;
    };
 
+#if 0
 #if 1
 template <class T>
 void
@@ -24,6 +25,7 @@ foo (BaseFab<int>& mask)
    {
 //     mask.setVal(0);
    }
+#endif
 #endif
 
 BaseFab< vector<int> > hash;

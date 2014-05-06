@@ -10,7 +10,7 @@ class DBusXMLHandler
      public:
           void getCurrentScope()
              {
-               m_scopeStack.last()->scope;
+            // m_scopeStack.last()->scope;
             // m_scopeStack.last();
              }
 

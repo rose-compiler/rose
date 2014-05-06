@@ -3,6 +3,7 @@
  */
 int foo()
 {
-  bar();
+/* MSVC does not allow implicit functions: GNU specific */
+/*  bar(); */
   return 0;
 }
