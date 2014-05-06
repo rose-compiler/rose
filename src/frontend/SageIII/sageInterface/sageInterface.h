@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <utility>
 
-#include "rose_config.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
