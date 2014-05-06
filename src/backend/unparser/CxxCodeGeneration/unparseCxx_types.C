@@ -640,9 +640,17 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
              // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
              // SgJavaWildcardType
-                case T_JAVA_WILD:
+               case T_JAVA_WILD:
                   {
                     printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
+                    break;
+                  }
+
+            // DQ (4/27/2014): After some fixes to ROSE to permit the new shared memory DSL, we now get this 
+            // IR node appearing in test2007_168.f90 (I don't yet understand why).
+               case T_LABLE:
+                  {
+                    printf ("ERROR: Unparse_Type::unparseType(): SgTypeLabel is appearing in test2007_168.f90 (where it had not appeared before) (allow this for now) \n");
                     break;
                   }
 
@@ -2276,27 +2284,27 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
                if (block_size == 0) // block size empty
-               {
-                 curprint ("shared[] ") ;
-               }
+                  {
+                    curprint ("shared[] ") ;
+                  }
                else if (block_size == -1) // block size omitted
-               {
-                 curprint ("shared ") ;
-               }
+                  {
+                    curprint ("shared ") ;
+                  }
                else if (block_size == -2) // block size is *
-               {
-                 curprint ("shared[*] ") ;
-               }
+                  {
+                    curprint ("shared[*] ") ;
+                  }
                else
-               {
-                 ROSE_ASSERT(block_size > 0);
+                  {
+                    ROSE_ASSERT(block_size > 0);
 
-                 stringstream ss;
+                    stringstream ss;
 
-                 ss<<block_size;
+                    ss << block_size;
 
-                 curprint ("shared["+ss.str()+"] ") ;
-               }
+                    curprint ("shared[" + ss.str() + "] ");
+                  }
              }
 
        // Print the base type unless it has been printed up front

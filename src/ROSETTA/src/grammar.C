@@ -3712,9 +3712,12 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                               outputFile << "case " << StringUtility::numberToString(counter++) << ": "
                                          << "return compute_classDefinition();\n";
                             }
-                         else
+                           else
                             {
-                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                           // DQ (4/22/2014): Added code to allow valgrind to detect unitialized variables.
+                           // outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " 
+                                         << "ROSE_ASSERT(p_" << memberVariableName << " == NULL || p_" << memberVariableName << " != NULL); return p_" << memberVariableName << ";\n";
                             }
                        }
                  // Reaching the default case is an error.
