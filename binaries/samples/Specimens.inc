@@ -117,6 +117,7 @@ elf_exe_x86_specimens =				\
     i386-fcalls					\
     i386-fsck.cramfs				\
     i386-int3					\
+    i386-mul					\
     i386-nologin				\
     i386-pivot_root				\
     i386-pointers				\
@@ -175,6 +176,7 @@ raw_rot13_x86_specimens =			\
 other_distributed =				\
     ARPPRODUCTICON.exe				\
     i386-int3.s					\
+    i386-mul.s					\
     memreadwrite.s				\
     pentium-xmm.s				\
     vm-final.README				\
