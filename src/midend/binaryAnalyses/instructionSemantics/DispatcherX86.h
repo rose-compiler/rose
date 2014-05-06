@@ -11,7 +11,7 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
     explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_i386());
+        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
         regcache_init();
         iproc_init();
     }

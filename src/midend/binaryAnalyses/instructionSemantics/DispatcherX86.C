@@ -11,13 +11,15 @@ namespace InstructionSemantics2 {
  *******************************************************************************************************************************/
 
 static inline size_t asm_type_width(SgAsmType* ty) {
-  switch (ty->variantT()) {
-    case V_SgAsmTypeByte: return 8;
-    case V_SgAsmTypeWord: return 16;
-    case V_SgAsmTypeDoubleWord: return 32;
-    case V_SgAsmTypeQuadWord: return 64;
-    default: {std::cerr << "Unhandled type " << ty->class_name() << " in asm_type_width" << std::endl; abort();}
-  }
+    switch (ty->variantT()) {
+        case V_SgAsmTypeByte:                   return 8;
+        case V_SgAsmTypeWord:                   return 16;
+        case V_SgAsmTypeDoubleWord:             return 32;
+        case V_SgAsmTypeQuadWord:               return 64;
+        case V_SgAsmTypeDoubleQuadWord:         return 128;
+        default:
+            ASSERT_not_reachable("unhandled type: " + ty->class_name());
+    }
 }
 
 /*******************************************************************************************************************************
@@ -44,7 +46,7 @@ public:
         operators->writeRegister(dispatcher->REG_EIP, operators->add(operators->number_(32, insn->get_address()),
                                                                      operators->number_(32, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-        check_arg_width(insn, operands);
+        check_arg_width(dispatcher.get(), insn, operands);
         p(dispatcher.get(), operators.get(), insn, operands);
     }
 
@@ -57,11 +59,31 @@ public:
 
     // This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
     // E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
-    void check_arg_width(I insn, A args) {
+    // Note that even 32-bit x86 architectures might have registers that are larger than 32 bits (e.g., xmm registers on a
+    // Pentium4). Therefore, we consult the register dictionary and only fail if the operand is larger than 32 bits and
+    // contains a register which isn't part of the dictionary.
+    void check_arg_width(D d, I insn, A args) {
+        struct T1: AstSimpleProcessing {
+            D d;
+            I insn;
+            size_t argWidth;
+            T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
+            void visit(SgNode *node) {
+                if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                    const RegisterDictionary *regdict = d->get_register_dictionary();
+                    ASSERT_not_null(regdict);
+                    if (regdict->lookup(rre->get_descriptor()).empty())
+                        throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
+                                                       "-bit operands not supported for " +
+                                                       regdict->get_architecture_name(),
+                                                       insn);
+                }
+            }
+        };
         for (size_t i=0; i<args.size(); ++i) {
             size_t nbits = asm_type_width(args[i]->get_type());
             if (nbits > 32)
-                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit operands not supported yet", insn);
+                T1(d, insn, nbits).traverse(args[i], preorder);
         }
     }
 };
