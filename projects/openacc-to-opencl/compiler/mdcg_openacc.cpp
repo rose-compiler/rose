@@ -40,6 +40,8 @@ SgExpression * LoopDesc::createFieldInitializer(
   }
 }
 
+size_t s_version_id = 0;
+
 SgExpression * KernelVersion::createFieldInitializer(
   const MDCG::CodeGenerator & codegen,
   MDCG::Model::field_t element,
@@ -49,15 +51,17 @@ SgExpression * KernelVersion::createFieldInitializer(
 ) {
   switch (field_id) {
     case 0:
+      return SageBuilder::buildIntVal(s_version_id++);
+    case 1:
       /// /todo unsigned long num_gang;
       return SageBuilder::buildIntVal(0);
-    case 1:
+    case 2:
       /// /todo unsigned long num_worker;
       return SageBuilder::buildIntVal(0);
-    case 2:
+    case 3:
       /// /todo unsigned long vector_length;
       return SageBuilder::buildIntVal(1);
-    case 3:
+    case 4:
     {
       /// struct acc_loop_t_ * loops;
       std::ostringstream decl_name;
@@ -76,10 +80,10 @@ SgExpression * KernelVersion::createFieldInitializer(
                decl_name.str()
              );
     }
-    case 4:
+    case 5:
       /// char * suffix;
       return SageBuilder::buildStringVal(input->kernel_name);
-    case 5:
+    case 6:
       /// acc_device_t device_affinity;
       return SageBuilder::buildIntVal(0); /// \todo use 'acc_device_any'
     default:
@@ -157,6 +161,7 @@ SgExpression * KernelDesc::createFieldInitializer(
       return SageBuilder::buildIntVal(versions.size());
     case 9:
     {
+      s_version_id = 0;
       /// acc_kernel_version_t * versions;
       MDCG::Model::type_t type = element->node->type;
       assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
