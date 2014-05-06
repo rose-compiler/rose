@@ -126,6 +126,7 @@ elf_exe_x86_specimens =				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
     memreadwrite				\
+    pentium-movd				\
     pentium-xmm					\
     usedef
 elf_obj_x86_specimens =
@@ -178,6 +179,7 @@ other_distributed =				\
     i386-int3.s					\
     i386-mul.s					\
     memreadwrite.s				\
+    pentium-movd.s				\
     pentium-xmm.s				\
     vm-final.README				\
     vm-final.ipd

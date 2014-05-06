@@ -17,6 +17,13 @@ static inline size_t asm_type_width(SgAsmType* ty) {
         case V_SgAsmTypeDoubleWord:             return 32;
         case V_SgAsmTypeQuadWord:               return 64;
         case V_SgAsmTypeDoubleQuadWord:         return 128;
+        case V_SgAsmTypeSingleFloat:            return 32;
+        case V_SgAsmTypeDoubleFloat:            return 64;
+        case V_SgAsmType80bitFloat:             return 80;
+        case V_SgAsmTypeVector: {
+            SgAsmTypeVector *vtype = isSgAsmTypeVector(ty);
+            return asm_type_width(vtype->get_elementType()) * vtype->get_elementCount();
+        }
         default:
             ASSERT_not_reachable("unhandled type: " + ty->class_name());
     }
@@ -752,6 +759,16 @@ struct IP_mov: P {
     }
 };
 
+// Move source to destination with truncation or zero extend
+struct IP_move_extend: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nbitsSrc = asm_type_width(args[1]->get_type());
+        size_t nbitsDst = asm_type_width(args[0]->get_type());
+        d->write(args[0], ops->unsignedExtend(d->read(args[1], nbitsSrc), nbitsDst));
+    }
+};
+
 // Move aligned double quadword
 struct IP_movdqa: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1349,7 +1366,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
     iproc_set(x86_mov,          new X86::IP_mov);
+    iproc_set(x86_movd,         new X86::IP_move_extend);
     iproc_set(x86_movdqa,       new X86::IP_movdqa);
+    iproc_set(x86_movq,         new X86::IP_move_extend);
     iproc_set(x86_movsb,        new X86::IP_movestring(x86_repeat_none, 8));
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
