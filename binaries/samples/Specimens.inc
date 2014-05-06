@@ -124,6 +124,7 @@ elf_exe_x86_specimens =				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
     memreadwrite				\
+    pentium-xmm					\
     usedef
 elf_obj_x86_specimens =
 elf_so_x86_specimens =				\
@@ -173,6 +174,7 @@ raw_rot13_x86_specimens =			\
 other_distributed =				\
     ARPPRODUCTICON.exe				\
     memreadwrite.s				\
+    pentium-xmm.s				\
     vm-final.README				\
     vm-final.ipd
 

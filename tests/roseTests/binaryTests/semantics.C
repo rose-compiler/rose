@@ -59,7 +59,7 @@
 #   error "invalid value for SMT_SOLVER"
 #endif
 
-const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
 
 #include "TraceSemantics2.h"
 
