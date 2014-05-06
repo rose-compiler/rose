@@ -39,13 +39,16 @@ using namespace AType;
 
 #include "ReachabilityResults.h"
 #include "DeadCodeElimination.h"
+#include "ReachabilityAnalysis.h"
 
 //static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
-ReachabilityResults reachabilityResults;
 bool global_option_multiconstanalysis=false;
+
+// temporary
+//#include "ReachabilityAnalysis.C"
 
 #if 0
 bool isVariableOfInterest(VariableId varId) {
@@ -66,83 +69,6 @@ size_t numberOfFunctions(SgNode* node) {
 //#include "FIConstAnalysis.C"
 //#include "DeadCodeEliminationOperators.C"
 
-
-// returns the error_XX label number or -1
-//  error_0 is a valid label number (therefore -1 is returned if no label is found)
-int isIfWithLabeledAssert(SgNode* node) {
-  if(isSgIfStmt(node)) {
-    node=SgNodeHelper::getTrueBranch(node);
-    RoseAst block(node);
-    for(RoseAst::iterator i=block.begin();i!=block.end();++i) {
-      SgNode* node2=*i;
-      if(SgExprStatement* exp=isSgExprStatement(node2))
-        node2=SgNodeHelper::getExprStmtChild(exp);
-      if(isSgLabelStatement(node2)) {
-        RoseAst::iterator next=i;
-        next++;
-        if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
-          //          cout<<"ASSERT FOUND with Label found:"<<endl;
-          SgLabelStatement* labStmt=isSgLabelStatement(*i);
-          assert(labStmt);
-          string name=SgNodeHelper::getLabelName(labStmt);
-          if(name=="globalError")
-            name="error_60";
-          name=name.substr(6,name.size()-6);
-          std::istringstream ss(name);
-          int num;
-          ss>>num;
-          return num;
-        }
-      }
-    }
-  }
-  return -1;
-}
-
-#if 0
-int eliminateDeadCodePhase2(SgNode* root,SgFunctionDefinition* mainFunctionRoot,
-                            VariableIdMapping* variableIdMapping,
-                            VariableConstInfo& vci) {
-  // temporary global var
-  //global_variableIdMappingPtr=variableIdMapping;
-  //global_variableConstInfo=&vci;
-  FIConstAnalysis fiConstAnalysis(variableIdMapping);
-  fiConstAnalysis.setVariableConstInfo(&vci);
-  fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
-
-  RoseAst ast1(root);
-
-  cout<<"STATUS: Dead code elimination phase 2: Eliminating sub expressions."<<endl;
-  list<pair<SgExpression*,SgExpression*> > toReplaceExpressions;
-  for(RoseAst::iterator i=ast1.begin();i!=ast1.end();++i) {
-    // determine expressions of blocks/ifstatements
-    SgExpression* exp=0;
-    if(isSgIfStmt(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)) {
-      SgNode* node=SgNodeHelper::getCond(*i);
-      if(isSgExprStatement(node)) {
-        node=SgNodeHelper::getExprStmtChild(node);
-      }
-      //cout<<node->class_name()<<";";
-      exp=isSgExpression(node);
-      if(exp) {
-        ConstIntLattice res=fiConstAnalysis.eval(exp);
-        int assertCode=isIfWithLabeledAssert(*i);
-        if(assertCode>=0) {
-          if(res.isTrue()) {
-            reachabilityResults.reachable(assertCode);
-          }
-          if(res.isFalse()) {
-            reachabilityResults.nonReachable(assertCode);
-          }
-        }
-        //cout<<"\nELIM:"<<res.toString()<<":"<<exp->unparseToString()<<endl;
-      }
-    }
-  }
-  cout<<"STATUS: Dead code elimination phase 2: finished."<<endl;
-  return 0;
-}
-#endif
 
 void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"Result:"<<endl;
@@ -372,15 +298,19 @@ int main(int argc, char* argv[]) {
     cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
     cout<<"STATUS: Dead code elimination phase 1: finished."<<endl;
     cout<<"STATUS: Performing condition const analysis."<<endl;
+  } else {
+    cout<<"STATUS: Dead code elimination: turned off."<<endl;
+  }
+  if(csvAssertFileName) {
+    cout<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
     Labeler labeler(root);
     fiConstAnalysis.performConditionConstAnalysis(&labeler);
     cout<<"INFO: Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
     cout<<"INFO: Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
     cout<<"INFO: Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
-  } else {
-    cout<<"STATUS: Dead code elimination: turned off."<<endl;
-  }
-  if(csvAssertFileName) {
+    cout<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
+    ReachabilityAnalysis ra;
+    ReachabilityResults reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
     cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
     reachabilityResults.write2013File(csvAssertFileName,true);
   }

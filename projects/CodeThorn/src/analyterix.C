@@ -303,7 +303,7 @@ void rdAnalysis(SgProject* root) {
                                  rdAnalyzer->getVariableIdMapping(),
                                  "ud-analysis");
   //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
-  //ddvis._showSourceCode=false; // for large programs
+  ddvis0._showSourceCode=false; // for large programs
   ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
   flow->resetDotOptions();
 
