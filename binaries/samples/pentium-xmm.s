@@ -3,6 +3,7 @@
 	
 _start:
 	movdqa	xmm0, xmm1
+	palignr	xmm0, xmm1, 3
 
 	;; exit
 	mov	eax, 1

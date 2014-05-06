@@ -905,6 +905,27 @@ struct IP_or: P {
     }
 };
 
+// Packed align right
+struct IP_palignr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (64!=nbits && 128!=nbits) {
+            throw BaseSemantics::Exception("first operand must be 64 or 128 bits wide (actual " +
+                                           StringUtility::plural(nbits, "bits") + ")", insn);
+        }
+        if (args[0]->get_type() != args[1]->get_type())
+            throw BaseSemantics::Exception("first and second operands must be the same type", insn);
+        SgAsmIntegerValueExpression *nBytes = isSgAsmIntegerValueExpression(args[2]);
+        if (!nBytes)
+            throw BaseSemantics::Exception("third operand must be a byte value expression (imm8)", insn);
+        BaseSemantics::SValuePtr wide = ops->concat(d->read(args[0], nbits), d->read(args[1], nbits));
+        BaseSemantics::SValuePtr result = ops->extract(ops->shiftRight(wide, d->number_(8, nBytes->get_value() * 8)),
+                                                       0, nbits);
+        d->write(args[0], result);
+    }
+};
+
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1339,6 +1360,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_nop,          new X86::IP_nop);
     iproc_set(x86_not,          new X86::IP_not);
     iproc_set(x86_or,           new X86::IP_or);
+    iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popad,        new X86::IP_popad);
     iproc_set(x86_push,         new X86::IP_push);
