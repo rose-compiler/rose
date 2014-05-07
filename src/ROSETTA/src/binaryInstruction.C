@@ -18,6 +18,10 @@
  *
  * NOTE:  Please use three blank lines between IR node definitions to help make this file more readable.  Unless those IR
  *        nodes are so closely related to one another that it's better to keep them close.
+ *
+ * NOTE:  If you get thousands of compile errors in Cxx_Grammar.h that seem to have absolutely nothing to do with the node
+ *        you just added, then double check that the new node type is listed as the descendant of some other node type in
+ *        a NEW_NONTERMINAL_MACRO macro expansion.
  *-----------------------------------------------------------------------------------------------------------------------------*/
 
 #include "ROSETTA_macros.h"
@@ -197,6 +201,23 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    // Indirect registers, as in x86 ST(1), which has base=register st_0, stride={0,1,0,0}, offset=register _st_top,
+    // index=1, and modulus=8.
+    NEW_TERMINAL_MACRO(AsmIndirectRegisterExpression,
+                       "AsmIndirectRegisterExpression", "AsmIndirectRegisterExpressionTag");
+    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "base", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("size_t", "index", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("size_t", "modulus", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
     NEW_TERMINAL_MACRO(AsmIntegerValueExpression, "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag");
     AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "=NULL",
@@ -205,6 +226,7 @@ Grammar::setUpBinaryInstructions()
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "=0",
                                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
     // Floating point constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])
@@ -283,7 +305,7 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmExpression,
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
-                          AsmCommonSubExpression       | AsmExprListExp,
+                          AsmCommonSubExpression       | AsmExprListExp                 | AsmIndirectRegisterExpression,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
