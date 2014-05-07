@@ -160,49 +160,20 @@ Grammar::setUpBinaryInstructions()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
+    // Direct register references, like x86 EAX (as opposed to, say, ST(0)).  The only purpose of this class is because SageIII
+    // doesn't allow traversals on non-terminal classes.
+    NEW_TERMINAL_MACRO(AsmDirectRegisterExpression,
+                       "AsmDirectRegisterExpression", "AsmDirectRegisterExpressionTag");
+    AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                 NO_DELETE);
 
-    // References to registers
-    NEW_TERMINAL_MACRO(Asmx86RegisterReferenceExpression,
-                       "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag");
+    
 
-
-
-    NEW_TERMINAL_MACRO(AsmArmRegisterReferenceExpression ,
-                       "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag");
-    AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
-                                                           "../Grammar/BinaryInstruction.code");
-    AsmArmRegisterReferenceExpression.setDataPrototype("unsigned", "psr_mask", "=0",
-                                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmPowerpcRegisterReferenceExpression,
-                       "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag");
-
-
-
-
-    NEW_TERMINAL_MACRO(AsmMipsRegisterReferenceExpression,
-                       "AsmMipsRegisterReferenceExpression", "AsmMipsRegisterReferenceExpressionTag");
-
-
-
-
-    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression ,
-                          Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression |
-                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression,
-                          "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
-    AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
-                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-    // Indirect registers, as in x86 ST(1), which has base=register st_0, stride={0,1,0,0}, offset=register _st_top,
+    // Indirect registers, as in x86 ST(1), which has base="st", stride={0,1,0,0}, offset="_st_top",
     // index=1, and modulus=8.
     NEW_TERMINAL_MACRO(AsmIndirectRegisterExpression,
                        "AsmIndirectRegisterExpression", "AsmIndirectRegisterExpressionTag");
-    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "base", "",
-                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
@@ -211,6 +182,15 @@ Grammar::setUpBinaryInstructions()
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmIndirectRegisterExpression.setDataPrototype("size_t", "modulus", "",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+    // References to registers
+    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression, AsmDirectRegisterExpression|AsmIndirectRegisterExpression,
+                          "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag", false);
+    AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
+                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
 
@@ -301,7 +281,7 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmExpression,
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
-                          AsmCommonSubExpression       | AsmExprListExp                 | AsmIndirectRegisterExpression,
+                          AsmCommonSubExpression       | AsmExprListExp,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
