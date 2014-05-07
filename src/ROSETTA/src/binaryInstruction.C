@@ -164,10 +164,6 @@ Grammar::setUpBinaryInstructions()
     // References to registers
     NEW_TERMINAL_MACRO(Asmx86RegisterReferenceExpression,
                        "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag");
-    Asmx86RegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
-                                                           "../Grammar/BinaryInstruction.code");
-    Asmx86RegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
 
 
 
