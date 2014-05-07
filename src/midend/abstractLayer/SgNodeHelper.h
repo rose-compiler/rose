@@ -279,6 +279,10 @@ namespace SgNodeHelper {
   bool isFloatingPointAssignment(SgNode* exp);
   bool isFloatingPointType(SgType* type);
 
+  // this function replaces expressions e1 by expression e2. Currently is uses the SageInterface::rewriteExpression function
+  // but wraps around some addtional checks that significantly improve performance of the replace operation.
+  void replaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false);
+
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
     //! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.

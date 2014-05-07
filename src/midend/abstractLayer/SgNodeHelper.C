@@ -17,14 +17,14 @@ using namespace std;
   * \date 2013.
  */
 SgVariableSymbol* SgNodeHelper::isFunctionParameterVariableSymbol(SgNode* node) {
-  if(node)
+  if(node) {
     if(SgVariableSymbol* varsym=isSgVariableSymbol(node))
       if(SgInitializedName* initname=varsym->get_declaration())
         if(SgDeclarationStatement* declstmt=initname->get_declaration())
-          if(SgFunctionParameterList* fpl=isSgFunctionParameterList(declstmt)) {
+          if(SgFunctionParameterList* fpl=isSgFunctionParameterList(declstmt))
             if(fpl && !SgNodeHelper::isForwardFunctionDeclaration(fpl->get_parent()))
               return varsym;
-          }
+  }
   return 0;
 }
 
@@ -1250,3 +1250,12 @@ int SgNodeHelper::numChildren(SgNode* node) {
   }
 }
 
+void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mode) {
+  SgExpression* p=isSgExpression(e1->get_parent());
+  if(p && mode==false) {
+    p->replace_expression(e1,e2);
+    e2->set_parent(p);
+  } else {
+    SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
+  }
+}
