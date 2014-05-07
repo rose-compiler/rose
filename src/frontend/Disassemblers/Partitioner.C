@@ -1446,12 +1446,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             break;
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
             break;
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
@@ -1470,7 +1470,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=1)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
@@ -1489,12 +1489,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
             return insns.end();
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_sp)
@@ -2532,7 +2532,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
     SgAsmExpression *mref_addr = mref->get_address();
     if (isSgAsmBinaryExpression(mref_addr)) {
         SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
-        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
+        SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
         if (reg!=NULL && val!=NULL) {
             if (reg->get_descriptor().get_major()==x86_regclass_ip) {

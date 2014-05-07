@@ -1648,20 +1648,12 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmCommonSubExpression>(*n));
         break;
 
-      case V_SgAsmx86RegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmx86RegisterReferenceExpression>(*n));
+      case V_SgAsmDirectRegisterExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDirectRegisterExpression>(*n));
         break;
 
-      case V_SgAsmArmRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmArmRegisterReferenceExpression>(*n));
-        break;
-
-      case V_SgAsmPowerpcRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPowerpcRegisterReferenceExpression>(*n));
-        break;
-
-      case V_SgAsmRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmRegisterReferenceExpression>(*n));
+      case V_SgAsmIndirectRegisterExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIndirectRegisterExpression>(*n));
         break;
 
       case V_SgAsmIntegerValueExpression:

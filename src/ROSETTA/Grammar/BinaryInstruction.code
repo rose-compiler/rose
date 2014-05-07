@@ -3945,17 +3945,6 @@ HEADER_BINARY_TYPE_128bit_FLOAT_END
 
 
 
-HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
-        enum arm_suffix_field_enum {
-                undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
-                c = 1, // control field mask bit
-                x = 2, // extension field mask bit
-                s = 4, // status field mask bit
-                f = 8, // flags field mask bit
-                last_position_in_suffix
-        };
-HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
-
 
 
 

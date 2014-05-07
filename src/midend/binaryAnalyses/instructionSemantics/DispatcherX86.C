@@ -250,7 +250,7 @@ struct IP_bittest: P {
         ops->writeRegister(d->REG_AF, ops->undefined_(1));
         ops->writeRegister(d->REG_PF, ops->undefined_(1));
                 
-        if (isSgAsmMemoryReferenceExpression(args[0]) && isSgAsmx86RegisterReferenceExpression(args[1])) {
+        if (isSgAsmMemoryReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
             // Special case allowing multi-word offsets into memory
             SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
             BaseSemantics::SValuePtr addr = d->effectiveAddress(mre, 32);

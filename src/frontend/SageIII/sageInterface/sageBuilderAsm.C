@@ -7,28 +7,28 @@
 
 using namespace std;
 
-SgAsmx86RegisterReferenceExpression *
+SgAsmDirectRegisterExpression *
 SageBuilderAsm::buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor &desc) 
 {
-    return new SgAsmx86RegisterReferenceExpression(desc);
+    return new SgAsmDirectRegisterExpression(desc);
 }
 
-SgAsmArmRegisterReferenceExpression *
+SgAsmDirectRegisterExpression *
 SageBuilderAsm::buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor &desc)
 {
-    return new SgAsmArmRegisterReferenceExpression(desc);
+    return new SgAsmDirectRegisterExpression(desc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmDirectRegisterExpression *
 SageBuilderAsm::buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor &desc)
 {
-    return new SgAsmMipsRegisterReferenceExpression(desc);
+    return new SgAsmDirectRegisterExpression(desc);
 }
 
-SgAsmPowerpcRegisterReferenceExpression *
+SgAsmDirectRegisterExpression *
 SageBuilderAsm::buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &desc)
 {
-    return new SgAsmPowerpcRegisterReferenceExpression(desc);
+    return new SgAsmDirectRegisterExpression(desc);
 }
 
 

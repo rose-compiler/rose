@@ -112,10 +112,18 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             break;
         }
 
-        case V_SgAsmx86RegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression: {
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
-            SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseX86Register(insn, rr->get_descriptor(), registers);
+            break;
+        }
+
+        case V_SgAsmIndirectRegisterExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmIndirectRegisterExpression* rr = isSgAsmIndirectRegisterExpression(expr);
+            result = unparseX86Register(insn, rr->get_descriptor(), registers);
+            result += "(" + StringUtility::numberToString(rr->get_index()) + ")";
             break;
         }
 

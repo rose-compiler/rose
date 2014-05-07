@@ -61,6 +61,19 @@ enum X86GeneralPurposeRegister
     x86_gpr_r15         = 15,
 };
 
+/** Intel x86 ST-related registers.  These are the 8 80-bit floating point registers. */
+enum X86StRegister {
+    x86_st_0            = 0,
+    x86_st_1            = 1,
+    x86_st_2            = 2,
+    x86_st_3            = 3,
+    x86_st_4            = 4,
+    x86_st_5            = 5,
+    x86_st_6            = 6,
+    x86_st_7            = 7,
+    x86_st_top          = 8                             // must be last
+};
+
 /** Intel x86 status flags. These are the bit offsets in the flags register. */
 enum X86Flag 
 {

@@ -155,27 +155,27 @@ DisassemblerMips::makeInstruction(MipsInstructionKind kind, const std::string &m
     return insn;
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeRegister(unsigned regnum)
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
     const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpRegister(unsigned regnum)
 {
     std::string regname = "f" + StringUtility::numberToString(regnum);
     const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
 {
     ASSERT_require(regnum<32);
@@ -406,10 +406,10 @@ DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
     const RegisterDescriptor *regdesc = get_registers()->lookup(s);
     if (!regdesc)
         throw Exception("no such register: " + s);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpccRegister(unsigned cc)
 {
     ASSERT_require(cc<=7);
@@ -417,37 +417,37 @@ DisassemblerMips::makeFpccRegister(unsigned cc)
     if (!regdesc)
         throw Exception("no such register: fcsr");
     RegisterDescriptor r(regdesc->get_major(), regdesc->get_minor(), cc?24+cc:23, 1);
-    return new SgAsmMipsRegisterReferenceExpression(r);
+    return new SgAsmDirectRegisterExpression(r);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp2Register(unsigned regnum)
 {
     // Coprocessor 2 is implementation defined. We're assuming 32 individual 32-bit registers numbered 0-31.
     ASSERT_require(regnum<32);
-    return new SgAsmMipsRegisterReferenceExpression(RegisterDescriptor(mips_regclass_cp2gpr, regnum, 0, 32));
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2gpr, regnum, 0, 32));
 }
     
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp2ccRegister(unsigned regnum)
 {
     // Coprocessor 2 is implementation defined. We're assuming 32 individual 32-bit registers numbered 0-31.
     ASSERT_require(regnum<32);
-    return new SgAsmMipsRegisterReferenceExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeHwRegister(unsigned cc)
 {
     ASSERT_not_implemented("[Robb Matzke 2014-01-27]");
     return NULL;
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeShadowRegister(unsigned cc)
 {
     // Get the general purpose register
-    SgAsmMipsRegisterReferenceExpression *regref = makeRegister(cc);
+    SgAsmRegisterReferenceExpression *regref = makeRegister(cc);
     ASSERT_not_null(regref);
 
     // Turn it into a shadow register
@@ -517,7 +517,7 @@ DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offse
 SgAsmBinaryAdd *
 DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
 {
-    SgAsmMipsRegisterReferenceExpression *regref = makeRegister(gprnum);
+    SgAsmRegisterReferenceExpression *regref = makeRegister(gprnum);
     ASSERT_require(0==(offset16 & ~0xffff));
     unsigned offset32 = signExtend<16, 32>(offset16);
     SgAsmIntegerValueExpression *offset = SageBuilderAsm::makeDWordValue(offset32);
@@ -528,8 +528,8 @@ DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
 SgAsmBinaryAdd *
 DisassemblerMips::makeRegisterIndexed(unsigned base_gprnum, unsigned index_gprnum)
 {
-    SgAsmMipsRegisterReferenceExpression *base_reg = makeRegister(base_gprnum);
-    SgAsmMipsRegisterReferenceExpression *index_reg = makeRegister(index_gprnum);
+    SgAsmRegisterReferenceExpression *base_reg = makeRegister(base_gprnum);
+    SgAsmRegisterReferenceExpression *index_reg = makeRegister(index_gprnum);
     SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(base_reg, index_reg);
     return retval;
 }

@@ -411,18 +411,21 @@ RegisterDictionary::dictionary_i386_387()
         regs = new RegisterDictionary("i386 w/387");
         regs->insert(dictionary_i386());
 
-        /* The floating point registers names are relative to the current top-of-stack that changes dynamically. The
-         * definitions we're creating here are static.  When a floating-point instruction is simulated (e.g., by the
-         * instruction semantics analyses) then the simulation will have to make adjustments to the storage descriptors in
-         * order for the register names to point to their new storage locations. */
-        regs->insert("st(0)", x86_regclass_st, 0, 0, 80);
-        regs->insert("st(1)", x86_regclass_st, 1, 0, 80);
-        regs->insert("st(2)", x86_regclass_st, 2, 0, 80);
-        regs->insert("st(3)", x86_regclass_st, 3, 0, 80);
-        regs->insert("st(4)", x86_regclass_st, 4, 0, 80);
-        regs->insert("st(5)", x86_regclass_st, 5, 0, 80);
-        regs->insert("st(6)", x86_regclass_st, 6, 0, 80);
-        regs->insert("st(7)", x86_regclass_st, 7, 0, 80);
+        // The 387 contains eight floating point registers that have no names (we call them "st_0" through "st_7"), and defines
+        // expressions of the form "st(n)" to refer to the current nth register from the top of a circular stack.  These
+        // expressions are implemented usng SgAsmIndexedRegisterExpression IR nodes, which have a base register which is
+        // "st", a stride which increments the minor number, an offset which is the current top-of-stack value, an index
+        // which is the value "n" in the expression "st(n)", and a modulus of eight.  The current top-of-stack value is held in
+        // the three-bit register "_st_top", which normally has a concrete value.
+        regs->insert("st",      x86_regclass_st, x86_st_0,   0, 80);
+        regs->insert("st+1",    x86_regclass_st, x86_st_1,   0, 80);
+        regs->insert("st+2",    x86_regclass_st, x86_st_2,   0, 80);
+        regs->insert("st+3",    x86_regclass_st, x86_st_3,   0, 80);
+        regs->insert("st+4",    x86_regclass_st, x86_st_4,   0, 80);
+        regs->insert("st+5",    x86_regclass_st, x86_st_5,   0, 80);
+        regs->insert("st+6",    x86_regclass_st, x86_st_6,   0, 80);
+        regs->insert("st+7",    x86_regclass_st, x86_st_7,   0, 80);
+        regs->insert("_st_top", x86_regclass_st, x86_st_top, 0,  3); // offset from "st" to top of stack; i.e., "st(0)"
     }
     return regs;
 }

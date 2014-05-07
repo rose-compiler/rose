@@ -203,7 +203,7 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
           newOperand = memRefExp;
         }else if(isSgAsmRegisterReferenceExpression(operand) ){
           RegisterDescriptor reg(x86_regclass_mm, 0, 0, 64);
-          SgAsmx86RegisterReferenceExpression* regRef = new SgAsmx86RegisterReferenceExpression(reg);
+          SgAsmRegisterReferenceExpression* regRef = new SgAsmDirectRegisterExpression(reg);
           newOperand = regRef;
 
         }else{

@@ -366,7 +366,7 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
     return insn;
 }
 
-SgAsmx86RegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
     const char *name = NULL;
@@ -380,19 +380,19 @@ DisassemblerX86::makeIP()
     ASSERT_not_null(get_registers());
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ASSERT_not_null(rdesc);
-    SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(*rdesc);
+    SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
     r->set_type(sizeToType(insnSize));
     return r;
 }
 
-SgAsmx86RegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber)
 {
     return makeRegister((rexExtension ? 8 : 0) + registerNumber,
                         (rexPresent ? rmRexByte : rmLegacyByte));
 }
 
-SgAsmx86RegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber)
 {
     return makeRegister((rexExtension ? 8 : 0) + registerNumber,
@@ -414,7 +414,7 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
  * this is the case. They can assume that unrelated registers (e.g., "eax" vs "ebx") have descriptors that map to
  * non-overlapping areas of the descriptor address space {major,minor,offset,size} while related registers (e.g., "eax" vs
  * "ax") map to overlapping areas of the descriptor address space. */
-SgAsmx86RegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
     /* Register names for various RegisterMode, indexed by the fullRegisterNumber. The names and order of these names come from
@@ -482,7 +482,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
             registerType = WORDT;
             break;
         case rmST:
-            name = "st(" + StringUtility::numberToString(fullRegisterNumber) + ")";
+            name = "st";        // the first physical "st" register. See dictionary comments.
             registerType = LDOUBLET;
             break;
         case rmMM:
@@ -509,7 +509,19 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
 
     /* Construct the return value. */
-    SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);
+    SgAsmRegisterReferenceExpression *rre = NULL;
+    if (m != rmST) {
+        rre = new SgAsmDirectRegisterExpression(*rdesc);
+    } else {
+        // ST registers are different than most others. Starting with i387, the CPU has eight physical ST registers which
+        // are treated as a circular stack, with ST(0) being the top of the stack.  See comments in
+        // RegisterDictionary::dictionary_i386_387 for details.
+        RegisterDescriptor stride(0, 1, 0, 0);          // increment the minor number
+        RegisterDescriptor offset(x86_regclass_st, x86_st_top, 0, 3); // value of this register is added to the index
+        size_t index = fullRegisterNumber;
+        rre = new SgAsmIndirectRegisterExpression(*rdesc, stride, offset, index, x86_st_top);
+    }
+    
     ASSERT_not_null(rre);
     rre->set_type(registerType);
     return rre;
@@ -752,7 +764,7 @@ DisassemblerX86::makeModrmNormal(RegisterMode m, SgAsmType* mrType)
     }
 }
 
-SgAsmx86RegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
 {
     ASSERT_require(modregrmByteSet);
@@ -3888,7 +3900,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 2:
                             return makeInstruction(x86_psrlq, "psrlq", modrm, shiftAmount);
                         case 3:
-                            isSgAsmx86RegisterReferenceExpression(modrm)->set_type(DQWORDT);
+                            isSgAsmRegisterReferenceExpression(modrm)->set_type(DQWORDT);
                             return makeInstruction(x86_psrldq, "psrldq", modrm, shiftAmount);
                         case 4:
                             throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
@@ -3897,7 +3909,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 6:
                             return makeInstruction(x86_psllq, "psllq", modrm, shiftAmount);
                         case 7:
-                            isSgAsmx86RegisterReferenceExpression(modrm)->set_type(DQWORDT);
+                            isSgAsmRegisterReferenceExpression(modrm)->set_type(DQWORDT);
                             return makeInstruction(x86_pslldq, "pslldq", modrm, shiftAmount);
                         default:
                             ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));

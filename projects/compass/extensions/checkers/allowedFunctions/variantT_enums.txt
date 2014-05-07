@@ -370,8 +370,6 @@ V_SgAsmUnaryExpression
 V_SgAsmMemoryReferenceExpression 	
 V_SgAsmControlFlagsExpression 	
 V_SgAsmCommonSubExpression 	
-V_SgAsmx86RegisterReferenceExpression 	
-V_SgAsmArmRegisterReferenceExpression 	
 V_SgAsmRegisterReferenceExpression 	
 V_SgAsmIntegerValueExpression 	
 V_SgAsmSingleFloatValueExpression 	

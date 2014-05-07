@@ -98,7 +98,7 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
 }
 
 /** Creates a general-purpose register reference expression. */
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makeRegister(uint8_t reg) const
 {
     ASSERT_not_null(get_registers());
@@ -106,7 +106,7 @@ DisassemblerArm::makeRegister(uint8_t reg) const
     std::string name = "r" + StringUtility::numberToString(reg);
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ASSERT_not_null(rdesc);
-    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    SgAsmRegisterReferenceExpression* r = new SgAsmDirectRegisterExpression(*rdesc);
     return r;
 }
 
@@ -120,20 +120,20 @@ DisassemblerArm::makeRegister(uint8_t reg) const
  *     0x04 => s   status field mask bit
  *     0x08 => f   flags field mask bit
  */
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
 {
     ASSERT_not_null(get_registers());
     std::string name = useSPSR ? "spsr" : "cpsr";
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ASSERT_not_null(rdesc);
-    SgAsmArmRegisterReferenceExpression *r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    SgAsmDirectRegisterExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
     if (fields!=0)
         r->set_psr_mask(fields);
     return r;
 }
 
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsr(bool useSPSR) const
 {
     return makePsrFields(useSPSR, 0);
@@ -372,22 +372,22 @@ DisassemblerArm::decodeMiscInstruction() const
       switch ((insn >> 4) & 7) {
         case 0: {
           if (bit21) {
-            SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+            SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
             bool useSPSR = bit22;
             uint8_t mask = (insn >> 16) & 15;
-            SgAsmArmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
+            SgAsmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
             return MAKE_INSN2(msr, 3, psr, rm);
           } else {
             bool useSPSR = bit22;
-            SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-            SgAsmArmRegisterReferenceExpression* psr = makePsr(useSPSR);
+            SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+            SgAsmRegisterReferenceExpression* psr = makePsr(useSPSR);
             return MAKE_INSN2(mrs, 3, rd, psr);
           }
         }
         case 1: {
           if (bit22) {
-            SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-            SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+            SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+            SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
             return MAKE_INSN2(clz, 3, rd, rm);
           } else {
             return MAKE_INSN1(bx, 2, makeRegister(insn & 15));
@@ -397,9 +397,9 @@ DisassemblerArm::decodeMiscInstruction() const
         case 3: return MAKE_INSN1(blx, 3, makeRegister(insn & 15));
         case 4: throw ExceptionArm("bad bits in decodeMiscInstruction (4)", this, 4);
         case 5: {
-          SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-          SgAsmArmRegisterReferenceExpression* rn = makeRegister((insn >> 16) & 15);
-          SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+          SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+          SgAsmRegisterReferenceExpression* rn = makeRegister((insn >> 16) & 15);
+          SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
           uint8_t op = (insn >> 21) & 3;
           switch (op) {
             case 0: return MAKE_INSN3(qadd, 4, rd, rm, rn);
@@ -419,10 +419,10 @@ DisassemblerArm::decodeMiscInstruction() const
         default: ASSERT_not_reachable("invalid miscellaneous instruction");
       }
     } else { // bit 7 set -- signed mul
-      SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 16) & 15);
-      SgAsmArmRegisterReferenceExpression* rn = makeRegister((insn >> 12) & 15);
-      SgAsmArmRegisterReferenceExpression* rs = makeRegister((insn >> 8) & 15);
-      SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+      SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 16) & 15);
+      SgAsmRegisterReferenceExpression* rn = makeRegister((insn >> 12) & 15);
+      SgAsmRegisterReferenceExpression* rs = makeRegister((insn >> 8) & 15);
+      SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
       uint8_t op = (insn >> 21) & 3;
       bool y = (insn >> 6) & 1;
       bool x = (insn >> 5) & 1;
@@ -481,7 +481,7 @@ DisassemblerArm::disassemble()
                 SgAsmExpression* imm = makeRotatedImmediate();
                 bool useSPSR = bit22;
                 uint8_t mask = (insn >> 16) & 15;
-                SgAsmArmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
+                SgAsmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
                 return MAKE_INSN2(msr, 3, psr, imm);
               } else {
                   throw ExceptionArm("bad bit21", this, 26);
@@ -526,7 +526,7 @@ DisassemblerArm::disassemble()
               SgAsmExprListExp* regs = SageBuilderAsm::makeExprListExp();
               for (int i = 0; i < 16; ++i) {
                 if ((insn >> i) & 1) {
-                  SgAsmArmRegisterReferenceExpression* reg = makeRegister(i);
+                  SgAsmRegisterReferenceExpression* reg = makeRegister(i);
                   regs->get_expressions().push_back(reg);
                   reg->set_parent(regs);
                 }
