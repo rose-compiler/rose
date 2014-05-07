@@ -171,6 +171,7 @@ SgAsmGenericString
 SgAsmGenericStrtab
 SgAsmGenericSymbol
 SgAsmGenericSymbolList
+SgAsmIndirectRegisterExpression
 SgAsmInstruction
 SgAsmIntegerValueExpression
 SgAsmInterpretation
