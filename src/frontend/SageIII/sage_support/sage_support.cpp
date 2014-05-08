@@ -5136,7 +5136,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("Number of command line arguments: %zu\n", compilerCmdLine.size());
                for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
+                    #ifdef _MSC_VER
+                    printf ("Backend compiler arg[%Iu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    #else
                     printf ("Backend compiler arg[%zu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    #endif
                   }
                printf("End of command line for backend compiler\n");
 
