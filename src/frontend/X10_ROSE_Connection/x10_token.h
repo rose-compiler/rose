@@ -2,6 +2,19 @@
 #define __x10_token_h__
 
 #include "x10SourceCodePosition.h"
+#include "JavaSourceCodePosition.h"
+
+#if 0
+class Token_t {
+    private:
+        std::string filename;
+        JavaSourceCodePosition *pos_info;
+    public:
+        Token_t (std::string filename, JavaSourceCodePosition *pos_info);
+        JavaSourceCodePosition *getSourcecodePosition();
+        std::string getFileName();
+};
+#endif
 
 class X10_Token_t {
     private:
@@ -13,6 +26,7 @@ class X10_Token_t {
         X10_Token_t (std::string s, X10SourceCodePosition * pos_info);
         X10SourceCodePosition * getSourcecodePosition();
         std::string getText();
+        std::string getFileName();
 };
   
 #endif
