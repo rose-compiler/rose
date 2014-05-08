@@ -42,7 +42,7 @@ class visitorTraversal : public AstSimpleProcessing
     protected:
       void virtual visit (SgNode* n)
       {
-        if (isSgProject(n)|| isSgSourceFile(n)||isSgLocatedNode(n))
+        if (isSgProject(n)|| isSgSourceFile(n)||isSgInitializedName(n)||isSgLocatedNode(n))
           setId (n);
       }
   };

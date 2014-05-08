@@ -996,8 +996,9 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
           ss << "\\n";
           ss << "\\n";
         }
-     // Liao, 4/3/2014  display Unique ID for located node
-     ss <<"ID:"<<TransformationTracking::getId(node)<<"\\n";
+     // Liao, 4/3/2014  display Unique ID for some nodes
+     if (TransformationTracking::getId(node) != 0)
+       ss <<"ID:"<<TransformationTracking::getId(node)<<"\\n";
      return ss.str();
    }
 
