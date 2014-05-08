@@ -7,18 +7,35 @@
 #include "rose.h"
 #include "transformationTracking.h"
 
+#include <vector>
+#include <string>
+
+using namespace std;
+
 int
 main (int argc, char *argv[])
 {
-  SgProject *sageProject = frontend (argc, argv);
+  bool id_dump = false;
+  vector <string> argvList (argv, argv + argc);
+
+  if (CommandlineProcessing::isOption (argvList,"-rose:unique_id","",true))
+  {
+    id_dump = true; 
+  }
+
+  //SgProject *sageProject = frontend (argc, argv);
+  SgProject *sageProject = frontend (argvList);
   AstTests::runAllTests (sageProject);
 
-#if 0
-// Test unique ID assignment and dot graph generation
-  TransformationTracking::registerAstSubtreeIds (sageProject);
-  generateWholeGraphOfAST("wholeAST");
+  if (id_dump)
+  {
+    // Test unique ID assignment and dot graph generation
+    TransformationTracking::registerAstSubtreeIds (sageProject);
+    generateWholeGraphOfAST("wholeAST");
+  }
 
-// simple DOT graph
+#if 0
+  // simple DOT graph
   AstDOTGeneration astdotgen;
   astdotgen.generateInputFiles(sageProject);
 #endif 
