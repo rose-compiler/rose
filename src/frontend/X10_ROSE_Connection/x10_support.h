@@ -75,7 +75,7 @@ class ComponentStack : private std::list<SgNode *> {
 public:
     void push(SgNode *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing Component node " << n -> class_name() << std::endl; 
+            std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
             std::cerr.flush();
         }
         push_front(n);
@@ -85,7 +85,7 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Popping Component node " << n -> class_name() << std::endl;
+            std::cerr << "***Popping node " << n -> class_name() << std::endl;
             std::cerr.flush();
         }
         pop_front();
@@ -117,8 +117,8 @@ public:
     SgExpression *popExpression() {
         SgNode *n = pop();
         if (! isSgExpression(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
-                     <<  n -> class_name()
+            std::cerr << "Invalid attempt to pop a node of type "
+                     << n -> class_name()
                      << " as an SgExpression"
                      << std::endl;
             ROSE_ASSERT(false);
@@ -139,7 +139,7 @@ public:
             n = SageBuilder::buildExprStatement((SgExpression *) n);
         }
         else if (! isSgStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                       << n -> class_name()
                       << " as an SgStatement"
                       << std::endl;
@@ -151,7 +151,7 @@ public:
     SgType *popType() {
         SgNode *n = pop();
         if (! isSgType(n)) {
-            std::cerr << "Invalid attempt to pop a Component node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgType"
                      << std::endl;
@@ -166,7 +166,7 @@ class ScopeStack : private std::list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing node " << n -> class_name() << std::endl;
+            std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
             std::cerr.flush();
         }
         push_front(n);
@@ -186,7 +186,7 @@ public:
     SgGlobal *popGlobal() {
         SgScopeStatement *n = pop();
         if (! isSgGlobal(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgGlobal"
                      << std::endl;
@@ -198,7 +198,7 @@ public:
     SgNamespaceDefinitionStatement *popNamespaceDefinitionStatement() {
         SgScopeStatement *n = pop();
         if (! isSgNamespaceDefinitionStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgNamespaceDefinitionStatement"
                      << std::endl;
@@ -210,14 +210,14 @@ public:
     SgClassDefinition *popPackage() {
         SgScopeStatement *n = pop();
         if (! isSgClassDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << std::endl;
             ROSE_ASSERT(false);
         }
         else if (! isSgJavaPackageDeclaration(isSgClassDefinition(n) -> get_declaration())) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgJavaPackageDeclaration"
                      << std::endl;
@@ -229,7 +229,7 @@ public:
     SgClassDefinition *popClassDefinition() {
         SgScopeStatement *n = pop();
         if (! isSgClassDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << std::endl;
@@ -241,7 +241,7 @@ public:
     SgBasicBlock *popBasicBlock() {
         SgScopeStatement *n = pop();
         if (! isSgBasicBlock(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgBasicBlock"
                      << std::endl;
@@ -253,7 +253,7 @@ public:
     SgIfStmt *popIfStmt() {
         SgScopeStatement *n = pop();
         if (! isSgIfStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgIfStmt"
                      << std::endl;
@@ -265,7 +265,7 @@ public:
     SgSwitchStatement *popSwitchStatement() {
         SgScopeStatement *n = pop();
         if (! isSgSwitchStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgSwitchStatement"
                      << std::endl;
@@ -277,7 +277,7 @@ public:
     SgCatchOptionStmt *popCatchOptionStmt() {
         SgScopeStatement *n = pop();
         if (! isSgCatchOptionStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgCatchOptionStmt"
                      << std::endl;
@@ -289,7 +289,7 @@ public:
     SgWhileStmt *popWhileStmt() {
         SgScopeStatement *n = pop();
         if (! isSgWhileStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgWhileStmt"
                      << std::endl;
@@ -301,7 +301,7 @@ public:
     SgDoWhileStmt *popDoWhileStmt() {
         SgScopeStatement *n = pop();
         if (! isSgDoWhileStmt(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgDoWhileStmt"
                      << std::endl;
@@ -313,7 +313,7 @@ public:
     SgForStatement *popForStatement() {
         SgScopeStatement *n = pop();
         if (! isSgForStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgForStatement"
                      << std::endl;
@@ -325,7 +325,7 @@ public:
     SgJavaForEachStatement *popJavaForEachStatement() {
         SgScopeStatement *n = pop();
         if (! isSgJavaForEachStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgJavaForEachStatement"
                      << std::endl;
@@ -337,7 +337,7 @@ public:
     SgJavaLabelStatement *popJavaLabelStatement() {
         SgScopeStatement *n = pop();
         if (! isSgJavaLabelStatement(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgJavaLabelStatement"
                      << std::endl;
@@ -349,7 +349,7 @@ public:
     SgFunctionDefinition *popFunctionDefinition() {
         SgScopeStatement *n = pop();
         if (! isSgFunctionDefinition(n)) {
-            std::cerr << "Invalid attempt to pop a Stack node of type "
+            std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgFunctionDefinition"
                      << std::endl;
