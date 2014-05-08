@@ -538,12 +538,23 @@ struct IP_divide: P {
     }
 };
 
+// Load floating-point value
+struct IP_fld: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (80!=nbits)
+            throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+        BaseSemantics::SValuePtr fp = d->read(args[0], nbits);
+        d->pushFloatingPoint(fp);
+    }
+};
+
 // Restore x86 FPU control word
 struct IP_fldcw: P {
     void p(D d, Ops ops, I insn, A args) {
-        // FIXME: this is a dummy version that should be replaced later
         assert_args(insn, args, 1);
-        (void) d->read(args[0], 16); // To catch access control violations
+        ops->writeRegister(d->REG_FPCTL, d->read(args[0], 16));
     }
 };
 
@@ -973,7 +984,7 @@ struct IP_popad: P {
         ops->writeRegister(d->REG_EBX,
                            ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 16)), ops->boolean_(true), 32));
         ops->writeRegister(d->REG_EDX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 20)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS,ops->add(oldSp, ops->number_(32, 20)), ops->boolean_(true), 32));
         ops->writeRegister(d->REG_ECX,
                            ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 24)), ops->boolean_(true), 32));
         ops->writeRegister(d->REG_EAX,
@@ -1331,6 +1342,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_cwde,         new X86::IP_cwde);
     iproc_set(x86_dec,          new X86::IP_dec);
     iproc_set(x86_div,          new X86::IP_divide(x86_div));
+    iproc_set(x86_fld,          new X86::IP_fld);
     iproc_set(x86_fldcw,        new X86::IP_fldcw);
     iproc_set(x86_fnstcw,       new X86::IP_fnstcw);
     iproc_set(x86_hlt,          new X86::IP_hlt);
@@ -1483,6 +1495,11 @@ DispatcherX86::regcache_init()
         REG_DS = findRegister("ds", 16);
         REG_ES = findRegister("es", 16);
         REG_SS = findRegister("ss", 16);
+
+        REG_ST0 = findRegister("st0", 80);
+        REG_FPSTATUS = findRegister("fpstatus", 16);
+        REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
+        REG_FPCTL = findRegister("fpctl", 16);
     }
 }
 
@@ -1958,6 +1975,21 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     // Result flags SF, ZF, and PF are set according to the result, but are unchanged if the shift count is zero.
     setFlagsForResult(result, operators->invert(isZeroShiftCount));
     return result;
+}
+
+void
+DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
+{
+    BaseSemantics::SValuePtr topOfStack = operators->readRegister(REG_FPSTATUS_TOP);
+    if (!topOfStack->is_number())
+        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+    BaseSemantics::SValuePtr newTopOfStack = operators->add(topOfStack, operators->number_(topOfStack->get_width(), -1));
+    ASSERT_require2(newTopOfStack->is_number(), "constant folding is required for FP-stack");
+
+    RegisterDescriptor reg(REG_ST0.get_major(), (REG_ST0.get_minor() + newTopOfStack->get_number()) % 8,
+                           REG_ST0.get_offset(), REG_ST0.get_nbits());
+    operators->writeRegister(reg, value);
+    operators->writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
 
 } // namespace

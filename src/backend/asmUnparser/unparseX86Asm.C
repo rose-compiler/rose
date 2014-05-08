@@ -123,6 +123,8 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
             SgAsmIndirectRegisterExpression* rr = isSgAsmIndirectRegisterExpression(expr);
             result = unparseX86Register(insn, rr->get_descriptor(), registers);
+            if (!result.empty() && '0'==result[result.size()-1])
+                result = result.substr(0, result.size()-1);
             result += "(" + StringUtility::numberToString(rr->get_index()) + ")";
             break;
         }

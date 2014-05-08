@@ -1124,11 +1124,14 @@ public:
     static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
     static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
     static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
+    static const size_t n_st = 8;               /**< Number of ST registers (not counting _st_top pseudo register). */
 
     SValuePtr ip;                               /**< Instruction pointer. */
     SValuePtr gpr[n_gprs];                      /**< General-purpose registers */
     SValuePtr segreg[n_segregs];                /**< Segmentation registers. */
     SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
+    SValuePtr st[n_st];                         /**< Floating point circular stack. */
+    SValuePtr fpstatus;                         /**< Floating-point status word. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1145,6 +1148,9 @@ protected:
             segreg[i] = other.segreg[i]->copy();
         for (size_t i=0; i<n_flags; ++i)
             flag[i] = other.flag[i]->copy();
+        for (size_t i=0; i<n_st; ++i)
+            st[i] = other.st[i]->copy();
+        fpstatus = other.fpstatus;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1201,12 +1207,16 @@ protected:
     virtual SValuePtr readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops);
     virtual SValuePtr readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops);
     virtual SValuePtr readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops);
 
     // helpers for writeRegister()
     virtual void writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
 };
 
 

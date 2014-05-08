@@ -482,7 +482,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
             registerType = WORDT;
             break;
         case rmST:
-            name = "st";        // the first physical "st" register. See dictionary comments.
+            name = "st0";        // the first physical "st" register. See dictionary comments.
             registerType = LDOUBLET;
             break;
         case rmMM:
@@ -517,9 +517,9 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         // are treated as a circular stack, with ST(0) being the top of the stack.  See comments in
         // RegisterDictionary::dictionary_i386_387 for details.
         RegisterDescriptor stride(0, 1, 0, 0);          // increment the minor number
-        RegisterDescriptor offset(x86_regclass_st, x86_st_top, 0, 3); // value of this register is added to the index
+        RegisterDescriptor offset(x86_regclass_flags, x86_flags_fpstatus, 11, 3); // "fpstatus_top"
         size_t index = fullRegisterNumber;
-        rre = new SgAsmIndirectRegisterExpression(*rdesc, stride, offset, index, x86_st_top);
+        rre = new SgAsmIndirectRegisterExpression(*rdesc, stride, offset, index, x86_st_nregs);
     }
     
     ASSERT_not_null(rre);

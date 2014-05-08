@@ -470,6 +470,9 @@ RegisterStateX86::clear()
         segreg[i] = protoval->undefined_(16);
     for (size_t i=0; i<n_flags; ++i)
         flag[i] = protoval->undefined_(1);
+    for (size_t i=0; i<n_st; ++i)
+        st[i] = protoval->undefined_(80);
+    fpstatus = protoval->undefined_(16);
 }
 
 void
@@ -482,6 +485,7 @@ RegisterStateX86::zero()
         segreg[i] = protoval->number_(16, 0);
     for (size_t i=0; i<n_flags; ++i)
         flag[i] = protoval->number_(1, 0);
+    fpstatus = protoval->number_(16, 0);
 }
 
 SValuePtr
@@ -491,11 +495,18 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops
         case x86_regclass_gpr:
             return readRegisterGpr(reg, ops);
         case x86_regclass_flags:
-            return readRegisterFlag(reg, ops);
+            if (reg.get_minor()==x86_flags_status)
+                return readRegisterFlag(reg, ops);
+            if (reg.get_minor()==x86_flags_fpstatus)
+                return readRegisterFpStatus(reg, ops);
+            throw Exception("invalid flags minor number: " + StringUtility::numberToString(reg.get_minor()),
+                            ops->get_insn());
         case x86_regclass_segment:
             return readRegisterSeg(reg, ops);
         case x86_regclass_ip:
             return readRegisterIp(reg, ops);
+        case x86_regclass_st:
+            return readRegisterSt(reg, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -575,6 +586,30 @@ RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *o
     return ip;
 }
 
+SValuePtr
+RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_st);
+    assert(reg.get_minor()<8);
+    assert(reg.get_offset()==0);
+    assert(reg.get_nbits()==80);
+    SValuePtr retval = st[reg.get_minor()];
+    assert(retval!=NULL && retval->get_width()==80);
+    return retval;
+}
+
+SValuePtr
+RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==x86_flags_fpstatus);
+    assert(reg.get_offset() + reg.get_nbits() <= 16);
+    assert(fpstatus!=NULL && fpstatus->get_width()==16);
+    if (16==reg.get_nbits())
+        return fpstatus;
+    return ops->extract(fpstatus, reg.get_offset(), reg.get_offset()+reg.get_nbits());
+}
+
 void
 RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
@@ -582,11 +617,18 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
         case x86_regclass_gpr:
             return writeRegisterGpr(reg, value, ops);
         case x86_regclass_flags:
-            return writeRegisterFlag(reg, value, ops);
+            if (reg.get_minor()==x86_flags_status)
+                return writeRegisterFlag(reg, value, ops);
+            if (reg.get_minor()==x86_flags_fpstatus)
+                return writeRegisterFpStatus(reg, value, ops);
+            throw Exception("invalid register minor number: " + StringUtility::numberToString(reg.get_minor()),
+                            ops->get_insn());
         case x86_regclass_segment:
             return writeRegisterSeg(reg, value, ops);
         case x86_regclass_ip:
             return writeRegisterIp(reg, value, ops);
+        case x86_regclass_st:
+            return writeRegisterSt(reg, value, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -671,6 +713,35 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
+RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_st);
+    assert(reg.get_minor()<8);
+    assert(reg.get_offset()==0);
+    assert(reg.get_nbits()==80);
+    assert(value!=NULL);
+    assert(value->get_width()==80);
+    st[reg.get_minor()] = value;
+}
+
+void
+RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==x86_flags_fpstatus);
+    assert(reg.get_offset()+reg.get_nbits() <= 16);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+
+    SValuePtr towrite = value;
+    if (reg.get_offset()!=0)
+        towrite = ops->concat(ops->extract(fpstatus, 0, reg.get_offset()), towrite);
+    if (reg.get_offset() + reg.get_nbits()<32)
+        towrite = ops->concat(towrite, ops->extract(fpstatus, reg.get_offset()+reg.get_nbits(), 16));
+    assert(towrite->get_width()==16);
+    fpstatus = towrite;
+}
+
+void
 RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
 {
     const RegisterDictionary *regdict = fmt.get_register_dictionary();
@@ -721,6 +792,28 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
                 } else {
                     stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
                            <<" = { " <<(*flag[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_st; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_st, i, 0, 80));
+            if (should_show(regname, st[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*st[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, x86_flags_fpstatus, 0, 16));
+            if (should_show(regname, fpstatus)) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*fpstatus+fmt) <<" }\n";
                 }
             }
         }
@@ -1050,8 +1143,22 @@ void
 Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
 {
     assert(e!=NULL && value!=NULL);
-    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        operators->writeRegister(rre->get_descriptor(), value);
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        operators->writeRegister(re->get_descriptor(), value);
+    } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
+        SValuePtr offset = operators->readRegister(re->get_offset());
+        if (!offset->is_number()) {
+            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
+            throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
+        }
+        size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
+        RegisterDescriptor reg = re->get_descriptor();
+        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
+        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
+        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
+        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
         operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
@@ -1065,9 +1172,23 @@ SValuePtr
 Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
 {
     assert(e!=NULL);
-    BaseSemantics::SValuePtr retval;
-    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        retval = operators->readRegister(rre->get_descriptor());
+    SValuePtr retval;
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        retval = operators->readRegister(re->get_descriptor());
+    } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
+        SValuePtr offset = operators->readRegister(re->get_offset());
+        if (!offset->is_number()) {
+            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
+            throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
+        }
+        size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
+        RegisterDescriptor reg = re->get_descriptor();
+        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
+        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
+        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
+        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
         retval = operators->readMemory(segmentRegister(mre), addr, operators->boolean_(true), value_nbits);

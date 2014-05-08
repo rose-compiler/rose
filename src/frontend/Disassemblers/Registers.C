@@ -304,17 +304,17 @@ RegisterDictionary::dictionary_i8086() {
         regs->insert("dil", x86_regclass_gpr, x86_gpr_di, 0, 8);
 
         /* Flags. Reserved flags have no names but can be accessed by reading the entire "flags" register. */
-        regs->insert("flags", x86_regclass_flags, 0,  0, 16);           /* all flags */
-        regs->insert("cf",    x86_regclass_flags, 0,  0,  1);           /* carry status flag */
-        regs->insert("pf",    x86_regclass_flags, 0,  2,  1);           /* parity status flag */
-        regs->insert("af",    x86_regclass_flags, 0,  4,  1);           /* adjust status flag */
-        regs->insert("zf",    x86_regclass_flags, 0,  6,  1);           /* zero status flag */
-        regs->insert("sf",    x86_regclass_flags, 0,  7,  1);           /* sign status flag */
-        regs->insert("tf",    x86_regclass_flags, 0,  8,  1);           /* trap system flag */
-        regs->insert("if",    x86_regclass_flags, 0,  9,  1);           /* interrupt enable system flag */
-        regs->insert("df",    x86_regclass_flags, 0, 10,  1);           /* direction control flag */
-        regs->insert("of",    x86_regclass_flags, 0, 11,  1);           /* overflow status flag */
-        regs->insert("nt",    x86_regclass_flags, 0, 14,  1);           /* nested task system flag */
+        regs->insert("flags", x86_regclass_flags, x86_flags_status,  0, 16); /* all flags */
+        regs->insert("cf",    x86_regclass_flags, x86_flags_status,  0,  1); /* carry status flag */
+        regs->insert("pf",    x86_regclass_flags, x86_flags_status,  2,  1); /* parity status flag */
+        regs->insert("af",    x86_regclass_flags, x86_flags_status,  4,  1); /* adjust status flag */
+        regs->insert("zf",    x86_regclass_flags, x86_flags_status,  6,  1); /* zero status flag */
+        regs->insert("sf",    x86_regclass_flags, x86_flags_status,  7,  1); /* sign status flag */
+        regs->insert("tf",    x86_regclass_flags, x86_flags_status,  8,  1); /* trap system flag */
+        regs->insert("if",    x86_regclass_flags, x86_flags_status,  9,  1); /* interrupt enable system flag */
+        regs->insert("df",    x86_regclass_flags, x86_flags_status, 10,  1); /* direction control flag */
+        regs->insert("of",    x86_regclass_flags, x86_flags_status, 11,  1); /* overflow status flag */
+        regs->insert("nt",    x86_regclass_flags, x86_flags_status, 14,  1); /* nested task system flag */
     }
     return regs;
 }
@@ -343,8 +343,8 @@ RegisterDictionary::dictionary_i286()
     if (!regs) {
         regs = new RegisterDictionary("i286");
         regs->insert(dictionary_i8086());
-        regs->insert("iopl", x86_regclass_flags, 0, 12, 2);             /*  I/O privilege level flag */
-        regs->insert("nt",   x86_regclass_flags, 0, 14, 1);             /*  nested task system flag */
+        regs->insert("iopl", x86_regclass_flags, x86_flags_status, 12, 2); /*  I/O privilege level flag */
+        regs->insert("nt",   x86_regclass_flags, x86_flags_status, 14, 1); /*  nested task system flag */
     }
     return regs;
 }
@@ -373,15 +373,15 @@ RegisterDictionary::dictionary_i386()
         regs->insert("eip", x86_regclass_ip, 0, 0, 32);
         regs->insert("esi", x86_regclass_gpr, x86_gpr_si, 0, 32);
         regs->insert("edi", x86_regclass_gpr, x86_gpr_di, 0, 32);
-        regs->insert("eflags", x86_regclass_flags, 0, 0, 32);
+        regs->insert("eflags", x86_regclass_flags, x86_flags_status, 0, 32);
 
         /* Additional 16-bit segment registers */
         regs->insert("fs", x86_regclass_segment, x86_segreg_fs, 0, 16);
         regs->insert("gs", x86_regclass_segment, x86_segreg_gs, 0, 16);
 
         /* Additional flags */
-        regs->insert("rf", x86_regclass_flags, 0, 16, 1);               /* resume system flag */
-        regs->insert("vm", x86_regclass_flags, 0, 17, 1);               /* virtual 8086 mode flag */
+        regs->insert("rf", x86_regclass_flags, x86_flags_status, 16, 1); /* resume system flag */
+        regs->insert("vm", x86_regclass_flags, x86_flags_status, 17, 1); /* virtual 8086 mode flag */
 
         /* Control registers */
         regs->insert("cr0", x86_regclass_cr, 0, 0, 32);
@@ -411,21 +411,60 @@ RegisterDictionary::dictionary_i386_387()
         regs = new RegisterDictionary("i386 w/387");
         regs->insert(dictionary_i386());
 
-        // The 387 contains eight floating point registers that have no names (we call them "st_0" through "st_7"), and defines
+        // The 387 contains eight floating-point registers that have no names (we call them "st0" through "st7"), and defines
         // expressions of the form "st(n)" to refer to the current nth register from the top of a circular stack.  These
         // expressions are implemented usng SgAsmIndexedRegisterExpression IR nodes, which have a base register which is
-        // "st", a stride which increments the minor number, an offset which is the current top-of-stack value, an index
+        // "st0", a stride which increments the minor number, an offset which is the current top-of-stack value, an index
         // which is the value "n" in the expression "st(n)", and a modulus of eight.  The current top-of-stack value is held in
-        // the three-bit register "_st_top", which normally has a concrete value.
-        regs->insert("st",      x86_regclass_st, x86_st_0,   0, 80);
-        regs->insert("st+1",    x86_regclass_st, x86_st_1,   0, 80);
-        regs->insert("st+2",    x86_regclass_st, x86_st_2,   0, 80);
-        regs->insert("st+3",    x86_regclass_st, x86_st_3,   0, 80);
-        regs->insert("st+4",    x86_regclass_st, x86_st_4,   0, 80);
-        regs->insert("st+5",    x86_regclass_st, x86_st_5,   0, 80);
-        regs->insert("st+6",    x86_regclass_st, x86_st_6,   0, 80);
-        regs->insert("st+7",    x86_regclass_st, x86_st_7,   0, 80);
-        regs->insert("_st_top", x86_regclass_st, x86_st_top, 0,  3); // offset from "st" to top of stack; i.e., "st(0)"
+        // the three-bit register "fpstatus_top", which normally has a concrete value.
+        regs->insert("st0",     x86_regclass_st, x86_st_0,   0, 80);
+        regs->insert("st1",     x86_regclass_st, x86_st_1,   0, 80);
+        regs->insert("st2",     x86_regclass_st, x86_st_2,   0, 80);
+        regs->insert("st3",     x86_regclass_st, x86_st_3,   0, 80);
+        regs->insert("st4",     x86_regclass_st, x86_st_4,   0, 80);
+        regs->insert("st5",     x86_regclass_st, x86_st_5,   0, 80);
+        regs->insert("st6",     x86_regclass_st, x86_st_6,   0, 80);
+        regs->insert("st7",     x86_regclass_st, x86_st_7,   0, 80);
+
+        // Floating-point tag registers, two bits per ST register.
+        regs->insert("fptag",     x86_regclass_flags, x86_flags_fptag,  0, 16); // all tags
+        regs->insert("fptag_st0", x86_regclass_flags, x86_flags_fptag,  0,  2); // tag for st0
+        regs->insert("fptag_st1", x86_regclass_flags, x86_flags_fptag,  2,  2); // tag for st1
+        regs->insert("fptag_st2", x86_regclass_flags, x86_flags_fptag,  4,  2); // tag for st2
+        regs->insert("fptag_st3", x86_regclass_flags, x86_flags_fptag,  6,  2); // tag for st3
+        regs->insert("fptag_st4", x86_regclass_flags, x86_flags_fptag,  8,  2); // tag for st4
+        regs->insert("fptag_st5", x86_regclass_flags, x86_flags_fptag, 10,  2); // tag for st5
+        regs->insert("fptag_st6", x86_regclass_flags, x86_flags_fptag, 12,  2); // tag for st6
+        regs->insert("fptag_st7", x86_regclass_flags, x86_flags_fptag, 14,  2); // tag for st7
+
+        // Floating-point status register
+        regs->insert("fpstatus",     x86_regclass_flags, x86_flags_fpstatus,  0, 16);
+        regs->insert("fpstatus_ie",  x86_regclass_flags, x86_flags_fpstatus,  0,  1); // invalid operation
+        regs->insert("fpstatus_de",  x86_regclass_flags, x86_flags_fpstatus,  1,  1); // denormalized operand
+        regs->insert("fpstatus_ze",  x86_regclass_flags, x86_flags_fpstatus,  2,  1); // zero divide
+        regs->insert("fpstatus_oe",  x86_regclass_flags, x86_flags_fpstatus,  3,  1); // overflow
+        regs->insert("fpstatus_ue",  x86_regclass_flags, x86_flags_fpstatus,  4,  1); // underflow
+        regs->insert("fpstatus_pe",  x86_regclass_flags, x86_flags_fpstatus,  5,  1); // precision
+        regs->insert("fpstatus_ir",  x86_regclass_flags, x86_flags_fpstatus,  7,  1); // interrupt request
+        regs->insert("fpstatus_c4",  x86_regclass_flags, x86_flags_fpstatus,  8,  1); // condition code
+        regs->insert("fpstatus_c1",  x86_regclass_flags, x86_flags_fpstatus,  9,  1); // condition code
+        regs->insert("fpstatus_c2",  x86_regclass_flags, x86_flags_fpstatus, 10,  1); // condition code
+        regs->insert("fpstatus_top", x86_regclass_flags, x86_flags_fpstatus, 11,  3); // top of stack
+        regs->insert("fpstatus_c3",  x86_regclass_flags, x86_flags_fpstatus, 14,  1); // condition code
+        regs->insert("fpstatus_b",   x86_regclass_flags, x86_flags_fpstatus, 15,  1); // busy
+
+        // Floating-point control register
+        regs->insert("fpctl",    x86_regclass_flags, x86_flags_fpctl,  0, 16);
+        regs->insert("fpctl_im", x86_regclass_flags, x86_flags_fpctl,  0,  1); // invalid operation
+        regs->insert("fpctl_dm", x86_regclass_flags, x86_flags_fpctl,  1,  1); // denormalized operand
+        regs->insert("fpctl_zm", x86_regclass_flags, x86_flags_fpctl,  2,  1); // zero divide
+        regs->insert("fpctl_om", x86_regclass_flags, x86_flags_fpctl,  3,  1); // overflow
+        regs->insert("fpctl_um", x86_regclass_flags, x86_flags_fpctl,  4,  1); // underflow
+        regs->insert("fpctl_pm", x86_regclass_flags, x86_flags_fpctl,  5,  1); // precision
+        regs->insert("fpctl_m",  x86_regclass_flags, x86_flags_fpctl,  7,  1); // interrupt mask
+        regs->insert("fpctl_pc", x86_regclass_flags, x86_flags_fpctl,  8,  2); // precision control
+        regs->insert("fpctl_rc", x86_regclass_flags, x86_flags_fpctl, 10,  2); // rounding control
+        regs->insert("fpctl_ic", x86_regclass_flags, x86_flags_fpctl, 12,  1); // infinity control
     }
     return regs;
 }
@@ -441,7 +480,7 @@ RegisterDictionary::dictionary_i486()
     if (!regs) {
         regs = new RegisterDictionary("i486");
         regs->insert(dictionary_i386_387());
-        regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
+        regs->insert("ac", x86_regclass_flags, x86_flags_status, 18, 1); /* alignment check system flag */
     }
     return regs;
 }
@@ -458,9 +497,9 @@ RegisterDictionary::dictionary_pentium()
         regs->insert(dictionary_i486());
 
         /* Additional flags */
-        regs->insert("vif", x86_regclass_flags, 0, 19, 1);              /* virtual interrupt flag */
-        regs->insert("vip", x86_regclass_flags, 0, 20, 1);              /* virt interrupt pending */
-        regs->insert("id",  x86_regclass_flags, 0, 21, 1);              /* ident system flag */
+        regs->insert("vif", x86_regclass_flags, x86_flags_status, 19, 1); /* virtual interrupt flag */
+        regs->insert("vip", x86_regclass_flags, x86_flags_status, 20, 1); /* virt interrupt pending */
+        regs->insert("id",  x86_regclass_flags, x86_flags_status, 21, 1); /* ident system flag */
 
         /* The MMi registers are aliases for the ST(i) registers but are absolute rather than relative to the top of the
          * stack. We're creating the static definitions, so MMi will point to the same storage as ST(i) for 0<=i<=7. Note that
@@ -530,7 +569,7 @@ RegisterDictionary::dictionary_amd64()
         regs->insert("rsi", x86_regclass_gpr, x86_gpr_si, 0, 64);
         regs->insert("rdi", x86_regclass_gpr, x86_gpr_di, 0, 64);
         regs->insert("rip", x86_regclass_ip, 0, 0, 64);
-        regs->insert("rflags", x86_regclass_flags, 0, 0, 64);
+        regs->insert("rflags", x86_regclass_flags, x86_flags_status, 0, 64);
 
         for (unsigned i=8; i<16; i++) {
             /* New general purpose registers in various widths */
