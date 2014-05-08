@@ -32,15 +32,15 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
     // (traversed) data member information for current grammar node
     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
-      stringListIterator != includeList.end();
-    stringListIterator++) {
+        stringListIterator != includeList.end();
+        stringListIterator++) {
       if ((*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
-    string type = (*stringListIterator)->getTypeNameString();
-    type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-    type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-    type=GrammarString::copyEdit (type,"*","");
-    s+=string(grammarnode->getName())+" -> "+type
-      +" [label=\""+(*stringListIterator)->getVariableNameString()+"\"];\n";
+        string type = (*stringListIterator)->getTypeNameString();
+        type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
+        type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
+        type=GrammarString::copyEdit (type,"*","");
+        s+=string(grammarnode->getName())+" -> "+type
+          +" [label=\""+(*stringListIterator)->getVariableNameString()+"\"];\n";
       }
     }
     // approximation: if the node has at least one successor that is a non-terminal then
@@ -48,17 +48,17 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
     // unfortunately GrammarString does not contain this information
     bool createSuccessorInfo=false;
     for(vector<Terminal *>::iterator succiter=grammarnode->subclasses.begin();
-    succiter!=grammarnode->subclasses.end();
-    succiter++) {
+        succiter!=grammarnode->subclasses.end();
+        succiter++) {
       if((*succiter)->isInnerNode())
-    createSuccessorInfo=true;
+        createSuccessorInfo=true;
     }
-
+    
     // inheritance hierarchy information
     // create data for current node (edges to subtree nodes) (only edges for inner nodes)
     if(createSuccessorInfo) {
       for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    s+=string(grammarnode->getName())+" -> "+(*viter).grammarnode->getName()+" [color=\"blue\"];\n";
+        s+=string(grammarnode->getName())+" -> "+(*viter).grammarnode->getName()+" [color=\"blue\"];\n";
       }
     }
   }
@@ -103,15 +103,14 @@ Grammar::isAbstractTreeGrammarSymbol(string s) {
 // MS: We compute the set of traversed terminals to restrict the abstract grammar to traversed nodes only.
 Grammar::GrammarSynthesizedAttribute
 Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
-                     vector<Grammar::GrammarSynthesizedAttribute> v) {
+                                                 vector<Grammar::GrammarSynthesizedAttribute> v) {
   if(grammarnode->isLeafNode()) {
     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
     stringListIterator != includeList.end(); // ", " only between the elements of the list
     stringListIterator++) {
       if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
-    traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
-  
+        traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
       }
     }  
   }

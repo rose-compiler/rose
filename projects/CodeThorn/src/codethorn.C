@@ -24,13 +24,10 @@
 #include "SgNodeHelper.h"
 #include "AType.h"
 #include "AstMatching.h"
+#include "RewriteSystem.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
-
-
-// temporary
-#include "RewriteSystem.C"
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
 list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string prefix) {
@@ -424,12 +421,13 @@ string readableruntime(double time) {
 static Analyzer* global_analyzer=0;
 
 
- void substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
+ int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
    typedef pair<SgExpression*,int> SubstitutionPair;
    typedef list<SubstitutionPair > SubstitutionList;
    SubstitutionList substitutionList;
    AstMatching m;
    MatchResult res;
+   int numConstExprElim=0;
  #pragma omp critical
    {
    res=m.performMatching("SgPntrArrRefExp(_,$ArrayIndexExpr)",root);
@@ -451,17 +449,18 @@ static Analyzer* global_analyzer=0;
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
                //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
-               SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue));
-               dump1_stats.numConstExprElim++;
+               SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
+               numConstExprElim++;
              }
            }
          }
        }
      }
    }
+   return numConstExprElim;
  }
 
- void substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+ int substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
    typedef pair<SgExpression*,int> SubstitutionPair;
    typedef list<SubstitutionPair > SubstitutionList;
    SubstitutionList substitutionList;
@@ -482,15 +481,9 @@ static Analyzer* global_analyzer=0;
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
-     // replaceExpression (SgExpression *oldExp, SgExpression *newExp, bool keepOldExp=false)
-     //cout<<"subst:"<<(*i).first->unparseToString()<<" : "<<(*i).second<<endl;
-#if 0
-     SageInterface::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
-#else
-     SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second));
-#endif
+     SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
-   dump1_stats.numVariableElim+=substitutionList.size();
+   return (int)substitutionList.size();
  }
 
  struct EStateExprInfo {
@@ -508,7 +501,13 @@ static Analyzer* global_analyzer=0;
    Label elab=estate->label();
    return elab==lab;
  }
- void extractArrayUpdateOperations(Analyzer* ana, ArrayUpdatesSequence& arrayUpdates, bool useConstExprSubstRule=true, Label startMarkerLabel=Labeler::NO_LABEL, Label endMarkerLabel=Labeler::NO_LABEL) {
+void extractArrayUpdateOperations(Analyzer* ana,
+                                  ArrayUpdatesSequence& arrayUpdates,
+                                  RewriteSystem& rewriteSystem,
+                                  bool useConstExprSubstRule=true,
+                                  Label startMarkerLabel=Labeler::NO_LABEL,
+                                  Label endMarkerLabel=Labeler::NO_LABEL
+                                  ) {
    Labeler* labeler=ana->getLabeler();
    VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
    TransitionGraph* tg=ana->getTransitionGraph();
@@ -518,8 +517,9 @@ static Analyzer* global_analyzer=0;
    int numProcessedArrayUpdates=0;
    vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 
-   // initialize markers
-   // if NO_LABEL is specified then assume start-label at first node and that the end-label is never found (on the path).
+   // initialize markers. if NO_LABEL is specified then assume
+   // start-label at first node and that the end-label is never found
+   // (on the path).
    bool foundStartMarker=false;
    bool foundEndMarker=false;
    if(startMarkerLabel==Labeler::NO_LABEL) {
@@ -580,11 +580,12 @@ static Analyzer* global_analyzer=0;
 #if 1
      // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
      if(useConstExprSubstRule) {
-       substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
-       rewriteCompoundAssignments(p_expCopy,variableIdMapping);
+       int numConstExprElim=substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
+       rewriteSystem.dump1_stats.numConstExprElim+=numConstExprElim;
+       rewriteSystem.rewriteCompoundAssignments(p_expCopy,variableIdMapping);
      } else {
-       substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
-       rewriteAst(p_expCopy, variableIdMapping);
+       rewriteSystem.dump1_stats.numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+       rewriteSystem.rewriteAst(p_expCopy, variableIdMapping);
      }
 #endif
      SgExpression* p_expCopy2=isSgExpression(p_expCopy);
@@ -1201,6 +1202,7 @@ int main( int argc, char * argv[] ) {
     }
   }
 
+  RewriteSystem rewriteSystem;
   // reset dump1 in case sorted or non-sorted is used
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     boolOptions.registerOption("dump1",true);
@@ -1449,10 +1451,12 @@ int main( int argc, char * argv[] ) {
     bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
     extractArrayUpdateOperations(&analyzer,
                                  arrayUpdates,
+                                 rewriteSystem,
                                  useConstSubstitutionRule,
-                                 fragmentStartLabel,fragmentEndLabel);
+                                 fragmentStartLabel,
+                                 fragmentEndLabel);
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
-    dump1_stats.numArrayUpdates=arrayUpdates.size();
+    rewriteSystem.dump1_stats.numArrayUpdates=arrayUpdates.size();
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
 #if 0
@@ -1523,13 +1527,13 @@ int main( int argc, char * argv[] ) {
     //    text<<"abstract-and-const-states,"
     //    <<"";
     text<<"rewrite-stats, "
-        <<dump1_stats.numArrayUpdates<<", "
-        <<dump1_stats.numElimMinusOperator<<", "
-        <<dump1_stats.numElimAssignOperator<<", "
-        <<dump1_stats.numAddOpReordering<<", "
-        <<dump1_stats.numConstantFolding<<", "
-        <<dump1_stats.numVariableElim<<", "
-        <<dump1_stats.numConstExprElim
+        <<rewriteSystem.dump1_stats.numArrayUpdates<<", "
+        <<rewriteSystem.dump1_stats.numElimMinusOperator<<", "
+        <<rewriteSystem.dump1_stats.numElimAssignOperator<<", "
+        <<rewriteSystem.dump1_stats.numAddOpReordering<<", "
+        <<rewriteSystem.dump1_stats.numConstantFolding<<", "
+        <<rewriteSystem.dump1_stats.numVariableElim<<", "
+        <<rewriteSystem.dump1_stats.numConstExprElim
         <<endl;
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;

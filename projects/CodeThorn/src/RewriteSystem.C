@@ -1,26 +1,26 @@
-struct RewriteStatistics {
-  RewriteStatistics(){init();}
-private:
-  void init() {
-    numElimMinusOperator=0;
-    numElimAssignOperator=0;
-    numAddOpReordering=0;
-    numConstantFolding=0;
-    numVariableElim=0;
-    numArrayUpdates=0;
-    numConstExprElim=0;
-  }
-  int numElimMinusOperator;
-  int numElimAssignOperator;
-  int numAddOpReordering;
-  int numConstantFolding;
-  int numVariableElim;
-  int numArrayUpdates; // number of array updates (i.e. assignments)
-  int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
-  void reset() { init(); }
-} dump1_stats;
+#include "sage3basic.h"
+#include "RewriteSystem.h"
 
-void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
+RewriteStatistics::RewriteStatistics() {
+  init();
+}
+void RewriteStatistics::init() {
+  numElimMinusOperator=0;
+  numElimAssignOperator=0;
+  numAddOpReordering=0;
+  numConstantFolding=0;
+  numVariableElim=0;
+  numArrayUpdates=0;
+  numConstExprElim=0;
+}
+void RewriteStatistics::reset() { 
+  init();
+}
+RewriteStatistics RewriteSystem::getStatistics() {
+  return dump1_stats;
+}
+
+void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
 
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
@@ -57,7 +57,7 @@ void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapp
  // rewrites an AST
  // requirements: all variables have been replaced by constants
  // uses AstMatching to match patterns.
-void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false) {
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
    bool transformationApplied=false;
@@ -191,4 +191,5 @@ void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewrit
   } while(transformationApplied);
  //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
- }
+}
+

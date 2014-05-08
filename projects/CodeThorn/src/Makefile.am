@@ -86,7 +86,9 @@ codethorn_SOURCES = \
   VariableIdUtils.C \
   VariableIdUtils.h \
   addressTakenAnalysis.C \
-  addressTakenAnalysis.h
+  addressTakenAnalysis.h \
+  RewriteSystem.C \
+  RewriteSystem.h 
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
