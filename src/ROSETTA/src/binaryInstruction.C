@@ -170,7 +170,7 @@ Grammar::setUpBinaryInstructions()
 
     
 
-    // Indirect registers, as in x86 ST(1), which has base="st", stride={0,1,0,0}, offset="_st_top",
+    // Indirect registers, as in x86 ST(1), which has base="st", stride={0,1,0,0}, offset="fpstatus_top",
     // index=1, and modulus=8.
     NEW_TERMINAL_MACRO(AsmIndirectRegisterExpression,
                        "AsmIndirectRegisterExpression", "AsmIndirectRegisterExpressionTag");
