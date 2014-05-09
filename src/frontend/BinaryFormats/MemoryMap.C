@@ -25,6 +25,8 @@
 #define TEMP_FAILURE_RETRY(expression) expression
 #define PROT_WRITE 0x02
 #define F_OK 0
+#define MAP_SHARED 0
+#define MAP_PRIVATE 1
 #endif
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
@@ -625,7 +627,7 @@ size_t
 MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writable, bool erase_prior, const std::string &sgmtname)
 {
     int o_flags = writable ? O_RDWR : O_RDONLY;
-    int m_prot = writable ? (PROT_READ|PROT_WRITE) : PROT_READ;
+    int m_prot = writable ? (MM_PROT_READ|MM_PROT_WRITE) : MM_PROT_READ;
     int m_flags = writable ? MAP_SHARED : MAP_PRIVATE;
     unsigned s_prot = writable ? MM_PROT_RW : MM_PROT_READ;
 
