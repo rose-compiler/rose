@@ -80,7 +80,7 @@ namespace Assert {
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
 void fail(const char *mesg, const char *expr, const std::string &note,
-          const char *filename, unsigned linenum, const char *funcname) __attribute__((noreturn));
+          const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
 
 /** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
  *  initialized at the first call to @ref fail if it is a null pointer. Users can assign a different stream to it any time

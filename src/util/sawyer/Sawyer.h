@@ -158,4 +158,13 @@ extern bool isInitialized;
 
 } // namespace
 
+// Microsoft compilers are deficient in some respects
+#ifdef _MSC_VER
+# define SAWYER_ATTR_UNUSED /*unused*/
+# define SAWYER_ATTR_NORETURN /*noreturn*/
+#else
+# define SAWYER_ATTR_UNUSED __attribute__((unused))
+# define SAWYER_ATTR_NORETURN __attribute__((noreturn))
+#endif
+
 #endif

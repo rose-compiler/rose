@@ -372,6 +372,32 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
+    /** Return a reference to a (new) value.
+     *
+     *  Returns a reference to the value at the node with the specified @p key.  Unlike <code>std::map</code>, this container
+     *  does not instantiate a new key/value pair if the @p key is not in the map's domain.  In other words, the array operator
+     *  for this class is more like an array operator on arrays or vectors--such objects are not automatically extended if
+     *  dereferenced with an operand that is outside the domain.
+     *
+     *  If the @p key is not part of this map's domain then an <code>std:domain_error</code> is thrown.
+     *
+     *  @sa insert insertDefault
+     *
+     *  @{ */
+    Value& operator[](const Key &key) {
+        typename StlMap::iterator found = map_.find(key);
+        if (found==map_.end())
+            throw std::range_error("key lookup failure; key is not in map domain");
+        return found->second;
+    }
+    const Value& operator[](const Key &key) const {
+        typename StlMap::const_iterator found = map_.find(key);
+        if (found==map_.end())
+            throw std::range_error("key lookup failure; key is not in map domain");
+        return found->second;
+    }
+    /** @} */
+
     /** Lookup and return a value or nothing.
      *
      *  Looks up the node with the specified key and returns either a copy of its value, or nothing. This method executes in
@@ -400,7 +426,7 @@ public:
         return found == map_.end() ? boost::optional<Value>() : boost::optional<Value>(found->second);
     }
 
-    /** Lookup and return a value or something.
+    /** Lookup and return a value or something else.
      *
      *  This is similar to the @ref get method, except a default can be provided.  If a node with the specified @p key is
      *  present in this container, then a reference to that node's value is returned, otherwise the (reference to) supplied
@@ -416,28 +442,29 @@ public:
         return found == map_.end() ? dflt : found->second;
     }
     /** @} */
-    
 
+
+    /** Lookup and return a value or a default.
+     *
+     *  This is similar to the @ref getOrElse method except when the key is not present in the map, a reference to a const,
+     *  default-constructed value is returned. */
+    const Value& getOrDefault(const Key &key) const {
+        static const Value dflt;
+        typename StlMap::const_iterator found = map_.find(key);
+        return found==map_.end() ? dflt : found->second;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Mutators
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-
-    /** Return a reference to a (new) value.
-     *
-     *  Returns a reference to the value at the node with the specified @p key, first creating that node if necessary.
-     *
-     *  @sa insert */
-    Value& operator[](const Key &key) {
-        return map_[key];
-    }
 
     /** Insert or update a key/value pair.
      *
      *  Inserts the key/value pair into the container. If a previous node already had the same key then it is replaced by the
      *  new node.  This method executes in logorithmic time.
      *
-     *  @sa insertMaybe insertMultiple insertMaybeMultiple */
+     *  @sa insertDefault insertMaybe insertMaybeDefault insertMultiple insertMaybeMultiple */
     Map& insert(const Key &key, const Value &value) {
         std::pair<typename StlMap::iterator, bool> inserted = map_.insert(std::make_pair(key, value));
         if (!inserted.second)
@@ -445,6 +472,17 @@ public:
         return *this;
     }
 
+    /** Insert or update a key with a default value.
+     *
+     *  The value associated with @p key in the map is replaced with a default-constructed value.  If the key does not exist
+     *  then it is inserted with a default value.  This operation is similar to the array operator of <code>std::map</code>.
+     *
+     *  @sa insert insertMaybe insertMaybeDefault insertMultiple insertMaybeMultiple */
+    Map& insertDefault(const Key &key) {
+        map_[key] = T();
+        return *this;
+    }
+    
     /** Insert multiple values.
      *  
      *  Inserts copies of the nodes in the specified node iterator range. The iterators must iterate over objects that have
@@ -459,7 +497,7 @@ public:
      *  destination.insertMultiple(source.nodes());
      * @endcode
      *
-     * @sa insert insertMaybe insertMaybeMultiple
+     * @sa insert insertDefault insertMaybe insertMaybeDefault insertMaybeMultiple
      *
      * @{ */
     template<class OtherNodeIterator>
@@ -480,9 +518,20 @@ public:
      *  executes in logarithmic time.  The return value is a reference to the value that is in the container, either the value
      *  that previously existed or a copy of the specified @p value.
      *
-     *  @sa insert insertMultiple insertMaybeMultiple */
+     *  @sa insert insertDefault insertMaybeDefault insertMultiple insertMaybeMultiple */
     Value& insertMaybe(const Key &key, const Value &value) {
         return map_.insert(std::make_pair(key, value)).first->second;
+    }
+
+    /** Conditionally insert a new key with default value.
+     *
+     *  Inserts a key/value pair into the container if the container does not yet have a node with the same key. The value is
+     *  default-constructed.  This method executes in logarithmic time.  The return value is a reference to the value that is
+     *  in the container, either the value that previously existed or the new default-constructed value.
+     *
+     *  @sa insert insertDefault insertMultiple insertMaybeMultiple */
+    Value& insertMaybeDefault(const Key &key) {
+        return map_.insert(std::make_pair(key, T())).first->second;
     }
 
     /** Conditionally insert multiple key/value pairs.
@@ -490,7 +539,7 @@ public:
      *  Inserts each of the specified key/value pairs into this container where this container does not already contain a value
      *  for the key.  The return value is a reference to the container itself so that this method can be chained with others.
      *
-     *  @sa insert insertMultiple insertMaybe */
+     *  @sa insert insertDefault insertMaybe insertMaybeDefault insertMultiple */
     template<class OtherNodeIterator>
     Map& insertMaybeMultiple(const boost::iterator_range<OtherNodeIterator> &range) {
         for (OtherNodeIterator otherIter=range.begin(); otherIter!=range.end(); ++otherIter)

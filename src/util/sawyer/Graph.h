@@ -732,7 +732,7 @@ public:
         clear();
         for (size_t i=0; i<other.nVertices(); ++i) {
             typename Graph<V2, E2>::ConstVertexNodeIterator vertex = other.findVertex(i);
-            VertexNodeIterator inserted __attribute__((unused)) = insertVertex(VertexValue(vertex->value()));
+            VertexNodeIterator inserted SAWYER_ATTR_UNUSED = insertVertex(VertexValue(vertex->value()));
             ASSERT_require(inserted->id() == i);
         }
         for (size_t i=0; i<other.nEdges(); ++i) {
