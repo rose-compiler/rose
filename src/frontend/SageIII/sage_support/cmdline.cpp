@@ -1583,6 +1583,10 @@ ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv)
 
       project->set_unparser__clobber_input_file(true);
   }
+  else
+  {
+      project->set_unparser__clobber_input_file(false);
+  }
 }// ::Rose::Cmdline::Unparser::ProcessClobberInputFile
 
 //------------------------------------------------------------------------------
