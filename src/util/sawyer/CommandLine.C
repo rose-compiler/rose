@@ -972,22 +972,22 @@ void ParserResult::insertValuesForSwitch(const ParsedValues &pvals, const Parser
             if (!pvals.empty())
                 throw std::runtime_error(pvals.front().switchString() + " is illegal here");
         case SAVE_ONE:
-            if (!keyIndex_[key].empty() && !pvals.empty())
+            if (!keyIndex_.getOrDefault(key).empty() && !pvals.empty())
                 throw std::runtime_error("switch key \"" + key + "\" cannot appear multiple times (" +
                                          pvals.front().switchString() + ")");
             break;
         case SAVE_FIRST:
-            if (!keyIndex_[key].empty())
+            if (!keyIndex_.getOrDefault(key).empty())
                 shouldSave = false;                     // skip this value since we already saved one
             break;
         case SAVE_LAST:
-            keyIndex_[key].clear();
+            keyIndex_.insertDefault(key);
             break;
         case SAVE_ALL:
             break;
         case SAVE_AUGMENTED:
             ValueAugmenter::Ptr f = sw->valueAugmenter();
-            if (f!=NULL && !keyIndex_[key].empty()) {
+            if (f!=NULL && !keyIndex_.getOrDefault(key).empty()) {
                 ParsedValues oldValues;
                 BOOST_FOREACH (size_t idx, keyIndex_[key])
                     oldValues.push_back(values_[idx]);
@@ -997,7 +997,7 @@ void ParserResult::insertValuesForSwitch(const ParsedValues &pvals, const Parser
                     insertOneValue(pval, sw);
                 return;
             }
-            keyIndex_[key].clear();                     // act like SAVE_LAST
+            keyIndex_.insertDefault(key);               // act like SAVE_LAST
             break;
     }
 
@@ -1009,19 +1009,19 @@ void ParserResult::insertOneValue(const ParsedValue &pval, const Switch *sw, boo
     // Get sequences for this value and update the value.
     const std::string &key = sw->key();
     const std::string &name = sw->preferredName();
-    size_t keySequence = keyIndex_[key].size();
-    size_t switchSequence = switchIndex_[name].size();
+    size_t keySequence = keyIndex_.getOrDefault(key).size();
+    size_t switchSequence = switchIndex_.getOrDefault(name).size();
     size_t idx = values_.size();
     values_.push_back(pval);
     values_.back().switchKey(key);
     values_.back().sequenceInfo(keySequence, switchSequence);
-    argvIndex_[pval.switchLocation()].push_back(idx);
+    argvIndex_.insertMaybeDefault(pval.switchLocation()).push_back(idx);
 
     // Associate the value with a key and switch name
     if (saveValue) {
-        keyIndex_[key].push_back(idx);
-        switchIndex_[name].push_back(idx);
-        actions_[key] = sw->action();
+        keyIndex_.insertMaybeDefault(key).push_back(idx);
+        switchIndex_.insertMaybeDefault(name).push_back(idx);
+        actions_.insert(key, sw->action());
 
 #if 0 /*DEBUGGING [Robb Matzke 2014-02-18]*/
         std::cerr <<"    " <<values_.back() <<"\n";
@@ -1053,11 +1053,11 @@ const ParserResult& ParserResult::apply() const {
     return *this;
 }
 
-const ParsedValue& ParserResult::parsed(const std::string &switchKey, size_t idx) {
+const ParsedValue& ParserResult::parsed(const std::string &switchKey, size_t idx) const {
     return values_[keyIndex_[switchKey][idx]];
 }
 
-ParsedValues ParserResult::parsed(const std::string &switchKey) {
+ParsedValues ParserResult::parsed(const std::string &switchKey) const {
     ParsedValues retval;
     BOOST_FOREACH (size_t idx, keyIndex_[switchKey])
         retval.push_back(values_[idx]);
@@ -1603,7 +1603,7 @@ protected:
 public:
     static SeeAlsoTagPtr instance() { return SeeAlsoTagPtr(new SeeAlsoTag); }
     void insert(const std::string &name, const Markup::ContentPtr content) {
-        seeAlso_[name] = content;
+        seeAlso_.insert(name, content);
     }
     virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*override*/ {
         using namespace Markup;
@@ -1648,7 +1648,7 @@ protected:
 public:
     static PropTagPtr instance() { return PropTagPtr(new PropTag); }
     PropTagPtr with(const std::string &key, const std::string &value) {
-        values_[key] = value;
+        values_.insert(key, value);
         return boost::dynamic_pointer_cast<PropTag>(shared_from_this());
     }
     virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*overload*/ {
@@ -1656,7 +1656,7 @@ public:
         ASSERT_require(1==args.size());
         std::string key = args.front()->asText();
         ContentPtr retval = Content::instance();
-        retval->append(values_[key]);
+        retval->append(values_.getOrDefault(key));
         return retval;
     }
 };
@@ -1682,13 +1682,13 @@ std::string Parser::docForSwitches() const {
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
         std::string groupKey = sg.docKey().empty() ? boost::to_lower_copy(sg.name()) : sg.docKey();
         groupTitles.insert(groupKey, sg.name());
-        groupSortOrders[groupKey] = sg.switchOrder();
+        groupSortOrders.insert(groupKey, sg.switchOrder());
         if (!sg.doc().empty())
-            groupDocumentation[groupKey].push_back(sg.doc());
+            groupDocumentation.insertMaybeDefault(groupKey).push_back(sg.doc());
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             if (!sw.hidden()) {
                 std::string switchKey = sw.docKey();    // never empty
-                groupSwitches[groupKey].push_back(KeySwitchPair(switchKey, &sw));
+                groupSwitches.insertMaybeDefault(groupKey).push_back(KeySwitchPair(switchKey, &sw));
             }
         }
     }
@@ -1709,10 +1709,10 @@ std::string Parser::docForSwitches() const {
     switch (switchGroupOrder_) {
         case DOCKEY_ORDER: {
             BOOST_FOREACH (GroupSwitches::Node &sgNode, groupSwitches.nodes()) {
-                const std::string &groupTitle = groupTitles[sgNode.key()];
+                const std::string &groupTitle = groupTitles.getOrDefault(sgNode.key());
                 if (!groupTitle.empty())
                     retval += "@subsection{" + groupTitle + "}{";
-                retval += boost::join(groupDocumentation[sgNode.key()], "\n\n");
+                retval += boost::join(groupDocumentation.getOrDefault(sgNode.key()), "\n\n");
                 BOOST_FOREACH (KeySwitchPair &swPair, sgNode.value()) {
                     std::string synopsis = swPair.second->synopsis();
                     const std::string &doc = swPair.second->doc();
@@ -1729,10 +1729,10 @@ std::string Parser::docForSwitches() const {
             BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
                 std::string groupKey = sg.docKey().empty() ? boost::to_lower_copy(sg.name()) : sg.docKey();
                 if (sgKeysSeen.insert(groupKey).second) {
-                    const std::string &groupTitle = groupTitles[groupKey];
+                    const std::string &groupTitle = groupTitles.getOrDefault(groupKey);
                     if (!groupTitle.empty())
                         retval += "@subsection{" + groupTitle + "}{";
-                    retval += boost::join(groupDocumentation[groupKey], "\n\n");
+                    retval += boost::join(groupDocumentation.getOrDefault(groupKey), "\n\n");
                     BOOST_FOREACH (KeySwitchPair &swPair, groupSwitches[groupKey]) {
                         std::string synopsis = swPair.second->synopsis();
                         const std::string &doc = swPair.second->doc();

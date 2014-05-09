@@ -2614,7 +2614,9 @@ public:
 
     /** Returns the number of values for the specified key. This is the number of values actually stored for switches using
      * this key, which might be fewer than the number of values parsed.  See Switch::whichValue. */
-    size_t have(const std::string &switchKey) { return keyIndex_[switchKey].size(); }
+    size_t have(const std::string &switchKey) const {
+        return keyIndex_.getOrDefault(switchKey).size();
+    }
 
     /** Returns values for a key.  This is the usual method for obtaining a value for a switch.  During parsing, the arguments
      *  of the switch are converted to @ref ParsedValue objects and stored according to the key of the switch that did the
@@ -2634,8 +2636,8 @@ public:
      * @endcode
      *
      * @{ */
-    const ParsedValue& parsed(const std::string &switchKey, size_t idx);
-    ParsedValues parsed(const std::string &switchKey);
+    const ParsedValue& parsed(const std::string &switchKey, size_t idx) const;
+    ParsedValues parsed(const std::string &switchKey) const;
     /** @} */
 
     /** Program arguments that were skipped over during parsing.

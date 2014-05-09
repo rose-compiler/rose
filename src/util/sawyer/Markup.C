@@ -171,7 +171,7 @@ void Parser::init() {
 }
 
 Parser& Parser::registerTag(const TagPtr &tag, const std::string &name) {
-    symtab_[name.empty() ? tag->name() : name] = tag;
+    symtab_.insert(name.empty() ? tag->name() : name, tag);
     return *this;
 }
 
@@ -273,7 +273,7 @@ TagInstancePtr Parser::parseTag(Input &input) {
     if ('@'!=input.next())
         return TagInstancePtr();
     std::string tagName = parseSymbol(input);
-    TagPtr tag = symtab_[tagName];
+    TagPtr tag = symtab_.getOrDefault(tagName);
     if (!tag)
         return TagInstancePtr();
     TagInstancePtr retval = TagInstance::instance(tag);
