@@ -120,6 +120,7 @@ elf_exe_x86_specimens =				\
     i386-int3					\
     i386-mul					\
     i386-nologin				\
+    i386-pop					\
     i386-pivot_root				\
     i386-pointers				\
     i386-poweroff				\
@@ -180,6 +181,7 @@ other_distributed =				\
     i386-fld.s					\
     i386-int3.s					\
     i386-mul.s					\
+    i386-pop.s					\
     memreadwrite.s				\
     pentium-movd.s				\
     pentium-xmm.s				\
