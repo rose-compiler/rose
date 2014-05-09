@@ -958,12 +958,21 @@ struct IP_palignr: P {
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
+
+        // Assuming the address size attribute of the stack segment is set to 32 bits.
+        size_t operandWidth = asm_type_width(args[0]->get_type());
+        if (16!=operandWidth && 32!=operandWidth)
+            throw BaseSemantics::Exception(StringUtility::numberToString(operandWidth)+"-bit operand not supported for POP",
+                                           insn);
+        
+        // Increment the stack pointer before writing to args[0] just in case args[0] is ESP-relative
+        size_t stackDelta = operandWidth / 8;
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 4));
+        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, stackDelta));
         ops->writeRegister(d->REG_ESP, newSp);
-        d->write(args[0], ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), 32));
+
+        // Read from stack and write to args[0]
+        d->write(args[0], ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), operandWidth));
     }
 };
 
@@ -998,12 +1007,29 @@ struct IP_popad: P {
 struct IP_push: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
+        size_t operandWidth = asm_type_width(args[0]->get_type());
+        bool isImmediate = isSgAsmIntegerValueExpression(args[0])!=NULL;
+
+        // Assuming the address size attribute of the stack segment is set to 32 bits.
+        BaseSemantics::SValuePtr toPush;
+        if (isImmediate) {
+            toPush = ops->signExtend(d->read(args[0], operandWidth), 32);
+        } else if (16==operandWidth || 32==operandWidth) {
+            toPush = d->read(args[0], operandWidth);
+        } else {
+            throw BaseSemantics::Exception("invalid operand size for 32-bit push", insn);
+        }
+        ASSERT_not_null(toPush);
+        ASSERT_require(toPush->get_width()==16 || toPush->get_width()==32);
+        
+        // Decrement stack pointer
+        int stackDelta = toPush->get_width() / 8;
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
-        ops->writeMemory(d->REG_SS, newSp, d->read(args[0], 32), ops->boolean_(true));
+        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -stackDelta));
         ops->writeRegister(d->REG_ESP, newSp);
+
+        // Write data to stack
+        ops->writeMemory(d->REG_SS, newSp, toPush, ops->boolean_(true));
     }
 };
 
