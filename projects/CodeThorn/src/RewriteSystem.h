@@ -15,6 +15,7 @@ struct RewriteStatistics {
   int numArrayUpdates; // number of array updates (i.e. assignments)
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
   void reset();
+  string toString();
 private:
   void init();
 };
@@ -24,6 +25,7 @@ class RewriteSystem {
   void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping);
   void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false);
   RewriteStatistics getStatistics();
+  void resetStatistics();
  public:
   RewriteStatistics dump1_stats;
 };

@@ -37,6 +37,38 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
   }
 }
 
+// requires available expressions analysis
+void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
+  RoseAst ast(root);
+  long labelNum=labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+    Label lab=i;
+    SgNode* node=labeler->getNode(lab);
+    UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(node->getAttribute(udAttributeName));
+    if(udAttr) {
+      VariableIdSet usedVars=udAttr->useVariables(*variableIdMapping);
+      if(usedVars.size()>0) {
+        cout<<"Found used vars."<<endl;
+        // foreach uvar in usedVars do if(def(uvar)==1) replace(ast(uvar),rhs(def(uvar))) od
+        for(VariableIdSet::iterator i=usedVars.begin();i!=usedVars.end();++i) {
+          LabelSet varDefs=udAttr->definitionsOfVariable(*i);
+          if(varDefs.size()==1) {
+            // 1) determine definition rhs
+            Label def=*varDefs.begin(); // guaranteed to be one
+            SgNode* defRootNode=labeler->getNode(def);
+            // only substitute variables
+            if(variableIdMapping->hasIntegerType(*i)||variableIdMapping->hasFloatingPointType(*i)) {
+              cout<<"Found UD Attribute with one def. variable:"<<variableIdMapping->uniqueShortVariableName(*i)<<" ";
+              cout<<"DEF:"<<defRootNode->unparseToString()<<endl;
+              //SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -52,6 +84,7 @@ int main(int argc, char* argv[]) {
   SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
+
   cout << "INFO: attaching RD-data to AST."<<endl;
   rdAnalyzer->attachInInfoToAst("rd-analysis-in");
   rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
@@ -59,6 +92,9 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
+  substituteUsesWithReadOnlyRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
+
+#if 0
   Flow* flow=rdAnalyzer->getFlow();
 #if 1
   cout << "INFO: computing program statistics."<<endl;
@@ -110,11 +146,15 @@ int main(int argc, char* argv[]) {
                                  "ud-analysis");
   ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
 
+#if 0
   cout << "INFO: annotating analysis results as comments."<<endl;
   AstAnnotator ara(rdAnalyzer->getLabeler());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;
+#endif
+#endif
+
   root->unparse(0,0);
   return 0;
 }

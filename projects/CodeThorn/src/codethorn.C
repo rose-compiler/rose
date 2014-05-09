@@ -1003,7 +1003,7 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)/")
+    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
@@ -1011,6 +1011,7 @@ int main( int argc, char * argv[] ) {
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+    ("rewrite","rewrite AST applying all rewrite system rules.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1242,6 +1243,17 @@ int main( int argc, char * argv[] ) {
   }
 
   SgNode* root=sageProject;
+
+  if(args.count("rewrite")) {
+    VariableIdMapping variableIdMapping;
+    variableIdMapping.computeVariableSymbolMapping(sageProject);
+    rewriteSystem.resetStatistics();
+    rewriteSystem.rewriteAst(root, &variableIdMapping,true,false);
+    cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
+    sageProject->unparse(0,0);
+    cout<<"STATUS: generated rewritten program."<<endl;
+    exit(0);
+  }
 
   if(!boolOptions["skip-analysis"])
   {

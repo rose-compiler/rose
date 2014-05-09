@@ -20,6 +20,22 @@ RewriteStatistics RewriteSystem::getStatistics() {
   return dump1_stats;
 }
 
+string RewriteStatistics::toString() {
+  stringstream ss;
+  ss<<"Array updates  : "<<numArrayUpdates<<endl;
+  ss<<"Elim minus op  : "<<numElimMinusOperator<<endl;
+  ss<<"Elim assign op : "<<numElimAssignOperator<<endl;
+  ss<<"Add op reorder : "<<numAddOpReordering<<endl;
+  ss<<"Const fold     : "<<numConstantFolding<<endl;
+  ss<<"Variable elim  : "<<numVariableElim<<endl;
+  ss<<"Const expr elim: "<<numConstExprElim<<endl;
+  return ss.str();
+}
+
+void RewriteSystem::resetStatistics() {
+  dump1_stats.reset();
+}
+
 void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
 
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
