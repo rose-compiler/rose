@@ -134,7 +134,7 @@ void nonoverlappingCopy(const Word *src, const BitRange &srcRange, Word *dst, co
     size_t srcLastIdx  = wordIndex<Word>(srcRange.greatest());
 
     size_t srcOffset = srcFirstIdx - dstFirstIdx; // overflow is okay
-    ssize_t srcOffsetSigned __attribute__((unused)) = srcOffset;// to debug overflow
+    ssize_t srcOffsetSigned SAWYER_ATTR_UNUSED = srcOffset;// to debug overflow
 
     size_t srcBitIdx = bitIndex<Word>(srcRange.least());
     size_t dstBitIdx = bitIndex<Word>(dstRange.least());
