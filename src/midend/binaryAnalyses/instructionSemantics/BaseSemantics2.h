@@ -9,6 +9,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
+#include <sawyer/IntervalMap.h>
+#include <sawyer/Map.h>
 
 // Documented elsewhere
 namespace BinaryAnalysis {
@@ -545,17 +547,29 @@ private:
     enum { SIZE_DIVISOR = 8 };          // must be >= sizeof(FreeItem)
     enum { N_FREE_LISTS = 16 };         // number of lists. list[N] has objects of size <= (N+1)*SIZE_DIVISOR
     FreeItem *freelist[N_FREE_LISTS];
+    typedef std::list<Bucket*> BucketList;
+    BucketList buckets_[N_FREE_LISTS];                  // lists containing all buckets allocated
+    size_t nallocated_[N_FREE_LISTS];                   // number of objects currently allocated
+    size_t highwater_[N_FREE_LISTS];                    // max number of objects allocated at once
+
+    typedef Sawyer::Container::Interval<uint64_t> BucketAddressInterval;
+    typedef Sawyer::Container::IntervalMap<BucketAddressInterval, Bucket*> BucketAddressMap;
+    typedef Sawyer::Container::Map<Bucket*, size_t> BucketUsageCounts;
+
+    // Returns a mapping from address (as uint64_t) to bucket pointer
+    void bucketAddresses(BucketAddressMap&/*out*/, size_t poolNumber) const;
+
+    // Returns a mapping from bucket pointer to number of used objects in the bucket.
+    void bucketUsage(BucketUsageCounts &result, size_t poolNumber) const;
+    void bucketUsage(BucketUsageCounts &result, size_t poolNumber, const BucketAddressMap&) const;
 
     // Fills the specified freelist by adding another Bucket-worth of objects.
     void fill_freelist(const int listn) { // hot
-#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
-        std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
-#endif
         assert(listn>=0 && listn<N_FREE_LISTS);
         const size_t object_size = (listn+1) * SIZE_DIVISOR;
-        assert(object_size >= sizeof(FreeItem));
         Bucket *b = new Bucket;
-        for (size_t offset=0; offset+object_size<Bucket::SIZE; offset+=object_size) {
+        buckets_[listn].push_back(b);
+        for (size_t offset=0; offset+object_size<=Bucket::SIZE; offset+=object_size) {
             FreeItem *item = (FreeItem*)(b->buffer+offset);
             item->next = freelist[listn];
             freelist[listn] = item;
@@ -563,38 +577,40 @@ private:
         assert(freelist[listn]!=NULL);
     }
 
+    // Used internally when debugging
+    void assertInvariants() const;
+
 public:
+    Allocator() {
+        ASSERT_require(sizeof(FreeItem) <= SIZE_DIVISOR);
+        memset(nallocated_, 0, sizeof nallocated_);
+        memset(highwater_, 0, sizeof highwater_);
+        memset(freelist, 0, sizeof freelist);
+    }
+
+    ~Allocator() {
+        destroyAllObjects();
+    }
+
     /** Allocate one object of specified size. The size must be non-zero. If the size is greater than the largest objects this
      *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
      *  this happens). */
     void *allocate(size_t size) { // hot
         assert(size>0);
         const int listn = (size-1) / SIZE_DIVISOR;
-        if (listn>=N_FREE_LISTS) {
-            static bool warned = false;
-            if (!warned) {
-                std::cerr <<"BinaryAnalysis::InstructionSemantics2::BaseSemantics::Allocator::allocate(): warning:"
-                          <<" object is too large for allocator (" <<size <<" bytes); falling back to global allocator\n";
-                warned = true;
-            }
+        if (listn>=N_FREE_LISTS)
             return ::operator new(size);
-        }
         if (NULL==freelist[listn])
             fill_freelist(listn);
         void *retval = freelist[listn];
         freelist[listn] = freelist[listn]->next;
-#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
-        std::cerr <<"Allocator::allocate(" <<size <<") = " <<retval <<"\n";
-#endif
+        highwater_[listn] = std::max(highwater_[listn], ++nallocated_[listn]);
         return retval;
     }
 
     /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
      *  is a no-op if @p ptr is null. */
     void deallocate(void *ptr, const size_t size) { // hot
-#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
-        std::cerr <<"Allocator::deallocate(" <<ptr <<", " <<size <<")\n";
-#endif
         if (ptr) {
             assert(size>0);
             const int listn = (size-1) / SIZE_DIVISOR;
@@ -603,8 +619,27 @@ public:
             FreeItem *item = (FreeItem*)ptr;
             item->next = freelist[listn];
             freelist[listn] = item;
+            ASSERT_require(nallocated_[listn]>0);
+            --nallocated_[listn];
         }
     }
+
+    /** Deallocate unused buckets.
+     *
+     *  Does a linear traversal of the free lists to determine which buckets contain only free objects, then deletes those
+     *  buckets, removing their members from the free list. */
+    void vacuum();
+
+    /** Deallocate all buckets.
+     *
+     *  Frees all objects allocated by this allocator regardless of whether those objects are on a freelist. */
+    void destroyAllObjects();
+
+    /** Print some statistics.
+     *
+     *  Writes some information about this allocator to the specified stream. */
+    void printStatistics(std::ostream&) const;
+
 };
 
 /*******************************************************************************************************************************
