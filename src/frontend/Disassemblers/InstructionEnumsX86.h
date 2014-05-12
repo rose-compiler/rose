@@ -21,8 +21,7 @@ enum X86RegisterClass
   x86_regclass_segment,         /**< Minors are X86SegmentRegister (es,cs,ss,ds,fs,gs) */
   x86_regclass_cr,              /**< Control registers; Minors are 0-4, 8 */
   x86_regclass_dr,              /**< Debug registers; Minors are 0-7 */
-  x86_regclass_st,              /**< Floating point stack; Minors are 0-7 */
-  x86_regclass_mm,              /**< 64-bit mmN; Minors are 0-7. Note that these reference low 64 bits of st(i) */
+  x86_regclass_st,              /**< Floating point stack or MM registers; Minors are 0-7 */
   x86_regclass_xmm,             /**< 128-bit xmmN; Minors are 0-7. */
   x86_regclass_ip,              /**< Instruction pointer; Only allowed minor is zero. */
   x86_regclass_flags            /**< Status flags. */
@@ -80,6 +79,7 @@ enum X86Flags {
     x86_flags_fpstatus   = 1,                           // floating-point status flags
     x86_flags_fptag      = 2,                           // floating-point tag register
     x86_flags_fpctl      = 3,                           // floating-point control register
+    x86_flags_mxcsr      = 4,                           // SSE control and status register
 };
 
 /** Intel x86 status flags. These are the bit offsets in the x86_flags_status register. */

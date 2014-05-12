@@ -505,14 +505,17 @@ RegisterDictionary::dictionary_pentium()
          * stack. We're creating the static definitions, so MMi will point to the same storage as ST(i) for 0<=i<=7. Note that
          * a write to one of the 64-bit MMi registers causes the high-order 16 bits of the corresponding ST(j) register to be
          * set to all ones to indicate a NaN value. */
-        regs->insert("mm0", x86_regclass_mm, 0, 0, 64);
-        regs->insert("mm1", x86_regclass_mm, 1, 0, 64);
-        regs->insert("mm2", x86_regclass_mm, 2, 0, 64);
-        regs->insert("mm3", x86_regclass_mm, 3, 0, 64);
-        regs->insert("mm4", x86_regclass_mm, 4, 0, 64);
-        regs->insert("mm5", x86_regclass_mm, 5, 0, 64);
-        regs->insert("mm6", x86_regclass_mm, 6, 0, 64);
-        regs->insert("mm7", x86_regclass_mm, 7, 0, 64);
+        regs->insert("mm0", x86_regclass_st, x86_st_0, 0, 64);
+        regs->insert("mm1", x86_regclass_st, x86_st_1, 0, 64);
+        regs->insert("mm2", x86_regclass_st, x86_st_2, 0, 64);
+        regs->insert("mm3", x86_regclass_st, x86_st_3, 0, 64);
+        regs->insert("mm4", x86_regclass_st, x86_st_4, 0, 64);
+        regs->insert("mm5", x86_regclass_st, x86_st_5, 0, 64);
+        regs->insert("mm6", x86_regclass_st, x86_st_6, 0, 64);
+        regs->insert("mm7", x86_regclass_st, x86_st_7, 0, 64);
+
+        /** SSE status and control register. */
+        regs->insert("mxcsr", x86_regclass_flags, x86_flags_mxcsr, 0, 32);
     }
     return regs;
 }

@@ -708,7 +708,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                     x86_regclass_st==rre->get_descriptor().get_major());
 
         case od_mm:
-            return rre && x86_regclass_mm==rre->get_descriptor().get_major();
+            // These are the same registers as ST(n) except directly accessed (i.e., not as a stack)
+            return rre && x86_regclass_st==rre->get_descriptor().get_major();
 
         case od_mm_m32:
             return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
@@ -982,7 +983,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
             } else {
                 ROSE_ASSERT(!"unknown register position");
             }
-        } else if (rre->get_descriptor().get_major()==x86_regclass_mm) {
+        } else if (rre->get_descriptor().get_major()==x86_regclass_st) { // MM and ST(i) are the same physical registers
             rm = rre->get_descriptor().get_minor() % 8;
         } else if (rre->get_descriptor().get_major()==x86_regclass_xmm) {
             rm = rre->get_descriptor().get_minor() % 8;
