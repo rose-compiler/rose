@@ -578,7 +578,9 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
       int mylog2=log2(mywidth);
       // compute upper whole number
       int bits=-1;
-      if(mywidth==pow(2,mylog2)) {
+
+      // casts on pow args to ensure that the correct overloaded C++ cmath function is selected
+      if(mywidth==static_cast<size_t>(pow(2.0,(double)mylog2))) {
         if(mylog2==0)
           bits=1;
         else
