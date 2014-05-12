@@ -117,6 +117,7 @@ elf_exe_x86_specimens =				\
     i386-fcalls					\
     i386-fsck.cramfs				\
     i386-fld					\
+    i386-fnstsw					\
     i386-int3					\
     i386-mul					\
     i386-nologin				\
@@ -179,6 +180,7 @@ raw_rot13_x86_specimens =			\
 other_distributed =				\
     ARPPRODUCTICON.exe				\
     i386-fld.s					\
+    i386-fnstsw.s				\
     i386-int3.s					\
     i386-mul.s					\
     i386-pop.s					\

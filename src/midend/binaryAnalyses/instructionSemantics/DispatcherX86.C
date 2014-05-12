@@ -561,9 +561,16 @@ struct IP_fldcw: P {
 // Store x87 FPU control word
 struct IP_fnstcw: P {
     void p(D d, Ops ops, I insn, A args) {
-        // FIXME: this is a dummy version that should be replaced later
         assert_args(insn, args, 1);
-        d->write(args[0], ops->number_(16, 0x37f));
+        d->write(args[0], ops->readRegister(d->REG_FPCTL));
+    }
+};
+
+// Store x87 FPU status word
+struct IP_fnstsw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        d->write(args[0], ops->readRegister(d->REG_FPSTATUS));
     }
 };
 
@@ -1371,6 +1378,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_fld,          new X86::IP_fld);
     iproc_set(x86_fldcw,        new X86::IP_fldcw);
     iproc_set(x86_fnstcw,       new X86::IP_fnstcw);
+    iproc_set(x86_fnstsw,       new X86::IP_fnstsw);
     iproc_set(x86_hlt,          new X86::IP_hlt);
     iproc_set(x86_idiv,         new X86::IP_divide(x86_idiv));
     iproc_set(x86_imul,         new X86::IP_imul);
