@@ -206,7 +206,9 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     assert(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
-            } else if (LeafNodePtr leaf = node->isLeafNode()) {
+            } else {
+                LeafNodePtr leaf = node->isLeafNode();
+                ASSERT_not_null(leaf);
                 if (leaf->is_variable()) {
                     std::string comment = leaf->get_comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
@@ -214,6 +216,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafNodePtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
+            return InsnSemanticsExpr::CONTINUE;
         }
         virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
             return InsnSemanticsExpr::CONTINUE;
