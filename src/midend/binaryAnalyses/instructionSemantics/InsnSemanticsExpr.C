@@ -73,14 +73,6 @@ TreeNode::hash() const
     return hashval;
 }
 
-size_t
-TreeNode::nnodes() const
-{
-    std::vector<TreeNodePtr> trees;
-    trees.push_back(shared_from_this());
-    return total_nnodes(trees.begin(), trees.end());
-}
-
 void
 TreeNode::assert_acyclic() const
 {
@@ -112,6 +104,7 @@ InternalNode::add_child(const TreeNodePtr &child)
 {
     assert(child!=0);
     children.push_back(child);
+    nnodes_ += child->nnodes();
 }
 
 void

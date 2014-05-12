@@ -184,9 +184,20 @@ public:
      *  return value of the last call to the visitor. */
     virtual VisitAction depth_first_traversal(Visitor&) const = 0;
 
-    /** Computes the size of an expression by counting the number of nodes.  This algorithm is usually faster than a naive
-     *  traversal-with-increment because it optimizes for the case where a large expression has common subexpressions. */
-    size_t nnodes() const;
+    /** Computes the size of an expression by counting the number of nodes.  Operates in constant time.   Note that it is
+     *  possible (even likely) for the 64-bit return value to overflow in expressions when many nodes are shared.  For
+     *  instance, the following loop will create an expression that contains more than 2^64 nodes:
+     *
+     *  @code
+     *   InsnSemanticsExpr expr = LeafNode::create_variable(32);
+     *   for(size_t i=0; i<64; ++i)
+     *       expr = InternalNode::create(32, OP_ADD, expr, expr)
+     *  @endcode
+     *
+     *  When an overflow occurs the result is meaningless.
+     *
+     *  @sa nnodesUnique */
+    virtual uint64_t nnodes() const = 0;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
@@ -391,36 +402,39 @@ class InternalNode: public TreeNode {
 private:
     Operator op;
     TreeNodes children;
+    uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
     InternalNode(size_t nbits, Operator op, const std::string comment="")
-        : TreeNode(nbits, comment), op(op) {}
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                  std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
         add_child(c);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
     }
 
 public:
     /** Create a new expression node. Although we're creating internal nodes, the simplification process might replace it with
-     *  a leaf node. Use these class methods instead of c'tors. */
+     *  a leaf node. Use these class methods instead of c'tors.
+     *
+     *  @{ */
     static TreeNodePtr create(size_t nbits, Operator op, const std::string comment="") {
         InternalNodePtr retval(new InternalNode(nbits, op, comment));
         return retval->simplifyTop();
@@ -455,6 +469,7 @@ public:
     }
     virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
+    virtual uint64_t nnodes() const { return nnodes_; }
 
     /** Returns the number of children. */
     size_t nchildren() const { return children.size(); }
@@ -558,6 +573,7 @@ public:
     virtual bool equivalent_to(const TreeNodePtr &other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual VisitAction depth_first_traversal(Visitor&) const;
+    virtual uint64_t nnodes() const { return 1; }
 
     /** Is the node a bitvector variable? */
     virtual bool is_variable() const;
@@ -582,46 +598,32 @@ public:
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
 
-
-/** Counts the total size across a number of expressions. This algorithm is optimized for the case when expressions contain
- *  common subexpressions. The iterators should point to a sequence of TreeNodePtr smart pointers. Returns (size_t)(-1) if
- *  there are more nodes than what can be represented in size_t (yes, this does actually happen when large expressions contain
- *  a high degree of common subexpressions). */
+/** Counts the number of unique nodes.
+ *
+ *  Counts the number of unique nodes across a number of expressions.  Nodes shared between two expressions are counted only
+ *  one time, whereas the TreeNode::nnodes virtual method counts shared nodes multiple times. */
 template<typename InputIterator>
-size_t
-total_nnodes(InputIterator begin, InputIterator end)
+uint64_t
+nnodesUnique(InputIterator begin, InputIterator end)
 {
     struct T1: Visitor {
-        typedef Map<const TreeNode*, size_t> SeenNodes;
-        typedef std::vector<std::pair<size_t, bool> > Stack;
+        typedef std::set<const TreeNode*> SeenNodes;
 
         SeenNodes seen;                                 // nodes that we've already seen, and the subtree size
-        size_t total_size;                              // total tree size
-        Stack stack;                                    // total_size when we enter a node, and whether we traversed children
+        uint64_t nUnique;                               // number of unique nodes
 
-        T1(): total_size(0) {}
+        T1(): nUnique(0) {}
 
         VisitAction preVisit(const TreeNodePtr &node) {
-            std::pair<SeenNodes::iterator, bool> inserted = seen.insert(std::make_pair(node.get(), 0));
-            stack.push_back(std::make_pair(total_size, inserted.second));
-            if (!inserted.second) {
-                assert(inserted.first->second > 0);     // failure implies that we've entered this node twice w/out exit; cycle
-                if (total_size + inserted.first->second - 1 < total_size)
-                    return TERMINATE;                   // overflow
-                total_size += inserted.first->second - 1; // don't count ourself yet
-                return TRUNCATE;
+            if (seen.insert(node.get()).second) {
+                ++nUnique;
+                return CONTINUE;                        // this node has not been seen before; traverse into children
+            } else {
+                return TRUNCATE;                        // this node has been seen already; skip over the children
             }
-            return CONTINUE;
         }
 
         VisitAction postVisit(const TreeNodePtr &node) {
-            assert(!stack.empty());
-            if ((total_size+1) < stack.back().first)
-                return TERMINATE;                       // overflow
-            size_t subtree_size = ++total_size - stack.back().first;
-            if (stack.back().second)
-                seen[node.get()] = subtree_size;
-            stack.pop_back();
             return CONTINUE;
         }
     } visitor;
@@ -629,7 +631,7 @@ total_nnodes(InputIterator begin, InputIterator end)
     VisitAction status = CONTINUE;
     for (InputIterator ii=begin; ii!=end && TERMINATE!=status; ++ii)
         status = (*ii)->depth_first_traversal(visitor);
-    return TERMINATE==status ? (size_t)(-1) : visitor.total_size;
+    return visitor.nUnique;
 }
 
 } // namespace

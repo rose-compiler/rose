@@ -1022,7 +1022,7 @@ struct IP_push: P {
         ASSERT_not_null(toPush);
         ASSERT_require(toPush->get_width()==16 || toPush->get_width()==32);
         
-        // Decrement stack pointer
+        // Decrement stack pointer. The source operand must have been read already (i.e., "push esp" pushes the old value)
         int stackDelta = toPush->get_width() / 8;
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -stackDelta));
