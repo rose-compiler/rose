@@ -9,29 +9,17 @@ extern SgSourceFile *currentSourceFile;
 extern SgClassDefinition *ObjectClassDefinition;
 
 // Control output from Fortran parser
-#define DEBUG_JAVA_SUPPORT true
+#define DEBUG_X10_SUPPORT true
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
-// TODO: Remove this !!!
-//extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-//extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
 extern std::string javaStringToUtf8(const jstring &java_string);
 
-std::string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+std::string convertX10PackageNameToCxxString(JNIEnv *env, const jstring &java_string);
 extern SgPointerType *getUniquePointerType(SgType *, int);
-
-//extern SgArrayType *getUniqueArrayType(SgType *, int);
-//extern SgPointerType *getUniquePointerType(SgType *, int);
-//extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
-//extern SgJavaWildcardType *getUniqueWildcardUnbound();
-//extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
-//extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
-//extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType *, SgType *);
 
 std::string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
-//bool isVisibleSimpleTypeName(SgNamedType *);
 bool isConflictingType(std::string, SgClassType *);
 bool isImportedType(SgClassType *);
 bool isImportedTypeOnDemand(AstSgNodeListAttribute *, SgClassDefinition *, SgClassType *);
@@ -382,14 +370,14 @@ public:
 };
 
 // Global stack of AST components: Expressions, statements, types, etc...
-extern ComponentStack astJavaComponentStack;
+extern ComponentStack astX10ComponentStack;
 
 // Global stack of scopes
-extern ScopeStack astJavaScopeStack;
+extern ScopeStack astX10ScopeStack;
 
-class Token_t;
-void setJavaSourcePosition(SgLocatedNode *locatedNode, Token_t *);
-void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
+class X10_Token_t;
+void setX10SourcePosition(SgLocatedNode *locatedNode, X10_Token_t *);
+void setX10SourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
 //void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
@@ -451,21 +439,21 @@ SgJavaLabelSymbol *lookupLabelByName(const SgName &name);
 
 template< class T >
 void unaryExpressionSupport() {
-    SgExpression *operand = astJavaComponentStack.popExpression();
+    SgExpression *operand = astX10ComponentStack.popExpression();
 
     // Build the assignment operator and push it onto the stack.
     // SgExpression *assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
     SgExpression *resultExpression = SageBuilder::buildUnaryExpression<T>(operand);
     ROSE_ASSERT(resultExpression != NULL);
-    astJavaComponentStack.push(resultExpression);
+    astX10ComponentStack.push(resultExpression);
 }
 
 template< class T >
 void binaryExpressionSupport() {
-    SgExpression *rhs = astJavaComponentStack.popExpression();
+    SgExpression *rhs = astX10ComponentStack.popExpression();
     ROSE_ASSERT(rhs != NULL);
 
-    SgExpression *lhs = astJavaComponentStack.popExpression();
+    SgExpression *lhs = astX10ComponentStack.popExpression();
     ROSE_ASSERT(lhs != NULL);
 
     // Build the assignment operator and push it onto the stack.
@@ -473,7 +461,7 @@ void binaryExpressionSupport() {
     SgExpression *resultExpression = SageBuilder::buildBinaryExpression<T>(lhs, rhs);
     ROSE_ASSERT(resultExpression != NULL);
 
-    astJavaComponentStack.push(resultExpression);
+    astX10ComponentStack.push(resultExpression);
 }
 
 // endif for ROSE_X10_SUPPORT

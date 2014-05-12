@@ -7,7 +7,7 @@
 
 using namespace std;
 
-Token_t *convert_Java_token(JNIEnv *env, jobject token) {
+X10_Token_t *convert_X10_token(JNIEnv *env, jobject token) {
     assert(env != NULL);
     // Need to get the object class so we can use it to retrieve the methods.
     // printf ("Need to get the object class so we can use it to retrieve the methods. \n");  
@@ -58,16 +58,16 @@ Token_t *convert_Java_token(JNIEnv *env, jobject token) {
     jobject jpos_info = (jobject) env->CallObjectMethod(token, method_id);
 
     // Convert position to its C-based representation
-    JavaSourceCodePosition *pos_info = convert_Java_SourcePosition(env, jpos_info);
+    X10SourceCodePosition *pos_info = convert_X10_SourcePosition(env, jpos_info);
 
     // Build a C-based representation of the JavaToken
-    Token_t *our_token = new Token_t(filename, pos_info);
+    X10_Token_t *our_token = new X10_Token_t(filename, pos_info);
 
     // printf ("returning from convert_Java_token()\n");
     return our_token;
 }
 
-
+#if 0
 X10_Token_t *convert_X10_token(JNIEnv *env, jobject token) {
     jclass cls;
     jstring java_string;
@@ -120,4 +120,4 @@ X10_Token_t *convert_X10_token(JNIEnv *env, jobject token) {
     // printf ("returning from convert_Java_token()\n");
     return our_token;
 }
-
+#endif

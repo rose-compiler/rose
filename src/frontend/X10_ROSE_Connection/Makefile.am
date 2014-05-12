@@ -12,9 +12,10 @@ include_HEADERS = \
 	x10SourceCodePosition.h \
 	x10_support.h \
 	x10_token.h \
-	x10Parser.h
+    x10Parser.h \
+    jserver.h
 
-if ROSE_BUILD_X10_LANGUAGE_SUPPORT
+#if ROSE_BUILD_X10_LANGUAGE_SUPPORT
 X10_DIR = @X10_INSTALL_PATH@
 
 lib_LTLIBRARIES = libx10Traversal.la
@@ -28,12 +29,11 @@ libx10Traversal_la_SOURCES = \
 	x10Traversal.C \
 	x10_support.C \
 	x10_token.C \
-	JavaSourceCodePosition.C \
-	JavaParserActionROSE.C
+    ParserActionROSE.C
 
 
 libroseX10_la_SOURCES = \
-	x10.C \
+	x10.C jserver.C \
 	x10_main.cpp
 
 INCLUDES = \
@@ -41,6 +41,6 @@ INCLUDES = \
 	-I$(top_srcdir)/src/frontend/X10_ROSE_Connection \
 	-I$(X10_DIR) \
 	$(JAVA_JVM_INCLUDE)
-else
-libroseX10_la_SOURCES = dummy_x10_main.cpp
-endif
+#else
+#libroseX10_la_SOURCES = dummy_x10_main.cpp
+#endif

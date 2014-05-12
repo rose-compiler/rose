@@ -1,12 +1,12 @@
 # README For ROSE X10 Connection (Michihiro Horie, 04/21/14)
 
 ## FILES
-* x10_main.cpp - defines a function to invoke x10 compiler (polyglot.main.Main class) is defined
-* x10ActionROSE.C	- JNI native functions to create ROSE ASTs. Most of the functions invoke the functions defined in ECJ_ROSE_Connection
-* x10Parser.h	 - header file for x10ActionROSE.C
+* x10_main.cpp - defines a function to invoke x10 compiler (polyglot.main.Main class) 
+* x10ActionROSE.C, ParserActionROSE.C - JNI native functions to create ROSE ASTs
+* x10Parser.h - header file for x10ActionROSE.C
+* Parser.h - header file for ParserActionROSE.C
 * Other files 
-    * Helper functions - jni_x10_utils.C, x10_support.C, jni_x10_token.C, jni_x10SourceCodePosition.C, x10SourceCodePosition.h, jni_x10_utils.h, x10_support.h, jni_x10SourceCodePosition.h, jserver.C, jserver.h, jni_x10_token.h		 
-    * Currently unused - x10.C, x10SourceCodePosition.C, x10.h, x10c.h, x10_token.C, x10_token.h, x10Traversal.C, x10Traversal.h
+    * Helper functions - jni_x10_utils.[Ch], x10_support.[Ch], jni_x10_token.[Ch], jni_x10SourceCodePosition.[Ch], x10SourceCodePosition.[Ch], jserver.[Ch], x10.[Ch], x10Traversal.[Ch]
 
 ## Current support for .x10 files (04/21/14)
 * Supported "SgProject *frontend()" and "void generateDOT()" functions for .x10 files
