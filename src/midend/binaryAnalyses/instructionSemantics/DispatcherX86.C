@@ -574,6 +574,29 @@ struct IP_fnstsw: P {
     }
 };
 
+// Store x87 floating point value
+struct IP_fst: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (80!=nbits)
+            throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+        d->write(args[0], d->readFloatingPointStack(0));
+    }
+};
+
+// Store x87 floating point value and pop fp stack
+struct IP_fstp: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (80!=nbits)
+            throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+        d->write(args[0], d->readFloatingPointStack(0));
+        d->popFloatingPoint();
+    }
+};
+
 // Signed multiply
 struct IP_imul: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1379,6 +1402,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_fldcw,        new X86::IP_fldcw);
     iproc_set(x86_fnstcw,       new X86::IP_fnstcw);
     iproc_set(x86_fnstsw,       new X86::IP_fnstsw);
+    iproc_set(x86_fst,          new X86::IP_fst);
+    iproc_set(x86_fstp,         new X86::IP_fstp);
     iproc_set(x86_hlt,          new X86::IP_hlt);
     iproc_set(x86_idiv,         new X86::IP_divide(x86_idiv));
     iproc_set(x86_imul,         new X86::IP_imul);
@@ -2023,6 +2048,28 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
     RegisterDescriptor reg(REG_ST0.get_major(), (REG_ST0.get_minor() + newTopOfStack->get_number()) % 8,
                            REG_ST0.get_offset(), REG_ST0.get_nbits());
     operators->writeRegister(reg, value);
+    operators->writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
+}
+
+BaseSemantics::SValuePtr
+DispatcherX86::readFloatingPointStack(size_t position)
+{
+    BaseSemantics::SValuePtr topOfStack = operators->readRegister(REG_FPSTATUS_TOP);
+    if (!topOfStack->is_number())
+        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+    RegisterDescriptor reg(REG_ST0.get_major(), (REG_ST0.get_minor() + topOfStack->get_number()) % 8,
+                           REG_ST0.get_offset(), REG_ST0.get_nbits());
+    return operators->readRegister(reg);
+}
+
+void
+DispatcherX86::popFloatingPoint()
+{
+    BaseSemantics::SValuePtr topOfStack = operators->readRegister(REG_FPSTATUS_TOP);
+    if (!topOfStack->is_number())
+        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+    BaseSemantics::SValuePtr newTopOfStack = operators->add(topOfStack, operators->number_(topOfStack->get_width(), 1));
+    ASSERT_require2(newTopOfStack->is_number(), "constant folding is required for FP-stack");
     operators->writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
 

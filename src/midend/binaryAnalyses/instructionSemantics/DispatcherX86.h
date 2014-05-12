@@ -125,6 +125,11 @@ public:
      * value in REG_ST_TOP (which must be concrete) is decremented modulo eight before being used. */
     virtual void pushFloatingPoint(const BaseSemantics::SValuePtr &valueToPush);
 
+    /** Read a value from the floating point stack. */
+    virtual BaseSemantics::SValuePtr readFloatingPointStack(size_t position);
+
+    /** Pop the top item from the floating point stack. */
+    virtual void popFloatingPoint();
 };
         
 } // namespace
