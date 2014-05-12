@@ -126,6 +126,7 @@ elf_exe_x86_specimens =				\
     i386-pivot_root				\
     i386-pointers				\
     i386-poweroff				\
+    i386-wait					\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
@@ -186,6 +187,7 @@ other_distributed =				\
     i386-int3.s					\
     i386-mul.s					\
     i386-pop.s					\
+    i386-wait.s					\
     memreadwrite.s				\
     pentium-movd.s				\
     pentium-xmm.s				\
