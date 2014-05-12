@@ -3849,3 +3849,33 @@ memory:
   addr=(add[32] esp_0[32] 0x00000001[32]) value=(extract[8] 0x00000008[32] 0x00000010[32] v5870[32])
   addr=esp_0[32] value=(extract[8] 0x00000000[32] 0x00000008[32] v5870[32])
 analyzed headers: 1
+Before vacuum...
+Allocator statistics for SValue objects:
+  Pool #5
+    Max object size:        48 bytes
+    Max objects per bucket: 1706
+    Number of buckets:      1
+    Objects in use:         0 objects
+    Object memory:          0 bytes
+    Pool utilization:       0 percent
+    High water:             27 objects
+    High water utilization: 1.58203 percent
+      Bucket at 0x01cb70f0:	0 objects in use
+  Pool #13
+    Max object size:        112 bytes
+    Max objects per bucket: 731
+    Number of buckets:      1
+    Objects in use:         0 objects
+    Object memory:          0 bytes
+    Pool utilization:       0 percent
+    High water:             99 objects
+    High water utilization: 13.5352 percent
+      Bucket at 0x01a88ce0:	0 objects in use
+  Totals across all pools for this allocator
+    Number of buckets:            2
+    Memory allocated for buckets: 163840 bytes
+    Memory in use for objects:    0 bytes inc. internal fragmentation
+    Utilization:                  0 percent
+After vacuum...
+Allocator statistics for SValue objects:
+  allocator is empty
