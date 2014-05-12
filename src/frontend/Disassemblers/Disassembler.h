@@ -229,7 +229,7 @@ public:
     Disassembler(const Disassembler& other)
         : p_registers(other.p_registers), p_partitioner(other.p_partitioner), p_search(other.p_search),
           p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
-          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection)
+          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection), progress_time(other.progress_time)
         {}
 
     virtual ~Disassembler() {}

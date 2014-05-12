@@ -42,6 +42,7 @@ void Disassembler::initDiagnostics() {
     
 /* Hook for construction */
 void Disassembler::ctor() {
+    memset(&progress_time, 0, sizeof progress_time);
 }
 
 void
