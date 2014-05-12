@@ -30,7 +30,7 @@ public:
     RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
     RegisterDescriptor REG_DS, REG_ES, REG_SS;
-    RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL;
+    RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 
     /** Constructor. */

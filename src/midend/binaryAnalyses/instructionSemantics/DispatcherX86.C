@@ -1261,6 +1261,17 @@ struct IP_storestring: P {
     }
 };
 
+// Store SSE control and status register
+struct IP_stmxcsr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (nbits!=32)
+            throw BaseSemantics::Exception("STMXCSR operand must be 32 bits", insn);
+        d->write(args[0], ops->readRegister(d->REG_MXCSR));
+    }
+};
+
 // Subtract two values
 struct IP_sub: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1521,6 +1532,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_stosb,        new X86::IP_storestring(x86_repeat_none, 8));
     iproc_set(x86_stosw,        new X86::IP_storestring(x86_repeat_none, 16));
     iproc_set(x86_stosd,        new X86::IP_storestring(x86_repeat_none, 32));
+    iproc_set(x86_stmxcsr,      new X86::IP_stmxcsr);
     iproc_set(x86_sub,          new X86::IP_sub);
     iproc_set(x86_sysenter,     new X86::IP_sysenter);
     iproc_set(x86_test,         new X86::IP_test);
@@ -1568,6 +1580,7 @@ DispatcherX86::regcache_init()
         REG_FPSTATUS = findRegister("fpstatus", 16);
         REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
         REG_FPCTL = findRegister("fpctl", 16);
+        REG_MXCSR = findRegister("mxcsr", 32);
     }
 }
 
