@@ -1,5 +1,5 @@
-#ifndef __JAVA_JSERVER_H__
-#define __JAVA_JSERVER_H__
+#ifndef __X10_JSERVER_H__
+#define __X10_JSERVER_H__
 
 #include "jni.h"
 
@@ -17,17 +17,17 @@ class SgSourceFile;
 
 namespace Rose {
     namespace Frontend {
-        namespace Java {
+        namespace X10 {
 
-            extern SgClassDefinition *javaLangPackageDefinition;
+            extern SgClassDefinition *x10LangPackageDefinition;
             extern SgClassType *ObjectClassType;
             extern SgClassType *StringClassType;
             extern SgClassType *ClassClassType;
             extern SgVariableSymbol *lengthSymbol;
 
-            namespace Ecj {
+            namespace X10c {
 
-                extern SgSourceFile* Ecj_globalFilePointer;
+                extern SgSourceFile* X10c_globalFilePointer;
                 jstring      jserver_getJavaString(const char*);
                 jobject      jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
                 jclass       jserver_FindClass(const char *name);
@@ -40,7 +40,7 @@ namespace Rose {
                 void         jserver_finish();
                 JNIEnv* getEnv();
 
-                extern jclass currentJavaTraversalClass;
+                extern jclass currentX10TraversalClass;
                 extern JNIEnv *currentEnvironment;
                 extern jmethodID mainMethod;
                 extern jmethodID hasConflictsMethod;
@@ -49,8 +49,8 @@ namespace Rose {
                 extern jmethodID createTempNamedFileMethod;
                 extern jmethodID createTempNamedDirectoryMethod;
 
-            }// Rose::Frontend::Java::Ecj
-        }// Rose::Frontend::Java
+            }// Rose::Frontend::X10::X10c
+        }// Rose::Frontend::X10
     }// Rose::Frontend
 }// Rose
 

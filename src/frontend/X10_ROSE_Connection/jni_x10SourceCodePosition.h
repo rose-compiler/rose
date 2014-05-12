@@ -3,11 +3,8 @@
 
 #include <jni.h>
 #include "x10SourceCodePosition.h"
-#include "JavaSourceCodePosition.h"
 
 X10SourceCodePosition * convert_X10_SourcePosition(JNIEnv *env, jobject sourcePosition);
-
-JavaSourceCodePosition * convert_Java_SourcePosition(JNIEnv *env, jobject sourcePosition);
 
 std::string normalize(std::string str);
 

@@ -13,6 +13,7 @@
 
 #include "jserver.h"
 
+// MH (5/9/2014): Update to use namespace X10
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
@@ -20,18 +21,18 @@
 
 namespace Rose {
     namespace Frontend {
-        namespace Java {
+        namespace X10 {
 
-            SgClassDefinition *javaLangPackageDefinition = NULL;
+            SgClassDefinition *x10LangPackageDefinition = NULL;
             SgClassType *ObjectClassType = NULL;
             SgClassType *StringClassType = NULL;
             SgClassType *ClassClassType = NULL;
             SgVariableSymbol *lengthSymbol = NULL;
 
-            namespace Ecj {
+            namespace X10c {
                 using namespace std;
 
-                SgSourceFile* Ecj_globalFilePointer = 0;
+                SgSourceFile* X10c_globalFilePointer = 0;
 
                 typedef struct {
                    JavaVM * jvm;
@@ -48,7 +49,7 @@ namespace Rose {
                 void     jserver_destroy();
                 jclass   jserver_getJavaStringClass();
 
-                jclass currentJavaTraversalClass = NULL;
+                jclass currentX10TraversalClass = NULL;
                 JNIEnv *currentEnvironment = NULL;
                 jmethodID mainMethod = NULL;
                 jmethodID hasConflictsMethod = NULL;
@@ -230,8 +231,8 @@ namespace Rose {
                     JNIEnv * env = get_env();
                     return env->FindClass("java/lang/String");
                 }
-            }// Rose::Frontend::Java::Ecj
-        }// Rose::Frontend::Java
+            }// Rose::Frontend::Java::X10c
+        }// Rose::Frontend::X10
     }// Rose::Frontend
 }// Rose
 
