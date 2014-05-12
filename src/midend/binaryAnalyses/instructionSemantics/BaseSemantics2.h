@@ -2333,7 +2333,7 @@ public:
  *
  *  Each dispatcher contains a table indexed by the machine instruction "kind" (e.g., SgAsmMipsInstruction::get_kind()). The
  *  table stores functors derived from the abstract InsnProcessor class.  (FIXME: The functors are not currently reference
- *  counted [Robb Matzke 2013-03-04])
+ *  counted; they are owned by the dispatcher and deleted when the dispatcher is destroyed. [Robb Matzke 2013-03-04])
  *
  *  Dispatcher objects are allocated on the heap and reference counted.  The BaseSemantics::Dispatcher is an abstract class
  *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
@@ -2356,7 +2356,10 @@ protected:
     }
 
 public:
-    virtual ~Dispatcher() {}
+    virtual ~Dispatcher() {
+        for (InsnProcessors::iterator iter=iproc_table.begin(); iter!=iproc_table.end(); ++iter)
+            delete *iter;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors. None since this is an abstract class
@@ -2391,7 +2394,9 @@ protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 
-    /** Set an iproc table entry to the specified value. */
+    /** Set an iproc table entry to the specified value.
+     *
+     *  The @p iproc object will become owned by this dispatcher and deleted when this dispatcher is destroyed. */
     virtual void iproc_set(int key, InsnProcessor *iproc);
 
     /** Obtain an iproc table entry for the specified key. */
