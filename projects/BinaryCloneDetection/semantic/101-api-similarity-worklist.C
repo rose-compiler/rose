@@ -42,7 +42,7 @@ insert_specialized_funtions()
 			" values (?, ?)");
         std::cerr << "Compute equivalent functions";
 
-	SqlDatabase::StatementPtr stmt = transaction->statement("select id,name from semantic_functions where name like '\_\_intel%' and id NOT IN ( select func_id as id from tmp_uninteresting_funcs)");
+	SqlDatabase::StatementPtr stmt = transaction->statement("select id,name from semantic_functions where name like '__intel%' and id NOT IN ( select func_id as id from tmp_uninteresting_funcs)");
 	for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
 
 		int func_id = row.get<int>(0);

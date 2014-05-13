@@ -313,7 +313,6 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
   bool by_category       = (std::find(sc.begin(), sc.end(), "by_category") != sc.end());
   bool total_for_variant = (std::find(sc.begin(), sc.end(), "total_for_variant") != sc.end());
   bool operand_total     = (std::find(sc.begin(), sc.end(), "operant_total") != sc.end());
-  bool ops_for_variant   = (std::find(sc.begin(), sc.end(), "ops_for_variant") != sc.end());
   bool specific_op       = (std::find(sc.begin(), sc.end(), "specific_op") != sc.end());
   bool operand_pair      = (std::find(sc.begin(), sc.end(), "operand_pair") != sc.end());
   bool apply_log         = (std::find(sc.begin(), sc.end(), "apply_log") != sc.end());
@@ -406,6 +405,3 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
   }
 
 }
-
-
-

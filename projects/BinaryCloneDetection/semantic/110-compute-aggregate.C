@@ -175,8 +175,10 @@ compute_mean_similarity_statistics( double bucket_size, double increment, SqlDat
 };
 
 void
-find_clusters(int max_cluster_size, SqlDatabase::TransactionPtr transaction)
+find_clusters(int max_cluster_size_signed, SqlDatabase::TransactionPtr transaction)
 {
+  assert(max_cluster_size_signed >= 0);
+  size_t max_cluster_size = max_cluster_size_signed;
 
   SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into fr_ignored_function_pairs"
       // 0        1         2  

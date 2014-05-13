@@ -618,9 +618,9 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
                     int f1_v=0;
                     int f2_v=0;
                     int vec_length = x86_last_instruction*4 + 300 + 9 + 3;
-                    for (int i = 0; i < vec_length; i++) {
-                        f1_v = f1_signature_vector[i]; 
-                        f2_v = f2_signature_vector[i];
+                    for (int k = 0; k < vec_length; k++) {
+                        f1_v = f1_signature_vector[k]; 
+                        f2_v = f2_signature_vector[k];
 
                         if (f1_v != f2_v)
                             cur_hamming_d++;
