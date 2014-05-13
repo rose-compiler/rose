@@ -61,19 +61,27 @@ usage(int exit_status)
               <<"            on the tty whether it should checkpoint and/or terminate. The default is --no-interactive.\n"
               <<"            Note that interrupts are not supported for the 25-run-test-fork version of the command since\n"
               <<"            there's no easy way to control which process can read terminal input.\n"
-              <<"    --timeout=NINSNS\n"
-              <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
-              <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
-              <<"            produced.\n"
+              <<"    --path-syntactic=no|function|all\n"
+              <<"            Determines whether the path sensistive syntactic clone detection should be computed from\n"
+              <<"            all instructions covered, instructions covered in the function scope, or not at all.\n" 
               <<"    --[no-]pointers\n"
               <<"            Perform [or not] pointer analysis on each function.  The pointer analysis is a binary-only\n"
               <<"            analysis that looks for memory addresses that hold pointers from the source code.  When this is\n"
               <<"            enabled, any read from such an address before it's initialized causes an input to be consumed\n"
               <<"            from the \"pointers\" input queue. This analysis slows down processing considerably and is\n"
               <<"            therefore disabled by default.\n"
+              <<"    --signature-components=by_category|total_for_variant|operand_total|ops_for_variant|specific_op|\n"
+              <<"                           operand_pair|apply_log\n"
+              <<"            Select which, if any, properties should be counted and/or how they should be counted. By default\n"
+              <<"            no properties are counted. By default the instructions are counted by operation kind, but one\n"
+              <<"            can optionally choose to count by instruction category.\n"
               <<"    --[no-]progress\n"
               <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not\n"
               <<"            silent.\n"
+              <<"    --timeout=NINSNS\n"
+              <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
+              <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
+              <<"            produced.\n"
               <<"    --trace[=EVENTS]\n"
               <<"    --no-trace\n"
               <<"            Sets the events that are traced by each test.  The EVENTS is a comma-separated list of event\n"
@@ -209,6 +217,10 @@ int parse_commandline(int argc, char *argv[]) {
             opt.nprocs = strtol(argv[argno]+9, NULL, 0);
         } else if (!strncmp(argv[argno], "--timeout=", 10)) {
             opt.params.timeout = strtoull(argv[argno]+10, NULL, 0);
+        } else if (!strcmp(argv[argno], "--path-syntactic") || !strcmp(argv[argno], "--path-syntactic=all")) {
+            opt.path_syntactic = PATH_SYNTACTIC_ALL;
+        } else if (!strcmp(argv[argno], "--path-syntactic=function")) {
+            opt.path_syntactic = PATH_SYNTACTIC_FUNCTION;
         } else if (!strcmp(argv[argno], "--pointers")) {
             opt.pointers = true;
         } else if (!strcmp(argv[argno], "--no-pointers")) {
@@ -217,6 +229,17 @@ int parse_commandline(int argc, char *argv[]) {
             opt.progress = true;
         } else if (!strcmp(argv[argno], "--no-progress")) {
             opt.progress = false;
+        } else if (!strncmp(argv[argno], "--signature-components=", 23)) {
+            static const char *comp_opts[7] = {"by_category", "total_for_variant", "operand_total", "ops_for_variant",
+                                               "specific_op", "operand_pair", "apply_log"};
+            bool isValid = false;
+            for (int comp_i=0; comp_i<7 && !isValid; comp_i++)
+                isValid = 0==strcmp(argv[argno]+23, comp_opts[comp_i]);
+            if (!isValid) {
+                std::cerr <<argv0 <<": invalid argument for --signature-components: " <<argv[argno]+23 <<"\n";
+                exit(1);
+            }
+            opt.signature_components.push_back(argv[argno]+23);
         } else if (!strcmp(argv[argno], "--trace")) {
             opt.trace_events = ALL_EVENTS;
         } else if (!strcmp(argv[argno], "--no-trace")) {
@@ -1196,6 +1219,17 @@ runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDete
                               (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
                               (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
 
+    // Create syntactic signature vector
+    std::vector<SgAsmInstruction*> insnVector;
+    if (opt.path_syntactic == PATH_SYNTACTIC_ALL) {
+        insn_coverage.get_instructions(insnVector, interp);
+    } else if (opt.path_syntactic == PATH_SYNTACTIC_FUNCTION) {
+        insn_coverage.get_instructions(insnVector, interp, func);
+    }
+    int syntactic_ninsns = insnVector.size(); 
+    createVectorsForAllInstructions(ogroup.get_signature_vector(), insnVector, opt.signature_components);
+    std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
+
     // Find a matching output group, or create a new one
     int64_t ogroup_id = ogroups.find(ogroup);
     if (ogroup_id<0)
@@ -1208,9 +1242,9 @@ runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDete
                                                    "globals_consumed, functions_consumed, pointers_consumed,"
                                                    // 7                8                      9          10
                                                    "integers_consumed, instructions_executed, ogroup_id, status,"
-                                                   // 11          12        13
-                                                   "elapsed_time, cpu_time, cmd)"
-                                                   " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                   // 11          12        13   14          15
+                                                   "elapsed_time, cpu_time, cmd, counts_b64, syntactic_ninsns)"
+                                                   " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     stmt->bind(0, workItem.func_id);
     stmt->bind(1, workItem.igroup_id);
     stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
@@ -1225,6 +1259,8 @@ runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDete
     stmt->bind(11, elapsed_time);
     stmt->bind(12, cpu_time);
     stmt->bind(13, cmd_id);
+    stmt->bind(14, StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
+    stmt->bind(15, syntactic_ninsns);
     stmt->execute();
 }
 

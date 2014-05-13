@@ -4,6 +4,7 @@
 #include "Combinatorics.h"
 #include "BinaryLoaderElf.h"
 #include "Partitioner.h"
+#include "rose.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -15,10 +16,17 @@
 #include <string>
 #include <sys/mman.h>
 #include <unistd.h>
+#include "sqlite3x.h"
+
+using namespace sqlite3x;
+
+
 
 namespace CloneDetection {
 
 const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
+
+
 
 /*******************************************************************************************************************************
  *                                      Exceptions
@@ -765,6 +773,79 @@ InsnCoverage::get_ratio(SgAsmFunction *func, int func_id, int igroup_id) const
     return 1.0 - (double)c.addrs.size() / denominator;
 }
 
+
+void
+InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top )
+{
+  //Find the instructions 
+  std::vector<SgAsmx86Instruction*> tmp_insns;
+
+  InstructionMap instr_map = interp->get_instruction_map(interp);
+  if (top != NULL){
+
+    FindInstructionsVisitor vis;
+    AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &tmp_insns ));
+
+
+    //Addresses and map of instructions in the subtree of top
+    std::vector<rose_addr_t> query_insns_addr;
+
+    for(std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it) {
+      query_insns_addr.push_back((*it)->get_address());
+    }
+
+    std::sort(query_insns_addr.begin(), query_insns_addr.end());
+
+
+    //Addresses of instruction in the trace 
+    std::vector<rose_addr_t> trace_insns_addr;
+
+    for(CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+      trace_insns_addr.push_back(it->first);
+    }
+
+    std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
+
+    //Addresses in the intersection of the trace and the subtree of top
+    std::vector<rose_addr_t> trace_query_intersection( trace_insns_addr.size() > query_insns_addr.size() ? trace_insns_addr.size() : query_insns_addr.size() );    
+    std::vector<rose_addr_t>::iterator intersection_end;
+
+    intersection_end = std::set_intersection (query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(), trace_insns_addr.end(), trace_query_intersection.begin());
+
+
+    //Instructions
+    
+
+    Disassembler::InstructionMap::iterator find_it;
+
+    for(std::vector<rose_addr_t>::iterator  it = trace_query_intersection.begin(); it != intersection_end; ++it) {
+      find_it = instr_map.find(*it);
+
+      if (find_it == instr_map.end()){
+        assert(!"element not found in instruction map");
+        abort();
+      }
+      
+      insns.push_back(find_it->second);
+    }
+
+  }else{
+    Disassembler::InstructionMap::iterator find_it;
+
+    for(CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+      find_it = instr_map.find(it->first);
+
+      if (find_it == instr_map.end()){
+        assert(!"element not found in instruction map");
+        abort();
+      }
+      
+      insns.push_back(find_it->second);
+    }
+
+  }
+
+}
 
 /*******************************************************************************************************************************
  *                                      Dynamic Call Graph

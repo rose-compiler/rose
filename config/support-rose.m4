@@ -1833,6 +1833,7 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryCloneDetection/compression/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile

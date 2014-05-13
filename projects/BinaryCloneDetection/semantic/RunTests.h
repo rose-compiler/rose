@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
+#include "vectorCompression.h"
 
 namespace CloneDetection {
 namespace RunTests {
@@ -12,10 +13,13 @@ typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> Clone
 typedef X86InstructionSemantics<ClonePolicy, PartialSymbolicSemantics::ValueType> CloneSemantics;
 typedef std::set<std::string> NameSet;
 
+enum PathSyntactic {PATH_SYNTACTIC_NONE, PATH_SYNTACTIC_ALL, PATH_SYNTACTIC_FUNCTION };
+
 struct Switches {
     Switches()
         : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false),
-          save_coverage(false), save_callgraph(false), save_consumed_inputs(false), nprocs(1) {
+          save_coverage(false), save_callgraph(false), save_consumed_inputs(false), nprocs(1),
+          path_syntactic(PATH_SYNTACTIC_NONE) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -29,8 +33,10 @@ struct Switches {
     bool save_coverage;
     bool save_callgraph;
     bool save_consumed_inputs;
-    PolicyParams params;
-    size_t nprocs;                              // number of parallel processes to fork
+    PolicyParams params;                                // parameters controlling instruction semantics
+    size_t nprocs;                                      // number of parallel processes to fork
+    std::vector<std::string> signature_components;      /**< How should the signature vectors be computed */
+    PathSyntactic path_syntactic;                       /**< How to compute path sensistive syntactic signature */
 };
 
 struct WorkItem {
