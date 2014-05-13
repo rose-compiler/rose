@@ -65,7 +65,7 @@ class WorkItem {
 public:
     // needed for std::priority_queue but not actually used
     WorkItem(): range_(0, 0), sorted_(DIM_NONE) {}
-    
+
     // Construct a new work item for the entire vector of points before they are ever sorted
     explicit WorkItem(const IdxRange &range): range_(range), sorted_(DIM_NONE) {}
 

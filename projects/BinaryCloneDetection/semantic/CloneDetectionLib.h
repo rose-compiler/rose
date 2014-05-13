@@ -107,7 +107,7 @@ public:
         BAD_STACK   = 911000008,     /**< ESP is above the starting point. */
         // don't forget to fix 00-create-schema.C and the functions below
     };
-    
+
     /** Return the short name of a fault ID. */
     static const char *fault_name(Fault fault) {
         switch (fault) {
@@ -222,7 +222,7 @@ public:
             nrows = 0;
         }
     }
-    
+
 private:
     void open_backing() {
         if (!f.is_open()) {
@@ -242,7 +242,7 @@ private:
             nrows = 0;
         }
     }
-    
+
 
 private:
     std::string tablename;
@@ -400,13 +400,13 @@ public:
         this->func_id = func_id;
         this->igroup_id = igroup_id;
     }
-    
+
     /** Delete coverage info and reset to initial state. */
     void clear() {
         WriteOnlyTable<InsnCoverageRow>::clear();
         coverage.clear();
     }
-        
+
     /** Mark instructions as having been executed. */
     void execute(SgAsmInstruction*);
 
@@ -426,13 +426,13 @@ public:
      *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
      *  instructions that belong to other functions also, and they are not counted. */
     double get_ratio(SgAsmFunction*, int func_id, int igroup_id) const;
- 
+
     /** Get instructions covered by trace in the order in which they were encountered.
      */
-    void get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top = NULL);    
+    void get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top = NULL);
 protected:
     int func_id, igroup_id;
- 
+
     typedef std::map<rose_addr_t, InsnCoverageRow> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
@@ -475,7 +475,7 @@ public:
         this->igroup_id = igroup_id;
         this->call_sequence = 0;
     }
-    
+
     /** Set this call graph back to its empty state. */
     void clear() {
         WriteOnlyTable<DynamicCallGraphRow>::clear();
@@ -574,7 +574,7 @@ public:
         assert(keep_in_memory);
         return rows[idx];
     }
-    
+
     /** Add an input to the list of rows pending to be written to the database. */
     void consumed(int request_queue_id, int actual_queue_id, uint64_t value) {
         assert(func_id>=0 && igroup_id>=0);
@@ -778,7 +778,7 @@ public:
         this->retval = 0;
         has_retval = false;
     }
-    
+
     /** Returns the return value and whether the return value is the default or explicitly set. */
     std::pair<bool, value_type> get_retval() const {
         return std::make_pair(has_retval, retval);
@@ -951,7 +951,7 @@ public:
             val[i] = lcg();
         }
     }
-    
+
     uint64_t operator()(rose_addr_t addr) {
         uint64_t retval;
         uint8_t idx = 0;
@@ -968,7 +968,7 @@ private:
     uint8_t tab[256];
     uint64_t val[256];
 };
-    
+
 /*******************************************************************************************************************************
  *                                      Input Group
  *******************************************************************************************************************************/
@@ -1043,7 +1043,7 @@ public:
     void redirect(InputQueueName qn) { redirect_=qn; }
     InputQueueName redirect() const { return redirect_; }
     /** @} */
-    
+
     /** Load a row from the semantic_outputvalues table into this queue. */
     void load(int pos, uint64_t val);
 
@@ -1079,7 +1079,7 @@ public:
             default: assert(!"fixme"); abort();
         }
     }
-    
+
     /** Load a single input group from the database. Returns true if the input group exists in the database. */
     bool load(const SqlDatabase::TransactionPtr&, int id);
 
@@ -1113,7 +1113,7 @@ public:
     /** Collection to which input group is assigned. The @p dflt is usually the same as the input group ID. */
     int get_collection_id(int dflt=-1) const { return collection_id<0 ? dflt : collection_id; }
     void set_collection_id(int collection_id) { this->collection_id=collection_id; }
-        
+
 protected:
     Queues queues_;
     int collection_id;
@@ -1129,7 +1129,7 @@ protected:
 struct PolicyParams {
     PolicyParams()
         : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000),
-          compute_coverage(false), compute_callgraph(false), top_callgraph(false), compute_consumed_inputs(false) {} 
+          compute_coverage(false), compute_callgraph(false), top_callgraph(false), compute_consumed_inputs(false) {}
 
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
@@ -1192,7 +1192,7 @@ public:
                         unsigned rw_state=HAS_BEEN_WRITTEN) {
         memory[addr.known_value()] = MemoryValue(value.known_value(), rw_state, first_of_n, sr);
     }
-        
+
     // Read a single byte from memory.  If the read operation cannot find an appropriate memory cell, then @p
     // uninitialized_read is set (it is not cleared in the counter case) and the return value is default constructed (for
     // PartialSymbolicSemantics it is a unique undefined value).
@@ -1204,7 +1204,7 @@ public:
             *uninitialized_read = true;
         return ValueType<8>();
     }
-        
+
     // Returns true if two memory addresses can be equal.
     static bool may_alias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
         return addr1.known_value()==addr2.known_value();
@@ -1368,7 +1368,7 @@ public:
     const StackFrame& top() const { return (*this)[0]; }
           StackFrame& top()       { return (*this)[0]; }
     /** @} */
-    
+
     /** Returns the Nth frame from the top. The top frame is N=0.
      * @{ */
     const StackFrame& operator[](size_t n) const { assert(n<size()); return stack_frames[size()-(n+1)]; }
@@ -1484,7 +1484,7 @@ public:
     OutputGroup get_outputs() {
         return state.get_outputs(params.verbosity, interp->get_map());
     }
-    
+
     // Sets up the machine state to start the analysis of one function.
     void reset(SgAsmInterpretation *interp, SgAsmFunction *func, InputGroup *inputs, const InstructionProvidor *insns,
                const PointerDetector *pointers/*=NULL*/, const Disassembler::AddressSet &whitelist_exports) {
@@ -1680,7 +1680,7 @@ public:
         }
         return NULL;
     }
-        
+
     // Called by instruction semantics before each instruction is executed
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (ninsns++ >= params.timeout)
@@ -1768,7 +1768,7 @@ public:
                 }
             }
         }
-        
+
         // Update some necessary things
         state.registers.ip = ValueType<32>(insn->get_address());
         monitor_esp(insn, stack_frame);
@@ -1860,7 +1860,7 @@ public:
                 }
             }
         }
-        
+
         // Emit an event if the next instruction to execute is not at the fall through address.
         rose_addr_t fall_through_va = insn->get_address() + insn->get_size();
         if (next_eip!=fall_through_va)
@@ -1871,7 +1871,7 @@ public:
 
         Super::finishInstruction(insn);
     }
-    
+
     // Handle INT 0x80 instructions: save the system call number (from EAX) in the output group and set EAX to a random
     // value, thus consuming one input.
     void interrupt(uint8_t inum) /*override*/ {
@@ -1946,7 +1946,7 @@ public:
         assert(8==nBits || 16==nBits || 24==nBits || 32==nBits);
         abort();
     }
-    
+
     // Track memory access.
     template<size_t nBits>
     ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<1> &cond) {
@@ -2031,7 +2031,7 @@ public:
         ValueType<nBits> retval = concatBytes<nBits>(bytes);
         return retval;
     }
-        
+
     template<size_t nBits>
     void writeMemory(X86SegmentRegister sr, ValueType<32> a0, ValueType<nBits> data, const ValueType<1> &cond,
                      unsigned rw_state=HAS_BEEN_WRITTEN) {
@@ -2475,7 +2475,7 @@ public:
                 throw Exception("invalid register access width");
         }
     }
-        
+
 
     // Print the state, including memory and register access flags
     void print(std::ostream &o) const {
@@ -2485,7 +2485,7 @@ public:
     void print(std::ostream &o, BaseSemantics::Formatter &fmt) const {
         state.print(o, fmt);
     }
-    
+
     friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
         p.print(o);
         return o;
@@ -2521,7 +2521,7 @@ std::string filename_for_function(SgAsmFunction*, bool basename=false);
 /** Returns the functions that don't exist in the database. Of those function listed in @p functions, return those which
  *  are not present in the database.  The returned std::map's key is the ID number to be assigned to that function when it
  *  is eventually added to the database.  The internal representation of the FilesTable is updated with the names of
- *  the files that aren't yet in the database. */ 
+ *  the files that aren't yet in the database. */
 IdFunctionMap missing_functions(const SqlDatabase::TransactionPtr&, CloneDetection::FilesTable&,
                                 const std::vector<SgAsmFunction*> &functions);
 

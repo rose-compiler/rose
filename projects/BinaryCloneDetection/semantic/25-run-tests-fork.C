@@ -57,9 +57,8 @@ load_sorted_work(MultiWork &work /*out*/)
 }
 
 // How many processors does this machine have?  Returns 1 if it can't figure that out.
-size_t nProcessors() 
+size_t nProcessors()
 {
-    
     if (FILE *f = fopen("/proc/cpuinfo", "r")) {
         char *buf = NULL;
         size_t bufsz = 0, nprocs = 0;
@@ -75,7 +74,7 @@ size_t nProcessors()
 
 // Forks, calls f(), then returns zero on success or non-zero on failure.
 template<class Functor>
-int forkAndWait(Functor f) 
+int forkAndWait(Functor f)
 {
     pid_t child = fork();
     if (-1==child) {

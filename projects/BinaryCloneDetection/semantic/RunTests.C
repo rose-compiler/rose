@@ -63,7 +63,7 @@ usage(int exit_status)
               <<"            there's no easy way to control which process can read terminal input.\n"
               <<"    --path-syntactic=no|function|all\n"
               <<"            Determines whether the path sensistive syntactic clone detection should be computed from\n"
-              <<"            all instructions covered, instructions covered in the function scope, or not at all.\n" 
+              <<"            all instructions covered, instructions covered in the function scope, or not at all.\n"
               <<"    --[no-]pointers\n"
               <<"            Perform [or not] pointer analysis on each function.  The pointer analysis is a binary-only\n"
               <<"            analysis that looks for memory addresses that hold pointers from the source code.  When this is\n"
@@ -1117,7 +1117,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
             tracer.emit(va, EV_FAULT, last_good_va, (int)fault);
         }
     }
-    
+
     // Gather the function's outputs before restoring machine state.
     OutputGroup outputs = policy.get_outputs();
     outputs.set_fault(fault);
@@ -1226,7 +1226,7 @@ runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDete
     } else if (opt.path_syntactic == PATH_SYNTACTIC_FUNCTION) {
         insn_coverage.get_instructions(insnVector, interp, func);
     }
-    int syntactic_ninsns = insnVector.size(); 
+    int syntactic_ninsns = insnVector.size();
     createVectorsForAllInstructions(ogroup.get_signature_vector(), insnVector, opt.signature_components);
     std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
 

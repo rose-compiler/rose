@@ -66,7 +66,7 @@ struct Switches {
     bool nfuzz_set; // is nfuzz value valid?
     bool list_specimens, list_files;
 };
-    
+
 int
 main(int argc, char *argv[])
 {
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
         std::cerr <<argv0 <<": database has no input groups; nothing to test\n";
         return 0;
     }
-    
+
     // Create table tmp_functions containing IDs for selected functions and their specimen IDs
     std::vector<std::string> constraints;
     if (!opt.entry_vas.empty())

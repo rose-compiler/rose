@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     RoseAst ast(frontend(argc, argv));
-    
+
     size_t maxinsns = 0;
     SgAsmFunction *biggestFunction = NULL;
 

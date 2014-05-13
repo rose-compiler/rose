@@ -107,7 +107,7 @@ public:
     explicit Surface(FILE *f): nsim_(0) { nsim_ = load(f); }
     size_t load(FILE*);                                 // initialize metrics
     size_t nsim() const { return nsim_; }
-    double operator()(const SurfaceDomainValue&)const ; // objective function
+    double operator()(const SurfaceDomainValue&) const; // objective function
 };
 
 class Genome {
@@ -325,7 +325,7 @@ void computeFitness(Population &population, const Surface &surface, size_t maxTh
     size_t nworkers = (population.size() + worksize - 1) / worksize;// ceiling
     assert(population.empty() || (nworkers>0 && nworkers<=maxThreads));
     boost::thread *workers = new boost::thread[nworkers];
-    
+
     size_t offset = 0;
     for (size_t i=0; i<nworkers; ++i) {
         size_t n = std::min(population.size()-offset, worksize);

@@ -253,7 +253,7 @@ FilesTable::add_content(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, i
     }
     return found->second.digest;
 }
-    
+
 int
 FilesTable::id(const std::string &name) const
 {
@@ -775,76 +775,55 @@ InsnCoverage::get_ratio(SgAsmFunction *func, int func_id, int igroup_id) const
 
 
 void
-InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top )
+InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top)
 {
-  //Find the instructions 
-  std::vector<SgAsmx86Instruction*> tmp_insns;
+    // Find the instructions
+    std::vector<SgAsmx86Instruction*> tmp_insns;
+    InstructionMap instr_map = interp->get_instruction_map(interp);
+    if (top != NULL) {
+        FindInstructionsVisitor vis;
+        AstQueryNamespace::querySubTree(top, std::bind2nd(vis, &tmp_insns));
 
-  InstructionMap instr_map = interp->get_instruction_map(interp);
-  if (top != NULL){
+        // Addresses and map of instructions in the subtree of top
+        std::vector<rose_addr_t> query_insns_addr;
+        for (std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
+            query_insns_addr.push_back((*it)->get_address());
+        std::sort(query_insns_addr.begin(), query_insns_addr.end());
 
-    FindInstructionsVisitor vis;
-    AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &tmp_insns ));
+        // Addresses of instruction in the trace
+        std::vector<rose_addr_t> trace_insns_addr;
+        for (CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it)
+            trace_insns_addr.push_back(it->first);
+        std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
 
+        // Addresses in the intersection of the trace and the subtree of top
+        std::vector<rose_addr_t> trace_query_intersection(trace_insns_addr.size() > query_insns_addr.size() ?
+                                                          trace_insns_addr.size() : query_insns_addr.size());
+        std::vector<rose_addr_t>::iterator intersection_end;
+        intersection_end = std::set_intersection(query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(),
+                                                 trace_insns_addr.end(), trace_query_intersection.begin());
 
-    //Addresses and map of instructions in the subtree of top
-    std::vector<rose_addr_t> query_insns_addr;
-
-    for(std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it) {
-      query_insns_addr.push_back((*it)->get_address());
+        //Instructions
+        Disassembler::InstructionMap::iterator find_it;
+        for (std::vector<rose_addr_t>::iterator  it = trace_query_intersection.begin(); it != intersection_end; ++it) {
+            find_it = instr_map.find(*it);
+            if (find_it == instr_map.end()) {
+                assert(!"element not found in instruction map");
+                abort();
+            }
+            insns.push_back(find_it->second);
+        }
+    } else {
+        Disassembler::InstructionMap::iterator find_it;
+        for (CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+            find_it = instr_map.find(it->first);
+            if (find_it == instr_map.end()) {
+                assert(!"element not found in instruction map");
+                abort();
+            }
+            insns.push_back(find_it->second);
+        }
     }
-
-    std::sort(query_insns_addr.begin(), query_insns_addr.end());
-
-
-    //Addresses of instruction in the trace 
-    std::vector<rose_addr_t> trace_insns_addr;
-
-    for(CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
-      trace_insns_addr.push_back(it->first);
-    }
-
-    std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
-
-    //Addresses in the intersection of the trace and the subtree of top
-    std::vector<rose_addr_t> trace_query_intersection( trace_insns_addr.size() > query_insns_addr.size() ? trace_insns_addr.size() : query_insns_addr.size() );    
-    std::vector<rose_addr_t>::iterator intersection_end;
-
-    intersection_end = std::set_intersection (query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(), trace_insns_addr.end(), trace_query_intersection.begin());
-
-
-    //Instructions
-    
-
-    Disassembler::InstructionMap::iterator find_it;
-
-    for(std::vector<rose_addr_t>::iterator  it = trace_query_intersection.begin(); it != intersection_end; ++it) {
-      find_it = instr_map.find(*it);
-
-      if (find_it == instr_map.end()){
-        assert(!"element not found in instruction map");
-        abort();
-      }
-      
-      insns.push_back(find_it->second);
-    }
-
-  }else{
-    Disassembler::InstructionMap::iterator find_it;
-
-    for(CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
-      find_it = instr_map.find(it->first);
-
-      if (find_it == instr_map.end()){
-        assert(!"element not found in instruction map");
-        abort();
-      }
-      
-      insns.push_back(find_it->second);
-    }
-
-  }
-
 }
 
 /*******************************************************************************************************************************
@@ -1119,7 +1098,7 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
                               <<" (symbol #" <<reloc->get_sym() <<" in \"" <<symsec->get_name()->get_string(true) <<"\")\n"
                               <<"        value to write: " <<addrToString(export_va) <<" (exported function)\n";
 #endif
-                        
+
 
                     // The memory address to which we'll eventually write the address of the exported function.  For elf, we'll
                     // probably be writing the value into the .got.plt section.  Take into account that the section into which

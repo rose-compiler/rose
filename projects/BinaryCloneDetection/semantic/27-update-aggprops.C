@@ -42,21 +42,19 @@ main(int argc, char *argv[])
                       <<argv0 <<": see --help for more info\n";
             exit(1);
         }
-    };
+    }
+
     if (argno+1!=argc)
         usage(0);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = CloneDetection::start_command(tx, argc, argv, "running tests");
 
-
-    
     typedef std::map<int, double> RetProb;
     RetProb retprob = CloneDetection::function_returns_value(tx);
     tx->execute("delete from semantic_aggprops");
     SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_aggprops (func_id, retprob) values (?, ?)");
     for (RetProb::iterator rpi=retprob.begin(); rpi!=retprob.end(); ++rpi)
         stmt->bind(0, rpi->first)->bind(1, rpi->second)->execute();
-    
 
     CloneDetection::finish_command(tx, cmd_id,
                                    "updated aggregate properties for " + StringUtility::plural(retprob.size(), "functions"));

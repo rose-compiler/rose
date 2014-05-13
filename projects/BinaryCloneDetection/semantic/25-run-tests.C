@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     OutputGroups ogroups; // do not load from database (that might take a very long time)
     NameSet builtin_function_names;
     add_builtin_functions(builtin_function_names/*out*/);
-    
+
     // Set up the interrupt handler
     if (opt.interactive) {
         struct sigaction sa;
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
                 std::cerr <<argv0 <<": problems loading specimen\n";
                 exit(1);
             }
-            
+
             // Get list of functions and initialize the instruction cache
             std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
             functions = existing_functions(tx, files, all_functions);
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
             }
             interrupted = -1;
         }
-        
+
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
             if (!opt.dry_run)
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
             tx->rollback();
             break;
         }
-        
+
         prev_work = workItem;
     }
 

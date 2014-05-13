@@ -163,19 +163,11 @@ static FuncInfos func_infos;
 boost::scoped_array<uint16_t>*
 decompress_string_to_array(const std::string& array_from_db)
 {
-
-  std::vector<uint8_t> counts = StringUtility::decode_base64( array_from_db );
-  //std::string compressed_counts(&counts[0], &counts[0]+counts.size());
-
-  //scoped_array_with_size<uint8_t> 
-  //memcpy(compressed_counts.get(), compressed_counts.data(), compressed_counts.size());
-
-  int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
-  boost::scoped_array<uint16_t>* array_uncompressed = new boost::scoped_array<uint16_t>(new uint16_t[vec_length]);
-  
-  decompressVector(counts.data(), counts.size(), array_uncompressed->get());
-
-  return array_uncompressed;
+    std::vector<uint8_t> counts = StringUtility::decode_base64(array_from_db);
+    int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
+    boost::scoped_array<uint16_t>* array_uncompressed = new boost::scoped_array<uint16_t>(new uint16_t[vec_length]);
+    decompressVector(counts.data(), counts.size(), array_uncompressed->get());
+    return array_uncompressed;
 }
 
 
@@ -258,7 +250,7 @@ protected: // use create() instead
         retval = ogroup->get_retval();
         signature_vector = decompress_string_to_array(array_from_db);
         syntactic_ninsns = tmp_syntactic_ninsns;
- 
+
     }
 
 public:
@@ -500,43 +492,40 @@ find_outputs(const FunctionOutputs &func_outputs, int func_id)
 
 
 class OutputSimilarity{
+public:
+    double ave_semantic_sim;
+    double min_semantic_sim;
+    double max_semantic_sim;
 
-  public:
+    double ave_hamming_d;
+    int min_hamming_d;
+    int max_hamming_d;
 
-  double ave_semantic_sim;
-  double min_semantic_sim;
-  double max_semantic_sim;
+    double ave_euclidean_d;
+    double min_euclidean_d;
+    double max_euclidean_d;
 
-  double ave_hamming_d;
-  int min_hamming_d;
-  int max_hamming_d;
+    double ave_euclidean_d_ratio;
+    double min_euclidean_d_ratio;
+    double max_euclidean_d_ratio;
 
-  double ave_euclidean_d;
-  double min_euclidean_d;
-  double max_euclidean_d;
+    OutputSimilarity() {
+        ave_semantic_sim = 0;
+        min_semantic_sim = 0;
+        max_semantic_sim = 0;
 
-  double ave_euclidean_d_ratio;
-  double min_euclidean_d_ratio;
-  double max_euclidean_d_ratio;
+        ave_hamming_d = 0;
+        min_hamming_d = 0;
+        max_hamming_d = 0;
 
-  OutputSimilarity(){
+        ave_euclidean_d = 0;
+        min_euclidean_d = 0;
+        max_euclidean_d = 0;
 
-    ave_semantic_sim = 0;
-    min_semantic_sim = 0;
-    max_semantic_sim = 0;
-
-    ave_hamming_d = 0;
-    min_hamming_d = 0;
-    max_hamming_d = 0;
-
-    ave_euclidean_d = 0;
-    min_euclidean_d = 0;
-    max_euclidean_d = 0;
-
-    ave_euclidean_d_ratio = 0;
-    min_euclidean_d_ratio = 0;
-    max_euclidean_d_ratio = 0;
-  }
+        ave_euclidean_d_ratio = 0;
+        min_euclidean_d_ratio = 0;
+        max_euclidean_d_ratio = 0;
+    }
 };
 
 static OutputSimilarity
@@ -560,7 +549,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
     int hamming_d            = 0;
     int min_hamming_d        = INT_MAX;
     int max_hamming_d        = 0;
-    
+
     double euclidean_d       = 0.0;
     double min_euclidean_d   = INFINITY;
     double max_euclidean_d   = 0.0;
@@ -619,7 +608,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
                     int f2_v=0;
                     int vec_length = x86_last_instruction*4 + 300 + 9 + 3;
                     for (int k = 0; k < vec_length; k++) {
-                        f1_v = f1_signature_vector[k]; 
+                        f1_v = f1_signature_vector[k];
                         f2_v = f2_signature_vector[k];
 
                         if (f1_v != f2_v)
@@ -637,7 +626,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
                     min_euclidean_d = std::min(min_euclidean_d, cur_euclidean_d);
 
                     int difference = std::max(f1_syntactic_ninsns, f2_syntactic_ninsns);
-                    if (difference != 0 ) {
+                    if (difference != 0) {
                         cur_euclidean_d_ratio = 100.0*cur_euclidean_d/difference;
                         euclidean_d_ratio    += cur_euclidean_d_ratio;
                         max_euclidean_d_ratio = std::max(cur_euclidean_d_ratio, max_euclidean_d_ratio);
@@ -660,11 +649,8 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
         }
     }
 
-
     OutputSimilarity output_sim;
-
-    if (0<ncompares)
-    {
+    if (0<ncompares) {
       output_sim.ave_hamming_d = (1.0*hamming_d) / ncompares;
       output_sim.min_hamming_d = min_hamming_d;
       output_sim.max_hamming_d = max_hamming_d;
@@ -678,13 +664,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
       output_sim.ave_semantic_sim = total_sim / ncompares;
       output_sim.min_semantic_sim = min_sim;
       output_sim.max_semantic_sim = max_sim;
-
-
-
     }
-
-
-
     return output_sim;
 }
 
@@ -739,7 +719,7 @@ load_worklist(const std::string &input_name, FILE *f, IdSet &function_ids)
                 exit(1);
             }
             worklist.push(std::make_pair(FUNC_EVICT, func_id));
-            
+
         } else {
             if (char *c = strchr(line, '#'))
                 *c = '\0';
@@ -788,9 +768,7 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
     vectors.allocate(eltCount);
 
     size_t indexInVectors=0;
-
-    SqlDatabase::StatementPtr cmd3 = tx->statement( "select id, ninsns, counts_b64  from semantic_functions");
-
+    SqlDatabase::StatementPtr cmd3 = tx->statement("select id, ninsns, counts_b64  from semantic_functions");
 
     for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
       //Add feature vectors
@@ -808,15 +786,12 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
       ve.rowNumber = 0;
       ve.ninsns = ninsns;
 
-
       ve.compressedCounts.allocate(compressedCounts.size());
       memcpy(ve.compressedCounts.get(), compressedCounts.data(), compressedCounts.size());
 
       id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
       indexInVectors++;
-
     }
-
 }
 
 int
@@ -915,7 +890,7 @@ main(int argc, char *argv[])
                       <<argv0 <<": see --help for more info\n";
             exit(1);
         }
-    };
+    }
     if (argno+1!=argc)
         usage(1);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
@@ -948,14 +923,12 @@ main(int argc, char *argv[])
 
     scoped_array_with_size<VectorEntry> allVectors;
     std::map<int, VectorEntry* > id_to_vec;
- 
+
     read_vector_data(transaction, allVectors, id_to_vec);
 
 
     SqlDatabase::StatementPtr stmt = transaction->statement("insert into semantic_funcsim"
-                                                            // 0        1         2           3          4
                                                             "(func1_id, func2_id, similarity, ncompares, maxcompares,"
-                                                            // 5           6
                                                             " relation_id, cmd, hamming_d, euclidean_d, euclidean_d_ratio,"
                                                             "path_ave_hamming_d, path_min_hamming_d, path_max_hamming_d,"
                                                             "path_ave_euclidean_d, path_min_euclidean_d, path_max_euclidean_d,"
@@ -1025,19 +998,19 @@ main(int argc, char *argv[])
 
             std::map<int, VectorEntry*>::iterator it;
             it = id_to_vec.find(func1_id);
-            if(it == id_to_vec.end()){
+            if (it == id_to_vec.end()) {
                 assert(!"func 1 not found");
                 exit(1);
             }
 
             VectorEntry* f1_compressed = it->second;
             it = id_to_vec.find(func2_id);
-            if(it == id_to_vec.end()){
+            if (it == id_to_vec.end()) {
                 assert(!"func 2 not found");
                 exit(1);
             }
 
-            VectorEntry* f2_compressed = it->second;  
+            VectorEntry* f2_compressed = it->second;
             int vec_length = SignatureVector::Size;
             boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
             decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(),
@@ -1052,19 +1025,20 @@ main(int argc, char *argv[])
             double euclidean_d_ratio = 0;
             int f1_v=0;
             int f2_v=0;
-            for(int i = 0; i < vec_length; i++){
-                f1_v = f1_uncompressed[i]; 
+            for (int i = 0; i < vec_length; i++) {
+                f1_v = f1_uncompressed[i];
                 f2_v = f2_uncompressed[i];
 
-                if ( f1_v != f2_v ) hamming_d++;
+                if (f1_v != f2_v)
+                    hamming_d++;
                 euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
 
             }
-      
+
             hamming_d = hamming_d;
             euclidean_d = sqrt(euclidean_d);
             int difference = abs(f1_compressed->ninsns-f2_compressed->ninsns);
-            if ( difference != 0  ){
+            if (difference != 0) {
                 euclidean_d_ratio = 100.0*euclidean_d/(abs(f1_compressed->ninsns+f2_compressed->ninsns));
             }
 
@@ -1089,11 +1063,11 @@ main(int argc, char *argv[])
             stmt->bind(16, output_sim.ave_euclidean_d_ratio);
             stmt->bind(17, output_sim.min_euclidean_d_ratio);
             stmt->bind(18, output_sim.max_euclidean_d_ratio);
-        
+
             stmt->execute();
         }
     }
-    
+
     progress.message("committing changes");
     std::string mesg = "calculated similarity relationship #"+StringUtility::numberToString(opt.relation_id)+
                        " for "+StringUtility::numberToString(npairs)+" function pair"+(1==npairs?"":"s");

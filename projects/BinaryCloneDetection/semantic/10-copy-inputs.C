@@ -57,7 +57,7 @@ main(int argc, char *argv[])
     SqlDatabase::StatementPtr cmdsQuery = dstTx->statement("select hashkey from semantic_history");
     for (SqlDatabase::Statement::iterator row=cmdsQuery->begin(); row!=cmdsQuery->end(); ++row)
         cmds.insert(row.get<int64_t>(0));
-    
+
     // What do we need to copy?
     std::string toCopyConstraint = cmds.empty() ? std::string() : " where cmd not " + SqlDatabase::in(cmds);
     size_t nRowsToCopy = srcTx->statement("select count(*) from semantic_inputvalues" + toCopyConstraint)->execute_int();
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 
         ++progress;
     }
-    
+
     // Clean up
     dstTx->commit();
     return 0;
