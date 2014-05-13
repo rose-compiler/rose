@@ -191,7 +191,17 @@ select
     join fr_false_negatives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
     where fio.status = 0
     group by func.name, func.id, func.file_id
-    order by ave_insns_exec;
+    order by func.name, func.file_id;
+
+-- output that can be fed to the optimizer
+--select 'y' as oracle, t2.similarity as sim1
+--    from fr_positive_pairs as t1
+--    join semantic_funcsim as t2 on t1.func1_id=t2.func1_id and t1.func2_id=t2.func2_id
+--  union all
+--select 'n' as oracle, t2.similarity as sim1
+--    from fr_negative_pairs as t1
+--    join semantic_funcsim as t2 on t1.func1_id=t2.func1_id and t1.func2_id=t2.func2_id;
+
 
 
 rollback;
