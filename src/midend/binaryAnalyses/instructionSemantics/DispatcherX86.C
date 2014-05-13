@@ -1104,6 +1104,31 @@ struct IP_pushfd: P {
     }
 };
 
+// Bitwise XOR
+struct IP_pxor: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nbits = asm_type_width(args[0]->get_type());
+        if (nbits!=asm_type_width(args[1]->get_type()))
+            throw BaseSemantics::Exception("PXOR operands must be the same width", insn);
+        BaseSemantics::SValuePtr result;
+
+        // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
+        if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
+            RegisterDescriptor r1 = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
+            RegisterDescriptor r2 = isSgAsmRegisterReferenceExpression(args[1])->get_descriptor();
+            if (r1==r2)
+                result = ops->number_(nbits, 0);
+        }
+
+        // The non-idiomatic behavior
+        if (result==NULL)
+            result = ops->xor_(d->read(args[0], nbits), d->read(args[1], nbits));
+
+        d->write(args[0], result);
+    }
+};
+
 // Return from procedure
 struct IP_ret: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1475,6 +1500,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pushad,       new X86::IP_pushad);
     iproc_set(x86_pushfd,       new X86::IP_pushfd);
+    iproc_set(x86_pxor,         new X86::IP_pxor);
     iproc_set(x86_rcl,          new X86::IP_rotate(x86_rcl));
     iproc_set(x86_rcr,          new X86::IP_rotate(x86_rcr));
     iproc_set(x86_rdtsc,        new X86::IP_rdtsc);
@@ -2056,6 +2082,23 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     // Result flags SF, ZF, and PF are set according to the result, but are unchanged if the shift count is zero.
     setFlagsForResult(result, operators->invert(isZeroShiftCount));
     return result;
+}
+
+void
+DispatcherX86::write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits/*=0*/)
+{
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        RegisterDescriptor reg = re->get_descriptor();
+        if (reg.get_major()==x86_regclass_st && reg.get_minor()>=0 && reg.get_minor()<8 &&
+            reg.get_offset()==0 && reg.get_nbits()==64) {
+            // When writing to an MM register, the high-order 16 bits are set in order to make the underlying
+            // ST register NaN.
+            reg.set_nbits(80);
+            operators->writeRegister(reg, operators->concat(value, number_(16, 0xffff)));
+            return;
+        }
+    }
+    Dispatcher::write(e, value, addr_nbits);            // defer to super class
 }
 
 void
