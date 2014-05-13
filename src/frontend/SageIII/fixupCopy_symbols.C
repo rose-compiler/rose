@@ -717,9 +717,9 @@ SgNamespaceDeclarationStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & he
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
-
+#if 0
      printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
-
+#endif
   // Call the base class fixupCopy member function
      SgDeclarationStatement::fixupCopy_symbols(copy,help);
 

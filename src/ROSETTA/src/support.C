@@ -831,6 +831,12 @@ Grammar::setUpSupport ()
   // DQ (7/21/2012): Adding C++11 support.
      File.setDataPrototype         ( "bool", "Cxx11_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/20/2014): Adding C14 support.
+     File.setDataPrototype         ( "bool", "C14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/20/2014): Adding C++14 support.
+     File.setDataPrototype         ( "bool", "Cxx14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/11/2007): Support for Fortran (Fortran, f77, f90, f95, f03)
      File.setDataPrototype         ( "bool", "Fortran_only", "= false",
@@ -1013,7 +1019,7 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/13/2004): Added to support to save Edg command line
-     File.setDataPrototype("std::string","savedEdgCommandLine", "= \"\"",
+     File.setDataPrototype("std::string","savedFrontendCommandLine", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/21/2005): Backend specific template option.  This might at a later date be abstracted out as a
@@ -1754,6 +1760,12 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Cxx11_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/20/2014): Adding C14 and C++14 support.
+     Project.setDataPrototype ( "bool", "C14_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Cxx14_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1779,6 +1791,9 @@ Grammar::setUpSupport ()
 
      Project.setDataPrototype ("std::list<std::string>", "Java_ecj_jvm_options", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype ("bool", "Java_batch_mode", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
