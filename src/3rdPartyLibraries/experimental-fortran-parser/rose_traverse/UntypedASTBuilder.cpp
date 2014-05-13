@@ -251,6 +251,7 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
 
    stmt = new SgUntypedVariableDeclaration(start, type);
    if (typeDeclarationStmt->getLabel()) stmt->set_label_string(typeDeclarationStmt->getLabel()->getValue());
+   stmt->set_parameters(new SgUntypedInitializedNameList(start));
 
    printf("build_TypeDeclarationStmt: .........\n");
 
@@ -276,10 +277,6 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
    //TODO-CER-2014.3.7 should this be variables or parameters?
    printf("               parameters: ......... ");
    parameters = stmt->get_parameters();
-
-// DQ (3/25/2014): Added assertion.
-   assert(parameters != NULL);
-
    for (int i = 0; i < declList->size(); i++) {
       std::string name = declList->at(i)->getObjectName()->getIdent()->getName();
       parameters->get_name_list().push_back(new SgUntypedInitializedName(start, type, name));
@@ -335,6 +332,55 @@ void UntypedASTBuilder::build_ImplicitStmt(ImplicitStmt * implicitStmt)
    }
 
    implicitStmt->setPayload(stmt);
+}
+
+//========================================================================================
+// R611 data-ref
+//----------------------------------------------------------------------------------------
+void UntypedASTBuilder::build_DataRef(DataRef * dataRef)
+{
+   // TODO - handle PartRef list instead of just grabbing first element
+   dataRef->inheritPayload(dataRef->getPartRefList()->front());
+
+   printf("ROSE DataRef: ....................... ");
+   unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(dataRef->getPayload()));  printf("\n");
+}
+
+//========================================================================================
+// R612 part-ref
+//----------------------------------------------------------------------------------------
+void UntypedASTBuilder::build_PartRef(PartRef * partRef)
+{
+   Sg_File_Info * start = NULL;
+   SgUntypedReferenceExpression* expr = NULL;
+
+   //TODO-CER-2014.3.14 handle SectionSubscriptList and ImageSelector
+
+   //TODO-CER-2014.3.28 - this should go away along with unparseExpr below
+   printf("ROSE PartRef: .......................(%p) ", partRef);
+
+   expr = new SgUntypedReferenceExpression(start, SgToken::FORTRAN_UNKNOWN, partRef->getPartName()->getIdent()->getValue().c_str());
+   partRef->setPayload(expr);
+
+   unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(partRef->getPayload()));  printf("\n");
+}
+
+//========================================================================================
+// R732 assignment-stmt
+//----------------------------------------------------------------------------------------
+void UntypedASTBuilder::build_AssignmentStmt(AssignmentStmt * assignmentStmt)
+{
+   Sg_File_Info * start = NULL;
+   SgUntypedAssignmentStatement * stmt = NULL;
+
+   SgUntypedExpression* lhs = dynamic_cast<SgUntypedExpression*>(assignmentStmt->getVariable()->payload);
+   SgUntypedExpression* rhs = dynamic_cast<SgUntypedExpression*>(assignmentStmt->getExpr()->payload);
+
+   stmt = new SgUntypedAssignmentStatement(start, lhs, rhs);
+   stmt->set_statement_enum(SgToken::FORTRAN_IMPLICIT_NONE);
+   if (assignmentStmt->getLabel()) stmt->set_label_string(assignmentStmt->getLabel()->getValue());
+
+   assignmentStmt->setPayload(stmt);
 }
 
 //========================================================================================
@@ -444,6 +490,108 @@ void UntypedASTBuilder::build_EndProgramStmt(EndProgramStmt * endProgramStmt)
 }
 
 //========================================================================================
+// R1233 subroutine-subprogram
+//----------------------------------------------------------------------------------------
+void UntypedASTBuilder::build_SubroutineSubprogram(SubroutineSubprogram * subroutineSubprogram)
+{
+   Sg_File_Info * start = NULL;
+   SgUntypedNamedStatement * stmt = NULL;
+   SgUntypedDeclarationList* sgDeclList = NULL;
+   SgUntypedStatementList* sgStmtList = NULL;
+   SgUntypedSubroutineDeclaration * subroutine = NULL;
+
+   // SubroutineStmt
+   //
+   if (subroutineSubprogram->getSubroutineStmt()) {
+      subroutine = dynamic_cast<SgUntypedSubroutineDeclaration*>(subroutineSubprogram->getSubroutineStmt()->getPayload());
+      assert(subroutine);
+   }
+
+   printf("build_MainSubroutine label: ........ %s\n", subroutine->get_label_string().c_str());
+   printf("             begin name: ........... %s\n", subroutine->get_name().c_str());
+
+   // SpecificationPart
+   //
+   SpecificationPart * specPart = subroutineSubprogram->getSpecificationPart();
+   sgDeclList = dynamic_cast<SgUntypedDeclarationList*>(specPart->givePayload());  assert(sgDeclList);
+   subroutine->get_scope()->set_declaration_list(sgDeclList);
+
+   printf("         spec_list_size: ........... %lu\n", sgDeclList->get_decl_list().size());
+
+   // ExecutionPart
+   //
+   ExecutionPart * execPart = subroutineSubprogram->getExecutionPart();
+   sgStmtList = dynamic_cast<SgUntypedStatementList*>(execPart->givePayload());  assert(sgStmtList);
+   subroutine->get_scope()->set_statement_list(sgStmtList);
+
+   printf("         exec_list_size: ........... %lu\n", sgStmtList->get_stmt_list().size());
+
+   // InternalSubprogramPart
+   //
+   InternalSubprogramPart * isubPart = subroutineSubprogram->getInternalSubprogramPart();
+   if (isubPart) {
+      SgUntypedFunctionDeclarationList* sgFuncList;
+      sgFuncList = dynamic_cast<SgUntypedFunctionDeclarationList*>(isubPart->givePayload());  assert(sgFuncList);
+      subroutine->get_scope()->set_function_list(sgFuncList);
+   }
+
+   // EndSubroutineStmt
+   //
+   stmt = dynamic_cast<SgUntypedNamedStatement*>(subroutineSubprogram->getEndSubroutineStmt()->getPayload());  assert(stmt);
+   subroutine->set_end_statement(stmt);
+
+   printf("              end label: ........... %s\n", stmt->get_label_string().c_str());
+   printf("              end  name: ........... %s\n", stmt->get_statement_name().c_str());
+
+   subroutineSubprogram->setPayload(subroutine);
+}
+
+//========================================================================================
+// R1234 subroutine-stmt
+//----------------------------------------------------------------------------------------
+void UntypedASTBuilder::build_SubroutineStmt(SubroutineStmt * subroutineStmt)
+{
+   Sg_File_Info * start = NULL;
+   SgUntypedSubroutineDeclaration * subroutine = NULL;
+
+   // set up the function scope
+   //
+   SgUntypedFunctionScope * scope = new SgUntypedFunctionScope(start);
+   scope->set_declaration_list(new SgUntypedDeclarationList(start));  
+   scope->set_statement_list(new SgUntypedStatementList(start));  
+   scope->set_function_list(new SgUntypedFunctionDeclarationList(start));  
+
+   subroutine = new SgUntypedSubroutineDeclaration(start, subroutineStmt->getSubroutineName()->getIdent()->getName());
+   subroutine->set_statement_enum(SgToken::FORTRAN_SUBROUTINE);
+   subroutine->set_scope(scope);
+
+   if (subroutineStmt->getLabel()) subroutine->set_label_string(subroutineStmt->getLabel()->getValue());
+
+   //TODO-CER-2014.3.24 - handle prefix, arguments, language-binding
+
+   subroutineStmt->setPayload(subroutine);
+}
+
+//========================================================================================
+// R1236 end-subroutine-stmt
+//----------------------------------------------------------------------------------------
+void  UntypedASTBuilder::build_EndSubroutineStmt(EndSubroutineStmt * endSubroutineStmt)
+{
+   Sg_File_Info * start = NULL;
+   SgUntypedNamedStatement * stmt = new SgUntypedNamedStatement(start);
+   stmt->set_statement_enum(SgToken::FORTRAN_END_SUBROUTINE);
+
+   if (endSubroutineStmt->getLabel()) {
+      stmt->set_label_string  (endSubroutineStmt->getLabel()->getValue());
+   }
+   if (endSubroutineStmt->getSubroutineName()) {
+      stmt->set_statement_name(endSubroutineStmt->getSubroutineName()->getIdent()->getValue());
+   }
+
+   endSubroutineStmt->setPayload(stmt);
+}
+
+//========================================================================================
 // Binary operators
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operators op, std::string name)
@@ -454,6 +602,12 @@ void UntypedASTBuilder::build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operat
    SgUntypedExpression * lhs = dynamic_cast<SgUntypedExpression*>(expr->getExpr1()->getPayload());
    SgUntypedExpression * rhs = dynamic_cast<SgUntypedExpression*>(expr->getExpr2()->getPayload());
    assert(rhs);  assert(lhs);
+
+   printf("======================build_BinaryOp(%p): %s ", expr, name.c_str());
+   unparser->unparseExpr(lhs);
+   printf(" ");
+   unparser->unparseExpr(rhs);
+   printf("\n");
 
    //TODO-DQ-2014.3.7 I don't think a Fortran enum should be in constructor
    binop = new SgUntypedBinaryOperator(start, SgToken::FORTRAN_UNKNOWN, op, name, lhs, rhs); 

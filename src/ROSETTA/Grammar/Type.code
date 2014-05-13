@@ -1458,9 +1458,13 @@ SgType::isIntegerType() const
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_SIGNED_128BIT_INTEGER:
+          case T_UNSIGNED_128BIT_INTEGER:
           case T_BOOL:
                return true; // 1
                break;
+
           default:
                return false; // 0
         }
@@ -1494,6 +1498,10 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_CHAR:
           case T_UNSIGNED_SHORT:
           case T_UNSIGNED_INT:
+
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_UNSIGNED_LONG_LONG:
+          case T_UNSIGNED_128BIT_INTEGER:
                return 1;
                break;
           default:
@@ -2497,6 +2505,14 @@ SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_START
 SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_END
 
 
+SOURCE_TYPE_SIGNED_128BIT_TYPE_START
+SOURCE_TYPE_SIGNED_128BIT_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
+
+
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START
 SOURCE_TYPE_LONG_DOUBLE_TYPE_END
 
@@ -2890,7 +2906,6 @@ SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType
    }
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-
 SgName
 SgJavaParameterizedType::get_name() const {
     if (get_declaration()) {
@@ -2914,8 +2929,15 @@ SgJavaParameterizedType::get_name() const {
     else
         return SgName((char *)0L);
 }
+#else
+SgName
+SgJavaParameterizedType::get_name() const {
+    ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
+}
+#endif
 
-
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SgName
 SgJavaParameterizedType::get_qualified_name() const {
     string name = get_raw_type() -> get_qualified_name().getString();
@@ -2935,7 +2957,12 @@ SgJavaParameterizedType::get_qualified_name() const {
     }
     return SgName(name);
 }
-
+#else
+SgName
+SgJavaParameterizedType::get_qualified_name() const {
+    ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
+}
 #endif
 
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
@@ -4660,7 +4687,6 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_ARRAY_TYPE_START
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
@@ -4756,8 +4782,6 @@ SgArrayType::get_qualified_name(void) const {
 
     return SgName(name);
 }
-
-#endif
 
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName

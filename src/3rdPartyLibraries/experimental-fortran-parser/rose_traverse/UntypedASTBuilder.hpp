@@ -23,6 +23,12 @@ class UntypedASTBuilder : public ASTBuilder
    virtual void build_TypeDeclarationStmt(TypeDeclarationStmt * typeDeclarationStmt);
    virtual void build_EntityDecl(EntityDecl* entityDecl);
    virtual void build_ImplicitStmt(ImplicitStmt * implicitStmt);
+   virtual void build_DataRef(DataRef * dataRef);
+   virtual void build_PartRef(PartRef * partRef);
+   virtual void build_AssignmentStmt(AssignmentStmt * assignmentStmt);
+   virtual void build_SubroutineSubprogram(SubroutineSubprogram * subroutineSubprogram);
+   virtual void build_SubroutineStmt(SubroutineStmt * subroutineStmt);
+   virtual void build_EndSubroutineStmt(EndSubroutineStmt * endSubroutineStmt);
 
    // Expressions
    //

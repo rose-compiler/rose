@@ -73,7 +73,12 @@ class Y
        // Code that we should generate so that we can compile with g++
        // static const double pi = 3.141592653589793238462643383279; // Pi to 30 places
 #ifdef USE_ROSE
-          STORAGE const double pi = 3.141592653589793238462643383279; // Pi to 30 places
+       // DQ (3/23/2014): When ROSE is using EDG 4.7 we can specify const double pi = 3.141...
+       // but when we use EDG 4.8, we have to follow GNU more closely.
+       // STORAGE const double pi = 3.141592653589793238462643383279; // Pi to 30 places
+
+       // Version for when ROSE is using EDG 4.8.
+          double pi;
 #else
           double pi; // = 3.141592653589793238462643383279; // Pi to 30 places
 #endif
@@ -108,11 +113,15 @@ void foo()
      double var10 = (double) (double) xptr->pi;
 
   // ROSE can properly handle integer constants but we need to handle
-  // floating point constants as well (which is non-standard C++).
+  // floating point constants as well (which is non-standard in C++).
   // Since we are close this is likely worth fixing.
      Y y,*yptr;
 #ifdef USE_ROSE
-     double var11 = Y::pi;     // This works
+  // This is the version that works for ROSE EDG 4.7 and before, but with EDG 4.8...
+  // double var11 = Y::pi;     // This works
+
+  // Version for when ROSE is using EDG 4.8.
+     double var11 = y.pi;     // This works
 #else
      double var11 = y.pi;     // This works
 #endif

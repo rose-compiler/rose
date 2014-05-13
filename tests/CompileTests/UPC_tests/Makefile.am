@@ -1,5 +1,14 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+INCLUDES = $(ROSE_INCLUDES)
+
+bin_PROGRAMS = sharedMemoryDSL
+
+sharedMemoryDSL_SOURCES = sharedMemoryDSL.C sharedMemoryTypeTraversal.C
+
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+
 #####################################################################################
 # These are UPC testcodes targeting aspects of UPCC that might not be a subset of C #
 #####################################################################################
@@ -137,6 +146,41 @@ rose_shared.upc.aa:rose_shared.upc
 	split -36 rose_shared.upc rose_shared.upc.
 	test -f rose_shared.upc.aa
 	test -f rose_shared.upc.ab
+
+
+testSharedMemoryDSL_1: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_01.upc
+
+testSharedMemoryDSL_2: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_02.upc
+
+testSharedMemoryDSL_3: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_03.upc
+
+testSharedMemoryDSL_4: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_04.upc
+
+testSharedMemoryDSL_5: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_05.upc
+
+testSharedMemoryDSL_6: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_06.upc
+
+testSharedMemoryDSL_7: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_07.upc
+
+testSharedMemoryDSL_8: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_08.upc
+
+testSharedMemoryDSL_9: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_09.upc
+
+testSharedMemoryDSL_10: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_10.upc
+
+testSharedMemoryDSL_11: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_11.upc
+
 
 QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 

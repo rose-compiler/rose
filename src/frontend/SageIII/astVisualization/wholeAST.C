@@ -1615,8 +1615,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           addNode(graphNode);
         }
 
+
      if (isSgType(node) != NULL)
         {
+          SgType* type = isSgType(node);
+          ROSE_ASSERT(type != NULL);
+
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
        // Make this statement different in the generated dot graph
@@ -1668,6 +1672,50 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
        // DQ (5/4/2013): Added to make the formatting of the type information better in the graph node.
           labelWithSourceCode += string("\\n   ");
+
+#if 1
+          SgModifierType* mod_type = isSgModifierType(node);
+          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+             {
+               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+
+               labelWithSourceCode += string("UPC: ");
+
+               if (block_size == 0) // block size empty
+                  {
+                 // curprint ("shared[] ") ;
+                    labelWithSourceCode += string("shared[] ");
+                  }
+               else if (block_size == -1) // block size omitted
+                  {
+                 // curprint ("shared ") ;
+                    labelWithSourceCode += string("shared ");
+                  }
+               else if (block_size == -2) // block size is *
+                  {
+                 // curprint ("shared[*] ") ;
+                    labelWithSourceCode += string("shared[*] ");
+                  }
+               else
+                  {
+                    ROSE_ASSERT(block_size > 0);
+                    stringstream ss;
+                    ss << block_size;
+
+                 // curprint ("shared["+ss.str()+"] ") ;
+                    labelWithSourceCode += string("shared["+ss.str()+"] ");
+                  }
+             }
+
+       // DQ (4/22/2014): Added to make the formatting of the type information better in the graph node.
+          labelWithSourceCode += string("\\n   ");
+#endif
+
+#if 0
+       // DQ (4/24/2014): Added string name to unparsed IR node label  (this might not always be wanted).
+          string unparsedType = type->unparseToString();
+          labelWithSourceCode += unparsedType + string("\\n   ");
+#endif
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);

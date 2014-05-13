@@ -73,12 +73,19 @@ dnl predefined by a specific compiler
                     tmp_macro="$tmp_macro, \"$macro_i\""
                     echo " tmp_macro  $tmp_macro"
                  done
+
+           # DQ (4/4/2014): Commented this out again, we need this to get the /usr/include/math.h to be included 
+           # by the #include_next directive in the Intel specific math.h, plus I think we support throw options better now.
+           # The problem is demonstrated in test2014_36.C where M_PI is not defined because the #include_next is not 
+           # processed to bring in the /usr/include/math.h file that is included using the #include_next directive.
+           # Note that ${tmp_macro} starts with a comma, so I have padded the start of the macroString with -D__ROSE_DUMMY_FIRST_MACRO__.
            # macroString=" -D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} --preinclude rose_edg_macros_and_functions_required_for_icc.h "
            # DQ (1/9/2010): I put this back and commented out the problem directly in the UPC file: lock.upc directly.
            # DQ (1/9/2010): This causes an error in math.h with an inconstant use of __THROW with the declaration of "abs()".
            #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
            # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
-             macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+           # macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+             macroString="{ \"-D__ROSE_DUMMY_FIRST_MACRO__\" ${tmp_macro}"
 
            # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
            # if test x$enable_new_edg_interface = xyes; then

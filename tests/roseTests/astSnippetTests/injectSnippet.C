@@ -26,6 +26,7 @@ usage(const std::string &arg0)
               <<"        statement in the ipoint-function that references a variable named\n"
               <<"        \"INSERT_HERE\" (normally one would find an insertion point by\n"
               <<"        matching some pattern in the specimen, but this is only a test).\n"
+              <<"        If the FQNAME is the word \"none\" then no snippets are inserted.\n"
               <<"  The following switches are optional:\n"
               <<"    --test:insert-mechanism=(body|stmts)\n"
               <<"        Indicates how the snippet is inserted into the SPECIMEN.  If the value\n"
@@ -63,6 +64,9 @@ struct InsertionPoint {
     SgFunctionDefinition *function;
     SgStatement *last_stmt, *insert_here;
     std::vector<SgInitializedName*> localvars;
+
+    InsertionPoint()
+        : function(NULL), last_stmt(NULL), insert_here(NULL) {}
 
     InsertionPoint(SgProject *project, const std::string &function_name)
         : function(NULL), last_stmt(NULL), insert_here(NULL) {
@@ -181,7 +185,6 @@ main(int argc, char *argv[])
 
     // Parse the source code into which the snippet will be inserted and find a place to insert.
     SgProject *project = frontend(frontend_args);
-
     assert(project!=NULL);
     if (ipoint_function_name.empty()) {
         std::cerr <<"use --test:ipoint-function=NAME to specify a fully qualified insertion point function\n"
@@ -189,10 +192,13 @@ main(int argc, char *argv[])
         list_function_definitions(project);
         exit(1);
     }
-    InsertionPoint insertionPoint(project, ipoint_function_name);
-    if (!insertionPoint.isValid()) {
-        std::cerr <<"could not find insertion point\n";
-        return 1;
+    InsertionPoint insertionPoint;
+    if (0!=ipoint_function_name.compare("none")) {
+        insertionPoint = InsertionPoint(project, ipoint_function_name);
+        if (!insertionPoint.isValid()) {
+            std::cerr <<"could not find insertion point\n";
+            return 1;
+        }
     }
 
     // Load the snippet from its file.  This actually loads all the snippets in the file.
@@ -264,43 +270,43 @@ main(int argc, char *argv[])
 #endif
 
     // Insert the snippet. This test just passes the first N local variables as snippet arguments
-    size_t nargs = snippet->numberOfArguments();
-    if (nargs > insertionPoint.localvars.size()) {
-        throw std::runtime_error("not enough local variables to insert " + snippet_name + " into " + ipoint_function_name +
-                                 "; the snippet needs " + StringUtility::plural(nargs, "arguments") +
-                                 " but the target function has " +
-                                 StringUtility::plural(insertionPoint.localvars.size(), "local variables"));
-    }
-    std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
-    SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
+    if (insertionPoint.isValid()) {
+        size_t nargs = snippet->numberOfArguments();
+        if (nargs > insertionPoint.localvars.size()) {
+            throw std::runtime_error("not enough local variables to insert " + snippet_name + " into " + ipoint_function_name +
+                                     "; the snippet needs " + StringUtility::plural(nargs, "arguments") +
+                                     " but the target function has " +
+                                     StringUtility::plural(insertionPoint.localvars.size(), "local variables"));
+        }
+        std::vector<SgNode*> args(insertionPoint.localvars.begin(), insertionPoint.localvars.begin()+nargs);
+        SgStatement *ipoint = insertionPoint.insert_here ? insertionPoint.insert_here : insertionPoint.last_stmt;
 
-    snippet->setInsertMechanism(insert_mechanism);
-    if (locdecls_position) {
-        snippet->setLocalDeclarationPosition(*locdecls_position);
-    } else if (SageInterface::is_C_language()) {
-        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
-    } else {
-        assert(SageInterface::is_Java_language());
-        snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_CURSOR);
-    }
-    snippet->setInsertRecursively(insert_recursively);
-    snippet->setFixupAst(shouldFixupAst);
+        snippet->setInsertMechanism(insert_mechanism);
+        if (locdecls_position) {
+            snippet->setLocalDeclarationPosition(*locdecls_position);
+        } else if (SageInterface::is_C_language()) {
+            snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_END);
+        } else {
+            assert(SageInterface::is_Java_language());
+            snippet->setLocalDeclarationPosition(Snippet::LOCDECLS_AT_CURSOR);
+        }
+        snippet->setInsertRecursively(insert_recursively);
+        snippet->setFixupAst(shouldFixupAst);
 
 #if 0 // DEBUGGING [DQ 2014-03-07]
-    printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-            project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
-            tmp_snippetSourceFile->getFileName().c_str());
+        printf ("Test 1: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+                project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
+                tmp_snippetSourceFile->getFileName().c_str());
 #endif
 
- // DQ (3/1/2014): This function causes the name of the snippet file to change to that of the specimen file (which is not a
- // problem, but is interesting).
-    snippet->insert(ipoint, args);
+        snippet->insert(ipoint, args);
 
 #if 0 // DEBUGGING [2014-03-07]
-    printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
-            project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
-            tmp_snippetSourceFile->getFileName().c_str());
+        printf ("Test 2: project->get_fileList().size() = %zu snippetSourceFile = %p = %s = %s \n",
+                project->get_fileList().size(),tmp_snippetSourceFile,tmp_snippetSourceFile->class_name().c_str(),
+                tmp_snippetSourceFile->getFileName().c_str());
 #endif
+    }
 
 #if 1
     if (shouldFixupAst) {

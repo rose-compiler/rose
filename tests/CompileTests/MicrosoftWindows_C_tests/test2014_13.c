@@ -2,7 +2,8 @@ typedef unsigned char  uint8_t;
 typedef unsigned int   uint32_t;
 typedef unsigned short uint16_t;
 
-#define PACKED __attribute__ ((__packed__))
+/* #define PACKED __attribute__ ((__packed__)) */
+#define PACKED
 
 struct msdos_volume_info { /* (offsets are relative to start of boot sector) */
 	uint8_t  drive_number;    /* 040 BIOS drive number */
@@ -15,6 +16,8 @@ struct msdos_volume_info { /* (offsets are relative to start of boot sector) */
 
 struct bug_check 
    {
-     char BUG2[sizeof(struct msdos_volume_info) == 0x1a ? 1 : -1];
+  /* MS mode enforces that array sizes are greater than zero (size of msdos_volume_info unknown for MS mode).
+     char BUG2[sizeof(struct msdos_volume_info) == 0x1a ? 1 : -1]; */
+     int x;
    };
 

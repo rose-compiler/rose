@@ -10,7 +10,7 @@ class reverse_iterator
 
           reverse_iterator(const reverse_iterator& __x) { }
 
-          template<typename _Iter> reverse_iterator(const reverse_iterator<_Iter>& __x) { }
+//          template<typename _Iter> reverse_iterator(const reverse_iterator<_Iter>& __x) { }
    };
 
 
