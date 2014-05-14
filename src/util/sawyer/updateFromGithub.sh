@@ -20,7 +20,7 @@ fi
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
     Assert BitVector BitVectorSupport CommandLine Graph GraphBoost IndexedList \
-    Interval Map Markup MarkupRoff Message ProgressBar Sawyer
+    Interval IntervalMap IntervalSet Map Markup MarkupRoff Message ProgressBar Sawyer
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";
     cp "$srcbase.h" .
