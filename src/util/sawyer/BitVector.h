@@ -94,7 +94,7 @@ public:
         } else if (newSize > size_) {
             size_t nwords = BitVectorSupport::numberOfWords<Word>(newSize);
             words_.resize(nwords, Word(0));
-            BitVectorSupport::set(data(), BitRange(size_, newSize-1), newBits);
+            BitVectorSupport::set(data(), BitRange::hull(size_, newSize-1), newBits);
             size_ = newSize;
         } else {
             size_t nwords = BitVectorSupport::numberOfWords<Word>(newSize);
@@ -116,7 +116,7 @@ public:
      *
      *  Returns the smallest index interval that includes all bits. */
     BitRange hull() const {
-        return 0==size_ ? BitRange() : BitRange(0, size_-1);
+        return 0==size_ ? BitRange() : BitRange::hull(0, size_-1);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -372,7 +372,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
-    /** Return a reference to a (new) value.
+    /** Return a reference to an existing value.
      *
      *  Returns a reference to the value at the node with the specified @p key.  Unlike <code>std::map</code>, this container
      *  does not instantiate a new key/value pair if the @p key is not in the map's domain.  In other words, the array operator
@@ -387,7 +387,7 @@ public:
     Value& operator[](const Key &key) {
         typename StlMap::iterator found = map_.find(key);
         if (found==map_.end())
-            throw std::range_error("key lookup failure; key is not in map domain");
+            throw std::domain_error("key lookup failure; key is not in map domain");
         return found->second;
     }
     const Value& operator[](const Key &key) const {

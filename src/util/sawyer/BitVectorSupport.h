@@ -1003,7 +1003,7 @@ bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitR
     } else if (range1.size() < range2.size()) {         // sign extension
         bool oldSign = get(vec1, range1.greatest());
         copy(vec1, range1, vec2, BitRange::baseSize(range2.least(), range1.size()));
-        set(vec2, BitRange(range2.least()+range1.size(), range2.greatest()), oldSign);
+        set(vec2, BitRange::hull(range2.least()+range1.size(), range2.greatest()), oldSign);
         return oldSign;
     } else {                                            // truncation or plain copy
         ASSERT_require(range1.size() >= range2.size());
@@ -1137,13 +1137,13 @@ int compare(const Word *vec1, const BitRange &range1, const Word *vec2, const Bi
     } else if (range2.isEmpty()) {
         return isEqualToZero(vec1, range1) ? 0 : 1;
     } else if (range1.size() < range2.size()) {
-        BitRange hi(range2.least() + range1.size(), range2.greatest());
+        BitRange hi = BitRange::hull(range2.least() + range1.size(), range2.greatest());
         if (!isEqualToZero(vec2, hi))
             return -1;
         BitRange lo = BitRange::baseSize(range2.least(), range1.size());
         return compare(vec1, range1, vec2, lo);
     } else if (range1.size() > range2.size()) {
-        BitRange hi(range1.least() + range2.size(), range1.greatest());
+        BitRange hi = BitRange::hull(range1.least() + range2.size(), range1.greatest());
         if (!isEqualToZero(vec1, hi))
             return 1;
         BitRange lo = BitRange::baseSize(range1.least(), range2.size());
@@ -1180,7 +1180,7 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
             return 0;
         }
     } else if (range1.size() < range2.size()) {
-        BitRange hi(range2.least()+range1.size(), range2.greatest());
+        BitRange hi = BitRange::hull(range2.least()+range1.size(), range2.greatest());
         bool neg1 = get(vec1, range1.greatest());
         bool neg2 = get(vec2, range2.greatest());
         if (!neg1 && !neg2) {                           // both are non-negative, so leverage unsigned comparison
@@ -1349,7 +1349,7 @@ void fromString(Word *vec, const BitRange &range, const std::string &input) {
 
     // Zero fill high order stuff that we didn't already initialize
     if (offset < range.size())
-        clear(vec, BitRange(range.least()+offset, range.greatest()));
+        clear(vec, BitRange::hull(range.least()+offset, range.greatest()));
 }
 
 /** Obtain bits from a hexadecimal representation.
