@@ -80,6 +80,8 @@ nobase_include_HEADERS   =			\
 	sawyer/GraphBoost.h			\
 	sawyer/IndexedList.h			\
 	sawyer/Interval.h			\
+	sawyer/IntervalMap.h			\
+	sawyer/IntervalSet.h			\
 	sawyer/Map.h				\
 	sawyer/Markup.h				\
 	sawyer/MarkupRoff.h			\
