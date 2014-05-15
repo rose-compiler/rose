@@ -1260,7 +1260,7 @@ cout.flush();
                                               string objectFileName = *i;
                                               printf ("objectFileName = %s \n",objectFileName.c_str());
                                               binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
+                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %" PRIuPTR " \n",binary->get_libraryArchiveObjectFileNameList().size());
                                           }
 #if 0
                                           printf ("Exiting in processing a library archive file. \n");
@@ -1582,7 +1582,7 @@ SgProject::parse(const vector<string>& argv)
             else
              {
             // Normal case without AST Merge: Compiling ...
-            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %zu \n",get_sourceFileNameList().size());
+            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %" PRIuPTR " \n",get_sourceFileNameList().size());
                if (get_sourceFileNameList().size() > 0)
                   {
                  // This is a compile line
@@ -1817,7 +1817,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
 #if 0
-     printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+     printf ("Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
 #endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
@@ -1913,7 +1913,7 @@ SgProject::parse()
         }
 
 #if 0
-     printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %zu \n",vectorOfFiles.size());
+     printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
 #endif
 
   errorCode = this->RunFrontend();
@@ -2746,7 +2746,7 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
           AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
 
           if (SgProject::get_verbose() > 1)
-               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
           if (commentOrDirectiveList != NULL)
              {
@@ -2891,7 +2891,7 @@ SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDi
    : filenameIdList(filenameSet)
    {
      if (SgProject::get_verbose() > 1)
-          printf ("In FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives(): filenameIdList.size() = %zu \n",filenameIdList.size());
+          printf ("In FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives(): filenameIdList.size() = %" PRIuPTR " \n",filenameIdList.size());
    }
 
 
@@ -3582,7 +3582,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if 1
      if ( get_verbose() > 0 )
-          printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",frontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",frontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
 #if 0
@@ -3657,7 +3657,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
 
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
-          printf ("   --- Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+          printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
           printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) \n");
         }
@@ -3672,7 +3672,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // ROSE_ASSERT(astIncludeStack.size() == 0);
      if (astIncludeStack.size() != 0)
         {
-          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %zu \n",astIncludeStack.size());
+          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
         }
 #endif
 
@@ -4309,7 +4309,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
      if ( get_verbose() > 0 )
-          printf ("Java numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Java numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 
      int ecjArgc = 0;
      char** ecjArgv = NULL;
@@ -4437,7 +4437,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
           AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
 
           if ( SgProject::get_verbose() > 1 )
-               printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+               printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
           if (commentOrDirectiveList != NULL)
              {
@@ -4677,7 +4677,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
         for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
+            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
                     i, get_libraryArchiveObjectFileNameList()[i].c_str());
             string filename = get_libraryArchiveObjectFileNameList()[i];
             printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
@@ -4730,7 +4730,7 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
         for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
+            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
                     i, get_libraryArchiveObjectFileNameList()[i].c_str());
             string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
             printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
@@ -5133,13 +5133,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           if ( get_verbose() > 1 )
              {
                printf ("calling systemFromVector() \n");
-               printf ("Number of command line arguments: %zu\n", compilerCmdLine.size());
+               printf ("Number of command line arguments: %" PRIuPTR "\n", compilerCmdLine.size());
                for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
                     #ifdef _MSC_VER
                     printf ("Backend compiler arg[%Iu]: = %s\n", i, compilerCmdLine[i].c_str());
                     #else
-                    printf ("Backend compiler arg[%zu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    printf ("Backend compiler arg[%" PRIuPTR "]: = %s\n", i, compilerCmdLine[i].c_str());
                     #endif
                   }
                printf("End of command line for backend compiler\n");

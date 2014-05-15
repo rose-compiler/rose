@@ -13,6 +13,8 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
+#include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
+
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
@@ -123,7 +125,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
         }
 
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
@@ -188,7 +190,7 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
 
      initExecutableFileSuffixList();
 
-  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -450,7 +452,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
+            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
 
                  if (!isSourceFilename(*i) &&
                      (binaryMode || !isObjectFilename(*i)) &&
@@ -569,7 +571,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // printf ("DONE with copy of command line in SgProject constructor! \n");
 
-  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %zu \n",local_commandLineArgumentList.size());
+  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
 
      if (SgProject::get_verbose() > 1)
         {
@@ -1186,7 +1188,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
 
-       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %zu \n",p_sourceFileNameList.size());
+       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %" PRIuPTR " \n",p_sourceFileNameList.size());
 
        // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being
        // processed as binary source files (targets for analysis, as opposed to linking).
@@ -4675,9 +4677,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
 
@@ -4894,9 +4896,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
    }
@@ -5131,7 +5133,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
      for (size_t i=0; i < configDefs.size(); i++)
         {
-          printf ("configDefs[%zu] = %s \n",i,configDefs[i].c_str());
+          printf ("configDefs[%" PRIuPTR "] = %s \n",i,configDefs[i].c_str());
         }
 #endif
 
@@ -5632,7 +5634,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--preinit_il");
         }
 
-  // printf ("After processing -sage:preinit_il option argc = %zu \n",argv.size());
+  // printf ("After processing -sage:preinit_il option argc = %" PRIuPTR " \n",argv.size());
 #endif
 
   // ***********************************************************************
@@ -5736,7 +5738,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
   // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )
-          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+          printf ("project->get_preincludeDirectoryList().size() = %" PRIuPTR " \n",project->get_preincludeDirectoryList().size());
 
   // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
   // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
@@ -5781,7 +5783,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // DQ (8/6/2006): there are a number of options that when specified in their EDG forms
   // should turn on ROSE mechanisms.  "--edg:c" should turn on C mode in ROSE.
-  // printf ("--edg option processing: edgOptionList.size() = %zu \n",edgOptionList.size());
+  // printf ("--edg option processing: edgOptionList.size() = %" PRIuPTR " \n",edgOptionList.size());
      Rose_STL_Container<string>::iterator i = edgOptionList.begin();
      while (i != edgOptionList.end())
         {
@@ -6293,7 +6295,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if 0
-     printf ("Selected compilerNameString.size() = %zu compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
+     printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
@@ -6367,7 +6369,7 @@ if (get_C_only() ||
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-     printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+     printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
 
   // DQ (4/20/2006): Modified to only do this when generating code and compiling it
@@ -6381,7 +6383,7 @@ if (get_C_only() ||
           ROSE_ASSERT (project != NULL);
           Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 #if 0
-          printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+          printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
@@ -6419,7 +6421,7 @@ if (get_C_only() ||
         }
 
 #if 0
-     printf ("After removing source file name: argcArgvList.size() = %zu argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+     printf ("After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
 
@@ -6483,7 +6485,7 @@ if (get_C_only() ||
             // unsigned int endingQuote   = i->rfind("\"");
                std::string::size_type endingQuote   = i->rfind("\"");
 #if 0
-               printf ("startingQuote = %zu endingQuote = %zu \n",startingQuote,endingQuote);
+               printf ("startingQuote = %" PRIuPTR " endingQuote = %" PRIuPTR " \n",startingQuote,endingQuote);
 #endif
             // There should be a double quote on both ends of the string
                ROSE_ASSERT (endingQuote != std::string::npos);
@@ -6494,7 +6496,7 @@ if (get_C_only() ||
             // std::string quotedSubstringWithoutQuotes = i->substr(startingQuote,endingQuote);
                std::string::size_type substringWithoutQuotesSize = ((endingQuote-1) - (startingQuote+1)) + 1;
 #if 0
-               printf ("substringWithoutQuotesSize = %zu \n",substringWithoutQuotesSize);
+               printf ("substringWithoutQuotesSize = %" PRIuPTR " \n",substringWithoutQuotesSize);
 #endif
             // Generate the string without quotes so that we can rebuild the quoted string.
             // This is more critical if there were escpes before the quotes in the original string.
@@ -6526,7 +6528,7 @@ if (get_C_only() ||
 
 #if 0
      printf ("In buildCompilerCommandLineOptions: test 2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
-     printf ("argcArgvList.size()                                            = %zu \n",argcArgvList.size());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
      printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
