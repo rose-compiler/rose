@@ -116,8 +116,7 @@ class LoopTrees {
 
     /// Read from a lisp like text file
     void read(char * filename);
-
-    /// Read from a lisp like text file
+    void read(const std::string & filename);
     void read(std::ifstream & in_file);
 
     /// Write a lisp like text
@@ -342,6 +341,18 @@ void LoopTrees<Annotation>::read(char * filename) {
 }
 
 template <class Annotation> 
+void LoopTrees<Annotation>::read(const std::string & filename) {
+  std::ifstream in_file;
+  in_file.open(filename.c_str());
+
+  assert(in_file.is_open());
+
+  read(in_file);
+
+  in_file.close();
+}
+
+template <class Annotation> 
 void LoopTrees<Annotation>::read(std::ifstream & in_file) {
   initAstFromString(in_file);
 
@@ -509,12 +520,18 @@ typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
   if (AstFromString::afs_match_substr("loop")) {
     ensure('(');
 
+    SgVariableSymbol * it_sym = NULL;
     assert(AstFromString::afs_match_identifier());
-    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
-    assert(label != NULL);
+    SgVarRefExp * expr = isSgVarRefExp(AstFromString::c_parsed_node);
+    if (expr != NULL)
+      it_sym = isSgVariableSymbol(expr->get_symbol());
+    else {
+      SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+      assert(label != NULL);
 
-    SgVariableDeclaration * it_decl = SageBuilder::buildVariableDeclaration_nfi(*label, SageBuilder::buildUnsignedLongType(), NULL, NULL);
-    SgVariableSymbol * it_sym = isSgVariableSymbol(it_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+      SgVariableDeclaration * it_decl = SageBuilder::buildVariableDeclaration_nfi(*label, SageBuilder::buildUnsignedLongType(), NULL, NULL);
+      it_sym = isSgVariableSymbol(it_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+    }
     assert(it_sym != NULL);
 
     ensure(',');
@@ -557,9 +574,20 @@ typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
 
     ensure('(');
 
-    assert(AstFromString::afs_match_statement());
-    SgStatement * stmt = isSgStatement(AstFromString::c_parsed_node);
-    assert(stmt != NULL);
+    SgStatement * stmt = NULL;
+    if (AstFromString::afs_match_statement()) {
+      stmt = isSgStatement(AstFromString::c_parsed_node);
+      assert(stmt != NULL);
+    }
+    else if (AstFromString::afs_match_declaration()) {
+      stmt = isSgVariableDeclaration(AstFromString::c_parsed_node);
+      assert(stmt != NULL);
+    }
+    else {
+      std::cerr << AstFromString::c_char << std::endl;
+      assert(false);
+    }
+
     stmt->set_parent(AstFromString::c_sgnode);
     lt_node = new typename LoopTrees<Annotation>::stmt_t(stmt);
 

@@ -412,12 +412,32 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
 
 template <>
 template <>
+bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_auto>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_auto> * clause
+) {
+  assert(directive_str.size() == 0 || directive_str[0] != '(');
+  return true;
+}
+
+template <>
+template <>
 bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e_acc_clause_gang>(
   std::string & directive_str,
   SgLocatedNode * directive_node,
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_gang> * clause
 ) {
   assert(directive_str.size() == 0 || directive_str[0] != '(');
+
+  clause->parameters.dimension_id = -1;
+  if (directive_str[0] == '[') {
+    /// \todo read number in dimension_id, find matching ']'
+  }
+  else clause->parameters.dimension_id = 0;
+
+  assert(clause->parameters.dimension_id != -1);
+
   return true;
 }
 
@@ -429,6 +449,15 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   Directives::clause_t<OpenACC::language_t, OpenACC::language_t::e_acc_clause_worker> * clause
 ) {
   assert(directive_str.size() == 0 || directive_str[0] != '(');
+
+  clause->parameters.dimension_id = -1;
+  if (directive_str[0] == '[') {
+    /// \todo read number in dimension_id, find matching ']'
+  }
+  else clause->parameters.dimension_id = 0;
+
+  assert(clause->parameters.dimension_id != -1);
+
   return true;
 }
 

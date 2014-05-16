@@ -10,6 +10,43 @@ void initAstFromString(std::ifstream & in_file) {
   AstFromString::c_sgnode = scope;
   SageBuilder::pushScopeStack(scope);
 
+  SgName pow_name("pow");
+  SgFunctionDeclaration * pow_decl = SageBuilder::buildNondefiningFunctionDeclaration(
+                                       pow_name,
+                                       SageBuilder::buildDoubleType(),
+                                       SageBuilder::buildFunctionParameterList(
+                                         SageBuilder::buildInitializedName("base", SageBuilder::buildDoubleType()),
+                                         SageBuilder::buildInitializedName("exp", SageBuilder::buildDoubleType())
+                                       ),
+                                       scope,
+                                       NULL
+                                     );
+  scope->insert_symbol(pow_name, new SgFunctionSymbol(pow_decl));
+
+  SgName sqrt_name("sqrt");
+  SgFunctionDeclaration * sqrt_decl = SageBuilder::buildNondefiningFunctionDeclaration(
+                                       sqrt_name,
+                                       SageBuilder::buildDoubleType(),
+                                       SageBuilder::buildFunctionParameterList(
+                                         SageBuilder::buildInitializedName("v", SageBuilder::buildDoubleType())
+                                       ),
+                                       scope,
+                                       NULL
+                                     );
+  scope->insert_symbol(sqrt_name, new SgFunctionSymbol(sqrt_decl));
+
+  SgName abs_name("fabs");
+  SgFunctionDeclaration * abs_decl = SageBuilder::buildNondefiningFunctionDeclaration(
+                                       abs_name,
+                                       SageBuilder::buildDoubleType(),
+                                       SageBuilder::buildFunctionParameterList(
+                                         SageBuilder::buildInitializedName("v", SageBuilder::buildDoubleType())
+                                       ),
+                                       scope,
+                                       NULL
+                                     );
+  scope->insert_symbol(abs_name, new SgFunctionSymbol(abs_decl));
+
   in_file.seekg (0, in_file.end);
   int length = in_file.tellg();
   in_file.seekg (0, in_file.beg);

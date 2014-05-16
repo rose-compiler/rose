@@ -83,6 +83,7 @@ struct language_t {
     e_acc_clause_use_device,         //!< 
     e_acc_clause_device_resident,    //!< 
     e_acc_clause_collapse,           //!< 
+    e_acc_clause_auto,               //!< 
     e_acc_clause_gang,               //!< 
     e_acc_clause_worker,             //!< 
     e_acc_clause_vector,             //!< 
@@ -293,13 +294,21 @@ struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::
 
 template <>
 template <>
+struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_auto> {
+  // empty
+};
+
+template <>
+template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_gang> {
+  size_t dimension_id;
   // empty
 };
 
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_worker> {
+  size_t dimension_id;
   // empty
 };
 

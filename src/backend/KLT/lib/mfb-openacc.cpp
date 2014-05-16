@@ -117,7 +117,7 @@ SgBasicBlock * createLocalDeclarations<
     std::string iter_name = iter_sym->get_name().getString();
     SgType * iter_type = iter_sym->get_type();
 
-    if (shape == NULL) {
+    if (!loop->isDistributed()) {
 //    std::cerr << "Create it decl for " << iter_name << " (not dist)" << std::endl;
       SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
         "local_it_" + iter_name, iter_type, NULL, kernel_body
@@ -130,7 +130,6 @@ SgBasicBlock * createLocalDeclarations<
     }
     else {
 //    std::cerr << "Create it decl for " << iter_name << " (dist)" << std::endl;
-      assert(loop->isDistributed());
 
       SgVariableSymbol * local_sym = NULL;
 

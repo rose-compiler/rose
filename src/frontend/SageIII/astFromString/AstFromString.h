@@ -94,6 +94,9 @@ namespace AstFromString
   //! Match an integer constant, store it into result
   ROSE_DLL_API bool afs_match_integer_const(int * result);
 
+  //! Match an double constant, store it into result
+  ROSE_DLL_API bool afs_match_double_const(double * result);
+
   //! Match a translation unit. Not yet implemented.
   ROSE_DLL_API bool afs_match_translation_unit();
 
@@ -248,3 +251,4 @@ namespace AstFromString
 }
 
 #endif /* __AST_FROM_STRING_H__ */
+

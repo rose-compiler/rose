@@ -187,8 +187,9 @@ namespace AstFromString
 
     // check tail to ensure digit sequence is independent (not part of another identifier)
     // but it can be followed by space ',' '[' '{' etc.
+    // cannot be followed by '.' => floating point
     // TODO other cases??
-    if (afs_is_letter())
+    if (afs_is_letter() || *c_char == '.')
     {
       c_char = old_char;
       return false;
@@ -198,6 +199,74 @@ namespace AstFromString
     *result = atoi(buffer);
     return true;
   }
+
+  bool afs_match_double_const(double * result) {
+    char buffer[OFS_MAX_LEN];
+    const char* old_char = c_char;
+
+    afs_skip_whitespace();
+
+    if (!afs_is_digit()) {
+      c_char = old_char;
+      return false;
+    }
+
+    int i=0;
+    do {
+      buffer[i] = *c_char;
+      i++;
+      c_char++;
+    } while (afs_is_digit());
+    buffer[i]='\0';
+
+    *result = atoi(buffer);
+
+    if (*c_char == '.') {
+      c_char++;
+
+      double decimals = 1;
+      i=0;
+      do {
+        buffer[i] = *c_char;
+        i++;
+        c_char++;
+        decimals /= 10;
+      } while (afs_is_digit());
+      buffer[i]='\0';
+
+      if (i > 0) *result += (atoi(buffer) * decimals);
+    }
+
+    if (*c_char == 'e' || *c_char == 'E') {
+      c_char++;
+
+      double exponent = 1;
+      if (*c_char == '-') {
+        exponent = -1;
+        c_char++;
+      }
+
+      if (!afs_is_digit()) {
+        c_char = old_char;
+        return false;
+      }
+
+      i=0;
+      do {
+        buffer[i] = *c_char;
+        i++;
+        c_char++;
+      } while (afs_is_digit());
+      buffer[i]='\0';
+
+      exponent *= pow(10, atoi(buffer));
+
+      *result *= exponent;
+    }
+
+    return true;
+  }
+
   // Try to retrieve a possible name identifier from the head
   // store the result in buffer
   /*
@@ -309,6 +378,7 @@ namespace AstFromString
   {
     bool result = false;
     int int_result;
+    double dbl_result;
     const char* old_char = c_char;
     if (afs_match_integer_const (&int_result))
     {
@@ -316,13 +386,16 @@ namespace AstFromString
       //   cout<<"debug:building int val exp:"<<int_result<<endl;
       c_parsed_node = buildIntVal (int_result);
     }
+    else if (afs_match_double_const(&dbl_result)) {
+      result = true;
+      c_parsed_node = buildDoubleVal (dbl_result);
+    }    
     // TODO add other types of C constant
 
     if (result == false)
       c_char = old_char;
     return result;
   }
-
 
   /*
      primary_expression
@@ -2609,4 +2682,51 @@ jump_statement
     return result;
   }
 
+  bool afs_match_declaration() {
+    const char* old_char = c_char;
+
+    if (!afs_match_type_name()) {
+      c_char = old_char;
+      return false;
+    }
+    SgType * type = isSgType(c_parsed_node);
+    assert(type != NULL);
+
+    if (!afs_match_identifier()) {
+      c_char = old_char;
+      return false;
+    }
+    SgName * ident = isSgName(c_parsed_node);
+    assert(ident != NULL);
+
+    afs_skip_whitespace();
+
+    SgInitializer * init = NULL;
+    if (afs_match_char('=')) {
+
+      if (!afs_match_additive_expression()) {
+        c_char = old_char;
+        assert(false);
+        return false;
+      }
+      SgExpression * expr = isSgExpression(c_parsed_node);
+      assert(expr != NULL);
+      init = SageBuilder::buildAssignInitializer(expr);
+    }
+
+    afs_skip_whitespace();
+
+    if (!afs_match_char(';')) {
+      c_char = old_char;
+      return false;
+    }
+
+    SgScopeStatement * scope = getScope(c_sgnode);
+    assert (scope != NULL);
+    c_parsed_node = SageBuilder::buildVariableDeclaration(*ident, type, init, scope);
+
+    return true;
+  }
+
 } // end namespace AstFromString
+

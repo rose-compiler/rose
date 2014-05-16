@@ -21,7 +21,8 @@ template <>
 bool LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t::isDistributed() const {
   std::vector<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::const_iterator it;
   for (it = annotations.begin(); it != annotations.end(); it++) {
-    if (   it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_gang
+    if (   it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_auto
+        || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_gang
         || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_worker
         || it->clause->kind == DLX::OpenACC::language_t::e_acc_clause_vector
     ) return true;

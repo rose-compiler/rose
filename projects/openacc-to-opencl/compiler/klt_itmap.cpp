@@ -66,7 +66,10 @@ void IterationMapperOpenACC::computeValidShapes(
   LoopTrees<Annotation>::loop_t * loop,
   std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
 ) const {
-  if (!loop->isDistributed()) return;
+  if (!loop->isDistributed()) {
+    shapes.push_back(new Runtime::OpenACC::loop_shape_t(0, 1, 1, 1, 1, 1, 1, false, false, false, false));
+    return;
+  }
 
   std::vector<Annotation>::const_iterator it_annot;
   long gang = 1;
@@ -93,11 +96,11 @@ void IterationMapperOpenACC::computeValidShapes(
     // gang and vector: 3 tiles: tile_0, tile_1 and tile_2
 
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 1, worker, 1, 1, 1, false, false, false, false));
-
+/*
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(0, gang, 1, worker, 1, 1, 1, false, false, false, false));
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 0, worker, 1, 1, 1, false, false, false, false));
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 1, worker, 0, 1, 1, false, false, false, false));
-
+*/
     for (it_tiling_size = tiling_sizes.begin(); it_tiling_size != tiling_sizes.end(); it_tiling_size++) {
       unsigned tile = *it_tiling_size;
 
@@ -132,10 +135,10 @@ void IterationMapperOpenACC::computeValidShapes(
     // gang only      : 2 tiles: tile_0 and tile_1
 
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 1, 1, 1, 1, 1, false, false, false, false));
-
+/*
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(0, gang, 1, 1, 1, 1, 1, false, false, false, false));
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, gang, 0, 1, 1, 1, 1, false, false, false, false));
-
+*/
     for (it_tiling_size = tiling_sizes.begin(); it_tiling_size != tiling_sizes.end(); it_tiling_size++) {
       unsigned tile = *it_tiling_size;
 
@@ -158,10 +161,10 @@ void IterationMapperOpenACC::computeValidShapes(
     // vector only    : 2 tiles: tile_1 and tile_2
 
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, 1, 1, worker, 1, 1, 1, false, false, false, false));
-
+/*
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, 1, 0, worker, 1, 1, 1, false, false, false, false));
     shapes.push_back(new Runtime::OpenACC::loop_shape_t(1, 1, 1, worker, 0, 1, 1, false, false, false, false));
-
+*/
     for (it_tiling_size = tiling_sizes.begin(); it_tiling_size != tiling_sizes.end(); it_tiling_size++) {
       unsigned tile = *it_tiling_size;
 

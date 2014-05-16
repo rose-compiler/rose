@@ -10,48 +10,180 @@ typedef ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> Annotation;
 typedef ::KLT::LoopTrees<Annotation> LoopTrees;
 typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
 
-unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_dir) {
+unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_inc_dir) {
   unsigned openacc_model = model_builder.create();
 
-  model_builder.add(openacc_model, "compiler",     libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "region",       libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "kernel",       libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "loop",         libopenacc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "api",          libopenacc_dir + "/OpenACC/device",   "cl");
+  model_builder.add(openacc_model, "compiler",     libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "region",       libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "kernel",       libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "loop",         libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "api",          libopenacc_inc_dir + "/OpenACC/device",   "cl");
 
   return openacc_model;
 }
 
-int main(int argc, char ** argv) {
+void help(std::ostream & out) {
+  out << "[Help]  > ---------------------------" << std::endl;
+  out << "[Help]  > RoseACC: LoopTree to OpenCL" << std::endl;
+  out << "[Help]  > ---------------------------" << std::endl;
+  out << "[Help]  > Transforms LoopTree (RoseACC's intermediate format) into OpenCL C kernels." << std::endl;
+  out << "[Help]  > It also produces kernel descriptions to be used by libOpenACC (stored in both a database and a C file)." << std::endl;
+  out << "[Help]  > ---------------------------" << std::endl;
+  out << "[Help]  > Options: (all options should appear at most once)" << std::endl;
+  out << "[Help]  >   -i input.lt [...] : Add one or more loop-tree representation for the current kernel." << std::endl;
+  out << "[Help]  >   -cl kernels.cl    : Output file for generated OpenCL C kernels (default='kernels.cl')." << std::endl;
+  out << "[Help]  >   -hd host-data.c   : Output file for the C descriptions of the generated kernels (default='host-data.c')." << std::endl;
+  out << "[Help]  >   -db versions.db   : Database where detailled descriptions of the generated kernels are stored." << std::endl;
+  out << "[Help]  >   --tile-size 2 4 8 : Tile sizes to be tried, followed by a list of positive integer." << std::endl;
+  out << "[Help]  > ---------------------------" << std::endl;
+  out << "[Help]  > Environment Variables:" << std::endl;
+  out << "[Help]  >   ROSEACC_LIBOPENACC_INCLUDE_DIR : Path to libOpenACC header files." << std::endl;
+  out << "[Help]  >   ROSEACC_OPENCL_INCLUDE_DIR     : Path to OpenCL header files." << std::endl;
+}
 
+void init_error(const std::string & err_msg) {
+  std::cerr << "[Error] > " << err_msg << std::endl << std::endl;
+  help(std::cerr);
+  exit(-1);
+}
+
+void init(
+  int argc, char ** argv,
+  std::string & ocl_kernels_file,
+  std::string & kernels_desc_file,
+  std::string & version_db_file,
+  std::string & libopenacc_inc_dir,
+  std::vector<std::string> & lt_inputs,
+  SgProject * & project,
+  std::vector<unsigned> & tile_sizes,
+  size_t & region_id
+) {
   // Arguments
-  if (argc < 4) {
-    std::cerr << "Usage: " << argv[0] << " LIBOPENACC_DIR OPENCL_DIR versions.db [looptree.lt [...] ]" << std::endl;
-    exit(-1);
+
+  region_id = -1;
+
+  int arg_idx = 1;
+  while (arg_idx < argc) {
+    if (strcmp(argv[arg_idx], "-i") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for -i");
+
+      if (lt_inputs.size() > 0)
+        init_error("Option '-i' should only be provided once.");
+
+      do {
+        lt_inputs.push_back(std::string(argv[arg_idx]));
+        arg_idx++;
+      } while (arg_idx >= argc && argv[arg_idx][0] != '-');
+    }
+    else if (strcmp(argv[arg_idx], "-cl") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for -cl");
+
+      if (ocl_kernels_file.size() > 0)
+        init_error("Option '-cl' should only be provided once.");
+      ocl_kernels_file = argv[arg_idx];
+      arg_idx++;
+    }
+    else if (strcmp(argv[arg_idx], "-hd") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for -hd");
+
+      if (kernels_desc_file.size() > 0)
+        init_error("Option '-hd' should only be provided once.");
+      kernels_desc_file = argv[arg_idx];
+      arg_idx++;
+    }
+    else if (strcmp(argv[arg_idx], "-db") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for -db");
+
+      if (version_db_file.size() > 0)
+        init_error("Option '-db' should only be provided once.");
+      version_db_file = argv[arg_idx];
+      arg_idx++;
+    }
+    else if (strcmp(argv[arg_idx], "--tile-sizes") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for --tile-sizes");
+
+      if (tile_sizes.size() > 0)
+        init_error("Option '--tile-sizes' should only be provided once.");
+
+      do {
+        tile_sizes.push_back(atoi(argv[arg_idx]));
+        arg_idx++;
+      } while (arg_idx >= argc && argv[arg_idx][0] != '-');
+    }
+    else if (strcmp(argv[arg_idx], "--region-id") == 0) {
+      arg_idx++;
+      if (arg_idx >= argc && argv[arg_idx][0] != '-')
+        init_error("Missing parameter for --region-id");
+
+      if (region_id != -1)
+        init_error("Option '--region-id' should only be provided once.");
+
+      region_id = atoi(argv[arg_idx]);
+      arg_idx++;
+    }
+    else if (strcmp(argv[arg_idx], "-h") == 0) {
+      help(std::cout);
+      exit(0);
+    }
+    else init_error("Unrecognized option.");
   }
 
-  // argv[1]: LoopTrees file
+  if (lt_inputs.size() == 0) init_error("No input file.");
 
-  std::string libopenacc_dir(argv[1]);
+  if (ocl_kernels_file.size()  == 0) ocl_kernels_file  = "kernels.cl";
+  if (kernels_desc_file.size() == 0) kernels_desc_file = "host-data.c";
+  if (version_db_file.size()   == 0) version_db_file   = "versions.db";
 
-  std::string opencl_dir(argv[2]);
+  if (region_id == -1) region_id = 0;
 
-  std::string db_file(argv[3]);
+  // Environment Variables
+
+  char * env_libopenacc_inc_dir = getenv("ROSEACC_LIBOPENACC_INCLUDE_DIR");
+  if (env_libopenacc_inc_dir == NULL || env_libopenacc_inc_dir[0] == '\0')
+    init_error("Environment variable ROSEACC_LIBOPENACC_INCLUDE_DIR need to be set");
+  libopenacc_inc_dir = env_libopenacc_inc_dir;
+
+  char * env_opencl_include_dir = getenv("ROSEACC_OPENCL_INCLUDE_DIR");
+  if (env_opencl_include_dir == NULL || env_opencl_include_dir[0] == '\0')
+    init_error("Environment variable ROSEACC_OPENCL_INCLUDE_DIR need to be set");
+  std::string opencl_inc_dir = env_opencl_include_dir;
 
   // Build a default ROSE project
-  SgProject * project = new SgProject::SgProject();
+  project = new SgProject::SgProject();
   { // Add default command line to an empty project
     std::vector<std::string> arglist;
       arglist.push_back("c++");
       arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
-      arglist.push_back(std::string("-I") + libopenacc_dir);
-      arglist.push_back(std::string("-I") + opencl_dir);
+      arglist.push_back(std::string("-I") + libopenacc_inc_dir);
+      arglist.push_back(std::string("-I") + opencl_inc_dir);
       arglist.push_back("-c");
     project->set_originalCommandLineArgumentList (arglist);
   }
 
   // Initialize DLX for OpenACC
-  DLX::OpenACC::language_t::init();
+  DLX::OpenACC::language_t::init(); 
+}
+
+int main(int argc, char ** argv) {
+  std::string ocl_kernels_file;
+  std::string kernels_desc_file;
+  std::string version_db_file;
+  std::string libopenacc_inc_dir;
+  std::vector<std::string> lt_inputs;
+  SgProject * project;
+  std::vector<unsigned> tiling_sizes;
+  size_t region_id;
+  init(argc, argv, ocl_kernels_file, kernels_desc_file, version_db_file, libopenacc_inc_dir, lt_inputs, project, tiling_sizes, region_id);
 
   // Initialize MFB to use with KLT
   MFB::KLT_Driver driver(project);
@@ -61,25 +193,16 @@ int main(int argc, char ** argv) {
   MDCG::CodeGenerator codegen(driver);
 
   // Initialize KLT's Generator
-  KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, "kernels.cl");
+  KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, ocl_kernels_file);
 
   // Read OpenACC Model
-  unsigned model = readOpenaccModel(model_builder, libopenacc_dir);
+  unsigned model = readOpenaccModel(model_builder, libopenacc_inc_dir);
 
-  unsigned host_data_file_id = driver.add(boost::filesystem::path(std::string("host-data.c")));
+  unsigned host_data_file_id = driver.add(boost::filesystem::path(kernels_desc_file));
   driver.setUnparsedFile(host_data_file_id);
 
   // Load OpenACC API for KLT
-  KLT::Runtime::OpenACC::loadAPI(driver, libopenacc_dir);
-
-  std::vector<unsigned> tiling_sizes;/*
-    tiling_sizes.push_back(2);
-    tiling_sizes.push_back(4);
-    tiling_sizes.push_back(8);*/
-    tiling_sizes.push_back(16);
-    tiling_sizes.push_back(32);
-    tiling_sizes.push_back(64);
-    tiling_sizes.push_back(128);
+  KLT::Runtime::OpenACC::loadAPI(driver, libopenacc_inc_dir);
 
   // Create a Code Generation Configuration
   KLT::CG_Config<Annotation, Language, Runtime> cg_config(
@@ -90,10 +213,12 @@ int main(int argc, char ** argv) {
 
   // Call the generator for each input file and merge the results (Assume that only one kernel is produced)
   Kernel * kernel = NULL;
-  for (size_t arg_idx = 4; arg_idx < argc; arg_idx++) {
+  std::vector<std::string>::const_iterator it_input;
+  for (it_input = lt_inputs.begin(); it_input != lt_inputs.end(); it_input++) {
+
     // Read input LoopTrees
     LoopTrees loop_trees;
-    loop_trees.read(argv[arg_idx]);
+    loop_trees.read(*it_input);
 
     // Generate kernels
     std::set<std::list<Kernel *> > kernel_lists;
@@ -112,11 +237,12 @@ int main(int argc, char ** argv) {
         kernel->addKernel(*it);
     }
   }
+  assert(kernel != NULL);
 
   // Build input for static data generation
   MDCG::OpenACC::RegionDesc::input_t input_region;
-    input_region.id = 0;
-    input_region.file = std::string("kernels.cl");
+    input_region.id = region_id;
+    input_region.file = ocl_kernels_file;
     input_region.kernel_lists.insert(std::list<Kernel *>(1, kernel));
 
   MDCG::OpenACC::CompilerData::input_t input;
@@ -135,7 +261,7 @@ int main(int argc, char ** argv) {
   codegen.addDeclaration<MDCG::OpenACC::CompilerData>(region_desc_class, input, host_data_file_id, "compiler_data");
 
   // Store static data in data-base
-  MDCG::OpenACC::CompilerData::storeToDB(db_file, input);
+  MDCG::OpenACC::CompilerData::storeToDB(version_db_file, input);
 
   project->unparse(); // Cannot call the backend directly because of OpenCL files. There is a warning when trying, just have to trace it.
 

@@ -63,6 +63,7 @@ void compute_read_write(
   std::set<SgStatement *>::iterator it_stmt;
   for (it_stmt = leaves.begin(); it_stmt != leaves.end(); it_stmt++) {
     SgExprStatement * expr_stmt = isSgExprStatement(*it_stmt);
+    SgVariableDeclaration * var_decl = isSgVariableDeclaration(*it_stmt);
     if (expr_stmt != NULL) {
       SgExpression * exp = expr_stmt->get_expression();
       assert(exp != NULL);
@@ -89,10 +90,26 @@ void compute_read_write(
       }
       else assert(false); // FIXME expression statement are not always made of binary op
     }
-    else assert(false); // FIXME case other than expression statement (replacing the set of leave by a FIFO)
+    else if (var_decl != NULL) {
+      assert(var_decl->get_variables().size() == 1);
+      SgInitializedName * init_name = isSgInitializedName(var_decl->get_variables()[0]);
+      assert(init_name != NULL);
+      SgInitializer * init = isSgInitializer(init_name->get_initptr());
+      if (init != NULL) {
+        SgAssignInitializer * assign_init = isSgAssignInitializer(init);
+        if (assign_init != NULL) {
+          SgExpression * exp = assign_init->get_operand_i();
+          assert(exp != NULL);
+          append_access<Annotation>(exp, data_flow.read,  datas);
+        }
+        else assert(false);
+      }
+    }
+    else assert(false);
   }
 
-  Data<Annotation>::set_union(data_flow.datas, data_flow.read, data_flow.write);
+  Data<Annotation>::set_union(data_flow.datas, data_flow.read);
+  Data<Annotation>::set_union(data_flow.datas, data_flow.write);
 }
 
 template <class Annotation, class Language, class Runtime>

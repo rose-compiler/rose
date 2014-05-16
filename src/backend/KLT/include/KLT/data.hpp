@@ -66,6 +66,10 @@ class Data {
 
   static void set_union(
       std::set<Data<Annotation> *> & result_,
+      const std::set<Data<Annotation> *> & datas_
+  );
+  static void set_union(
+      std::set<Data<Annotation> *> & result_,
       const std::set<Data<Annotation> *> & datas_1_,
       const std::set<Data<Annotation> *> & datas_2_
   );
@@ -183,6 +187,27 @@ bool Data<Annotation>::less(Data<Annotation> * d1, Data<Annotation> * d2) {
 template <class Annotation>
 bool Data<Annotation>::equal(Data<Annotation> * d1, Data<Annotation> * d2) {
   return (d1->getVariableSymbol() == d2->getVariableSymbol()) && d1->match(d2);
+}
+
+template <class Annotation>
+void Data<Annotation>::set_union(
+  std::set<Data<Annotation> *> & result_,
+  const std::set<Data<Annotation> *> & datas_
+) {
+  // FIXME currently: same symbol => same data
+
+  std::vector<Data<Annotation> *> datas(datas_.begin(), datas_.end());
+  std::vector<Data<Annotation> *> result_in (result_.begin(), result_.end());
+  std::vector<Data<Annotation> *> result_out(result_.size() + datas.size());
+
+  std::sort(result_in.begin(), result_in.end(), less);
+  std::sort(datas.begin(), datas.end(), less);
+
+  typename std::vector<Data<Annotation> *>::iterator it_result_begin = result_out.begin();
+  typename std::vector<Data<Annotation> *>::iterator it_result_end = std::set_union(result_in.begin(), result_in.end(), datas.begin(), datas.end(), it_result_begin, less);
+
+  result_.clear();
+  result_.insert(it_result_begin, it_result_end);
 }
 
 template <class Annotation>

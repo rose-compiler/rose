@@ -98,6 +98,8 @@ void KLT_Annotation<OpenACC::language_t>::parseLoop(std::vector<DLX::KLT_Annotat
     case OpenACC::language_t::e_acc_clause_gang:
     case OpenACC::language_t::e_acc_clause_worker:
     case OpenACC::language_t::e_acc_clause_vector:
+      /// \todo 'dimension_id' and expression parameter
+    case OpenACC::language_t::e_acc_clause_auto:
     case OpenACC::language_t::e_acc_clause_seq:
     case OpenACC::language_t::e_acc_clause_independent:
       // None of these clauses take any parameters

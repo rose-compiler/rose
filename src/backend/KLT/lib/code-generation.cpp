@@ -210,9 +210,11 @@ SgStatement * generateStatement<
       local_sym = it_sym_to_local->second;
     }
 
-    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol
-
-    SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym), true);
+    if (local_sym != NULL)
+      SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym), true);
+    else {
+      /// \todo valid if sym can be found in local scope
+    }
   }
 
   assert(result != NULL);
@@ -382,8 +384,6 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops<
   >::local_symbol_maps_t & local_symbol_maps
 ) {
   if (!loop->isDistributed()) {
-    assert(shape == NULL);
-
     std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(loop->iterator);
     assert(it_sym_to_local != local_symbol_maps.iterators.end());
     SgVariableSymbol * local_it_sym = it_sym_to_local->second;

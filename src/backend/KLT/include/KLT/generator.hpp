@@ -10,6 +10,13 @@
 
 #include "KLT/mfb-klt.hpp"
 
+#ifndef VERBOSE
+#define VERBOSE 0
+#endif
+#ifndef FILTER_OUT_LARGE_UNROLLING_FACTOR
+#define FILTER_OUT_LARGE_UNROLLING_FACTOR 1
+#endif
+
 class SgProject;
 class SgSourceFile;
 class SgVariableSymbol;
@@ -261,9 +268,11 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       unsigned cnt = 0;
       typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> >::iterator it_loop_shape_map;
       for (it_loop_shape_map = loop_shape_set.begin(); it_loop_shape_map != loop_shape_set.end(); it_loop_shape_map++) {
-
+#if FILTER_OUT_LARGE_UNROLLING_FACTOR
+        /// \todo Should not be here, shape should be filtered earlier even if this limitation come from codegen
         unsigned unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(*it_kernel, *it_loop_shape_map);
-
+#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
+#if VERBOSE
         std::cerr << "Generate kernel version " << cnt << "/" << loop_shape_set.size() << std::endl;
         for (it_loop_shape = it_loop_shape_map->begin(); it_loop_shape != it_loop_shape_map->end(); it_loop_shape++) {
           std::cerr << "  Loop: " << it_loop_shape->first->iterator->get_name().getString() << std::endl;
@@ -276,12 +285,19 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
           else
             std::cerr << "      No shape information." << std::endl;
         }
+#if FILTER_OUT_LARGE_UNROLLING_FACTOR
         std::cerr << "    Unrolling Factor = " << unrolling_factor << std::endl;
+#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
+#endif /* VERBOSE */
 
+#if FILTER_OUT_LARGE_UNROLLING_FACTOR
         if (unrolling_factor > 128) {
+#if VERBOSE
           std::cerr << "  Skip this shape configuration because of a Unrolling factor too large." << std::endl;
+#endif /* VERBOSE */
           continue;
         }
+#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
 
         typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
 
