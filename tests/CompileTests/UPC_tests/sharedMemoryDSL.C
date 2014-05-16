@@ -4,6 +4,8 @@
 #include "rose.h"
 #include "sharedMemoryDSL.h"
 
+// #include "cmdline.h"
+
 #include "sharedMemoryTypeTraversal.h"
 
 InheritedAttribute::InheritedAttribute()
@@ -42,24 +44,66 @@ Traversal::isSharedType(SgType* type)
         {
        // Check if the base type is marked as shared.
           SgModifierType* mod_type = isSgModifierType(pointerType->get_base_type());
-          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+          if (mod_type != NULL)
              {
-               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+#if 0
+               printf ("(pointerType != NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
+#endif
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
+                    long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
-            // printf ("In Traversal::isSharedType(): Detected a shared type: block_size = %ld \n",block_size);
-               returnValue = true;
+                 // printf ("In Traversal::isSharedType(): Detected a shared type: block_size = %ld \n",block_size);
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // It appears that there can sometimes be a nested list of SgModifierType IR nodes (see test2014_24.c).
+                    SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
+                    if (nested_mod_type != NULL)
+                       {
+#if 0
+                         printf ("(pointerType != NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
+#endif
+                         if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                            {
+                              returnValue = true;
+                            }
+                       }
+                  }
              }
         }
        else
         {
        // DQ (4/26/2014): Added additional case as a result of fixing generated cases.
           SgModifierType* mod_type = isSgModifierType(type);
-          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+          if (mod_type != NULL)
              {
-               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+#if 0
+               printf ("(pointerType == NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
+#endif
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
+                    long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
-            // printf ("In Traversal::isSharedType(): Detected a shared type: block_size = %ld \n",block_size);
-               returnValue = true;
+                 // printf ("In Traversal::isSharedType(): Detected a shared type: block_size = %ld \n",block_size);
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // It appears that there can sometimes be a nested list of SgModifierType IR nodes (see test2014_24.c).
+                    SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
+                    if (nested_mod_type != NULL)
+                       {
+#if 0
+                         printf ("(pointerType == NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
+#endif
+                         if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                            {
+                              returnValue = true;
+                            }
+                       }
+                  }
              }
         }
 
@@ -328,7 +372,8 @@ Traversal::evaluateSynthesizedAttribute (
                        }
                       else
                        {
-#if 1
+#if 0
+                      // DQ (5/16/2014): This should not be required to be implemented, but it was tested as part of debugging.
                          printf ("case of NOT a shared type is not implemented \n");
                          ROSE_ASSERT(false);
 #endif
@@ -441,12 +486,29 @@ int main( int argc, char * argv[] )
   // Form the command line so that we can add some ROSE specific options to turn on UPC mode and skip the final compilation.
      Rose_STL_Container<std::string> argList = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
 
+  // DQ (5/16/2014): Added option to permit optional compilation of generated code using C compiler.
+     bool testGeneratedSourceCode = false;
+     if ( CommandlineProcessing::isOption(argList,"-","(testCompile)",true) == true )
+        {
+#if 0
+          printf ("Note: Testing generated code by compiling it with C compiler \n");
+#endif
+          testGeneratedSourceCode = true;
+        }
+
+#if 0
+     printf ("testGeneratedSourceCode = %s \n",testGeneratedSourceCode ? "true" : "false");
+#endif
+
   // Add UPC option so that ROSE will process the file as a UPC file.
   // We can add the option anywhere on the command line.
      argList.push_back("-rose:UPC");
 
   // This tool will only unparse the file and not compile it.
-     argList.push_back("-rose:skipfinalCompileStep");
+     if (testGeneratedSourceCode == false)
+        {
+          argList.push_back("-rose:skipfinalCompileStep");
+        }
 
   // Generate the ROSE AST.
      SgProject* project = frontend(argList);

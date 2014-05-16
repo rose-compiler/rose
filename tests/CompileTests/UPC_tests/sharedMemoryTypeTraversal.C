@@ -28,25 +28,65 @@ TypeTraversal::transformType(SgType* type)
         {
        // Check if the base type is marked as shared.
           SgModifierType* mod_type = isSgModifierType(pointerType->get_base_type());
-          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+          if (mod_type != NULL)
              {
 #if 0
-               printf ("TypeTraversal::transformType(): Detected a shared type! (transform the type) \n");
+               printf ("(mod_type != NULL): mod_type->get_typeModifier().displayString() = %s \n",mod_type->get_typeModifier().displayString().c_str());
 #endif
-            // Reset the base_type on the pointer to point to the base_type of the modifier.
-            // Note that a less elegant solution would be to call: mod_type->get_typeModifier().get_upcModifier().set_isShared(false).
-               SgType* modifier_base_type = mod_type->get_base_type();
-               ROSE_ASSERT(modifier_base_type != NULL);
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
 #if 0
-               printf ("TypeTraversal::transformType(): Removing shared base_type from pointerType = %p replacing with modifier_base_type = %p = %s \n",pointerType,modifier_base_type,modifier_base_type->class_name().c_str());
+                    printf ("TypeTraversal::transformType(): (mod_type != NULL): Detected a shared type! (transform the type) \n");
 #endif
-               pointerType->set_base_type(modifier_base_type);
+                 // Reset the base_type on the pointer to point to the base_type of the modifier.
+                 // Note that a less elegant solution would be to call: mod_type->get_typeModifier().get_upcModifier().set_isShared(false).
+                    SgType* modifier_base_type = mod_type->get_base_type();
+                    ROSE_ASSERT(modifier_base_type != NULL);
+#if 0
+                    printf ("TypeTraversal::transformType(): (mod_type != NULL): Removing shared base_type from pointerType = %p replacing with modifier_base_type = %p = %s \n",pointerType,modifier_base_type,modifier_base_type->class_name().c_str());
+#endif
+                    pointerType->set_base_type(modifier_base_type);
 #if 1
-            // DQ (4/26/2014): Also mark this as not shared, since the cast expressions will refer directly to this SgModifierType type.
-               mod_type->get_typeModifier().get_upcModifier().set_isShared(false);
+                 // DQ (4/26/2014): Also mark this as not shared, since the cast expressions will refer directly to this SgModifierType type.
+                    mod_type->get_typeModifier().get_upcModifier().set_isShared(false);
 #else
-               printf ("In TypeTraversal::transformType(): Skipping reset of upc modifier in SgModifierType: mod_type = %p \n",mod_type);
+                    printf ("In TypeTraversal::transformType(): (mod_type != NULL): Skipping reset of upc modifier in SgModifierType: mod_type = %p \n",mod_type);
 #endif
+                  }
+                 else
+                  {
+                 // DQ (5/16/2014): in the case of test2014_20.c the function parameter has a type with a short
+                 // chain of SgModifierType IR nodes. In this case only the last one is marked as shared.
+                 // There might be a more general AST post processing step for this, or it might be that we 
+                 // need to build the attributes better to avoid such chains of SgModifierType IR nodes.
+                    SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
+                    if (nested_mod_type != NULL)
+                       {
+#if 0
+                         printf ("(mod_type != NULL): (nested_mod_type != NULL): nested_mod_type->get_typeModifier().displayString() = %s \n",nested_mod_type->get_typeModifier().displayString().c_str());
+#endif
+                         if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                            {
+#if 0
+                              printf ("TypeTraversal::transformType(): (mod_type != NULL): (nested_mod_type != NULL): Detected a nested shared type! (transform the type) \n");
+#endif
+                           // Reset the base_type on the pointer to point to the base_type of the modifier.
+                           // Note that a less elegant solution would be to call: mod_type->get_typeModifier().get_upcModifier().set_isShared(false).
+                              SgType* nested_modifier_base_type = nested_mod_type->get_base_type();
+                              ROSE_ASSERT(nested_modifier_base_type != NULL);
+#if 0
+                              printf ("TypeTraversal::transformType(): (mod_type != NULL): (nested_mod_type != NULL): Removing shared base_type from pointerType = %p replacing with modifier_base_type = %p = %s \n",pointerType,modifier_base_type,modifier_base_type->class_name().c_str());
+#endif
+                              mod_type->set_base_type(nested_modifier_base_type);
+#if 1
+                           // DQ (4/26/2014): Also mark this as not shared, since the cast expressions will refer directly to this SgModifierType type.
+                              nested_mod_type->get_typeModifier().get_upcModifier().set_isShared(false);
+#else
+                              printf ("In TypeTraversal::transformType(): (mod_type != NULL): (nested_mod_type != NULL): Skipping reset of upc modifier in SgModifierType: mod_type = %p \n",mod_type);
+#endif
+                            }
+                       }
+                  }
              }
         }
    }
