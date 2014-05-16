@@ -8,6 +8,7 @@
 
 #define __STDC_FORMAT_MACROS
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 #include <errno.h>
 #include <inttypes.h>
 #include <ostream>
@@ -633,10 +634,10 @@ dump_CFG_CG(SgNode *ast)
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
 static struct LargeAnonymousRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+    virtual bool operator()(const MemoryMap*, const AddressInterval &range, const MemoryMap::Segment &segment) {
         if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
-            mlog[INFO] <<"ignoring zero-mapped memory at va " + addrToString(range.first()) <<" + "
-                       <<addrToString(range.size()) <<" = " <<addrToString(range.last()+1) <<"\n";
+            mlog[INFO] <<"ignoring zero-mapped memory at va " + addrToString(range.least()) <<" + "
+                       <<addrToString(range.size()) <<" = " <<addrToString(range.greatest()+1) <<"\n";
             return true;
         }
         return false;
@@ -1084,14 +1085,14 @@ main(int argc, char *argv[])
         }
     }
 
-    ExtentMap reserved;
+    AddressIntervalSet reserved;
     if (!reserved_vals.empty()) {
         if (reserved_vals.size() % 2) {
             mlog[ERROR] <<"expected an even number of arguments for '--reserved' switch(es)\n";
             exit(1);
         }
         for (size_t i=0; i<reserved_vals.size(); i+=2)
-            reserved.insert(Extent(reserved_vals[i], reserved_vals[i+1]));
+            reserved.insert(AddressInterval::baseSize(reserved_vals[i], reserved_vals[i+1]));
     }
 
     unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
@@ -1202,7 +1203,7 @@ main(int argc, char *argv[])
                 std::string base_name = StringUtility::stripPathFromFileName(raw_filename);
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
                 size_t raw_file_size = raw_map.insert_file(raw_filename, start_va, false, true, base_name);
-                raw_map.mprotect(Extent(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
+                raw_map.mprotect(AddressInterval::baseSize(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
             }
         } else {
             nposargs++;
@@ -1216,7 +1217,7 @@ main(int argc, char *argv[])
     }
     if (do_rebase && !raw_entries.empty())
         mlog[WARN] <<"--base-va ignored in raw buffer mode\n";
-    if (!reserved.empty() && !raw_entries.empty())
+    if (!reserved.isEmpty() && !raw_entries.empty())
         mlog[WARN] <<"--reserve ignored in raw buffer mode\n";
 
     /*------------------------------------------------------------------------------------------------------------------------
@@ -1253,9 +1254,9 @@ main(int argc, char *argv[])
         }
 
         /* Reserve parts of the address space. */
-        for (ExtentMap::iterator ri=reserved.begin(); ri!=reserved.end(); ++ri) {
-            map->insert(ri->first, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(ri->first.size()),
-                                                      0, MemoryMap::MM_PROT_NONE, "reserved area"));
+        BOOST_FOREACH (const AddressInterval &interval, reserved.nodes()) {
+            map->insert(interval, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(interval.size()),
+                                                     0, MemoryMap::MM_PROT_NONE, "reserved area"));
         }
 
         /* Run the loader */
@@ -1267,7 +1268,7 @@ main(int argc, char *argv[])
                 loader->link(interp);
             }
             loader->remap(interp);
-            if (do_link || !reserved.empty()) {
+            if (do_link || !reserved.isEmpty()) {
                 BinaryLoader::FixupErrors errors;
                 loader->fixup(interp, &errors);
                 if (!errors.empty()) {
@@ -1396,7 +1397,8 @@ main(int argc, char *argv[])
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
+                                                                          (*si)->get_mapped_size());
                     map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
                 }
             }
@@ -1560,7 +1562,7 @@ main(int argc, char *argv[])
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
     if ((do_show_extents || do_show_coverage) && block) {
-        ExtentMap extents=map.va_extents();
+        ExtentMap extents=toExtentMap(map.va_extents());
         size_t disassembled_map_size = extents.size();
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);

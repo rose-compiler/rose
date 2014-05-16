@@ -6,6 +6,7 @@
 
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
+#include <boost/foreach.hpp>
 
 /* Simulate RDTSC instruction by prividing values obtained from debugging. */
 class Rdtsc: public RSIM_Callbacks::InsnCallback {
@@ -66,12 +67,12 @@ public:
                     assert(f);
 
                     const MemoryMap::Segments &segments = t->get_process()->get_memory().segments();
-                    for (MemoryMap::Segments::const_iterator si=segments.begin(); si!=segments.end(); ++si) {
-                        const Extent &range = si->first;
-                        const MemoryMap::Segment &segment = si->second;
+                    BOOST_FOREACH (const MemoryMap::Segments::Node &node, segments.nodes()) {
+                        const AddressInterval &range = node.key();
+                        const MemoryMap::Segment &segment = node.value();
                         unsigned p = segment.get_mapperms();
                         fprintf(f, "%08"PRIx64"-%08"PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
-                                range.first(), range.last()+1,
+                                range.least(), range.greatest()+1,
                                 (p & MemoryMap::MM_PROT_READ)  ? 'r' : '-',
                                 (p & MemoryMap::MM_PROT_WRITE) ? 'w' : '-',
                                 (p & MemoryMap::MM_PROT_EXEC)  ? 'x' : '-',

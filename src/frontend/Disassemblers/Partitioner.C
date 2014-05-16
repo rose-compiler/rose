@@ -1093,14 +1093,14 @@ Partitioner::mark_ipd_configuration()
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
             MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
                                          0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
-            map->insert(Extent(text_va, bconf->sucs_program.size()), text_sgmt);
+            map->insert(AddressInterval::baseSize(text_va, bconf->sucs_program.size()), text_sgmt);
 
             /* Create a stack */
             static const size_t stack_size = 8192;
             rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
             MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
                                           MemoryMap::MM_PROT_RW, block_name + " successors stack");
-            map->insert(Extent(stack_va, stack_size), stack_sgmt);
+            map->insert(AddressInterval::baseSize(stack_va, stack_size), stack_sgmt);
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
@@ -1108,7 +1108,7 @@ Partitioner::mark_ipd_configuration()
             rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
             MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
                                          MemoryMap::MM_PROT_RW, block_name + " successors vector");
-            map->insert(Extent(svec_va, svec_size), svec_sgmt);
+            map->insert(AddressInterval::baseSize(svec_va, svec_size), svec_sgmt);
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
@@ -1736,8 +1736,12 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_map)
-        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
+    if (restrict_map) {
+        AddressIntervalSet nonmappedAddrs = restrict_map->va_extents();
+        nonmappedAddrs.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));
+        ExtentMap toRemove = toExtentMap(nonmappedAddrs);
+        unassigned.erase_ranges(toRemove);
+    }
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)

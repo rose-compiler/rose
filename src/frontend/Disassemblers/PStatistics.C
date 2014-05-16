@@ -721,7 +721,8 @@ Partitioner::region_statistics()
 {
     MemoryMap mymap = *map;
     mymap.prune(MemoryMap::MM_PROT_EXEC);
-    return region_statistics(mymap.va_extents());
+    ExtentMap emap = toExtentMap(mymap.va_extents());
+    return region_statistics(emap);
 }
 
 Partitioner::RegionStats *
