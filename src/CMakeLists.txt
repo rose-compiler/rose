@@ -505,6 +505,14 @@ set( libastprocessing_SRC  ${libastprocessing_SRC}
    )
 endif (NOT WIN32)
 
+set(libastmatching_SRC
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/AstMatching.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherlexer.ll
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherparser.yy
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/MatchOperation.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/RoseAst.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherparser.C
+)
 
 set( midend_util_src
 ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface/CPPAstInterface.C
