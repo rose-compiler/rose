@@ -53,6 +53,7 @@ libbinaryMidend_la_SOURCES +=					\
 endif
 
 include_HEADERS =					\
+    AbstractLocation.h					\
     binary_analysis.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\
@@ -86,6 +87,7 @@ include_HEADERS =					\
     instructionSemantics/SMTSolver.h			\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
+    instructionSemantics/TaintSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
