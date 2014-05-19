@@ -144,11 +144,6 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
-    SValue(const TreeNodePtr &expr, const InsnSet &defs): BaseSemantics::SValue(expr->get_nbits()) {
-        width = expr->get_nbits();
-        this->expr = expr;
-        this->defs = defs;
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -167,11 +162,6 @@ public:
     static SValuePtr instance(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(nbits, value));
     }
-
-    /** Instantiate a new value with specified symbolic expression. */
-    static SValuePtr instance(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        return SValuePtr(new SValue(expr, defs));
-    }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
@@ -187,11 +177,6 @@ public:
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
-    }
-
-    /** Virtual allocating constructor. Constructs a new semantic value with full control over all aspects of the value. */
-    virtual BaseSemantics::SValuePtr create(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        return instance(expr, defs);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -583,8 +568,10 @@ public:
     // implementations.
 protected:
     SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        BaseSemantics::SValuePtr newval = SValue::promote(protoval)->create(expr, defs);
-        return SValue::promote(newval);
+        SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
+        newval->set_expression(expr);
+        newval->set_defining_instructions(defs);
+        return newval;
     }
 
     SValuePtr svalue_undefined(size_t nbits) {

@@ -146,8 +146,8 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
             definers.insert(cell_definers.begin(), cell_definers.end());
         }
     }
-    SValuePtr retval = SValue::promote(address->create(InternalNode::create(8, InsnSemanticsExpr::OP_READ,
-                                                                            expr, address->get_expression())));
+    SValuePtr retval = SValue::promote(address->undefined_(8)); // "address" used only to lookup virtual function
+    retval->set_expression(InternalNode::create(8, InsnSemanticsExpr::OP_READ, expr, address->get_expression()));
     if (compute_usedef)
         retval->add_defining_instructions(definers);
     return retval;
