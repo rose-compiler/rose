@@ -1,6 +1,9 @@
 #ifndef ROSE_WorkLists_H
 #define ROSE_WorkLists_H
 
+/* Needed for __attribute__ definition on Visual Studio */
+#include "threadSupport.h"
+
 #include <boost/logic/tribool.hpp>
 #include <cassert>
 #include <list>
@@ -91,8 +94,8 @@ public:
 
     /** Add an item to the back of the work list. If @p unique is true (the default) then the item is added to the list only
      *  if it's not already on the list. Returns true if the item was added to the list. Time complexity is O(log(N)). */
-    bool push(const T&, boost::tribool check_uniqueness=boost::indeterminate);
-
+    bool push(const T&, boost::tribool check_uniqueness=boost::logic::indeterminate);
+    
     /** Adds multiple items to the back of the work list.  If @p unique is true (the default) then an item is added to the
      *  list only if it's not already on the list. Returns the number of items that were added to the list. Time complexity is
      *  O(M log(N+M)) where M is the number of items being inserted. */

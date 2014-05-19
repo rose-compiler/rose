@@ -269,7 +269,7 @@ private:
      *  @param rhsNode The AST node which contains a rvalue.
 	 *  @returns The new vertex.
 	 */
-	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
+    VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
     //! Create an VG node for a functioin call expression. If this function call
     //! modifies a value, create a value node for it, and add an edge between the
