@@ -717,7 +717,7 @@ public:
     virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
 
     /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
-     * space or line termination.  See also, with_format().
+     *  space or line termination.  See also, with_format().
      *  @{ */
     void print(std::ostream &stream) const { Formatter fmt; print(stream, fmt); }
     virtual void print(std::ostream&, Formatter&) const = 0;
@@ -1927,7 +1927,7 @@ public:
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
      * @{ */
-    virtual StatePtr get_state() { return state; }
+    virtual StatePtr get_state() const { return state; }
     virtual void set_state(const StatePtr &s) { state = s; }
     /** @} */
 
