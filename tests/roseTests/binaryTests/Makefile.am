@@ -210,16 +210,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Disassemble a file containing bare instructions
-noinst_PROGRAMS += disassembleBuffer
-disassembleBuffer_SOURCES = disassembleBuffer.C
-disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += disassembleBuffer.passed
-EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
-disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
-	@$(RTH_RUN) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
-
-
 noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
@@ -401,6 +391,14 @@ EXTRA_DIST += testCallDetection.ans
 testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
 	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
 
+# Test analysis to see whether a function returns a value
+noinst_PROGRAMS += testReturnsValue
+testReturnsValue_SOURCES = testReturnsValue.C
+testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testReturnsValue.passed
+testReturnsValue.passed: $(BINARY_SAMPLES)/buffer2.bin testReturnsValue
+	@$(RTH_RUN) CMD="./testReturnsValue $<" $(TEST_EXIT_STATUS) $@
+
 # Unit tests for use-def (executed created below)
 TEST_TARGETS += usedef.passed
 EXTRA_DIST += usedef.ans usedef.conf
@@ -479,6 +477,7 @@ disassemble2_buffer2.raw.passed: $(disassemble2_directory)/buffer2.raw disassemb
 
 disassemble2_vm-final.raw.passed: $(disassemble2_directory)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
 	@$(RTH_RUN) \
+		DISABLED="This takes forever to run" \
 		TITLE="disassemble $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
 		EXE="$$(pwd)/disassemble" \
@@ -770,6 +769,28 @@ multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 
 
 ###############################################################################################################################
+# LLVM tests
+###############################################################################################################################
+
+noinst_PROGRAMS += llvmTranscoder
+llvmTranscoder_SOURCES = llvmTranscoder.C
+llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+llvmTranscoder_TestTargets = $(addprefix llvm_, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
+TEST_TARGETS += $(llvmTranscoder_TestTargets)
+EXTRA_DIST += llvmTranscoder.conf
+
+$(llvmTranscoder_TestTargets): llvm_%.passed: $(BINARY_SAMPLES)/% llvmTranscoder llvmTranscoder.conf
+	@$(RTH_RUN) \
+		TITLE="LLVM transcoder for $* [$@]" \
+		SPECIMEN="$(abspath $<)" \
+		$(srcdir)/llvmTranscoder.conf $@
+
+.PHONY: check-llvm
+check-llvm: $(llvmTranscoder_TestTargets)
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
@@ -842,11 +863,7 @@ demo_disassemble: disassemble demo_yicesSemanticsLib
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
-demo_disassembleBuffer: disassembleBuffer demo_disassemble
-	@echo; echo; echo "Demo for $<"; echo
-	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
-
-demo_testAssembler: testAssembler demo_disassembleBuffer
+demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 

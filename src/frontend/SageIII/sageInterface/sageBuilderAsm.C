@@ -72,21 +72,21 @@ SgAsmx86Instruction* SageBuilderAsm::buildx86Instruction( X86InstructionKind kin
      return instruction;
    }
 
-SgAsmDoubleWordValueExpression*
+SgAsmIntegerValueExpression*
 SageBuilderAsm::buildAsmDWordValue(uint32_t val)
    {
   // This build function is just a wrapper (for now) to the "make" functions of which there are only a few available.
      return SageBuilderAsm::makeDWordValue(val);
    }
 
-SgAsmByteValueExpression*
+SgAsmIntegerValueExpression*
 SageBuilderAsm::buildAsmByteValue(uint8_t val)
    {
   // This build function is just a wrapper (for now) to the "make" functions of which there are only a few available.
      return SageBuilderAsm::makeByteValue(val);
    }
 
-SgAsmWordValueExpression*
+SgAsmIntegerValueExpression*
 SageBuilderAsm::buildAsmWordValue(uint16_t val)
    {
   // This build function is just a wrapper (for now) to the "make" functions of which there are only a few available.
@@ -251,27 +251,31 @@ SageBuilderAsm::buildMultibyteNopInstruction(int n)
 // change the names to be consistant with the rest of the AST build interface.
 namespace SageBuilderAsm {
 
-  SgAsmByteValueExpression* makeByteValue(uint8_t val) {
-    SgAsmByteValueExpression* v = new SgAsmByteValueExpression(val);
+  SgAsmIntegerValueExpression* makeByteValue(uint8_t val) {
+    SgAsmIntegerValueExpression* v = new SgAsmIntegerValueExpression(val, 8);
     ROSE_ASSERT (v);
+    v->set_type(SgAsmTypeByte::createType());
     return v;
   }
 
-  SgAsmWordValueExpression* makeWordValue(uint16_t val) {
-    SgAsmWordValueExpression* v = new SgAsmWordValueExpression(val);
+  SgAsmIntegerValueExpression* makeWordValue(uint16_t val) {
+    SgAsmIntegerValueExpression* v = new SgAsmIntegerValueExpression(val, 16);
     ROSE_ASSERT (v);
+    v->set_type(SgAsmTypeWord::createType());
     return v;
   }
 
-  SgAsmDoubleWordValueExpression* makeDWordValue(uint32_t val) {
-    SgAsmDoubleWordValueExpression* v = new SgAsmDoubleWordValueExpression(val);
+  SgAsmIntegerValueExpression* makeDWordValue(uint32_t val) {
+    SgAsmIntegerValueExpression* v = new SgAsmIntegerValueExpression(val, 32);
     ROSE_ASSERT (v);
+    v->set_type(SgAsmTypeDoubleWord::createType());
     return v;
   }
 
-  SgAsmQuadWordValueExpression* makeQWordValue(uint64_t val) {
-    SgAsmQuadWordValueExpression* v = new SgAsmQuadWordValueExpression(val);
+  SgAsmIntegerValueExpression* makeQWordValue(uint64_t val) {
+    SgAsmIntegerValueExpression* v = new SgAsmIntegerValueExpression(val, 64);
     ROSE_ASSERT (v);
+    v->set_type(SgAsmTypeQuadWord::createType());
     return v;
   }
 

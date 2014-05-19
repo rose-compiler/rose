@@ -851,7 +851,6 @@ git commit --allow-empty
 # And then push the changes
 git push origin dq-cxx-rc
 
-
 New merged-builder branch specific instructions:
 
 Push to local repository:
@@ -908,4 +907,22 @@ Clone my edg4x branch:
 
 Command to sync branch on RH5 to RH6 machines (and visa versa)
    git pull origin dquinlan/dq-edg4x-rc
+
+
+Compiling with CMake:
+   CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-edg4x-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
+then run make normally.
+
+Verbose mode:
+   make VERBOSE=1 -j24
+
+For snippets work with Robb:
+    git pull origin matzke/snippets-rc
+
+
+Make a backup using git:
+   git branch backup
+
+Delete the backup:
+   git branch -D backup
 

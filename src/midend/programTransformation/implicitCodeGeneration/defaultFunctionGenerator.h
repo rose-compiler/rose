@@ -4,6 +4,6 @@
 
 
 
-void defaultFunctionGenerator(SgProject *prj);
+ROSE_DLL_API void defaultFunctionGenerator(SgProject *prj);
 
 #endif /* DEFAULT_FUNCTION_GENERATOR_HH */

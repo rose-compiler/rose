@@ -135,10 +135,13 @@ namespace StringUtility
        //  ROSE_UTIL_API std::string numberToString ( size_t x );
 
 #ifndef _MSC_VER
-  #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
         // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
            ROSE_UTIL_API std::string numberToString ( __int128 x );
-  #endif
+           ROSE_UTIL_API std::string numberToString ( unsigned __int128 x );
+   #endif
 #endif
 
        // DQ (8/10/2010): Changed to take parameter as const.
@@ -601,6 +604,14 @@ namespace StringUtility
      *  size_t n = ...;
      *  std::cout <<"received " <<plural(n, "values") <<"\n";
      * @encode
+     *
+     *  Output for various values of <em>n</em> will be:
+     *
+     * @code
+     *  received 0 values
+     *  received 1 value
+     *  received 2 values
+     * @endcode
      */
     template<typename T>
     std::string plural(T n, const std::string &plural_word) {

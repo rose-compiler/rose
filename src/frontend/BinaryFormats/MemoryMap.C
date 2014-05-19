@@ -25,6 +25,8 @@
 #define TEMP_FAILURE_RETRY(expression) expression
 #define PROT_WRITE 0x02
 #define F_OK 0
+#define MAP_SHARED 0
+#define MAP_PRIVATE 1
 #endif
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
@@ -42,7 +44,8 @@ std::ostream& operator<<(std::ostream &o, const MemoryMap::Segment      &x) { x.
 std::string
 MemoryMap::Exception::leader(std::string dflt) const
 {
-    return mesg.empty() ? dflt : mesg;
+    const char *s = what();
+    return s && *s ? dflt : std::string(s);
 }
 
 std::string
@@ -597,6 +600,15 @@ MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
     return *this;
 }
 
+size_t
+MemoryMap::size() const
+{
+    size_t retval = 0;
+    for (const_iterator si=p_segments.begin(); si!=p_segments.end(); ++si)
+        retval += si->first.size();
+    return retval;
+}
+
 void
 MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
 {
@@ -609,6 +621,29 @@ MemoryMap::insert(const Extent &range, const Segment &segment, bool erase_prior)
         assert(range.overlaps(found->first));
         throw Inconsistent("insertion failed", this, range, segment, found->first, found->second);
     }
+}
+
+size_t
+MemoryMap::insert_file(const std::string &filename, rose_addr_t va, bool writable, bool erase_prior, const std::string &sgmtname)
+{
+    int o_flags = writable ? O_RDWR : O_RDONLY;
+    int m_prot = writable ? (MM_PROT_READ|MM_PROT_WRITE) : MM_PROT_READ;
+    int m_flags = writable ? MAP_SHARED : MAP_PRIVATE;
+    unsigned s_prot = writable ? MM_PROT_RW : MM_PROT_READ;
+
+    int fd = open(filename.c_str(), o_flags);
+    if (-1==fd)
+        throw Exception(filename + ": " + strerror(errno), NULL);
+    struct stat sb;
+    if (-1==fstat(fd, &sb))
+        throw Exception(filename + " stat: " + strerror(errno), NULL);
+    if (0==sb.st_size)
+        return 0;
+
+    Extent extent(va, sb.st_size);
+    BufferPtr buf = MmapBuffer::create(sb.st_size, m_prot, m_flags, fd, 0);
+    insert(extent, Segment(buf, 0, s_prot, sgmtname.empty()?filename:sgmtname), erase_prior);
+    return sb.st_size;
 }
 
 bool

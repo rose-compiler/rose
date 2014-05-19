@@ -51,7 +51,7 @@ BUILD_BINARY_PROTO(Multiply)
 BUILD_BINARY_PROTO(Subtract)
 
   // These functions are copies of the "make" functions (wrappers for the "make" functions) to provide a consistant interface for the future API.
-     SgAsmQuadWordValueExpression* buildAsmQWordValue(uint64_t val);
+     SgAsmIntegerValueExpression* buildAsmQWordValue(uint64_t val);
      SgAsmBinarySubtract* buildAsmSubtract(SgAsmExpression* lhs, SgAsmExpression* rhs);
      SgAsmBinaryAddPreupdate* buildAsmAddPreupdate(SgAsmExpression* lhs, SgAsmExpression* rhs);
      SgAsmBinarySubtractPreupdate* buildAsmSubtractPreupdate(SgAsmExpression* lhs, SgAsmExpression* rhs);
@@ -67,9 +67,9 @@ BUILD_BINARY_PROTO(Subtract)
      SgAsmExprListExp* buildAsmExprListExp();
 
   // Implemented versions of "make" functions wrapped as "build" functions.
-     SgAsmDoubleWordValueExpression* buildAsmDWordValue(uint32_t val);
-     SgAsmByteValueExpression* buildAsmByteValue(uint8_t val);
-     SgAsmWordValueExpression* buildAsmWordValue(uint16_t val);
+     SgAsmIntegerValueExpression* buildAsmDWordValue(uint32_t val);
+     SgAsmIntegerValueExpression* buildAsmByteValue(uint8_t val);
+     SgAsmIntegerValueExpression* buildAsmWordValue(uint16_t val);
 
      SgAsmMemoryReferenceExpression* buildAsmMemoryReferenceExpression(SgAsmExpression* addr, SgAsmExpression* segment = NULL, SgAsmType* t = NULL);
      SgAsmBinaryAdd*                 buildAsmAddExpression(SgAsmExpression* lhs, SgAsmExpression* rhs);
@@ -93,10 +93,10 @@ BUILD_BINARY_PROTO(Subtract)
   // associated "build" functions in the sageBuilder.h.  They are however
   // needed elsewhere in ROSE (src/frontend/Disassemblers directory).
 
-     SgAsmByteValueExpression* makeByteValue(uint8_t val);
-     SgAsmWordValueExpression* makeWordValue(uint16_t val);
-     SgAsmDoubleWordValueExpression* makeDWordValue(uint32_t val);
-     SgAsmQuadWordValueExpression* makeQWordValue(uint64_t val);
+     SgAsmIntegerValueExpression* makeByteValue(uint8_t val);
+     SgAsmIntegerValueExpression* makeWordValue(uint16_t val);
+     SgAsmIntegerValueExpression* makeDWordValue(uint32_t val);
+     SgAsmIntegerValueExpression* makeQWordValue(uint64_t val);
      SgAsmMemoryReferenceExpression* makeMemoryReference(SgAsmExpression* addr, SgAsmExpression* segment = NULL, SgAsmType* t = NULL);
      SgAsmBinaryAdd* makeAdd(SgAsmExpression* lhs, SgAsmExpression* rhs);
      SgAsmBinarySubtract* makeSubtract(SgAsmExpression* lhs, SgAsmExpression* rhs);

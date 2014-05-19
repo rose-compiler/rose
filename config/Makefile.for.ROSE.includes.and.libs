@@ -183,7 +183,12 @@ endif
 
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
-  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
+#  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
+ROSE_INTEL_COMPILER_MATH_LIBS =
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
+endif
+ROSE_INTEL_COMPILER_MATH_LIBS += -lm
 endif
 
 # DQ (3/6/2013): We need to build a SWIG path that can't include the isystem option.
@@ -209,6 +214,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/SageIII/sage_support \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
+     -I"$(JAVA_HOME)/include" \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
@@ -262,6 +268,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/SageIII/sage_support \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
+     -I"$(JAVA_HOME)/include" \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend \
      -I$(top_srcdir)/src/frontend/PythonFrontend \

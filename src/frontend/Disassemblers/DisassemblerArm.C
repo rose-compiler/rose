@@ -234,7 +234,7 @@ DisassemblerArm::makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression
    return NULL;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerArm::makeSplit8bitOffset() const
 {
     int32_t val = ((insn >> 4) & 0xF0) | (insn & 0xF);
@@ -243,7 +243,7 @@ DisassemblerArm::makeSplit8bitOffset() const
     return SageBuilderAsm::makeDWordValue((uint32_t)val);
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerArm::makeBranchTarget() const
 {
     int32_t val = insn & 0xFFFFFF;

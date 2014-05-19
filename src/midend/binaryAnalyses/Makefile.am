@@ -27,6 +27,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/InsnSemanticsExpr.C			\
     instructionSemantics/IntervalSemantics.C			\
     instructionSemantics/IntervalSemantics2.C			\
+    instructionSemantics/LlvmSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics.C		\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/SMTSolver.C				\
@@ -38,6 +39,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
+    BinaryReturnValueUsed.C					\
     DwarfLineMapper.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
@@ -74,6 +76,7 @@ include_HEADERS =					\
     instructionSemantics/DispatcherX86.h		\
     instructionSemantics/IntervalSemantics.h		\
     instructionSemantics/IntervalSemantics2.h		\
+    instructionSemantics/LlvmSemantics2.h		\
     instructionSemantics/NullSemantics.h		\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/MultiSemantics.h		\
@@ -98,6 +101,7 @@ include_HEADERS =					\
     BinaryCallingConvention.h				\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
+    BinaryReturnValueUsed.h				\
     DwarfLineMapper.h
 
 

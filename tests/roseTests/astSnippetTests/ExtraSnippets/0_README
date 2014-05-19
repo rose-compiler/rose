@@ -1,0 +1,4 @@
+This directory contains snippet files (*.C, *.java) and related header files (*.h). The makefile one level up will
+check that each 0-argument snippet in each of these files can be inserted into a target specimen. These tests will
+run with either "make check" or "make check-extra-snippets" (the latter runs only these tests and none of the other
+makefile tests).

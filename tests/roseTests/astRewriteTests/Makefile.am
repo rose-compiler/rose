@@ -204,6 +204,7 @@ EXTRA_DIST += tauExample.C
 MOSTLYCLEANFILES += rose_tauExample.C
 endif
 
+EXTRA_DIST += tauProtos.h 
 #------------------------------------------------------------------------------------------------------------------------
 if !ROSE_BUILD_OS_IS_CYGWIN
 noinst_PROGRAMS += testTranslator2004_01
