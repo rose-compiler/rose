@@ -361,7 +361,7 @@ $CLASSNAME::variant() const
    }
 #endif
 
-const char*
+ROSE_DLL_API const char*
 $CLASSNAME::sage_class_name() const
    {
      ROSE_ASSERT(this != NULL);

@@ -36,6 +36,8 @@ protected:
 
   // Use a build function to avoid duplicated building
     ROSE_DLL_API roseNode* buildroseNode(SgNode* snode);
+  //! A default builder function handles all details: file use name, others use numbering  
+    ROSE_DLL_API abstract_handle * buildAbstractHandle(SgNode* snode);
 }
 
 #endif

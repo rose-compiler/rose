@@ -127,7 +127,11 @@ cout.flush();
 /*
 cout << "*** @ type " << i << ": " << type_declaration -> get_qualified_name().str() << endl;
 cout.flush();
+AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type_declaration -> getAttribute("sourcefile");
+ROSE_ASSERT(isSgSourceFile(attribute -> getNode()));
+ROSE_ASSERT(attribute -> getNode() == sourcefile);
 */
+
             unparseStatement(type_declaration, info);
         }
     }
@@ -770,6 +774,7 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
         }
     }
 */
+/*
 if (! init_name -> attributeExists("type")){
 if (init_name -> get_type() == NULL)
 cout << "The SgInitialized name " 
@@ -785,10 +790,22 @@ cout << "The SgInitialized name "
 << endl;
 cout.flush();
 }
+*/
 
-    ROSE_ASSERT(init_name -> attributeExists("type"));
     AstRegExAttribute *attribute = (AstRegExAttribute *) init_name -> getAttribute("type");
-    curprint(attribute -> expression);
+    if (attribute) {
+        curprint(attribute -> expression);
+    }
+    else if (init_name -> attributeExists("var_args")) {
+        SgArrayType *array_type = isSgArrayType(init_name -> get_type());
+        ROSE_ASSERT(array_type);
+        SgType *element_type = array_type -> get_base_type();
+        unparseType(element_type ,info);
+        curprint("...");
+    }
+    else {
+        unparseType(init_name -> get_type() ,info);
+    }
     curprint(" ");
 
     unparseName(init_name -> get_name(), info);
@@ -923,11 +940,15 @@ Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& in
     for (name_it = names.begin(); name_it != names.end(); name_it++) {
         if (name_it != names.begin())
             curprint(", ");
-        SgInitializedName* iname = *name_it;
+        SgInitializedName *iname = *name_it;
 
-        ROSE_ASSERT(iname -> attributeExists("type"));
         AstRegExAttribute *attribute = (AstRegExAttribute *) iname -> getAttribute("type");
-        curprint(attribute -> expression);
+        if (attribute) {
+            curprint(attribute -> expression);
+        }
+        else {
+            unparseType(iname -> get_type(), info);
+        }
         curprint(" ");
 // TODO: Remove this !
 //        unparseType(iname->get_type(), info);
@@ -979,7 +1000,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 // charles4 :  2/29/2012   I don't think this is needed!
 /*
      //TODO should there be forward declarations or nondefining declarations?
-     if (mfuncdecl_stmt->isForward()) {
+     if (mfuncdecl_stmt-> isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
          //   << mfuncdecl_stmt->get_qualified_name().getString()
          //   << endl;
@@ -1025,23 +1046,12 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
 */
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
-// TODO: Remove this !
-
-if (! attribute) { // TODO: I am baffled as to why this is happening!!!
-SgClassDefinition *class_definition = isSgClassDefinition(mfuncdecl_stmt -> get_scope());
-cout << "What!?? No type attribute for method " 
-     << mfuncdecl_stmt -> get_name().getString()
-     << " declared in class "
-     << class_definition -> get_qualified_name().getString()
-     << endl;
-cout.flush();
-unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-}
-else {
-
-         ROSE_ASSERT(attribute);
-         curprint(attribute -> expression);
-}
+         if (attribute) {
+             curprint(attribute -> expression);
+         }
+         else {
+             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+         }
          curprint(" ");
          unparseName(mfuncdecl_stmt->get_name(), info);
      }
@@ -1073,7 +1083,7 @@ else {
      }
 
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
-     if (mfuncdecl_stmt -> isForward()) {
+     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
          curprint(")");
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
 
@@ -1182,16 +1192,13 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
+     ROSE_ASSERT(! classdecl_stmt -> get_explicit_anonymous());
 // TODO: Remove this!
 /*
 cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name().str()
 << endl;
 cout.flush();
 */
-
-     if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
-         return;
-     }
 
      AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
      if (annotations_attribute) {
@@ -1295,7 +1302,7 @@ cout.flush();
          }
 */
 
-         ROSE_ASSERT(class_def -> attributeExists("extensions"));
+         ROSE_ASSERT(class_def -> attributeExists("extension_type_names"));
          AstRegExAttribute *extension_attribute = (AstRegExAttribute *) class_def -> getAttribute("extension_type_names");
          curprint(extension_attribute -> expression);
      }
@@ -1855,8 +1862,12 @@ Unparse_Java::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnpars
 */
 
         AstRegExAttribute *attribute = (AstRegExAttribute *) parameter_type -> getAttribute("type");
-        ROSE_ASSERT(attribute);
-        curprint(attribute -> expression);
+        if (attribute) {
+            curprint(attribute -> expression);
+        }
+        else {
+            unparseType(parameter_type, info);
+        }
 
         if (i + 1 < type_list->get_args().size()) {
             curprint(", ");

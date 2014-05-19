@@ -45,14 +45,14 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgModifierType:   unparseModifierType( isSgModifierType(type), info); break;
 
        // DQ (9/5/2011): Added support for Java generics.
+          case V_SgJavaQualifiedType:  unparseJavaQualifiedType(isSgJavaQualifiedType(type), info); break;
+          case V_SgJavaParameterType:  unparseClassType(isSgJavaParameterType(type), info); break;
           case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type), info); break;
           case V_SgJavaWildcardType:  unparseJavaWildcardType(isSgJavaWildcardType(type), info); break;
           case V_SgJavaUnionType:  unparseJavaUnionType(isSgJavaUnionType(type), info); break;
 
           default:
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
-string *p = NULL;
- if (p -> size()); // force a crash!!!
                ROSE_ASSERT(false);
                break;
         }
@@ -84,53 +84,49 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
          curprint(type -> get_name().getString());
      }
      else {
-         //
-         // Note that we use this attribute to store the qualified name of the type instead of
-         // "type -> get_qualified_name()" because the qualified name has been altered to remap
-         // any use of the character '.' which is not a valid character for a variable name in ROSE.
-         //
-         AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
-         ROSE_ASSERT(attribute);
-         curprint(attribute -> expression);
+         curprint(type -> get_qualified_name().getString());
      }
    }
 
 
-void Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info) {
-    unparseType(type -> get_raw_type(), info);
+void Unparse_Java::unparseTypeArguments(SgTemplateParameterList *type_list, SgUnparse_Info& info) {
+    ROSE_ASSERT(type_list);
+    curprint("<");
+    for (size_t i = 0; i < type_list -> get_args().size(); i++) {
+        if (i != 0) {
+            curprint(", ");
+        }
 
-    if (type -> get_type_list() != NULL) {
-        curprint("<");
-        SgTemplateParameterList* type_list = type -> get_type_list();
-        for (size_t i = 0; i < type_list -> get_args().size(); i++) {
-            if (i != 0) {
-                curprint(", ");
-            }
-
-            SgType* argumentType = NULL;
-            SgTemplateParameter* templateParameter = type_list -> get_args()[i];
-            ROSE_ASSERT(templateParameter != NULL);
-            if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter) {
-                if (templateParameter -> get_type() != NULL) {
-                    argumentType = templateParameter -> get_type();
-                }
-                else {
-                     // Do we need to support the default type when the type is not explicit.
-                }
+        SgType* argumentType = NULL;
+        SgTemplateParameter* templateParameter = type_list -> get_args()[i];
+        ROSE_ASSERT(templateParameter != NULL);
+        if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter) {
+            if (templateParameter -> get_type() != NULL) {
+                argumentType = templateParameter -> get_type();
             }
             else {
-                // This was not a type parameter (but it might be a template declaration or something work paying attention to).
-            }
-
-            // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
-            if (argumentType != NULL) {
-                unparseType(argumentType, info);
-            }
-            else {
-                // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
+                 // Do we need to support the default type when the type is not explicit.
             }
         }
-        curprint(">");
+        else {
+            // This was not a type parameter (but it might be a template declaration or something work paying attention to).
+        }
+
+        // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
+        if (argumentType != NULL) {
+            unparseType(argumentType, info);
+        }
+        else {
+            // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
+        }
+    }
+    curprint(">");
+}
+
+void Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType *type, SgUnparse_Info& info) {
+    unparseType(type -> get_raw_type(), info);
+    if (type -> get_type_list() != NULL) {
+      unparseTypeArguments(type -> get_type_list(), info);
     }
 }
 
@@ -139,16 +135,14 @@ void
 Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* wildcard_type, SgUnparse_Info& info) {
      curprint("?");
 
-     SgType *extends_type = wildcard_type -> get_extends_type(),
-            *super_type = wildcard_type -> get_super_type();
-     if (extends_type) {
+     SgType *bound_type = wildcard_type -> get_bound_type();
+     if (wildcard_type -> get_has_extends()) {
          curprint(" extends "); 
-         unparseType(extends_type, info);
      }
-     else if (super_type) {
+     else if (wildcard_type -> get_has_super()) {
          curprint(" super "); 
-         unparseType(super_type, info);
      }
+     unparseType(bound_type, info);
 }
 
 
@@ -281,14 +275,29 @@ Unparse_Java::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
-   {
-     SgArrayType* array_type = isSgArrayType(type);
-     ROSE_ASSERT(array_type != NULL);
+Unparse_Java::unparseArrayType(SgArrayType *array_type, SgUnparse_Info& info) {
+    unparseType(array_type->get_base_type(), info);
+    curprint("[]");
+}
 
-     unparseType(array_type->get_base_type(), info);
-     curprint("[]");
-   }
+void
+Unparse_Java::unparseJavaQualifiedType(SgJavaQualifiedType *qualified_type, SgUnparse_Info& info) {
+    unparseType(qualified_type -> get_parent_type(), info);
+    curprint(".");
+
+    SgType *type = qualified_type -> get_type();
+    SgJavaParameterizedType *param_type = isSgJavaParameterizedType(type);
+    SgClassType *class_type = isSgClassType(type);
+
+    if (param_type) {
+      curprint(isSgClassType(param_type -> get_raw_type()) -> get_name().getString());
+        unparseTypeArguments(param_type -> get_type_list(), info);
+    }
+    else {
+        ROSE_ASSERT(class_type);
+        class_type -> get_name().getString();
+    }
+}
 
 void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
 void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char"); }
