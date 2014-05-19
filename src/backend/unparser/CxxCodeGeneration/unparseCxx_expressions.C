@@ -1161,7 +1161,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // DQ (7/3/2013): Added initial support for varadic template arguments.
             // Using an expression for now, but we might need something else.
                ROSE_ASSERT (templateArgument->get_expression() != NULL);
-#if 1
+#if 0
                printf ("In unparseTemplateArgument(): Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
