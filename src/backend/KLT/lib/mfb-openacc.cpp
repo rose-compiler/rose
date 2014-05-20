@@ -28,6 +28,21 @@ KLT<Kernel_OpenCL_OpenACC>::object_desc_t::object_desc_t(
   shapes()
 {}
 
+SgVariableSymbol * getExistingSymbolOrBuildDecl(
+  const std::string & name,
+  SgType * type,
+  SgScopeStatement * scope
+) {
+  SgVariableSymbol * sym = scope->lookup_variable_symbol(name);
+  if (sym == NULL) {
+    SgVariableDeclaration * decl = SageBuilder::buildVariableDeclaration(name, type, NULL, scope);
+    SageInterface::appendStatement(decl, scope);
+    sym = scope->lookup_variable_symbol(name);
+  }
+  assert(sym != NULL);
+  return sym;
+}
+
 template <>
 SgBasicBlock * createLocalDeclarations<
   DLX::KLT_Annotation<DLX::OpenACC::language_t>,
@@ -118,74 +133,37 @@ SgBasicBlock * createLocalDeclarations<
     SgType * iter_type = iter_sym->get_type();
 
     if (!loop->isDistributed()) {
-//    std::cerr << "Create it decl for " << iter_name << " (not dist)" << std::endl;
-      SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-        "local_it_" + iter_name, iter_type, NULL, kernel_body
-      );
-      SageInterface::appendStatement(iter_decl, kernel_body);
-
-      SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
-      assert(local_sym != NULL);
+      SgVariableSymbol * local_sym = getExistingSymbolOrBuildDecl("local_it_" + iter_name, iter_type, kernel_body);
       local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
     }
     else {
-//    std::cerr << "Create it decl for " << iter_name << " (dist)" << std::endl;
+      std::cerr << "Create it decl for " << iter_name << " (dist)" << std::endl;
 
       SgVariableSymbol * local_sym = NULL;
 
       if (shape->tile_0 != 1) {
         std::string name = "local_it_" + iter_name + "_tile_0";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[0] = local_sym;
       }
       if (shape->gang != 1) {
         std::string name = "local_it_" + iter_name + "_gang";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[1] = local_sym;
       }
       if (shape->tile_1 != 1) {
         std::string name = "local_it_" + iter_name + "_tile_1";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[2] = local_sym;
       }
       if (shape->worker != 1) {
         std::string name = "local_it_" + iter_name + "_worker";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[3] = local_sym;
       }
       if (shape->tile_2 != 1) {
         std::string name = "local_it_" + iter_name + "_tile_2";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[4] = local_sym;
       }
       if (shape->vector == 0)
@@ -195,25 +173,13 @@ SgBasicBlock * createLocalDeclarations<
         assert(false); /// \todo no iterator with static vector length > 1, as vector expressions imply it
 
         std::string name = "local_it_" + iter_name + "_vector";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[5] = local_sym;
       }
 
       if (shape->tile_3 != 1) {
         std::string name = "local_it_" + iter_name + "_tile_3";
-        SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
-          name, iter_type, NULL, kernel_body
-        );
-        SageInterface::appendStatement(iter_decl, kernel_body);
-
-        local_sym = kernel_body->lookup_variable_symbol(name);
-        assert(local_sym != NULL);
+        local_sym = getExistingSymbolOrBuildDecl(name, iter_type, kernel_body);
         shape->iterators[6] = local_sym;
       }
 

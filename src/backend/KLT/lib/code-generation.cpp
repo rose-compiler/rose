@@ -24,7 +24,9 @@ unsigned long Generator<
   Runtime::OpenACC,
   MFB::KLT_Driver
 >::createFile() {
-  return p_sage_driver.add(boost::filesystem::path(p_file_name));
+  unsigned long file_id = p_sage_driver.add(boost::filesystem::path(p_file_name));
+  p_sage_driver.attachArbitraryText(file_id, "#pragma OPENCL EXTENSION cl_khr_fp64: enable");
+  return file_id;
 }
 
 template <>

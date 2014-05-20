@@ -19,14 +19,21 @@ class KLT {};
 
 template <>
 class Driver<KLT> {
+  protected:
+    bool guard_kernel_decl;
+
   public:
+    Driver(bool guard_kernel_decl_);
+    virtual ~Driver();
+
     template <class Object>
     typename KLT<Object>::build_result_t build(typename KLT<Object>::object_desc_t const & object);
 };
 
 class KLT_Driver : public Driver<Sage>, public Driver<KLT> {
   public:
-    KLT_Driver(SgProject * project_ = NULL);
+    KLT_Driver(SgProject * project_ = NULL, bool guard_kernel_decl = false);
+    virtual ~KLT_Driver();
 };
 
 template <class Annotation, class Language, class Runtime>
@@ -79,8 +86,11 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     object.file_id
   );
 
+  Driver<Sage> * sage_driver = dynamic_cast<Driver<Sage> *>(this);
+  assert(sage_driver != NULL);
+
   MFB::Sage<SgFunctionDeclaration>::build_result_t kernel_result = 
-    ((Driver<Sage> *)this)->build<SgFunctionDeclaration>(kernel_function_desc);
+    sage_driver->build<SgFunctionDeclaration>(kernel_function_desc);
 
   {
     SgFunctionDeclaration * kernel_decl = kernel_result.symbol->get_declaration();
@@ -94,7 +104,8 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     assert(defn_kernel_decl != NULL);
     defn_kernel_decl->get_functionModifier().setOpenclKernel();
 
-    SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
+    if (guard_kernel_decl)
+      SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
   }
 
   // * Local Declarations *

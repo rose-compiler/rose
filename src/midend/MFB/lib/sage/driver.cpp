@@ -87,6 +87,8 @@ Driver<Sage>::Driver(SgProject * project_) :
     CommandlineProcessing::extraCppSourceFileSuffixes.push_back("h");
 }
 
+Driver<Sage>::~Driver() {}
+
 unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
   if (boost::filesystem::exists(path)) {
     assert(boost::filesystem::is_regular_file(path));
@@ -174,6 +176,16 @@ void Driver<Sage>::addExternalHeader(unsigned file_id, std::string header_name, 
   assert(file != NULL);
 
   SageInterface::insertHeader(file, header_name, is_system_header);
+}
+
+void Driver<Sage>::attachArbitraryText(unsigned file_id, std::string str) {
+  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+  assert(it_file != id_to_file_map.end());
+  
+  SgSourceFile * file = it_file->second;
+  assert(file != NULL);
+
+  SageInterface::attachArbitraryText(file->get_globalScope(), str);
 }
 
 void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned file_id) {

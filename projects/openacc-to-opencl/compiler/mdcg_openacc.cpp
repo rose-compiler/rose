@@ -359,6 +359,16 @@ void KernelVersion::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned ke
   free(query);
 }
 
+size_t ocl_sizeof(SgType * type) {
+  if (isSgTypeInt(type))         return sizeof(int);
+  else if (isSgTypeLong(type))  return sizeof(long);
+  else if (isSgTypeFloat(type))  return sizeof(float);
+  else if (isSgTypeDouble(type)) return sizeof(double);
+  else assert(0);
+
+  return 0;
+}
+
 void KernelDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kernel_id, const input_t & input) {
   const std::vector<Kernel::a_kernel *> & versions = input->getKernels();
   std::vector<Kernel::a_kernel *>::const_iterator it;
@@ -370,9 +380,35 @@ void KernelDesc::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned kerne
 
   char * err_msg;
   char * query = (char *)malloc(140 * sizeof(char));
+
   sprintf(query, "INSERT INTO Kernels VALUES ( '%u', '%u', '%s' , '%u' , '%u' );", region_id, kernel_id, "", cnt_version, num_loops);
   int status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
   assert (status == SQLITE_OK);
+
+  const Kernel::arguments_t & args = input->getArguments();
+  
+  std::list<SgVariableSymbol *>::const_iterator it_sym;
+  size_t cnt = 0;
+  for (it_sym = args.parameters.begin(); it_sym != args.parameters.end(); it_sym++) {
+    sprintf(query, "INSERT INTO Parameters VALUES ( '%u', '%u', '%zd' , '%zd' );", region_id, kernel_id, cnt++, ocl_sizeof((*it_sym)->get_type()));
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
+  }
+  cnt = 0;
+  for (it_sym = args.scalars.begin(); it_sym != args.scalars.end(); it_sym++) {
+    sprintf(query, "INSERT INTO Scalars VALUES ( '%u', '%u', '%zd' , '%zd' );", region_id, kernel_id, cnt++, ocl_sizeof((*it_sym)->get_type()));
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
+  }
+  
+  std::list< ::KLT::Data<Annotation> *>::const_iterator it_data;
+  cnt = 0;
+  for (it_data = args.datas.begin(); it_data != args.datas.end(); it_data++) {
+    sprintf(query, "INSERT INTO Datas VALUES ( '%u', '%u', '%zd' );", region_id, kernel_id, cnt++);
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
+  }
+
   free(query);
 }
 
@@ -419,13 +455,25 @@ void CompilerData::storeToDB(const std::string & db_file_name, const input_t & i
     query = "CREATE TABLE Loops ( region_id INT , kernel_id INT , version_id INT , loop_id INT , tile_0 INT , gang INT , tile_1 INT , worker INT , tile_2 INT , vector INT , tile_3 INT , unroll_tile_0 INT , unroll_tile_1 INT , unroll_tile_2 INT , unroll_tile_3 INT);";
     status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
     assert (status == SQLITE_OK);
+
+    query = "CREATE TABLE Parameters ( region_id INT , kernel_id INT, idx INT, size INT );";
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
+
+    query = "CREATE TABLE Scalars ( region_id INT , kernel_id INT, idx INT, size INT );";
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
+
+    query = "CREATE TABLE Datas ( region_id INT , kernel_id INT, idx INT );";
+    status = sqlite3_exec (db_file, query, NULL, NULL, &err_msg);
+    assert (status == SQLITE_OK);
   }
 
   std::vector<RegionDesc::input_t>::const_iterator it;
   for (it = input.regions.begin(); it != input.regions.end(); it++)
     RegionDesc::storeToDB(db_file, *it);
 
-  /// \todo close DB
+  sqlite3_close(db_file);
 }
 
 }

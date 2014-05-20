@@ -108,6 +108,7 @@ class Driver<Sage> {
 
   public:
     Driver(SgProject * project_ = NULL);
+    virtual ~Driver();
 
     /// Create or load a file
     unsigned add(const boost::filesystem::path & path);
@@ -146,6 +147,9 @@ class Driver<Sage> {
 
     /// Import external header for a given file
     void addExternalHeader(unsigned file_id, std::string header_name, bool is_system_header = true);
+
+    /// Add a string at the begining of the file
+    void attachArbitraryText(unsigned file_id, std::string str);
 };
 
 // SgTemplateInstantiationMemberFunctionDecl
