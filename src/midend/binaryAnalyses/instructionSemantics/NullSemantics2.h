@@ -97,6 +97,57 @@ public:
     }
 };
 
+
+/*******************************************************************************************************************************
+ *                                      Memory
+ *******************************************************************************************************************************/
+
+typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+
+/** Null memory.
+ *
+ *  This memory state does not store any values. Read operations always return (new) undefined values. */
+class MemoryState: public BaseSemantics::MemoryState {
+protected:
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryState(addrProtoval, valProtoval) {}
+
+    MemoryState(const MemoryStatePtr &other)
+        : BaseSemantics::MemoryState(other) {}
+
+public:
+    static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+    }
+
+public:
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
+    }
+
+    virtual BaseSemantics::MemoryStatePtr clone() const {
+        return MemoryStatePtr(new MemoryState(*this));
+    }
+
+public:
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        assert(x!=NULL);
+        return retval;
+    }
+
+public:
+    virtual void clear() /*override*/ {}
+    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                size_t nbits, BaseSemantics::RiscOperators *ops) /*override*/ {
+        return get_val_protoval()->undefined_(nbits);
+    }
+    virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
+                             BaseSemantics::RiscOperators *ops) /*override*/ {}
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/ {}
+};
+
 /*******************************************************************************************************************************
  *                                      RISC Operators
  *******************************************************************************************************************************/
