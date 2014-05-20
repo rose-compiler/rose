@@ -218,10 +218,16 @@ testSharedMemoryDSL_23: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_23.c
 
 testSharedMemoryDSL_24: sharedMemoryDSL
-	./sharedMemoryDSL -c $(srcdir)/test2014_24.c
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_24.c
 
 testSharedMemoryDSL_25: sharedMemoryDSL
-	./sharedMemoryDSL -c $(srcdir)/test2014_25.c
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_25.c
+
+testSharedMemoryDSL_26: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_26.c
+
+testSharedMemoryDSL_27: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_27.c
 
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \
@@ -229,7 +235,8 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_6 testSharedMemoryDSL_7 testSharedMemoryDSL_8 testSharedMemoryDSL_9 testSharedMemoryDSL_10 \
    testSharedMemoryDSL_11 testSharedMemoryDSL_12 testSharedMemoryDSL_13 testSharedMemoryDSL_14 testSharedMemoryDSL_15 \
    testSharedMemoryDSL_16 testSharedMemoryDSL_17 testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
-   testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24
+   testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24 testSharedMemoryDSL_25 \
+   testSharedMemoryDSL_26 testSharedMemoryDSL_27
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 

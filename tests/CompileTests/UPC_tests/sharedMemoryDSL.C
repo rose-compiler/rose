@@ -138,6 +138,10 @@ SgExpression*
 Traversal::transformExpression(SgExpression* exp)
    {
      SgExpression* returnExp = NULL;
+ 
+#if 0
+     printf ("In transformExpression(): exp = %p = %s \n",exp,exp->class_name().c_str());
+#endif
 
      SgGlobal*         globalScope          = SageInterface::getGlobalScope(exp);
      SgName            offset_variable_name = "MPISMOFFSET";
@@ -146,7 +150,10 @@ Traversal::transformExpression(SgExpression* exp)
         {
        // Build the variable in global scope.
           SgInitializer *varInit = NULL;
-          SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(offset_variable_name,SageBuilder::buildUnsignedLongType(),varInit,globalScope);
+
+       // DQ (5/20/2014): The offset variable should be signed.
+       // SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(offset_variable_name,SageBuilder::buildUnsignedLongType(),varInit,globalScope);
+          SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(offset_variable_name,SageBuilder::buildLongType(),varInit,globalScope);
 
        // Mark this as an extern variable.
           variableDeclaration->get_declarationModifier().get_storageModifier().setExtern();
@@ -285,15 +292,13 @@ Traversal::evaluateSynthesizedAttribute (
      if (pointerDerefExp != NULL)
         {
           SgType* type = pointerDerefExp->get_type();
-
 #if 0
           printf ("SgPointerDerefExp: type                           = %p = %s \n",type,type->class_name().c_str());
           printf ("SgPointerDerefExp: pointerDerefExp->get_operand() = %p = %s \n",pointerDerefExp->get_operand(),pointerDerefExp->get_operand()->class_name().c_str());
 #endif
-
-          SgVarRefExp*       varRefExp = isSgVarRefExp(pointerDerefExp->get_operand());
-          SgDotExp*          dotExp    = isSgDotExp(pointerDerefExp->get_operand());
-          SgArrowExp*        arrowExp  = isSgArrowExp(pointerDerefExp->get_operand());
+          SgVarRefExp*       varRefExp       = isSgVarRefExp(pointerDerefExp->get_operand());
+          SgDotExp*          dotExp          = isSgDotExp(pointerDerefExp->get_operand());
+          SgArrowExp*        arrowExp        = isSgArrowExp(pointerDerefExp->get_operand());
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(pointerDerefExp->get_operand());
 
        // if (varRefExp != NULL)
@@ -322,6 +327,32 @@ Traversal::evaluateSynthesizedAttribute (
 #if 0
                     printf ("***** SgVarRefExp: pointerDerefExp = %p = %s = %s \n",pointerDerefExp,pointerDerefExp->class_name().c_str(),pointerDerefExp->unparseToString().c_str());
 #endif
+                  }
+
+            // DQ (5/20/2014): See test2014_27.c for where this is required.
+               if (arrowExp != NULL)
+                  {
+#if 0
+                    printf ("This is SgArrowExp, so check if the LHS type is an shared pointer \n");
+#endif
+                    SgExpression* lhs = arrowExp->get_lhs_operand();
+                    SgType* lhs_type = lhs->get_type();
+                    if (isSharedType(lhs_type) == true)
+                       {
+#if 0
+                         printf ("Found a SgArrowExp with LHS of shared type \n");
+#endif
+                         SgExpression* newSubtree = transformExpression(lhs);
+                         ROSE_ASSERT(newSubtree != NULL);
+#if 0
+                         printf ("***** SgArrowExp: lhs = %p = %s newSubtree = %p = %s = %s \n",lhs,lhs->class_name().c_str(),newSubtree,newSubtree->class_name().c_str(),newSubtree->unparseToString().c_str());
+#endif
+                         arrowExp->set_lhs_operand(newSubtree);
+                         newSubtree->set_parent(arrowExp);
+#if 0
+                         printf ("***** SgArrowExp: arrowExp = %p = %s = %s \n",arrowExp,arrowExp->class_name().c_str(),arrowExp->unparseToString().c_str());
+#endif
+                       }
                   }
              }
             else
@@ -381,6 +412,9 @@ Traversal::evaluateSynthesizedAttribute (
                   }
                  else
                   {
+#if 1
+                    printf ("case of NOT a SgPointerDerefExp is not implemented \n");
+#endif
 #if 0
                     printf ("case of NOT a SgPointerDerefExp is not implemented \n");
                     ROSE_ASSERT(false);
@@ -407,12 +441,68 @@ Traversal::evaluateSynthesizedAttribute (
      if (varRefExp != NULL)
         {
           SgType* type = varRefExp->get_type();
-       // printf ("SgVarRefExp: type = %p = %s \n",type,type->class_name().c_str());
+#if 0
+          printf ("SgVarRefExp: varRefExp = %p type = %p = %s \n",varRefExp,type,type->class_name().c_str());
+#endif
           SgTypedefType* typedefType = isSgTypedefType(type);
           if (typedefType != NULL)
              {
             // Found a typedef type, we have to check if this can be unwrapped to identify a shared pointer type.
-               printf ("SgVarRefExp: Identified a SgTypedefType: need to implement investigation of internal shared type within typedef type \n");
+               SgType* base_type = typedefType->get_base_type();
+               ROSE_ASSERT(base_type != NULL);
+               if (isSharedType(base_type) == true)
+                  {
+                    printf ("SgVarRefExp: Identified a SgTypedefType: need to implement investigation of internal shared type within typedef type \n");
+                  }
+             }
+
+       // DQ (5/19/2014): missing transformations of SgVarRefExp of type shared pointers.
+          if (isSharedType(type) == true)
+             {
+#if 0
+               printf ("Found varRefExp with shared pointer type (not transformed yet) \n");
+#endif
+#if 0
+            // DQ (5/20/2014): This fails for /test2014_11.upc
+            // The transformation we want is to introduce a new subtree using the varRefExp.
+               SgExpression* parentExpression = isSgExpression(varRefExp->get_parent());
+               ROSE_ASSERT(parentExpression != NULL);
+#endif
+#if 0
+            // Skip the transformation of the SgVarRefExp is we will see it as a SgPointerDerefExp as we proceed up the AST.
+               SgPointerDerefExp* pointerDerefExp = isSgPointerDerefExp(parentExpression);
+               if (pointerDerefExp == NULL)
+                  {
+                    printf ("This is NOT a SgPointerDerefExp: so OK to transform \n");
+
+               SgExpression* newSubtree = transformExpression(varRefExp);
+               ROSE_ASSERT(newSubtree != NULL);
+#if 0
+               printf ("***** SgVarRefExp: BEFORE: parentExpression = %p = %s newSubtree = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),newSubtree,newSubtree->class_name().c_str(),newSubtree->unparseToString().c_str());
+#endif
+            // Set the new subtree into the SgPointerDerefExp's operand.
+               parentExpression->replace_expression(varRefExp,newSubtree);
+
+            // DQ (5/20/2014): We can sometimes have to set the lvalue flag.
+               newSubtree->set_lvalue(varRefExp->get_lvalue());
+               varRefExp->set_lvalue(false);
+               
+               printf ("BEFORE: Reset the parent \n");
+
+            // pointerDerefExp->set_operand(newSubtree);
+            // newSubtree->set_parent(pointerDerefExp);
+               newSubtree->set_parent(parentExpression);
+
+               printf ("AFTER: Reset the parent parentExpression = %p \n",parentExpression);
+#if 0
+               printf ("***** SgVarRefExp: AFTER: parentExpression = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),parentExpression->unparseToString().c_str());
+#endif
+                  }
+                 else
+                  {
+                    printf ("This IS a SgPointerDerefExp: so SKIP the transformation \n");
+                  }
+#endif
              }
         }
 
@@ -519,8 +609,10 @@ int main( int argc, char * argv[] )
      generateDOT(*project,"_before_transformation");
 #endif
 #if 0
-  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+#endif
+#if 0
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 #endif
 
@@ -548,7 +640,7 @@ int main( int argc, char * argv[] )
 #endif
 #if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
-     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+  // const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 #endif
 
