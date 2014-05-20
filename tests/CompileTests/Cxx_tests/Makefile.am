@@ -98,7 +98,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_48.C \
    test2014_49.C \
    test2014_50.C \
-   test2014_52.C \
    test2014_53.C \
    test2014_54.C \
    test2014_55.C \
@@ -110,6 +109,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 
 # DQ (5/19/2014): Failing tests
 #   test2014_51.C (Not clear what is wrong with this, if anything. EDG does not accept it as valid C++).
+#   test2014_52.C (__int128 is not available everywhere, so this fails on some versions of gnu before 4.8).
 #   test2014_59.C (This is a name qualification error, type hiding error needs name qualification to be properly resolved).
 
 # DQ (4/6/2014): Failing tests
