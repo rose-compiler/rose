@@ -529,7 +529,7 @@ typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
       SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
       assert(label != NULL);
 
-      SgVariableDeclaration * it_decl = SageBuilder::buildVariableDeclaration_nfi(*label, SageBuilder::buildUnsignedLongType(), NULL, NULL);
+      SgVariableDeclaration * it_decl = SageBuilder::buildVariableDeclaration_nfi(*label, SageBuilder::buildLongType(), NULL, NULL);
       it_sym = isSgVariableSymbol(it_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
     }
     assert(it_sym != NULL);
