@@ -367,11 +367,11 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protocell, protoval), cell_compressor(&cc_choice) {}
+    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
-    MemoryState(const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protoval), cell_compressor(&cc_choice) {}
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
 
     MemoryState(const MemoryState &other)
         : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor), cc_choice(other.cc_choice) {}
@@ -380,14 +380,14 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryStatePtr(new MemoryState(protocell));
     }
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      * as the cell type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protoval));
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
     }
 
     /** Instantiates a new deep copy of an existing state. */
@@ -400,14 +400,14 @@ public:
 public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
@@ -505,7 +505,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }

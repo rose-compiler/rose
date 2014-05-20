@@ -180,11 +180,14 @@ public:
         BaseSemantics::MemoryStatePtr ms1 = state->get_memory_state();
         check_type<MemoryStatePtr>(MemoryState::promote(ms1), "MemoryState::promote()");
 
-        BaseSemantics::SValuePtr ms1v1 = ms1->get_protoval();
-        check_sval_type(ms1v1, "MemoryState::get_protoval()");
+        BaseSemantics::SValuePtr ms1v1 = ms1->get_addr_protoval();
+        check_sval_type(ms1v1, "MemoryState::get_addr_protoval()");
+
+        BaseSemantics::SValuePtr ms1v2 = ms1->get_val_protoval();
+        check_sval_type(ms1v2, "MemoryState::get_val_protoval()");
 
         // Virtual constructors
-        BaseSemantics::MemoryStatePtr ms2 = ms1->create(protoval);
+        BaseSemantics::MemoryStatePtr ms2 = ms1->create(protoval, protoval);
         check_type<MemoryStatePtr>(ms2, "MemoryState::create(protoval)");
 
         BaseSemantics::MemoryStatePtr ms3 = ms1->clone();

@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
+#include <sawyer/Assert.h>
 
 // Documented elsewhere
 namespace BinaryAnalysis {
@@ -1221,15 +1222,20 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
  *  namespace for an overview of how the parts fit together.*/
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
-protected:
-    SValuePtr protoval;                         /**< Prototypical value. */
+    SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
+    SValuePtr valProtoval_;                             /**< Prototypical value for values. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit MemoryState(const SValuePtr &protoval): protoval(protoval) {
-        assert(protoval!=NULL);
+    explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+        : addrProtoval_(addrProtoval), valProtoval_(valProtoval) {
+        ASSERT_not_null(addrProtoval);
+        ASSERT_not_null(valProtoval);
     }
+
+    MemoryState(const MemoryStatePtr &other)
+        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_) {}
 
 public:
     virtual ~MemoryState() {}
@@ -1244,8 +1250,9 @@ public:
      *
      *  Allocates and constructs a new MemoryState object having the same dynamic type as this object. A prototypical SValue
      *  must be supplied and will be used to construct any additional SValue objects needed during the operation of a
-     *  MemoryState. */
-    virtual MemoryStatePtr create(const SValuePtr &protoval) const = 0;
+     *  MemoryState.  Two prototypical values are supplied, one for addresses and another for values stored at those addresses,
+     *  although they will almost always be the same. */
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const = 0;
 
     /** Virtual allocating copy constructor. Creates a new MemoryState object which is a copy of this object. */
     virtual MemoryStatePtr clone() const = 0;
@@ -1261,8 +1268,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
-    /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    /** Return the address protoval.  The address protoval is used to construct other memory addresses via its virtual
+     *  constructors. */
+    SValuePtr get_addr_protoval() const { return addrProtoval_; }
+
+    /** Return the value protoval.  The value protoval is used to construct other stored values via its virtual
+     *  constructors. */
+    SValuePtr get_val_protoval() const { return valProtoval_; }
 
     /** Clear memory. Removes all memory cells from this memory state. */
     virtual void clear() = 0;
@@ -1342,9 +1354,9 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
  *  state. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 protected:
-    SValuePtr address;                          /**< Address of memory cell. */
-    SValuePtr value;                            /**< Value stored at that address. */
-    boost::optional<rose_addr_t> latest_writer;   /**< Optional address for most recent writer of this cell's value. */
+    SValuePtr address;                                  /**< Address of memory cell. */
+    SValuePtr value;                                    /**< Value stored at that address. */
+    boost::optional<rose_addr_t> latest_writer;         /**< Optional address for most recent writer of this cell's value. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1500,13 +1512,19 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryCellList(const MemoryCellPtr &protocell, const SValuePtr &protoval)
-        : MemoryState(protoval), protocell(protocell), byte_restricted(true) {
-        assert(protocell!=NULL);
+    explicit MemoryCellList(const MemoryCellPtr &protocell)
+        : MemoryState(protocell->get_address(), protocell->get_value()),
+          protocell(protocell),
+          byte_restricted(true) {
+        ASSERT_not_null(protocell);
+        ASSERT_not_null(protocell->get_address());
+        ASSERT_not_null(protocell->get_value());
     }
 
-    explicit MemoryCellList(const SValuePtr &protoval)
-        : MemoryState(protoval), protocell(MemoryCell::instance(protoval, protoval)), byte_restricted(true) {}
+    MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+        : MemoryState(addrProtoval, valProtoval),
+          protocell(MemoryCell::instance(addrProtoval, valProtoval)),
+          byte_restricted(true) {}
 
     // deep-copy cell list so that modifying this new state does not modify the existing state
     MemoryCellList(const MemoryCellList &other)
@@ -1519,14 +1537,15 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical memory state. This constructor uses the default type for the cell type (based on the
-     *  semantic domain). */
-    static MemoryCellListPtr instance(const SValuePtr &protoval) {
-        return MemoryCellListPtr(new MemoryCellList(protoval));
+     *  semantic domain). The prototypical values are usually the same (addresses and stored values are normally the same
+     *  type). */
+    static MemoryCellListPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) {
+        return MemoryCellListPtr(new MemoryCellList(addrProtoval, valProtoval));
     }
     
-    /** Instantiate a new memory state with prototypical memory cell and values. */
-    static MemoryCellListPtr instance(const MemoryCellPtr &protocell, const SValuePtr &protoval) {
-        return MemoryCellListPtr(new MemoryCellList(protocell, protoval));
+    /** Instantiate a new memory state with prototypical memory cell. */
+    static MemoryCellListPtr instance(const MemoryCellPtr &protocell) {
+        return MemoryCellListPtr(new MemoryCellList(protocell));
     }
 
     /** Instantiate a new copy of an existing memory state. */
@@ -1538,13 +1557,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual MemoryStatePtr create(const SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
     
     /** Virtual allocating constructor. */
-    virtual MemoryStatePtr create(const MemoryCellPtr &protocell, const SValuePtr &protoval) const {
-        return instance(protocell, protoval);
+    virtual MemoryStatePtr create(const MemoryCellPtr &protocell) const {
+        return instance(protocell);
     }
 
     virtual MemoryStatePtr clone() const /*override*/ {

@@ -198,7 +198,8 @@ protected:
         assert(registers!=NULL);
         (void) SValue::promote(registers->get_protoval());
         assert(memory!=NULL);
-        (void) SValue::promote(memory->get_protoval());
+        (void) SValue::promote(memory->get_addr_protoval());
+        (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
         BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
@@ -291,7 +292,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
         memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
