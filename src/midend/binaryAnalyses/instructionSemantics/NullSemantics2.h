@@ -99,6 +99,57 @@ public:
 
 
 /*******************************************************************************************************************************
+ *                                      Registers
+ *******************************************************************************************************************************/
+
+typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
+
+/** Null register state.
+ *
+ *  This register state does not store any values.  Read operations always return (new) undefined values. */
+class RegisterState: public BaseSemantics::RegisterState {
+protected:
+    RegisterState(const RegisterState &other)
+        : BaseSemantics::RegisterState(other) {}
+
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict)
+        : BaseSemantics::RegisterState(protoval, regdict) {}
+
+public:
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStatePtr(new RegisterState(protoval, regdict));
+    }
+
+    virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   const RegisterDictionary *regdict) const /*override*/ {
+        return instance(protoval, regdict);
+    }
+
+    virtual BaseSemantics::RegisterStatePtr clone() const /*override*/ {
+        return RegisterStatePtr(new RegisterState(*this));
+    }
+    
+    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from) {
+        RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(from);
+        assert(retval!=NULL);
+        return retval;
+    }
+
+    virtual void clear() /*override*/ {}
+    virtual void zero() /*override*/ {}
+
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) /*override*/ {
+        return get_protoval()->undefined_(reg.get_nbits());
+    }
+
+    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
+                               BaseSemantics::RiscOperators *ops) /*override*/ {}
+
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/ {}
+};
+
+
+/*******************************************************************************************************************************
  *                                      Memory
  *******************************************************************************************************************************/
 

@@ -81,7 +81,7 @@ static bool do_usedef = true;
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
         TestSemantics<
-            NullSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr, NullSemantics::MemoryStatePtr,
+            NullSemantics::SValuePtr, NullSemantics::RegisterStatePtr, NullSemantics::MemoryStatePtr,
             BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
         tester.test(retval);
         return retval;

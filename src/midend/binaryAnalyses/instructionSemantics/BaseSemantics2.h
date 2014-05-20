@@ -775,7 +775,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
+    RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval(protoval), regdict(regdict) {
         assert(protoval!=NULL);
     }
