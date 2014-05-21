@@ -12,8 +12,9 @@ namespace LlvmSemantics {
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
+    size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
     return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
                                             LeafNode::create_memory(nbits), addr->get_expression()));

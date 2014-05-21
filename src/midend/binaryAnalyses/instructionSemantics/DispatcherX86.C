@@ -228,7 +228,8 @@ struct IP_bittest: P {
             size_t nbits = asm_type_width(args[1]->get_type());
             BaseSemantics::SValuePtr bitnum = d->read(args[1], nbits);
             BaseSemantics::SValuePtr adjustedAddr = ops->add(addr, ops->signExtend(ops->extract(bitnum, 3, nbits), 32));
-            BaseSemantics::SValuePtr val = ops->readMemory(d->segmentRegister(mre), adjustedAddr, ops->boolean_(true), 8);
+            BaseSemantics::SValuePtr dflt = ops->undefined_(8);
+            BaseSemantics::SValuePtr val = ops->readMemory(d->segmentRegister(mre), adjustedAddr, dflt, ops->boolean_(true));
             BaseSemantics::SValuePtr bitval = ops->extract(ops->shiftRight(val, ops->extract(bitnum, 0, 3)), 0, 1);
             ops->writeRegister(d->REG_CF, bitval);
             BaseSemantics::SValuePtr result;
@@ -384,8 +385,10 @@ struct IP_cmpstrings: P {
         RegisterDescriptor sr(x86_regclass_segment,
                               insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
                               0, 16);
-        BaseSemantics::SValuePtr si_value = ops->readMemory(sr, ops->readRegister(d->REG_ESI), in_loop, nbits);
-        BaseSemantics::SValuePtr di_value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI), in_loop, nbits);
+        BaseSemantics::SValuePtr si_value = ops->readMemory(sr, ops->readRegister(d->REG_ESI),
+                                                            ops->undefined_(nbits), in_loop);
+        BaseSemantics::SValuePtr di_value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI),
+                                                            ops->undefined_(nbits), in_loop);
         d->doAddOperation(si_value, ops->invert(di_value), true, ops->boolean_(false), in_loop);
         BaseSemantics::SValuePtr step = ops->ite(ops->readRegister(d->REG_DF),
                                                  ops->number_(32, -nbytes), ops->number_(32, nbytes));
@@ -648,7 +651,7 @@ struct IP_leave: P {
         ops->writeRegister(d->REG_ESP, ops->readRegister(d->REG_EBP));
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 4));
-        ops->writeRegister(d->REG_EBP, ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), 32));
+        ops->writeRegister(d->REG_EBP, ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_ESP, newSp);
     }
 };
@@ -680,7 +683,7 @@ struct IP_loadstring: P {
         RegisterDescriptor sr(x86_regclass_segment,
                               insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
                               0, 16);
-        BaseSemantics::SValuePtr value = ops->readMemory(sr, ops->readRegister(d->REG_ESI), in_loop, nbits);
+        BaseSemantics::SValuePtr value = ops->readMemory(sr, ops->readRegister(d->REG_ESI), ops->undefined_(nbits), in_loop);
         ops->writeRegister(regA, value);
         BaseSemantics::SValuePtr step = ops->ite(ops->readRegister(d->REG_DF),
                                                  ops->number_(32, -nbytes), ops->number_(32, nbytes));
@@ -744,7 +747,8 @@ struct IP_movestring: P {
         if (insn->get_addressSize() != x86_insnsize_32)
             throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
-        BaseSemantics::SValuePtr value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI), in_loop, nbits);
+        BaseSemantics::SValuePtr value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI),
+                                                         ops->undefined_(nbits), in_loop);
         ops->writeMemory(d->REG_ES, ops->readRegister(d->REG_EDI), value, in_loop);
         BaseSemantics::SValuePtr step = ops->ite(ops->readRegister(d->REG_DF),
                                                  ops->number_(32, -nbytes), ops->number_(32, nbytes));
@@ -883,7 +887,7 @@ struct IP_pop: P {
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 4));
         ops->writeRegister(d->REG_ESP, newSp);
-        d->write(args[0], ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), 32));
+        d->write(args[0], ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32), ops->boolean_(true)));
     }
 };
 
@@ -896,20 +900,27 @@ struct IP_popad: P {
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 32));
         ops->writeRegister(d->REG_EDI,
-                           ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_ESI,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 4)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 4)),
+                                           ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_EBP,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 8)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 8)),
+                                           ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_EBX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 16)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 16)),
+                                           ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_EDX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 20)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 20)),
+                                           ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_ECX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 24)), ops->boolean_(true), 32));
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 24)),
+                                           ops->undefined_(32), ops->boolean_(true)));
         ops->writeRegister(d->REG_EAX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 28)), ops->boolean_(true), 32));
-        (void) ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 12)), ops->boolean_(true), 32);
+                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 28)),
+                                           ops->undefined_(32), ops->boolean_(true)));
+        (void) ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 12)),
+                               ops->undefined_(32), ops->boolean_(true));
         ops->writeRegister(d->REG_ESP, newSp);
     }
 };
@@ -978,7 +989,8 @@ struct IP_ret: P {
         BaseSemantics::SValuePtr extraBytes = (args.size()==1 ? d->read(args[0], 32) : ops->number_(32, 0));
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->add(ops->number_(32, 4), extraBytes));
-        ops->writeRegister(d->REG_EIP, ops->filterReturnTarget(ops->readMemory(d->REG_SS, oldSp, ops->boolean_(true), 32)));
+        ops->writeRegister(d->REG_EIP, ops->filterReturnTarget(ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32),
+                                                                               ops->boolean_(true))));
         ops->writeRegister(d->REG_ESP, newSp);
     }
 };
@@ -1034,7 +1046,8 @@ struct IP_scanstring: P {
             throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
         RegisterDescriptor regA = d->REG_EAX; regA.set_nbits(nbits);
-        BaseSemantics::SValuePtr value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI), in_loop, nbits);
+        BaseSemantics::SValuePtr value = ops->readMemory(d->REG_ES, ops->readRegister(d->REG_EDI),
+                                                         ops->undefined_(nbits), in_loop);
         d->doAddOperation(ops->readRegister(regA), ops->invert(value), true, ops->boolean_(false), in_loop);
         BaseSemantics::SValuePtr step = ops->ite(ops->readRegister(d->REG_DF),
                                                  ops->number_(32, -nbytes), ops->number_(32, nbytes));

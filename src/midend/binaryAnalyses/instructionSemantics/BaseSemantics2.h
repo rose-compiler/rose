@@ -1292,12 +1292,13 @@ public:
      *  memory state that stores only bytes.  A RiscOperators object is provided for use in these situations.
      *
      *  In order to support cases where an address does not match any existing location, the @p dflt value can be used to
-     *  initialize a new memory location.  The manner in which the default is used depends on the implementation.
+     *  initialize a new memory location.  The manner in which the default is used depends on the implementation.  In any case,
+     *  the width of the @p dflt value determines how much to read.
      *
      *  Footnote 1: A MemoryState::readMemory() call is the last in a sequence of delegations starting with
      *  RiscOperators::readMemory().  The designers of the MemoryState, State, and RiscOperators subclasses will need to
      *  coordinate to decide which layer should handle concatenating values from individual memory locations. */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
     /** Write a value to memory.
@@ -1599,8 +1600,9 @@ public:
      *  the end of the list, then @p dflt becomes the return value, otherwise the return value is the single value on the
      *  accumulated list. If the @p dflt value is returned, then it is also pushed onto the front of the cell list.
      *
-     *  The base implementation assumes that all cells contain 8-bit values. */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+     *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
+     *  8-bit values. */
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
 
     /** Write a value to memory.
@@ -1791,9 +1793,9 @@ public:
      *
      *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state. See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) {
-        return memory->readMemory(address, dflt, nbits, addrOps, valOps);
+        return memory->readMemory(address, dflt, addrOps, valOps);
     }
 
     /** Write a value to memory.
@@ -2273,10 +2275,12 @@ public:
      *  pass a default-constructed register descriptor whose is_valid() method returns false.
      *
      *  The @p cond argument is a Boolean value that indicates whether this is a true read operation. If @p cond can be proven
-     *  to be false then the read is a no-op and returns an arbitrary value. */
-    virtual SValuePtr readMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &cond,
-                                 size_t nbits) = 0;
-
+     *  to be false then the read is a no-op and returns an arbitrary value.
+     *
+     *  The @p dflt argument determines the size of the value to be read. This argument is also passed along to the lower
+     *  layers so that they can, if they desire, use it to initialize memory that has never been read or written before. */
+    virtual SValuePtr readMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &dflt,
+                                 const SValuePtr &cond) = 0;
 
     /** Writes a value to memory.
      *

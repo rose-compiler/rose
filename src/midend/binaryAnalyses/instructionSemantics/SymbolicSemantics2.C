@@ -180,8 +180,9 @@ MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const Ba
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                        size_t nbits, BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
+    size_t nbits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
     assert(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
     bool short_circuited;
@@ -652,8 +653,9 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &condition,
-                          size_t nbits) {
+                          const BaseSemantics::SValuePtr &dflt,
+                          const BaseSemantics::SValuePtr &condition) {
+    size_t nbits = dflt->get_width();
     assert(1==condition->get_width()); // FIXME: condition is not used
     assert(8==nbits || 16==nbits || 32==nbits);
 
@@ -662,12 +664,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     // Read the bytes in little endian order and concatenate them together. InsnSemanticsExpr will simplify the expression
     // so that reading after writing a multi-byte value will return the original value written rather than a concatenation
     // of byte extractions.
-    SValuePtr dflt = svalue_undefined(nbits), retval;
+    SValuePtr retval;
     InsnSet defs;
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*bytenum, 8*bytenum+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, 8, this, this));
+        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
         retval = 0==bytenum ? byte_value : SValue::promote(concat(retval, byte_value));
         if (compute_usedef) {
             const InsnSet &definers = byte_value->get_defining_instructions();

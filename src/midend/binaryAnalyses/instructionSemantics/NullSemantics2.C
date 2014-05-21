@@ -233,12 +233,12 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
     assert(get_state()!=NULL);
     (void) SValue::promote(addr);
     (void) SValue::promote(cond);
-    return undefined_(nbits);
+    return dflt->copy();
 }
 
 void

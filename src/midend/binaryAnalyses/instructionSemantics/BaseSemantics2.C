@@ -830,13 +830,12 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 }
 
 SValuePtr
-MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits,
-                           RiscOperators *addrOps, RiscOperators *valOps)
+MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
     assert(addr!=NULL);
     assert(dflt!=NULL && (!byte_restricted || dflt->get_width()==8));
     bool short_circuited;
-    CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
+    CellList found = scan(addr, dflt->get_width(), addrOps, valOps, short_circuited/*out*/);
     size_t nfound = found.size();
 
     SValuePtr retval;
@@ -845,13 +844,13 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
         cells.push_front(protocell->create(addr, dflt));
     } else {
         retval = found.front()->get_value();
-        if (retval->get_width()!=nbits) {
+        if (retval->get_width()!=dflt->get_width()) {
             assert(!byte_restricted); // can't happen if memory state stores only byte values
-            retval = valOps->unsignedExtend(retval, nbits); // extend or truncate
+            retval = valOps->unsignedExtend(retval, dflt->get_width()); // extend or truncate
         }
     }
 
-    assert(retval->get_width()==nbits);
+    assert(retval->get_width()==dflt->get_width());
     return retval;
 }
 
@@ -1088,7 +1087,8 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         retval = operators->readRegister(rre->get_descriptor());
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
-        retval = operators->readMemory(segmentRegister(mre), addr, operators->boolean_(true), value_nbits);
+        BaseSemantics::SValuePtr dflt = undefined_(value_nbits);
+        retval = operators->readMemory(segmentRegister(mre), addr, dflt, operators->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
         uint64_t val = SageInterface::getAsmSignedConstant(ve);
         retval = operators->number_(value_nbits, val);
