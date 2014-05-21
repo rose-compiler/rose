@@ -144,10 +144,10 @@ namespace Rose {
                     //----------------------------------------------------------------------------
                     // Add all our JVM options
                     //----------------------------------------------------------------------------
-                    // TOO1 (2/11/2014): JVM options now stored in the Cmdline::Java::ECJ namespace.
-                    std::list<std::string> jvm_options = Rose::Cmdline::Java::Ecj::jvm_options;
+                    // MH (5/21/2014): X10 compiler options stored in the Cmdline::X10::x10c namespace.
+                    std::list<std::string> jvm_options = Rose::Cmdline::X10::X10c::jvm_options;
 
-                    std::string classpath = Rose::Cmdline::Java::Ecj::GetRoseClasspath();
+                    std::string classpath = Rose::Cmdline::X10::X10c::GetRoseClasspath();
                     jvm_options.push_back(classpath);
 
                     jvm_args.nOptions = jvm_options.size();
@@ -155,7 +155,7 @@ namespace Rose {
                     for(int i=0; i < jvm_args.nOptions; ++i) {
                         std::string jvm_option = jvm_options.front();
                         if (Rose::Cmdline::verbose > 0)
-                            std::cout << "[INFO] [ECJ] jvm_option[" << i << "] = " << jvm_option << std::endl;
+                            std::cout << "[INFO] [x10c] jvm_option[" << i << "] = " << jvm_option << std::endl;
                         jvm_args.options[i].optionString = strdup(jvm_option.c_str());
                         jvm_options.pop_front();
                     }
@@ -231,7 +231,7 @@ namespace Rose {
                     JNIEnv * env = get_env();
                     return env->FindClass("java/lang/String");
                 }
-            }// Rose::Frontend::Java::X10c
+            }// Rose::Frontend::X10::X10c
         }// Rose::Frontend::X10
     }// Rose::Frontend
 }// Rose
