@@ -323,6 +323,7 @@ namespace Cmdline {
     /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
     namespace Ecj {
+      extern bool batch_mode;
       extern std::list<std::string> jvm_options;
 
       void
@@ -333,6 +334,11 @@ namespace Cmdline {
 
       void
       Process (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:java:ecj:batch_mode
+       */
+      void
+      ProcessBatchMode (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:jvm_options
        */
@@ -356,22 +362,6 @@ namespace Cmdline {
     // -rose:x10
     void
     ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
-
-	namespace X10c {
-
-	extern std::list<std::string> jvm_options;
-
-	std::string
-    GetRoseClasspath();
-
-    void
-    Process (SgProject* project, std::vector<std::string>& argv);
-
-    /** -rose:java:ecj:jvm_options
-     */
-    void
-    ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
-	} // namespace Rose::Cmdline::X10::X10c
   } // namespace Rose::Cmdline::X10
 
 } // namespace Rose::Cmdline
