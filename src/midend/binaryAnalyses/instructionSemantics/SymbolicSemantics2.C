@@ -126,10 +126,15 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 
 SValuePtr
 MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *ops, const CellList &cells)
+                                                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                                const CellList &cells)
 {
-    RiscOperators *ops_symbolic = dynamic_cast<RiscOperators*>(ops);
-    bool compute_usedef = ops_symbolic ?  true : ops_symbolic->get_compute_usedef();
+    bool compute_usedef = true;
+    if (RiscOperators *addrOpsSymbolic = dynamic_cast<RiscOperators*>(addrOps)) {
+        compute_usedef = addrOpsSymbolic->get_compute_usedef();
+    } else if (RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps)) {
+        compute_usedef = valOpsSymbolic->get_compute_usedef();
+    }
 
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
@@ -155,7 +160,8 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
 
 SValuePtr
 MemoryState::CellCompressorSimple::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                               BaseSemantics::RiscOperators *ops, const CellList &cells)
+                                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                              const CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
@@ -164,21 +170,22 @@ MemoryState::CellCompressorSimple::operator()(const SValuePtr &address, const Ba
 
 SValuePtr
 MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                              BaseSemantics::RiscOperators *ops, const CellList &cells)
+                                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                              const CellList &cells)
 {
-    if (ops->get_solver())
-        return cc_mccarthy(address, dflt, ops, cells);
-    return cc_simple(address, dflt, ops, cells);
+    if (addrOps->get_solver() || valOps->get_solver())
+        return cc_mccarthy(address, dflt, addrOps, valOps, cells);
+    return cc_simple(address, dflt, addrOps, valOps, cells);
 }
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                        size_t nbits, BaseSemantics::RiscOperators *ops)
+                        size_t nbits, BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     SValuePtr address = SValue::promote(address_);
     assert(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
     bool short_circuited;
-    CellList matches = scan(address, nbits, ops, short_circuited/*out*/);
+    CellList matches = scan(address, nbits, addrOps, valOps, short_circuited/*out*/);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
     if (!short_circuited) {
@@ -188,18 +195,18 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSema
     }
 
     assert(dflt->get_width()==nbits);
-    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, ops, matches);
+    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, matches);
     assert(retval->get_width()==8);
     return retval;
 }
 
 void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
-                         BaseSemantics::RiscOperators *ops)
+                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     assert(32==address->get_width());
     assert(8==value->get_width());
-    BaseSemantics::MemoryCellList::writeMemory(address, value, ops);
+    BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }
 
 /*******************************************************************************************************************************
@@ -660,7 +667,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*bytenum, 8*bytenum+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, 8, this));
+        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, 8, this, this));
         retval = 0==bytenum ? byte_value : SValue::promote(concat(retval, byte_value));
         if (compute_usedef) {
             const InsnSet &definers = byte_value->get_defining_instructions();
@@ -688,7 +695,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
         BaseSemantics::SValuePtr byte_value = extract(value, 8*bytenum, 8*bytenum+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        state->writeMemory(byte_addr, byte_value, this);
+        state->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (SgAsmInstruction *insn = get_insn()) {

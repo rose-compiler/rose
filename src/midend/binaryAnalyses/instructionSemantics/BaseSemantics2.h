@@ -1297,7 +1297,8 @@ public:
      *  Footnote 1: A MemoryState::readMemory() call is the last in a sequence of delegations starting with
      *  RiscOperators::readMemory().  The designers of the MemoryState, State, and RiscOperators subclasses will need to
      *  coordinate to decide which layer should handle concatenating values from individual memory locations. */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) = 0;
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+                                 RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
     /** Write a value to memory.
      *
@@ -1308,7 +1309,8 @@ public:
      *  A MemoryState::writeMemory() call is the last in a sequence of delegations starting with
      *  RiscOperators::writeMemory(). The designers of the MemoryState, State, and RiscOperators will need to coordinate to
      *  decide which layer (if any) should handle splitting a multi-byte value into multiple memory locations. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) = 0;
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
+                             RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
     /** Print a memory state to more than one line of output.
      * @{ */
@@ -1442,12 +1444,12 @@ public:
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
      *  may be equal; multi-byte cells will need to check ranges of addresses. */
-    virtual bool may_alias(const MemoryCellPtr &other, RiscOperators *ops) const;
+    virtual bool may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
 
     /** Determines whether two memory cells must alias one another.  Two cells must alias one another when it can be proven
      * that their addresses cause them to overlap.  For cells containing one-byte values, aliasing must occur unless their
      * addresses can be different; multi-byte cells will need to check ranges of addresses. */
-    virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *ops) const;
+    virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
     
     /** Print the memory cell on a single line.
      * @{ */
@@ -1598,7 +1600,8 @@ public:
      *  accumulated list. If the @p dflt value is returned, then it is also pushed onto the front of the cell list.
      *
      *  The base implementation assumes that all cells contain 8-bit values. */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) /*override*/;
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+                                 RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
 
     /** Write a value to memory.
      *
@@ -1606,7 +1609,8 @@ public:
      *  the front of the cell list.
      *
      *  The base implementation assumes that all cells contain 8-bit values. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) /*override*/;
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
+                             RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
 
     virtual void print(std::ostream&, Formatter&) const /*override*/;
 
@@ -1626,7 +1630,7 @@ public:
      *  beginning of the list (which is normally stored in reverse chronological order) and continues until it reaches either
      *  the end, or a cell that must alias the specified address. If the last cell in the returned list must alias the
      *  specified address, then true is returned via @p short_circuited argument. */
-    virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *ops,
+    virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
                           bool &short_circuited/*out*/) const;
 
     /** Visitor for traversing a cell list. */
@@ -1649,7 +1653,8 @@ public:
     virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
 
     /** Returns the union of writer virtual addresses for cells that may alias the given address. */
-    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops);
+    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,
+                                                     RiscOperators *addrOps, RiscOperators *valOps);
 };
 
 /******************************************************************************************************************
@@ -1786,16 +1791,18 @@ public:
      *
      *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state. See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) {
-        return memory->readMemory(address, dflt, nbits, ops);
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits,
+                                 RiscOperators *addrOps, RiscOperators *valOps) {
+        return memory->readMemory(address, dflt, nbits, addrOps, valOps);
     }
 
     /** Write a value to memory.
      *
      *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state. See
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) {
-        memory->writeMemory(addr, value, ops);
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
+                             RiscOperators *addrOps, RiscOperators *valOps) {
+        memory->writeMemory(addr, value, addrOps, valOps);
     }
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.

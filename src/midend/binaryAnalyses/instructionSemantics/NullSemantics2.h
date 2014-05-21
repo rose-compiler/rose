@@ -191,11 +191,12 @@ public:
 public:
     virtual void clear() /*override*/ {}
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                                size_t nbits, BaseSemantics::RiscOperators *ops) /*override*/ {
+                                                size_t nbits, BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) /*override*/ {
         return get_val_protoval()->undefined_(nbits);
     }
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) /*override*/ {}
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) /*override*/ {}
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/ {}
 };
 

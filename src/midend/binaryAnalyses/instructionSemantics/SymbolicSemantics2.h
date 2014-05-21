@@ -323,7 +323,8 @@ public:
     struct CellCompressor {
         virtual ~CellCompressor() {}
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const MemoryCellList::CellList &cells) = 0;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const MemoryCellList::CellList &cells) = 0;
     };
     
     /** Functor for handling a memory read whose address matches more than one memory cell.  This functor returns a symbolic
@@ -341,13 +342,15 @@ public:
      */
     struct CellCompressorMcCarthy: CellCompressor {
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
     struct CellCompressorSimple: CellCompressor {
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
@@ -357,7 +360,8 @@ public:
         CellCompressorMcCarthy cc_mccarthy;
         CellCompressorSimple cc_simple;
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
 protected:
@@ -433,13 +437,14 @@ public:
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                size_t nbits, BaseSemantics::RiscOperators *ops) /*override*/;
+                                                size_t nbits, BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) /*override*/;
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) /*override*/;
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class

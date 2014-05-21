@@ -528,7 +528,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     assert(1==condition->get_width()); // FIXME: condition is not used
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    state->writeMemory(address, value, this);
+    state->writeMemory(address, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -557,7 +557,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, nbits, this));
+    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, nbits, this, this));
     return retval;
 }
 
