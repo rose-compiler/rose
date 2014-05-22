@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sawyer/ProgressBar.h>
 #include <stdarg.h>
 
 using namespace rose;
@@ -98,6 +99,33 @@ Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
             progress_time = curtime;
         }
     }
+}
+
+struct ProgressSuffix {
+    const Partitioner *p;
+    ProgressSuffix(): p(NULL) {}
+    ProgressSuffix(const Partitioner *p): p(p) {}
+    void print(std::ostream &o) const {
+        if (p!=NULL) {
+            o <<(1==p->basic_blocks.size() ? " block" : " blocks");// label for value printed by ProgressBar
+            o <<" " <<StringUtility::plural(p->functions.size(), "functions");
+        }
+    }
+};
+
+std::ostream& operator<<(std::ostream &o, const ProgressSuffix &suffix) {
+    suffix.print(o);
+    return o;
+}
+
+void
+Partitioner::update_progress() const
+{
+    static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
+    if (!progressBar)
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+    progressBar->suffix(ProgressSuffix(this));
+    progressBar->value(basic_blocks.size());
 }
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
@@ -936,6 +964,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         return NULL;
     if (!create || insn->bblock!=NULL)
         return insn->bblock;
+    update_progress();
     BasicBlock *bb = insn->bblock;
     if (!bb) {
         bb = new BasicBlock;
