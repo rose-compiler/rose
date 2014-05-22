@@ -4406,7 +4406,7 @@ std::cout << this->class_name() << " was alredy processed" << endl;
   char** argv = NULL;
 
   CommandlineProcessing::
-      generateArgcArgvFromList(p_argv, argc, argv);
+      generateArgcArgvFromList(frontEndCommandLine, argc, argv);
 
 	Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
     ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
