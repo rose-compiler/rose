@@ -96,6 +96,10 @@ private:
     };
 
 public:
+    /** Combination user-defined value and ID number.
+     *
+     *  This class represents the user-defined value and an ID number and serves as the type of object stored by the underlying
+     *  STL <code>std::list</code> container. */
     class Node {
         ProtoNode linkage_;                             // This member MUST BE FIRST so ProtoNode::dereference works
         Value value_;                                   // User-supplied data for each node
@@ -103,14 +107,27 @@ public:
         friend class IndexedList;
         Node(size_t id, const Value &value): linkage_(id), value_(value) { ASSERT_forbid(linkage_.isHead()); }
     public:
+        /** Unique identification number.
+         *
+         *  Obtains the unique (within this container) identification number for a storage node.  Identification numbers are
+         *  zero through the size of the list (exclusive) but not necessarily in the same order as the nodes of the list.  IDs
+         *  are stable across insertion but not erasure. When a node is erased from the list, the node that had the highest ID
+         *  number (if not the one being erased) is renumbered to fill the gap left by the one that was erased. */
         const size_t& id() const { return linkage_.id; }
+
+        /** Accessor for user-defined value.
+         *
+         *  The user defined value can be accessed by this method, which returns either a reference to a const value or a
+         *  reference to a mutable value depending on whether this container is const or mutable.
+         *
+         *  @{ */
         Value& value() { return value_; }
         const Value& value() const { return value_; }
-
         Value& operator*() { return value_; }
         const Value& operator*() const { return value_; }
         Value* operator->() { return &value_; }
         const Value* operator->() const { return &value_; }
+        /** @} */
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,9 +156,10 @@ private:
     };
 
 public:
-    /** List iterator.
+    /** List node bidirectional iterator.
      *
-     *  This iterator traverse the elements of the list in the order they are stored in the list.  If one wants to traverse
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to a
+     *  storage node (@ref Node, a user-defined value and associated ID number) when dereferenced.  If one wants to traverse
      *  elements in the order of the ID numbers instead, just use a "for" loop to iterate from zero to the number of items in
      *  the list and make use of the constant-time lookup-by-ID feature.
      *
@@ -151,9 +169,7 @@ public:
      *
      *  Node ID numbers are accessed from the iterator by invoking its <code>id</code> method.  ID numbers are stable across
      *  insertion, but not erasure; erasing an element from the list will cause zero or one other element to receive a new ID
-     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node.
-     *
-     * @{ */
+     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node. */
     class NodeIterator: public IteratorBase<NodeIterator, Node, ProtoNode*> {
         typedef                IteratorBase<NodeIterator, Node, ProtoNode*> Super;
     public:
@@ -167,6 +183,20 @@ public:
         NodeIterator(Node *node): Super(&node->linkage_) {}
     };
 
+    /** List const node bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to a
+     *  const storage node (@ref Node, a user-defined value and associated ID number) when dereferenced.  If one wants to
+     *  traverse elements in the order of the ID numbers instead, just use a "for" loop to iterate from zero to the number of
+     *  items in the list and make use of the constant-time lookup-by-ID feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position.
+     *
+     *  Node ID numbers are accessed from the iterator by invoking its <code>id</code> method.  ID numbers are stable across
+     *  insertion, but not erasure; erasing an element from the list will cause zero or one other element to receive a new ID
+     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node. */
     class ConstNodeIterator: public IteratorBase<ConstNodeIterator, const Node, const ProtoNode*> {
         typedef                     IteratorBase<ConstNodeIterator, const Node, const ProtoNode*> Super;
     public:
@@ -181,6 +211,16 @@ public:
         ConstNodeIterator(const Node *node): Super(&node->linkage_) {}
     };
 
+    /** List value bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to the
+     *  user-defined value when dereferenced.  If one wants to traverse elements in the order of the ID numbers instead, just
+     *  use a "for" loop to iterate from zero to the number of items in the list and make use of the constant-time lookup-by-ID
+     *  feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position. */
     class ValueIterator: public IteratorBase<ValueIterator, Value, ProtoNode*> {
         typedef                 IteratorBase<ValueIterator, Value, ProtoNode*> Super;
     public:
@@ -195,6 +235,16 @@ public:
         ValueIterator(Node *node): Super(&node->linkage_) {}
     };
 
+    /** List const value bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to the
+     *  user-defined const value when dereferenced.  If one wants to traverse elements in the order of the ID numbers instead,
+     *  just use a "for" loop to iterate from zero to the number of items in the list and make use of the constant-time
+     *  lookup-by-ID feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position. */
     class ConstValueIterator: public IteratorBase<ConstValueIterator, const Value, const ProtoNode*> {
         typedef                      IteratorBase<ConstValueIterator, const Value, const ProtoNode*> Super;
     public:

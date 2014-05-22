@@ -78,19 +78,19 @@ public:
  *  map.erase(Interval(2,3));
  * @endcode
  *
- *  Erasing keys 2 and 3 causes the affected not to split into two discontiguous nodes and a new copy of the node's
+ *  Erasing keys 2 and 3 causes the affected node to split into two discontiguous nodes and a new copy of the node's
  *  value. Assuming we started with the two nodes { ([1,5], stats1), (6, stats2) }, then after erasing [2,3] the container will
  *  hold three nodes: { (1, stats1), ([4,5], stats1), (6, stats2) }.
  *
- *  Iteration over the container returns references to the nodes as <code>std::pair</code> objects whose first member is the
- *  interval type and whose second member is the value type specified by the template arguments.  For example, here's one way
- *  to print the contents of the container, assuming the interval itself doesn't already have a printing function:
+ *  Iteration over the container returns references to the nodes as @ref Node object that has <code>key</code> and
+ *  <code>value</code> methods to access the interval and user-defined value parts of each storage node.  For example, here's
+ *  one way to print the contents of the container, assuming the interval itself doesn't already have a printing function:
  *
  * @code
  *  std::cout <<"{";
- *  for (Map::ConstNodeIterator iter=map.begin(); iter!=map.end(); ++iter) {
- *      const Interval &interval = iter->first;
- *      const Stats &stats = iter->second;
+ *  for (Map::ConstNodeIterator iter=map.nodes().begin(); iter!=map.nodes().end(); ++iter) {
+ *      const Interval &interval = iter->key();
+ *      const Stats &stats = iter->value();
  *      std::cout <<" (";
  *      if (singleton(interval))
  *          std::cout <<interval.least() <<", ";
@@ -102,9 +102,21 @@ public:
  *  std::cout <<" }";
  * @endcode
  *
+ *  Here's another way:
+ *
+ * @code
+ *  BOOST_FOREACH (const Map::Node &node, map.nodes()) {
+ *      const Interval &interval = node.key();
+ *      const Stats &stats = node.value();
+ *      ...
+ *  }
+ * @endcode
+ *
+ *  Besides <code>nodes()</code>, there's also <code>values()</code> and <code>keys()</code> that return bidirectional
+ *  iterators over the user-defined values or the keys when dereferenced.
+ *
  *  This class uses CamelCase for all its methods and inner types in conformance with the naming convention for the rest of the
- *  library.  However, the usual STL iterator names <code>iterator</code>, <code>const_iterator</code>, etc. are also available
- *  (although undocumented). */
+ *  library. This includes iterator names (we don't use <code>iterator</code>, <code>const_iterator</code>, etc). */
 template<typename I, typename T, class Policy = MergePolicy<I, T> >
 class IntervalMap {
 public:
