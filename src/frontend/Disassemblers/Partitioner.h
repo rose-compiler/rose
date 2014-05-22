@@ -506,6 +506,7 @@ public:
     void set_progress_reporting(double min_interval);
 
     void update_progress(SgAsmBlock::Reason reason, size_t pass) const;
+    void update_progress() const;
 
     /*************************************************************************************************************************
      *                                                High-level Functions
