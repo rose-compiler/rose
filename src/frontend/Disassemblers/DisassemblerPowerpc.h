@@ -230,7 +230,7 @@ private:
     SgAsmPowerpcInstruction* decode_MD_formInstruction();
     SgAsmPowerpcInstruction* decode_MDS_formInstruction();
 
-    SgAsmQuadWordValueExpression* makeBranchTarget( uint64_t targetAddr ) const;
+    SgAsmIntegerValueExpression* makeBranchTarget( uint64_t targetAddr ) const;
 
     SgAsmPowerpcInstruction* disassemble();
 

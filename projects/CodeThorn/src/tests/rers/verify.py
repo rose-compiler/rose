@@ -11,6 +11,7 @@ if __name__ == '__main__':
     cmdline.add_argument('--ref', metavar='<solution.csv>', type=file, help='LTL CSV data')
     cmdline.add_argument('--mine', metavar='<mine.csv>', type=file, help='codethorn ltl output')
     cmdline.add_argument('--verbose', action='store_true', help='verbose mode')
+    cmdline.add_argument('--ltlstart', default=60, type=int, help='ltl start')
 
     args = cmdline.parse_args()
     if not args.ref: print 'no reference input specified!'; exit(1)
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     unknown      = 0
     for line in args.ref.readlines():
         idx, result, confidence = line.split(',')
-        n = int(idx)-60
+        n = int(idx)-args.ltlstart
         if n <= 0:
             # skip over assertions
             continue

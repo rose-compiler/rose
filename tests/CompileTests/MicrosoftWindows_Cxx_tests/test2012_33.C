@@ -7,7 +7,7 @@ namespace std
         {
           public:
 #if DEFINE_AS_FRIEND_FUNCTION
-               template <typename T> friend bool operator== (X,int);
+            // template <typename T> friend bool operator== (X,int);
 #else
                template <typename T> bool operator== (int);
 #endif

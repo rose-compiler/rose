@@ -9,6 +9,7 @@ using namespace std;
 
 StatementReversal SgVariableDeclaration_Handler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
+  cerr<<"DEBUG: VarDecl_Handler::genRevAST"<<endl;
 	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().size() <= 1);
 
 	SgVariableDeclaration* varDeclaration = isSgVariableDeclaration(stmt);

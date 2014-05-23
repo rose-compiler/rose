@@ -510,7 +510,7 @@ struct X86InstructionSemantics {
                 return policy.add(read8(isSgAsmBinaryAdd(e)->get_lhs()), read8(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -520,11 +520,8 @@ struct X86InstructionSemantics {
                 return readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                      readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
+            case V_SgAsmIntegerValueExpression: {
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
                 return number<8>(val & 0xFFU);
             }
             default: {
@@ -545,7 +542,7 @@ struct X86InstructionSemantics {
                 return policy.add(read16(isSgAsmBinaryAdd(e)->get_lhs()), read16(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -555,11 +552,8 @@ struct X86InstructionSemantics {
                 return readMemory<16>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                       readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
+            case V_SgAsmIntegerValueExpression: {
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
                 return number<16>(val & 0xFFFFU);
             }
             default: {
@@ -580,7 +574,7 @@ struct X86InstructionSemantics {
                 return policy.add(read32(isSgAsmBinaryAdd(e)->get_lhs()), read32(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -590,10 +584,7 @@ struct X86InstructionSemantics {
                 return readMemory<32>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                       readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
+            case V_SgAsmIntegerValueExpression: {
                 uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
                 return number<32>(val & 0xFFFFFFFFU);
             }
@@ -2414,7 +2405,7 @@ struct X86InstructionSemantics {
             case x86_int: {
                 if (operands.size()!=1)
                     throw Exception("instruction must have one operand", insn);
-                SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
+                SgAsmIntegerValueExpression* bv = isSgAsmIntegerValueExpression(operands[0]);
                 if (!bv)
                     throw Exception("operand must be a byte value expression", insn);
                 policy.interrupt(bv->get_value());

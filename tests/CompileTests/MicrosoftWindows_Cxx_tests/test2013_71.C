@@ -1,9 +1,11 @@
 
+#define __attribute__(X) 
+
 void foobar_1() throw();
 
-void foobar_2()  __attribute__((constructor));
+void foobar_2();
 
-void foobar_3()  __attribute__((destructor));
+void foobar_3();
 
 void foobar_4()  __attribute__((pure));
 

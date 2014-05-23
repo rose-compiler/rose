@@ -420,16 +420,15 @@ public:
      **************************************************************************************************************************/
 public:
     /** Exception for MemoryMap operations. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &mesg, const MemoryMap *map): mesg(mesg), map(map) {}
-        virtual ~Exception() {}
+        Exception(const std::string &mesg, const MemoryMap *map): std::runtime_error(mesg), map(map) {}
+        virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
     public:
-        std::string mesg;               /**< Error message. Details of the exception. */
         const MemoryMap *map;           /**< Map that caused the exception if available, null otherwise. */
     };
 
@@ -444,6 +443,7 @@ public:
             : Exception(mesg, map),
               new_range(new_range), old_range(old_range),
               new_segment(new_segment), old_segment(old_segment) {}
+        virtual ~Inconsistent() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Inconsistent&);
         Extent new_range, old_range;
@@ -454,6 +454,7 @@ public:
     struct NotMapped : public Exception {
         NotMapped(const std::string &mesg, const MemoryMap *map, rose_addr_t va)
             : Exception(mesg, map), va(va) {}
+        virtual ~NotMapped() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const NotMapped&);
         rose_addr_t va;
@@ -463,6 +464,7 @@ public:
     struct NoFreeSpace : public Exception {
         NoFreeSpace(const std::string &mesg, const MemoryMap *map, size_t size)
             : Exception(mesg, map), size(size) {}
+        virtual ~NoFreeSpace() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const NoFreeSpace&);
         size_t size;
@@ -472,6 +474,7 @@ public:
     struct SyntaxError: public Exception {
         SyntaxError(const std::string &mesg, const MemoryMap *map, const std::string &filename, unsigned linenum, int colnum=-1)
             : Exception(mesg, map), filename(filename), linenum(linenum), colnum(colnum) {}
+        virtual ~SyntaxError() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const SyntaxError&);
         std::string filename;                   /**< Name of index file where error occurred. */
@@ -507,6 +510,9 @@ public:
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
 
+    /** Number of bytes mapped. */
+    size_t size() const;
+
     /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
      *  The default byte order is little-endian.
      * @{ */
@@ -523,6 +529,11 @@ public:
      *  the virtual address space are first removed from the mapping.  Otherwise an overlap throws a MemoryMap::Inconsistent
      *  exception.   If an exception is thrown, then the memory map is not changed. */
     void insert(const Extent &range, const Segment &segment, bool erase_prior=true);
+
+    /** Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
+     *  creates a new MmapBuffer and inserts it into the mapping. Returns the size of the file mapping. */
+    size_t insert_file(const std::string &filename, rose_addr_t va, bool writable=false, bool erase_prior=true,
+                       const std::string &sgmtname="");
 
     /** Determines whether a virtual address is defined.  Returns true if the specified virtual address (or all addresses in a
      *  range of addresses) are defined, false otherwise.  An address is defined if it is associated with a Segment.  If @p

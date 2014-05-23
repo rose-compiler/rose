@@ -1,8 +1,8 @@
 class X
    {
      public:
-          template <typename T>
-          friend bool operator== (T,int);
+       // MSVC has different friend function symbol injection than GNU.
+       // template <typename T> friend bool operator== (T,int);
    };
 
 

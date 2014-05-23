@@ -39,6 +39,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
+    BinaryReturnValueUsed.C					\
     DwarfLineMapper.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
@@ -100,6 +101,7 @@ include_HEADERS =					\
     BinaryCallingConvention.h				\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
+    BinaryReturnValueUsed.h				\
     DwarfLineMapper.h
 
 

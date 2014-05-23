@@ -509,11 +509,15 @@ void EventReverser::processVariableReference(SgExpression* expr)
     else if (SgPointerDerefExp* ptrDerefExp = isSgPointerDerefExp(expr))
     {
         // ...
-       
+      cerr<<"SgPointerDerefExp not supported."<<endl;
+      ROSE_ASSERT(0);
+      
     }
 
     else if (SgAddressOfOp* addressOfOp = isSgAddressOfOp(expr))
     {
+      cerr<<"SgAddressOfOp not supported."<<endl;
+      ROSE_ASSERT(0);
        
     }
 
@@ -743,8 +747,10 @@ void EventReverser::addAvailableAndTargetValues()
         
         if (varVertexMap_.count(var) > 0)
             node = varVertexMap_[var];
-        else
-            cout << "!!!Unhandled variable: " << var << endl;
+        else {
+            cerr << "!!!Unhandled variable: " << var << endl;
+            ROSE_ASSERT(0);
+        }
             
         if (isStateVariable(name))
         {
@@ -1164,12 +1170,13 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     
     // Build a node for this function call in VG.
     FunctionCallNode* funcCallNode    = new FunctionCallNode(funcCallExp);
-    FunctionCallNode* rvsFuncCallNode;
+    FunctionCallNode* rvsFuncCallNode=0;
     if (funcCallNode->canBeReversed)
         rvsFuncCallNode = new FunctionCallNode(funcCallExp, true);
     
     VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
     VGVertex rvsFuncCallVertex;
+    ROSE_ASSERT(rvsFuncCallNode);
     if (funcCallNode->canBeReversed)
         rvsFuncCallVertex = addValueGraphNode(rvsFuncCallNode);
     
@@ -1517,7 +1524,11 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         
         return lhsVertex;
     }
-
+    {
+      // MS: check validity of rhsVertex
+      VGVertex rhsVertex2;
+      ROSE_ASSERT(rhsVertex!=rhsVertex2);
+    }
     return rhsVertex;
 }
 

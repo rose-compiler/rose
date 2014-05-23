@@ -9,6 +9,17 @@
 
 using namespace CodeThorn;
 
+ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false){
+}
+
+void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
+  _skipSelectedFunctionCalls=skip;
+}
+
+bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
+}
+
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
@@ -43,56 +54,6 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
 }
 
 //////////////////////////////////////////////////////////////////////
-// EVAL BOOL
-//////////////////////////////////////////////////////////////////////
-SingleEvalResult ExprAnalyzer::eval(SgNode* node,EState estate) {
-  SingleEvalResult tmp;
-  tmp.estate=estate;
-  switch(node->variantT()) {
-  case V_SgAndOp: {
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    SingleEvalResult lhsResult=eval(lhs,estate);
-    SgNode* rhs=SgNodeHelper::getRhs(node);
-    SingleEvalResult rhsResult=eval(rhs,estate);
-    tmp.result=lhsResult.result&&rhsResult.result;
-    return tmp;
-  }
-  case V_SgOrOp: {
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    SingleEvalResult lhsResult=eval(lhs,estate);
-    SgNode* rhs=SgNodeHelper::getRhs(node);
-    SingleEvalResult rhsResult=eval(rhs,estate);
-    tmp.result=lhsResult.result||rhsResult.result;
-    return tmp;
-  }
-  case V_SgNotOp: {
-    SgNode* child=SgNodeHelper::getFirstChild(node);
-    SingleEvalResult operandResult=eval(child,estate);
-    tmp.result=!operandResult.result;
-    return tmp;
-  }
-  case V_SgBoolValExp: {
-    SgBoolValExp* boolValExp=isSgBoolValExp(node);
-    assert(boolValExp);
-    int boolVal= boolValExp->get_value();
-    if(boolVal==0) {
-      tmp.result=false;
-      return tmp;
-    }
-    if(boolVal==1) {
-      tmp.result=true;
-      return tmp;
-    }
-    break;
-  }
-  default:
-    throw "ExprAnalyzer::eval: unknown operator.";
-  } // end of switch
-  tmp.result=AType::Top();
-  return tmp;
-}
-
-//////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
 list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
@@ -105,13 +66,51 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
+
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
+
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "INFO: incdec-op found!"<<endl;
   }
-
+  if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
+    list<SingleEvalResultConstInt> resultList;
+    SgExpression* cond=condExp->get_conditional_exp();
+    list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints,safeConstraintPropagation);
+    if(condResultList.size()==0) {
+      cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
+      exit(1);
+    }
+    if(condResultList.size()>1) {
+      cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt singleResult=*condResultList.begin();
+    if(singleResult.result.isTop()) {
+      SgExpression* trueBranch=condExp->get_true_exp();
+      list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+      SgExpression* falseBranch=condExp->get_false_exp();
+      list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+      // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
+      trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
+      return trueBranchResultList;
+    }
+    if(singleResult.result.isTrue()) {
+      SgExpression* trueBranch=condExp->get_true_exp();
+      list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
+      return trueBranchResultList;
+    }
+    if(singleResult.result.isFalse()) {
+      SgExpression* falseBranch=condExp->get_false_exp();
+      list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
+      return falseBranchResultList;
+    }
+    // dummy return value to avoid compiler warning
+    cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
+    exit(1);
+    return resultList;
+  }
   if(dynamic_cast<SgBinaryOp*>(node)) {
     //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
 
@@ -148,7 +147,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               tmpres2.result=false;
               resultList.push_back(tmpres1);
               resultList.push_back(tmpres2);
-              return resultList;
+              //return resultList; MS: removed 3/11/2014
               break;
             }
           }
@@ -332,9 +331,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           resultList.push_back(res);
           break;
         }
+        case V_SgPntrArrRefExp: {
+          // assume top for array elements (array elements are not stored in state)
+          res.result=AType::Top();
+          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+          resultList.push_back(res);
+          break;
+        }
         default:
-          cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<endl;
-          throw "Error: evalConstInt::unkown binary operatio.";
+            cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+          throw "Error: evalConstInt::unkown binary operation.";
         }
       }
     }
@@ -399,6 +405,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
     break;
   }
+  case V_SgDoubleVal: {
+    //SgDoubleVal* doubleValNode=isSgDoubleVal(node);
+    // floating point values are currently not computed
+    res.result=AType::Top();
+    return listify(res);
+  }
   case V_SgIntVal: {
     SgIntVal* intValNode=isSgIntVal(node);
     int intVal=intValNode->get_value();
@@ -429,150 +441,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
     break;
   }
-  default:
-    cerr << "@NODE:"<<node->sage_class_name()<<endl;
-    throw "Error: evalConstInt::unknown operation failed.";
-  } // end of switch
-  throw "Error: evalConstInt failed.";
-}
-
-//////////////////////////////////////////////////////////////////////
-// PURE EVAL CONSTINT
-//////////////////////////////////////////////////////////////////////
-AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
-  ConstraintSet cset=*estate.constraints();
-  AValue res;
-  // initialize with default values from argument(s)
-  res=AType::ConstIntLattice(AType::Bot());
-
-  if(dynamic_cast<SgBinaryOp*>(node)) {
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    AValue lhsResult=pureEvalConstInt(lhs,estate);
-    SgNode* rhs=SgNodeHelper::getRhs(node);
-    AValue rhsResult=pureEvalConstInt(rhs,estate);
-
-    switch(node->variantT()) {
-    case V_SgEqualityOp: {
-      res=(lhsResult==rhsResult);
-      // record new constraint
-      VariableId varId;
-      if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
-        // only add the equality constraint if no constant is bound to the respective variable
-        if(!estate.pstate()->varIsConst(varId)) {
-          Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
-          if(cset.constraintExists(newConstraint)) {
-            return true; // existing constraint allows to assume this fact as true 
-          }
-        }
-      }
-      return res;
-    }
-    case V_SgNotEqualOp: {
-      res=(lhsResult!=rhsResult);
-      // record new constraint
-      VariableId varId;
-      if((variable(lhs,varId) && rhsResult.isConstInt()) || (lhsResult.isConstInt() && variable(rhs,varId))) {
-        // only add the inequality constraint if no constant is bound to the respective variable
-        if(!estate.pstate()->varIsConst(varId)) {
-          Constraint newConstraint=Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult);
-          if(cset.constraintExists(newConstraint)) {
-            // override result of evaluation based on existent constraint
-            res=true;
-          } else {
-            res=AType::Top();
-          }
-        }
-      }
-      return res;
-    }
-    case V_SgAndOp:
-      // we encode short-circuit CPP-AND semantics here!
-      if(lhsResult.isFalse()) {
-        res=lhsResult;
-      } else {
-        res=(lhsResult&&rhsResult);
-      }
-      return res;
-    case V_SgOrOp:
-      // we encode short-circuit CPP-OR semantics here!
-      if(lhsResult.isTrue()) {
-        res=lhsResult;
-      } else {
-        res=(lhsResult||rhsResult);
-      }
-      return res;
-    default:
-      throw "Error: evalConstInt::binary operation failed.";
-    }
-  }
-  if(dynamic_cast<SgUnaryOp*>(node)) {
-    SgNode* child=SgNodeHelper::getFirstChild(node);
-    AValue operandResult=pureEvalConstInt(child,estate);
-    switch(node->variantT()) {
-    case V_SgNotOp:
-      res=!operandResult;
-      return res;
-    case V_SgCastExp: {
-      SgCastExp* castExp=isSgCastExp(node);
-      return pureEvalConstInt(SgNodeHelper::getFirstChild(castExp),estate);
-    }
-    case V_SgMinusOp: {
-      res=-operandResult; // using overloaded operator
-      return res;
-    }
-    default:
-      cerr << "@NODE:"<<node->sage_class_name()<<endl;
-      throw "Error: pureEvalConstInt::unary operation failed.";
-    } // end switch
-  }
-  assert(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
-
-  // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
-  switch(node->variantT()) {
-  case V_SgBoolValExp: {
-    SgBoolValExp* boolValExp=isSgBoolValExp(node);
-    assert(boolValExp);
-    int boolVal= boolValExp->get_value();
-    if(boolVal==0) {
-      res=false;
-      return res;
-    }
-    if(boolVal==1) {
-      res=true;
-      return res;
-    }
-    break;
-  }
-  case V_SgIntVal: {
-    SgIntVal* intValNode=isSgIntVal(node);
-    int intVal=intValNode->get_value();
-    res=intVal;
-    return res;
-  }
-  case V_SgVarRefExp: {
-    VariableId varId;
-    bool isVar=ExprAnalyzer::variable(node,varId);
-    assert(isVar);
-    const PState* pstate=estate.pstate();
-    if(pstate->varExists(varId)) {
-      PState pstate2=*pstate; // also removes constness
-      res=pstate2[varId].getValue();
-      if(res.isTop()) {
-        // in case of TOP we try to extract a possibly more precise value from the constraints
-        AValue val=cset.varConstIntLatticeValue(varId);
-        //if(!val.isTop())
-        // TODO: we will want to monitor this for statistics!
-        //  cout << "DEBUG: extracing more precise value from constraints: "<<res.toString()<<" ==> "<<val.toString()<<endl;
-        res=val;
-      }
-      return res;
+  case V_SgFunctionCallExp: {
+    if(getSkipSelectedFunctionCalls()) {
+      // return default value
+      return listify(res);
     } else {
-      res=AType::Top();
-      //cerr << "WARNING: variable not in State (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
-      return res;
+      throw "Error: evalConstInt::function call inside expression.";
     }
-    break;
+
   }
+
   default:
     cerr << "@NODE:"<<node->sage_class_name()<<endl;
     throw "Error: evalConstInt::unknown operation failed.";

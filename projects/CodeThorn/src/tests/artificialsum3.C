@@ -8,10 +8,10 @@ main() {
   int i=n;
   int j=n;
   for(i=n-1;i>=0;i--) {
-	a=a+1;
-	for (j=i;j>0;j--) {
-	  b=b+1;
-	}
+    a=a+1;
+    for (j=i;j>0;j--) {
+      b=b+1;
+    }
   } 
   sum=a + b;
   printf("%d\n",sum);

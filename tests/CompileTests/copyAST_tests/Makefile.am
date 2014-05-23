@@ -64,6 +64,8 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_47.C \
    copytest2007_49.C \
    copytest2007_50.C \
+   copytest2014_01.C \
+   copytest2014_02.C \
    copyExampleInput.C
 
 # DQ (6/22/2011): These fail the new name qualification support.

@@ -11,7 +11,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "CommandLineOptions.h"
+#include <set>
 
 using namespace std;
 
@@ -27,6 +27,7 @@ namespace CodeThorn {
    bool integer(istream& is, int& num);
    int spaces(istream& is);
    int whitespaces(istream& is);
+   set<int> integerSet(string intSet);
  }
 
 } // end of namespace CodeThorn

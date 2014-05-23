@@ -268,6 +268,18 @@ void SgUntypedFunctionDeclaration::set_end_statement(SgUntypedNamedStatement* en
 
 
 //========================================================================================
+// SgUntypedSubroutineDeclaration
+//----------------------------------------------------------------------------------------
+SgUntypedSubroutineDeclaration:: SgUntypedSubroutineDeclaration(Sg_File_Info* start, std::string name)
+   :  SgUntypedFunctionDeclaration(start, name)
+   {
+   }
+SgUntypedSubroutineDeclaration::~SgUntypedSubroutineDeclaration() {}
+
+VariantT SgUntypedSubroutineDeclaration::variantT() const {return V_SgUntypedSubroutineDeclaration;}
+
+
+//========================================================================================
 // SgUntypedProgramHeaderDeclaration
 //----------------------------------------------------------------------------------------
 SgUntypedProgramHeaderDeclaration:: SgUntypedProgramHeaderDeclaration(Sg_File_Info* start, std::string name)
@@ -311,9 +323,8 @@ void SgUntypedInitializedName::set_name(std::string name)     {p_name = name;}
 // SgUntypedVariableDeclaration
 //----------------------------------------------------------------------------------------
 SgUntypedVariableDeclaration::SgUntypedVariableDeclaration(Sg_File_Info* start, SgUntypedType* type) 
-   : SgUntypedDeclarationStatement(start), p_type(type)
+   : SgUntypedDeclarationStatement(start), p_type(type), p_parameters(NULL)
    {
-      p_parameters = new SgUntypedInitializedNameList(start);
    }
 SgUntypedVariableDeclaration::~SgUntypedVariableDeclaration() {assert(0);}
 
