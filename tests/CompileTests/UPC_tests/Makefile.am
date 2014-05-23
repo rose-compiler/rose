@@ -181,6 +181,30 @@ testSharedMemoryDSL_10: sharedMemoryDSL
 testSharedMemoryDSL_11: sharedMemoryDSL
 	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_11.upc
 
+testSharedMemoryDSL_12: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_12.c
+
+testSharedMemoryDSL_13: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_13.c
+
+testSharedMemoryDSL_14: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_14.c
+
+testSharedMemoryDSL_15: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_15.c
+
+testSharedMemoryDSL_16: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_16.c
+
+# DQ (4/30/2014): List of test codes to test the shared memory DSL work.
+SharedMemoryDSL_testcodes = \
+   testSharedMemoryDSL_1 testSharedMemoryDSL_2 testSharedMemoryDSL_3 testSharedMemoryDSL_4 testSharedMemoryDSL_5 \
+   testSharedMemoryDSL_6 testSharedMemoryDSL_7 testSharedMemoryDSL_8 testSharedMemoryDSL_9 testSharedMemoryDSL_10 \
+   testSharedMemoryDSL_11 testSharedMemoryDSL_12 testSharedMemoryDSL_13 testSharedMemoryDSL_14 testSharedMemoryDSL_15 \
+   testSharedMemoryDSL_16
+
+testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
+
 
 QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 

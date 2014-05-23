@@ -19,6 +19,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "LTL.h"
 //using LTL::Formula;
+#undef INIT_TO_NEUTRAL_ELEMENT
 
 namespace CodeThorn {
 namespace UnifiedLTL {
@@ -41,7 +42,13 @@ namespace UnifiedLTL {
 
     LTLState() : estate(NULL) { }
     LTLState(const EState* s, size_t stacksize) 
-      : estate(s), valstack(stacksize, Bot()) {}
+      : estate(s), valstack(stacksize,
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+                Bot()
+#else
+                Top()
+#endif
+                ) {}
     
     inline BoolLattice top()  const { return valstack.back(); }
     inline BoolLattice over() const { return valstack[valstack.size()-2]; }
@@ -110,10 +117,9 @@ namespace UnifiedLTL {
     /// verify the LTL formula f
     BoolLattice verify(const CodeThorn::LTL::Formula& f);
 
-    Label collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
+    void collapse_transition_graph(BoostTransitionGraph &g, BoostTransitionGraph &reduced) const;
 
   protected:
-    Label start;
     BoostTransitionGraph g;
     TransitionGraph& transitionGraph;
     EStateSet& eStateSet;
